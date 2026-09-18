@@ -1,8 +1,15 @@
 {
-  "mcpServers": {
-    "phpstorm": {
-      "url": "http://127.0.0.1:64442/stream",
-      "type": "http"
+    "mcpServers": {
+        "phpstorm": {
+            "url": "http://127.0.0.1:64442/stream",
+            "type": "http"
+        },
+        "laravel-boost": {
+            "command": "vendor/bin/sail",
+            "args": [
+                "artisan",
+                "boost:mcp"
+            ]
+        }
     }
-  }
 }
