@@ -42,3 +42,7 @@ yarn-error.log
 /boost.json
 /opencode.json
 /opencode.jsonc
+.idea
+.claude/**/10x-*
+.github/**/10x-*
+.agents/**/10x-*
