@@ -226,9 +226,11 @@ GitHub milestone: [M-1](https://github.com/sebastian-kostecki/root-keeper/milest
 
 ## Open Roadmap Questions
 
-1. **Deploy ręczny czy automatyczny po merge'u?** (#12) `tech-stack.md` zakłada auto-deploy-on-merge, ale workflow deployu nie istnieje, a `infrastructure.md` rekomenduje decyzję wprost (zostawić ręczny w MVP i poprawić `tech-stack.md` albo dodać workflow). — Owner: user. Block: roadmap-wide (nie blokuje planowania żadnego wycinka).
+Brak otwartych pytań. PRD nie ma otwartych pytań.
 
-PRD nie ma otwartych pytań.
+Rozstrzygnięte:
+
+- **Deploy ręczny czy automatyczny po merge'u?** (#12, 2026-09-21) — Ręczny: właściciel uruchamia `scripts/deploy.sh` na VPS po merge'u do `main`. Workflow deployu nie powstaje; `tech-stack.md` poprawiony (`ci_default_flow: manual-promotion`).
 
 ## Parked
 

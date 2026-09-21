@@ -227,7 +227,7 @@ npm audit fix && npm audit
 ### CI hardening: branch trigger, security scanning, DB parity, deploy
 
 **Lesson**: [Sprint Zero z Agentem: infrastruktura, walking skeleton i pierwszy deploy (M1L5)](https://platforma.przeprogramowani.pl/external/10xdevs-3/m1-l5)
-**What you'll do there**: Set up the remote and the real pipeline — point the push trigger at your actual default branch (`master` vs `main`), add `composer audit` / `npm audit` steps and npm/composer ecosystems to Dependabot, consider a Postgres service in CI for parity with dev, and add the self-host auto-deploy-on-merge flow recorded in `tech-stack.md`.
+**What you'll do there**: Set up the remote and the real pipeline — point the push trigger at your actual default branch (`master` vs `main`), add `composer audit` / `npm audit` steps and npm/composer ecosystems to Dependabot, and consider a Postgres service in CI for parity with dev. (Deploy stays manual via `scripts/deploy.sh` on the VPS, decided in #12; no deploy workflow.)
 
 ## Summary
 
