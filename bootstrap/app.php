@@ -2,6 +2,7 @@
 
 use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandleInertiaRequests;
+use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -15,6 +16,8 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->trustProxies(at: '*');
+
         $middleware->encryptCookies(except: ['appearance', 'sidebar_state']);
 
         $middleware->web(append: [
@@ -22,6 +25,28 @@ return Application::configure(basePath: dirname(__DIR__))
             HandleInertiaRequests::class,
             AddLinkHeadersForPreloadedAssets::class,
         ]);
+    })
+    ->withSchedule(function (Schedule $schedule): void {
+        $schedule->command('backup:run')
+            ->dailyAt('03:45')
+            ->timezone('Europe/Warsaw')
+            ->withoutOverlapping(120)
+            ->onOneServer()
+            ->environments(['production']);
+
+        $schedule->command('backup:clean')
+            ->dailyAt('04:15')
+            ->timezone('Europe/Warsaw')
+            ->withoutOverlapping(60)
+            ->onOneServer()
+            ->environments(['production']);
+
+        $schedule->command('backup:monitor')
+            ->dailyAt('04:45')
+            ->timezone('Europe/Warsaw')
+            ->withoutOverlapping(30)
+            ->onOneServer()
+            ->environments(['production']);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(
