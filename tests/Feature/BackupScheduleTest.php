@@ -2,12 +2,16 @@
 
 use Illuminate\Console\Scheduling\Event;
 use Illuminate\Console\Scheduling\Schedule;
+use Illuminate\Support\Facades\Artisan;
 
 test('production backups include the database and storage and run at 03:45 Warsaw', function () {
     expect(config('backup.backup.source.files.include'))->toBe([storage_path('app')])
         ->and(config('backup.backup.source.files.exclude'))->toContain(storage_path('app/backups'))
         ->and(config('backup.backup.source.databases'))->toBe([config('database.default')])
         ->and(config('backup.backup.destination.disks'))->toContain('backups');
+
+    // withSchedule() hooks into Artisan::starting(), which the test lifecycle resets between tests.
+    Artisan::all();
 
     $byCommand = collect($this->app->make(Schedule::class)->events())
         ->keyBy(fn (Event $event): string => match (true) {
