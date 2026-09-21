@@ -209,22 +209,24 @@ Foundations below assume these are present and do NOT re-scaffold them.
 
 ## Backlog Handoff
 
-| Roadmap ID | Change ID                     | Suggested issue title                                          | Ready for `/10x-plan` | Notes                                                        |
-| ---------- | ----------------------------- | -------------------------------------------------------------- | --------------------- | ------------------------------------------------------------ |
-| F-01       | production-data-safety        | Zabezpieczenie danych produkcyjnych przed prawdziwym drzewem   | yes                   | Część kroków wyłącznie ręcznie (DNS, `.env.prod`, odtworzenie) |
-| S-01       | account-tree-and-first-person | Konto z automatycznym drzewem i dodanie pierwszej osoby        | yes                   | Run `/10x-plan account-tree-and-first-person`                |
-| S-02       | scan-upload-and-preview       | Wgrywanie i podgląd skanu aktu z powiększeniem                 | no                    | Czeka na S-01                                                |
-| S-03       | birth-death-confirmed-by-scan | Urodzenie i zgon potwierdzone skanem na podglądzie osoby       | no                    | Gwiazda przewodnia; czeka na S-01, S-02                      |
-| S-04       | person-search                 | Wyszukiwanie osoby na liście                                   | no                    | Czeka na S-01                                                |
-| S-05       | person-edit-and-delete        | Edycja i usuwanie osoby z potwierdzeniem                       | no                    | Czeka na S-01                                                |
-| S-06       | parent-child-relations        | Relacje rodzic–dziecko                                         | no                    | Czeka na S-01                                                |
-| S-07       | marriage-with-shared-source   | Małżeństwa z aktem widocznym u obojga małżonków                | no                    | Czeka na S-03                                                |
-| S-08       | scan-delete-with-impact       | Usuwanie skanu z listą faktów tracących źródło                 | no                    | Czeka na S-03                                                |
-| S-09       | graphical-tree-view           | Graficzny widok drzewa                                         | no                    | Czeka na S-06, S-07                                          |
+GitHub milestone: [M-1](https://github.com/sebastian-kostecki/root-keeper/milestone/1).
+
+| Roadmap ID | Issue | Change ID                     | Suggested issue title                                          | Ready for `/10x-plan` | Notes                                                        |
+| ---------- | ----- | ----------------------------- | -------------------------------------------------------------- | --------------------- | ------------------------------------------------------------ |
+| F-01       | #2    | production-data-safety        | Zabezpieczenie danych produkcyjnych przed prawdziwym drzewem   | yes                   | Część kroków wyłącznie ręcznie (DNS, `.env.prod`, odtworzenie) |
+| S-01       | #3    | account-tree-and-first-person | Konto z automatycznym drzewem i dodanie pierwszej osoby        | yes                   | Run `/10x-plan account-tree-and-first-person`                |
+| S-02       | #4    | scan-upload-and-preview       | Wgrywanie i podgląd skanu aktu z powiększeniem                 | no                    | Czeka na S-01                                                |
+| S-03       | #5    | birth-death-confirmed-by-scan | Urodzenie i zgon potwierdzone skanem na podglądzie osoby       | no                    | Gwiazda przewodnia; czeka na S-01, S-02                      |
+| S-04       | #6    | person-search                 | Wyszukiwanie osoby na liście                                   | no                    | Czeka na S-01                                                |
+| S-05       | #7    | person-edit-and-delete        | Edycja i usuwanie osoby z potwierdzeniem                       | no                    | Czeka na S-01                                                |
+| S-06       | #8    | parent-child-relations        | Relacje rodzic–dziecko                                         | no                    | Czeka na S-01                                                |
+| S-07       | #9    | marriage-with-shared-source   | Małżeństwa z aktem widocznym u obojga małżonków                | no                    | Czeka na S-03                                                |
+| S-08       | #10   | scan-delete-with-impact       | Usuwanie skanu z listą faktów tracących źródło                 | no                    | Czeka na S-03                                                |
+| S-09       | #11   | graphical-tree-view           | Graficzny widok drzewa                                         | no                    | Czeka na S-06, S-07                                          |
 
 ## Open Roadmap Questions
 
-1. **Deploy ręczny czy automatyczny po merge'u?** `tech-stack.md` zakłada auto-deploy-on-merge, ale workflow deployu nie istnieje, a `infrastructure.md` rekomenduje decyzję wprost (zostawić ręczny w MVP i poprawić `tech-stack.md` albo dodać workflow). — Owner: user. Block: roadmap-wide (nie blokuje planowania żadnego wycinka).
+1. **Deploy ręczny czy automatyczny po merge'u?** (#12) `tech-stack.md` zakłada auto-deploy-on-merge, ale workflow deployu nie istnieje, a `infrastructure.md` rekomenduje decyzję wprost (zostawić ręczny w MVP i poprawić `tech-stack.md` albo dodać workflow). — Owner: user. Block: roadmap-wide (nie blokuje planowania żadnego wycinka).
 
 PRD nie ma otwartych pytań.
 
