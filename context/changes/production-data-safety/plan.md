@@ -314,29 +314,29 @@ Brak migracji schematu. Jedyna zmiana danych to usunięcie archiwów sprzed szyf
 
 #### Automated
 
-- [x] 3.1 Deploy przechodzi preflight i robi backup przed migracją
-- [x] 3.2 config:show backup.backup.encryption zwraca default
-- [x] 3.3 config:show backup.notifications.mail.to zwraca adres właściciela
-- [x] 3.4 backup:run kończy się sukcesem i archiwum jest na liście
-- [x] 3.5 Najnowsze archiwum jest AES-256 i odszyfrowuje się hasłem spoza VPS
+- [x] 3.1 Deploy przechodzi preflight i robi backup przed migracją — 3c8bd4b
+- [x] 3.2 config:show backup.backup.encryption zwraca default — 3c8bd4b
+- [x] 3.3 config:show backup.notifications.mail.to zwraca adres właściciela — 3c8bd4b
+- [x] 3.4 backup:run kończy się sukcesem i archiwum jest na liście — 3c8bd4b
+- [x] 3.5 Najnowsze archiwum jest AES-256 i odszyfrowuje się hasłem spoza VPS — 3c8bd4b
 
 #### Manual
 
-- [x] 3.6 Kopia hasła archiwów istnieje poza VPS
-- [x] 3.7 Mail testowy dotarł do skrzynki właściciela
-- [x] 3.8 Preflight odrzuca deploy z pustym hasłem archiwów
-- [x] 3.9 Archiwa sprzed szyfrowania usunięte
+- [x] 3.6 Kopia hasła archiwów istnieje poza VPS — 3c8bd4b
+- [x] 3.7 Mail testowy dotarł do skrzynki właściciela — 3c8bd4b
+- [x] 3.8 Preflight odrzuca deploy z pustym hasłem archiwów — 3c8bd4b
+- [x] 3.9 Archiwa sprzed szyfrowania usunięte — 3c8bd4b
 
 ### Phase 4: Próba odtworzenia i runbook
 
 #### Automated
 
-- [ ] 4.1 Suma SHA-256 odtworzonego pliku równa oryginałowi
-- [ ] 4.2 Dump wczytuje się do Postgresa 18 bez błędów
-- [ ] 4.3 Plik testowy przetrwał up -d --build
+- [x] 4.1 Suma SHA-256 odtworzonego pliku równa oryginałowi
+- [x] 4.2 Dump wczytuje się do Postgresa 18 bez błędów
+- [x] 4.3 Plik testowy przetrwał up -d --build
 
 #### Manual
 
-- [ ] 4.4 Tabele i liczności w odtworzonej bazie zgodne z produkcją
-- [ ] 4.5 Artefakty próby usunięte, aplikacja odpowiada 200
-- [ ] 4.6 Sekcja Restore w dokumentacji infra spisana i scommitowana
+- [x] 4.4 Tabele i liczności w odtworzonej bazie zgodne z produkcją
+- [x] 4.5 Artefakty próby usunięte, aplikacja odpowiada 200
+- [x] 4.6 Sekcja Restore w dokumentacji infra spisana i scommitowana
