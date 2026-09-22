@@ -314,18 +314,18 @@ Brak migracji schematu. Jedyna zmiana danych to usunięcie archiwów sprzed szyf
 
 #### Automated
 
-- [ ] 3.1 Deploy przechodzi preflight i robi backup przed migracją
-- [ ] 3.2 config:show backup.backup.encryption zwraca default
-- [ ] 3.3 config:show backup.notifications.mail.to zwraca adres właściciela
-- [ ] 3.4 backup:run kończy się sukcesem i archiwum jest na liście
-- [ ] 3.5 Najnowsze archiwum jest AES-256 i odszyfrowuje się hasłem spoza VPS
+- [x] 3.1 Deploy przechodzi preflight i robi backup przed migracją
+- [x] 3.2 config:show backup.backup.encryption zwraca default
+- [x] 3.3 config:show backup.notifications.mail.to zwraca adres właściciela
+- [x] 3.4 backup:run kończy się sukcesem i archiwum jest na liście
+- [x] 3.5 Najnowsze archiwum jest AES-256 i odszyfrowuje się hasłem spoza VPS
 
 #### Manual
 
-- [ ] 3.6 Kopia hasła archiwów istnieje poza VPS
-- [ ] 3.7 Mail testowy dotarł do skrzynki właściciela
-- [ ] 3.8 Preflight odrzuca deploy z pustym hasłem archiwów
-- [ ] 3.9 Archiwa sprzed szyfrowania usunięte
+- [x] 3.6 Kopia hasła archiwów istnieje poza VPS
+- [x] 3.7 Mail testowy dotarł do skrzynki właściciela
+- [x] 3.8 Preflight odrzuca deploy z pustym hasłem archiwów
+- [x] 3.9 Archiwa sprzed szyfrowania usunięte
 
 ### Phase 4: Próba odtworzenia i runbook
 
