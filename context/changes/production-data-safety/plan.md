@@ -2,13 +2,15 @@
 
 ## Overview
 
-F-01 z roadmapy (M-1): zanim na produkcję trafi prawdziwe drzewo, produkcja ma nie przepuszczać ruchu przez podmiot trzeci (Cloudflare), backupy mają być szyfrowane, alarmy o awarii backupu mają docierać, przed każdą migracją ma powstawać backup bazy, a odtworzenie backupu z plikiem skanu ma zostać raz przećwiczone i spisane. PRD nie ma kosza ani cofania, więc utrata danych bez przećwiczonego odtworzenia jest nieodwracalna (Guardrails: „Wprowadzone dane i wgrane skany nie giną”; NFR: RPO 24 h, brak podmiotów trzecich).
+F-01 z roadmapy (M-1): zanim na produkcję trafi prawdziwe drzewo, backupy mają być szyfrowane, alarmy o awarii backupu mają docierać, przed każdą migracją ma powstawać backup bazy, a odtworzenie backupu z plikiem skanu ma zostać raz przećwiczone i spisane. PRD nie ma kosza ani cofania, więc utrata danych bez przećwiczonego odtworzenia jest nieodwracalna (Guardrails: „Wprowadzone dane i wgrane skany nie giną”; NFR: RPO 24 h).
+
+**Decyzja właściciela (2026-09-22):** Cloudflare zostaje przed `genealog.kostecki.dev` jako Proxied — celowo, dla ochrony DDoS/bot na edge'u. To koliduje z NFR PRD „brak podmiotów trzecich" (ruch i skany przechodzą przez Cloudflare); wymaga przeglądu i uzgodnienia zapisu NFR w `context/foundation/prd.md` oraz outcome F-01 w `context/foundation/roadmap.md` przez właściciela, poza tym planem. Faza 2 poniżej dokumentuje ten stan jako świadomy, zamiast przełączać na DNS-only.
 
 Większość pracy to kroki ręczne właściciela (Cloudflare, `.env.prod`, VPS). Kod ogranicza się do `scripts/deploy.sh` i `scripts/lib/production-deploy.sh`.
 
 ## Current State Analysis
 
-- **Ruch idzie przez Cloudflare.** Sprawdzone 2026-09-22: `dig +short genealog.kostecki.dev` → `188.114.97.11`, `188.114.96.11`; `curl -vI https://genealog.kostecki.dev/up` → `server: cloudflare`, `cf-ray`, certyfikat Google Trust Services (WE1). Właściciel zgłaszał przełączenie 2026-09-21, ale nie zadziałało albo nie zostało zapisane. Dokumentacja infra nadal każe włączyć Proxied: `kostecki-dev-infra/docs/root-keeper.md` (sekcje „DNS” i „Cloudflare (Proxied)”) oraz `kostecki-dev-infra/docs/SETUP.md:44`.
+- **Ruch idzie przez Cloudflare — świadomie.** Sprawdzone 2026-09-22: `dig +short genealog.kostecki.dev` → `188.114.97.11`, `188.114.96.11`; `curl -vI https://genealog.kostecki.dev/up` → `server: cloudflare`, `cf-ray`, certyfikat Google Trust Services (WE1). Wstępnie planowano przełączenie na DNS-only (patrz commit `kostecki-dev-infra@765914d`), ale właściciel potwierdził 2026-09-22, że Cloudflare Proxied zostaje ze względu na ochronę DDoS/bot; dokumentacja infra przywrócona i uzupełniona o to uzasadnienie (`kostecki-dev-infra@0a2091f`, rewert `765914d`): `kostecki-dev-infra/docs/root-keeper.md` (sekcje „DNS” i „Cloudflare (Proxied)”) oraz `kostecki-dev-infra/docs/SETUP.md:44`.
 - **Backupy nieszyfrowane.** `config/backup.php:78` — `encryption` = `none`, gdy `BACKUP_ARCHIVE_PASSWORD` jest puste; `.env.prod.example` dostarcza je puste. Archiwa z nocnych przebiegów od pierwszego deployu leżą w `/storage/root-keeper-backups` jawnym zipem (zawierają tylko dane testowe — brak kodu domenowego).
 - **Alarmy nie dotrą.** `config/backup.php:88-93` — `BackupHasFailed`, `UnhealthyBackupWasFound`, `CleanupHasFailed` idą wyłącznie mailem; `MAIL_HOST` w `.env.prod.example` jest pusty. `backup.notifications.mail.to` spada na `MAIL_FROM_ADDRESS` (`noreply@…`), gdy `BACKUP_NOTIFICATION_MAIL` jest puste.
 - **Migracja bez kopii.** `scripts/deploy.sh:30-36`: `up -d` (nowy kod startuje) → `migrate --force`; brak `backup:run` przed.
@@ -17,7 +19,7 @@ Większość pracy to kroki ręczne właściciela (Cloudflare, `.env.prod`, VPS)
 
 ## Desired End State
 
-- `genealog.kostecki.dev` rozwiązuje się na adres VPS, TLS kończy Traefik z certyfikatem Let's Encrypt, odpowiedź nie ma nagłówka `cf-ray`; dokumentacja infra mówi „DNS-only”.
+- Cloudflare pozostaje Proxied przed `genealog.kostecki.dev` (SSL/TLS mode Full (strict), origin TLS przez Traefik/Let's Encrypt) — świadomie, dla ochrony DDoS/bot; dokumentacja infra opisuje to jako decyzję z uzasadnieniem, nie jako pozostałość do naprawienia. NFR PRD „brak podmiotów trzecich” pozostaje w kolizji z tą decyzją do rozstrzygnięcia przez właściciela osobno.
 - W działającej aplikacji `backup.backup.encryption` = `default` (AES-256), najnowsze archiwum jest zaszyfrowane, a hasło ma kopię poza VPS.
 - Mail testowy wysłany przez skonfigurowany SMTP na adres `backup.notifications.mail.to` dociera.
 - `scripts/deploy.sh` odmawia deployu, gdy w `.env.prod` brakuje hasła archiwów lub konfiguracji maila albo włączono offsite; przy działającym kontenerze robi `backup:run --only-db` przed `up -d` i przerywa deploy, gdy backup się nie powiedzie.
@@ -38,7 +40,7 @@ Większość pracy to kroki ręczne właściciela (Cloudflare, `.env.prod`, VPS)
 - Heartbeat / monitoring „scheduler nie działa” — kanałem alarmów zostaje sam mail.
 - Kopia offsite (`BACKUP_OFFSITE_ENABLED` zostaje `false`; preflight to wymusza).
 - Mechanizm rollbacku w `deploy.sh` (`DEPLOY_REF`) — rollback zostaje `git revert` na `main` + deploy (infrastructure.md, Operational Story).
-- Przełączenie na DNS-only i zmiany dokumentacji dla innych aplikacji (`treasurer`, `vault`, `backup`) — w `SETUP.md` zmieniamy tylko wpis `genealog`.
+- Przełączenie na DNS-only — odrzucone decyzją właściciela 2026-09-22: Cloudflare Proxied zostaje ze względu na ochronę DDoS/bot (patrz Faza 2).
 - Powtórka próby odtworzenia z prawdziwym skanem wgranym przez UI — należy do S-02 jako krok ręczny, nie do tego planu.
 
 ## Implementation Approach
@@ -110,43 +112,33 @@ Najpierw kod (faza 1), bo musi wejść na `main`, zanim pierwszy deploy chronion
 
 ---
 
-## Phase 2: DNS-only dla genealog.kostecki.dev
+## Phase 2: Cloudflare Proxied dla genealog.kostecki.dev — świadoma decyzja, nie DNS-only
 
 ### Overview
 
-Cloudflare przestaje terminować TLS dla aplikacji; dokumentacja infra przestaje zalecać Proxied dla `genealog`.
+**Re-planned 2026-09-22** (pierwotnie: przełączenie na DNS-only; odrzucone przez właściciela — patrz Overview planu i `## Progress` niżej). Cloudflare pozostaje Proxied przed `genealog.kostecki.dev` dla ochrony DDoS/bot. Ta faza już nie zmienia infrastruktury — potwierdza istniejący, zamierzony stan i dokumentuje uzasadnienie, żeby odtworzenie serwera lub przyszła zmiana nie cofnęły tej decyzji bez kontekstu.
 
 ### Changes Required:
 
-#### 1. Rekord DNS (ręcznie, właściciel)
-
-**File**: Cloudflare → strefa `kostecki.dev` → rekord A `genealog`
-
-**Intent**: Przełączyć na DNS-only (szara chmurka), żeby ruch i skany nie przechodziły przez podmiot trzeci.
-
-**Contract**: Rekord A `genealog` → IP VPS, Proxy status: DNS only. Jeśli istnieje rekord AAAA, analogicznie. Pozostałe rekordy strefy bez zmian.
-
-#### 2. Dokumentacja infra
+#### 1. Dokumentacja infra
 
 **File**: `kostecki-dev-infra/docs/root-keeper.md`, `kostecki-dev-infra/docs/SETUP.md`
 
-**Intent**: Dokumentacja opisuje stan docelowy, żeby odtworzenie serwera nie przywróciło proxy.
+**Intent**: Dokumentacja potwierdza Proxied jako celową decyzję (DDoS/bot), nie jako krok do naprawienia.
 
-**Contract**: W `root-keeper.md` sekcje „DNS” i „Cloudflare (Proxied)” → „DNS-only (szara chmurka)” z uzasadnieniem (NFR: brak podmiotów trzecich) i komendami weryfikacji (`dig`, `curl -vI`). W `SETUP.md` tylko wiersz checklisty `genealog.kostecki.dev` (linia 44). Osobny commit w `kostecki-dev-infra`; SHA zanotować w tej fazie.
+**Contract**: `root-keeper.md` sekcje „DNS” i „Cloudflare (Proxied)” zawierają uzasadnienie (ochrona DDoS/bot) i notatkę o kolizji z NFR PRD „brak podmiotów trzecich”, z komendą weryfikacji (`curl -svI`, oczekiwane `cf-ray` i `server: cloudflare`). `SETUP.md` wiersz checklisty `genealog.kostecki.dev` (linia 44) mówi „Cloudflare Proxied”. **Zrobione**: `kostecki-dev-infra@0a2091f` (rewert wcześniejszego, odrzuconego commitu `765914d` na DNS-only).
 
 ### Success Criteria:
 
 #### Automated Verification:
 
-- `dig +short genealog.kostecki.dev @1.1.1.1` i `@8.8.8.8` zwracają adres VPS (nie `188.114.96.0/23` ani `104.16.0.0/12` / `172.64.0.0/13`)
-- `curl -svI https://genealog.kostecki.dev/up` zwraca `HTTP/2 200`, wystawca certyfikatu to Let's Encrypt, brak nagłówków `cf-ray` i `server: cloudflare`
+- `curl -svI https://genealog.kostecki.dev/up` zwraca `HTTP/2 200` z nagłówkami `cf-ray` i `server: cloudflare` (potwierdza, że ruch faktycznie idzie przez Cloudflare, zgodnie z decyzją)
 
 #### Manual Verification:
 
-- Rekord `genealog` w panelu Cloudflare ma status „DNS only”
-- `docker logs traefik` nie pokazuje błędów ACME dla `genealog.kostecki.dev`
-- Logowanie w przeglądarce działa bez ostrzeżeń certyfikatu
-- Dokumentacja w `kostecki-dev-infra` zaktualizowana i scommitowana
+- Rekord `genealog` w panelu Cloudflare ma status „Proxied” (pomarańczowa chmurka), SSL/TLS mode „Full (strict)”
+- Dokumentacja w `kostecki-dev-infra` (`root-keeper.md`, `SETUP.md`) potwierdzona i scommitowana z uzasadnieniem DDoS/bot
+- NFR PRD „brak podmiotów trzecich” i outcome F-01 w roadmapie oznaczone przez właściciela do przeglądu poza tym planem (nie blokuje dalszych faz)
 
 **Implementation Note**: After completing this phase and all automated verification passes, pause here for manual confirmation from the human that the manual testing was successful before proceeding to the next phase.
 
@@ -267,7 +259,7 @@ Jedno przećwiczone odtworzenie zaszyfrowanego archiwum z plikiem w roli skanu o
 
 ### Manual Testing Steps:
 
-1. Faza 2: `dig` / `curl -vI` z zewnątrz VPS — adres VPS, Let's Encrypt, brak `cf-ray`.
+1. Faza 2: `curl -vI` potwierdza, że ruch nadal idzie przez Cloudflare (`cf-ray`, `server: cloudflare`); panel Cloudflare pokazuje Proxied + Full (strict).
 2. Faza 3: deploy przechodzi preflight i robi backup przed migracją; `config:show` pokazuje `encryption=default`; mail testowy dociera; archiwum AES.
 3. Faza 4: odtworzenie do tymczasowego Postgresa 18 i porównanie sum SHA-256; plik przetrwa `up -d --build`.
 
@@ -296,29 +288,27 @@ Brak migracji schematu. Jedyna zmiana danych to usunięcie archiwów sprzed szyf
 
 #### Automated
 
-- [x] 1.1 Składnia skryptów poprawna (bash -n)
-- [x] 1.2 Preflight odrzuca każdy brakujący sekret i włączony offsite
-- [x] 1.3 Preflight przepuszcza kompletny plik
-- [x] 1.4 Backup przed migracją pomija brak kontenera i propaguje błąd
-- [x] 1.5 Istniejące testy backupu przechodzą
+- [x] 1.1 Składnia skryptów poprawna (bash -n) — e775c58
+- [x] 1.2 Preflight odrzuca każdy brakujący sekret i włączony offsite — e775c58
+- [x] 1.3 Preflight przepuszcza kompletny plik — e775c58
+- [x] 1.4 Backup przed migracją pomija brak kontenera i propaguje błąd — e775c58
+- [x] 1.5 Istniejące testy backupu przechodzą — e775c58
 
 #### Manual
 
-- [x] 1.6 Przegląd kolejności kroków w deploy.sh
+- [x] 1.6 Przegląd kolejności kroków w deploy.sh — e775c58
 
-### Phase 2: DNS-only dla genealog.kostecki.dev
+### Phase 2: Cloudflare Proxied dla genealog.kostecki.dev — świadoma decyzja, nie DNS-only
 
 #### Automated
 
-- [ ] 2.1 dig zwraca adres VPS z 1.1.1.1 i 8.8.8.8
-- [ ] 2.2 curl: HTTP/2 200, Let's Encrypt, brak cf-ray
+- [x] 2.7 curl potwierdza HTTP/2 200 z cf-ray i server: cloudflare
 
 #### Manual
 
-- [ ] 2.3 Rekord genealog ma status DNS only
-- [ ] 2.4 Brak błędów ACME w logach Traefika
-- [ ] 2.5 Logowanie w przeglądarce bez ostrzeżeń certyfikatu
-- [ ] 2.6 Dokumentacja infra zaktualizowana i scommitowana
+- [x] 2.8 Rekord genealog ma status Proxied, SSL/TLS mode Full (strict)
+- [x] 2.9 Dokumentacja infra potwierdzona i scommitowana z uzasadnieniem DDoS/bot
+- [x] 2.10 NFR PRD i outcome F-01 w roadmapie oznaczone do przeglądu przez właściciela
 
 ### Phase 3: Sekrety, alarmy i pierwszy chroniony deploy
 
