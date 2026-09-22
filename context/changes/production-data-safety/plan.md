@@ -302,13 +302,13 @@ Brak migracji schematu. Jedyna zmiana danych to usunięcie archiwów sprzed szyf
 
 #### Automated
 
-- [x] 2.7 curl potwierdza HTTP/2 200 z cf-ray i server: cloudflare
+- [x] 2.7 curl potwierdza HTTP/2 200 z cf-ray i server: cloudflare — 5eb60bb
 
 #### Manual
 
-- [x] 2.8 Rekord genealog ma status Proxied, SSL/TLS mode Full (strict)
-- [x] 2.9 Dokumentacja infra potwierdzona i scommitowana z uzasadnieniem DDoS/bot
-- [x] 2.10 NFR PRD i outcome F-01 w roadmapie oznaczone do przeglądu przez właściciela
+- [x] 2.8 Rekord genealog ma status Proxied, SSL/TLS mode Full (strict) — 5eb60bb
+- [x] 2.9 Dokumentacja infra potwierdzona i scommitowana z uzasadnieniem DDoS/bot — 5eb60bb
+- [x] 2.10 NFR PRD i outcome F-01 w roadmapie oznaczone do przeglądu przez właściciela — 5eb60bb
 
 ### Phase 3: Sekrety, alarmy i pierwszy chroniony deploy
 
