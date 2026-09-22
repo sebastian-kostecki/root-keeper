@@ -331,12 +331,12 @@ Brak migracji schematu. Jedyna zmiana danych to usunięcie archiwów sprzed szyf
 
 #### Automated
 
-- [x] 4.1 Suma SHA-256 odtworzonego pliku równa oryginałowi
-- [x] 4.2 Dump wczytuje się do Postgresa 18 bez błędów
-- [x] 4.3 Plik testowy przetrwał up -d --build
+- [x] 4.1 Suma SHA-256 odtworzonego pliku równa oryginałowi — 6de5189
+- [x] 4.2 Dump wczytuje się do Postgresa 18 bez błędów — 6de5189
+- [x] 4.3 Plik testowy przetrwał up -d --build — 6de5189
 
 #### Manual
 
-- [x] 4.4 Tabele i liczności w odtworzonej bazie zgodne z produkcją
-- [x] 4.5 Artefakty próby usunięte, aplikacja odpowiada 200
-- [x] 4.6 Sekcja Restore w dokumentacji infra spisana i scommitowana
+- [x] 4.4 Tabele i liczności w odtworzonej bazie zgodne z produkcją — 6de5189
+- [x] 4.5 Artefakty próby usunięte, aplikacja odpowiada 200 — 6de5189
+- [x] 4.6 Sekcja Restore w dokumentacji infra spisana i scommitowana — 6de5189
