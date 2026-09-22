@@ -3,7 +3,7 @@ project: root-keeper
 version: 1
 status: draft
 created: 2026-09-21
-updated: 2026-09-21
+updated: 2026-09-22
 prd_version: 1
 main_goal: speed
 top_blocker: time
@@ -41,7 +41,7 @@ Genealog prowadzący własne badania ma notatki, skany i zdjęcia rozproszone i 
 
 | ID   | Change ID                       | Outcome (user can …)                                                                  | Prerequisites | PRD refs                               | Status   |
 | ---- | ------------------------------- | ------------------------------------------------------------------------------------- | ------------- | -------------------------------------- | -------- |
-| F-01 | production-data-safety          | (foundation) produkcja chroni dane i skany przed utratą i przed podmiotami trzecimi   | —             | NFR (RPO 24 h), NFR (podmioty trzecie), Guardrails | ready    |
+| F-01 | production-data-safety          | (foundation) produkcja chroni dane i skany przed utratą i przed podmiotami trzecimi   | —             | NFR (RPO 24 h), NFR (podmioty trzecie), Guardrails | in-progress |
 | S-01 | account-tree-and-first-person   | założyć konto, od razu mieć swoje drzewo i dodać pierwszą osobę                        | —             | FR-001, FR-002, FR-003, FR-005, FR-008, Access Control | ready    |
 | S-02 | scan-upload-and-preview         | wgrać skan aktu i obejrzeć go w powiększeniu pozwalającym odczytać treść               | S-01          | FR-013, FR-016, US-01                  | proposed |
 | S-03 | birth-death-confirmed-by-scan   | powiązać skan z urodzeniem lub zgonem i zobaczyć na podglądzie, co jest potwierdzone   | S-01, S-02    | FR-014, FR-008, US-01                  | proposed |
@@ -90,7 +90,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Unknowns:**
   - Czy skany zostają w nocnych archiwach Spatie, czy przechodzą na osobny, przyrostowy plan backupu — rozstrzygnąć po zmierzeniu pierwszych 20–30 prawdziwych skanów. Owner: user. Block: no.
 - **Risk:** Stoi osobno i równolegle, bo nie zależy od kodu, ale musi się zakończyć przed prawdziwymi danymi: PRD nie ma kosza ani cofania, więc utrata danych bez przećwiczonego odtworzenia jest nieodwracalna.
-- **Status:** ready
+- **Status:** in-progress
 
 ## Slices
 
