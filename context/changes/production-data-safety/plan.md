@@ -296,15 +296,15 @@ Brak migracji schematu. Jedyna zmiana danych to usunięcie archiwów sprzed szyf
 
 #### Automated
 
-- [ ] 1.1 Składnia skryptów poprawna (bash -n)
-- [ ] 1.2 Preflight odrzuca każdy brakujący sekret i włączony offsite
-- [ ] 1.3 Preflight przepuszcza kompletny plik
-- [ ] 1.4 Backup przed migracją pomija brak kontenera i propaguje błąd
-- [ ] 1.5 Istniejące testy backupu przechodzą
+- [x] 1.1 Składnia skryptów poprawna (bash -n)
+- [x] 1.2 Preflight odrzuca każdy brakujący sekret i włączony offsite
+- [x] 1.3 Preflight przepuszcza kompletny plik
+- [x] 1.4 Backup przed migracją pomija brak kontenera i propaguje błąd
+- [x] 1.5 Istniejące testy backupu przechodzą
 
 #### Manual
 
-- [ ] 1.6 Przegląd kolejności kroków w deploy.sh
+- [x] 1.6 Przegląd kolejności kroków w deploy.sh
 
 ### Phase 2: DNS-only dla genealog.kostecki.dev
 
