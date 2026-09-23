@@ -2,7 +2,14 @@
 
 use App\Models\User;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Facades\Route;
 use Laravel\Fortify\Features;
+
+test('password reset is disabled', function () {
+    $this->get('/forgot-password')->assertNotFound();
+
+    expect(Route::has('password.request'))->toBeFalse();
+});
 
 test('login screen can be rendered', function () {
     $response = $this->get(route('login'));
@@ -19,7 +26,7 @@ test('users can authenticate using the login screen', function () {
     ]);
 
     $this->assertAuthenticated();
-    $response->assertRedirect(route('dashboard', absolute: false));
+    $response->assertRedirect(route('persons.index', absolute: false));
 });
 
 test('users with two factor enabled are redirected to two factor challenge', function () {

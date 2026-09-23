@@ -18,6 +18,26 @@ class UserFactory extends Factory
     protected static ?string $password;
 
     /**
+     * Configure the model factory.
+     */
+    public function configure(): static
+    {
+        return $this->afterCreating(function (User $user): void {
+            $user->tree()->create();
+        });
+    }
+
+    /**
+     * Indicate that the user should not have a tree created for it.
+     */
+    public function withoutTree(): static
+    {
+        return $this->afterCreating(function (User $user): void {
+            $user->tree()->delete();
+        });
+    }
+
+    /**
      * Define the model's default state.
      *
      * @return array<string, mixed>
