@@ -2,7 +2,14 @@
 
 use App\Models\User;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Facades\Route;
 use Laravel\Fortify\Features;
+
+test('password reset is disabled', function () {
+    $this->get('/forgot-password')->assertNotFound();
+
+    expect(Route::has('password.request'))->toBeFalse();
+});
 
 test('login screen can be rendered', function () {
     $response = $this->get(route('login'));
