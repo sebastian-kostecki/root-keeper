@@ -28,6 +28,9 @@ const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Dodaj osobę', href: PersonController.create() },
 ];
 
+/** Radix Select does not allow an empty item value, so "no religion" uses a sentinel. */
+const NO_RELIGION = 'none';
+
 export default function Create({ religions }: Props) {
     const [isDeceased, setIsDeceased] = useState(false);
     const [religion, setReligion] = useState('');
@@ -83,8 +86,12 @@ export default function Create({ religions }: Props) {
                             <div className="grid gap-2">
                                 <Label htmlFor="religion">Wyznanie</Label>
                                 <Select
-                                    value={religion}
-                                    onValueChange={setReligion}
+                                    value={religion || NO_RELIGION}
+                                    onValueChange={(value) =>
+                                        setReligion(
+                                            value === NO_RELIGION ? '' : value,
+                                        )
+                                    }
                                 >
                                     <SelectTrigger
                                         id="religion"
@@ -93,6 +100,9 @@ export default function Create({ religions }: Props) {
                                         <SelectValue placeholder="Brak danych" />
                                     </SelectTrigger>
                                     <SelectContent>
+                                        <SelectItem value={NO_RELIGION}>
+                                            Brak danych
+                                        </SelectItem>
                                         {religions.map((option) => (
                                             <SelectItem
                                                 key={option.value}

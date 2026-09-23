@@ -20,6 +20,7 @@ test('persons index shows only the people from the authenticated user tree, sort
     $otherUser = User::factory()->create();
 
     $zolski = Person::factory()->for($user->tree)->create(['first_name' => 'Adam', 'last_name' => 'Zolski']);
+    $zbigniewAdamski = Person::factory()->for($user->tree)->create(['first_name' => 'Zbigniew', 'last_name' => 'Adamski']);
     $adamski = Person::factory()->for($user->tree)->create(['first_name' => 'Bartek', 'last_name' => 'Adamski']);
     $unnamed = Person::factory()->for($user->tree)->create(['first_name' => null, 'last_name' => null]);
     Person::factory()->for($otherUser->tree)->create(['first_name' => 'Obcy', 'last_name' => 'Człowiek']);
@@ -29,10 +30,11 @@ test('persons index shows only the people from the authenticated user tree, sort
     $response->assertOk();
     $response->assertInertia(fn ($page) => $page
         ->component('persons/index')
-        ->has('persons', 3)
+        ->has('persons', 4)
         ->where('persons.0.id', $adamski->id)
-        ->where('persons.1.id', $zolski->id)
-        ->where('persons.2.id', $unnamed->id));
+        ->where('persons.1.id', $zbigniewAdamski->id)
+        ->where('persons.2.id', $zolski->id)
+        ->where('persons.3.id', $unnamed->id));
 });
 
 test('persons show returns not found for a person from another users tree', function () {
@@ -89,6 +91,31 @@ test('store creates a death event when marked deceased even with empty death fie
     expect($death->date_year)->toBeNull();
 });
 
+test('store accepts a person with only one name when the other is sent empty', function (array $names) {
+    $user = User::factory()->create();
+
+    $response = $this->actingAs($user)->post(route('persons.store'), $names);
+
+    $response->assertSessionHasNoErrors();
+    expect($user->tree->people()->count())->toBe(1);
+})->with([
+    'only first name' => [['first_name' => 'Maria', 'last_name' => '']],
+    'only last name' => [['first_name' => '', 'last_name' => 'Kowalski']],
+]);
+
+test('store treats a JSON boolean is_deceased like the checkbox value', function () {
+    $user = User::factory()->create();
+
+    $this->actingAs($user)->postJson(route('persons.store'), [
+        'first_name' => 'Jan',
+        'is_deceased' => true,
+        'death' => ['year' => 1900],
+    ])->assertRedirect();
+
+    $death = Event::where('tree_id', $user->tree->id)->where('type', EventType::Death)->first();
+    expect($death?->date_year)->toBe(1900);
+});
+
 test('store rejects a person with neither first nor last name', function () {
     $user = User::factory()->create();
 
@@ -128,6 +155,18 @@ test('store rejects an impossible calendar date', function () {
     ]);
 
     $response->assertSessionHasErrors('birth.day');
+});
+
+test('store reports only the invalid date part, not an impossible date', function () {
+    $user = User::factory()->create();
+
+    $response = $this->actingAs($user)->post(route('persons.store'), [
+        'first_name' => 'Jan',
+        'birth' => ['year' => 1850, 'month' => 13, 'day' => 1],
+    ]);
+
+    $response->assertSessionHasErrors('birth.month');
+    $response->assertSessionDoesntHaveErrors('birth.day');
 });
 
 test('store rejects a birth year in the future', function () {

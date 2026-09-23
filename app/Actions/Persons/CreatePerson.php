@@ -20,19 +20,19 @@ class CreatePerson
      *     last_name?: string|null,
      *     residence?: string|null,
      *     religion?: string|null,
-     *     is_deceased?: bool|string|null,
+     *     is_deceased?: bool|int|string|null,
      *     birth?: array{
      *         year?: int|string|null,
      *         month?: int|string|null,
      *         day?: int|string|null,
-     *         is_approximate?: bool|string|null,
+     *         is_approximate?: bool|int|string|null,
      *         place?: string|null,
      *     },
      *     death?: array{
      *         year?: int|string|null,
      *         month?: int|string|null,
      *         day?: int|string|null,
-     *         is_approximate?: bool|string|null,
+     *         is_approximate?: bool|int|string|null,
      *         place?: string|null,
      *     },
      * }  $data
@@ -58,7 +58,7 @@ class CreatePerson
     }
 
     /**
-     * @param  array{year?: int|string|null, month?: int|string|null, day?: int|string|null, is_approximate?: bool|string|null, place?: string|null}  $date
+     * @param  array{year?: int|string|null, month?: int|string|null, day?: int|string|null, is_approximate?: bool|int|string|null, place?: string|null}  $date
      */
     private function createEvent(Tree $tree, Person $person, EventType $type, array $date): void
     {
@@ -74,8 +74,8 @@ class CreatePerson
         $event->participants()->attach($person, ['role' => ParticipantRole::Subject]);
     }
 
-    private function isChecked(bool|string|null $value): bool
+    private function isChecked(bool|int|string|null $value): bool
     {
-        return $value === true || $value === '1';
+        return filter_var($value, FILTER_VALIDATE_BOOL);
     }
 }

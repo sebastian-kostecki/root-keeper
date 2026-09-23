@@ -19,7 +19,7 @@ class TreeFactory extends Factory
     public function definition(): array
     {
         return [
-            'user_id' => User::factory()->withoutTree(),
+            'user_id' => fn () => User::factory()->withoutTree(),
         ];
     }
 }

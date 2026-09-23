@@ -21,8 +21,8 @@ class PersonStoreRequest extends FormRequest
         $currentYear = (int) Date::now()->year;
 
         return [
-            'first_name' => ['required_without:last_name', 'string', 'max:255'],
-            'last_name' => ['required_without:first_name', 'string', 'max:255'],
+            'first_name' => ['nullable', 'required_without:last_name', 'string', 'max:255'],
+            'last_name' => ['nullable', 'required_without:first_name', 'string', 'max:255'],
             'residence' => ['nullable', 'string', 'max:255'],
             'religion' => ['nullable', Rule::enum(Religion::class)],
             'is_deceased' => ['sometimes', 'boolean'],
@@ -33,11 +33,11 @@ class PersonStoreRequest extends FormRequest
             'birth.is_approximate' => ['sometimes', 'boolean'],
             'birth.place' => ['nullable', 'string', 'max:255'],
 
-            'death.year' => ['nullable', 'integer', "between:1000,{$currentYear}", 'required_with:death.month', 'required_if_accepted:death.is_approximate', 'prohibited_unless:is_deceased,1'],
-            'death.month' => ['nullable', 'integer', 'between:1,12', 'required_with:death.day', 'prohibited_unless:is_deceased,1'],
-            'death.day' => ['nullable', 'integer', 'between:1,31', 'prohibited_unless:is_deceased,1'],
-            'death.is_approximate' => ['sometimes', 'boolean', 'prohibited_unless:is_deceased,1'],
-            'death.place' => ['nullable', 'string', 'max:255', 'prohibited_unless:is_deceased,1'],
+            'death.year' => ['nullable', 'integer', "between:1000,{$currentYear}", 'required_with:death.month', 'required_if_accepted:death.is_approximate', 'prohibited_unless:is_deceased,1,true'],
+            'death.month' => ['nullable', 'integer', 'between:1,12', 'required_with:death.day', 'prohibited_unless:is_deceased,1,true'],
+            'death.day' => ['nullable', 'integer', 'between:1,31', 'prohibited_unless:is_deceased,1,true'],
+            'death.is_approximate' => ['sometimes', 'boolean', 'prohibited_unless:is_deceased,1,true'],
+            'death.place' => ['nullable', 'string', 'max:255', 'prohibited_unless:is_deceased,1,true'],
         ];
     }
 
@@ -91,8 +91,12 @@ class PersonStoreRequest extends FormRequest
             return;
         }
 
+        if ($validator->errors()->hasAny(["{$prefix}.year", "{$prefix}.month", "{$prefix}.day"])) {
+            return;
+        }
+
         if (! checkdate((int) $month, (int) $day, (int) $year)) {
-            $validator->errors()->add("{$prefix}.day", 'Podana data jest nieprawidłowa.');
+            $validator->errors()->add("{$prefix}.day", __('Podana data jest nieprawidłowa.'));
         }
     }
 }

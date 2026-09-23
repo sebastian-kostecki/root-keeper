@@ -50,7 +50,7 @@ class PersonController extends Controller
     {
         $person = $createPerson->handle($request->user()->tree, $request->validated());
 
-        Inertia::flash('toast', ['type' => 'success', 'message' => 'Dodano osobę']);
+        Inertia::flash('toast', ['type' => 'success', 'message' => __('Dodano osobę')]);
 
         return to_route('persons.show', $person);
     }
