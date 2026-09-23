@@ -571,14 +571,14 @@ The list loads all of the user's people with their events in one eager-loaded qu
 
 #### Automated
 
-- [x] 3.1 Auth tests pass: `vendor/bin/sail artisan test --compact tests/Feature/Auth`
-- [x] 3.2 No remaining references to the reset: `grep -rn "resetPasswords\|ResetUserPassword\|forgot-password\|canResetPassword\|'@/routes/password'" app config resources/js/pages resources/js/components` returns nothing (tests are excluded, because the new test deliberately checks `/forgot-password`; the quoted module name deliberately does not match `@/routes/password/confirm`, which stays)
-- [x] 3.3 Static analysis passes: `vendor/bin/sail composer types:check`
-- [x] 3.4 Formatting passes: `vendor/bin/sail bin pint --dirty --format agent`
-- [x] 3.5 TypeScript and build pass: `vendor/bin/sail npm run types:check && vendor/bin/sail npm run build`
-- [x] 3.6 Full suite passes: `vendor/bin/sail artisan test --compact`
+- [x] 3.1 Auth tests pass: `vendor/bin/sail artisan test --compact tests/Feature/Auth` — 5167b9f
+- [x] 3.2 No remaining references to the reset: `grep -rn "resetPasswords\|ResetUserPassword\|forgot-password\|canResetPassword\|'@/routes/password'" app config resources/js/pages resources/js/components` returns nothing (tests are excluded, because the new test deliberately checks `/forgot-password`; the quoted module name deliberately does not match `@/routes/password/confirm`, which stays) — 5167b9f
+- [x] 3.3 Static analysis passes: `vendor/bin/sail composer types:check` — 5167b9f
+- [x] 3.4 Formatting passes: `vendor/bin/sail bin pint --dirty --format agent` — 5167b9f
+- [x] 3.5 TypeScript and build pass: `vendor/bin/sail npm run types:check && vendor/bin/sail npm run build` — 5167b9f
+- [x] 3.6 Full suite passes: `vendor/bin/sail artisan test --compact` — 5167b9f
 
 #### Manual
 
-- [x] 3.7 The login page has no "forgot your password" link, and `/forgot-password` shows a 404
-- [x] 3.8 Changing the password in settings still works
+- [x] 3.7 The login page has no "forgot your password" link, and `/forgot-password` shows a 404 — 5167b9f
+- [x] 3.8 Changing the password in settings still works — 5167b9f
