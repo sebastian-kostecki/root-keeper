@@ -538,34 +538,34 @@ The list loads all of the user's people with their events in one eager-loaded qu
 
 #### Automated
 
-- [x] 1.1 Migrations apply cleanly on pgsql: `vendor/bin/sail artisan migrate:fresh --no-interaction`
-- [x] 1.2 Phase 1 tests pass: `vendor/bin/sail artisan test --compact tests/Feature/Auth/RegistrationTest.php tests/Feature/TreeBackfillTest.php tests/Unit/PartialDateTest.php`
-- [x] 1.3 Static analysis passes: `vendor/bin/sail composer types:check`
-- [x] 1.4 Formatting passes: `vendor/bin/sail bin pint --dirty --format agent`
+- [x] 1.1 Migrations apply cleanly on pgsql: `vendor/bin/sail artisan migrate:fresh --no-interaction` — 2bdb94d
+- [x] 1.2 Phase 1 tests pass: `vendor/bin/sail artisan test --compact tests/Feature/Auth/RegistrationTest.php tests/Feature/TreeBackfillTest.php tests/Unit/PartialDateTest.php` — 2bdb94d
+- [x] 1.3 Static analysis passes: `vendor/bin/sail composer types:check` — 2bdb94d
+- [x] 1.4 Formatting passes: `vendor/bin/sail bin pint --dirty --format agent` — 2bdb94d
 
 #### Manual
 
-- [x] 1.5 On the local database with existing accounts, `vendor/bin/sail artisan migrate` creates exactly one tree for every user (check with a `trees` vs `users` query)
+- [x] 1.5 On the local database with existing accounts, `vendor/bin/sail artisan migrate` creates exactly one tree for every user (check with a `trees` vs `users` query) — 2bdb94d
 
 ### Phase 2: Dodanie i podgląd osoby po polsku
 
 #### Automated
 
-- [ ] 2.1 Persons and auth tests pass: `vendor/bin/sail artisan test --compact tests/Feature/PersonsTest.php tests/Feature/Auth`
-- [ ] 2.2 Static analysis passes: `vendor/bin/sail composer types:check`
-- [ ] 2.3 Formatting passes: `vendor/bin/sail bin pint --dirty --format agent`
-- [ ] 2.4 TypeScript passes: `vendor/bin/sail npm run types:check`
-- [ ] 2.5 Frontend lint/format passes: `vendor/bin/sail npm run check`
-- [ ] 2.6 Production build succeeds: `vendor/bin/sail npm run build`
-- [ ] 2.7 Full suite passes: `vendor/bin/sail artisan test --compact`
+- [x] 2.1 Persons and auth tests pass: `vendor/bin/sail artisan test --compact tests/Feature/PersonsTest.php tests/Feature/Auth`
+- [x] 2.2 Static analysis passes: `vendor/bin/sail composer types:check`
+- [x] 2.3 Formatting passes: `vendor/bin/sail bin pint --dirty --format agent`
+- [x] 2.4 TypeScript passes: `vendor/bin/sail npm run types:check`
+- [x] 2.5 Frontend lint/format passes: `vendor/bin/sail npm run check`
+- [x] 2.6 Production build succeeds: `vendor/bin/sail npm run build`
+- [x] 2.7 Full suite passes: `vendor/bin/sail artisan test --compact`
 
 #### Manual
 
-- [ ] 2.8 A newly registered account lands on the empty "Osoby" list with a prompt to add the first person
-- [ ] 2.9 Adding a person with a date "ok. 1850", a place and religion shows the preview with Polish formatting, and the person appears on the list in the right position
-- [ ] 2.10 Checking "Zmarły/a" with no data shows a "Zgon" card with "brak danych"; leaving it unchecked shows no death card
-- [ ] 2.11 Invalid dates (e.g. 31.02) show Polish error messages next to the right fields
-- [ ] 2.12 Opening another account's person URL shows a 404
+- [x] 2.8 A newly registered account lands on the empty "Osoby" list with a prompt to add the first person
+- [x] 2.9 Adding a person with a date "ok. 1850", a place and religion shows the preview with Polish formatting, and the person appears on the list in the right position
+- [x] 2.10 Checking "Zmarły/a" with no data shows a "Zgon" card with "brak danych"; leaving it unchecked shows no death card
+- [x] 2.11 Invalid dates (e.g. 31.02) show Polish error messages next to the right fields
+- [x] 2.12 Opening another account's person URL shows a 404
 
 ### Phase 3: Usunięcie resetu hasła
 

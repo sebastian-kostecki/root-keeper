@@ -23,7 +23,7 @@ test('new users can register', function () {
     ]);
 
     $this->assertAuthenticated();
-    $response->assertRedirect(route('dashboard', absolute: false));
+    $response->assertRedirect(route('persons.index', absolute: false));
 });
 
 test('registration creates exactly one tree for the new user', function () {
