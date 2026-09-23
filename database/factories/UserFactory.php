@@ -18,6 +18,42 @@ class UserFactory extends Factory
     protected static ?string $password;
 
     /**
+     * Whether the next created user should skip tree creation.
+     *
+     * Static because Factory::afterCreating() clones the factory via
+     * newInstance(), which only copies a fixed list of built-in properties
+     * (see Factory::newInstance()) — a plain instance property set by
+     * withoutTree() would never be seen by the closure registered here.
+     */
+    protected static bool $skipsTreeCreation = false;
+
+    /**
+     * Configure the model factory.
+     */
+    public function configure(): static
+    {
+        return $this->afterCreating(function (User $user): void {
+            if (static::$skipsTreeCreation) {
+                static::$skipsTreeCreation = false;
+
+                return;
+            }
+
+            $user->tree()->create();
+        });
+    }
+
+    /**
+     * Indicate that the user should not have a tree created for it.
+     */
+    public function withoutTree(): static
+    {
+        static::$skipsTreeCreation = true;
+
+        return $this;
+    }
+
+    /**
      * Define the model's default state.
      *
      * @return array<string, mixed>

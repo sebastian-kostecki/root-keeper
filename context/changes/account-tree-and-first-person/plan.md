@@ -538,14 +538,14 @@ The list loads all of the user's people with their events in one eager-loaded qu
 
 #### Automated
 
-- [ ] 1.1 Migrations apply cleanly on pgsql: `vendor/bin/sail artisan migrate:fresh --no-interaction`
-- [ ] 1.2 Phase 1 tests pass: `vendor/bin/sail artisan test --compact tests/Feature/Auth/RegistrationTest.php tests/Feature/TreeBackfillTest.php tests/Unit/PartialDateTest.php`
-- [ ] 1.3 Static analysis passes: `vendor/bin/sail composer types:check`
-- [ ] 1.4 Formatting passes: `vendor/bin/sail bin pint --dirty --format agent`
+- [x] 1.1 Migrations apply cleanly on pgsql: `vendor/bin/sail artisan migrate:fresh --no-interaction`
+- [x] 1.2 Phase 1 tests pass: `vendor/bin/sail artisan test --compact tests/Feature/Auth/RegistrationTest.php tests/Feature/TreeBackfillTest.php tests/Unit/PartialDateTest.php`
+- [x] 1.3 Static analysis passes: `vendor/bin/sail composer types:check`
+- [x] 1.4 Formatting passes: `vendor/bin/sail bin pint --dirty --format agent`
 
 #### Manual
 
-- [ ] 1.5 On the local database with existing accounts, `vendor/bin/sail artisan migrate` creates exactly one tree for every user (check with a `trees` vs `users` query)
+- [x] 1.5 On the local database with existing accounts, `vendor/bin/sail artisan migrate` creates exactly one tree for every user (check with a `trees` vs `users` query)
 
 ### Phase 2: Dodanie i podgląd osoby po polsku
 
