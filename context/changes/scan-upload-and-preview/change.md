@@ -1,7 +1,7 @@
 ---
 change_id: scan-upload-and-preview
 title: Scan upload and preview
-status: plan_reviewed
+status: implementing
 created: 2026-09-24
 updated: 2026-09-24
 archived_at: null

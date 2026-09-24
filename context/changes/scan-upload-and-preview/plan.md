@@ -412,11 +412,11 @@ The scan list grid, the upload page, the zoom preview with `react-zoom-pan-pinch
 
 #### Automated
 
-- [ ] 1.1 Scan feature and unit tests pass: `vendor/bin/sail artisan test --compact tests/Feature/ScansTest.php tests/Feature/GenerateScanThumbnailTest.php`
-- [ ] 1.2 Full test suite passes: `vendor/bin/sail artisan test --compact`
-- [ ] 1.3 Static analysis passes: `vendor/bin/sail composer types:check`
-- [ ] 1.4 Code style is clean: `vendor/bin/sail bin pint --dirty --format agent`
-- [ ] 1.5 Frontend types still compile after Wayfinder regeneration: `vendor/bin/sail npm run types:check`
+- [x] 1.1 Scan feature and unit tests pass: `vendor/bin/sail artisan test --compact tests/Feature/ScansTest.php tests/Feature/GenerateScanThumbnailTest.php`
+- [x] 1.2 Full test suite passes: `vendor/bin/sail artisan test --compact`
+- [x] 1.3 Static analysis passes: `vendor/bin/sail composer types:check`
+- [x] 1.4 Code style is clean: `vendor/bin/sail bin pint --dirty --format agent`
+- [x] 1.5 Frontend types still compile after Wayfinder regeneration: `vendor/bin/sail npm run types:check`
 
 #### Manual
 

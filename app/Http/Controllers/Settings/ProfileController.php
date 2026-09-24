@@ -9,6 +9,7 @@ use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -49,10 +50,15 @@ class ProfileController extends Controller
     public function destroy(ProfileDeleteRequest $request): RedirectResponse
     {
         $user = $request->user();
+        $treeId = $user->tree?->id;
 
         Auth::logout();
 
         $user->delete();
+
+        if ($treeId !== null) {
+            Storage::disk('local')->deleteDirectory("scans/{$treeId}");
+        }
 
         $request->session()->invalidate();
         $request->session()->regenerateToken();
