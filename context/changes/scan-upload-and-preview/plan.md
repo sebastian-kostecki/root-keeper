@@ -72,7 +72,7 @@ The backend phase delivers a fully tested model, upload, thumbnail and authorize
 ## Critical Implementation Details
 
 - **Never serve scans through a signed URL.** The `local` disk's built-in `serve` route authorizes by signature only, so every scan byte must go through `ScanController` actions guarded by `Gate::authorize('view', $scan)`. Responses carry `Cache-Control: private` and `X-Content-Type-Options: nosniff`, so a shared cache (Cloudflare) never stores a scan and a mislabeled file is never content-sniffed.
-- **Thumbnail memory guard.** Read dimensions with `getimagesize()` *before* decoding. If width × height exceeds 40 megapixels, skip thumbnail generation: GD needs roughly 5 bytes per pixel, so 40 Mpx ≈ 200 MB, which keeps a decode well within the 1 GB container shared by 4 server workers. This budget holds only if exactly one full-size bitmap exists at a time: scale first, then rotate the thumbnail (rotating the full-size image would double the peak to ~400 MB). Free GD images explicitly after use.
+- **Thumbnail memory guard.** Read dimensions with `getimagesize()` *before* decoding. If width × height exceeds 25 megapixels, skip thumbnail generation: GD's PNG/WebP/progressive-JPEG decoders peak at roughly 7–8 bytes per pixel (measured in Sail at impl-review F2), so 25 Mpx ≈ 190 MB, which keeps a decode well within the 1 GB container shared by 4 server workers. This budget holds only if exactly one full-size bitmap exists at a time: scale first, then rotate the thumbnail (rotating the full-size image would double the peak to ~400 MB). Free GD images explicitly after use.
 
 ## Phase 1: Scan backend
 
@@ -143,13 +143,13 @@ Scan model, storage, validated upload, GD thumbnail, authorized file serving, fi
 **Contract**:
 - `handle(string $sourceAbsolutePath, string $mimeType): ?string` returns the thumbnail's binary JPEG content, or null when it is skipped or fails.
 - Steps:
-  1. `getimagesize` guard: skip above `$maxPixels` (40 Mpx by default).
+  1. `getimagesize` guard: skip above `$maxPixels` (25 Mpx by default; lowered from 40 Mpx by impl-review F2).
   2. Decode by MIME type (`imagecreatefromjpeg`/`png`/`webp`).
   3. Read the EXIF `Orientation` for JPEG (`exif_read_data` guarded with `function_exists`).
   4. `imagescale` so the *final* (upright) width is 400, keeping the aspect ratio and never upscaling small images. For orientation 6/8, the source height becomes the final width. Free the full-size image right after scaling.
   5. Apply orientation 3/6/8 with `imagerotate` on the small scaled image, never on the full-size bitmap, so peak memory stays at one full-size copy.
   6. Encode with `imagejpeg` at quality ~80; fill PNG/WebP transparency with white first.
-- Constructor: `__construct(private int $maxPixels = 40_000_000)`, so tests can lower the cap.
+- Constructor: `__construct(private int $maxPixels = 25_000_000)`, so tests can lower the cap.
 - Catches any `Throwable`, reports it with `report()` and returns null.
 
 #### 6. Store action
@@ -386,7 +386,7 @@ The scan list grid, the upload page, the zoom preview with `react-zoom-pan-pinch
 
 - Thumbnails keep the list light: about 400 px JPEG, tens of KB each, lazy-loaded. Originals load only in the preview.
 - Uploads of up to 20 MB each occupy one of the 4 `artisan serve` workers for the duration of the upload. This is acceptable at `qps: low`.
-- GD decoding is bounded by the 40 Mpx guard (about 200 MB peak) inside the 1 GB container.
+- GD decoding is bounded by the 25 Mpx guard (about 190 MB peak at ~7.6 B/px) inside the 1 GB container.
 - `Cache-Control: private, max-age=86400` lets the browser reuse scan bytes while revisiting the grid or preview without shared caching.
 
 ## Migration Notes

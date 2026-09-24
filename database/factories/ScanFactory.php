@@ -22,7 +22,7 @@ class ScanFactory extends Factory
         return [
             'tree_id' => Tree::factory(),
             'original_name' => fake()->slug().'.jpg',
-            'path' => 'scans/'.fake()->numberBetween(1, 1000).'/'.Str::uuid().'.jpg',
+            'path' => fn (array $attributes): string => "scans/{$attributes['tree_id']}/".Str::uuid().'.jpg',
             'thumbnail_path' => null,
             'mime_type' => 'image/jpeg',
             'size' => fake()->numberBetween(50_000, 5_000_000),
@@ -36,8 +36,8 @@ class ScanFactory extends Factory
      */
     public function withThumbnail(): static
     {
-        return $this->state(fn (array $attributes): array => [
-            'thumbnail_path' => 'scans/'.fake()->numberBetween(1, 1000).'/thumbnails/'.Str::uuid().'.jpg',
+        return $this->state([
+            'thumbnail_path' => fn (array $attributes): string => "scans/{$attributes['tree_id']}/thumbnails/".Str::uuid().'.jpg',
         ]);
     }
 }

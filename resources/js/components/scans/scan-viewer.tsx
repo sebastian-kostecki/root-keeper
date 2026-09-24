@@ -11,7 +11,7 @@ export function ScanViewer({ src, alt }: Props) {
         <TransformWrapper
             initialScale={1}
             minScale={0.5}
-            maxScale={8}
+            maxScale={32}
             centerOnInit
         >
             {({ zoomIn, zoomOut, resetTransform }) => (

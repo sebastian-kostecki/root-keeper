@@ -72,8 +72,8 @@ class ScanController extends Controller
             abort(404);
         }
 
-        $ascii = Str::ascii($scan->original_name);
-        $downloadName = $ascii !== '' ? $scan->original_name : "skan-{$scan->id}.".pathinfo($scan->path, PATHINFO_EXTENSION);
+        $asciiFallback = str_replace('%', '', Str::ascii($scan->original_name));
+        $downloadName = $asciiFallback !== '' ? $scan->original_name : "skan-{$scan->id}.".pathinfo($scan->path, PATHINFO_EXTENSION);
 
         return Storage::disk('local')->response($scan->path, $downloadName, $this->fileHeaders($scan->mime_type));
     }

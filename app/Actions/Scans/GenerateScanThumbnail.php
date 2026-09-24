@@ -11,7 +11,10 @@ class GenerateScanThumbnail
 
     private const JPEG_QUALITY = 80;
 
-    public function __construct(private int $maxPixels = 40_000_000) {}
+    public function __construct(
+        private int $maxPixels = 25_000_000,
+        private ReadExifOrientation $readExifOrientation = new ReadExifOrientation,
+    ) {}
 
     /**
      * Generate a ~400px-wide, correctly oriented JPEG thumbnail for the given image.
@@ -40,10 +43,9 @@ class GenerateScanThumbnail
                 return null;
             }
 
-            $orientation = $mimeType === 'image/jpeg' ? $this->readOrientation($sourceAbsolutePath) : null;
-            $swapsDimensions = in_array($orientation, [6, 8], true);
+            $orientation = $this->readExifOrientation->handle($sourceAbsolutePath, $mimeType);
 
-            $targetDimension = $swapsDimensions ? $height : $width;
+            $targetDimension = $this->readExifOrientation->swapsDimensions($orientation) ? $height : $width;
             $finalWidth = min(self::TARGET_WIDTH, $targetDimension);
             $scale = $finalWidth / $targetDimension;
 
@@ -51,7 +53,7 @@ class GenerateScanThumbnail
             $newHeight = max(1, (int) round($height * $scale));
 
             $scaled = imagescale($image, $newWidth, $newHeight);
-            imagedestroy($image);
+            unset($image);
 
             if (! $scaled instanceof GdImage) {
                 return null;
@@ -66,7 +68,7 @@ class GenerateScanThumbnail
             ob_start();
             imagejpeg($rotated, null, self::JPEG_QUALITY);
             $content = ob_get_clean();
-            imagedestroy($rotated);
+            unset($rotated);
 
             return $content !== false && $content !== '' ? $content : null;
         } catch (Throwable $e) {
@@ -86,35 +88,25 @@ class GenerateScanThumbnail
         };
     }
 
-    private function readOrientation(string $path): ?int
-    {
-        if (! function_exists('exif_read_data')) {
-            return null;
-        }
-
-        $exif = @exif_read_data($path);
-
-        if ($exif === false || ! isset($exif['Orientation'])) {
-            return null;
-        }
-
-        return (int) $exif['Orientation'];
-    }
-
+    /**
+     * Turn the (already scaled) image upright. Orientations 2, 4, 5 and 7 are mirrored.
+     */
     private function applyOrientation(GdImage $image, ?int $orientation): GdImage
     {
         $rotated = match ($orientation) {
-            3 => imagerotate($image, 180, 0),
-            6 => imagerotate($image, -90, 0),
-            8 => imagerotate($image, 90, 0),
-            default => false,
+            3, 4 => imagerotate($image, 180, 0),
+            5, 6 => imagerotate($image, -90, 0),
+            7, 8 => imagerotate($image, 90, 0),
+            default => $image,
         };
 
         if (! $rotated instanceof GdImage) {
             return $image;
         }
 
-        imagedestroy($image);
+        if (in_array($orientation, [2, 4, 5, 7], true)) {
+            imageflip($rotated, IMG_FLIP_HORIZONTAL);
+        }
 
         return $rotated;
     }
@@ -131,7 +123,6 @@ class GenerateScanThumbnail
         imagealphablending($background, true);
         imagesavealpha($background, false);
         imagecopy($background, $image, 0, 0, 0, 0, $width, $height);
-        imagedestroy($image);
 
         return $background;
     }

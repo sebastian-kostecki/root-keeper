@@ -7,11 +7,15 @@ use App\Models\Tree;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use RuntimeException;
 use Throwable;
 
 class StoreScan
 {
-    public function __construct(private GenerateScanThumbnail $generateScanThumbnail) {}
+    public function __construct(
+        private GenerateScanThumbnail $generateScanThumbnail,
+        private ReadExifOrientation $readExifOrientation,
+    ) {}
 
     /**
      * Store the uploaded scan (and, when possible, a thumbnail) on the private
@@ -24,7 +28,9 @@ class StoreScan
         $mimeType = $file->getMimeType();
         $path = "scans/{$tree->id}/{$uuid}.{$extension}";
 
-        Storage::disk('local')->putFileAs("scans/{$tree->id}", $file, "{$uuid}.{$extension}");
+        if (Storage::disk('local')->putFileAs("scans/{$tree->id}", $file, "{$uuid}.{$extension}") === false) {
+            throw new RuntimeException("Unable to store scan file [{$path}].");
+        }
 
         [$width, $height] = $this->dimensions($file->getRealPath(), $mimeType);
 
@@ -33,7 +39,10 @@ class StoreScan
 
         if ($thumbnailContent !== null) {
             $thumbnailPath = "scans/{$tree->id}/thumbnails/{$uuid}.jpg";
-            Storage::disk('local')->put($thumbnailPath, $thumbnailContent);
+
+            if (! Storage::disk('local')->put($thumbnailPath, $thumbnailContent)) {
+                $thumbnailPath = null;
+            }
         }
 
         try {
@@ -66,26 +75,13 @@ class StoreScan
 
         [$width, $height] = $size;
 
-        if ($mimeType === 'image/jpeg' && in_array($this->readOrientation($absolutePath), [5, 6, 7, 8], true)) {
+        $orientation = $this->readExifOrientation->handle($absolutePath, $mimeType);
+
+        if ($this->readExifOrientation->swapsDimensions($orientation)) {
             return [$height, $width];
         }
 
         return [$width, $height];
-    }
-
-    private function readOrientation(string $path): ?int
-    {
-        if (! function_exists('exif_read_data')) {
-            return null;
-        }
-
-        $exif = @exif_read_data($path);
-
-        if ($exif === false || ! isset($exif['Orientation'])) {
-            return null;
-        }
-
-        return (int) $exif['Orientation'];
     }
 
     private function sanitizeOriginalName(string $name, string $extension): string

@@ -29,6 +29,20 @@ class Scan extends Model
     use HasFactory;
 
     /**
+     * Get the attributes that should be cast.
+     *
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return [
+            'size' => 'integer',
+            'width' => 'integer',
+            'height' => 'integer',
+        ];
+    }
+
+    /**
      * @return BelongsTo<Tree, $this>
      */
     public function tree(): BelongsTo
