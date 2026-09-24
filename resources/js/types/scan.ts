@@ -8,3 +8,13 @@ export type Scan = {
     has_thumbnail: boolean;
     uploaded_at: string;
 };
+
+export type ScanConfirmation = {
+    event_id: number;
+    event_type: string;
+    event_label: string;
+    person: {
+        id: number;
+        display_name: string;
+    };
+};

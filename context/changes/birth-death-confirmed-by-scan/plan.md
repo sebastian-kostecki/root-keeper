@@ -282,32 +282,32 @@ Additive migration: one new table, no data backfill. Production deploy runs the 
 
 #### Automated
 
-- [x] 1.1 Migration applies cleanly
-- [x] 1.2 New and affected feature tests pass
-- [x] 1.3 Full test suite passes
-- [x] 1.4 Static analysis passes
-- [x] 1.5 Code style is clean
-- [x] 1.6 Frontend types still compile after Wayfinder regeneration
+- [x] 1.1 Migration applies cleanly — 8592926
+- [x] 1.2 New and affected feature tests pass — 8592926
+- [x] 1.3 Full test suite passes — 8592926
+- [x] 1.4 Static analysis passes — 8592926
+- [x] 1.5 Code style is clean — 8592926
+- [x] 1.6 Frontend types still compile after Wayfinder regeneration — 8592926
 
 #### Manual
 
-- [x] 1.7 Route list shows exactly the two new routes behind auth and verified
+- [x] 1.7 Route list shows exactly the two new routes behind auth and verified — 8592926
 
 ### Phase 2: Linking UI
 
 #### Automated
 
-- [ ] 2.1 Frontend type check passes
-- [ ] 2.2 Frontend lint/format check passes
-- [ ] 2.3 Production build succeeds
-- [ ] 2.4 Feature tests still pass
+- [x] 2.1 Frontend type check passes
+- [x] 2.2 Frontend lint/format check passes
+- [x] 2.3 Production build succeeds
+- [x] 2.4 Feature tests still pass
 
 #### Manual
 
-- [ ] 2.5 US-01 end to end: confirmed birth opens a readable scan
-- [ ] 2.6 Unconfirmed event is clearly distinguishable in light and dark themes
-- [ ] 2.7 Picker loads, marks linked scans, links with toast, shows empty state
-- [ ] 2.8 Multiple scans per event and one scan across two people
-- [ ] 2.9 Unlink confirmation with last-scan warning
-- [ ] 2.10 Scan page Potwierdza links and empty note
-- [ ] 2.11 Screenshots of all states in light and dark themes captured
+- [x] 2.5 US-01 end to end: confirmed birth opens a readable scan
+- [x] 2.6 Unconfirmed event is clearly distinguishable in light and dark themes
+- [x] 2.7 Picker loads, marks linked scans, links with toast, shows empty state
+- [x] 2.8 Multiple scans per event and one scan across two people
+- [x] 2.9 Unlink confirmation with last-scan warning
+- [x] 2.10 Scan page Potwierdza links and empty note
+- [x] 2.11 Screenshots of all states in light and dark themes captured

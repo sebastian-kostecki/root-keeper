@@ -1,16 +1,18 @@
 import { Head, setLayoutProps } from '@inertiajs/react';
 import PersonController from '@/actions/App/Http/Controllers/PersonController';
+import { EventCard } from '@/components/persons/event-card';
 import Heading from '@/components/heading';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { index as personsIndex } from '@/routes/persons';
-import type { Person } from '@/types';
+import type { PersonPreview, Scan } from '@/types';
 
 type Props = {
-    person: Person;
+    person: PersonPreview;
+    availableScans?: Scan[];
 };
 
-export default function Show({ person }: Props) {
+export default function Show({ person, availableScans }: Props) {
     setLayoutProps({
         breadcrumbs: [
             { title: 'Osoby', href: personsIndex() },
@@ -52,46 +54,20 @@ export default function Show({ person }: Props) {
                     </CardContent>
                 </Card>
 
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Urodzenie</CardTitle>
-                    </CardHeader>
-                    <CardContent className="grid gap-4 sm:grid-cols-2">
-                        <div>
-                            <p className="text-muted-foreground text-sm">
-                                Data
-                            </p>
-                            <p>{person.birth?.date ?? 'brak danych'}</p>
-                        </div>
-                        <div>
-                            <p className="text-muted-foreground text-sm">
-                                Miejsce
-                            </p>
-                            <p>{person.birth?.place ?? 'brak danych'}</p>
-                        </div>
-                    </CardContent>
-                </Card>
+                {person.birth && (
+                    <EventCard
+                        title="Urodzenie"
+                        event={person.birth}
+                        availableScans={availableScans}
+                    />
+                )}
 
                 {person.death && (
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Zgon</CardTitle>
-                        </CardHeader>
-                        <CardContent className="grid gap-4 sm:grid-cols-2">
-                            <div>
-                                <p className="text-muted-foreground text-sm">
-                                    Data
-                                </p>
-                                <p>{person.death.date ?? 'brak danych'}</p>
-                            </div>
-                            <div>
-                                <p className="text-muted-foreground text-sm">
-                                    Miejsce
-                                </p>
-                                <p>{person.death.place ?? 'brak danych'}</p>
-                            </div>
-                        </CardContent>
-                    </Card>
+                    <EventCard
+                        title="Zgon"
+                        event={person.death}
+                        availableScans={availableScans}
+                    />
                 )}
             </div>
         </>
