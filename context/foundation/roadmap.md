@@ -43,7 +43,7 @@ Genealog prowadzący własne badania ma notatki, skany i zdjęcia rozproszone i 
 | ---- | ------------------------------- | ------------------------------------------------------------------------------------- | ------------- | -------------------------------------- | -------- |
 | F-01 | production-data-safety          | (foundation) produkcja chroni dane i skany przed utratą i przed podmiotami trzecimi   | —             | NFR (RPO 24 h), NFR (podmioty trzecie), Guardrails | done |
 | S-01 | account-tree-and-first-person   | założyć konto, od razu mieć swoje drzewo i dodać pierwszą osobę                        | —             | FR-001, FR-002, FR-003, FR-005, FR-008, Access Control | done        |
-| S-02 | scan-upload-and-preview         | wgrać skan aktu i obejrzeć go w powiększeniu pozwalającym odczytać treść               | S-01          | FR-013, FR-016, US-01                  | in-progress |
+| S-02 | scan-upload-and-preview         | wgrać skan aktu i obejrzeć go w powiększeniu pozwalającym odczytać treść               | S-01          | FR-013, FR-016, US-01                  | done |
 | S-03 | birth-death-confirmed-by-scan   | powiązać skan z urodzeniem lub zgonem i zobaczyć na podglądzie, co jest potwierdzone   | S-01, S-02    | FR-014, FR-008, US-01                  | proposed |
 | S-04 | person-search                   | wyszukać osobę na liście i przejść do jej podglądu                                     | S-01          | FR-009, US-01                          | proposed |
 | S-05 | person-edit-and-delete          | poprawić dane osoby i usunąć ją po jawnym potwierdzeniu                                | S-01          | FR-006, FR-007                         | proposed |
@@ -119,7 +119,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Unknowns:**
   - Jaki maksymalny rozmiar skanu przyjąć? Od niego zależy wymiarowanie backupów w F-01. Owner: user. Block: no.
 - **Risk:** Stoi przed S-03, bo bez skanu nie ma czego wiązać; ryzykiem jest wyciek pliku przez publiczny dostęp albo zbyt słabe powiększenie, przez które akt jest nieczytelny.
-- **Status:** in-progress
+- **Status:** done
 
 ### S-03: Urodzenie i zgon potwierdzone skanem (gwiazda przewodnia)
 
@@ -254,3 +254,4 @@ Rozstrzygnięte:
 
 - **F-01: (foundation) produkcja chroni dane i skany przed utratą i przed podmiotami trzecimi** — Archived 2026-09-22 → `context/archive/2026-09-22-production-data-safety/`. Lesson: —.
 - **S-01: użytkownik może założyć konto, zalogować się, od razu mieć swoje jedno drzewo i dodać do niego osobę (imię, nazwisko, urodzenie, zamieszkanie, wyznanie, zgon; daty pełne, niepełne lub „około”), a następnie zobaczyć ją na liście i w podglądzie.** — Archived 2026-09-23 → `context/archive/2026-09-23-account-tree-and-first-person/`. Lesson: —.
+- **S-02: użytkownik może wgrać skan aktu metrykalnego do swojego drzewa i obejrzeć go w powiększeniu pozwalającym odczytać treść; skan jest niedostępny dla niezalogowanych i innych użytkowników.** — Archived 2026-09-24 → `context/archive/2026-09-24-scan-upload-and-preview/`. Lesson: —.

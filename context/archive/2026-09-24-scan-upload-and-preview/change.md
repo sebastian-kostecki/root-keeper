@@ -1,10 +1,10 @@
 ---
 change_id: scan-upload-and-preview
 title: Scan upload and preview
-status: impl_reviewed
+status: archived
 created: 2026-09-24
 updated: 2026-09-24
-archived_at: null
+archived_at: 2026-09-24T05:24:30Z
 ---
 
 ## Notes
