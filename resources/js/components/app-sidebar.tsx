@@ -1,5 +1,5 @@
 import { Link } from '@inertiajs/react';
-import { BookOpen, FolderGit2, Users } from 'lucide-react';
+import { BookOpen, FileImage, FolderGit2, Users } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
@@ -14,6 +14,7 @@ import {
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
 import { index as personsIndex } from '@/routes/persons';
+import { index as scansIndex } from '@/routes/scans';
 import type { NavItem } from '@/types';
 
 const mainNavItems: NavItem[] = [
@@ -21,6 +22,11 @@ const mainNavItems: NavItem[] = [
         title: 'Osoby',
         href: personsIndex(),
         icon: Users,
+    },
+    {
+        title: 'Skany',
+        href: scansIndex(),
+        icon: FileImage,
     },
 ];
 

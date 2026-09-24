@@ -45,4 +45,12 @@ class Tree extends Model
     {
         return $this->hasMany(Event::class);
     }
+
+    /**
+     * @return HasMany<Scan, $this>
+     */
+    public function scans(): HasMany
+    {
+        return $this->hasMany(Scan::class);
+    }
 }
