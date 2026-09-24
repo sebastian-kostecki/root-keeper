@@ -426,17 +426,17 @@ The scan list grid, the upload page, the zoom preview with `react-zoom-pan-pinch
 
 #### Automated
 
-- [x] 2.1 Scan tests pass: `vendor/bin/sail artisan test --compact tests/Feature/ScansTest.php`
-- [x] 2.2 Full test suite passes: `vendor/bin/sail artisan test --compact`
-- [x] 2.3 Frontend type check passes: `vendor/bin/sail npm run types:check`
-- [x] 2.4 Frontend lint/format check passes: `vendor/bin/sail npm run check`
-- [x] 2.5 Production build succeeds: `vendor/bin/sail npm run build`
-- [x] 2.6 Code style is clean: `vendor/bin/sail bin pint --dirty --format agent`
+- [x] 2.1 Scan tests pass: `vendor/bin/sail artisan test --compact tests/Feature/ScansTest.php` — 18ee96e
+- [x] 2.2 Full test suite passes: `vendor/bin/sail artisan test --compact` — 18ee96e
+- [x] 2.3 Frontend type check passes: `vendor/bin/sail npm run types:check` — 18ee96e
+- [x] 2.4 Frontend lint/format check passes: `vendor/bin/sail npm run check` — 18ee96e
+- [x] 2.5 Production build succeeds: `vendor/bin/sail npm run build` — 18ee96e
+- [x] 2.6 Code style is clean: `vendor/bin/sail bin pint --dirty --format agent` — 18ee96e
 
 #### Manual
 
-- [ ] 2.7 Uploading a real act scan via "Dodaj skan" lands on the preview with the toast "Dodano skan", and the scan appears first in the Skany grid with an upright thumbnail
-- [ ] 2.8 In the preview, the handwriting of a real act is comfortably readable using wheel zoom and drag-to-pan, and Dopasuj resets to fit
-- [ ] 2.9 Uploading a PDF and a file over 20 MB shows a Polish validation error and stores nothing
-- [ ] 2.10 A second test account sees an empty Skany grid and gets 404 on the first account's scan preview and file URLs
+- [x] 2.7 Uploading a real act scan via "Dodaj skan" lands on the preview with the toast "Dodano skan", and the scan appears first in the Skany grid with an upright thumbnail — 18ee96e
+- [x] 2.8 In the preview, the handwriting of a real act is comfortably readable using wheel zoom and drag-to-pan, and Dopasuj resets to fit — 18ee96e
+- [x] 2.9 Uploading a PDF and a file over 20 MB shows a Polish validation error and stores nothing — 18ee96e
+- [x] 2.10 A second test account sees an empty Skany grid and gets 404 on the first account's scan preview and file URLs — 18ee96e
 - [ ] 2.11 After deploying to production, the F-01 handoff drill passes: upload a real scan via the UI, run `./scripts/artisan.sh backup:run`, restore the archive into a throwaway instance and confirm the scan file opens
