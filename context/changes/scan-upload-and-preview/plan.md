@@ -412,26 +412,26 @@ The scan list grid, the upload page, the zoom preview with `react-zoom-pan-pinch
 
 #### Automated
 
-- [x] 1.1 Scan feature and unit tests pass: `vendor/bin/sail artisan test --compact tests/Feature/ScansTest.php tests/Feature/GenerateScanThumbnailTest.php`
-- [x] 1.2 Full test suite passes: `vendor/bin/sail artisan test --compact`
-- [x] 1.3 Static analysis passes: `vendor/bin/sail composer types:check`
-- [x] 1.4 Code style is clean: `vendor/bin/sail bin pint --dirty --format agent`
-- [x] 1.5 Frontend types still compile after Wayfinder regeneration: `vendor/bin/sail npm run types:check`
+- [x] 1.1 Scan feature and unit tests pass: `vendor/bin/sail artisan test --compact tests/Feature/ScansTest.php tests/Feature/GenerateScanThumbnailTest.php` — 8ca2b9e
+- [x] 1.2 Full test suite passes: `vendor/bin/sail artisan test --compact` — 8ca2b9e
+- [x] 1.3 Static analysis passes: `vendor/bin/sail composer types:check` — 8ca2b9e
+- [x] 1.4 Code style is clean: `vendor/bin/sail bin pint --dirty --format agent` — 8ca2b9e
+- [x] 1.5 Frontend types still compile after Wayfinder regeneration: `vendor/bin/sail npm run types:check` — 8ca2b9e
 
 #### Manual
 
-- [ ] 1.6 Opening `/scans/<id>/file` of another user's scan in the browser returns 404, and logged out it redirects to login
+- [x] 1.6 Opening `/scans/<id>/file` of another user's scan in the browser returns 404, and logged out it redirects to login — 8ca2b9e
 
 ### Phase 2: Scan UI
 
 #### Automated
 
-- [ ] 2.1 Scan tests pass: `vendor/bin/sail artisan test --compact tests/Feature/ScansTest.php`
-- [ ] 2.2 Full test suite passes: `vendor/bin/sail artisan test --compact`
-- [ ] 2.3 Frontend type check passes: `vendor/bin/sail npm run types:check`
-- [ ] 2.4 Frontend lint/format check passes: `vendor/bin/sail npm run check`
-- [ ] 2.5 Production build succeeds: `vendor/bin/sail npm run build`
-- [ ] 2.6 Code style is clean: `vendor/bin/sail bin pint --dirty --format agent`
+- [x] 2.1 Scan tests pass: `vendor/bin/sail artisan test --compact tests/Feature/ScansTest.php`
+- [x] 2.2 Full test suite passes: `vendor/bin/sail artisan test --compact`
+- [x] 2.3 Frontend type check passes: `vendor/bin/sail npm run types:check`
+- [x] 2.4 Frontend lint/format check passes: `vendor/bin/sail npm run check`
+- [x] 2.5 Production build succeeds: `vendor/bin/sail npm run build`
+- [x] 2.6 Code style is clean: `vendor/bin/sail bin pint --dirty --format agent`
 
 #### Manual
 

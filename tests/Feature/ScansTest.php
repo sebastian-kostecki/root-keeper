@@ -34,12 +34,34 @@ test('scans index shows only the authenticated user own scans, newest first', fu
         ->where('scans.1.id', $older->id));
 });
 
+test('scans create shows the upload form', function () {
+    $user = User::factory()->create();
+
+    $response = $this->actingAs($user)->get(route('scans.create'));
+
+    $response->assertOk();
+    $response->assertInertia(fn ($page) => $page->component('scans/create'));
+});
+
 test('scans show returns not found for a scan from another users tree', function () {
     $user = User::factory()->create();
     $otherUser = User::factory()->create();
     $scan = Scan::factory()->for($otherUser->tree)->create();
 
     $this->actingAs($user)->get(route('scans.show', $scan))->assertNotFound();
+});
+
+test('scans show renders the scan', function () {
+    $user = User::factory()->create();
+    $scan = Scan::factory()->for($user->tree)->withThumbnail()->create();
+
+    $response = $this->actingAs($user)->get(route('scans.show', $scan));
+
+    $response->assertOk();
+    $response->assertInertia(fn ($page) => $page
+        ->component('scans/show')
+        ->where('scan.id', $scan->id)
+        ->where('scan.has_thumbnail', true));
 });
 
 test('scan file returns not found for a scan from another users tree', function () {
