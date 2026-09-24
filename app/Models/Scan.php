@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Support\Carbon;
 
 /**
@@ -48,5 +49,16 @@ class Scan extends Model
     public function tree(): BelongsTo
     {
         return $this->belongsTo(Tree::class);
+    }
+
+    /**
+     * @return BelongsToMany<Event, $this>
+     */
+    public function events(): BelongsToMany
+    {
+        return $this->belongsToMany(Event::class, 'event_scan')
+            ->withTimestamps()
+            ->orderBy('event_scan.created_at')
+            ->orderBy('event_scan.id');
     }
 }

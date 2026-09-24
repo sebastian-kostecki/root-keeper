@@ -6,6 +6,7 @@ use App\Actions\Persons\CreatePerson;
 use App\Enums\Religion;
 use App\Http\Requests\PersonStoreRequest;
 use App\Http\Resources\PersonResource;
+use App\Http\Resources\ScanResource;
 use App\Models\Person;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -58,14 +59,17 @@ class PersonController extends Controller
     /**
      * Display the given person.
      */
-    public function show(Person $person): Response
+    public function show(Request $request, Person $person): Response
     {
         Gate::authorize('view', $person);
 
-        $person->load('events');
+        $person->load('events.scans');
 
         return Inertia::render('persons/show', [
             'person' => PersonResource::make($person)->resolve(),
+            'availableScans' => Inertia::optional(fn (): array => ScanResource::collection(
+                $request->user()->tree->scans()->latest()->orderByDesc('id')->get()
+            )->resolve()),
         ]);
     }
 }

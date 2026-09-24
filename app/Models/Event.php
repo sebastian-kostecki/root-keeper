@@ -64,6 +64,17 @@ class Event extends Model
     }
 
     /**
+     * @return BelongsToMany<Scan, $this>
+     */
+    public function scans(): BelongsToMany
+    {
+        return $this->belongsToMany(Scan::class, 'event_scan')
+            ->withTimestamps()
+            ->orderBy('event_scan.created_at')
+            ->orderBy('event_scan.id');
+    }
+
+    /**
      * @return Attribute<PartialDate, never>
      */
     protected function date(): Attribute

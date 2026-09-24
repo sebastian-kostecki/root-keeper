@@ -16,14 +16,28 @@ class EventResource extends JsonResource
     /**
      * Transform the resource into an array.
      *
-     * @return array{type: string, date: string|null, place: string|null}
+     * @return array{
+     *     id: int,
+     *     type: string,
+     *     date: string|null,
+     *     place: string|null,
+     *     is_confirmed?: bool,
+     *     scans?: list<array{id: int, original_name: string, has_thumbnail: bool}>,
+     * }
      */
     public function toArray(Request $request): array
     {
         return [
+            'id' => $this->id,
             'type' => $this->type->value,
             'date' => $this->date->format(),
             'place' => $this->place,
+            'is_confirmed' => $this->whenLoaded('scans', fn (): bool => $this->scans->isNotEmpty()),
+            'scans' => $this->whenLoaded('scans', fn (): array => $this->scans->map(fn ($scan): array => [
+                'id' => $scan->id,
+                'original_name' => $scan->original_name,
+                'has_thumbnail' => $scan->thumbnail_path !== null,
+            ])->all()),
         ];
     }
 }

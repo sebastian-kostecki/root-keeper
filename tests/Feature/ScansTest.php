@@ -1,5 +1,8 @@
 <?php
 
+use App\Enums\ParticipantRole;
+use App\Models\Event;
+use App\Models\Person;
 use App\Models\Scan;
 use App\Models\User;
 use Illuminate\Http\UploadedFile;
@@ -70,6 +73,39 @@ test('scans show renders the scan', function () {
         ->component('scans/show')
         ->where('scan.id', $scan->id)
         ->where('scan.has_thumbnail', true));
+});
+
+test('scan show confirms is empty for an unlinked scan', function () {
+    $user = User::factory()->create();
+    $scan = Scan::factory()->for($user->tree)->create();
+
+    $response = $this->actingAs($user)->get(route('scans.show', $scan));
+
+    $response->assertOk();
+    $response->assertInertia(fn ($page) => $page
+        ->component('scans/show')
+        ->where('confirms', []));
+});
+
+test('scan show confirms lists the linked events with the person names', function () {
+    $user = User::factory()->create();
+    $scan = Scan::factory()->for($user->tree)->create();
+    $person = Person::factory()->for($user->tree)->create(['first_name' => 'Jan', 'last_name' => 'Kowalski']);
+    $birth = Event::factory()->for($user->tree)->birth()->create();
+    $birth->participants()->attach($person, ['role' => ParticipantRole::Subject]);
+    $scan->events()->attach($birth);
+
+    $response = $this->actingAs($user)->get(route('scans.show', $scan));
+
+    $response->assertOk();
+    $response->assertInertia(fn ($page) => $page
+        ->component('scans/show')
+        ->has('confirms', 1)
+        ->where('confirms.0.event_id', $birth->id)
+        ->where('confirms.0.event_type', 'birth')
+        ->where('confirms.0.event_label', 'Urodzenie')
+        ->where('confirms.0.person.id', $person->id)
+        ->where('confirms.0.person.display_name', 'Jan Kowalski'));
 });
 
 test('scan file returns not found for a scan from another users tree', function () {

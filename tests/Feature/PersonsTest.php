@@ -4,6 +4,7 @@ use App\Enums\EventType;
 use App\Enums\ParticipantRole;
 use App\Models\Event;
 use App\Models\Person;
+use App\Models\Scan;
 use App\Models\User;
 
 test('guests are redirected to the login page from persons routes', function () {
@@ -35,6 +36,90 @@ test('persons index shows only the people from the authenticated user tree, sort
         ->where('persons.1.id', $zbigniewAdamski->id)
         ->where('persons.2.id', $zolski->id)
         ->where('persons.3.id', $unnamed->id));
+});
+
+test('persons index payload does not contain is_confirmed or scans on events', function () {
+    $user = User::factory()->create();
+    $person = Person::factory()->for($user->tree)->create();
+    $event = Event::factory()->for($user->tree)->birth()->create();
+    $event->participants()->attach($person, ['role' => ParticipantRole::Subject]);
+
+    $response = $this->actingAs($user)->get(route('persons.index'));
+
+    $response->assertOk();
+    $response->assertInertia(fn ($page) => $page
+        ->component('persons/index')
+        ->missing('persons.0.birth.is_confirmed')
+        ->missing('persons.0.birth.scans'));
+});
+
+test('person show exposes birth is_confirmed false with no scans and true with one, listed in link order', function () {
+    $user = User::factory()->create();
+    $person = Person::factory()->for($user->tree)->create();
+    $event = Event::factory()->for($user->tree)->birth()->create();
+    $event->participants()->attach($person, ['role' => ParticipantRole::Subject]);
+
+    $response = $this->actingAs($user)->get(route('persons.show', $person));
+
+    $response->assertOk();
+    $response->assertInertia(fn ($page) => $page
+        ->component('persons/show')
+        ->where('person.birth.is_confirmed', false)
+        ->where('person.birth.scans', []));
+
+    $firstScan = Scan::factory()->for($user->tree)->create();
+    $secondScan = Scan::factory()->for($user->tree)->create();
+    $event->scans()->attach($firstScan);
+    $event->scans()->attach($secondScan);
+
+    $response = $this->actingAs($user)->get(route('persons.show', $person));
+
+    $response->assertOk();
+    $response->assertInertia(fn ($page) => $page
+        ->component('persons/show')
+        ->where('person.birth.is_confirmed', true)
+        ->where('person.birth.scans.0.id', $firstScan->id)
+        ->where('person.birth.scans.1.id', $secondScan->id));
+});
+
+test('person show does not include availableScans on a normal visit', function () {
+    $user = User::factory()->create();
+    $person = Person::factory()->for($user->tree)->create();
+
+    $response = $this->actingAs($user)->get(route('persons.show', $person));
+
+    $response->assertOk();
+    $response->assertInertia(fn ($page) => $page
+        ->component('persons/show')
+        ->missing('availableScans'));
+});
+
+test('a partial reload of availableScans returns only the user own scans, newest first', function () {
+    $user = User::factory()->create();
+    $otherUser = User::factory()->create();
+    $person = Person::factory()->for($user->tree)->create();
+
+    $older = Scan::factory()->for($user->tree)->create();
+    $newer = Scan::factory()->for($user->tree)->create();
+    Scan::factory()->for($otherUser->tree)->create();
+
+    $initial = $this->actingAs($user)->get(route('persons.show', $person), ['X-Inertia' => 'true']);
+    $version = $initial->headers->get('X-Inertia-Version');
+
+    $response = $this->actingAs($user)->get(route('persons.show', $person), [
+        'X-Inertia' => 'true',
+        'X-Inertia-Version' => $version,
+        'X-Inertia-Partial-Data' => 'availableScans',
+        'X-Inertia-Partial-Component' => 'persons/show',
+    ]);
+
+    $response->assertOk();
+    $props = $response->json('props');
+
+    expect($props)->not->toHaveKey('person');
+    expect($props['availableScans'])->toHaveCount(2);
+    expect($props['availableScans'][0]['id'])->toBe($newer->id);
+    expect($props['availableScans'][1]['id'])->toBe($older->id);
 });
 
 test('persons show returns not found for a person from another users tree', function () {

@@ -282,16 +282,16 @@ Additive migration: one new table, no data backfill. Production deploy runs the 
 
 #### Automated
 
-- [ ] 1.1 Migration applies cleanly
-- [ ] 1.2 New and affected feature tests pass
-- [ ] 1.3 Full test suite passes
-- [ ] 1.4 Static analysis passes
-- [ ] 1.5 Code style is clean
-- [ ] 1.6 Frontend types still compile after Wayfinder regeneration
+- [x] 1.1 Migration applies cleanly
+- [x] 1.2 New and affected feature tests pass
+- [x] 1.3 Full test suite passes
+- [x] 1.4 Static analysis passes
+- [x] 1.5 Code style is clean
+- [x] 1.6 Frontend types still compile after Wayfinder regeneration
 
 #### Manual
 
-- [ ] 1.7 Route list shows exactly the two new routes behind auth and verified
+- [x] 1.7 Route list shows exactly the two new routes behind auth and verified
 
 ### Phase 2: Linking UI
 
