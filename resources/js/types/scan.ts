@@ -1,3 +1,5 @@
+import type { PersonEvent } from './person';
+
 export type Scan = {
     id: number;
     original_name: string;
@@ -7,4 +9,14 @@ export type Scan = {
     height: number | null;
     has_thumbnail: boolean;
     uploaded_at: string;
+};
+
+export type ScanConfirmation = {
+    event_id: number;
+    event_type: PersonEvent['type'];
+    event_label: string;
+    person: {
+        id: number;
+        display_name: string;
+    };
 };

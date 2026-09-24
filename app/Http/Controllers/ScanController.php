@@ -5,9 +5,12 @@ namespace App\Http\Controllers;
 use App\Actions\Scans\StoreScan;
 use App\Http\Requests\ScanStoreRequest;
 use App\Http\Resources\ScanResource;
+use App\Models\Event;
+use App\Models\Person;
 use App\Models\Scan;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -56,8 +59,21 @@ class ScanController extends Controller
     {
         Gate::authorize('view', $scan);
 
+        $scan->load('events.participants');
+
         return Inertia::render('scans/show', [
             'scan' => ScanResource::make($scan)->resolve(),
+            'confirms' => $scan->events->flatMap(
+                fn (Event $event): Collection => $event->participants->map(fn (Person $person): array => [
+                    'event_id' => $event->id,
+                    'event_type' => $event->type->value,
+                    'event_label' => $event->type->label(),
+                    'person' => [
+                        'id' => $person->id,
+                        'display_name' => $person->displayName(),
+                    ],
+                ])
+            )->values()->all(),
         ]);
     }
 

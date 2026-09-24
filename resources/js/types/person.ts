@@ -4,9 +4,21 @@ export type Religion = {
 };
 
 export type PersonEvent = {
+    id: number;
     type: 'birth' | 'death';
     date: string | null;
     place: string | null;
+};
+
+export type LinkedScan = {
+    id: number;
+    original_name: string;
+    has_thumbnail: boolean;
+};
+
+export type SourcedPersonEvent = PersonEvent & {
+    is_confirmed: boolean;
+    scans: LinkedScan[];
 };
 
 export type Person = {
@@ -18,4 +30,9 @@ export type Person = {
     religion: Religion | null;
     birth: PersonEvent | null;
     death: PersonEvent | null;
+};
+
+export type PersonPreview = Omit<Person, 'birth' | 'death'> & {
+    birth: SourcedPersonEvent | null;
+    death: SourcedPersonEvent | null;
 };

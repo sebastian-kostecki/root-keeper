@@ -1,7 +1,7 @@
 import { Head, Link } from '@inertiajs/react';
-import { ImageOff } from 'lucide-react';
 import ScanController from '@/actions/App/Http/Controllers/ScanController';
 import Heading from '@/components/heading';
+import { ScanThumbnail } from '@/components/scans/scan-thumbnail';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { index as scansIndex } from '@/routes/scans';
@@ -56,20 +56,7 @@ export default function Index({ scans }: Props) {
                                 href={ScanController.show(scan.id)}
                             >
                                 <Card className="hover:bg-accent/50 gap-3 overflow-hidden py-0 transition-colors">
-                                    <div className="bg-muted flex aspect-square items-center justify-center overflow-hidden">
-                                        {scan.has_thumbnail ? (
-                                            <img
-                                                src={ScanController.thumbnail.url(
-                                                    scan.id,
-                                                )}
-                                                alt={scan.original_name}
-                                                loading="lazy"
-                                                className="h-full w-full object-cover"
-                                            />
-                                        ) : (
-                                            <ImageOff className="text-muted-foreground size-10" />
-                                        )}
-                                    </div>
+                                    <ScanThumbnail scan={scan} />
                                     <CardContent className="space-y-0.5 pb-4">
                                         <p
                                             className="truncate text-sm font-medium"

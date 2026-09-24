@@ -1,15 +1,18 @@
-import { Head, setLayoutProps } from '@inertiajs/react';
+import { Head, Link, setLayoutProps } from '@inertiajs/react';
+import PersonController from '@/actions/App/Http/Controllers/PersonController';
 import ScanController from '@/actions/App/Http/Controllers/ScanController';
 import Heading from '@/components/heading';
 import { ScanViewer } from '@/components/scans/scan-viewer';
+import { Card, CardContent } from '@/components/ui/card';
 import { index as scansIndex } from '@/routes/scans';
-import type { Scan } from '@/types';
+import type { Scan, ScanConfirmation } from '@/types';
 
 type Props = {
     scan: Scan;
+    confirms: ScanConfirmation[];
 };
 
-export default function Show({ scan }: Props) {
+export default function Show({ scan, confirms }: Props) {
     setLayoutProps({
         breadcrumbs: [
             { title: 'Skany', href: scansIndex() },
@@ -40,6 +43,39 @@ export default function Show({ scan }: Props) {
                     src={ScanController.file.url(scan.id)}
                     alt={scan.original_name}
                 />
+
+                <Card>
+                    <CardContent className="space-y-2">
+                        <p className="text-muted-foreground text-sm">
+                            Potwierdza
+                        </p>
+                        {confirms.length === 0 ? (
+                            <p className="text-sm">
+                                Ten skan nie potwierdza jeszcze żadnego
+                                wydarzenia.
+                            </p>
+                        ) : (
+                            <ul className="space-y-1">
+                                {confirms.map((confirmation) => (
+                                    <li
+                                        key={`${confirmation.event_id}-${confirmation.person.id}`}
+                                        className="text-sm"
+                                    >
+                                        <Link
+                                            href={PersonController.show(
+                                                confirmation.person.id,
+                                            )}
+                                            className="text-primary underline-offset-4 hover:underline"
+                                        >
+                                            {confirmation.event_label} —{' '}
+                                            {confirmation.person.display_name}
+                                        </Link>
+                                    </li>
+                                ))}
+                            </ul>
+                        )}
+                    </CardContent>
+                </Card>
             </div>
         </>
     );
