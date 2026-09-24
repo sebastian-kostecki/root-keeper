@@ -1,3 +1,5 @@
+import type { PersonEvent } from './person';
+
 export type Scan = {
     id: number;
     original_name: string;
@@ -11,7 +13,7 @@ export type Scan = {
 
 export type ScanConfirmation = {
     event_id: number;
-    event_type: string;
+    event_type: PersonEvent['type'];
     event_label: string;
     person: {
         id: number;

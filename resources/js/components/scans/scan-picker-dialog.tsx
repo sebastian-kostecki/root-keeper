@@ -30,19 +30,30 @@ export function ScanPickerDialog({
 }: Props) {
     const [open, setOpen] = useState(false);
     const [loading, setLoading] = useState(false);
+    const [loaded, setLoaded] = useState(false);
     const [processingScanId, setProcessingScanId] = useState<number | null>(
         null,
     );
     const [error, setError] = useState<string | undefined>(undefined);
+
+    // The optional prop is dropped by any non-partial visit (e.g. the redirect
+    // back after a validation error), so keep the last list that was loaded.
+    const [scans, setScans] = useState(availableScans);
+
+    if (availableScans !== undefined && availableScans !== scans) {
+        setScans(availableScans);
+    }
 
     const handleOpenChange = (nextOpen: boolean) => {
         setOpen(nextOpen);
 
         if (nextOpen) {
             setError(undefined);
+            setLoaded(false);
             setLoading(true);
             router.reload({
                 only: ['availableScans'],
+                onSuccess: () => setLoaded(true),
                 onFinish: () => setLoading(false),
             });
         }
@@ -64,8 +75,6 @@ export function ScanPickerDialog({
         );
     };
 
-    const isLoading = loading || availableScans === undefined;
-
     return (
         <Dialog open={open} onOpenChange={handleOpenChange}>
             <DialogTrigger asChild>{trigger}</DialogTrigger>
@@ -75,7 +84,7 @@ export function ScanPickerDialog({
                     Wybierz skan aktu, który potwierdza to wydarzenie.
                 </DialogDescription>
 
-                {isLoading ? (
+                {loading ? (
                     <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
                         {Array.from({ length: 6 }).map((_, index) => (
                             <Skeleton
@@ -84,7 +93,12 @@ export function ScanPickerDialog({
                             />
                         ))}
                     </div>
-                ) : availableScans.length === 0 ? (
+                ) : !loaded || scans === undefined ? (
+                    <p className="text-muted-foreground text-sm">
+                        Nie udało się wczytać skanów. Zamknij okno i spróbuj
+                        ponownie.
+                    </p>
+                ) : scans.length === 0 ? (
                     <p className="text-muted-foreground text-sm">
                         Nie masz jeszcze żadnych skanów.{' '}
                         <Link
@@ -97,45 +111,39 @@ export function ScanPickerDialog({
                     </p>
                 ) : (
                     <div className="grid max-h-96 grid-cols-2 gap-3 overflow-y-auto sm:grid-cols-3">
-                        {availableScans
-                            .slice()
-                            .sort((a, b) => b.id - a.id)
-                            .map((scan) => {
-                                const isLinked = linkedScanIds.includes(
-                                    scan.id,
-                                );
+                        {scans.map((scan) => {
+                            const isLinked = linkedScanIds.includes(scan.id);
 
-                                return (
-                                    <button
-                                        key={scan.id}
-                                        type="button"
-                                        disabled={
-                                            isLinked ||
-                                            processingScanId !== null
-                                        }
-                                        onClick={() => handleSelect(scan.id)}
-                                        className="space-y-1 text-left disabled:cursor-not-allowed disabled:opacity-50"
+                            return (
+                                <button
+                                    key={scan.id}
+                                    type="button"
+                                    disabled={
+                                        isLinked || processingScanId !== null
+                                    }
+                                    onClick={() => handleSelect(scan.id)}
+                                    className="space-y-1 text-left disabled:cursor-not-allowed disabled:opacity-50"
+                                >
+                                    <ScanThumbnail
+                                        scan={scan}
+                                        className="rounded-md"
+                                    />
+                                    <p
+                                        className="truncate text-xs font-medium"
+                                        title={scan.original_name}
                                     >
-                                        <ScanThumbnail
-                                            scan={scan}
-                                            className="rounded-md"
-                                        />
-                                        <p
-                                            className="truncate text-xs font-medium"
-                                            title={scan.original_name}
-                                        >
-                                            {scan.original_name}
-                                        </p>
-                                        <p className="text-muted-foreground text-xs">
-                                            {isLinked
-                                                ? 'Już powiązany'
-                                                : new Date(
-                                                      scan.uploaded_at,
-                                                  ).toLocaleDateString('pl-PL')}
-                                        </p>
-                                    </button>
-                                );
-                            })}
+                                        {scan.original_name}
+                                    </p>
+                                    <p className="text-muted-foreground text-xs">
+                                        {isLinked
+                                            ? 'Już powiązany'
+                                            : new Date(
+                                                  scan.uploaded_at,
+                                              ).toLocaleDateString('pl-PL')}
+                                    </p>
+                                </button>
+                            );
+                        })}
                     </div>
                 )}
 

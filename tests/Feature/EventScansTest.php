@@ -138,8 +138,25 @@ test('one scan linked to two events confirms both', function () {
     $this->actingAs($user)->post(route('events.scans.store', $deathOfB), ['scan_id' => $scan->id]);
 
     expect($scan->events()->count())->toBe(2);
-    expect($birthOfA->fresh()->scans()->count())->toBe(1);
-    expect($deathOfB->fresh()->scans()->count())->toBe(1);
+
+    $this->actingAs($user)->get(route('persons.show', $personA))
+        ->assertInertia(fn ($page) => $page->where('person.birth.is_confirmed', true));
+
+    $this->actingAs($user)->get(route('persons.show', $personB))
+        ->assertInertia(fn ($page) => $page->where('person.death.is_confirmed', true));
+});
+
+test('unlinking another trees scan from an own event returns not found', function () {
+    $user = User::factory()->create();
+    $otherUser = User::factory()->create();
+    $event = Event::factory()->for($user->tree)->create();
+    $foreignScan = Scan::factory()->for($otherUser->tree)->create();
+    $event->scans()->attach($foreignScan);
+
+    $this->actingAs($user)->delete(route('events.scans.destroy', [$event, $foreignScan]))
+        ->assertNotFound();
+
+    $this->assertDatabaseCount('event_scan', 1);
 });
 
 test('deleting a scan cascades the pivot rows', function () {

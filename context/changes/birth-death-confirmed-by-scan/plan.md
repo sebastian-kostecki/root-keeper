@@ -304,10 +304,10 @@ Additive migration: one new table, no data backfill. Production deploy runs the 
 
 #### Manual
 
-- [x] 2.5 US-01 end to end: confirmed birth opens a readable scan — c21551e
-- [x] 2.6 Unconfirmed event is clearly distinguishable in light and dark themes — c21551e
-- [x] 2.7 Picker loads, marks linked scans, links with toast, shows empty state — c21551e
-- [x] 2.8 Multiple scans per event and one scan across two people — c21551e
-- [x] 2.9 Unlink confirmation with last-scan warning — c21551e
-- [x] 2.10 Scan page Potwierdza links and empty note — c21551e
-- [x] 2.11 Screenshots of all states in light and dark themes captured — c21551e
+- [ ] 2.5 US-01 end to end: confirmed birth opens a readable scan
+- [ ] 2.6 Unconfirmed event is clearly distinguishable in light and dark themes
+- [ ] 2.7 Picker loads, marks linked scans, links with toast, shows empty state
+- [ ] 2.8 Multiple scans per event and one scan across two people
+- [ ] 2.9 Unlink confirmation with last-scan warning
+- [ ] 2.10 Scan page Potwierdza links and empty note
+- [ ] 2.11 Screenshots of all states in light and dark themes captured

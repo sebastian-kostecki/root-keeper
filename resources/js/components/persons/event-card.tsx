@@ -55,7 +55,10 @@ export function EventCard({ title, event, availableScans }: Props) {
                         <div className="flex flex-wrap gap-3">
                             {event.scans.map((scan) => (
                                 <div key={scan.id} className="w-20 space-y-1">
-                                    <Link href={ScanController.show(scan.id)}>
+                                    <Link
+                                        href={ScanController.show(scan.id)}
+                                        aria-label={`Otwórz skan ${scan.original_name}`}
+                                    >
                                         <ScanThumbnail
                                             scan={scan}
                                             className="rounded-md"
@@ -69,6 +72,7 @@ export function EventCard({ title, event, availableScans }: Props) {
                                         trigger={
                                             <button
                                                 type="button"
+                                                aria-label={`Odepnij skan ${scan.original_name}`}
                                                 className="text-muted-foreground hover:text-destructive w-full text-center text-xs underline-offset-4 hover:underline"
                                             >
                                                 Odepnij

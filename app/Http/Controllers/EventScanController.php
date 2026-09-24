@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\EventScanStoreRequest;
 use App\Models\Event;
 use App\Models\Scan;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
@@ -16,7 +17,11 @@ class EventScanController extends Controller
      */
     public function store(EventScanStoreRequest $request, Event $event): RedirectResponse
     {
-        $event->scans()->syncWithoutDetaching([$request->validated('scan_id')]);
+        try {
+            $event->scans()->syncWithoutDetaching([$request->validated('scan_id')]);
+        } catch (UniqueConstraintViolationException) {
+            // A concurrent request already created the link; linking is idempotent.
+        }
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Powiązano skan')]);
 

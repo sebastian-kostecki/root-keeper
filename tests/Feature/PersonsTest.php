@@ -67,10 +67,11 @@ test('person show exposes birth is_confirmed false with no scans and true with o
         ->where('person.birth.is_confirmed', false)
         ->where('person.birth.scans', []));
 
-    $firstScan = Scan::factory()->for($user->tree)->create();
-    $secondScan = Scan::factory()->for($user->tree)->create();
-    $event->scans()->attach($firstScan);
-    $event->scans()->attach($secondScan);
+    $olderScan = Scan::factory()->for($user->tree)->create();
+    $newerScan = Scan::factory()->for($user->tree)->create();
+    $event->scans()->attach($newerScan);
+    $this->travel(1)->minute();
+    $event->scans()->attach($olderScan);
 
     $response = $this->actingAs($user)->get(route('persons.show', $person));
 
@@ -78,8 +79,8 @@ test('person show exposes birth is_confirmed false with no scans and true with o
     $response->assertInertia(fn ($page) => $page
         ->component('persons/show')
         ->where('person.birth.is_confirmed', true)
-        ->where('person.birth.scans.0.id', $firstScan->id)
-        ->where('person.birth.scans.1.id', $secondScan->id));
+        ->where('person.birth.scans.0.id', $newerScan->id)
+        ->where('person.birth.scans.1.id', $olderScan->id));
 });
 
 test('person show does not include availableScans on a normal visit', function () {
@@ -99,8 +100,8 @@ test('a partial reload of availableScans returns only the user own scans, newest
     $otherUser = User::factory()->create();
     $person = Person::factory()->for($user->tree)->create();
 
-    $older = Scan::factory()->for($user->tree)->create();
     $newer = Scan::factory()->for($user->tree)->create();
+    $older = Scan::factory()->for($user->tree)->create(['created_at' => now()->subDay()]);
     Scan::factory()->for($otherUser->tree)->create();
 
     $initial = $this->actingAs($user)->get(route('persons.show', $person), ['X-Inertia' => 'true']);

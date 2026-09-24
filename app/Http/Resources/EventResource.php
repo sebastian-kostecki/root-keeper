@@ -3,6 +3,7 @@
 namespace App\Http\Resources;
 
 use App\Models\Event;
+use App\Models\Scan;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -33,7 +34,7 @@ class EventResource extends JsonResource
             'date' => $this->date->format(),
             'place' => $this->place,
             'is_confirmed' => $this->whenLoaded('scans', fn (): bool => $this->scans->isNotEmpty()),
-            'scans' => $this->whenLoaded('scans', fn (): array => $this->scans->map(fn ($scan): array => [
+            'scans' => $this->whenLoaded('scans', fn (): array => $this->scans->map(fn (Scan $scan): array => [
                 'id' => $scan->id,
                 'original_name' => $scan->original_name,
                 'has_thumbnail' => $scan->thumbnail_path !== null,
