@@ -45,7 +45,7 @@ Genealog prowadzący własne badania ma notatki, skany i zdjęcia rozproszone i 
 | S-01 | account-tree-and-first-person   | założyć konto, od razu mieć swoje drzewo i dodać pierwszą osobę                        | —             | FR-001, FR-002, FR-003, FR-005, FR-008, Access Control | done        |
 | S-02 | scan-upload-and-preview         | wgrać skan aktu i obejrzeć go w powiększeniu pozwalającym odczytać treść               | S-01          | FR-013, FR-016, US-01                  | done |
 | S-03 | birth-death-confirmed-by-scan   | powiązać skan z urodzeniem lub zgonem i zobaczyć na podglądzie, co jest potwierdzone   | S-01, S-02    | FR-014, FR-008, US-01                  | done |
-| S-04 | person-search                   | wyszukać osobę na liście i przejść do jej podglądu                                     | S-01          | FR-009, US-01                          | in-progress |
+| S-04 | person-search                   | wyszukać osobę na liście i przejść do jej podglądu                                     | S-01          | FR-009, US-01                          | done |
 | S-05 | person-edit-and-delete          | poprawić dane osoby i usunąć ją po jawnym potwierdzeniu                                | S-01          | FR-006, FR-007                         | done |
 | S-06 | parent-child-relations          | połączyć rodzica z dzieckiem, zobaczyć relacje na podglądzie i usunąć relację          | S-01          | FR-011, FR-012, FR-008                 | proposed |
 | S-07 | marriage-with-shared-source     | dodać małżeństwo z datą i miejscem i potwierdzić je jednym aktem u obojga małżonków    | S-03          | FR-010, FR-012, FR-014, US-01          | proposed |
@@ -143,7 +143,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Blockers:** —
 - **Unknowns:** —
 - **Risk:** Mały, niezależny wycinek; odnajdywanie osoby to jeden z dwóch bólów z wizji, więc nie może zostać na koniec, ale nie blokuje gwiazdy przewodniej.
-- **Status:** in-progress
+- **Status:** done
 
 ### S-05: Edycja i usunięcie osoby
 
@@ -257,3 +257,4 @@ Rozstrzygnięte:
 - **S-02: użytkownik może wgrać skan aktu metrykalnego do swojego drzewa i obejrzeć go w powiększeniu pozwalającym odczytać treść; skan jest niedostępny dla niezalogowanych i innych użytkowników.** — Archived 2026-09-24 → `context/archive/2026-09-24-scan-upload-and-preview/`. Lesson: —.
 - **S-03: użytkownik może powiązać skan z urodzeniem lub zgonem osoby i zmienić to powiązanie, a na podglądzie osoby widzi datę i miejsce wydarzenia ze wskazaniem aktu, otwiera skan, a wydarzenie bez aktu jest wyraźnie odróżnione od potwierdzonego.** — Archived 2026-09-24 → `context/archive/2026-09-24-birth-death-confirmed-by-scan/`. Lesson: —.
 - **S-05: użytkownik może poprawić dane osoby i usunąć osobę po jawnym potwierdzeniu.** — Archived 2026-09-25 → `context/archive/2026-09-25-person-edit-and-delete/`. Lesson: —.
+- **S-04: użytkownik może wyszukać osobę na liście swoich osób i przejść do jej podglądu.** — Archived 2026-09-25 → `context/archive/2026-09-25-person-search/`. Lesson: —.
