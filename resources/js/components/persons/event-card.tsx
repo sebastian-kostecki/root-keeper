@@ -10,16 +10,25 @@ import type { Scan, SourcedPersonEvent } from '@/types';
 
 type Props = {
     title: string;
+    header?: React.ReactNode;
+    headerActions?: React.ReactNode;
     event: SourcedPersonEvent;
     availableScans: Scan[] | undefined;
 };
 
-export function EventCard({ title, event, availableScans }: Props) {
+export function EventCard({
+    title,
+    header,
+    headerActions,
+    event,
+    availableScans,
+}: Props) {
     return (
         <Card>
             <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-2">
-                <CardTitle>{title}</CardTitle>
+                <CardTitle>{header ?? title}</CardTitle>
                 <div className="flex items-center gap-2">
+                    {headerActions}
                     <EventSourceStatus isConfirmed={event.is_confirmed} />
                     <ScanPickerDialog
                         eventId={event.id}

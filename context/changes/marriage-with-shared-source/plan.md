@@ -254,23 +254,23 @@ No schema change. Existing events keep their `type`/`role` values; rollback is a
 
 #### Automated
 
-- [x] 1.1 Marriage feature tests pass: `vendor/bin/sail artisan test --compact tests/Feature/MarriagesTest.php`
-- [x] 1.2 Existing person, event-scan, scan and relation tests still pass: `vendor/bin/sail artisan test --compact tests/Feature/PersonsTest.php tests/Feature/EventScansTest.php tests/Feature/ScansTest.php tests/Feature/ParentChildRelationsTest.php`
-- [x] 1.3 PHP formatting is clean: `vendor/bin/sail bin pint --dirty --format agent`
+- [x] 1.1 Marriage feature tests pass: `vendor/bin/sail artisan test --compact tests/Feature/MarriagesTest.php` — 8ed7607
+- [x] 1.2 Existing person, event-scan, scan and relation tests still pass: `vendor/bin/sail artisan test --compact tests/Feature/PersonsTest.php tests/Feature/EventScansTest.php tests/Feature/ScansTest.php tests/Feature/ParentChildRelationsTest.php` — 8ed7607
+- [x] 1.3 PHP formatting is clean: `vendor/bin/sail bin pint --dirty --format agent` — 8ed7607
 
 ### Phase 2: Marriages on the person view
 
 #### Automated
 
-- [ ] 2.1 Marriage and person tests pass: `vendor/bin/sail artisan test --compact tests/Feature/MarriagesTest.php tests/Feature/PersonsTest.php tests/Feature/ParentChildRelationsTest.php`
-- [ ] 2.2 TypeScript type check passes: `vendor/bin/sail npm run types:check`
-- [ ] 2.3 Lint and format check pass: `vendor/bin/sail npm run check`
-- [ ] 2.4 Production build succeeds: `vendor/bin/sail npm run build`
+- [x] 2.1 Marriage and person tests pass: `vendor/bin/sail artisan test --compact tests/Feature/MarriagesTest.php tests/Feature/PersonsTest.php tests/Feature/ParentChildRelationsTest.php`
+- [x] 2.2 TypeScript type check passes: `vendor/bin/sail npm run types:check`
+- [x] 2.3 Lint and format check pass: `vendor/bin/sail npm run check`
+- [x] 2.4 Production build succeeds: `vendor/bin/sail npm run build`
 
 #### Manual
 
-- [ ] 2.5 Adding a marriage from one spouse's preview (spouse, partial or "około" date, place) shows it on both previews with a working link to the other spouse; an existing spouse is greyed out with "Już jest małżonkiem"
-- [ ] 2.6 Linking one scan on one spouse's preview shows "Potwierdzone aktem" and the thumbnail on both previews, and the scan page lists "Małżeństwo — <each spouse>"
-- [ ] 2.7 A person with two marriages shows them ordered by wedding date; editing a date keeps the linked scan
-- [ ] 2.8 Removing a marriage (dialog states both spouses and scan links) removes it from both previews while the scan remains; deleting a spouse shows the marriage in the delete dialog and removes it from the other spouse
-- [ ] 2.9 Parents/children picker and birth/death cards behave exactly as before
+- [x] 2.5 Adding a marriage from one spouse's preview (spouse, partial or "około" date, place) shows it on both previews with a working link to the other spouse; an existing spouse is greyed out with "Już jest małżonkiem"
+- [x] 2.6 Linking one scan on one spouse's preview shows "Potwierdzone aktem" and the thumbnail on both previews, and the scan page lists "Małżeństwo — <each spouse>"
+- [x] 2.7 A person with two marriages shows them ordered by wedding date; editing a date keeps the linked scan
+- [x] 2.8 Removing a marriage (dialog states both spouses and scan links) removes it from both previews while the scan remains; deleting a spouse shows the marriage in the delete dialog and removes it from the other spouse
+- [x] 2.9 Parents/children picker and birth/death cards behave exactly as before

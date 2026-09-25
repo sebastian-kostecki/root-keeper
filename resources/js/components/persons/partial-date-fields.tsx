@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
 type Props = {
-    prefix: 'birth' | 'death';
+    prefix: 'birth' | 'death' | 'marriage';
     errors: Partial<Record<string, string>>;
     defaultValue?: {
         year: number | null;

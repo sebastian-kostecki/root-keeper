@@ -1,8 +1,8 @@
-import { Link, router } from '@inertiajs/react';
+import { router } from '@inertiajs/react';
 import { useState } from 'react';
 import ParentChildRelationController from '@/actions/App/Http/Controllers/ParentChildRelationController';
-import PersonController from '@/actions/App/Http/Controllers/PersonController';
 import InputError from '@/components/input-error';
+import { PersonCandidateList } from '@/components/persons/person-candidate-list';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -11,8 +11,6 @@ import {
     DialogTitle,
     DialogTrigger,
 } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Skeleton } from '@/components/ui/skeleton';
 import type { PersonPreview, RelationCandidate } from '@/types';
 
 type Props = {
@@ -21,13 +19,6 @@ type Props = {
     candidates: RelationCandidate[] | undefined;
     trigger: React.ReactNode;
 };
-
-function matchesFilter(displayName: string, filter: string): boolean {
-    const words = filter.trim().toLowerCase().split(/\s+/).filter(Boolean);
-    const haystack = displayName.toLowerCase();
-
-    return words.every((word) => haystack.includes(word));
-}
 
 export function RelativePickerDialog({
     kind,
@@ -86,10 +77,6 @@ export function RelativePickerDialog({
         });
     };
 
-    const filtered = list?.filter((candidate) =>
-        matchesFilter(candidate.display_name, filter),
-    );
-
     return (
         <Dialog open={open} onOpenChange={handleOpenChange}>
             <DialogTrigger asChild>{trigger}</DialogTrigger>
@@ -101,77 +88,20 @@ export function RelativePickerDialog({
                     Wybierz osobę z Twojego drzewa, którą chcesz powiązać.
                 </DialogDescription>
 
-                {loading ? (
-                    <div className="space-y-2">
-                        {Array.from({ length: 4 }).map((_, index) => (
-                            <Skeleton key={index} className="h-10 w-full" />
-                        ))}
-                    </div>
-                ) : !loaded || list === undefined ? (
-                    <p className="text-muted-foreground text-sm">
-                        Nie udało się wczytać osób. Zamknij okno i spróbuj
-                        ponownie.
-                    </p>
-                ) : list.length === 0 ? (
-                    <p className="text-muted-foreground text-sm">
-                        Nie masz jeszcze innych osób.{' '}
-                        <Link
-                            href={PersonController.create()}
-                            className="text-primary underline-offset-4 hover:underline"
-                        >
-                            Dodaj osobę
-                        </Link>
-                        .
-                    </p>
-                ) : (
-                    <div className="space-y-3">
-                        <Input
-                            type="search"
-                            placeholder="Szukaj po imieniu lub nazwisku"
-                            aria-label="Szukaj osoby"
-                            value={filter}
-                            onChange={(event) => setFilter(event.target.value)}
-                        />
-
-                        <div className="max-h-96 space-y-1 overflow-y-auto">
-                            {filtered?.map((candidate) => {
-                                const blockedReason =
-                                    kind === 'parent'
-                                        ? candidate.as_parent_blocked_reason
-                                        : candidate.as_child_blocked_reason;
-
-                                return (
-                                    <button
-                                        key={candidate.id}
-                                        type="button"
-                                        disabled={
-                                            blockedReason !== null ||
-                                            processingId !== null
-                                        }
-                                        onClick={() =>
-                                            handleSelect(candidate.id)
-                                        }
-                                        className="hover:bg-accent flex w-full items-center justify-between rounded-md px-3 py-2 text-left text-sm disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-transparent"
-                                    >
-                                        <span>
-                                            {candidate.display_name}
-                                            {candidate.birth_date && (
-                                                <span className="text-muted-foreground ml-2">
-                                                    {candidate.birth_date}
-                                                </span>
-                                            )}
-                                        </span>
-                                        {blockedReason && (
-                                            <span className="text-muted-foreground text-xs">
-                                                {blockedReason}
-                                            </span>
-                                        )}
-                                    </button>
-                                );
-                            })}
-                        </div>
-                    </div>
-                )}
+                <PersonCandidateList
+                    loading={loading}
+                    loaded={loaded}
+                    list={list}
+                    filter={filter}
+                    onFilterChange={setFilter}
+                    onSelect={handleSelect}
+                    getBlockedReason={(candidate) =>
+                        kind === 'parent'
+                            ? candidate.as_parent_blocked_reason
+                            : candidate.as_child_blocked_reason
+                    }
+                    processingId={processingId}
+                />
 
                 <InputError message={error} />
 

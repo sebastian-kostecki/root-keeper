@@ -5,7 +5,7 @@ export type Religion = {
 
 export type PersonEvent = {
     id: number;
-    type: 'birth' | 'death';
+    type: 'birth' | 'death' | 'marriage';
     date: string | null;
     place: string | null;
 };
@@ -19,6 +19,21 @@ export type LinkedScan = {
 export type SourcedPersonEvent = PersonEvent & {
     is_confirmed: boolean;
     scans: LinkedScan[];
+};
+
+export type Marriage = SourcedPersonEvent & {
+    date_parts: {
+        year: number | null;
+        month: number | null;
+        day: number | null;
+        is_approximate: boolean;
+    };
+    spouse: {
+        id: number;
+        display_name: string;
+        birth_date: string | null;
+        death_date: string | null;
+    } | null;
 };
 
 export type Person = {
@@ -46,6 +61,7 @@ export type RelationCandidate = {
     birth_date: string | null;
     as_parent_blocked_reason: string | null;
     as_child_blocked_reason: string | null;
+    as_spouse_blocked_reason: string | null;
 };
 
 export type PersonPreview = Omit<Person, 'birth' | 'death'> & {
@@ -53,6 +69,7 @@ export type PersonPreview = Omit<Person, 'birth' | 'death'> & {
     death: SourcedPersonEvent | null;
     parents: Relative[];
     children: Relative[];
+    marriages: Marriage[];
 };
 
 export type PersonFormEvent = {

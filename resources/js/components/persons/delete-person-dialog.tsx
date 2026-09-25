@@ -46,9 +46,16 @@ export function DeletePersonDialog({ person, trigger }: Props) {
     const [open, setOpen] = useState(false);
     const [processing, setProcessing] = useState(false);
 
+    const marriageScanCount = person.marriages.reduce(
+        (total, marriage) => total + marriage.scans.length,
+        0,
+    );
     const linkCount =
-        (person.birth?.scans.length ?? 0) + (person.death?.scans.length ?? 0);
+        (person.birth?.scans.length ?? 0) +
+        (person.death?.scans.length ?? 0) +
+        marriageScanCount;
     const relationCount = person.parents.length + person.children.length;
+    const marriageCount = person.marriages.length;
 
     const extras: string[] = [];
 
@@ -61,6 +68,12 @@ export function DeletePersonDialog({ person, trigger }: Props) {
     if (relationCount > 0) {
         extras.push(
             `${relationCount} ${pluralPhrase(relationCount, 'relacja rodzinna', 'relacje rodzinne', 'relacji rodzinnych')}`,
+        );
+    }
+
+    if (marriageCount > 0) {
+        extras.push(
+            `${marriageCount} ${pluralPhrase(marriageCount, 'małżeństwo', 'małżeństwa', 'małżeństw')} (zniknie także u drugiego małżonka)`,
         );
     }
 

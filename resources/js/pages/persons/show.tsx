@@ -2,6 +2,7 @@ import { Head, Link, setLayoutProps } from '@inertiajs/react';
 import PersonController from '@/actions/App/Http/Controllers/PersonController';
 import { DeletePersonDialog } from '@/components/persons/delete-person-dialog';
 import { EventCard } from '@/components/persons/event-card';
+import { MarriagesSection } from '@/components/persons/marriages-section';
 import { RelativesCard } from '@/components/persons/relatives-card';
 import Heading from '@/components/heading';
 import { Badge } from '@/components/ui/badge';
@@ -106,6 +107,12 @@ export default function Show({
                         availableScans={availableScans}
                     />
                 )}
+
+                <MarriagesSection
+                    person={person}
+                    availableScans={availableScans}
+                    candidates={relationCandidates}
+                />
 
                 {person.death && (
                     <EventCard
