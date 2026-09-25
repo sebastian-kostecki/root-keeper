@@ -1,7 +1,7 @@
 ---
 change_id: scan-delete-with-impact
 title: Scan delete with impact
-status: implementing
+status: implemented
 created: 2026-09-25
 updated: 2026-09-25
 archived_at: null

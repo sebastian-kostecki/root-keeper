@@ -223,15 +223,15 @@ None — no schema change. Deleting a scan is irreversible in the app; productio
 
 #### Automated
 
-- [x] 2.1 TypeScript type check passes: `vendor/bin/sail npm run types:check`
-- [x] 2.2 Lint and format check pass: `vendor/bin/sail npm run check`
-- [x] 2.3 Production build succeeds: `vendor/bin/sail npm run build`
-- [x] 2.4 Scan feature tests still pass: `vendor/bin/sail artisan test --compact tests/Feature/ScansTest.php`
+- [x] 2.1 TypeScript type check passes: `vendor/bin/sail npm run types:check` — 91cf484
+- [x] 2.2 Lint and format check pass: `vendor/bin/sail npm run check` — 91cf484
+- [x] 2.3 Production build succeeds: `vendor/bin/sail npm run build` — 91cf484
+- [x] 2.4 Scan feature tests still pass: `vendor/bin/sail artisan test --compact tests/Feature/ScansTest.php` — 91cf484
 
 #### Manual
 
-- [x] 2.5 Scan linked to a birth that has a second scan and to a death that has only this scan: the dialog lists both facts, death marked "stanie się niepotwierdzone", birth marked as staying confirmed
-- [x] 2.6 After confirming: redirect to the scan list with toast "Usunięto skan", the scan is gone from the list, and on the person page the death shows as unconfirmed while the birth stays confirmed
-- [x] 2.7 Unlinked scan: dialog states it confirms no events; delete works
-- [x] 2.8 "Anuluj" closes the dialog without deleting anything
-- [x] 2.9 Dialog is readable in light and dark mode and at phone width
+- [x] 2.5 Scan linked to a birth that has a second scan and to a death that has only this scan: the dialog lists both facts, death marked "stanie się niepotwierdzone", birth marked as staying confirmed — 91cf484
+- [x] 2.6 After confirming: redirect to the scan list with toast "Usunięto skan", the scan is gone from the list, and on the person page the death shows as unconfirmed while the birth stays confirmed — 91cf484
+- [x] 2.7 Unlinked scan: dialog states it confirms no events; delete works — 91cf484
+- [x] 2.8 "Anuluj" closes the dialog without deleting anything — 91cf484
+- [x] 2.9 Dialog is readable in light and dark mode and at phone width — 91cf484
