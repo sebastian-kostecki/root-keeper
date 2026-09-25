@@ -15,6 +15,7 @@ export type ScanConfirmation = {
     event_id: number;
     event_type: PersonEvent['type'];
     event_label: string;
+    is_last_scan: boolean;
     person: {
         id: number;
         display_name: string;

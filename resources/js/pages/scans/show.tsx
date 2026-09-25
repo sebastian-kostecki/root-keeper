@@ -2,7 +2,9 @@ import { Head, Link, setLayoutProps } from '@inertiajs/react';
 import PersonController from '@/actions/App/Http/Controllers/PersonController';
 import ScanController from '@/actions/App/Http/Controllers/ScanController';
 import Heading from '@/components/heading';
+import { DeleteScanDialog } from '@/components/scans/delete-scan-dialog';
 import { ScanViewer } from '@/components/scans/scan-viewer';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { index as scansIndex } from '@/routes/scans';
 import type { Scan, ScanConfirmation } from '@/types';
@@ -34,10 +36,26 @@ export default function Show({ scan, confirms }: Props) {
             <Head title={scan.original_name} />
 
             <div className="space-y-6">
-                <Heading
-                    title={scan.original_name}
-                    description={`${new Date(scan.uploaded_at).toLocaleDateString('pl-PL')} · ${sizeInMb} MB · ${dimensions}`}
-                />
+                <div className="flex items-center justify-between gap-4">
+                    <Heading
+                        title={scan.original_name}
+                        description={`${new Date(scan.uploaded_at).toLocaleDateString('pl-PL')} · ${sizeInMb} MB · ${dimensions}`}
+                    />
+
+                    <DeleteScanDialog
+                        scan={scan}
+                        confirms={confirms}
+                        trigger={
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                className="text-destructive hover:text-destructive"
+                            >
+                                Usuń
+                            </Button>
+                        }
+                    />
+                </div>
 
                 <ScanViewer
                     src={ScanController.file.url(scan.id)}

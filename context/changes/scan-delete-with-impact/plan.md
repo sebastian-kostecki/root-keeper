@@ -214,24 +214,24 @@ None — no schema change. Deleting a scan is irreversible in the app; productio
 
 #### Automated
 
-- [x] 1.1 Scan feature tests pass: `vendor/bin/sail artisan test --compact tests/Feature/ScansTest.php`
-- [x] 1.2 Existing event-scan and person tests still pass: `vendor/bin/sail artisan test --compact tests/Feature/EventScansTest.php tests/Feature/PersonsTest.php`
-- [x] 1.3 Route is registered: `vendor/bin/sail artisan route:list --name=scans.destroy`
-- [x] 1.4 PHP formatting is clean: `vendor/bin/sail bin pint --dirty --format agent`
+- [x] 1.1 Scan feature tests pass: `vendor/bin/sail artisan test --compact tests/Feature/ScansTest.php` — ced226d
+- [x] 1.2 Existing event-scan and person tests still pass: `vendor/bin/sail artisan test --compact tests/Feature/EventScansTest.php tests/Feature/PersonsTest.php` — ced226d
+- [x] 1.3 Route is registered: `vendor/bin/sail artisan route:list --name=scans.destroy` — ced226d
+- [x] 1.4 PHP formatting is clean: `vendor/bin/sail bin pint --dirty --format agent` — ced226d
 
 ### Phase 2: Delete dialog on scan preview
 
 #### Automated
 
-- [ ] 2.1 TypeScript type check passes: `vendor/bin/sail npm run types:check`
-- [ ] 2.2 Lint and format check pass: `vendor/bin/sail npm run check`
-- [ ] 2.3 Production build succeeds: `vendor/bin/sail npm run build`
-- [ ] 2.4 Scan feature tests still pass: `vendor/bin/sail artisan test --compact tests/Feature/ScansTest.php`
+- [x] 2.1 TypeScript type check passes: `vendor/bin/sail npm run types:check`
+- [x] 2.2 Lint and format check pass: `vendor/bin/sail npm run check`
+- [x] 2.3 Production build succeeds: `vendor/bin/sail npm run build`
+- [x] 2.4 Scan feature tests still pass: `vendor/bin/sail artisan test --compact tests/Feature/ScansTest.php`
 
 #### Manual
 
-- [ ] 2.5 Scan linked to a birth that has a second scan and to a death that has only this scan: the dialog lists both facts, death marked "stanie się niepotwierdzone", birth marked as staying confirmed
-- [ ] 2.6 After confirming: redirect to the scan list with toast "Usunięto skan", the scan is gone from the list, and on the person page the death shows as unconfirmed while the birth stays confirmed
-- [ ] 2.7 Unlinked scan: dialog states it confirms no events; delete works
-- [ ] 2.8 "Anuluj" closes the dialog without deleting anything
-- [ ] 2.9 Dialog is readable in light and dark mode and at phone width
+- [x] 2.5 Scan linked to a birth that has a second scan and to a death that has only this scan: the dialog lists both facts, death marked "stanie się niepotwierdzone", birth marked as staying confirmed
+- [x] 2.6 After confirming: redirect to the scan list with toast "Usunięto skan", the scan is gone from the list, and on the person page the death shows as unconfirmed while the birth stays confirmed
+- [x] 2.7 Unlinked scan: dialog states it confirms no events; delete works
+- [x] 2.8 "Anuluj" closes the dialog without deleting anything
+- [x] 2.9 Dialog is readable in light and dark mode and at phone width
