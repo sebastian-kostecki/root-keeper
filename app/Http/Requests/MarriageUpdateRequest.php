@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use App\Concerns\PartialDateValidationRules;
+use App\Enums\EventType;
 use Illuminate\Auth\Access\Response;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
@@ -14,11 +15,18 @@ class MarriageUpdateRequest extends FormRequest
     use PartialDateValidationRules;
 
     /**
-     * Determine if the user is authorized to make this request.
+     * Determine if the user is authorized to make this request. A non-marriage
+     * event is reported as not found before any validation runs.
      */
     public function authorize(): Response
     {
-        return Gate::inspect('update', $this->route('marriage'));
+        $marriage = $this->route('marriage');
+
+        if ($marriage->type !== EventType::Marriage) {
+            return Response::denyAsNotFound();
+        }
+
+        return Gate::inspect('update', $marriage);
     }
 
     /**

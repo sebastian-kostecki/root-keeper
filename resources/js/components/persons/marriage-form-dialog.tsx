@@ -1,4 +1,4 @@
-import { Form, router } from '@inertiajs/react';
+import { Form } from '@inertiajs/react';
 import { useState } from 'react';
 import MarriageController from '@/actions/App/Http/Controllers/MarriageController';
 import InputError from '@/components/input-error';
@@ -13,6 +13,7 @@ import {
     DialogTitle,
     DialogTrigger,
 } from '@/components/ui/dialog';
+import { useRelationCandidates } from '@/hooks/use-relation-candidates';
 import type { Marriage, PersonPreview, RelationCandidate } from '@/types';
 
 type Props =
@@ -33,25 +34,12 @@ export function MarriageFormDialog(props: Props) {
     const { person, trigger } = props;
 
     const [open, setOpen] = useState(false);
-    const [loading, setLoading] = useState(false);
-    const [loaded, setLoaded] = useState(false);
     const [filter, setFilter] = useState('');
     const [selectedSpouse, setSelectedSpouse] =
         useState<RelationCandidate | null>(null);
-
-    // The optional prop is dropped by any non-partial visit (e.g. the
-    // redirect back after a validation error), so keep the last loaded list.
-    const [list, setList] = useState(
+    const { list, loading, loaded, load } = useRelationCandidates(
         props.mode === 'create' ? props.candidates : undefined,
     );
-
-    if (
-        props.mode === 'create' &&
-        props.candidates !== undefined &&
-        props.candidates !== list
-    ) {
-        setList(props.candidates);
-    }
 
     const handleOpenChange = (nextOpen: boolean) => {
         setOpen(nextOpen);
@@ -61,13 +49,7 @@ export function MarriageFormDialog(props: Props) {
 
             if (props.mode === 'create') {
                 setSelectedSpouse(null);
-                setLoaded(false);
-                setLoading(true);
-                router.reload({
-                    only: ['relationCandidates'],
-                    onSuccess: () => setLoaded(true),
-                    onFinish: () => setLoading(false),
-                });
+                load();
             }
         }
     };
@@ -129,6 +111,7 @@ export function MarriageFormDialog(props: Props) {
                             : MarriageController.update.form(
                                   props.marriage.id,
                               ))}
+                        options={{ preserveScroll: true }}
                         onSuccess={() => setOpen(false)}
                         className="space-y-4"
                     >

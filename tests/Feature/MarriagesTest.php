@@ -120,7 +120,7 @@ test('marrying oneself is rejected on spouse_id and nothing is created', functio
         'spouse_id' => $person->id,
     ]);
 
-    $response->assertSessionHasErrors('spouse_id');
+    $response->assertSessionHasErrors(['spouse_id' => 'Osoba nie może poślubić samej siebie.']);
     $this->assertDatabaseCount('events', 0);
 });
 
@@ -132,10 +132,10 @@ test('marrying the same pair twice is rejected in both argument orders and only 
     $this->actingAs($user)->post(route('marriages.store'), ['person_id' => $person->id, 'spouse_id' => $spouse->id]);
 
     $response = $this->actingAs($user)->post(route('marriages.store'), ['person_id' => $person->id, 'spouse_id' => $spouse->id]);
-    $response->assertSessionHasErrors('spouse_id');
+    $response->assertSessionHasErrors(['spouse_id' => 'Ta para ma już małżeństwo.']);
 
     $reversed = $this->actingAs($user)->post(route('marriages.store'), ['person_id' => $spouse->id, 'spouse_id' => $person->id]);
-    $reversed->assertSessionHasErrors('spouse_id');
+    $reversed->assertSessionHasErrors(['spouse_id' => 'Ta para ma już małżeństwo.']);
 
     $this->assertDatabaseCount('events', 1);
 });
@@ -248,6 +248,9 @@ test('updating a birth event through the marriage routes returns not found', fun
 
     $this->actingAs($user)->put(route('marriages.update', $birth), ['marriage' => ['year' => 1900]])
         ->assertNotFound();
+
+    $this->actingAs($user)->put(route('marriages.update', $birth), ['marriage' => ['month' => 13]])
+        ->assertNotFound();
 });
 
 test('destroying a birth event through the marriage routes returns not found', function () {
@@ -323,6 +326,9 @@ test('deleting one spouse removes the marriage but keeps the other spouse and th
     $this->assertDatabaseMissing('events', ['id' => $marriage->id]);
     $this->assertDatabaseHas('people', ['id' => $spouse->id]);
     $this->assertDatabaseHas('scans', ['id' => $scan->id]);
+
+    $this->actingAs($user)->get(route('persons.show', $spouse))
+        ->assertInertia(fn ($page) => $page->has('person.marriages', 0));
 });
 
 test('relationCandidates marks the existing spouse and leaves other people unblocked', function () {

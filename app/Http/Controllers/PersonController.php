@@ -94,7 +94,7 @@ class PersonController extends Controller
     {
         Gate::authorize('view', $person);
 
-        $person->load(['events.scans', 'parents.events', 'children.events', 'marriages.scans', 'marriages.participants']);
+        $person->load(['events.scans', 'parents.events', 'children.events', 'marriages.scans', 'marriages.participants.events']);
 
         return Inertia::render('persons/show', [
             'person' => PersonResource::make($person)->resolve(),

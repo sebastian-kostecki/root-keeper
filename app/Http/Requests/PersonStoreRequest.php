@@ -20,11 +20,10 @@ class PersonStoreRequest extends FormRequest
      */
     public function rules(): array
     {
-        $deathRules = $this->partialDateRules('death');
-
-        foreach ($deathRules as &$rule) {
-            $rule[] = 'prohibited_unless:is_deceased,1,true';
-        }
+        $deathRules = array_map(
+            fn (array $rule): array => [...$rule, 'prohibited_unless:is_deceased,1,true'],
+            $this->partialDateRules('death'),
+        );
 
         return [
             'first_name' => ['nullable', 'required_without:last_name', 'string', 'max:255'],

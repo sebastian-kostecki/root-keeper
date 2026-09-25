@@ -11,6 +11,7 @@ import {
     DialogTitle,
     DialogTrigger,
 } from '@/components/ui/dialog';
+import { pluralPhrase } from '@/lib/plural';
 import type { Marriage } from '@/types';
 
 type Props = {
@@ -19,30 +20,6 @@ type Props = {
     spouseName: string;
     trigger: React.ReactNode;
 };
-
-function pluralPhrase(
-    count: number,
-    one: string,
-    few: string,
-    many: string,
-): string {
-    if (count === 1) {
-        return one;
-    }
-
-    const lastDigit = count % 10;
-    const lastTwoDigits = count % 100;
-
-    if (
-        lastDigit >= 2 &&
-        lastDigit <= 4 &&
-        (lastTwoDigits < 12 || lastTwoDigits > 14)
-    ) {
-        return few;
-    }
-
-    return many;
-}
 
 export function RemoveMarriageDialog({
     marriage,

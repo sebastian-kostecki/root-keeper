@@ -246,6 +246,10 @@ No schema change. Existing events keep their `type`/`role` values; rollback is a
 - Similar implementation: `context/archive/2026-09-25-parent-child-relations/plan.md`, `app/Actions/Relations/CreateParentChildRelation.php:18-50`
 - Scan linking: `context/archive/2026-09-24-birth-death-confirmed-by-scan/plan.md`, `app/Http/Controllers/EventScanController.php`
 
+## Addenda
+
+- **Nullable spouse (impl review F6, 2026-09-25)**: `MarriageResource.spouse` and the TS `Marriage.spouse` are `… | null`, and the UI falls back to "Nieznany małżonek". This is a defensive fallback for a marriage event with only one participant. `DeletePerson` prevents that state, so it should not occur in practice.
+
 ## Progress
 
 > Convention: `- [ ]` pending, `- [x]` done. Append ` — <commit sha>` when a step lands. Do not rename step titles. See `references/progress-format.md`.

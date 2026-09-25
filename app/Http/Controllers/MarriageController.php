@@ -36,8 +36,6 @@ class MarriageController extends Controller
      */
     public function update(MarriageUpdateRequest $request, Event $marriage, UpdateMarriage $updateMarriage): RedirectResponse
     {
-        abort_unless($marriage->type === EventType::Marriage, 404);
-
         $updateMarriage->handle($marriage, $request->validated('marriage', []));
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Zapisano zmiany')]);

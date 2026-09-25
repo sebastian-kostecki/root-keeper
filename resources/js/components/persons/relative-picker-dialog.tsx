@@ -11,6 +11,7 @@ import {
     DialogTitle,
     DialogTrigger,
 } from '@/components/ui/dialog';
+import { useRelationCandidates } from '@/hooks/use-relation-candidates';
 import type { PersonPreview, RelationCandidate } from '@/types';
 
 type Props = {
@@ -27,19 +28,10 @@ export function RelativePickerDialog({
     trigger,
 }: Props) {
     const [open, setOpen] = useState(false);
-    const [loading, setLoading] = useState(false);
-    const [loaded, setLoaded] = useState(false);
     const [processingId, setProcessingId] = useState<number | null>(null);
     const [error, setError] = useState<string | undefined>(undefined);
     const [filter, setFilter] = useState('');
-
-    // The optional prop is dropped by any non-partial visit (e.g. the
-    // redirect back after a validation error), so keep the last loaded list.
-    const [list, setList] = useState(candidates);
-
-    if (candidates !== undefined && candidates !== list) {
-        setList(candidates);
-    }
+    const { list, loading, loaded, load } = useRelationCandidates(candidates);
 
     const handleOpenChange = (nextOpen: boolean) => {
         setOpen(nextOpen);
@@ -47,13 +39,7 @@ export function RelativePickerDialog({
         if (nextOpen) {
             setError(undefined);
             setFilter('');
-            setLoaded(false);
-            setLoading(true);
-            router.reload({
-                only: ['relationCandidates'],
-                onSuccess: () => setLoaded(true),
-                onFinish: () => setLoading(false),
-            });
+            load();
         }
     };
 
