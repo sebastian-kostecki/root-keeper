@@ -42,6 +42,136 @@ test('persons index shows only the people from the authenticated user tree, sort
         ->where('persons.3.id', $unnamed->id));
 });
 
+test('persons index filters by every query word against first or last name in any order', function () {
+    $user = User::factory()->create();
+
+    $janKowalski = Person::factory()->for($user->tree)->create(['first_name' => 'Jan', 'last_name' => 'Kowalski']);
+    Person::factory()->for($user->tree)->create(['first_name' => 'Anna', 'last_name' => 'Kowalski']);
+    $janNowak = Person::factory()->for($user->tree)->create(['first_name' => 'Jan', 'last_name' => 'Nowak']);
+
+    $response = $this->actingAs($user)->get(route('persons.index', ['q' => 'kowalski jan']));
+
+    $response->assertOk();
+    $response->assertInertia(fn ($page) => $page
+        ->component('persons/index')
+        ->has('persons', 1)
+        ->where('persons.0.id', $janKowalski->id));
+
+    $response = $this->actingAs($user)->get(route('persons.index', ['q' => 'JAN']));
+
+    $response->assertOk();
+    $response->assertInertia(fn ($page) => $page
+        ->component('persons/index')
+        ->has('persons', 2)
+        ->where('persons.0.id', $janKowalski->id)
+        ->where('persons.1.id', $janNowak->id));
+});
+
+test('persons index matches a query word anywhere inside a name', function () {
+    $user = User::factory()->create();
+
+    $kowalski = Person::factory()->for($user->tree)->create(['first_name' => 'Jan', 'last_name' => 'Kowalski']);
+
+    $response = $this->actingAs($user)->get(route('persons.index', ['q' => 'owal']));
+
+    $response->assertOk();
+    $response->assertInertia(fn ($page) => $page
+        ->component('persons/index')
+        ->has('persons', 1)
+        ->where('persons.0.id', $kowalski->id));
+});
+
+test('persons index ignores case but not polish diacritics', function () {
+    $user = User::factory()->create();
+
+    $lukasz = Person::factory()->for($user->tree)->create(['first_name' => 'Łukasz', 'last_name' => 'Żółkiewski']);
+
+    $response = $this->actingAs($user)->get(route('persons.index', ['q' => 'ŁUKASZ żółk']));
+
+    $response->assertOk();
+    $response->assertInertia(fn ($page) => $page
+        ->component('persons/index')
+        ->has('persons', 1)
+        ->where('persons.0.id', $lukasz->id));
+
+    $response = $this->actingAs($user)->get(route('persons.index', ['q' => 'lukasz']));
+
+    $response->assertOk();
+    $response->assertInertia(fn ($page) => $page
+        ->component('persons/index')
+        ->has('persons', 0));
+});
+
+test('persons index treats percent and underscore in the query literally', function () {
+    $user = User::factory()->create();
+
+    Person::factory()->for($user->tree)->create(['first_name' => 'Jan', 'last_name' => 'Kowalski']);
+
+    $response = $this->actingAs($user)->get(route('persons.index', ['q' => '%']));
+
+    $response->assertOk();
+    $response->assertInertia(fn ($page) => $page
+        ->component('persons/index')
+        ->has('persons', 0));
+
+    $response = $this->actingAs($user)->get(route('persons.index', ['q' => '_']));
+
+    $response->assertOk();
+    $response->assertInertia(fn ($page) => $page
+        ->component('persons/index')
+        ->has('persons', 0));
+});
+
+test('persons index search never returns people from another users tree', function () {
+    $user = User::factory()->create();
+    $otherUser = User::factory()->create();
+
+    $ownMatch = Person::factory()->for($user->tree)->create(['first_name' => 'Jan', 'last_name' => 'Kowalski']);
+    Person::factory()->for($otherUser->tree)->create(['first_name' => 'Jan', 'last_name' => 'Kowalski']);
+
+    $response = $this->actingAs($user)->get(route('persons.index', ['q' => 'Kowalski']));
+
+    $response->assertOk();
+    $response->assertInertia(fn ($page) => $page
+        ->component('persons/index')
+        ->has('persons', 1)
+        ->where('persons.0.id', $ownMatch->id));
+});
+
+test('persons index with an empty, blank or non-string query returns everyone and echoes filters.q', function () {
+    $user = User::factory()->create();
+
+    Person::factory()->for($user->tree)->create(['first_name' => 'Jan', 'last_name' => 'Kowalski']);
+    Person::factory()->for($user->tree)->create(['first_name' => 'Anna', 'last_name' => 'Nowak']);
+
+    $response = $this->actingAs($user)->get(route('persons.index', ['q' => '']));
+    $response->assertOk();
+    $response->assertInertia(fn ($page) => $page
+        ->component('persons/index')
+        ->has('persons', 2)
+        ->where('filters.q', ''));
+
+    $response = $this->actingAs($user)->get(route('persons.index', ['q' => '  ']));
+    $response->assertOk();
+    $response->assertInertia(fn ($page) => $page
+        ->component('persons/index')
+        ->has('persons', 2)
+        ->where('filters.q', ''));
+
+    $response = $this->actingAs($user)->get(route('persons.index', ['q' => ['x']]));
+    $response->assertOk();
+    $response->assertInertia(fn ($page) => $page
+        ->component('persons/index')
+        ->has('persons', 2)
+        ->where('filters.q', ''));
+
+    $response = $this->actingAs($user)->get(route('persons.index', ['q' => '  Jan  ']));
+    $response->assertOk();
+    $response->assertInertia(fn ($page) => $page
+        ->component('persons/index')
+        ->where('filters.q', 'Jan'));
+});
+
 test('persons index payload does not contain is_confirmed or scans on events', function () {
     $user = User::factory()->create();
     $person = Person::factory()->for($user->tree)->create();

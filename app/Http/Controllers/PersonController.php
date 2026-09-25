@@ -25,8 +25,21 @@ class PersonController extends Controller
      */
     public function index(Request $request): Response
     {
+        $query = $this->normalizeSearchQuery($request->query('q'));
+
         $people = $request->user()->tree->people()
             ->with('events')
+            ->when($query !== '', function ($builder) use ($query): void {
+                $words = preg_split('/\s+/u', $query, -1, PREG_SPLIT_NO_EMPTY) ?: [];
+
+                foreach ($words as $word) {
+                    $pattern = '%'.str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $word).'%';
+
+                    $builder->where(fn ($builder) => $builder
+                        ->whereLike('first_name', $pattern)
+                        ->orWhereLike('last_name', $pattern));
+                }
+            })
             ->orderByRaw('last_name is null')
             ->orderBy('last_name')
             ->orderBy('first_name')
@@ -35,7 +48,20 @@ class PersonController extends Controller
 
         return Inertia::render('persons/index', [
             'persons' => PersonResource::collection($people)->resolve(),
+            'filters' => ['q' => $query],
         ]);
+    }
+
+    /**
+     * Normalize the raw `q` query parameter into a trimmed, length-capped search string.
+     */
+    private function normalizeSearchQuery(mixed $q): string
+    {
+        if (! is_string($q)) {
+            return '';
+        }
+
+        return mb_substr(trim($q), 0, 100);
     }
 
     /**
