@@ -306,17 +306,17 @@ No schema changes. Orphaned events cannot pre-exist because no delete path exist
 
 #### Automated
 
-- [x] 2.1 Person and scan feature tests pass: `vendor/bin/sail artisan test --compact tests/Feature/PersonsTest.php tests/Feature/EventScansTest.php tests/Feature/ScansTest.php`
-- [x] 2.2 Full test suite passes: `vendor/bin/sail artisan test --compact`
-- [x] 2.3 Static analysis passes: `vendor/bin/sail composer types:check`
-- [x] 2.4 Code style is clean: `vendor/bin/sail bin pint --dirty --format agent`
-- [x] 2.5 Frontend types compile after Wayfinder regeneration: `vendor/bin/sail npm run types:check`
-- [x] 2.6 Frontend lint/format check passes: `vendor/bin/sail npm run check`
-- [x] 2.7 Production build succeeds: `vendor/bin/sail npm run build`
+- [x] 2.1 Person and scan feature tests pass: `vendor/bin/sail artisan test --compact tests/Feature/PersonsTest.php tests/Feature/EventScansTest.php tests/Feature/ScansTest.php` — 5f50dd4
+- [x] 2.2 Full test suite passes: `vendor/bin/sail artisan test --compact` — 5f50dd4
+- [x] 2.3 Static analysis passes: `vendor/bin/sail composer types:check` — 5f50dd4
+- [x] 2.4 Code style is clean: `vendor/bin/sail bin pint --dirty --format agent` — 5f50dd4
+- [x] 2.5 Frontend types compile after Wayfinder regeneration: `vendor/bin/sail npm run types:check` — 5f50dd4
+- [x] 2.6 Frontend lint/format check passes: `vendor/bin/sail npm run check` — 5f50dd4
+- [x] 2.7 Production build succeeds: `vendor/bin/sail npm run build` — 5f50dd4
 
 #### Manual
 
-- [x] 2.8 `vendor/bin/sail artisan route:list --path=persons` shows `edit`, `update`, `destroy` behind `auth` and `verified`
-- [x] 2.9 "Usuń" on a deceased person with linked scans shows the dialog with the name, "oraz zgon" and the correctly pluralised link count; "Anuluj" closes it without changes
-- [x] 2.10 Confirming redirects to "Osoby" with "Usunięto osobę", the person is gone from the list, and the previously linked scan still opens from "Skany" with its "Potwierdza" list no longer mentioning that person
-- [x] 2.11 Dialog and preview actions read correctly in light and dark themes
+- [x] 2.8 `vendor/bin/sail artisan route:list --path=persons` shows `edit`, `update`, `destroy` behind `auth` and `verified` — 5f50dd4
+- [x] 2.9 "Usuń" on a deceased person with linked scans shows the dialog with the name, "oraz zgon" and the correctly pluralised link count; "Anuluj" closes it without changes — 5f50dd4
+- [x] 2.10 Confirming redirects to "Osoby" with "Usunięto osobę", the person is gone from the list, and the previously linked scan still opens from "Skany" with its "Potwierdza" list no longer mentioning that person — 5f50dd4
+- [x] 2.11 Dialog and preview actions read correctly in light and dark themes — 5f50dd4
