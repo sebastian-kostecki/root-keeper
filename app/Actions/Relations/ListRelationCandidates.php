@@ -18,6 +18,7 @@ class ListRelationCandidates
      *     birth_date: string|null,
      *     as_parent_blocked_reason: string|null,
      *     as_child_blocked_reason: string|null,
+     *     as_spouse_blocked_reason: string|null,
      * }>
      */
     public function handle(Person $person): array
@@ -28,6 +29,14 @@ class ListRelationCandidates
         $childrenOfPerson = $graph->childrenOf($person->id);
         $descendantsOfPerson = $graph->descendantsOf($person->id);
         $ancestorsOfPerson = $graph->ancestorsOf($person->id);
+
+        $spouseIdsOfPerson = $person->marriages()
+            ->with('participants')
+            ->get()
+            ->flatMap(fn ($marriage) => $marriage->participants->pluck('id'))
+            ->reject(fn (int $id): bool => $id === $person->id)
+            ->unique()
+            ->all();
 
         $candidates = $person->tree->people()
             ->where('id', '!=', $person->id)
@@ -53,6 +62,7 @@ class ListRelationCandidates
                 count($graph->parentsOf($candidate->id)) >= 2 => 'Ma już dwoje rodziców',
                 default => null,
             },
+            'as_spouse_blocked_reason' => in_array($candidate->id, $spouseIdsOfPerson, true) ? 'Już jest małżonkiem' : null,
         ])->all();
     }
 }

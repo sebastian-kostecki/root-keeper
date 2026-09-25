@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\EventScanController;
+use App\Http\Controllers\MarriageController;
 use App\Http\Controllers\ParentChildRelationController;
 use App\Http\Controllers\PersonController;
 use App\Http\Controllers\ScanController;
@@ -19,6 +20,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('events/{event}/scans/{scan}', [EventScanController::class, 'destroy'])->name('events.scans.destroy');
 
     Route::resource('parent-child-relations', ParentChildRelationController::class)->only(['store', 'destroy']);
+
+    Route::resource('marriages', MarriageController::class)->only(['store', 'update', 'destroy']);
 });
 
 require __DIR__.'/settings.php';

@@ -78,6 +78,14 @@ class Person extends Model
             ->withTimestamps();
     }
 
+    /**
+     * @return BelongsToMany<Event, $this, EventParticipant>
+     */
+    public function marriages(): BelongsToMany
+    {
+        return $this->events()->where('type', EventType::Marriage);
+    }
+
     public function birth(): ?Event
     {
         return $this->events->firstWhere('type', EventType::Birth);

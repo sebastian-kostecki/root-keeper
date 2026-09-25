@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Models\Event;
 use App\Models\Person;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Request;
@@ -28,6 +29,7 @@ class PersonResource extends JsonResource
      *     death: array<string, mixed>|null,
      *     parents?: list<array<string, mixed>>,
      *     children?: list<array<string, mixed>>,
+     *     marriages?: list<array<string, mixed>>,
      * }
      */
     public function toArray(Request $request): array
@@ -50,6 +52,9 @@ class PersonResource extends JsonResource
             'children' => $this->whenLoaded('children', fn (): array => RelativeResource::collection(
                 $this->sortRelatives($this->children)
             )->resolve()),
+            'marriages' => $this->whenLoaded('marriages', fn (): array => $this->sortMarriages($this->marriages)
+                ->map(fn (Event $marriage): array => MarriageResource::make($marriage, $this->resource)->resolve())
+                ->all()),
         ];
     }
 
@@ -84,6 +89,35 @@ class PersonResource extends JsonResource
             $person->last_name ?? '',
             $person->first_name ?? '',
             $person->id,
+        ];
+    }
+
+    /**
+     * Order marriages by date (known year first, then year/month/day
+     * ascending with a missing month/day sorting before a known one within
+     * the same year), then by id.
+     *
+     * @param  Collection<int, Event>  $marriages
+     * @return Collection<int, Event>
+     */
+    private function sortMarriages(Collection $marriages): Collection
+    {
+        return $marriages->sort(
+            fn (Event $a, Event $b): int => $this->marriageSortKey($a) <=> $this->marriageSortKey($b)
+        )->values();
+    }
+
+    /**
+     * @return array{0: int, 1: int, 2: int, 3: int, 4: int}
+     */
+    private function marriageSortKey(Event $marriage): array
+    {
+        return [
+            $marriage->date_year === null ? 1 : 0,
+            $marriage->date_year ?? 0,
+            $marriage->date_month ?? 0,
+            $marriage->date_day ?? 0,
+            $marriage->id,
         ];
     }
 }

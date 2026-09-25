@@ -2,15 +2,17 @@
 
 namespace App\Http\Requests;
 
+use App\Concerns\PartialDateValidationRules;
 use App\Enums\Religion;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Support\Facades\Date;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
 
 class PersonStoreRequest extends FormRequest
 {
+    use PartialDateValidationRules;
+
     /**
      * Get the validation rules that apply to the request.
      *
@@ -18,7 +20,11 @@ class PersonStoreRequest extends FormRequest
      */
     public function rules(): array
     {
-        $currentYear = (int) Date::now()->year;
+        $deathRules = $this->partialDateRules('death');
+
+        foreach ($deathRules as &$rule) {
+            $rule[] = 'prohibited_unless:is_deceased,1,true';
+        }
 
         return [
             'first_name' => ['nullable', 'required_without:last_name', 'string', 'max:255'],
@@ -27,17 +33,8 @@ class PersonStoreRequest extends FormRequest
             'religion' => ['nullable', Rule::enum(Religion::class)],
             'is_deceased' => ['sometimes', 'boolean'],
 
-            'birth.year' => ['nullable', 'integer', "between:1000,{$currentYear}", 'required_with:birth.month', 'required_if_accepted:birth.is_approximate'],
-            'birth.month' => ['nullable', 'integer', 'between:1,12', 'required_with:birth.day'],
-            'birth.day' => ['nullable', 'integer', 'between:1,31'],
-            'birth.is_approximate' => ['sometimes', 'boolean'],
-            'birth.place' => ['nullable', 'string', 'max:255'],
-
-            'death.year' => ['nullable', 'integer', "between:1000,{$currentYear}", 'required_with:death.month', 'required_if_accepted:death.is_approximate', 'prohibited_unless:is_deceased,1,true'],
-            'death.month' => ['nullable', 'integer', 'between:1,12', 'required_with:death.day', 'prohibited_unless:is_deceased,1,true'],
-            'death.day' => ['nullable', 'integer', 'between:1,31', 'prohibited_unless:is_deceased,1,true'],
-            'death.is_approximate' => ['sometimes', 'boolean', 'prohibited_unless:is_deceased,1,true'],
-            'death.place' => ['nullable', 'string', 'max:255', 'prohibited_unless:is_deceased,1,true'],
+            ...$this->partialDateRules('birth'),
+            ...$deathRules,
         ];
     }
 
@@ -76,27 +73,5 @@ class PersonStoreRequest extends FormRequest
             $this->validateFullDate($validator, 'birth');
             $this->validateFullDate($validator, 'death');
         });
-    }
-
-    /**
-     * Reject an impossible calendar date (e.g. 31 lutego) for the given date prefix.
-     */
-    private function validateFullDate(Validator $validator, string $prefix): void
-    {
-        $year = $this->input("{$prefix}.year");
-        $month = $this->input("{$prefix}.month");
-        $day = $this->input("{$prefix}.day");
-
-        if ($year === null || $month === null || $day === null) {
-            return;
-        }
-
-        if ($validator->errors()->hasAny(["{$prefix}.year", "{$prefix}.month", "{$prefix}.day"])) {
-            return;
-        }
-
-        if (! checkdate((int) $month, (int) $day, (int) $year)) {
-            $validator->errors()->add("{$prefix}.day", __('Podana data jest nieprawidłowa.'));
-        }
     }
 }
