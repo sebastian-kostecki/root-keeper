@@ -27,6 +27,7 @@ export function DeleteScanDialog({ scan, confirms, trigger }: Props) {
         setProcessing(true);
 
         router.delete(ScanController.destroy(scan.id).url, {
+            preserveScroll: true,
             onSuccess: () => setOpen(false),
             onFinish: () => setProcessing(false),
         });
