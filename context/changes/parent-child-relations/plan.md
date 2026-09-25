@@ -295,18 +295,18 @@ Additive migration creating one table; no backfill. Rolling back drops the table
 
 #### Automated
 
-- [x] 2.1 Relation feature tests pass
-- [x] 2.2 Existing person tests still pass
-- [x] 2.3 PHP formatting is clean
-- [x] 2.4 TypeScript type check passes
-- [x] 2.5 Lint and format check pass
-- [x] 2.6 Production build succeeds
+- [x] 2.1 Relation feature tests pass — 8a82d17
+- [x] 2.2 Existing person tests still pass — 8a82d17
+- [x] 2.3 PHP formatting is clean — 8a82d17
+- [x] 2.4 TypeScript type check passes — 8a82d17
+- [x] 2.5 Lint and format check pass — 8a82d17
+- [x] 2.6 Production build succeeds — 8a82d17
 
 #### Manual
 
-- [x] 2.7 Adding a parent from a child's preview and a child from a parent's preview shows the relation on both previews
-- [x] 2.8 Picker shows blocked people with the correct reason, filter works, "Dodaj rodzica" hidden after two parents
-- [x] 2.9 Removing a relation asks for confirmation and both people remain
-- [x] 2.10 Children appear in birth order, unknown birth dates last
-- [x] 2.11 Delete-person dialog states the relation count with correct Polish plurals and relatives remain
-- [x] 2.12 Cards, picker and dialogs render correctly in light and dark appearance
+- [x] 2.7 Adding a parent from a child's preview and a child from a parent's preview shows the relation on both previews — 8a82d17
+- [x] 2.8 Picker shows blocked people with the correct reason, filter works, "Dodaj rodzica" hidden after two parents — 8a82d17
+- [x] 2.9 Removing a relation asks for confirmation and both people remain — 8a82d17
+- [x] 2.10 Children appear in birth order, unknown birth dates last — 8a82d17
+- [x] 2.11 Delete-person dialog states the relation count with correct Polish plurals and relatives remain — 8a82d17
+- [x] 2.12 Cards, picker and dialogs render correctly in light and dark appearance — 8a82d17
