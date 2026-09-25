@@ -2,19 +2,25 @@ import { Head, Link, setLayoutProps } from '@inertiajs/react';
 import PersonController from '@/actions/App/Http/Controllers/PersonController';
 import { DeletePersonDialog } from '@/components/persons/delete-person-dialog';
 import { EventCard } from '@/components/persons/event-card';
+import { RelativesCard } from '@/components/persons/relatives-card';
 import Heading from '@/components/heading';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { index as personsIndex } from '@/routes/persons';
-import type { PersonPreview, Scan } from '@/types';
+import type { PersonPreview, RelationCandidate, Scan } from '@/types';
 
 type Props = {
     person: PersonPreview;
     availableScans?: Scan[];
+    relationCandidates?: RelationCandidate[];
 };
 
-export default function Show({ person, availableScans }: Props) {
+export default function Show({
+    person,
+    availableScans,
+    relationCandidates,
+}: Props) {
     setLayoutProps({
         breadcrumbs: [
             { title: 'Osoby', href: personsIndex() },
@@ -78,6 +84,20 @@ export default function Show({ person, availableScans }: Props) {
                         </div>
                     </CardContent>
                 </Card>
+
+                <RelativesCard
+                    kind="parent"
+                    person={person}
+                    relatives={person.parents}
+                    candidates={relationCandidates}
+                />
+
+                <RelativesCard
+                    kind="child"
+                    person={person}
+                    relatives={person.children}
+                    candidates={relationCandidates}
+                />
 
                 {person.birth && (
                     <EventCard

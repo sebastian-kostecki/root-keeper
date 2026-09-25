@@ -18,9 +18,14 @@ type Props = {
     trigger: React.ReactNode;
 };
 
-function scanLinkPhrase(count: number): string {
+function pluralPhrase(
+    count: number,
+    one: string,
+    few: string,
+    many: string,
+): string {
     if (count === 1) {
-        return 'powiązanie';
+        return one;
     }
 
     const lastDigit = count % 10;
@@ -31,10 +36,10 @@ function scanLinkPhrase(count: number): string {
         lastDigit <= 4 &&
         (lastTwoDigits < 12 || lastTwoDigits > 14)
     ) {
-        return 'powiązania';
+        return few;
     }
 
-    return 'powiązań';
+    return many;
 }
 
 export function DeletePersonDialog({ person, trigger }: Props) {
@@ -43,6 +48,21 @@ export function DeletePersonDialog({ person, trigger }: Props) {
 
     const linkCount =
         (person.birth?.scans.length ?? 0) + (person.death?.scans.length ?? 0);
+    const relationCount = person.parents.length + person.children.length;
+
+    const extras: string[] = [];
+
+    if (linkCount > 0) {
+        extras.push(
+            `${linkCount} ${pluralPhrase(linkCount, 'powiązanie', 'powiązania', 'powiązań')} ze skanami aktów`,
+        );
+    }
+
+    if (relationCount > 0) {
+        extras.push(
+            `${relationCount} ${pluralPhrase(relationCount, 'relacja rodzinna', 'relacje rodzinne', 'relacji rodzinnych')}`,
+        );
+    }
 
     const handleConfirm = () => {
         setProcessing(true);
@@ -62,14 +82,12 @@ export function DeletePersonDialog({ person, trigger }: Props) {
                     Czy na pewno chcesz usunąć osobę „{person.display_name}
                     ”? Usunięte zostaną jej dane i urodzenie
                     {person.death && <> oraz zgon</>}
-                    {linkCount > 0 && (
-                        <>
-                            , a także {linkCount} {scanLinkPhrase(linkCount)} ze
-                            skanami aktów
-                        </>
-                    )}
-                    . Skany pozostaną w bibliotece skanów. Tej operacji nie
-                    można cofnąć.
+                    {extras.length > 0 && <>, a także {extras.join(' i ')}</>}.
+                    Skany pozostaną w bibliotece skanów.
+                    {relationCount > 0 && (
+                        <> Powiązane osoby pozostaną w drzewie.</>
+                    )}{' '}
+                    Tej operacji nie można cofnąć.
                 </DialogDescription>
 
                 <DialogFooter className="gap-2">

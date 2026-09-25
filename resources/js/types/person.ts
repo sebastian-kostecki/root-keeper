@@ -32,9 +32,27 @@ export type Person = {
     death: PersonEvent | null;
 };
 
+export type Relative = {
+    relation_id: number;
+    id: number;
+    display_name: string;
+    birth_date: string | null;
+    death_date: string | null;
+};
+
+export type RelationCandidate = {
+    id: number;
+    display_name: string;
+    birth_date: string | null;
+    as_parent_blocked_reason: string | null;
+    as_child_blocked_reason: string | null;
+};
+
 export type PersonPreview = Omit<Person, 'birth' | 'death'> & {
     birth: SourcedPersonEvent | null;
     death: SourcedPersonEvent | null;
+    parents: Relative[];
+    children: Relative[];
 };
 
 export type PersonFormEvent = {

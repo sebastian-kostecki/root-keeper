@@ -1,8 +1,24 @@
 <?php
 
+use App\Enums\ParticipantRole;
+use App\Models\Event;
 use App\Models\ParentChildRelation;
 use App\Models\Person;
 use App\Models\User;
+
+/**
+ * Attach a birth event with the given partial date to a person.
+ */
+function attachBirth(Person $person, ?int $year = null, ?int $month = null, ?int $day = null): void
+{
+    $event = Event::factory()->for($person->tree)->birth()->create([
+        'date_year' => $year,
+        'date_month' => $month,
+        'date_day' => $day,
+    ]);
+
+    $event->participants()->attach($person, ['role' => ParticipantRole::Subject]);
+}
 
 test('guests are redirected to the login page from parent-child-relations routes', function () {
     $relation = ParentChildRelation::factory()->create();
@@ -174,4 +190,123 @@ test('deleting a person removes the relations where they are parent and where th
     $this->assertDatabaseCount('parent_child_relations', 0);
     $this->assertDatabaseHas('people', ['id' => $grandparent->id]);
     $this->assertDatabaseHas('people', ['id' => $grandchild->id]);
+});
+
+test('the preview returns parents and children with the relation id, ordered by birth date', function () {
+    $user = User::factory()->create();
+    $person = Person::factory()->for($user->tree)->create();
+
+    $yearOnly = Person::factory()->for($user->tree)->create();
+    attachBirth($yearOnly, year: 1850);
+
+    $yearAndMonth = Person::factory()->for($user->tree)->create();
+    attachBirth($yearAndMonth, year: 1850, month: 3);
+
+    $laterYear = Person::factory()->for($user->tree)->create();
+    attachBirth($laterYear, year: 1852);
+
+    $noBirth = Person::factory()->for($user->tree)->create();
+
+    $relationYearOnly = ParentChildRelation::factory()->create(['tree_id' => $user->tree->id, 'parent_id' => $person->id, 'child_id' => $yearOnly->id]);
+    ParentChildRelation::factory()->create(['tree_id' => $user->tree->id, 'parent_id' => $person->id, 'child_id' => $yearAndMonth->id]);
+    ParentChildRelation::factory()->create(['tree_id' => $user->tree->id, 'parent_id' => $person->id, 'child_id' => $laterYear->id]);
+    ParentChildRelation::factory()->create(['tree_id' => $user->tree->id, 'parent_id' => $person->id, 'child_id' => $noBirth->id]);
+
+    $response = $this->actingAs($user)->get(route('persons.show', $person));
+
+    $response->assertOk();
+    $response->assertInertia(fn ($page) => $page
+        ->component('persons/show')
+        ->where('person.children.0.id', $yearOnly->id)
+        ->where('person.children.0.relation_id', $relationYearOnly->id)
+        ->where('person.children.1.id', $yearAndMonth->id)
+        ->where('person.children.2.id', $laterYear->id)
+        ->where('person.children.3.id', $noBirth->id));
+});
+
+test('two children born on the same date are ordered by name', function () {
+    $user = User::factory()->create();
+    $person = Person::factory()->for($user->tree)->create();
+
+    $zChild = Person::factory()->for($user->tree)->create(['first_name' => 'Zofia', 'last_name' => 'Nowak']);
+    attachBirth($zChild, year: 1850, month: 3, day: 15);
+
+    $aChild = Person::factory()->for($user->tree)->create(['first_name' => 'Adam', 'last_name' => 'Nowak']);
+    attachBirth($aChild, year: 1850, month: 3, day: 15);
+
+    ParentChildRelation::factory()->create(['tree_id' => $user->tree->id, 'parent_id' => $person->id, 'child_id' => $zChild->id]);
+    ParentChildRelation::factory()->create(['tree_id' => $user->tree->id, 'parent_id' => $person->id, 'child_id' => $aChild->id]);
+
+    $response = $this->actingAs($user)->get(route('persons.show', $person));
+
+    $response->assertOk();
+    $response->assertInertia(fn ($page) => $page
+        ->component('persons/show')
+        ->where('person.children.0.id', $aChild->id)
+        ->where('person.children.1.id', $zChild->id));
+});
+
+test('person show does not include relationCandidates on a normal visit', function () {
+    $user = User::factory()->create();
+    $person = Person::factory()->for($user->tree)->create();
+
+    $response = $this->actingAs($user)->get(route('persons.show', $person));
+
+    $response->assertOk();
+    $response->assertInertia(fn ($page) => $page
+        ->component('persons/show')
+        ->missing('relationCandidates'));
+});
+
+test('a partial reload of relationCandidates excludes the current person and other trees, and gives the expected reason per direction', function () {
+    $user = User::factory()->create();
+    $tree = $user->tree;
+
+    $grandparent = Person::factory()->for($tree)->create();
+    $parent = Person::factory()->for($tree)->create();
+    $person = Person::factory()->for($tree)->create();
+    $child = Person::factory()->for($tree)->create();
+    $grandchild = Person::factory()->for($tree)->create();
+    $parentA = Person::factory()->for($tree)->create();
+    $parentB = Person::factory()->for($tree)->create();
+    $twoParentsChild = Person::factory()->for($tree)->create();
+    $linkable = Person::factory()->for($tree)->create();
+
+    ParentChildRelation::factory()->create(['tree_id' => $tree->id, 'parent_id' => $grandparent->id, 'child_id' => $parent->id]);
+    ParentChildRelation::factory()->create(['tree_id' => $tree->id, 'parent_id' => $parent->id, 'child_id' => $person->id]);
+    ParentChildRelation::factory()->create(['tree_id' => $tree->id, 'parent_id' => $person->id, 'child_id' => $child->id]);
+    ParentChildRelation::factory()->create(['tree_id' => $tree->id, 'parent_id' => $child->id, 'child_id' => $grandchild->id]);
+    ParentChildRelation::factory()->create(['tree_id' => $tree->id, 'parent_id' => $parentA->id, 'child_id' => $twoParentsChild->id]);
+    ParentChildRelation::factory()->create(['tree_id' => $tree->id, 'parent_id' => $parentB->id, 'child_id' => $twoParentsChild->id]);
+
+    $otherUser = User::factory()->create();
+    $foreignPerson = Person::factory()->for($otherUser->tree)->create();
+
+    $initial = $this->actingAs($user)->get(route('persons.show', $person), ['X-Inertia' => 'true']);
+    $version = $initial->headers->get('X-Inertia-Version');
+
+    $response = $this->actingAs($user)->get(route('persons.show', $person), [
+        'X-Inertia' => 'true',
+        'X-Inertia-Version' => $version,
+        'X-Inertia-Partial-Data' => 'relationCandidates',
+        'X-Inertia-Partial-Component' => 'persons/show',
+    ]);
+
+    $response->assertOk();
+    $props = $response->json('props');
+
+    expect($props)->not->toHaveKey('person');
+
+    $candidates = collect($props['relationCandidates'])->keyBy('id');
+
+    expect($candidates->has($person->id))->toBeFalse();
+    expect($candidates->has($foreignPerson->id))->toBeFalse();
+
+    expect($candidates[$parent->id]['as_parent_blocked_reason'])->toBe('Już jest rodzicem');
+    expect($candidates[$grandchild->id]['as_parent_blocked_reason'])->toBe('Jest potomkiem tej osoby');
+    expect($candidates[$child->id]['as_child_blocked_reason'])->toBe('Już jest dzieckiem');
+    expect($candidates[$grandparent->id]['as_child_blocked_reason'])->toBe('Jest przodkiem tej osoby');
+    expect($candidates[$twoParentsChild->id]['as_child_blocked_reason'])->toBe('Ma już dwoje rodziców');
+    expect($candidates[$linkable->id]['as_parent_blocked_reason'])->toBeNull();
+    expect($candidates[$linkable->id]['as_child_blocked_reason'])->toBeNull();
 });

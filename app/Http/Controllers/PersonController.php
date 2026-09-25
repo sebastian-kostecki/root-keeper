@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Actions\Persons\CreatePerson;
 use App\Actions\Persons\DeletePerson;
 use App\Actions\Persons\UpdatePerson;
+use App\Actions\Relations\ListRelationCandidates;
 use App\Enums\Religion;
 use App\Http\Requests\PersonStoreRequest;
 use App\Http\Requests\PersonUpdateRequest;
@@ -89,17 +90,18 @@ class PersonController extends Controller
     /**
      * Display the given person.
      */
-    public function show(Request $request, Person $person): Response
+    public function show(Request $request, Person $person, ListRelationCandidates $listRelationCandidates): Response
     {
         Gate::authorize('view', $person);
 
-        $person->load('events.scans');
+        $person->load(['events.scans', 'parents.events', 'children.events']);
 
         return Inertia::render('persons/show', [
             'person' => PersonResource::make($person)->resolve(),
             'availableScans' => Inertia::optional(fn (): array => ScanResource::collection(
                 $request->user()->tree->scans()->latest()->orderByDesc('id')->get()
             )->resolve()),
+            'relationCandidates' => Inertia::optional(fn (): array => $listRelationCandidates->handle($person)),
         ]);
     }
 

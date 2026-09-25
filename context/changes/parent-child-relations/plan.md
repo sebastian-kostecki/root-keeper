@@ -286,27 +286,27 @@ Additive migration creating one table; no backfill. Rolling back drops the table
 
 #### Automated
 
-- [ ] 1.1 Migration applies and rolls back cleanly
-- [ ] 1.2 Relation feature tests pass
-- [ ] 1.3 Existing person and event-scan tests still pass
-- [ ] 1.4 PHP formatting is clean
+- [x] 1.1 Migration applies and rolls back cleanly — bcf3ca8
+- [x] 1.2 Relation feature tests pass — bcf3ca8
+- [x] 1.3 Existing person and event-scan tests still pass — bcf3ca8
+- [x] 1.4 PHP formatting is clean — bcf3ca8
 
 ### Phase 2: Relations on the person view
 
 #### Automated
 
-- [ ] 2.1 Relation feature tests pass
-- [ ] 2.2 Existing person tests still pass
-- [ ] 2.3 PHP formatting is clean
-- [ ] 2.4 TypeScript type check passes
-- [ ] 2.5 Lint and format check pass
-- [ ] 2.6 Production build succeeds
+- [x] 2.1 Relation feature tests pass
+- [x] 2.2 Existing person tests still pass
+- [x] 2.3 PHP formatting is clean
+- [x] 2.4 TypeScript type check passes
+- [x] 2.5 Lint and format check pass
+- [x] 2.6 Production build succeeds
 
 #### Manual
 
-- [ ] 2.7 Adding a parent from a child's preview and a child from a parent's preview shows the relation on both previews
-- [ ] 2.8 Picker shows blocked people with the correct reason, filter works, "Dodaj rodzica" hidden after two parents
-- [ ] 2.9 Removing a relation asks for confirmation and both people remain
-- [ ] 2.10 Children appear in birth order, unknown birth dates last
-- [ ] 2.11 Delete-person dialog states the relation count with correct Polish plurals and relatives remain
-- [ ] 2.12 Cards, picker and dialogs render correctly in light and dark appearance
+- [x] 2.7 Adding a parent from a child's preview and a child from a parent's preview shows the relation on both previews
+- [x] 2.8 Picker shows blocked people with the correct reason, filter works, "Dodaj rodzica" hidden after two parents
+- [x] 2.9 Removing a relation asks for confirmation and both people remain
+- [x] 2.10 Children appear in birth order, unknown birth dates last
+- [x] 2.11 Delete-person dialog states the relation count with correct Polish plurals and relatives remain
+- [x] 2.12 Cards, picker and dialogs render correctly in light and dark appearance
