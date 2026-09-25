@@ -53,4 +53,12 @@ class Tree extends Model
     {
         return $this->hasMany(Scan::class);
     }
+
+    /**
+     * @return HasMany<ParentChildRelation, $this>
+     */
+    public function parentChildRelations(): HasMany
+    {
+        return $this->hasMany(ParentChildRelation::class);
+    }
 }

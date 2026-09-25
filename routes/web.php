@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\EventScanController;
+use App\Http\Controllers\ParentChildRelationController;
 use App\Http\Controllers\PersonController;
 use App\Http\Controllers\ScanController;
 use Illuminate\Support\Facades\Route;
@@ -16,6 +17,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::post('events/{event}/scans', [EventScanController::class, 'store'])->name('events.scans.store');
     Route::delete('events/{event}/scans/{scan}', [EventScanController::class, 'destroy'])->name('events.scans.destroy');
+
+    Route::resource('parent-child-relations', ParentChildRelationController::class)->only(['store', 'destroy']);
 });
 
 require __DIR__.'/settings.php';

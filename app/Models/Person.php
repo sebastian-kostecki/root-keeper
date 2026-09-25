@@ -58,6 +58,26 @@ class Person extends Model
             ->withPivot('role');
     }
 
+    /**
+     * @return BelongsToMany<Person, $this>
+     */
+    public function parents(): BelongsToMany
+    {
+        return $this->belongsToMany(Person::class, 'parent_child_relations', 'child_id', 'parent_id')
+            ->withPivot('id')
+            ->withTimestamps();
+    }
+
+    /**
+     * @return BelongsToMany<Person, $this>
+     */
+    public function children(): BelongsToMany
+    {
+        return $this->belongsToMany(Person::class, 'parent_child_relations', 'parent_id', 'child_id')
+            ->withPivot('id')
+            ->withTimestamps();
+    }
+
     public function birth(): ?Event
     {
         return $this->events->firstWhere('type', EventType::Birth);

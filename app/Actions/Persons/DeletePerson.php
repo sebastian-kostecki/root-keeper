@@ -12,6 +12,8 @@ class DeletePerson
      * person before deleting the person itself. Events shared with other
      * participants keep their remaining participant rows. Scans are never
      * touched; only the event_scan rows of removed events cascade away.
+     * Parent-child relations where this person is a parent or a child are
+     * removed automatically by the foreign key cascade on people.
      */
     public function handle(Person $person): void
     {
