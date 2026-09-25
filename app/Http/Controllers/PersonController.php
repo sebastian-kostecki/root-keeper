@@ -61,7 +61,7 @@ class PersonController extends Controller
             return '';
         }
 
-        return mb_substr(trim($q), 0, 100);
+        return rtrim(mb_substr(trim($q), 0, 100));
     }
 
     /**

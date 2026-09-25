@@ -81,9 +81,9 @@ export default function Index({ persons, filters }: Props) {
                             pierwszej osoby do drzewa.
                         </CardContent>
                     </Card>
-                ) : persons.length === 0 && filters.q !== '' ? (
+                ) : persons.length === 0 ? (
                     <Card>
-                        <CardContent className="text-muted-foreground text-sm">
+                        <CardContent className="text-muted-foreground text-sm break-words">
                             Nie znaleziono osób pasujących do „{filters.q}”.
                         </CardContent>
                     </Card>

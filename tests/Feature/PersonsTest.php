@@ -172,6 +172,20 @@ test('persons index with an empty, blank or non-string query returns everyone an
         ->where('filters.q', 'Jan'));
 });
 
+test('persons index caps the query at 100 characters without a trailing space', function () {
+    $user = User::factory()->create();
+
+    $response = $this->actingAs($user)->get(route('persons.index', ['q' => str_repeat('a', 150)]));
+    $response->assertOk();
+    $response->assertInertia(fn ($page) => $page
+        ->where('filters.q', str_repeat('a', 100)));
+
+    $response = $this->actingAs($user)->get(route('persons.index', ['q' => str_repeat('a', 99).' Kowalski']));
+    $response->assertOk();
+    $response->assertInertia(fn ($page) => $page
+        ->where('filters.q', str_repeat('a', 99)));
+});
+
 test('persons index payload does not contain is_confirmed or scans on events', function () {
     $user = User::factory()->create();
     $person = Person::factory()->for($user->tree)->create();
