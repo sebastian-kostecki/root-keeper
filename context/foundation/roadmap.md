@@ -49,7 +49,7 @@ Genealog prowadzący własne badania ma notatki, skany i zdjęcia rozproszone i 
 | S-05 | person-edit-and-delete          | poprawić dane osoby i usunąć ją po jawnym potwierdzeniu                                | S-01          | FR-006, FR-007                         | done |
 | S-06 | parent-child-relations          | połączyć rodzica z dzieckiem, zobaczyć relacje na podglądzie i usunąć relację          | S-01          | FR-011, FR-012, FR-008                 | done |
 | S-07 | marriage-with-shared-source     | dodać małżeństwo z datą i miejscem i potwierdzić je jednym aktem u obojga małżonków    | S-03          | FR-010, FR-012, FR-014, US-01          | proposed |
-| S-08 | scan-delete-with-impact         | usunąć skan po zobaczeniu listy faktów, które stracą źródło                            | S-03          | FR-015                                 | in-progress |
+| S-08 | scan-delete-with-impact         | usunąć skan po zobaczeniu listy faktów, które stracą źródło                            | S-03          | FR-015                                 | done |
 | S-09 | graphical-tree-view             | oglądać swoje drzewo graficznie i przechodzić z niego do osób                          | S-06, S-07    | FR-004, US-01                          | proposed |
 
 ## Streams
@@ -192,7 +192,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Blockers:** —
 - **Unknowns:** —
 - **Risk:** Wymaga istniejących powiązań (S-03); ciche odłączenie faktów od źródła łamie Logikę biznesową, a usunięcie pliku ze skanem jest nieodwracalne.
-- **Status:** in-progress
+- **Status:** done
 
 ### S-09: Graficzny widok drzewa
 
@@ -259,3 +259,4 @@ Rozstrzygnięte:
 - **S-05: użytkownik może poprawić dane osoby i usunąć osobę po jawnym potwierdzeniu.** — Archived 2026-09-25 → `context/archive/2026-09-25-person-edit-and-delete/`. Lesson: —.
 - **S-04: użytkownik może wyszukać osobę na liście swoich osób i przejść do jej podglądu.** — Archived 2026-09-25 → `context/archive/2026-09-25-person-search/`. Lesson: —.
 - **S-06: użytkownik może połączyć dwie osoby relacją rodzic–dziecko (dziecko może mieć tylko jednego znanego rodzica), zobaczyć rodziców i dzieci na podglądzie osoby i usunąć relację po jawnym potwierdzeniu.** — Archived 2026-09-25 → `context/archive/2026-09-25-parent-child-relations/`. Lesson: —.
+- **S-08: użytkownik może usunąć skan po potwierdzeniu, widząc wcześniej listę faktów, które stracą źródło; fakty bez ostatniego skanu stają się niepotwierdzone.** — Archived 2026-09-25 → `context/archive/2026-09-25-scan-delete-with-impact/`. Lesson: —.
