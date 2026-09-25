@@ -220,9 +220,9 @@ GitHub milestone: [M-1](https://github.com/sebastian-kostecki/root-keeper/milest
 | S-04       | #6    | person-search                 | Wyszukiwanie osoby na liście                                   | no                    | Czeka na S-01                                                |
 | S-05       | #7    | person-edit-and-delete        | Edycja i usuwanie osoby z potwierdzeniem                       | no                    | Czeka na S-01                                                |
 | S-06       | #8    | parent-child-relations        | Relacje rodzic–dziecko                                         | no                    | Czeka na S-01                                                |
-| S-07       | #9    | marriage-with-shared-source   | Małżeństwa z aktem widocznym u obojga małżonków                | no                    | Czeka na S-03                                                |
-| S-08       | #10   | scan-delete-with-impact       | Usuwanie skanu z listą faktów tracących źródło                 | no                    | Czeka na S-03                                                |
-| S-09       | #11   | graphical-tree-view           | Graficzny widok drzewa                                         | no                    | Czeka na S-06, S-07                                          |
+| S-07       | #9    | marriage-with-shared-source   | Małżeństwa z aktem widocznym u obojga małżonków                | yes                   | S-03 done → odblokowane. Run `/10x-plan marriage-with-shared-source` |
+| S-08       | #10   | scan-delete-with-impact       | Usuwanie skanu z listą faktów tracących źródło                 | yes                   | S-03 done → odblokowane. Run `/10x-plan scan-delete-with-impact` |
+| S-09       | #11   | graphical-tree-view           | Graficzny widok drzewa                                         | no                    | S-06 done; czeka na S-07                                     |
 
 ## Open Roadmap Questions
 
