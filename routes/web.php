@@ -11,7 +11,7 @@ Route::inertia('/', 'welcome')->name('home');
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('persons', PersonController::class)->only(['index', 'create', 'store', 'show', 'edit', 'update', 'destroy']);
 
-    Route::resource('scans', ScanController::class)->only(['index', 'create', 'store', 'show']);
+    Route::resource('scans', ScanController::class)->only(['index', 'create', 'store', 'show', 'destroy']);
     Route::get('scans/{scan}/file', [ScanController::class, 'file'])->name('scans.file');
     Route::get('scans/{scan}/thumbnail', [ScanController::class, 'thumbnail'])->name('scans.thumbnail');
 

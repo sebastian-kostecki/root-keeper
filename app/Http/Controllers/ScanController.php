@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Actions\Scans\DeleteScan;
 use App\Actions\Scans\StoreScan;
 use App\Http\Requests\ScanStoreRequest;
 use App\Http\Resources\ScanResource;
@@ -59,7 +60,7 @@ class ScanController extends Controller
     {
         Gate::authorize('view', $scan);
 
-        $scan->load('events.participants');
+        $scan->load(['events' => fn ($query) => $query->withCount('scans')->with('participants')]);
 
         return Inertia::render('scans/show', [
             'scan' => ScanResource::make($scan)->resolve(),
@@ -68,6 +69,7 @@ class ScanController extends Controller
                     'event_id' => $event->id,
                     'event_type' => $event->type->value,
                     'event_label' => $event->type->label(),
+                    'is_last_scan' => $event->scans_count === 1,
                     'person' => [
                         'id' => $person->id,
                         'display_name' => $person->displayName(),
@@ -75,6 +77,20 @@ class ScanController extends Controller
                 ])
             )->values()->all(),
         ]);
+    }
+
+    /**
+     * Remove the given scan.
+     */
+    public function destroy(Scan $scan, DeleteScan $deleteScan): RedirectResponse
+    {
+        Gate::authorize('delete', $scan);
+
+        $deleteScan->handle($scan);
+
+        Inertia::flash('toast', ['type' => 'success', 'message' => __('Usunięto skan')]);
+
+        return to_route('scans.index');
     }
 
     /**

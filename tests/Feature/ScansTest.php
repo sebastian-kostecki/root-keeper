@@ -6,6 +6,7 @@ use App\Models\Person;
 use App\Models\Scan;
 use App\Models\User;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
 
@@ -18,6 +19,7 @@ test('guests are redirected to the login page from scans routes', function () {
     $this->post(route('scans.store'), [])->assertRedirect(route('login'));
     $this->get(route('scans.file', $scan))->assertRedirect(route('login'));
     $this->get(route('scans.thumbnail', $scan))->assertRedirect(route('login'));
+    $this->delete(route('scans.destroy', $scan))->assertRedirect(route('login'));
 });
 
 test('the private disk does not expose a signed-url storage route', function () {
@@ -87,25 +89,33 @@ test('scan show confirms is empty for an unlinked scan', function () {
         ->where('confirms', []));
 });
 
-test('scan show confirms lists the linked events with the person names', function () {
+test('scan show confirms lists the linked events with the person names and whether this is the last scan', function () {
     $user = User::factory()->create();
     $scan = Scan::factory()->for($user->tree)->create();
+    $otherScan = Scan::factory()->for($user->tree)->create();
     $person = Person::factory()->for($user->tree)->create(['first_name' => 'Jan', 'last_name' => 'Kowalski']);
     $birth = Event::factory()->for($user->tree)->birth()->create();
     $birth->participants()->attach($person, ['role' => ParticipantRole::Subject]);
     $scan->events()->attach($birth);
+
+    $death = Event::factory()->for($user->tree)->death()->create();
+    $death->participants()->attach($person, ['role' => ParticipantRole::Subject]);
+    $death->scans()->attach([$scan->id, $otherScan->id]);
 
     $response = $this->actingAs($user)->get(route('scans.show', $scan));
 
     $response->assertOk();
     $response->assertInertia(fn ($page) => $page
         ->component('scans/show')
-        ->has('confirms', 1)
+        ->has('confirms', 2)
         ->where('confirms.0.event_id', $birth->id)
         ->where('confirms.0.event_type', 'birth')
         ->where('confirms.0.event_label', 'Urodzenie')
+        ->where('confirms.0.is_last_scan', true)
         ->where('confirms.0.person.id', $person->id)
-        ->where('confirms.0.person.display_name', 'Jan Kowalski'));
+        ->where('confirms.0.person.display_name', 'Jan Kowalski')
+        ->where('confirms.1.event_id', $death->id)
+        ->where('confirms.1.is_last_scan', false));
 });
 
 test('scan file returns not found for a scan from another users tree', function () {
@@ -342,4 +352,90 @@ test('deleting an account without a tree leaves other trees scans intact', funct
     $this->assertGuest();
     expect($user->fresh())->toBeNull();
     Storage::disk('local')->assertExists("scans/{$otherUser->tree->id}/keepsake.jpg");
+});
+
+test('destroy of a scan from another users tree returns not found and deletes nothing', function () {
+    Storage::fake('local');
+
+    $user = User::factory()->create();
+    $otherUser = User::factory()->create();
+    $scan = Scan::factory()->for($otherUser->tree)->withThumbnail()->create();
+    Storage::disk('local')->put($scan->path, 'original-bytes');
+    Storage::disk('local')->put($scan->thumbnail_path, 'thumbnail-bytes');
+    $event = Event::factory()->for($otherUser->tree)->create();
+    $event->scans()->attach($scan);
+
+    $response = $this->actingAs($user)->delete(route('scans.destroy', $scan));
+
+    $response->assertNotFound();
+    expect(Scan::find($scan->id))->not->toBeNull();
+    expect(DB::table('event_scan')->where('scan_id', $scan->id)->exists())->toBeTrue();
+    Storage::disk('local')->assertExists($scan->path);
+    Storage::disk('local')->assertExists($scan->thumbnail_path);
+});
+
+test('destroy deletes the scan row, its event_scan rows and both files, keeps events and persons, and redirects with a toast', function () {
+    Storage::fake('local');
+
+    $user = User::factory()->create();
+    $scan = Scan::factory()->for($user->tree)->withThumbnail()->create();
+    Storage::disk('local')->put($scan->path, 'original-bytes');
+    Storage::disk('local')->put($scan->thumbnail_path, 'thumbnail-bytes');
+    $person = Person::factory()->for($user->tree)->create();
+    $event = Event::factory()->for($user->tree)->birth()->create();
+    $event->participants()->attach($person, ['role' => ParticipantRole::Subject]);
+    $event->scans()->attach($scan);
+
+    $response = $this->actingAs($user)->delete(route('scans.destroy', $scan));
+
+    $response->assertRedirect(route('scans.index'));
+    $response->assertSessionHas('inertia.flash_data.toast', ['type' => 'success', 'message' => 'Usunięto skan']);
+
+    expect(Scan::find($scan->id))->toBeNull();
+    expect(DB::table('event_scan')->where('scan_id', $scan->id)->exists())->toBeFalse();
+    expect(Event::find($event->id))->not->toBeNull();
+    expect(Person::find($person->id))->not->toBeNull();
+    Storage::disk('local')->assertMissing($scan->path);
+    Storage::disk('local')->assertMissing($scan->thumbnail_path);
+});
+
+test('destroy unconfirms an event that had only this scan and keeps another event confirmed via its other scan', function () {
+    Storage::fake('local');
+
+    $user = User::factory()->create();
+    $scan = Scan::factory()->for($user->tree)->create();
+    $otherScan = Scan::factory()->for($user->tree)->create();
+    $onlyThisScan = Event::factory()->for($user->tree)->birth()->create();
+    $onlyThisScan->scans()->attach($scan);
+    $alsoOtherScan = Event::factory()->for($user->tree)->death()->create();
+    $alsoOtherScan->scans()->attach([$scan->id, $otherScan->id]);
+
+    $this->actingAs($user)->delete(route('scans.destroy', $scan))->assertRedirect(route('scans.index'));
+
+    expect($onlyThisScan->fresh()->scans()->count())->toBe(0);
+    expect($alsoOtherScan->fresh()->scans()->count())->toBe(1);
+});
+
+test('destroy succeeds for a scan without a thumbnail', function () {
+    Storage::fake('local');
+
+    $user = User::factory()->create();
+    $scan = Scan::factory()->for($user->tree)->create(['thumbnail_path' => null]);
+    Storage::disk('local')->put($scan->path, 'original-bytes');
+
+    $this->actingAs($user)->delete(route('scans.destroy', $scan))->assertRedirect(route('scans.index'));
+
+    expect(Scan::find($scan->id))->toBeNull();
+    Storage::disk('local')->assertMissing($scan->path);
+});
+
+test('destroy succeeds when the file is already missing on disk', function () {
+    Storage::fake('local');
+
+    $user = User::factory()->create();
+    $scan = Scan::factory()->for($user->tree)->withThumbnail()->create();
+
+    $this->actingAs($user)->delete(route('scans.destroy', $scan))->assertRedirect(route('scans.index'));
+
+    expect(Scan::find($scan->id))->toBeNull();
 });
