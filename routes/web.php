@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Route;
 Route::inertia('/', 'welcome')->name('home');
 
 Route::middleware(['auth', 'verified'])->group(function () {
-    Route::resource('persons', PersonController::class)->only(['index', 'create', 'store', 'show', 'edit', 'update']);
+    Route::resource('persons', PersonController::class)->only(['index', 'create', 'store', 'show', 'edit', 'update', 'destroy']);
 
     Route::resource('scans', ScanController::class)->only(['index', 'create', 'store', 'show']);
     Route::get('scans/{scan}/file', [ScanController::class, 'file'])->name('scans.file');

@@ -1,5 +1,6 @@
 import { Head, Link, setLayoutProps } from '@inertiajs/react';
 import PersonController from '@/actions/App/Http/Controllers/PersonController';
+import { DeletePersonDialog } from '@/components/persons/delete-person-dialog';
 import { EventCard } from '@/components/persons/event-card';
 import Heading from '@/components/heading';
 import { Badge } from '@/components/ui/badge';
@@ -32,11 +33,26 @@ export default function Show({ person, availableScans }: Props) {
                 <div className="flex items-center justify-between gap-4">
                     <Heading title={person.display_name} />
 
-                    <Button variant="outline" size="sm" asChild>
-                        <Link href={PersonController.edit(person.id)}>
-                            Edytuj
-                        </Link>
-                    </Button>
+                    <div className="flex items-center gap-2">
+                        <Button variant="outline" size="sm" asChild>
+                            <Link href={PersonController.edit(person.id)}>
+                                Edytuj
+                            </Link>
+                        </Button>
+
+                        <DeletePersonDialog
+                            person={person}
+                            trigger={
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="text-destructive hover:text-destructive"
+                                >
+                                    Usuń
+                                </Button>
+                            }
+                        />
+                    </div>
                 </div>
 
                 <Card>

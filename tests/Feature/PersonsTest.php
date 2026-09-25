@@ -6,6 +6,7 @@ use App\Models\Event;
 use App\Models\Person;
 use App\Models\Scan;
 use App\Models\User;
+use Illuminate\Support\Facades\DB;
 
 test('guests are redirected to the login page from persons routes', function () {
     $person = Person::factory()->create();
@@ -16,6 +17,7 @@ test('guests are redirected to the login page from persons routes', function () 
     $this->post(route('persons.store'), [])->assertRedirect(route('login'));
     $this->get(route('persons.edit', $person))->assertRedirect(route('login'));
     $this->put(route('persons.update', $person), [])->assertRedirect(route('login'));
+    $this->delete(route('persons.destroy', $person))->assertRedirect(route('login'));
 });
 
 test('persons index shows only the people from the authenticated user tree, sorted with unnamed people last', function () {
@@ -470,4 +472,53 @@ test('update reuses store validation and rejects a person with neither first nor
     ]);
 
     $response->assertSessionHasErrors(['first_name', 'last_name']);
+});
+
+test('destroy deletes the person, their birth and death events and event_scan rows, keeps scans, and redirects with a toast', function () {
+    $user = User::factory()->create();
+    $person = Person::factory()->for($user->tree)->create();
+    $birth = Event::factory()->for($user->tree)->birth()->create();
+    $birth->participants()->attach($person, ['role' => ParticipantRole::Subject]);
+    $death = Event::factory()->for($user->tree)->death()->create();
+    $death->participants()->attach($person, ['role' => ParticipantRole::Subject]);
+    $scan = Scan::factory()->for($user->tree)->create();
+    $birth->scans()->attach($scan);
+
+    $response = $this->actingAs($user)->delete(route('persons.destroy', $person));
+
+    $response->assertRedirect(route('persons.index'));
+    $response->assertSessionHas('inertia.flash_data.toast', ['type' => 'success', 'message' => 'Usunięto osobę']);
+
+    expect(Person::find($person->id))->toBeNull();
+    expect(Event::find($birth->id))->toBeNull();
+    expect(Event::find($death->id))->toBeNull();
+    expect(DB::table('event_scan')->where('event_id', $birth->id)->exists())->toBeFalse();
+    expect(Scan::find($scan->id))->not->toBeNull();
+});
+
+test('destroy of a person sharing an event with another person keeps the event and the other participant', function () {
+    $user = User::factory()->create();
+    $person = Person::factory()->for($user->tree)->create();
+    $spouse = Person::factory()->for($user->tree)->create();
+    $sharedEvent = Event::factory()->for($user->tree)->birth()->create();
+    $sharedEvent->participants()->attach($person, ['role' => ParticipantRole::Subject]);
+    $sharedEvent->participants()->attach($spouse, ['role' => ParticipantRole::Subject]);
+
+    $this->actingAs($user)->delete(route('persons.destroy', $person))->assertRedirect(route('persons.index'));
+
+    expect(Person::find($person->id))->toBeNull();
+    expect(Person::find($spouse->id))->not->toBeNull();
+    expect(Event::find($sharedEvent->id))->not->toBeNull();
+    expect($sharedEvent->fresh()->participants()->pluck('people.id')->all())->toBe([$spouse->id]);
+});
+
+test('destroy of a person from another users tree returns not found and deletes nothing', function () {
+    $user = User::factory()->create();
+    $otherUser = User::factory()->create();
+    $person = Person::factory()->for($otherUser->tree)->create();
+
+    $response = $this->actingAs($user)->delete(route('persons.destroy', $person));
+
+    $response->assertNotFound();
+    expect(Person::find($person->id))->not->toBeNull();
 });

@@ -287,36 +287,36 @@ No schema changes. Orphaned events cannot pre-exist because no delete path exist
 
 #### Automated
 
-- [x] 1.1 Person feature tests pass: `vendor/bin/sail artisan test --compact tests/Feature/PersonsTest.php tests/Feature/EventScansTest.php`
-- [x] 1.2 Static analysis passes: `vendor/bin/sail composer types:check`
-- [x] 1.3 Code style is clean: `vendor/bin/sail bin pint --dirty --format agent`
-- [x] 1.4 Frontend types compile after Wayfinder regeneration: `vendor/bin/sail npm run types:check`
-- [x] 1.5 Frontend lint/format check passes: `vendor/bin/sail npm run check`
-- [x] 1.6 Production build succeeds: `vendor/bin/sail npm run build`
+- [x] 1.1 Person feature tests pass: `vendor/bin/sail artisan test --compact tests/Feature/PersonsTest.php tests/Feature/EventScansTest.php` — ce099c1
+- [x] 1.2 Static analysis passes: `vendor/bin/sail composer types:check` — ce099c1
+- [x] 1.3 Code style is clean: `vendor/bin/sail bin pint --dirty --format agent` — ce099c1
+- [x] 1.4 Frontend types compile after Wayfinder regeneration: `vendor/bin/sail npm run types:check` — ce099c1
+- [x] 1.5 Frontend lint/format check passes: `vendor/bin/sail npm run check` — ce099c1
+- [x] 1.6 Production build succeeds: `vendor/bin/sail npm run build` — ce099c1
 
 #### Manual
 
-- [x] 1.7 "Edytuj" on a preview opens the form prefilled with every field, including partial dates ("sam rok", "rok+miesiąc") and the "około" checkbox
-- [x] 1.8 Changing the birth date of a person with a linked birth scan saves, shows "Zapisano zmiany", and the preview still shows the scan and "Potwierdzone aktem"
-- [x] 1.9 The confirmed hint appears only under events that have a scan
-- [x] 1.10 Unchecking "Zmarły/a" on a person with a death scan shows the Polish error under the checkbox and keeps the death card; without a scan the death card disappears after saving
-- [x] 1.11 "Dodaj osobę" looks and works exactly as before
+- [x] 1.7 "Edytuj" on a preview opens the form prefilled with every field, including partial dates ("sam rok", "rok+miesiąc") and the "około" checkbox — ce099c1
+- [x] 1.8 Changing the birth date of a person with a linked birth scan saves, shows "Zapisano zmiany", and the preview still shows the scan and "Potwierdzone aktem" — ce099c1
+- [x] 1.9 The confirmed hint appears only under events that have a scan — ce099c1
+- [x] 1.10 Unchecking "Zmarły/a" on a person with a death scan shows the Polish error under the checkbox and keeps the death card; without a scan the death card disappears after saving — ce099c1
+- [x] 1.11 "Dodaj osobę" looks and works exactly as before — ce099c1
 
 ### Phase 2: Delete a person
 
 #### Automated
 
-- [ ] 2.1 Person and scan feature tests pass: `vendor/bin/sail artisan test --compact tests/Feature/PersonsTest.php tests/Feature/EventScansTest.php tests/Feature/ScansTest.php`
-- [ ] 2.2 Full test suite passes: `vendor/bin/sail artisan test --compact`
-- [ ] 2.3 Static analysis passes: `vendor/bin/sail composer types:check`
-- [ ] 2.4 Code style is clean: `vendor/bin/sail bin pint --dirty --format agent`
-- [ ] 2.5 Frontend types compile after Wayfinder regeneration: `vendor/bin/sail npm run types:check`
-- [ ] 2.6 Frontend lint/format check passes: `vendor/bin/sail npm run check`
-- [ ] 2.7 Production build succeeds: `vendor/bin/sail npm run build`
+- [x] 2.1 Person and scan feature tests pass: `vendor/bin/sail artisan test --compact tests/Feature/PersonsTest.php tests/Feature/EventScansTest.php tests/Feature/ScansTest.php`
+- [x] 2.2 Full test suite passes: `vendor/bin/sail artisan test --compact`
+- [x] 2.3 Static analysis passes: `vendor/bin/sail composer types:check`
+- [x] 2.4 Code style is clean: `vendor/bin/sail bin pint --dirty --format agent`
+- [x] 2.5 Frontend types compile after Wayfinder regeneration: `vendor/bin/sail npm run types:check`
+- [x] 2.6 Frontend lint/format check passes: `vendor/bin/sail npm run check`
+- [x] 2.7 Production build succeeds: `vendor/bin/sail npm run build`
 
 #### Manual
 
-- [ ] 2.8 `vendor/bin/sail artisan route:list --path=persons` shows `edit`, `update`, `destroy` behind `auth` and `verified`
-- [ ] 2.9 "Usuń" on a deceased person with linked scans shows the dialog with the name, "oraz zgon" and the correctly pluralised link count; "Anuluj" closes it without changes
-- [ ] 2.10 Confirming redirects to "Osoby" with "Usunięto osobę", the person is gone from the list, and the previously linked scan still opens from "Skany" with its "Potwierdza" list no longer mentioning that person
-- [ ] 2.11 Dialog and preview actions read correctly in light and dark themes
+- [x] 2.8 `vendor/bin/sail artisan route:list --path=persons` shows `edit`, `update`, `destroy` behind `auth` and `verified`
+- [x] 2.9 "Usuń" on a deceased person with linked scans shows the dialog with the name, "oraz zgon" and the correctly pluralised link count; "Anuluj" closes it without changes
+- [x] 2.10 Confirming redirects to "Osoby" with "Usunięto osobę", the person is gone from the list, and the previously linked scan still opens from "Skany" with its "Potwierdza" list no longer mentioning that person
+- [x] 2.11 Dialog and preview actions read correctly in light and dark themes

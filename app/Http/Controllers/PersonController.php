@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Actions\Persons\CreatePerson;
+use App\Actions\Persons\DeletePerson;
 use App\Actions\Persons\UpdatePerson;
 use App\Enums\Religion;
 use App\Http\Requests\PersonStoreRequest;
@@ -101,5 +102,19 @@ class PersonController extends Controller
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Zapisano zmiany')]);
 
         return to_route('persons.show', $person);
+    }
+
+    /**
+     * Remove the given person.
+     */
+    public function destroy(Person $person, DeletePerson $deletePerson): RedirectResponse
+    {
+        Gate::authorize('delete', $person);
+
+        $deletePerson->handle($person);
+
+        Inertia::flash('toast', ['type' => 'success', 'message' => __('Usunięto osobę')]);
+
+        return to_route('persons.index');
     }
 }
