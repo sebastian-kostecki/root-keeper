@@ -1,7 +1,7 @@
 ---
 change_id: marriage-with-shared-source
 title: Marriage with shared source
-status: implementing
+status: implemented
 created: 2026-09-25
 updated: 2026-09-25
 archived_at: null
