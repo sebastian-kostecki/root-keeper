@@ -204,14 +204,14 @@ None — no schema change. Assumption to confirm on production: its database was
 
 #### Automated
 
-- [x] 2.1 Person feature tests pass: `vendor/bin/sail artisan test --compact tests/Feature/PersonsTest.php`
-- [x] 2.2 Frontend types compile: `vendor/bin/sail npm run types:check`
-- [x] 2.3 Frontend lint/format check passes: `vendor/bin/sail npm run check`
-- [x] 2.4 Production build succeeds: `vendor/bin/sail npm run build`
+- [x] 2.1 Person feature tests pass: `vendor/bin/sail artisan test --compact tests/Feature/PersonsTest.php` — 37453fe
+- [x] 2.2 Frontend types compile: `vendor/bin/sail npm run types:check` — 37453fe
+- [x] 2.3 Frontend lint/format check passes: `vendor/bin/sail npm run check` — 37453fe
+- [x] 2.4 Production build succeeds: `vendor/bin/sail npm run build` — 37453fe
 
 #### Manual
 
-- [x] 2.5 Typing part of a name narrows the list after a short pause, the URL shows `?q=…`, and the input keeps focus and every typed character
-- [x] 2.6 `kowalski jan` and `Jan Kowalski` give the same result; clearing the box shows everyone and removes `q` from the URL
-- [x] 2.7 A query with no matches shows "Nie znaleziono osób pasujących do „…”."; an empty tree still shows the original empty-tree card without a search box
-- [x] 2.8 Clicking a result opens the preview; Back returns to the filtered list with the box filled, and typing does not add one history entry per keystroke
+- [x] 2.5 Typing part of a name narrows the list after a short pause, the URL shows `?q=…`, and the input keeps focus and every typed character — 37453fe
+- [x] 2.6 `kowalski jan` and `Jan Kowalski` give the same result; clearing the box shows everyone and removes `q` from the URL — 37453fe
+- [x] 2.7 A query with no matches shows "Nie znaleziono osób pasujących do „…”."; an empty tree still shows the original empty-tree card without a search box — 37453fe
+- [x] 2.8 Clicking a result opens the preview; Back returns to the filtered list with the box filled, and typing does not add one history entry per keystroke — 37453fe
