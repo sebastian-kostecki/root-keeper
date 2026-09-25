@@ -3,8 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Actions\Persons\CreatePerson;
+use App\Actions\Persons\UpdatePerson;
 use App\Enums\Religion;
 use App\Http\Requests\PersonStoreRequest;
+use App\Http\Requests\PersonUpdateRequest;
+use App\Http\Resources\PersonFormResource;
 use App\Http\Resources\PersonResource;
 use App\Http\Resources\ScanResource;
 use App\Models\Person;
@@ -71,5 +74,32 @@ class PersonController extends Controller
                 $request->user()->tree->scans()->latest()->orderByDesc('id')->get()
             )->resolve()),
         ]);
+    }
+
+    /**
+     * Show the form for editing the given person.
+     */
+    public function edit(Person $person): Response
+    {
+        Gate::authorize('update', $person);
+
+        $person->load('events.scans');
+
+        return Inertia::render('persons/edit', [
+            'person' => PersonFormResource::make($person)->resolve(),
+            'religions' => Religion::options(),
+        ]);
+    }
+
+    /**
+     * Update the given person.
+     */
+    public function update(PersonUpdateRequest $request, Person $person, UpdatePerson $updatePerson): RedirectResponse
+    {
+        $updatePerson->handle($person, $request->validated());
+
+        Inertia::flash('toast', ['type' => 'success', 'message' => __('Zapisano zmiany')]);
+
+        return to_route('persons.show', $person);
     }
 }

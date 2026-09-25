@@ -17,4 +17,14 @@ class PersonPolicy
             ? Response::allow()
             : Response::denyAsNotFound();
     }
+
+    /**
+     * Determine whether the user can update the model.
+     */
+    public function update(User $user, Person $person): Response
+    {
+        return $person->tree_id === $user->tree->id
+            ? Response::allow()
+            : Response::denyAsNotFound();
+    }
 }

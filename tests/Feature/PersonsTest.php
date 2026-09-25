@@ -14,6 +14,8 @@ test('guests are redirected to the login page from persons routes', function () 
     $this->get(route('persons.create'))->assertRedirect(route('login'));
     $this->get(route('persons.show', $person))->assertRedirect(route('login'));
     $this->post(route('persons.store'), [])->assertRedirect(route('login'));
+    $this->get(route('persons.edit', $person))->assertRedirect(route('login'));
+    $this->put(route('persons.update', $person), [])->assertRedirect(route('login'));
 });
 
 test('persons index shows only the people from the authenticated user tree, sorted with unnamed people last', function () {
@@ -308,4 +310,164 @@ test('validation errors are in polish', function () {
     $errors = $response->getSession()->get('errors')->getBag('default');
 
     expect($errors->first('first_name'))->toContain('wymagane');
+});
+
+test('edit page renders raw date parts, religion value, is_deceased and is_confirmed', function () {
+    $user = User::factory()->create();
+    $person = Person::factory()->for($user->tree)->create(['religion' => 'roman_catholic']);
+    $birth = Event::factory()->for($user->tree)->birth()->create(['date_year' => 1900, 'date_month' => 5, 'date_day' => 10]);
+    $birth->participants()->attach($person, ['role' => ParticipantRole::Subject]);
+
+    $response = $this->actingAs($user)->get(route('persons.edit', $person));
+
+    $response->assertOk();
+    $response->assertInertia(fn ($page) => $page
+        ->component('persons/edit')
+        ->where('person.religion', 'roman_catholic')
+        ->where('person.is_deceased', false)
+        ->where('person.birth.year', 1900)
+        ->where('person.birth.month', 5)
+        ->where('person.birth.day', 10)
+        ->where('person.birth.is_confirmed', false)
+        ->where('person.death', null));
+
+    $scan = Scan::factory()->for($user->tree)->create();
+    $birth->scans()->attach($scan);
+
+    $response = $this->actingAs($user)->get(route('persons.edit', $person));
+
+    $response->assertOk();
+    $response->assertInertia(fn ($page) => $page
+        ->component('persons/edit')
+        ->where('person.birth.is_confirmed', true));
+});
+
+test('persons edit and update return not found for a person from another users tree', function () {
+    $user = User::factory()->create();
+    $otherUser = User::factory()->create();
+    $person = Person::factory()->for($otherUser->tree)->create(['first_name' => 'Obcy']);
+
+    $this->actingAs($user)->get(route('persons.edit', $person))->assertNotFound();
+    $this->actingAs($user)->put(route('persons.update', $person), ['first_name' => 'Hacked'])->assertNotFound();
+
+    expect($person->fresh()->first_name)->toBe('Obcy');
+});
+
+test('update changes names, residence, religion, birth date parts and place, and redirects with a toast', function () {
+    $user = User::factory()->create();
+    $person = Person::factory()->for($user->tree)->create(['first_name' => 'Jan', 'last_name' => 'Kowalski']);
+    $birth = Event::factory()->for($user->tree)->birth()->withoutDate()->create();
+    $birth->participants()->attach($person, ['role' => ParticipantRole::Subject]);
+
+    $response = $this->actingAs($user)->put(route('persons.update', $person), [
+        'first_name' => 'Janina',
+        'last_name' => 'Nowak',
+        'residence' => 'Kraków',
+        'religion' => 'orthodox',
+        'birth' => ['year' => 1950, 'month' => 3, 'day' => 4, 'place' => 'Warszawa'],
+    ]);
+
+    $response->assertRedirect(route('persons.show', $person));
+    $response->assertSessionHas('inertia.flash_data.toast', ['type' => 'success', 'message' => 'Zapisano zmiany']);
+
+    $person->refresh();
+    expect($person->first_name)->toBe('Janina');
+    expect($person->last_name)->toBe('Nowak');
+    expect($person->residence)->toBe('Kraków');
+    expect($person->religion->value)->toBe('orthodox');
+
+    $birth->refresh();
+    expect($birth->date_year)->toBe(1950);
+    expect($birth->date_month)->toBe(3);
+    expect($birth->date_day)->toBe(4);
+    expect($birth->place)->toBe('Warszawa');
+});
+
+test('update of a birth with a linked scan keeps the same birth event id and the scan link', function () {
+    $user = User::factory()->create();
+    $person = Person::factory()->for($user->tree)->create();
+    $birth = Event::factory()->for($user->tree)->birth()->create();
+    $birth->participants()->attach($person, ['role' => ParticipantRole::Subject]);
+    $scan = Scan::factory()->for($user->tree)->create();
+    $birth->scans()->attach($scan);
+
+    $this->actingAs($user)->put(route('persons.update', $person), [
+        'first_name' => 'Jan',
+        'birth' => ['year' => 1888],
+    ])->assertRedirect(route('persons.show', $person));
+
+    $person->refresh()->load('events');
+    $updatedBirth = $person->birth();
+
+    expect($updatedBirth->id)->toBe($birth->id);
+    expect($updatedBirth->date_year)->toBe(1888);
+    expect($updatedBirth->scans()->pluck('scans.id')->all())->toBe([$scan->id]);
+});
+
+test('checking is_deceased on a living person creates a death event with role subject', function () {
+    $user = User::factory()->create();
+    $person = Person::factory()->for($user->tree)->create();
+    $birth = Event::factory()->for($user->tree)->birth()->withoutDate()->create();
+    $birth->participants()->attach($person, ['role' => ParticipantRole::Subject]);
+
+    $this->actingAs($user)->put(route('persons.update', $person), [
+        'first_name' => 'Jan',
+        'is_deceased' => '1',
+        'death' => ['year' => 1999, 'place' => 'Poznań'],
+    ])->assertSessionHasNoErrors();
+
+    $person->refresh()->load('events');
+    $death = $person->death();
+
+    expect($death)->not->toBeNull();
+    expect($death->date_year)->toBe(1999);
+    expect($death->place)->toBe('Poznań');
+    expect($death->participants()->firstOrFail()->pivot->role)->toBe(ParticipantRole::Subject);
+});
+
+test('unchecking is_deceased when the death event has no scans deletes the death event', function () {
+    $user = User::factory()->create();
+    $person = Person::factory()->for($user->tree)->create();
+    $birth = Event::factory()->for($user->tree)->birth()->withoutDate()->create();
+    $birth->participants()->attach($person, ['role' => ParticipantRole::Subject]);
+    $death = Event::factory()->for($user->tree)->death()->create();
+    $death->participants()->attach($person, ['role' => ParticipantRole::Subject]);
+
+    $this->actingAs($user)->put(route('persons.update', $person), [
+        'first_name' => 'Jan',
+    ])->assertSessionHasNoErrors();
+
+    expect(Event::find($death->id))->toBeNull();
+});
+
+test('unchecking is_deceased when the death event has a linked scan fails validation', function () {
+    $user = User::factory()->create();
+    $person = Person::factory()->for($user->tree)->create();
+    $birth = Event::factory()->for($user->tree)->birth()->withoutDate()->create();
+    $birth->participants()->attach($person, ['role' => ParticipantRole::Subject]);
+    $death = Event::factory()->for($user->tree)->death()->create();
+    $death->participants()->attach($person, ['role' => ParticipantRole::Subject]);
+    $scan = Scan::factory()->for($user->tree)->create();
+    $death->scans()->attach($scan);
+
+    $response = $this->actingAs($user)->put(route('persons.update', $person), [
+        'first_name' => 'Jan',
+    ]);
+
+    $response->assertSessionHasErrors(['is_deceased' => 'Najpierw odepnij skany od zgonu na podglądzie osoby.']);
+
+    expect(Event::find($death->id))->not->toBeNull();
+    expect($death->scans()->pluck('scans.id')->all())->toBe([$scan->id]);
+});
+
+test('update reuses store validation and rejects a person with neither first nor last name', function () {
+    $user = User::factory()->create();
+    $person = Person::factory()->for($user->tree)->create();
+
+    $response = $this->actingAs($user)->put(route('persons.update', $person), [
+        'first_name' => '',
+        'last_name' => '',
+    ]);
+
+    $response->assertSessionHasErrors(['first_name', 'last_name']);
 });

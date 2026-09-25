@@ -11,6 +11,8 @@ use Illuminate\Support\Facades\DB;
 
 class CreatePerson
 {
+    use MapsEventInput;
+
     /**
      * Create a person in the given tree, along with its birth event and,
      * when the person is deceased, its death event.
@@ -64,18 +66,9 @@ class CreatePerson
     {
         $event = $tree->events()->create([
             'type' => $type,
-            'date_year' => $date['year'] ?? null,
-            'date_month' => $date['month'] ?? null,
-            'date_day' => $date['day'] ?? null,
-            'date_is_approximate' => $this->isChecked($date['is_approximate'] ?? null),
-            'place' => $date['place'] ?? null,
+            ...$this->eventAttributesFrom($date),
         ]);
 
         $event->participants()->attach($person, ['role' => ParticipantRole::Subject]);
-    }
-
-    private function isChecked(bool|int|string|null $value): bool
-    {
-        return filter_var($value, FILTER_VALIDATE_BOOL);
     }
 }

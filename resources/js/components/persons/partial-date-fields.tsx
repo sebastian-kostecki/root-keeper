@@ -6,9 +6,21 @@ import { Label } from '@/components/ui/label';
 type Props = {
     prefix: 'birth' | 'death';
     errors: Partial<Record<string, string>>;
+    defaultValue?: {
+        year: number | null;
+        month: number | null;
+        day: number | null;
+        place: string | null;
+    };
+    defaultChecked?: boolean;
 };
 
-export function PartialDateFields({ prefix, errors }: Props) {
+export function PartialDateFields({
+    prefix,
+    errors,
+    defaultValue,
+    defaultChecked,
+}: Props) {
     return (
         <div className="grid gap-4">
             <div className="grid grid-cols-3 gap-4">
@@ -20,6 +32,7 @@ export function PartialDateFields({ prefix, errors }: Props) {
                         name={`${prefix}.day`}
                         min={1}
                         max={31}
+                        defaultValue={defaultValue?.day ?? undefined}
                     />
                     <InputError message={errors[`${prefix}.day`]} />
                 </div>
@@ -32,6 +45,7 @@ export function PartialDateFields({ prefix, errors }: Props) {
                         name={`${prefix}.month`}
                         min={1}
                         max={12}
+                        defaultValue={defaultValue?.month ?? undefined}
                     />
                     <InputError message={errors[`${prefix}.month`]} />
                 </div>
@@ -43,6 +57,7 @@ export function PartialDateFields({ prefix, errors }: Props) {
                         type="number"
                         name={`${prefix}.year`}
                         min={1000}
+                        defaultValue={defaultValue?.year ?? undefined}
                     />
                     <InputError message={errors[`${prefix}.year`]} />
                 </div>
@@ -55,6 +70,7 @@ export function PartialDateFields({ prefix, errors }: Props) {
                     type="text"
                     name={`${prefix}.place`}
                     maxLength={255}
+                    defaultValue={defaultValue?.place ?? undefined}
                 />
                 <InputError message={errors[`${prefix}.place`]} />
             </div>
@@ -64,6 +80,7 @@ export function PartialDateFields({ prefix, errors }: Props) {
                     id={`${prefix}-is_approximate`}
                     name={`${prefix}.is_approximate`}
                     value="1"
+                    defaultChecked={defaultChecked}
                 />
                 <Label htmlFor={`${prefix}-is_approximate`}>
                     Data przybliżona (około)

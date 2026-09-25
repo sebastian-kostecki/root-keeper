@@ -1,8 +1,9 @@
-import { Head, setLayoutProps } from '@inertiajs/react';
+import { Head, Link, setLayoutProps } from '@inertiajs/react';
 import PersonController from '@/actions/App/Http/Controllers/PersonController';
 import { EventCard } from '@/components/persons/event-card';
 import Heading from '@/components/heading';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { index as personsIndex } from '@/routes/persons';
 import type { PersonPreview, Scan } from '@/types';
@@ -28,7 +29,15 @@ export default function Show({ person, availableScans }: Props) {
             <Head title={person.display_name} />
 
             <div className="max-w-2xl space-y-6">
-                <Heading title={person.display_name} />
+                <div className="flex items-center justify-between gap-4">
+                    <Heading title={person.display_name} />
+
+                    <Button variant="outline" size="sm" asChild>
+                        <Link href={PersonController.edit(person.id)}>
+                            Edytuj
+                        </Link>
+                    </Button>
+                </div>
 
                 <Card>
                     <CardContent className="grid gap-4 sm:grid-cols-2">
