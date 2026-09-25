@@ -19,12 +19,10 @@ class ParentChildRelationFactory extends Factory
      */
     public function definition(): array
     {
-        $tree = Tree::factory()->create();
-
         return [
-            'tree_id' => $tree->id,
-            'parent_id' => Person::factory()->for($tree),
-            'child_id' => Person::factory()->for($tree),
+            'tree_id' => Tree::factory(),
+            'parent_id' => fn (array $attributes): int => Person::factory()->create(['tree_id' => $attributes['tree_id']])->id,
+            'child_id' => fn (array $attributes): int => Person::factory()->create(['tree_id' => $attributes['tree_id']])->id,
         ];
     }
 }

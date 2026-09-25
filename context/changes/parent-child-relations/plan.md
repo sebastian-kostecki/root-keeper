@@ -47,7 +47,7 @@ A dedicated `parent_child_relations` table owned by the tree, with a plain `Pare
 
 ## Critical Implementation Details
 
-- **Timing & lifecycle** — Rule checks must run inside the same transaction as the insert, after `lockForUpdate()` on both `people` rows taken in ascending id order. This serialises double-submits and two concurrent "add parent" requests for the same child (the third-parent race). The unique index on `(parent_id, child_id)` stays as the last safety net.
+- **Timing & lifecycle** — Rule checks must run inside the same transaction as the insert, after `lockForUpdate()` on both `people` rows taken in ascending id order. This serialises double-submits and two concurrent "add parent" requests for the same child (the third-parent race), and any cycle race whose new relations share a person. It does not serialise two concurrent requests on four different people that together close a cycle (e.g. with B→C and D→A, adding A→B and C→D at once); this residual race is accepted for a single-user tree (see `plan-brief.md` → Open Risks). The unique index on `(parent_id, child_id)` stays as the last safety net.
 - **User experience spec** — The picker filters client-side over the loaded candidates and keeps the last loaded list across non-partial visits, exactly like `ScanPickerDialog`; a server validation error is shown inside the dialog, which stays open.
 
 ## Phase 1: Relation model and rules

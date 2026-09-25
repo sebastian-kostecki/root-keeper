@@ -39,8 +39,8 @@ export function RelativesCard({ kind, person, relatives, candidates }: Props) {
                 {relatives.length === 0 ? (
                     <p className="text-muted-foreground text-sm">
                         {kind === 'parent'
-                            ? 'Brak dodanych rodziców.'
-                            : 'Brak dodanych dzieci.'}
+                            ? 'Brak znanych rodziców.'
+                            : 'Brak znanych dzieci.'}
                     </p>
                 ) : (
                     <div className="space-y-2">
@@ -54,9 +54,17 @@ export function RelativesCard({ kind, person, relatives, candidates }: Props) {
                                     className="underline-offset-4 hover:underline"
                                 >
                                     {relative.display_name}
-                                    {relative.birth_date && (
+                                    {(relative.birth_date ||
+                                        relative.death_date) && (
                                         <span className="text-muted-foreground ml-2 text-sm">
-                                            {relative.birth_date}
+                                            {[
+                                                relative.birth_date &&
+                                                    `ur. ${relative.birth_date}`,
+                                                relative.death_date &&
+                                                    `zm. ${relative.death_date}`,
+                                            ]
+                                                .filter(Boolean)
+                                                .join(' · ')}
                                         </span>
                                     )}
                                 </Link>
@@ -76,6 +84,7 @@ export function RelativesCard({ kind, person, relatives, candidates }: Props) {
                                     trigger={
                                         <button
                                             type="button"
+                                            aria-label={`Usuń relację z ${relative.display_name}`}
                                             className="text-muted-foreground hover:text-destructive text-xs underline-offset-4 hover:underline"
                                         >
                                             Usuń relację

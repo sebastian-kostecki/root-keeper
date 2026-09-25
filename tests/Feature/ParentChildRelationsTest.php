@@ -185,8 +185,9 @@ test('deleting a person removes the relations where they are parent and where th
     ParentChildRelation::factory()->create(['tree_id' => $user->tree->id, 'parent_id' => $grandparent->id, 'child_id' => $middle->id]);
     ParentChildRelation::factory()->create(['tree_id' => $user->tree->id, 'parent_id' => $middle->id, 'child_id' => $grandchild->id]);
 
-    $middle->delete();
+    $this->actingAs($user)->delete(route('persons.destroy', $middle))->assertRedirect();
 
+    $this->assertDatabaseMissing('people', ['id' => $middle->id]);
     $this->assertDatabaseCount('parent_child_relations', 0);
     $this->assertDatabaseHas('people', ['id' => $grandparent->id]);
     $this->assertDatabaseHas('people', ['id' => $grandchild->id]);
@@ -195,28 +196,32 @@ test('deleting a person removes the relations where they are parent and where th
 test('the preview returns parents and children with the relation id, ordered by birth date', function () {
     $user = User::factory()->create();
     $person = Person::factory()->for($user->tree)->create();
+    $parent = Person::factory()->for($user->tree)->create();
 
-    $yearOnly = Person::factory()->for($user->tree)->create();
-    attachBirth($yearOnly, year: 1850);
-
-    $yearAndMonth = Person::factory()->for($user->tree)->create();
-    attachBirth($yearAndMonth, year: 1850, month: 3);
+    $noBirth = Person::factory()->for($user->tree)->create();
 
     $laterYear = Person::factory()->for($user->tree)->create();
     attachBirth($laterYear, year: 1852);
 
-    $noBirth = Person::factory()->for($user->tree)->create();
+    $yearAndMonth = Person::factory()->for($user->tree)->create();
+    attachBirth($yearAndMonth, year: 1850, month: 3);
 
-    $relationYearOnly = ParentChildRelation::factory()->create(['tree_id' => $user->tree->id, 'parent_id' => $person->id, 'child_id' => $yearOnly->id]);
-    ParentChildRelation::factory()->create(['tree_id' => $user->tree->id, 'parent_id' => $person->id, 'child_id' => $yearAndMonth->id]);
-    ParentChildRelation::factory()->create(['tree_id' => $user->tree->id, 'parent_id' => $person->id, 'child_id' => $laterYear->id]);
+    $yearOnly = Person::factory()->for($user->tree)->create();
+    attachBirth($yearOnly, year: 1850);
+
+    $relationParent = ParentChildRelation::factory()->create(['tree_id' => $user->tree->id, 'parent_id' => $parent->id, 'child_id' => $person->id]);
     ParentChildRelation::factory()->create(['tree_id' => $user->tree->id, 'parent_id' => $person->id, 'child_id' => $noBirth->id]);
+    ParentChildRelation::factory()->create(['tree_id' => $user->tree->id, 'parent_id' => $person->id, 'child_id' => $laterYear->id]);
+    ParentChildRelation::factory()->create(['tree_id' => $user->tree->id, 'parent_id' => $person->id, 'child_id' => $yearAndMonth->id]);
+    $relationYearOnly = ParentChildRelation::factory()->create(['tree_id' => $user->tree->id, 'parent_id' => $person->id, 'child_id' => $yearOnly->id]);
 
     $response = $this->actingAs($user)->get(route('persons.show', $person));
 
     $response->assertOk();
     $response->assertInertia(fn ($page) => $page
         ->component('persons/show')
+        ->where('person.parents.0.id', $parent->id)
+        ->where('person.parents.0.relation_id', $relationParent->id)
         ->where('person.children.0.id', $yearOnly->id)
         ->where('person.children.0.relation_id', $relationYearOnly->id)
         ->where('person.children.1.id', $yearAndMonth->id)

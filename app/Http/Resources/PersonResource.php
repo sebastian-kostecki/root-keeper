@@ -15,6 +15,8 @@ use Illuminate\Http\Resources\Json\JsonResource;
 class PersonResource extends JsonResource
 {
     /**
+     * Transform the resource into an array.
+     *
      * @return array{
      *     id: int,
      *     first_name: string|null,

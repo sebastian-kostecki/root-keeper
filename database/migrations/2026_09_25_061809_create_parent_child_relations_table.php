@@ -20,6 +20,7 @@ return new class extends Migration
 
             $table->unique(['parent_id', 'child_id']);
             $table->index('child_id');
+            $table->index('tree_id');
         });
     }
 

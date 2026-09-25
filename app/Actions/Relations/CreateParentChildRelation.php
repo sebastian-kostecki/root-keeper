@@ -6,6 +6,7 @@ use App\Models\ParentChildRelation;
 use App\Models\Person;
 use App\Models\Tree;
 use App\Support\ParentChildGraph;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -20,8 +21,8 @@ class CreateParentChildRelation
         return DB::transaction(function () use ($tree, $parent, $child): ParentChildRelation {
             [$first, $second] = $parent->id <= $child->id ? [$parent, $child] : [$child, $parent];
 
-            Person::whereKey($first->id)->lockForUpdate()->first();
-            Person::whereKey($second->id)->lockForUpdate()->first();
+            Person::whereKey($first->id)->lockForUpdate()->firstOrFail();
+            Person::whereKey($second->id)->lockForUpdate()->firstOrFail();
 
             $graph = ParentChildGraph::forTree($tree);
 
@@ -37,10 +38,14 @@ class CreateParentChildRelation
                 throw ValidationException::withMessages(['relation' => 'Ta relacja utworzyłaby cykl w drzewie.']);
             }
 
-            return $tree->parentChildRelations()->create([
-                'parent_id' => $parent->id,
-                'child_id' => $child->id,
-            ]);
+            try {
+                return $tree->parentChildRelations()->create([
+                    'parent_id' => $parent->id,
+                    'child_id' => $child->id,
+                ]);
+            } catch (UniqueConstraintViolationException) {
+                throw ValidationException::withMessages(['relation' => 'Ta relacja już istnieje.']);
+            }
         });
     }
 }
