@@ -49,7 +49,7 @@ Genealog prowadzący własne badania ma notatki, skany i zdjęcia rozproszone i 
 | S-05 | person-edit-and-delete          | poprawić dane osoby i usunąć ją po jawnym potwierdzeniu                                | S-01          | FR-006, FR-007                         | done |
 | S-06 | parent-child-relations          | połączyć rodzica z dzieckiem, zobaczyć relacje na podglądzie i usunąć relację          | S-01          | FR-011, FR-012, FR-008                 | done |
 | S-07 | marriage-with-shared-source     | dodać małżeństwo z datą i miejscem i potwierdzić je jednym aktem u obojga małżonków    | S-03          | FR-010, FR-012, FR-014, US-01          | proposed |
-| S-08 | scan-delete-with-impact         | usunąć skan po zobaczeniu listy faktów, które stracą źródło                            | S-03          | FR-015                                 | proposed |
+| S-08 | scan-delete-with-impact         | usunąć skan po zobaczeniu listy faktów, które stracą źródło                            | S-03          | FR-015                                 | in-progress |
 | S-09 | graphical-tree-view             | oglądać swoje drzewo graficznie i przechodzić z niego do osób                          | S-06, S-07    | FR-004, US-01                          | proposed |
 
 ## Streams
@@ -192,7 +192,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Blockers:** —
 - **Unknowns:** —
 - **Risk:** Wymaga istniejących powiązań (S-03); ciche odłączenie faktów od źródła łamie Logikę biznesową, a usunięcie pliku ze skanem jest nieodwracalne.
-- **Status:** proposed
+- **Status:** in-progress
 
 ### S-09: Graficzny widok drzewa
 
