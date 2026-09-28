@@ -384,7 +384,7 @@ None: no schema changes. The prop rename is internal to the tree page.
 #### Manual
 
 - [x] 2.7 Pair Jan Kowalski + Anna Nowak → „Nowa osoba": surname starts as „Kowalski", sex freely selectable; saving shows the new child on the tree with „Dodano dziecko", centre and union unchanged; the child's preview lists both parents — f63e96f
-- [x] 2.8 Pair where the partner is the man (tree centred on Anna) → surname starts as Jan's surname; a single mother without a partner → her own surname
+- [x] 2.8 Pair where the partner is the man (tree centred on Anna) → surname starts as Jan's surname; a single mother without a partner → her own surname — f63e96f
 - [x] 2.9 „Nieznany partner" union → „Nowa osoba" → the child appears in that union with only the focus as parent — f63e96f
 - [x] 2.10 „Wróć do listy" returns to the list with candidates still loaded; closing and reopening starts on the list — f63e96f
 - [x] 2.11 Submitting an empty form shows the name error inside the dialog and creates nothing — f63e96f
