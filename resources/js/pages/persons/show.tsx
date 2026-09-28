@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { index as personsIndex } from '@/routes/persons';
+import { show as treeShow } from '@/routes/tree';
 import type { PersonPreview, RelationCandidate, Scan } from '@/types';
 
 type Props = {
@@ -61,6 +62,12 @@ export default function Show({
                                 Ustaw jako probanta
                             </Button>
                         )}
+
+                        <Button variant="outline" size="sm" asChild>
+                            <Link href={treeShow(person.id)}>
+                                Pokaż w drzewie
+                            </Link>
+                        </Button>
 
                         <Button variant="outline" size="sm" asChild>
                             <Link href={PersonController.edit(person.id)}>

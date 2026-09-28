@@ -702,25 +702,25 @@ trees have no proband. Both are reversible with `migrate:rollback`.
 
 #### Automated
 
-- [x] 3.1 Tree and preview tests pass
-- [x] 3.2 Unit tests pass
-- [x] 3.3 PHP style and static analysis
-- [x] 3.4 Wayfinder regenerated and types compile
+- [x] 3.1 Tree and preview tests pass — 241a5e6
+- [x] 3.2 Unit tests pass — 241a5e6
+- [x] 3.3 PHP style and static analysis — 241a5e6
+- [x] 3.4 Wayfinder regenerated and types compile — 241a5e6
 
 ### Phase 4: Family sheet UI
 
 #### Automated
 
-- [ ] 4.1 Format and lint
-- [ ] 4.2 Types
-- [ ] 4.3 Production build
-- [ ] 4.4 Backend still green
+- [x] 4.1 Format and lint
+- [x] 4.2 Types
+- [x] 4.3 Production build
+- [x] 4.4 Backend still green
 
 #### Manual
 
-- [ ] 4.5 Card click recentres with expected union, Podgląd opens preview, Back restores
-- [ ] 4.6 Union switch changes partner, partner ancestors and children
-- [ ] 4.7 Keyboard reachability and visible focus
+- [x] 4.5 Card click recentres with expected union, Podgląd opens preview, Back restores
+- [x] 4.6 Union switch changes partner, partner ancestors and children
+- [x] 4.7 Keyboard reachability and visible focus
 
 ### Phase 5: Visual gate (kitchen-sink tree and screenshots)
 

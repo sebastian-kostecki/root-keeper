@@ -1,0 +1,118 @@
+import { Head, Link, router, setLayoutProps } from '@inertiajs/react';
+import PersonController from '@/actions/App/Http/Controllers/PersonController';
+import TreeRootPersonController from '@/actions/App/Http/Controllers/TreeRootPersonController';
+import Heading from '@/components/heading';
+import { FamilySheet } from '@/components/tree/family-sheet';
+import { UnionSwitch } from '@/components/tree/union-switch';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { index as personsIndex } from '@/routes/persons';
+import { index as treeIndex, show as treeShow } from '@/routes/tree';
+import type { FamilySheet as FamilySheetData } from '@/types';
+
+type Props = {
+    sheet: FamilySheetData | null;
+    rootPersonId: number | null;
+};
+
+export default function Show({ sheet, rootPersonId }: Props) {
+    setLayoutProps({
+        breadcrumbs: [
+            { title: 'Drzewo', href: treeIndex() },
+            ...(sheet
+                ? [
+                      {
+                          title: sheet.focus.display_name,
+                          href: treeShow(sheet.focus.id),
+                      },
+                  ]
+                : []),
+        ],
+    });
+
+    if (sheet === null) {
+        return (
+            <>
+                <Head title="Drzewo" />
+
+                <div className="space-y-6">
+                    <Heading title="Drzewo" />
+
+                    <Card>
+                        <CardContent className="flex flex-col items-start gap-4 text-sm">
+                            <p className="text-muted-foreground">
+                                Nie wybrano probanta. Otwórz osobę i wybierz
+                                „Ustaw jako probanta”.
+                            </p>
+
+                            <Button variant="outline" size="sm" asChild>
+                                <Link href={personsIndex()}>
+                                    Przejdź do osób
+                                </Link>
+                            </Button>
+                        </CardContent>
+                    </Card>
+                </div>
+            </>
+        );
+    }
+
+    const isProband = sheet.focus.id === rootPersonId;
+
+    return (
+        <>
+            <Head title={`Drzewo: ${sheet.focus.display_name}`} />
+
+            <div className="space-y-6">
+                <div className="flex flex-wrap items-start justify-between gap-4">
+                    <Heading title={sheet.focus.display_name} />
+
+                    <div className="flex flex-wrap items-center gap-2">
+                        {isProband ? (
+                            <Badge variant="secondary">Probant</Badge>
+                        ) : (
+                            <>
+                                {rootPersonId !== null && (
+                                    <Button variant="outline" size="sm" asChild>
+                                        <Link href={treeIndex()}>
+                                            Wróć do probanta
+                                        </Link>
+                                    </Button>
+                                )}
+
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() =>
+                                        router.put(
+                                            TreeRootPersonController.update(
+                                                sheet.focus.id,
+                                            ).url,
+                                        )
+                                    }
+                                >
+                                    Ustaw jako probanta
+                                </Button>
+                            </>
+                        )}
+
+                        <Button variant="outline" size="sm" asChild>
+                            <Link href={PersonController.show(sheet.focus.id)}>
+                                Podgląd
+                            </Link>
+                        </Button>
+                    </div>
+                </div>
+
+                <UnionSwitch
+                    focusId={sheet.focus.id}
+                    unions={sheet.unions}
+                    selected={sheet.selected_union}
+                />
+
+                <FamilySheet sheet={sheet} />
+            </div>
+        </>
+    );
+}
