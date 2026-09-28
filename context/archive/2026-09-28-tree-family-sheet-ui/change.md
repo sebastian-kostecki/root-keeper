@@ -1,10 +1,10 @@
 ---
 change_id: tree-family-sheet-ui
 title: Audit and improve the family sheet view (tree/show)
-status: impl_reviewed
+status: archived
 created: 2026-09-28
 updated: 2026-09-28
-archived_at: null
+archived_at: 2026-09-28T21:37:44Z
 ---
 
 ## Notes
