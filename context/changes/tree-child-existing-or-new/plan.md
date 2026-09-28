@@ -354,38 +354,38 @@ None: no schema changes. The prop rename is internal to the tree page.
 
 #### Automated
 
-- [x] 1.1 Affected feature tests pass: `vendor/bin/sail artisan test --compact tests/Feature/ParentChildRelationsTest.php tests/Feature/TreeTest.php tests/Feature/PersonsTest.php`
-- [x] 1.2 Larastan passes: `vendor/bin/sail composer types:check`
-- [x] 1.3 Format and lint pass: `vendor/bin/sail npm run check`
-- [x] 1.4 Type check passes: `vendor/bin/sail npm run types:check`
-- [x] 1.5 Production build succeeds: `vendor/bin/sail npm run build`
-- [x] 1.6 PHP style is clean: `vendor/bin/sail bin pint --dirty --format agent`
+- [x] 1.1 Affected feature tests pass: `vendor/bin/sail artisan test --compact tests/Feature/ParentChildRelationsTest.php tests/Feature/TreeTest.php tests/Feature/PersonsTest.php` — 3d1c35c
+- [x] 1.2 Larastan passes: `vendor/bin/sail composer types:check` — 3d1c35c
+- [x] 1.3 Format and lint pass: `vendor/bin/sail npm run check` — 3d1c35c
+- [x] 1.4 Type check passes: `vendor/bin/sail npm run types:check` — 3d1c35c
+- [x] 1.5 Production build succeeds: `vendor/bin/sail npm run build` — 3d1c35c
+- [x] 1.6 PHP style is clean: `vendor/bin/sail bin pint --dirty --format agent` — 3d1c35c
 
 #### Manual
 
-- [x] 1.7 Pair: tree centred on Jan with union „Anna · ślub 1950", unrelated parentless Piotr exists → „Dodaj dziecko", pick Piotr → Piotr appears among the children; centre and union unchanged; toast „Dodano dziecko"; Piotr's preview lists Jan and Anna under „Rodzice"
-- [x] 1.8 A child of Jan from the „Nieznany partner" union is offered in Anna's union and, after picking, moves to it (the „Nieznany partner" union disappears when it had only that child)
-- [x] 1.9 The list never shows Jan, Anna, their parents/grandparents, or children already of both; a person with a parent outside the pair is hidden and counted in „… ukryto — mają już innych rodziców."
-- [x] 1.10 No partner (a person without any union): the dialog says „Rodzic: … (drugi nieznany)"; picking Anna's son (mother Anna) makes Jan his father; the tree now shows Jan's union with Anna, with the son among the children
-- [x] 1.11 Parent slot regression (S-25): father/mother/parent slots list and attach exactly as before, including the unknown-sex hint text
-- [x] 1.12 Visual gate: „Dodaj dziecko" card at rest / hover / keyboard focus, next to „Brak dzieci…" and after a full row of four children; dialog with results, with filter and no matches, with the hidden hint, loading skeleton, error message — at 375px and 1280px, light and dark; screenshots attached to the review
+- [x] 1.7 Pair: tree centred on Jan with union „Anna · ślub 1950", unrelated parentless Piotr exists → „Dodaj dziecko", pick Piotr → Piotr appears among the children; centre and union unchanged; toast „Dodano dziecko"; Piotr's preview lists Jan and Anna under „Rodzice" — 3d1c35c
+- [x] 1.8 A child of Jan from the „Nieznany partner" union is offered in Anna's union and, after picking, moves to it (the „Nieznany partner" union disappears when it had only that child) — 3d1c35c
+- [x] 1.9 The list never shows Jan, Anna, their parents/grandparents, or children already of both; a person with a parent outside the pair is hidden and counted in „… ukryto — mają już innych rodziców." — 3d1c35c
+- [x] 1.10 No partner (a person without any union): the dialog says „Rodzic: … (drugi nieznany)"; picking Anna's son (mother Anna) makes Jan his father; the tree now shows Jan's union with Anna, with the son among the children — 3d1c35c
+- [x] 1.11 Parent slot regression (S-25): father/mother/parent slots list and attach exactly as before, including the unknown-sex hint text — 3d1c35c
+- [x] 1.12 Visual gate: „Dodaj dziecko" card at rest / hover / keyboard focus, next to „Brak dzieci…" and after a full row of four children; dialog with results, with filter and no matches, with the hidden hint, loading skeleton, error message — at 375px and 1280px, light and dark; screenshots attached to the review — 3d1c35c
 
 ### Phase 2: New child from the same dialog
 
 #### Automated
 
-- [ ] 2.1 Affected feature tests pass: `vendor/bin/sail artisan test --compact tests/Feature/ParentChildRelationsTest.php tests/Feature/TreeTest.php tests/Feature/PersonsTest.php`
-- [ ] 2.2 Larastan passes: `vendor/bin/sail composer types:check`
-- [ ] 2.3 Format and lint pass: `vendor/bin/sail npm run check`
-- [ ] 2.4 Type check passes: `vendor/bin/sail npm run types:check`
-- [ ] 2.5 Production build succeeds: `vendor/bin/sail npm run build`
-- [ ] 2.6 PHP style is clean: `vendor/bin/sail bin pint --dirty --format agent`
+- [x] 2.1 Affected feature tests pass: `vendor/bin/sail artisan test --compact tests/Feature/ParentChildRelationsTest.php tests/Feature/TreeTest.php tests/Feature/PersonsTest.php`
+- [x] 2.2 Larastan passes: `vendor/bin/sail composer types:check`
+- [x] 2.3 Format and lint pass: `vendor/bin/sail npm run check`
+- [x] 2.4 Type check passes: `vendor/bin/sail npm run types:check`
+- [x] 2.5 Production build succeeds: `vendor/bin/sail npm run build`
+- [x] 2.6 PHP style is clean: `vendor/bin/sail bin pint --dirty --format agent`
 
 #### Manual
 
-- [ ] 2.7 Pair Jan Kowalski + Anna Nowak → „Nowa osoba": surname starts as „Kowalski", sex freely selectable; saving shows the new child on the tree with „Dodano dziecko", centre and union unchanged; the child's preview lists both parents
-- [ ] 2.8 Pair where the partner is the man (tree centred on Anna) → surname starts as Jan's surname; a single mother without a partner → her own surname
-- [ ] 2.9 „Nieznany partner" union → „Nowa osoba" → the child appears in that union with only the focus as parent
-- [ ] 2.10 „Wróć do listy" returns to the list with candidates still loaded; closing and reopening starts on the list
-- [ ] 2.11 Submitting an empty form shows the name error inside the dialog and creates nothing
-- [ ] 2.12 Visual gate: form view at 375px (full screen, scrolling, pinned header/footer) and 1280px, light and dark; screenshots attached to the review
+- [x] 2.7 Pair Jan Kowalski + Anna Nowak → „Nowa osoba": surname starts as „Kowalski", sex freely selectable; saving shows the new child on the tree with „Dodano dziecko", centre and union unchanged; the child's preview lists both parents
+- [x] 2.8 Pair where the partner is the man (tree centred on Anna) → surname starts as Jan's surname; a single mother without a partner → her own surname
+- [x] 2.9 „Nieznany partner" union → „Nowa osoba" → the child appears in that union with only the focus as parent
+- [x] 2.10 „Wróć do listy" returns to the list with candidates still loaded; closing and reopening starts on the list
+- [x] 2.11 Submitting an empty form shows the name error inside the dialog and creates nothing
+- [x] 2.12 Visual gate: form view at 375px (full screen, scrolling, pinned header/footer) and 1280px, light and dark; screenshots attached to the review

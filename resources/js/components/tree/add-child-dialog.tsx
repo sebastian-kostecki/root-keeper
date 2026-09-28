@@ -18,11 +18,17 @@ type Props = {
 
 /**
  * The "Dodaj dziecko" card of the children row and its dialog: pick an
- * existing person of the tree to become the child of the shown pair. People
+ * existing person of the tree to become the child of the shown pair, or add
+ * a new one with the default surname. People
  * the sheet marks as excluded or blocked are not offered; the server stays
  * the authority.
  */
-export function AddChildDialog({ target, candidates }: Props) {
+export function AddChildDialog({
+    target,
+    candidates,
+    genders,
+    religions,
+}: Props) {
     const names = target.parents
         .map((parent) => parent.display_name)
         .join(' i ');
@@ -69,6 +75,18 @@ export function AddChildDialog({ target, candidates }: Props) {
                     other_parent_id: target.parents[1]?.id ?? null,
                 },
             })}
+            form={{
+                definition: PersonChildController.store.form(
+                    target.parents[0].id,
+                ),
+                hiddenInputs: target.parents[1]
+                    ? [{ name: 'other_parent_id', value: target.parents[1].id }]
+                    : undefined,
+                defaults: { last_name: target.default_last_name },
+                genders,
+                religions,
+                submitTestId: 'create-child-button',
+            }}
         />
     );
 }

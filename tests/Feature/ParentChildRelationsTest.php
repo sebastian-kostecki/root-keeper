@@ -685,3 +685,104 @@ test('attaching a child to another users person returns not found and creates no
 
     $this->assertDatabaseCount('parent_child_relations', 0);
 });
+
+test('guests are redirected to the login page from the create-child route', function () {
+    $person = Person::factory()->create();
+
+    $this->post(route('persons.children.store', $person), [])->assertRedirect(route('login'));
+});
+
+test('creating a child for a pair stores the person with a birth event and both relations, redirects back and flashes the toast', function () {
+    $user = User::factory()->create();
+    $focus = Person::factory()->for($user->tree)->male()->create();
+    $partner = Person::factory()->for($user->tree)->female()->create();
+    $treeUrl = route('tree.show', ['person' => $focus->id, 'spouse' => $partner->id]);
+
+    $response = $this->from($treeUrl)
+        ->actingAs($user)
+        ->post(route('persons.children.store', $focus), [
+            'first_name' => 'Marta',
+            'last_name' => 'Kowalska',
+            'gender' => 'female',
+            'birth' => ['year' => 1930],
+            'other_parent_id' => $partner->id,
+        ]);
+
+    $response->assertRedirect($treeUrl);
+    $response->assertSessionHas('inertia.flash_data.toast', ['type' => 'success', 'message' => 'Dodano dziecko']);
+
+    $child = Person::where('first_name', 'Marta')->firstOrFail();
+
+    $this->assertDatabaseCount('parent_child_relations', 2);
+    $this->assertDatabaseHas('parent_child_relations', ['tree_id' => $user->tree->id, 'parent_id' => $focus->id, 'child_id' => $child->id]);
+    $this->assertDatabaseHas('parent_child_relations', ['tree_id' => $user->tree->id, 'parent_id' => $partner->id, 'child_id' => $child->id]);
+    $this->assertDatabaseHas('events', ['tree_id' => $user->tree->id, 'type' => 'birth', 'date_year' => 1930]);
+});
+
+test('creating a child for a single parent stores one relation', function () {
+    $user = User::factory()->create();
+    $focus = Person::factory()->for($user->tree)->create();
+
+    $this->actingAs($user)
+        ->post(route('persons.children.store', $focus), ['first_name' => 'Marta'])
+        ->assertSessionHasNoErrors();
+
+    $child = Person::where('first_name', 'Marta')->firstOrFail();
+
+    $this->assertDatabaseCount('parent_child_relations', 1);
+    $this->assertDatabaseHas('parent_child_relations', ['parent_id' => $focus->id, 'child_id' => $child->id]);
+});
+
+test('creating a child without a first name creates nothing', function () {
+    $user = User::factory()->create();
+    $focus = Person::factory()->for($user->tree)->create();
+    $peopleBefore = Person::count();
+
+    $this->actingAs($user)
+        ->post(route('persons.children.store', $focus), ['first_name' => ''])
+        ->assertSessionHasErrors('first_name');
+
+    expect(Person::count())->toBe($peopleBefore);
+    $this->assertDatabaseCount('parent_child_relations', 0);
+});
+
+test('an other_parent_id from another tree fails validation and creates nothing', function () {
+    $user = User::factory()->create();
+    $focus = Person::factory()->for($user->tree)->create();
+    $foreign = Person::factory()->for(User::factory()->create()->tree)->create();
+    $peopleBefore = Person::count();
+
+    $this->actingAs($user)
+        ->post(route('persons.children.store', $focus), ['first_name' => 'Marta', 'other_parent_id' => $foreign->id])
+        ->assertSessionHasErrors('other_parent_id');
+
+    expect(Person::count())->toBe($peopleBefore);
+    $this->assertDatabaseCount('parent_child_relations', 0);
+});
+
+test('a pair of the same known sex is rejected and the new person and the first link are rolled back', function () {
+    $user = User::factory()->create();
+    $focus = Person::factory()->for($user->tree)->male()->create();
+    $otherMan = Person::factory()->for($user->tree)->male()->create();
+    $peopleBefore = Person::count();
+
+    $this->actingAs($user)
+        ->post(route('persons.children.store', $focus), ['first_name' => 'Marta', 'other_parent_id' => $otherMan->id])
+        ->assertSessionHasErrors(['relation' => 'Ta osoba ma już ojca.']);
+
+    expect(Person::count())->toBe($peopleBefore);
+    $this->assertDatabaseCount('parent_child_relations', 0);
+});
+
+test('creating a child for another users person returns not found and creates nothing', function () {
+    $user = User::factory()->create();
+    $foreignFocus = Person::factory()->for(User::factory()->create()->tree)->create();
+    $peopleBefore = Person::count();
+
+    $this->actingAs($user)
+        ->post(route('persons.children.store', $foreignFocus), ['first_name' => 'Marta'])
+        ->assertNotFound();
+
+    expect(Person::count())->toBe($peopleBefore);
+    $this->assertDatabaseCount('parent_child_relations', 0);
+});

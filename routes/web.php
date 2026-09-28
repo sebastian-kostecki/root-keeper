@@ -29,6 +29,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::post('persons/{person}/parents', [PersonParentController::class, 'store'])->name('persons.parents.store');
     Route::post('persons/{person}/children/attach', [PersonChildController::class, 'attach'])->name('persons.children.attach');
+    Route::post('persons/{person}/children', [PersonChildController::class, 'store'])->name('persons.children.store');
 
     Route::resource('parent-child-relations', ParentChildRelationController::class)->only(['store', 'destroy']);
 
