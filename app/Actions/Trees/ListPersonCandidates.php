@@ -5,11 +5,12 @@ namespace App\Actions\Trees;
 use App\Models\Person;
 use App\Models\Tree;
 
-class ListParentCandidates
+class ListPersonCandidates
 {
     /**
      * Every person of the tree, in the standard person order, for the tree's
-     * parent-slot dialog; the client narrows them by the slot's rules and sex.
+     * parent and child dialogs; the client narrows them by the rules of the
+     * slot or pair.
      *
      * @return list<array{id: int, display_name: string, birth_date: string|null, gender: 'male'|'female'|null}>
      */

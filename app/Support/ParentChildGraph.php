@@ -44,6 +44,16 @@ final class ParentChildGraph
     }
 
     /**
+     * Every person who has at least one parent.
+     *
+     * @return list<int>
+     */
+    public function childIds(): array
+    {
+        return array_keys($this->parentsByChild);
+    }
+
+    /**
      * @return list<int>
      */
     public function childrenOf(int $personId): array

@@ -1,10 +1,11 @@
+import { AddChildDialog } from '@/components/tree/add-child-dialog';
 import { ParentSlotDialog } from '@/components/tree/parent-slot-dialog';
 import { SheetPersonCard } from '@/components/tree/sheet-person-card';
 import { UnknownPersonCard } from '@/components/tree/unknown-person-card';
 import type {
     FamilySheet as FamilySheetData,
     Gender,
-    ParentCandidate,
+    PersonCandidate,
     Religion,
     SheetSlot,
 } from '@/types';
@@ -32,7 +33,7 @@ function Slot({
 }: {
     slot: SheetSlot;
     spouse?: string;
-    candidates: ParentCandidate[] | undefined;
+    candidates: PersonCandidate[] | undefined;
     genders: Gender[];
     religions: Religion[];
 }) {
@@ -129,12 +130,12 @@ function ChildrenRows({ children }: Pick<FamilySheetData, 'children'>) {
 
 export function FamilySheet({
     sheet,
-    parentCandidates,
+    personCandidates,
     genders,
     religions,
 }: {
     sheet: FamilySheetData;
-    parentCandidates: ParentCandidate[] | undefined;
+    personCandidates: PersonCandidate[] | undefined;
     genders: Gender[];
     religions: Religion[];
 }) {
@@ -156,7 +157,7 @@ export function FamilySheet({
                         >
                             <Slot
                                 slot={slot}
-                                candidates={parentCandidates}
+                                candidates={personCandidates}
                                 genders={genders}
                                 religions={religions}
                                 spouse={slotSpouse(
@@ -193,7 +194,7 @@ export function FamilySheet({
                         >
                             <Slot
                                 slot={slot}
-                                candidates={parentCandidates}
+                                candidates={personCandidates}
                                 genders={genders}
                                 religions={religions}
                                 spouse={slotSpouse(sheet.parents[block], i)}
@@ -221,7 +222,7 @@ export function FamilySheet({
                         ) : (
                             <Slot
                                 slot={sheet.partner}
-                                candidates={parentCandidates}
+                                candidates={personCandidates}
                                 genders={genders}
                                 religions={religions}
                                 spouse={String(sheet.focus.id)}
@@ -244,6 +245,14 @@ export function FamilySheet({
                         Brak dzieci w tym związku.
                     </p>
                 )}
+                <div className="col-span-2">
+                    <AddChildDialog
+                        target={sheet.add_child}
+                        candidates={personCandidates}
+                        genders={genders}
+                        religions={religions}
+                    />
+                </div>
             </div>
         </div>
     );

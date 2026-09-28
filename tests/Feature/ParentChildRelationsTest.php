@@ -460,7 +460,7 @@ test('creating a parent from a slot stores the person with a birth event and the
         'parent_id' => $father->id,
         'child_id' => $child->id,
     ]);
-    $this->assertDatabaseHas('events', ['tree_id' => $user->tree->id, 'type' => 'birth', 'year' => 1900]);
+    $this->assertDatabaseHas('events', ['tree_id' => $user->tree->id, 'type' => 'birth', 'date_year' => 1900]);
 });
 
 test('a generic parent slot accepts a person without a sex', function () {
@@ -532,5 +532,156 @@ test('creating a parent for another trees child returns not found and creates no
         ->assertNotFound();
 
     expect(Person::count())->toBe($peopleBefore);
+    $this->assertDatabaseCount('parent_child_relations', 0);
+});
+
+test('guests are redirected to the login page from the attach-child route', function () {
+    $person = Person::factory()->create();
+
+    $this->post(route('persons.children.attach', $person), [])->assertRedirect(route('login'));
+});
+
+test('attaching a child to a pair links both parents, redirects back to the union and flashes the toast', function () {
+    $user = User::factory()->create();
+    $focus = Person::factory()->for($user->tree)->male()->create();
+    $partner = Person::factory()->for($user->tree)->female()->create();
+    $child = Person::factory()->for($user->tree)->create();
+    $treeUrl = route('tree.show', ['person' => $focus->id, 'spouse' => $partner->id]);
+
+    $response = $this->from($treeUrl)
+        ->actingAs($user)
+        ->post(route('persons.children.attach', $focus), ['child_id' => $child->id, 'other_parent_id' => $partner->id]);
+
+    $response->assertRedirect($treeUrl);
+    $response->assertSessionHas('inertia.flash_data.toast', ['type' => 'success', 'message' => 'Dodano dziecko']);
+    $this->assertDatabaseCount('parent_child_relations', 2);
+    $this->assertDatabaseHas('parent_child_relations', ['parent_id' => $focus->id, 'child_id' => $child->id, 'tree_id' => $user->tree->id]);
+    $this->assertDatabaseHas('parent_child_relations', ['parent_id' => $partner->id, 'child_id' => $child->id, 'tree_id' => $user->tree->id]);
+});
+
+test('attaching a child that already has the focus as parent adds only the partner link', function () {
+    $user = User::factory()->create();
+    $focus = Person::factory()->for($user->tree)->male()->create();
+    $partner = Person::factory()->for($user->tree)->female()->create();
+    $child = Person::factory()->for($user->tree)->create();
+    linkParent($focus, $child);
+
+    $this->actingAs($user)
+        ->post(route('persons.children.attach', $focus), ['child_id' => $child->id, 'other_parent_id' => $partner->id])
+        ->assertSessionHasNoErrors();
+
+    $this->assertDatabaseCount('parent_child_relations', 2);
+    $this->assertDatabaseHas('parent_child_relations', ['parent_id' => $partner->id, 'child_id' => $child->id]);
+});
+
+test('attaching a child of both parents is rejected as an existing relation', function () {
+    $user = User::factory()->create();
+    $focus = Person::factory()->for($user->tree)->male()->create();
+    $partner = Person::factory()->for($user->tree)->female()->create();
+    $child = Person::factory()->for($user->tree)->create();
+    linkParent($focus, $child);
+    linkParent($partner, $child);
+
+    $this->actingAs($user)
+        ->post(route('persons.children.attach', $focus), ['child_id' => $child->id, 'other_parent_id' => $partner->id])
+        ->assertSessionHasErrors(['relation' => 'Ta relacja już istnieje.']);
+
+    $this->assertDatabaseCount('parent_child_relations', 2);
+});
+
+test('a child with an outside parent is rejected for a pair and the first link is rolled back', function () {
+    $user = User::factory()->create();
+    $focus = Person::factory()->for($user->tree)->male()->create();
+    $partner = Person::factory()->for($user->tree)->female()->create();
+    $child = Person::factory()->for($user->tree)->create();
+    linkParent(Person::factory()->for($user->tree)->create(), $child);
+    linkParent(Person::factory()->for($user->tree)->create(), $child);
+
+    $this->actingAs($user)
+        ->post(route('persons.children.attach', $focus), ['child_id' => $child->id, 'other_parent_id' => $partner->id])
+        ->assertSessionHasErrors(['relation' => 'Ta osoba ma już dwoje rodziców.']);
+
+    $this->assertDatabaseCount('parent_child_relations', 2);
+    $this->assertDatabaseMissing('parent_child_relations', ['parent_id' => $focus->id]);
+});
+
+test('a lone parent keeps the other parent of an attached child', function () {
+    $user = User::factory()->create();
+    $focus = Person::factory()->for($user->tree)->male()->create();
+    $mother = Person::factory()->for($user->tree)->female()->create();
+    $child = Person::factory()->for($user->tree)->create();
+    linkParent($mother, $child);
+
+    $this->actingAs($user)
+        ->post(route('persons.children.attach', $focus), ['child_id' => $child->id])
+        ->assertSessionHasNoErrors();
+
+    $this->assertDatabaseCount('parent_child_relations', 2);
+    $this->assertDatabaseHas('parent_child_relations', ['parent_id' => $mother->id, 'child_id' => $child->id]);
+    $this->assertDatabaseHas('parent_child_relations', ['parent_id' => $focus->id, 'child_id' => $child->id]);
+});
+
+test('a lone father cannot attach a child who already has a father', function () {
+    $user = User::factory()->create();
+    $focus = Person::factory()->for($user->tree)->male()->create();
+    $child = Person::factory()->for($user->tree)->create();
+    linkParent(Person::factory()->for($user->tree)->male()->create(), $child);
+
+    $this->actingAs($user)
+        ->post(route('persons.children.attach', $focus), ['child_id' => $child->id])
+        ->assertSessionHasErrors(['relation' => 'Ta osoba ma już ojca.']);
+
+    $this->assertDatabaseCount('parent_child_relations', 1);
+});
+
+test('attaching the parent of the focus as its child is rejected as a cycle', function () {
+    $user = User::factory()->create();
+    $focus = Person::factory()->for($user->tree)->create();
+    $parent = Person::factory()->for($user->tree)->create();
+    linkParent($parent, $focus);
+
+    $this->actingAs($user)
+        ->post(route('persons.children.attach', $focus), ['child_id' => $parent->id])
+        ->assertSessionHasErrors('relation');
+
+    $this->assertDatabaseCount('parent_child_relations', 1);
+});
+
+test('attaching the focus person as its own child is rejected on child_id', function () {
+    $user = User::factory()->create();
+    $focus = Person::factory()->for($user->tree)->create();
+
+    $this->actingAs($user)
+        ->post(route('persons.children.attach', $focus), ['child_id' => $focus->id])
+        ->assertSessionHasErrors('child_id');
+
+    $this->assertDatabaseCount('parent_child_relations', 0);
+});
+
+test('a child_id or other_parent_id from another tree fails validation and creates nothing', function (string $field) {
+    $user = User::factory()->create();
+    $focus = Person::factory()->for($user->tree)->create();
+    $own = Person::factory()->for($user->tree)->create();
+    $foreign = Person::factory()->for(User::factory()->create()->tree)->create();
+    $payload = $field === 'child_id'
+        ? ['child_id' => $foreign->id, 'other_parent_id' => $own->id]
+        : ['child_id' => $own->id, 'other_parent_id' => $foreign->id];
+
+    $this->actingAs($user)
+        ->post(route('persons.children.attach', $focus), $payload)
+        ->assertSessionHasErrors($field);
+
+    $this->assertDatabaseCount('parent_child_relations', 0);
+})->with(['child' => ['child_id'], 'other parent' => ['other_parent_id']]);
+
+test('attaching a child to another users person returns not found and creates nothing', function () {
+    $user = User::factory()->create();
+    $foreignFocus = Person::factory()->for(User::factory()->create()->tree)->create();
+    $child = Person::factory()->for($user->tree)->create();
+
+    $this->actingAs($user)
+        ->post(route('persons.children.attach', $foreignFocus), ['child_id' => $child->id])
+        ->assertNotFound();
+
     $this->assertDatabaseCount('parent_child_relations', 0);
 });

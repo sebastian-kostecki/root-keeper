@@ -3,6 +3,7 @@
 use App\Http\Controllers\EventScanController;
 use App\Http\Controllers\MarriageController;
 use App\Http\Controllers\ParentChildRelationController;
+use App\Http\Controllers\PersonChildController;
 use App\Http\Controllers\PersonController;
 use App\Http\Controllers\PersonParentController;
 use App\Http\Controllers\ScanController;
@@ -27,6 +28,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('events/{event}/scans/{scan}', [EventScanController::class, 'destroy'])->name('events.scans.destroy');
 
     Route::post('persons/{person}/parents', [PersonParentController::class, 'store'])->name('persons.parents.store');
+    Route::post('persons/{person}/children/attach', [PersonChildController::class, 'attach'])->name('persons.children.attach');
 
     Route::resource('parent-child-relations', ParentChildRelationController::class)->only(['store', 'destroy']);
 

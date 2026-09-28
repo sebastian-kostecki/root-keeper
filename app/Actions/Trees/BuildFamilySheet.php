@@ -17,6 +17,7 @@ use Illuminate\Support\Collection;
  * @phpstan-type SheetPerson array{id: int, display_name: string, gender: 'male'|'female'|null, lifespan: string|null, is_deceased: bool}
  * @phpstan-type ParentOf array{id: int, display_name: string, last_name: string|null, role: 'father'|'mother'|'parent', excluded_ids: list<int>}
  * @phpstan-type Slot array{kind: 'person', person: SheetPerson}|array{kind: 'unknown', label: string, parent_of?: ParentOf}|array{kind: 'empty'}
+ * @phpstan-type AddChild array{parents: list<array{id: int, display_name: string}>, default_last_name: string|null, excluded_ids: list<int>, blocked_ids: list<int>}
  * @phpstan-type Union array{key: string, partner_id: int|null, label: string, is_marriage: bool, marriage_year: string|null, children_count: int}
  */
 class BuildFamilySheet
@@ -40,6 +41,7 @@ class BuildFamilySheet
      *     parents: array{focus: list<Slot>, partner: list<Slot>},
      *     grandparents: array{focus: list<Slot>, partner: list<Slot>},
      *     children: list<SheetPerson>,
+     *     add_child: AddChild,
      * }
      */
     public function handle(Person $focus, ?string $spouse): array
@@ -149,6 +151,80 @@ class BuildFamilySheet
                 fn (Person $child) => $this->render($child),
                 array_values($children->all()),
             ),
+            'add_child' => $this->addChild($focusPerson, $partnerPerson),
+        ];
+    }
+
+    /**
+     * What the "add child" card needs for the shown pair: the parents, the
+     * people who can never be its child (excluded) and the people whose
+     * existing parents would make the link break a rule (blocked).
+     *
+     * @return AddChild
+     */
+    private function addChild(Person $focus, ?Person $partner): array
+    {
+        $parents = $partner === null ? [$focus] : [$focus, $partner];
+        $parentIds = array_map(fn (Person $parent): int => $parent->id, $parents);
+
+        $excludedIds = $parentIds;
+
+        foreach ($parentIds as $parentId) {
+            array_push($excludedIds, ...$this->graph->ancestorsOf($parentId));
+        }
+
+        foreach ($this->graph->childIds() as $childId) {
+            if (array_diff($parentIds, $this->graph->parentsOf($childId)) === []) {
+                $excludedIds[] = $childId;
+            }
+        }
+
+        $excludedIds = array_values(array_unique($excludedIds));
+        $candidateIds = array_values(array_diff($this->graph->childIds(), $excludedIds));
+
+        $otherParentGenders = [];
+
+        if ($partner === null && $focus->gender !== null) {
+            $otherParentIds = [];
+
+            foreach ($candidateIds as $childId) {
+                array_push($otherParentIds, ...array_diff($this->graph->parentsOf($childId), $parentIds));
+            }
+
+            $otherParentGenders = $focus->tree->people()
+                ->whereIn('id', array_values(array_unique($otherParentIds)))
+                ->pluck('gender', 'id')
+                ->all();
+        }
+
+        $blockedIds = [];
+
+        foreach ($candidateIds as $childId) {
+            $childParentIds = $this->graph->parentsOf($childId);
+
+            if (count(array_unique([...$childParentIds, ...$parentIds])) > 2) {
+                $blockedIds[] = $childId;
+
+                continue;
+            }
+
+            $others = array_values(array_diff($childParentIds, $parentIds));
+
+            if (count($others) === 1 && $focus->gender !== null && ($otherParentGenders[$others[0]] ?? null) === $focus->gender) {
+                $blockedIds[] = $childId;
+            }
+        }
+
+        $firstMan = collect($parents)->first(fn (Person $parent): bool => $parent->gender === Gender::Male);
+
+        return [
+            'parents' => array_map(fn (Person $parent): array => [
+                'id' => $parent->id,
+                'display_name' => $parent->displayName(),
+            ], $parents),
+            'default_last_name' => ($firstMan ?? $focus)->last_name,
+            'excluded_ids' => $excludedIds,
+            'blocked_ids' => $blockedIds,
         ];
     }
 

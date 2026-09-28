@@ -21,11 +21,18 @@ export type SheetSlot =
     | { kind: 'unknown'; label: string; parent_of?: ParentSlotTarget }
     | { kind: 'empty' };
 
-export type ParentCandidate = {
+export type PersonCandidate = {
     id: number;
     display_name: string;
     birth_date: string | null;
     gender: 'male' | 'female' | null;
+};
+
+export type AddChildTarget = {
+    parents: { id: number; display_name: string }[];
+    default_last_name: string | null;
+    excluded_ids: number[];
+    blocked_ids: number[];
 };
 
 export type SheetUnion = {
@@ -46,4 +53,5 @@ export type FamilySheet = {
     parents: { focus: SheetSlot[]; partner: SheetSlot[] };
     grandparents: { focus: SheetSlot[]; partner: SheetSlot[] };
     children: SheetPerson[];
+    add_child: AddChildTarget;
 };

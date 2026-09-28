@@ -352,7 +352,7 @@ test('a grandparent slot belongs to the known parent above it', function () {
     expect(unknownShape($grandparents[1]))->toBe(['kind' => 'unknown', 'label' => 'Nieznana matka', 'role' => 'mother', 'parent_id' => $father->id]);
 });
 
-test('the parent candidates are an optional prop ordered like the person list, with gender', function () {
+test('the person candidates are an optional prop ordered like the person list, with gender', function () {
     $user = User::factory()->create();
     $tree = $user->tree;
     $focus = Person::factory()->for($tree)->create(['first_name' => 'Jan', 'last_name' => 'Kowalski']);
@@ -363,20 +363,20 @@ test('the parent candidates are an optional prop ordered like the person list, w
     $this->actingAs($user)->get(route('tree.show', $focus))
         ->assertInertia(fn ($page) => $page
             ->component('tree/show')
-            ->missing('parentCandidates'));
+            ->missing('personCandidates'));
 
     $version = $this->actingAs($user)->get(route('tree.show', $focus), ['X-Inertia' => 'true'])->headers->get('X-Inertia-Version');
 
     $response = $this->actingAs($user)->get(route('tree.show', $focus), [
         'X-Inertia' => 'true',
         'X-Inertia-Version' => $version,
-        'X-Inertia-Partial-Data' => 'parentCandidates',
+        'X-Inertia-Partial-Data' => 'personCandidates',
         'X-Inertia-Partial-Component' => 'tree/show',
     ]);
 
     $response->assertOk();
 
-    $candidates = $response->json('props.parentCandidates');
+    $candidates = $response->json('props.personCandidates');
 
     expect(collect($candidates)->pluck('id')->all())->toBe([$focus->id, $woman->id, $noSurname->id]);
     expect(collect($candidates)->pluck('gender')->all())->toBe([null, 'female', 'male']);
@@ -524,4 +524,85 @@ test('the sheet query count does not grow with the size of the tree', function (
     };
 
     expect($countQueries(12))->toBe($countQueries(2));
+});
+
+test('a partner union adds the pair as parents and hides the people who cannot be their child', function () {
+    $user = User::factory()->create();
+    $tree = $user->tree;
+    $focus = Person::factory()->for($tree)->male()->create(['last_name' => 'Kowalski']);
+    $partner = Person::factory()->for($tree)->female()->create(['last_name' => 'Nowak']);
+    $focusParent = Person::factory()->for($tree)->create();
+    $sharedChild = Person::factory()->for($tree)->create();
+    $soloChild = Person::factory()->for($tree)->create();
+    $outsideChild = Person::factory()->for($tree)->create();
+    $stranger = Person::factory()->for($tree)->create();
+    attachMarriage($focus, $partner, 1950);
+    linkParent($focusParent, $focus);
+    linkParent($focus, $sharedChild);
+    linkParent($partner, $sharedChild);
+    linkParent($focus, $soloChild);
+    linkParent($focus, $outsideChild);
+    linkParent(Person::factory()->for($tree)->create(), $outsideChild);
+
+    $addChild = sheetFor($this, $user, $focus, (string) $partner->id)['add_child'];
+
+    expect(collect($addChild['parents'])->pluck('id')->all())->toBe([$focus->id, $partner->id]);
+    expect($addChild['default_last_name'])->toBe('Kowalski');
+    expect($addChild['excluded_ids'])->toContain($focus->id, $partner->id, $focusParent->id, $sharedChild->id);
+    expect($addChild['blocked_ids'])->toBe([$outsideChild->id]);
+    expect($addChild['excluded_ids'])->not->toContain($stranger->id, $soloChild->id, $outsideChild->id);
+});
+
+test('the unknown union and a person without a union add the focus alone and exclude their children', function () {
+    $user = User::factory()->create();
+    $tree = $user->tree;
+    $focus = Person::factory()->for($tree)->create();
+    $child = Person::factory()->for($tree)->create();
+    linkParent($focus, $child);
+
+    $unknown = sheetFor($this, $user, $focus, 'unknown')['add_child'];
+
+    expect(collect($unknown['parents'])->pluck('id')->all())->toBe([$focus->id]);
+    expect($unknown['excluded_ids'])->toContain($focus->id, $child->id);
+
+    $loner = Person::factory()->for($tree)->create();
+    $none = sheetFor($this, $user, $loner)['add_child'];
+
+    expect(collect($none['parents'])->pluck('id')->all())->toBe([$loner->id]);
+    expect($none['excluded_ids'])->toBe([$loner->id]);
+    expect($none['blocked_ids'])->toBe([]);
+});
+
+test('a lone parent is blocked by another parent of the same known sex only', function () {
+    $user = User::factory()->create();
+    $tree = $user->tree;
+    $focus = Person::factory()->for($tree)->male()->create();
+    $withFather = Person::factory()->for($tree)->create();
+    $withMother = Person::factory()->for($tree)->create();
+    $withUnknownSexParent = Person::factory()->for($tree)->create();
+    linkParent(Person::factory()->for($tree)->male()->create(), $withFather);
+    linkParent(Person::factory()->for($tree)->female()->create(), $withMother);
+    linkParent(Person::factory()->for($tree)->create(), $withUnknownSexParent);
+
+    $addChild = sheetFor($this, $user, $focus)['add_child'];
+
+    expect($addChild['blocked_ids'])->toBe([$withFather->id]);
+});
+
+test('the default surname is the first mans, else the focus persons', function () {
+    $user = User::factory()->create();
+    $tree = $user->tree;
+    $woman = Person::factory()->for($tree)->female()->create(['last_name' => 'Nowak']);
+    $man = Person::factory()->for($tree)->male()->create(['last_name' => 'Kowalski']);
+    $otherWoman = Person::factory()->for($tree)->female()->create(['last_name' => 'Wiśniewska']);
+    attachMarriage($woman, $man, 1950);
+    attachMarriage($man, $otherWoman, 1960);
+
+    expect(sheetFor($this, $user, $woman)['add_child']['default_last_name'])->toBe('Kowalski');
+    expect(sheetFor($this, $user, $man, (string) $otherWoman->id)['add_child']['default_last_name'])->toBe('Kowalski');
+
+    $twin = Person::factory()->for($tree)->female()->create(['last_name' => 'Zielińska']);
+    attachMarriage($otherWoman, $twin, 1970);
+
+    expect(sheetFor($this, $user, $otherWoman, (string) $twin->id)['add_child']['default_last_name'])->toBe('Wiśniewska');
 });

@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Actions\Trees\BuildFamilySheet;
-use App\Actions\Trees\ListParentCandidates;
+use App\Actions\Trees\ListPersonCandidates;
 use App\Enums\Gender;
 use App\Enums\Religion;
 use App\Models\Person;
@@ -17,7 +17,7 @@ class TreeController extends Controller
     /**
      * Display the family sheet of the tree's proband.
      */
-    public function index(Request $request, BuildFamilySheet $buildFamilySheet, ListParentCandidates $listParentCandidates): Response
+    public function index(Request $request, BuildFamilySheet $buildFamilySheet, ListPersonCandidates $listPersonCandidates): Response
     {
         $tree = $request->user()->tree;
         $proband = $tree->rootPerson;
@@ -25,7 +25,7 @@ class TreeController extends Controller
         return Inertia::render('tree/show', [
             'sheet' => $proband === null ? null : $buildFamilySheet->handle($proband, $this->spouseParameter($request)),
             'rootPersonId' => $tree->root_person_id,
-            'parentCandidates' => Inertia::optional(fn (): array => $listParentCandidates->handle($tree)),
+            'personCandidates' => Inertia::optional(fn (): array => $listPersonCandidates->handle($tree)),
             'genders' => Gender::options(),
             'religions' => Religion::options(),
         ]);
@@ -34,7 +34,7 @@ class TreeController extends Controller
     /**
      * Display the family sheet centred on the given person.
      */
-    public function show(Request $request, Person $person, BuildFamilySheet $buildFamilySheet, ListParentCandidates $listParentCandidates): Response
+    public function show(Request $request, Person $person, BuildFamilySheet $buildFamilySheet, ListPersonCandidates $listPersonCandidates): Response
     {
         Gate::authorize('view', $person);
 
@@ -43,7 +43,7 @@ class TreeController extends Controller
         return Inertia::render('tree/show', [
             'sheet' => $buildFamilySheet->handle($person, $this->spouseParameter($request)),
             'rootPersonId' => $tree->root_person_id,
-            'parentCandidates' => Inertia::optional(fn (): array => $listParentCandidates->handle($tree)),
+            'personCandidates' => Inertia::optional(fn (): array => $listPersonCandidates->handle($tree)),
             'genders' => Gender::options(),
             'religions' => Religion::options(),
         ]);

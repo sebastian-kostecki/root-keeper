@@ -12,14 +12,14 @@ import { index as treeIndex, show as treeShow } from '@/routes/tree';
 import type {
     FamilySheet as FamilySheetData,
     Gender,
-    ParentCandidate,
+    PersonCandidate,
     Religion,
 } from '@/types';
 
 type Props = {
     sheet: FamilySheetData | null;
     rootPersonId: number | null;
-    parentCandidates?: ParentCandidate[];
+    personCandidates?: PersonCandidate[];
     genders: Gender[];
     religions: Religion[];
 };
@@ -27,7 +27,7 @@ type Props = {
 export default function Show({
     sheet,
     rootPersonId,
-    parentCandidates,
+    personCandidates,
     genders,
     religions,
 }: Props) {
@@ -117,7 +117,7 @@ export default function Show({
 
                 <FamilySheet
                     sheet={sheet}
-                    parentCandidates={parentCandidates}
+                    personCandidates={personCandidates}
                     genders={genders}
                     religions={religions}
                 />
