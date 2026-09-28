@@ -114,7 +114,7 @@ class PersonController extends Controller
         $fallback = route('persons.index');
         $parts = parse_url(url()->previous($fallback));
 
-        if ($parts === false || ($parts['host'] ?? null) !== $request->getHost() || ! isset($parts['path'])) {
+        if ($parts === false || ($parts['host'] ?? null) !== $request->getHost() || ! isset($parts['path']) || ! preg_match('#^/(?!/)#', $parts['path'])) {
             return $fallback;
         }
 
@@ -133,6 +133,6 @@ class PersonController extends Controller
         parse_str($parts['query'] ?? '', $query);
         unset($query['person']);
 
-        return url($parts['path'].($query === [] ? '' : '?'.http_build_query($query)));
+        return $request->getSchemeAndHttpHost().$parts['path'].($query === [] ? '' : '?'.http_build_query($query));
     }
 }

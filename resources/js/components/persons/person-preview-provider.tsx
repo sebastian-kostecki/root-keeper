@@ -11,8 +11,8 @@ type PersonPreviewContextValue = {
     hrefFor: (personId: number) => string;
     /** Swap the modal content to the given person. */
     open: (personId: number) => void;
-    /** Remember the currently shown person so "Wstecz" can return to it. */
-    pushCurrent: () => void;
+    /** Remember a person that was left, so "Wstecz" can return to it. */
+    push: (personId: number) => void;
     /** Return to the previously viewed person. */
     back: () => void;
     /** Close the modal without a server request. */
@@ -67,10 +67,8 @@ export function PersonPreviewProvider({ children }: { children: ReactNode }) {
         router.visit(hrefFor(personId), previewVisitOptions);
     };
 
-    const pushCurrent = () => {
-        if (currentId !== null) {
-            setStack((previous) => [...previous, currentId]);
-        }
+    const push = (personId: number) => {
+        setStack((previous) => [...previous, personId]);
     };
 
     const back = () => {
@@ -100,7 +98,7 @@ export function PersonPreviewProvider({ children }: { children: ReactNode }) {
                 currentId,
                 hrefFor,
                 open,
-                pushCurrent,
+                push,
                 back,
                 close,
             }}

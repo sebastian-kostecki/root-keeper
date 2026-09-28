@@ -68,6 +68,7 @@ class HandleInertiaRequests extends Middleware
      * Resolve the person named by the `person` query parameter from the user's own tree.
      *
      * Returns null without an authenticated user or a numeric parameter; a missing or foreign id is a 404.
+     * The resolved person is memoized on the request so several shared props do not repeat the lookup.
      */
     private function previewPerson(Request $request): ?Person
     {
@@ -78,9 +79,15 @@ class HandleInertiaRequests extends Middleware
             return null;
         }
 
+        if ($request->attributes->has('previewPerson')) {
+            return $request->attributes->get('previewPerson');
+        }
+
         $person = $user->tree->people()->findOrFail((int) $id);
 
         Gate::authorize('view', $person);
+
+        $request->attributes->set('previewPerson', $person);
 
         return $person;
     }

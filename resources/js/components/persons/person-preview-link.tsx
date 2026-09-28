@@ -1,4 +1,5 @@
 import { Link } from '@inertiajs/react';
+import { useRef } from 'react';
 import type * as React from 'react';
 import {
     previewVisitOptions,
@@ -22,7 +23,8 @@ export function PersonPreviewLink({
     children,
     ...props
 }: Props) {
-    const { hrefFor, pushCurrent } = usePersonPreview();
+    const { currentId, hrefFor, push } = usePersonPreview();
+    const fromId = useRef<number | null>(null);
 
     const handleClick = (event: React.MouseEvent) => {
         onClick?.(event);
@@ -34,9 +36,10 @@ export function PersonPreviewLink({
             !event.shiftKey &&
             !event.altKey;
 
-        if (isPlainClick && !event.defaultPrevented) {
-            pushCurrent();
-        }
+        fromId.current =
+            isPlainClick && !event.defaultPrevented && currentId !== personId
+                ? currentId
+                : null;
     };
 
     return (
@@ -45,6 +48,12 @@ export function PersonPreviewLink({
             {...previewVisitOptions}
             href={hrefFor(personId)}
             onClick={handleClick}
+            onSuccess={() => {
+                if (fromId.current !== null) {
+                    push(fromId.current);
+                    fromId.current = null;
+                }
+            }}
         >
             {children}
         </Link>
