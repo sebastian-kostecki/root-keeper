@@ -63,7 +63,7 @@ export function UnionSwitch({ focusId, unions, selected, action }: Props) {
                         ref={union.key === selected ? selectedRef : undefined}
                         className="data-[state=on]:border-primary data-[state=on]:ring-primary h-auto flex-col items-start rounded-md px-3 py-2 text-left whitespace-normal data-[state=on]:ring-1 data-[variant=outline]:border-l max-md:shrink-0"
                     >
-                        <span>{union.label}</span>
+                        <span>{union.partner_name ?? 'Nieznany partner'}</span>
                         <span className="text-muted-foreground text-xs font-normal">
                             Dzieci: {union.children_count}
                         </span>

@@ -42,7 +42,7 @@ export type AddSpouseTarget = {
 export type SheetUnion = {
     key: string;
     partner_id: number | null;
-    label: string;
+    partner_name: string | null;
     is_marriage: boolean;
     marriage_year: string | null;
     children_count: number;

@@ -22,7 +22,7 @@ use Illuminate\Support\Facades\DB;
  * @phpstan-type AddChild array{parents: list<array{id: int, display_name: string}>, default_last_name: string|null, excluded_ids: list<int>, blocked_ids: list<int>}
  * @phpstan-type AddSpouse array{excluded_ids: list<int>}
  * @phpstan-type UnmarriedParents array{focus: bool, partner: bool}
- * @phpstan-type Union array{key: string, partner_id: int|null, label: string, is_marriage: bool, marriage_year: string|null, children_count: int}
+ * @phpstan-type Union array{key: string, partner_id: int|null, partner_name: string|null, is_marriage: bool, marriage_year: string|null, children_count: int}
  */
 class BuildFamilySheet
 {
@@ -106,9 +106,7 @@ class BuildFamilySheet
             $unions[] = [
                 'key' => "person-{$partnerId}",
                 'partner_id' => $partnerId,
-                'label' => $marriage === null
-                    ? "{$partner->displayName()} · bez ślubu"
-                    : "{$partner->displayName()} · ślub ".($marriageYear ?? '?'),
+                'partner_name' => $partner->displayName(),
                 'is_marriage' => $marriage !== null,
                 'marriage_year' => $marriageYear,
                 'children_count' => count($childrenByOtherParent[$partnerId] ?? []),
@@ -119,7 +117,7 @@ class BuildFamilySheet
             $unions[] = [
                 'key' => self::UNKNOWN_UNION,
                 'partner_id' => null,
-                'label' => 'Nieznany partner',
+                'partner_name' => null,
                 'is_marriage' => false,
                 'marriage_year' => null,
                 'children_count' => count($childrenByOtherParent[0]),

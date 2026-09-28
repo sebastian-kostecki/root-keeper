@@ -179,12 +179,15 @@ test('unions are ordered marriage by date, then co-parent, then unknown, each wi
         'unknown',
     ]);
     expect(collect($sheet['unions'])->pluck('children_count')->all())->toBe([1, 1, 1, 1]);
-    expect($sheet['unions'][0]['label'])->toBe("{$earlierWife->displayName()} · ślub 1880");
+    expect($sheet['unions'][0])->not->toHaveKey('label');
+    expect($sheet['unions'][0]['partner_name'])->toBe($earlierWife->displayName());
     expect($sheet['unions'][0]['is_marriage'])->toBeTrue();
     expect($sheet['unions'][0]['marriage_year'])->toBe('1880');
-    expect($sheet['unions'][2]['label'])->toBe("{$coParent->displayName()} · bez ślubu");
+    expect($sheet['unions'][2]['partner_name'])->toBe($coParent->displayName());
+    expect($sheet['unions'][2]['marriage_year'])->toBeNull();
     expect($sheet['unions'][2]['is_marriage'])->toBeFalse();
-    expect($sheet['unions'][3]['label'])->toBe('Nieznany partner');
+    expect($sheet['unions'][3]['partner_name'])->toBeNull();
+    expect($sheet['unions'][3]['is_marriage'])->toBeFalse();
     expect($sheet['selected_union'])->toBe("person-{$earlierWife->id}");
 
     $expectations = [
@@ -231,7 +234,8 @@ test('repeat marriages to the same partner form one union labelled with the earl
     $sheet = sheetFor($this, $user, $focus);
 
     expect($sheet['unions'])->toHaveCount(1);
-    expect($sheet['unions'][0]['label'])->toBe("{$wife->displayName()} · ślub 1880");
+    expect($sheet['unions'][0]['partner_name'])->toBe($wife->displayName());
+    expect($sheet['unions'][0]['marriage_year'])->toBe('1880');
 });
 
 test('a focus without unions has an empty partner column', function () {
