@@ -688,24 +688,24 @@ trees have no proband. Both are reversible with `migrate:rollback`.
 
 #### Automated
 
-- [x] 2.1 Migration applies and rolls back
-- [x] 2.2 Tree tests pass
-- [x] 2.3 Account deletion still passes
-- [x] 2.4 PHP style and static analysis
-- [x] 2.5 Frontend check and types
+- [x] 2.1 Migration applies and rolls back — e5f69fa
+- [x] 2.2 Tree tests pass — e5f69fa
+- [x] 2.3 Account deletion still passes — e5f69fa
+- [x] 2.4 PHP style and static analysis — e5f69fa
+- [x] 2.5 Frontend check and types — e5f69fa
 
 #### Manual
 
-- [x] 2.6 Set proband from preview shows toast and badge; delete dialog warns
+- [x] 2.6 Set proband from preview shows toast and badge; delete dialog warns — e5f69fa
 
 ### Phase 3: Family sheet backend
 
 #### Automated
 
-- [ ] 3.1 Tree and preview tests pass
-- [ ] 3.2 Unit tests pass
-- [ ] 3.3 PHP style and static analysis
-- [ ] 3.4 Wayfinder regenerated and types compile
+- [x] 3.1 Tree and preview tests pass
+- [x] 3.2 Unit tests pass
+- [x] 3.3 PHP style and static analysis
+- [x] 3.4 Wayfinder regenerated and types compile
 
 ### Phase 4: Family sheet UI
 

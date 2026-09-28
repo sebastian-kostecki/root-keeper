@@ -5,6 +5,7 @@ use App\Http\Controllers\MarriageController;
 use App\Http\Controllers\ParentChildRelationController;
 use App\Http\Controllers\PersonController;
 use App\Http\Controllers\ScanController;
+use App\Http\Controllers\TreeController;
 use App\Http\Controllers\TreeRootPersonController;
 use Illuminate\Support\Facades\Route;
 
@@ -13,6 +14,8 @@ Route::inertia('/', 'welcome')->name('home');
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('persons', PersonController::class)->only(['index', 'create', 'store', 'show', 'edit', 'update', 'destroy']);
 
+    Route::get('tree', [TreeController::class, 'index'])->name('tree.index');
+    Route::get('tree/{person}', [TreeController::class, 'show'])->name('tree.show');
     Route::put('tree/root-person/{person}', [TreeRootPersonController::class, 'update'])->name('tree.root-person.update');
 
     Route::resource('scans', ScanController::class)->only(['index', 'create', 'store', 'show', 'destroy']);
