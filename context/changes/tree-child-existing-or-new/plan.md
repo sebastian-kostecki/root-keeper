@@ -374,18 +374,18 @@ None: no schema changes. The prop rename is internal to the tree page.
 
 #### Automated
 
-- [x] 2.1 Affected feature tests pass: `vendor/bin/sail artisan test --compact tests/Feature/ParentChildRelationsTest.php tests/Feature/TreeTest.php tests/Feature/PersonsTest.php`
-- [x] 2.2 Larastan passes: `vendor/bin/sail composer types:check`
-- [x] 2.3 Format and lint pass: `vendor/bin/sail npm run check`
-- [x] 2.4 Type check passes: `vendor/bin/sail npm run types:check`
-- [x] 2.5 Production build succeeds: `vendor/bin/sail npm run build`
-- [x] 2.6 PHP style is clean: `vendor/bin/sail bin pint --dirty --format agent`
+- [x] 2.1 Affected feature tests pass: `vendor/bin/sail artisan test --compact tests/Feature/ParentChildRelationsTest.php tests/Feature/TreeTest.php tests/Feature/PersonsTest.php` — f63e96f
+- [x] 2.2 Larastan passes: `vendor/bin/sail composer types:check` — f63e96f
+- [x] 2.3 Format and lint pass: `vendor/bin/sail npm run check` — f63e96f
+- [x] 2.4 Type check passes: `vendor/bin/sail npm run types:check` — f63e96f
+- [x] 2.5 Production build succeeds: `vendor/bin/sail npm run build` — f63e96f
+- [x] 2.6 PHP style is clean: `vendor/bin/sail bin pint --dirty --format agent` — f63e96f
 
 #### Manual
 
-- [x] 2.7 Pair Jan Kowalski + Anna Nowak → „Nowa osoba": surname starts as „Kowalski", sex freely selectable; saving shows the new child on the tree with „Dodano dziecko", centre and union unchanged; the child's preview lists both parents
+- [x] 2.7 Pair Jan Kowalski + Anna Nowak → „Nowa osoba": surname starts as „Kowalski", sex freely selectable; saving shows the new child on the tree with „Dodano dziecko", centre and union unchanged; the child's preview lists both parents — f63e96f
 - [x] 2.8 Pair where the partner is the man (tree centred on Anna) → surname starts as Jan's surname; a single mother without a partner → her own surname
-- [x] 2.9 „Nieznany partner" union → „Nowa osoba" → the child appears in that union with only the focus as parent
-- [x] 2.10 „Wróć do listy" returns to the list with candidates still loaded; closing and reopening starts on the list
-- [x] 2.11 Submitting an empty form shows the name error inside the dialog and creates nothing
-- [x] 2.12 Visual gate: form view at 375px (full screen, scrolling, pinned header/footer) and 1280px, light and dark; screenshots attached to the review
+- [x] 2.9 „Nieznany partner" union → „Nowa osoba" → the child appears in that union with only the focus as parent — f63e96f
+- [x] 2.10 „Wróć do listy" returns to the list with candidates still loaded; closing and reopening starts on the list — f63e96f
+- [x] 2.11 Submitting an empty form shows the name error inside the dialog and creates nothing — f63e96f
+- [x] 2.12 Visual gate: form view at 375px (full screen, scrolling, pinned header/footer) and 1280px, light and dark; screenshots attached to the review — f63e96f
