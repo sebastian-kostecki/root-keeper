@@ -91,27 +91,14 @@ class PersonController extends Controller
 
         return Inertia::render('persons/show', [
             'person' => PersonResource::make($person)->resolve(),
+            'personForm' => PersonFormResource::make($person)->resolve(),
+            'genders' => Gender::options(),
+            'religions' => Religion::options(),
             'isRootPerson' => $request->user()->tree->root_person_id === $person->id,
             'availableScans' => Inertia::optional(fn (): array => ScanResource::collection(
                 $request->user()->tree->scans()->latest()->orderByDesc('id')->get()
             )->resolve()),
             'relationCandidates' => Inertia::optional(fn (): array => $listRelationCandidates->handle($person)),
-        ]);
-    }
-
-    /**
-     * Show the form for editing the given person.
-     */
-    public function edit(Person $person): Response
-    {
-        Gate::authorize('update', $person);
-
-        $person->load('events.scans');
-
-        return Inertia::render('persons/edit', [
-            'person' => PersonFormResource::make($person)->resolve(),
-            'genders' => Gender::options(),
-            'religions' => Religion::options(),
         ]);
     }
 

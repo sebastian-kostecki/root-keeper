@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Route;
 Route::inertia('/', 'welcome')->name('home');
 
 Route::middleware(['auth', 'verified'])->group(function () {
-    Route::resource('persons', PersonController::class)->only(['index', 'store', 'show', 'edit', 'update', 'destroy']);
+    Route::resource('persons', PersonController::class)->only(['index', 'store', 'show', 'update', 'destroy']);
 
     Route::get('tree', [TreeController::class, 'index'])->name('tree.index');
     Route::get('tree/{person}', [TreeController::class, 'show'])->name('tree.show');

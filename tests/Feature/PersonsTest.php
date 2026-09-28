@@ -14,7 +14,6 @@ test('guests are redirected to the login page from persons routes', function () 
     $this->get(route('persons.index'))->assertRedirect(route('login'));
     $this->get(route('persons.show', $person))->assertRedirect(route('login'));
     $this->post(route('persons.store'), [])->assertRedirect(route('login'));
-    $this->get(route('persons.edit', $person))->assertRedirect(route('login'));
     $this->put(route('persons.update', $person), [])->assertRedirect(route('login'));
     $this->delete(route('persons.destroy', $person))->assertRedirect(route('login'));
 });
@@ -523,21 +522,24 @@ test('persons index passes gender and religion options', function () {
             ->where('religions.0.value', 'roman_catholic'));
 });
 
-test('edit page passes gender options and prefills the person gender', function () {
+test('person show passes gender and religion options and prefills personForm.gender', function () {
     $user = User::factory()->create();
     $person = Person::factory()->for($user->tree)->male()->create();
 
-    $this->actingAs($user)->get(route('persons.edit', $person))
+    $this->actingAs($user)->get(route('persons.show', $person))
         ->assertInertia(fn ($page) => $page
-            ->component('persons/edit')
+            ->component('persons/show')
             ->has('genders', 2)
-            ->where('person.gender', 'male'));
+            ->has('religions', 6)
+            ->where('personForm.gender', 'male'));
 });
 
-test('the old create url returns not found', function () {
+test('the old create and edit urls return not found', function () {
     $user = User::factory()->create();
+    $person = Person::factory()->for($user->tree)->create();
 
     $this->actingAs($user)->get('/persons/create')->assertNotFound();
+    $this->actingAs($user)->get("/persons/{$person->id}/edit")->assertNotFound();
 });
 
 test('store without a previous url redirects to the persons list', function () {
@@ -570,42 +572,41 @@ test('validation errors are in polish', function () {
     expect($errors->first('first_name'))->toContain('wymagane');
 });
 
-test('edit page renders raw date parts, religion value, is_deceased and is_confirmed', function () {
+test('person show exposes personForm with raw date parts, religion value, is_deceased and is_confirmed', function () {
     $user = User::factory()->create();
     $person = Person::factory()->for($user->tree)->create(['religion' => 'roman_catholic']);
     $birth = Event::factory()->for($user->tree)->birth()->create(['date_year' => 1900, 'date_month' => 5, 'date_day' => 10]);
     $birth->participants()->attach($person, ['role' => ParticipantRole::Subject]);
 
-    $response = $this->actingAs($user)->get(route('persons.edit', $person));
+    $response = $this->actingAs($user)->get(route('persons.show', $person));
 
     $response->assertOk();
     $response->assertInertia(fn ($page) => $page
-        ->component('persons/edit')
-        ->where('person.religion', 'roman_catholic')
-        ->where('person.is_deceased', false)
-        ->where('person.birth.year', 1900)
-        ->where('person.birth.month', 5)
-        ->where('person.birth.day', 10)
-        ->where('person.birth.is_confirmed', false)
-        ->where('person.death', null));
+        ->component('persons/show')
+        ->where('personForm.religion', 'roman_catholic')
+        ->where('personForm.is_deceased', false)
+        ->where('personForm.birth.year', 1900)
+        ->where('personForm.birth.month', 5)
+        ->where('personForm.birth.day', 10)
+        ->where('personForm.birth.is_confirmed', false)
+        ->where('personForm.death', null));
 
     $scan = Scan::factory()->for($user->tree)->create();
     $birth->scans()->attach($scan);
 
-    $response = $this->actingAs($user)->get(route('persons.edit', $person));
+    $response = $this->actingAs($user)->get(route('persons.show', $person));
 
     $response->assertOk();
     $response->assertInertia(fn ($page) => $page
-        ->component('persons/edit')
-        ->where('person.birth.is_confirmed', true));
+        ->component('persons/show')
+        ->where('personForm.birth.is_confirmed', true));
 });
 
-test('persons edit and update return not found for a person from another users tree', function () {
+test('persons update returns not found for a person from another users tree', function () {
     $user = User::factory()->create();
     $otherUser = User::factory()->create();
     $person = Person::factory()->for($otherUser->tree)->create(['first_name' => 'Obcy']);
 
-    $this->actingAs($user)->get(route('persons.edit', $person))->assertNotFound();
     $this->actingAs($user)->put(route('persons.update', $person), ['first_name' => 'Hacked'])->assertNotFound();
 
     expect($person->fresh()->first_name)->toBe('Obcy');

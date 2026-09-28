@@ -2,6 +2,7 @@ import { Head, Link, setLayoutProps } from '@inertiajs/react';
 import PersonController from '@/actions/App/Http/Controllers/PersonController';
 import { DeletePersonDialog } from '@/components/persons/delete-person-dialog';
 import { EventCard } from '@/components/persons/event-card';
+import { PersonFormDialog } from '@/components/persons/person-form-dialog';
 import { MarriagesSection } from '@/components/persons/marriages-section';
 import { RelativesCard } from '@/components/persons/relatives-card';
 import { SetRootPersonButton } from '@/components/tree/set-root-person-button';
@@ -11,10 +12,20 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { index as personsIndex } from '@/routes/persons';
 import { show as treeShow } from '@/routes/tree';
-import type { PersonPreview, RelationCandidate, Scan } from '@/types';
+import type {
+    Gender,
+    PersonFormData,
+    PersonPreview,
+    RelationCandidate,
+    Religion,
+    Scan,
+} from '@/types';
 
 type Props = {
     person: PersonPreview;
+    personForm: PersonFormData;
+    genders: Gender[];
+    religions: Religion[];
     isRootPerson: boolean;
     availableScans?: Scan[];
     relationCandidates?: RelationCandidate[];
@@ -22,6 +33,9 @@ type Props = {
 
 export default function Show({
     person,
+    personForm,
+    genders,
+    religions,
     isRootPerson,
     availableScans,
     relationCandidates,
@@ -57,11 +71,17 @@ export default function Show({
                             </Link>
                         </Button>
 
-                        <Button variant="outline" size="sm" asChild>
-                            <Link href={PersonController.edit(person.id)}>
-                                Edytuj
-                            </Link>
-                        </Button>
+                        <PersonFormDialog
+                            mode="edit"
+                            person={personForm}
+                            genders={genders}
+                            religions={religions}
+                            trigger={
+                                <Button variant="outline" size="sm">
+                                    Edytuj
+                                </Button>
+                            }
+                        />
 
                         <DeletePersonDialog
                             person={person}

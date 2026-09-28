@@ -8,7 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 /**
- * Raw values for prefilling the person edit form, including whether each
+ * Raw values for prefilling the person edit modal on the preview, including whether each
  * event is confirmed by a linked scan.
  *
  * @property-read Person $resource

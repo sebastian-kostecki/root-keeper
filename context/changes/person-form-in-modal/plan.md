@@ -262,40 +262,40 @@ None — no schema or data changes. Removing the routes makes old bookmarks to t
 
 #### Automated
 
-- [x] 1.1 Person feature tests pass: `vendor/bin/sail artisan test --compact tests/Feature/PersonsTest.php`
-- [x] 1.2 Format and lint pass: `vendor/bin/sail npm run check`
-- [x] 1.3 Type check passes: `vendor/bin/sail npm run types:check`
-- [x] 1.4 Production build succeeds: `vendor/bin/sail npm run build`
-- [x] 1.5 PHP style is clean: `vendor/bin/sail bin pint --dirty --format agent`
+- [x] 1.1 Person feature tests pass: `vendor/bin/sail artisan test --compact tests/Feature/PersonsTest.php` — 5186e2c
+- [x] 1.2 Format and lint pass: `vendor/bin/sail npm run check` — 5186e2c
+- [x] 1.3 Type check passes: `vendor/bin/sail npm run types:check` — 5186e2c
+- [x] 1.4 Production build succeeds: `vendor/bin/sail npm run build` — 5186e2c
+- [x] 1.5 PHP style is clean: `vendor/bin/sail bin pint --dirty --format agent` — 5186e2c
 
 #### Manual
 
-- [x] 1.6 On `/persons`, "Dodaj osobę" opens the modal; saving a valid person closes it, shows "Dodano osobę" and the person appears on the list
-- [x] 1.7 With the list filtered (e.g. "Kowal"), adding "Jan Kowalski" returns to the filtered list with the search text intact and the new person visible
-- [x] 1.8 Submitting an empty form keeps the modal open with Polish errors, and the first error is scrolled into view
-- [x] 1.9 At 375px width: modal fills the screen, title and X stay at the top, "Anuluj"/"Zapisz" stay at the bottom while the fields scroll (with "Zmarły/a" checked so the form is at its longest)
-- [x] 1.10 At 1280px width: modal is centred and wide enough for the two-column name row; a short form has no inner scrollbar, a long one scrolls inside the modal
-- [x] 1.11 Clicking the overlay does not close the modal; Esc, X and "Anuluj" do, and reopening shows an empty form
-- [x] 1.12 Selecting gender/religion from the dropdowns inside the modal works and does not close it
-- [x] 1.13 In a tree with one person, the relative picker's "Dodaj osobę" leads to the person list
-- [x] 1.14 Dark mode: header/footer borders and background look correct
+- [x] 1.6 On `/persons`, "Dodaj osobę" opens the modal; saving a valid person closes it, shows "Dodano osobę" and the person appears on the list — 5186e2c
+- [x] 1.7 With the list filtered (e.g. "Kowal"), adding "Jan Kowalski" returns to the filtered list with the search text intact and the new person visible — 5186e2c
+- [x] 1.8 Submitting an empty form keeps the modal open with Polish errors, and the first error is scrolled into view — 5186e2c
+- [x] 1.9 At 375px width: modal fills the screen, title and X stay at the top, "Anuluj"/"Zapisz" stay at the bottom while the fields scroll (with "Zmarły/a" checked so the form is at its longest) — 5186e2c
+- [x] 1.10 At 1280px width: modal is centred and wide enough for the two-column name row; a short form has no inner scrollbar, a long one scrolls inside the modal — 5186e2c
+- [x] 1.11 Clicking the overlay does not close the modal; Esc, X and "Anuluj" do, and reopening shows an empty form — 5186e2c
+- [x] 1.12 Selecting gender/religion from the dropdowns inside the modal works and does not close it — 5186e2c
+- [x] 1.13 In a tree with one person, the relative picker's "Dodaj osobę" leads to the person list — 5186e2c
+- [x] 1.14 Dark mode: header/footer borders and background look correct — 5186e2c
 
 ### Phase 2: Editing a person in a modal on the preview
 
 #### Automated
 
-- [ ] 2.1 Person feature tests pass: `vendor/bin/sail artisan test --compact tests/Feature/PersonsTest.php`
-- [ ] 2.2 Format and lint pass: `vendor/bin/sail npm run check`
-- [ ] 2.3 Type check passes: `vendor/bin/sail npm run types:check`
-- [ ] 2.4 Production build succeeds: `vendor/bin/sail npm run build`
-- [ ] 2.5 PHP style is clean: `vendor/bin/sail bin pint --dirty --format agent`
-- [ ] 2.6 No references to the removed pages remain: `grep -rn "persons/create\|persons/edit\|PersonController.create\|PersonController.edit" resources/js app routes tests` returns nothing outside generated Wayfinder dirs
+- [x] 2.1 Person feature tests pass: `vendor/bin/sail artisan test --compact tests/Feature/PersonsTest.php`
+- [x] 2.2 Format and lint pass: `vendor/bin/sail npm run check`
+- [x] 2.3 Type check passes: `vendor/bin/sail npm run types:check`
+- [x] 2.4 Production build succeeds: `vendor/bin/sail npm run build`
+- [x] 2.5 PHP style is clean: `vendor/bin/sail bin pint --dirty --format agent`
+- [x] 2.6 No references to the removed pages remain: `grep -rn "persons/create\|persons/edit\|PersonController.create\|PersonController.edit" resources/js app routes tests` returns nothing outside generated Wayfinder dirs
 
 #### Manual
 
-- [ ] 2.7 On a person preview, "Edytuj" opens the modal prefilled with names, residence, gender, religion, birth and (for a deceased person) death
-- [ ] 2.8 Saving changes closes the modal, shows "Zapisano zmiany" and the preview shows the new values; reopening shows the saved values
-- [ ] 2.9 For a person whose birth is confirmed by a scan, the "Potwierdzone aktem…" hint shows in the modal
-- [ ] 2.10 Unchecking "Zmarły/a" on a death with a linked scan shows the validation error inside the modal
-- [ ] 2.11 At 375px and 1280px the edit modal behaves like the add modal (pinned header/footer, scrolling body)
-- [ ] 2.12 `/persons/create` and `/persons/{id}/edit` show the 404 page
+- [x] 2.7 On a person preview, "Edytuj" opens the modal prefilled with names, residence, gender, religion, birth and (for a deceased person) death
+- [x] 2.8 Saving changes closes the modal, shows "Zapisano zmiany" and the preview shows the new values; reopening shows the saved values
+- [x] 2.9 For a person whose birth is confirmed by a scan, the "Potwierdzone aktem…" hint shows in the modal
+- [x] 2.10 Unchecking "Zmarły/a" on a death with a linked scan shows the validation error inside the modal
+- [x] 2.11 At 375px and 1280px the edit modal behaves like the add modal (pinned header/footer, scrolling body)
+- [x] 2.12 `/persons/create` and `/persons/{id}/edit` show the 404 page
