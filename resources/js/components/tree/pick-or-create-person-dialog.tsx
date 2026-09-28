@@ -1,6 +1,6 @@
 import { Form, router } from '@inertiajs/react';
 import type { RequestPayload } from '@inertiajs/core';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
     FormDialogBody,
     FormDialogContent,
@@ -34,8 +34,13 @@ export type PickOrCreateForm = {
 };
 
 type Props = {
-    /** Rendered through `DialogTrigger asChild`. */
-    trigger: React.ReactNode;
+    /** Rendered through `DialogTrigger asChild`; omit it for a controlled dialog. */
+    trigger?: React.ReactNode;
+    /** When given, the dialog is controlled by the caller. */
+    open?: boolean;
+    onOpenChange?: (open: boolean) => void;
+    /** Where focus goes on close, for a dialog without a trigger of its own. */
+    onCloseAutoFocus?: (event: Event) => void;
     title: string;
     description: string;
     candidates: PersonCandidate[] | undefined;
@@ -57,6 +62,9 @@ type Props = {
  */
 export function PickOrCreatePersonDialog({
     trigger,
+    open: controlledOpen,
+    onOpenChange,
+    onCloseAutoFocus,
     title,
     description,
     candidates,
@@ -64,7 +72,9 @@ export function PickOrCreatePersonDialog({
     pick,
     form,
 }: Props) {
-    const [open, setOpen] = useState(false);
+    const [internalOpen, setInternalOpen] = useState(false);
+    const open = controlledOpen ?? internalOpen;
+    const [wasOpen, setWasOpen] = useState(false);
     const [processingId, setProcessingId] = useState<number | null>(null);
     const [error, setError] = useState<string | undefined>(undefined);
     const [filter, setFilter] = useState('');
@@ -75,16 +85,27 @@ export function PickOrCreatePersonDialog({
         candidates,
     );
 
-    const handleOpenChange = (nextOpen: boolean) => {
-        setOpen(nextOpen);
+    const setOpen = (nextOpen: boolean) => {
+        setInternalOpen(nextOpen);
+        onOpenChange?.(nextOpen);
+    };
 
-        if (nextOpen) {
+    // Runs on every transition to open, whichever side opened the dialog.
+    if (open !== wasOpen) {
+        setWasOpen(open);
+
+        if (open) {
             setError(undefined);
             setFilter('');
             setView('list');
+        }
+    }
+
+    useEffect(() => {
+        if (open) {
             load();
         }
-    };
+    }, [open]);
 
     const scrollFirstErrorIntoView = () => {
         requestAnimationFrame(() => {
@@ -118,9 +139,11 @@ export function PickOrCreatePersonDialog({
     };
 
     return (
-        <Dialog open={open} onOpenChange={handleOpenChange}>
-            <DialogTrigger asChild>{trigger}</DialogTrigger>
-            <FormDialogContent>
+        <Dialog open={open} onOpenChange={setOpen}>
+            {trigger !== undefined && (
+                <DialogTrigger asChild>{trigger}</DialogTrigger>
+            )}
+            <FormDialogContent onCloseAutoFocus={onCloseAutoFocus}>
                 <FormDialogHeader title={title} description={description} />
 
                 {view === 'list' || form === undefined ? (

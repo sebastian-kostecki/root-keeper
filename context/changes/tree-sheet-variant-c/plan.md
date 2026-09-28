@@ -482,34 +482,34 @@ No data migration. `label` is removed from the Inertia payload in the same deplo
 
 #### Automated
 
-- [x] 2.1 Types check: `vendor/bin/sail npm run types:check`
-- [x] 2.2 Format and lint pass: `vendor/bin/sail npm run check`
-- [x] 2.3 Build succeeds: `vendor/bin/sail npm run build`
+- [x] 2.1 Types check: `vendor/bin/sail npm run types:check` — ac8f2c0
+- [x] 2.2 Format and lint pass: `vendor/bin/sail npm run check` — ac8f2c0
+- [x] 2.3 Build succeeds: `vendor/bin/sail npm run build` — ac8f2c0
 
 #### Manual
 
-- [x] 2.4 Tinted male/female cards, centred text, no icons; unknown-gender card neutral (light and dark)
-- [x] 2.5 Hover changes only the border to the gender colour; Tab shows the ring halo on cards and placeholders
-- [x] 2.6 Missing parent reads „Dodaj ojca/matkę/rodzica” dashed; static unknown is a borderless grey block
-- [x] 2.7 Screen reader still reads „mężczyzna” / „kobieta” on cards
+- [x] 2.4 Tinted male/female cards, centred text, no icons; unknown-gender card neutral (light and dark) — ac8f2c0
+- [x] 2.5 Hover changes only the border to the gender colour; Tab shows the ring halo on cards and placeholders — ac8f2c0
+- [x] 2.6 Missing parent reads „Dodaj ojca/matkę/rodzica” dashed; static unknown is a borderless grey block — ac8f2c0
+- [x] 2.7 Screen reader still reads „mężczyzna” / „kobieta” on cards — ac8f2c0
 
 ### Phase 3: Union node with a dropdown (C3, C3b)
 
 #### Automated
 
-- [ ] 3.1 Types check: `vendor/bin/sail npm run types:check`
-- [ ] 3.2 Format and lint pass: `vendor/bin/sail npm run check`
-- [ ] 3.3 Build succeeds: `vendor/bin/sail npm run build`
-- [ ] 3.4 No reference to the removed switcher remains
-- [ ] 3.5 Sheet tests still pass: `vendor/bin/sail artisan test --compact tests/Feature/TreeTest.php`
+- [x] 3.1 Types check: `vendor/bin/sail npm run types:check`
+- [x] 3.2 Format and lint pass: `vendor/bin/sail npm run check`
+- [x] 3.3 Build succeeds: `vendor/bin/sail npm run build`
+- [x] 3.4 No reference to the removed switcher remains
+- [x] 3.5 Sheet tests still pass: `vendor/bin/sail artisan test --compact tests/Feature/TreeTest.php`
 
 #### Manual
 
-- [ ] 3.6 Jan's node reads „1 z 4 · ślub 2001”; menu lists 4 unions; picking Marta gives „3 z 4 · bez ślubu” with scroll kept
-- [ ] 3.7 Unknown union shows „4 z 4” and „Nieznany partner / 1 dziecko”
-- [ ] 3.8 Anna: no „1 z 1”; Sasza shows „Związki”; Kacper: no node
-- [ ] 3.9 „Dodaj małżonka” from the menu opens the dialog with candidates; focus returns to the node; page stays clickable
-- [ ] 3.10 Keyboard: Tab, Enter, arrows, Esc work and focus returns to the node
+- [x] 3.6 Jan's node reads „1 z 4 · ślub 2001”; menu lists 4 unions; picking Marta gives „3 z 4 · bez ślubu” with scroll kept
+- [x] 3.7 Unknown union shows „4 z 4” and „Nieznany partner / 1 dziecko”
+- [x] 3.8 Anna: no „1 z 1”; Sasza shows „Związki”; Kacper: no node
+- [x] 3.9 „Dodaj małżonka” from the menu opens the dialog with candidates; focus returns to the node; page stays clickable
+- [x] 3.10 Keyboard: Tab, Enter, arrows, Esc work and focus returns to the node
 
 ### Phase 4: Sheet geometry — headings off the lines, „Dodaj dziecko” in the row (C4)
 

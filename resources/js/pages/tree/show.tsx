@@ -1,10 +1,8 @@
 import { Head, Link, setLayoutProps } from '@inertiajs/react';
 import Heading from '@/components/heading';
 import { PersonPreviewLink } from '@/components/persons/person-preview-link';
-import { AddSpouseDialog } from '@/components/tree/add-spouse-dialog';
 import { FamilySheet } from '@/components/tree/family-sheet';
 import { SetRootPersonButton } from '@/components/tree/set-root-person-button';
-import { UnionSwitch } from '@/components/tree/union-switch';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -109,22 +107,6 @@ export default function Show({
                         </Button>
                     </div>
                 </div>
-
-                <UnionSwitch
-                    focusId={sheet.focus.id}
-                    unions={sheet.unions}
-                    selected={sheet.selected_union}
-                    action={
-                        <AddSpouseDialog
-                            variant="switcher"
-                            focus={sheet.focus}
-                            target={sheet.add_spouse}
-                            candidates={personCandidates}
-                            genders={genders}
-                            religions={religions}
-                        />
-                    }
-                />
 
                 <FamilySheet
                     sheet={sheet}

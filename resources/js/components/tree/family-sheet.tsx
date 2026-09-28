@@ -4,6 +4,7 @@ import { AddSpouseDialog } from '@/components/tree/add-spouse-dialog';
 import { MarryCoupleDialog } from '@/components/tree/marry-couple-dialog';
 import { ParentSlotDialog } from '@/components/tree/parent-slot-dialog';
 import { SheetPersonCard } from '@/components/tree/sheet-person-card';
+import { UnionNode } from '@/components/tree/union-node';
 import { UnknownPersonCard } from '@/components/tree/unknown-person-card';
 import { useCentreInScroll } from '@/hooks/use-centre-in-scroll';
 import type {
@@ -316,6 +317,17 @@ export function FamilySheet({
                             )}
                         </div>
                     ))}
+                    <div className="absolute top-1/2 left-1/2 z-10 -translate-x-1/2 -translate-y-1/2">
+                        <UnionNode
+                            focus={sheet.focus}
+                            unions={sheet.unions}
+                            selected={sheet.selected_union}
+                            addSpouse={sheet.add_spouse}
+                            candidates={personCandidates}
+                            genders={genders}
+                            religions={religions}
+                        />
+                    </div>
                 </div>
 
                 <div

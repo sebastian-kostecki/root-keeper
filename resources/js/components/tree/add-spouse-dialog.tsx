@@ -1,8 +1,6 @@
-import { Plus } from 'lucide-react';
 import PersonSpouseController from '@/actions/App/Http/Controllers/PersonSpouseController';
 import { PickOrCreatePersonDialog } from '@/components/tree/pick-or-create-person-dialog';
 import { UnknownPersonCard } from '@/components/tree/unknown-person-card';
-import { Button } from '@/components/ui/button';
 import { pluralPhrase } from '@/lib/plural';
 import type {
     AddSpouseTarget,
@@ -18,8 +16,14 @@ type Props = {
     candidates: PersonCandidate[] | undefined;
     genders: Gender[];
     religions: Religion[];
-    /** `slot`: the card of the empty partner cell; `switcher`: the button after the union chips. */
-    variant: 'slot' | 'switcher';
+    /**
+     * `slot`: the card of the empty partner cell, with its own trigger;
+     * `menu`: no trigger, opened by the union node's menu through `open`.
+     */
+    variant: 'slot' | 'menu';
+    open?: boolean;
+    onOpenChange?: (open: boolean) => void;
+    onCloseAutoFocus?: (event: Event) => void;
 };
 
 /**
@@ -35,6 +39,9 @@ export function AddSpouseDialog({
     genders,
     religions,
     variant,
+    open,
+    onOpenChange,
+    onCloseAutoFocus,
 }: Props) {
     const addLabel = `Dodaj małżonka: ${focus.display_name}`;
     const isSameSex = (candidate: PersonCandidate) =>
@@ -48,18 +55,11 @@ export function AddSpouseDialog({
                         label="Dodaj małżonka"
                         addLabel={addLabel}
                     />
-                ) : (
-                    <Button
-                        type="button"
-                        variant="outline"
-                        aria-label={addLabel}
-                        className="h-auto border-dashed px-3 py-2"
-                    >
-                        <Plus className="size-4" aria-hidden="true" />
-                        Dodaj małżonka
-                    </Button>
-                )
+                ) : undefined
             }
+            open={variant === 'menu' ? open : undefined}
+            onOpenChange={onOpenChange}
+            onCloseAutoFocus={onCloseAutoFocus}
             title={`Dodaj małżonka — ${focus.display_name}`}
             description="Wybierz osobę z drzewa albo dodaj nową. Datę i miejsce ślubu uzupełnisz w podglądzie."
             candidates={candidates}
