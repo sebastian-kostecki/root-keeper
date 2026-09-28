@@ -533,13 +533,13 @@ No data migration. `label` is removed from the Inertia payload in the same deplo
 
 #### Automated
 
-- [x] 5.1 Gate script runs without errors into `screenshots/after`
-- [x] 5.2 Full checks pass: check, types:check, build
-- [x] 5.3 Sheet tests pass: `vendor/bin/sail artisan test --compact tests/Feature/TreeTest.php`
+- [x] 5.1 Gate script runs without errors into `screenshots/after` — 7c96382
+- [x] 5.2 Full checks pass: check, types:check, build — 7c96382
+- [x] 5.3 Sheet tests pass: `vendor/bin/sail artisan test --compact tests/Feature/TreeTest.php` — 7c96382
 
 #### Manual
 
-- [x] 5.4 Every state in the audit's inventory has a shot (light/dark where asked)
-- [x] 5.5 `verdict.md` shows C1–C4 passing against the before set
-- [x] 5.6 390px shots show no regression beyond the known sideways scroll
-- [x] 5.7 User runs the full suite: `vendor/bin/sail artisan test --compact`
+- [x] 5.4 Every state in the audit's inventory has a shot (light/dark where asked) — 7c96382
+- [x] 5.5 `verdict.md` shows C1–C4 passing against the before set — 7c96382
+- [x] 5.6 390px shots show no regression beyond the known sideways scroll — 7c96382
+- [x] 5.7 User runs the full suite: `vendor/bin/sail artisan test --compact` — 7c96382
