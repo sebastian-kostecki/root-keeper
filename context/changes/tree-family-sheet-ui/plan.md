@@ -459,24 +459,24 @@ None. There is no schema or data change. The seeder is dev-only and idempotent: 
 
 #### Automated
 
-- [x] 4.1 Format + lint pass: `vendor/bin/sail npm run check`
-- [x] 4.2 Types pass: `vendor/bin/sail npm run types:check`
-- [x] 4.3 Build passes: `vendor/bin/sail npm run build`
+- [x] 4.1 Format + lint pass: `vendor/bin/sail npm run check` — 5e8a3a1
+- [x] 4.2 Types pass: `vendor/bin/sail npm run types:check` — 5e8a3a1
+- [x] 4.3 Build passes: `vendor/bin/sail npm run build` — 5e8a3a1
 
 #### Manual
 
-- [x] 4.4 390px `/tree`: first viewport shows the focus person centred, a right/left edge fade, and the union switch as one row with the selected union visible
-- [x] 4.5 390px: switching union and re-centring on another person re-centres the sheet without the page jumping vertically
-- [x] 4.6 1440px: no fade, no forced scroll, union switch wraps as before
+- [x] 4.4 390px `/tree`: first viewport shows the focus person centred, a right/left edge fade, and the union switch as one row with the selected union visible — 5e8a3a1
+- [x] 4.5 390px: switching union and re-centring on another person re-centres the sheet without the page jumping vertically — 5e8a3a1
+- [x] 4.6 1440px: no fade, no forced scroll, union switch wraps as before — 5e8a3a1
 
 ### Phase 5: Screenshot gate
 
 #### Automated
 
-- [ ] 5.1 Script runs and writes every expected file: `node context/changes/tree-family-sheet-ui/screenshots/shots.mjs context/changes/tree-family-sheet-ui/screenshots/after`
-- [ ] 5.2 Every `before/*.png` has a same-named `after/*.png`: `comm -23 <(ls context/changes/tree-family-sheet-ui/screenshots/before) <(ls context/changes/tree-family-sheet-ui/screenshots/after)` prints nothing
+- [x] 5.1 Script runs and writes every expected file: `node context/changes/tree-family-sheet-ui/screenshots/shots.mjs context/changes/tree-family-sheet-ui/screenshots/after`
+- [x] 5.2 Every `before/*.png` has a same-named `after/*.png`: `comm -23 <(ls context/changes/tree-family-sheet-ui/screenshots/before) <(ls context/changes/tree-family-sheet-ui/screenshots/after)` prints nothing
 
 #### Manual
 
-- [ ] 5.3 Each gate-table verdict in `audit.md` is confirmed by looking at the before/after pair
-- [ ] 5.4 No regression on `/persons`, `/scans`, `/settings/*` (gutter present, nothing double-padded, nothing clipped)
+- [x] 5.3 Each gate-table verdict in `audit.md` is confirmed by looking at the before/after pair
+- [x] 5.4 No regression on `/persons`, `/scans`, `/settings/*` (gutter present, nothing double-padded, nothing clipped)

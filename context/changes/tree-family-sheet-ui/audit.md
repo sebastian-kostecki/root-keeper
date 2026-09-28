@@ -112,3 +112,19 @@ default ✓ · hover ✗ (C3) · focus ✗ (C4) · disabled — `SetRootPersonBu
 error — n/a on the sheet itself (dialog forms own their errors) · empty ✓ (no proband; union without children
 „Brak dzieci w tym związku.”) · loading — `personCandidates` is `Inertia::optional`, loaded when a dialog opens; not
 captured yet. The kitchen sink for the gate = `TreeViewDemoSeeder` + the screenshot set above, re-shot as `after/`.
+
+## Gate (after `tree-family-sheet-ui`)
+
+Shots: `screenshots/before/` vs `screenshots/after/` (`shots.mjs`, IDs derived from the proband's id). Verdicts are from looking at the pairs; the user confirms them in Phase 5 manual verification.
+
+| Charge | Before | After | Verdict |
+| --- | --- | --- | --- |
+| C1 page gutter | `before/desktop-light-proband.png`, `before/mobile-light-empty.png` | `after/desktop-light-proband.png`, `after/mobile-light-empty.png`, plus new `after/{desktop,mobile}-light-{persons,scans,settings-profile}.png` | holds: content sits inside the panel with a gutter aligned with the breadcrumb; settings is not double-padded |
+| C2 children attached to couple | `before/desktop-light-proband.png`, `before/desktop-light-coparent.png` | `after/desktop-light-proband.png`, `after/desktop-light-coparent.png`, `after/desktop-light-five-children.png` | holds: couple line joins both cards, descent meets the bracket midpoint, children and „Dodaj dziecko” centred, 5 children wrap into two centred rows |
+| C3 selected union / hover | `before/desktop-light-second-union.png`, `before/desktop-light-hover-card.png` | `after/desktop-light-second-union.png`, `after/desktop-light-hover-card.png`, `after/desktop-dark-hover-card.png` | holds: selected chip has a primary border + ring, hover fills the card, gender strip keeps its colour, dark hover visible |
+| C4 focus ring | `before/desktop-light-focus-card.png` | `after/desktop-light-focus-card.png`, `after/desktop-dark-focus-card.png` | holds: detached grey halo, clearly visible in both themes, distinct from the focus person's attached ring |
+| C5 mobile | `before/mobile-light-proband-viewport.png`, `before/mobile-light-proband.png` | `after/mobile-light-proband-viewport.png`, `after/mobile-light-union-switch.png` | holds: sheet opens with the focus person centred, right-edge fade, union switch is one row |
+| D2 title | `before/desktop-light-proband.png` | `after/desktop-light-proband.png` | holds: title is an `h1`, no dead gap before the union switch |
+| D3 duplicated card classes | code only | `resources/js/components/tree/card-styles.ts` | holds: person and placeholder cards share `cardSurface` / `cardInteractive` |
+
+States covered: default, hover, focus (light and dark), empty (no proband, union without children), >4 children, mobile. Not captured: the disabled `SetRootPersonButton` while processing, and the loading dialog candidates (`personCandidates` optional prop).
