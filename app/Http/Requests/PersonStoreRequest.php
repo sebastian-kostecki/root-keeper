@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use App\Concerns\PartialDateValidationRules;
+use App\Enums\Gender;
 use App\Enums\Religion;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
@@ -28,6 +29,7 @@ class PersonStoreRequest extends FormRequest
         return [
             'first_name' => ['nullable', 'required_without:last_name', 'string', 'max:255'],
             'last_name' => ['nullable', 'required_without:first_name', 'string', 'max:255'],
+            'gender' => ['nullable', Rule::enum(Gender::class)],
             'residence' => ['nullable', 'string', 'max:255'],
             'religion' => ['nullable', Rule::enum(Religion::class)],
             'is_deceased' => ['sometimes', 'boolean'],
@@ -47,6 +49,7 @@ class PersonStoreRequest extends FormRequest
         return [
             'first_name' => 'imię',
             'last_name' => 'nazwisko',
+            'gender' => 'płeć',
             'residence' => 'miejsce zamieszkania',
             'religion' => 'wyznanie',
             'is_deceased' => 'zmarły/a',

@@ -13,10 +13,11 @@ use Illuminate\Support\Carbon;
 /**
  * @property int $id
  * @property int $user_id
+ * @property int|null $root_person_id
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
-#[Fillable(['user_id'])]
+#[Fillable(['user_id', 'root_person_id'])]
 class Tree extends Model
 {
     /** @use HasFactory<TreeFactory> */
@@ -28,6 +29,14 @@ class Tree extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    /**
+     * @return BelongsTo<Person, $this>
+     */
+    public function rootPerson(): BelongsTo
+    {
+        return $this->belongsTo(Person::class, 'root_person_id');
     }
 
     /**

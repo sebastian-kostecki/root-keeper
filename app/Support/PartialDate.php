@@ -32,4 +32,15 @@ final readonly class PartialDate
 
         return $this->isApproximate ? "ok. {$formatted}" : $formatted;
     }
+
+    public function formatYear(): ?string
+    {
+        if ($this->year === null) {
+            return null;
+        }
+
+        $formatted = sprintf('%04d', $this->year);
+
+        return $this->isApproximate ? "ok. {$formatted}" : $formatted;
+    }
 }

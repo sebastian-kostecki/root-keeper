@@ -4,21 +4,25 @@ import { DeletePersonDialog } from '@/components/persons/delete-person-dialog';
 import { EventCard } from '@/components/persons/event-card';
 import { MarriagesSection } from '@/components/persons/marriages-section';
 import { RelativesCard } from '@/components/persons/relatives-card';
+import { SetRootPersonButton } from '@/components/tree/set-root-person-button';
 import Heading from '@/components/heading';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { index as personsIndex } from '@/routes/persons';
+import { show as treeShow } from '@/routes/tree';
 import type { PersonPreview, RelationCandidate, Scan } from '@/types';
 
 type Props = {
     person: PersonPreview;
+    isRootPerson: boolean;
     availableScans?: Scan[];
     relationCandidates?: RelationCandidate[];
 };
 
 export default function Show({
     person,
+    isRootPerson,
     availableScans,
     relationCandidates,
 }: Props) {
@@ -41,6 +45,18 @@ export default function Show({
                     <Heading title={person.display_name} />
 
                     <div className="flex items-center gap-2">
+                        {isRootPerson ? (
+                            <Badge variant="secondary">Probant</Badge>
+                        ) : (
+                            <SetRootPersonButton personId={person.id} />
+                        )}
+
+                        <Button variant="outline" size="sm" asChild>
+                            <Link href={treeShow(person.id)}>
+                                Pokaż w drzewie
+                            </Link>
+                        </Button>
+
                         <Button variant="outline" size="sm" asChild>
                             <Link href={PersonController.edit(person.id)}>
                                 Edytuj
@@ -49,6 +65,7 @@ export default function Show({
 
                         <DeletePersonDialog
                             person={person}
+                            isRootPerson={isRootPerson}
                             trigger={
                                 <Button
                                     variant="outline"
@@ -69,6 +86,19 @@ export default function Show({
                                 Miejsce zamieszkania
                             </p>
                             <p>{person.residence ?? 'brak danych'}</p>
+                        </div>
+
+                        <div>
+                            <p className="text-muted-foreground text-sm">
+                                Płeć
+                            </p>
+                            {person.gender ? (
+                                <Badge variant="secondary">
+                                    {person.gender.label}
+                                </Badge>
+                            ) : (
+                                <p>brak danych</p>
+                            )}
                         </div>
 
                         <div>

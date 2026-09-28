@@ -16,10 +16,11 @@ import type { PersonPreview } from '@/types';
 
 type Props = {
     person: PersonPreview;
+    isRootPerson: boolean;
     trigger: React.ReactNode;
 };
 
-export function DeletePersonDialog({ person, trigger }: Props) {
+export function DeletePersonDialog({ person, isRootPerson, trigger }: Props) {
     const [open, setOpen] = useState(false);
     const [processing, setProcessing] = useState(false);
 
@@ -77,6 +78,14 @@ export function DeletePersonDialog({ person, trigger }: Props) {
                     {relationCount > 0 && (
                         <> Powiązane osoby pozostaną w drzewie.</>
                     )}{' '}
+                    {isRootPerson && (
+                        <>
+                            {' '}
+                            Osoba jest probantem drzewa — widok drzewa pokaże
+                            pusty stan, dopóki nie wybierzesz nowego
+                            probanta.{' '}
+                        </>
+                    )}
                     Tej operacji nie można cofnąć.
                 </DialogDescription>
 

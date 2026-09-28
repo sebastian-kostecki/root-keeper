@@ -3,6 +3,11 @@ export type Religion = {
     label: string;
 };
 
+export type Gender = {
+    value: 'male' | 'female';
+    label: string;
+};
+
 export type PersonEvent = {
     id: number;
     type: 'birth' | 'death' | 'marriage';
@@ -41,6 +46,7 @@ export type Person = {
     first_name: string | null;
     last_name: string | null;
     display_name: string;
+    gender: Gender | null;
     residence: string | null;
     religion: Religion | null;
     birth: PersonEvent | null;
@@ -86,6 +92,7 @@ export type PersonFormData = {
     display_name: string;
     first_name: string | null;
     last_name: string | null;
+    gender: string | null;
     residence: string | null;
     religion: string | null;
     is_deceased: boolean;

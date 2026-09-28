@@ -6,6 +6,7 @@ use App\Actions\Persons\CreatePerson;
 use App\Actions\Persons\DeletePerson;
 use App\Actions\Persons\UpdatePerson;
 use App\Actions\Relations\ListRelationCandidates;
+use App\Enums\Gender;
 use App\Enums\Religion;
 use App\Http\Requests\PersonStoreRequest;
 use App\Http\Requests\PersonUpdateRequest;
@@ -71,6 +72,7 @@ class PersonController extends Controller
     public function create(): Response
     {
         return Inertia::render('persons/create', [
+            'genders' => Gender::options(),
             'religions' => Religion::options(),
         ]);
     }
@@ -98,6 +100,7 @@ class PersonController extends Controller
 
         return Inertia::render('persons/show', [
             'person' => PersonResource::make($person)->resolve(),
+            'isRootPerson' => $request->user()->tree->root_person_id === $person->id,
             'availableScans' => Inertia::optional(fn (): array => ScanResource::collection(
                 $request->user()->tree->scans()->latest()->orderByDesc('id')->get()
             )->resolve()),
@@ -116,6 +119,7 @@ class PersonController extends Controller
 
         return Inertia::render('persons/edit', [
             'person' => PersonFormResource::make($person)->resolve(),
+            'genders' => Gender::options(),
             'religions' => Religion::options(),
         ]);
     }

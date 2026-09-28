@@ -1,24 +1,8 @@
 <?php
 
-use App\Enums\ParticipantRole;
-use App\Models\Event;
 use App\Models\ParentChildRelation;
 use App\Models\Person;
 use App\Models\User;
-
-/**
- * Attach a birth event with the given partial date to a person.
- */
-function attachBirth(Person $person, ?int $year = null, ?int $month = null, ?int $day = null): void
-{
-    $event = Event::factory()->for($person->tree)->birth()->create([
-        'date_year' => $year,
-        'date_month' => $month,
-        'date_day' => $day,
-    ]);
-
-    $event->participants()->attach($person, ['role' => ParticipantRole::Subject]);
-}
 
 test('guests are redirected to the login page from parent-child-relations routes', function () {
     $relation = ParentChildRelation::factory()->create();

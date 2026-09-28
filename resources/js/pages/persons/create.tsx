@@ -4,9 +4,10 @@ import Heading from '@/components/heading';
 import { PersonFormFields } from '@/components/persons/person-form-fields';
 import { Button } from '@/components/ui/button';
 import { index as personsIndex } from '@/routes/persons';
-import type { BreadcrumbItem, Religion } from '@/types';
+import type { BreadcrumbItem, Gender, Religion } from '@/types';
 
 type Props = {
+    genders: Gender[];
     religions: Religion[];
 };
 
@@ -15,7 +16,7 @@ const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Dodaj osobę', href: PersonController.create() },
 ];
 
-export default function Create({ religions }: Props) {
+export default function Create({ genders, religions }: Props) {
     return (
         <>
             <Head title="Dodaj osobę" />
@@ -30,6 +31,7 @@ export default function Create({ religions }: Props) {
                     {({ processing, errors }) => (
                         <>
                             <PersonFormFields
+                                genders={genders}
                                 religions={religions}
                                 errors={errors}
                             />

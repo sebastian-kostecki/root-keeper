@@ -31,3 +31,21 @@ test('returns null when there is no year', function () {
 
     expect($date->format())->toBeNull();
 });
+
+test('formats a year for a card', function () {
+    $date = new PartialDate(year: 1850, month: 3, day: 12, isApproximate: false);
+
+    expect($date->formatYear())->toBe('1850');
+});
+
+test('prefixes an approximate card year with ok.', function () {
+    $date = new PartialDate(year: 1850, month: null, day: null, isApproximate: true);
+
+    expect($date->formatYear())->toBe('ok. 1850');
+});
+
+test('returns no card year without a year', function () {
+    $date = new PartialDate(year: null, month: 3, day: null, isApproximate: false);
+
+    expect($date->formatYear())->toBeNull();
+});
