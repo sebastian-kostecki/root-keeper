@@ -51,6 +51,8 @@ class PersonController extends Controller
         return Inertia::render('persons/index', [
             'persons' => PersonResource::collection($people)->resolve(),
             'filters' => ['q' => $query],
+            'genders' => Gender::options(),
+            'religions' => Religion::options(),
         ]);
     }
 
@@ -67,17 +69,6 @@ class PersonController extends Controller
     }
 
     /**
-     * Show the form for creating a new person.
-     */
-    public function create(): Response
-    {
-        return Inertia::render('persons/create', [
-            'genders' => Gender::options(),
-            'religions' => Religion::options(),
-        ]);
-    }
-
-    /**
      * Store a newly created person in the tree.
      */
     public function store(PersonStoreRequest $request, CreatePerson $createPerson): RedirectResponse
@@ -86,7 +77,7 @@ class PersonController extends Controller
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Dodano osobę')]);
 
-        return to_route('persons.show', $person);
+        return redirect()->back(fallback: route('persons.index'));
     }
 
     /**

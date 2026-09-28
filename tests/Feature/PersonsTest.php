@@ -12,7 +12,6 @@ test('guests are redirected to the login page from persons routes', function () 
     $person = Person::factory()->create();
 
     $this->get(route('persons.index'))->assertRedirect(route('login'));
-    $this->get(route('persons.create'))->assertRedirect(route('login'));
     $this->get(route('persons.show', $person))->assertRedirect(route('login'));
     $this->post(route('persons.store'), [])->assertRedirect(route('login'));
     $this->get(route('persons.edit', $person))->assertRedirect(route('login'));
@@ -284,14 +283,16 @@ test('persons show returns not found for a person from another users tree', func
 test('store creates a person and a birth event even when birth fields are empty', function () {
     $user = User::factory()->create();
 
-    $response = $this->actingAs($user)->post(route('persons.store'), [
-        'first_name' => 'Jan',
-        'last_name' => 'Kowalski',
-    ]);
+    $response = $this->actingAs($user)
+        ->from(route('persons.index', ['q' => 'Kowal']))
+        ->post(route('persons.store'), [
+            'first_name' => 'Jan',
+            'last_name' => 'Kowalski',
+        ]);
 
     $person = Person::where('first_name', 'Jan')->where('last_name', 'Kowalski')->firstOrFail();
 
-    $response->assertRedirect(route('persons.show', $person));
+    $response->assertRedirect(route('persons.index', ['q' => 'Kowal']));
 
     expect($person->tree_id)->toBe($user->tree->id);
 
@@ -510,21 +511,41 @@ test('person show exposes gender as value and label, or null', function () {
             ->where('person.gender', null));
 });
 
-test('create and edit pages pass gender options and edit prefills the person gender', function () {
+test('persons index passes gender and religion options', function () {
+    $user = User::factory()->create();
+
+    $this->actingAs($user)->get(route('persons.index'))
+        ->assertInertia(fn ($page) => $page
+            ->component('persons/index')
+            ->has('genders', 2)
+            ->where('genders.0', ['value' => 'male', 'label' => 'Mężczyzna'])
+            ->has('religions', 6)
+            ->where('religions.0.value', 'roman_catholic'));
+});
+
+test('edit page passes gender options and prefills the person gender', function () {
     $user = User::factory()->create();
     $person = Person::factory()->for($user->tree)->male()->create();
-
-    $this->actingAs($user)->get(route('persons.create'))
-        ->assertInertia(fn ($page) => $page
-            ->component('persons/create')
-            ->has('genders', 2)
-            ->where('genders.0', ['value' => 'male', 'label' => 'Mężczyzna']));
 
     $this->actingAs($user)->get(route('persons.edit', $person))
         ->assertInertia(fn ($page) => $page
             ->component('persons/edit')
             ->has('genders', 2)
             ->where('person.gender', 'male'));
+});
+
+test('the old create url returns not found', function () {
+    $user = User::factory()->create();
+
+    $this->actingAs($user)->get('/persons/create')->assertNotFound();
+});
+
+test('store without a previous url redirects to the persons list', function () {
+    $user = User::factory()->create();
+
+    $this->actingAs($user)
+        ->post(route('persons.store'), ['first_name' => 'Jan'])
+        ->assertRedirect(route('persons.index'));
 });
 
 test('store rejects death fields when the person is not marked deceased', function () {

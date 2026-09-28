@@ -1,7 +1,7 @@
 import { Link } from '@inertiajs/react';
-import PersonController from '@/actions/App/Http/Controllers/PersonController';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
+import { index as personsIndex } from '@/routes/persons';
 import type { RelationCandidate } from '@/types';
 
 type Props = {
@@ -60,7 +60,7 @@ export function PersonCandidateList({
             <p className="text-muted-foreground text-sm">
                 Nie masz jeszcze innych osób.{' '}
                 <Link
-                    href={PersonController.create()}
+                    href={personsIndex()}
                     className="text-primary underline-offset-4 hover:underline"
                 >
                     Dodaj osobę
