@@ -473,10 +473,10 @@ None. There is no schema or data change. The seeder is dev-only and idempotent: 
 
 #### Automated
 
-- [x] 5.1 Script runs and writes every expected file: `node context/changes/tree-family-sheet-ui/screenshots/shots.mjs context/changes/tree-family-sheet-ui/screenshots/after`
-- [x] 5.2 Every `before/*.png` has a same-named `after/*.png`: `comm -23 <(ls context/changes/tree-family-sheet-ui/screenshots/before) <(ls context/changes/tree-family-sheet-ui/screenshots/after)` prints nothing
+- [x] 5.1 Script runs and writes every expected file: `node context/changes/tree-family-sheet-ui/screenshots/shots.mjs context/changes/tree-family-sheet-ui/screenshots/after` — 9ab054c
+- [x] 5.2 Every `before/*.png` has a same-named `after/*.png`: `comm -23 <(ls context/changes/tree-family-sheet-ui/screenshots/before) <(ls context/changes/tree-family-sheet-ui/screenshots/after)` prints nothing — 9ab054c
 
 #### Manual
 
-- [x] 5.3 Each gate-table verdict in `audit.md` is confirmed by looking at the before/after pair
-- [x] 5.4 No regression on `/persons`, `/scans`, `/settings/*` (gutter present, nothing double-padded, nothing clipped)
+- [x] 5.3 Each gate-table verdict in `audit.md` is confirmed by looking at the before/after pair — 9ab054c
+- [x] 5.4 No regression on `/persons`, `/scans`, `/settings/*` (gutter present, nothing double-padded, nothing clipped) — 9ab054c
