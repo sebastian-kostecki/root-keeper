@@ -1,6 +1,13 @@
+import { ParentSlotDialog } from '@/components/tree/parent-slot-dialog';
 import { SheetPersonCard } from '@/components/tree/sheet-person-card';
 import { UnknownPersonCard } from '@/components/tree/unknown-person-card';
-import type { FamilySheet as FamilySheetData, SheetSlot } from '@/types';
+import type {
+    FamilySheet as FamilySheetData,
+    Gender,
+    ParentCandidate,
+    Religion,
+    SheetSlot,
+} from '@/types';
 
 type BlockKey = 'focus' | 'partner';
 
@@ -16,13 +23,35 @@ function slotSpouse(pair: SheetSlot[], index: number): string | undefined {
     return other?.kind === 'unknown' ? 'unknown' : undefined;
 }
 
-function Slot({ slot, spouse }: { slot: SheetSlot; spouse?: string }) {
+function Slot({
+    slot,
+    spouse,
+    candidates,
+    genders,
+    religions,
+}: {
+    slot: SheetSlot;
+    spouse?: string;
+    candidates: ParentCandidate[] | undefined;
+    genders: Gender[];
+    religions: Religion[];
+}) {
     if (slot.kind === 'person') {
         return <SheetPersonCard person={slot.person} spouse={spouse} />;
     }
 
     if (slot.kind === 'unknown') {
-        return <UnknownPersonCard label={slot.label} />;
+        return slot.parent_of === undefined ? (
+            <UnknownPersonCard label={slot.label} />
+        ) : (
+            <ParentSlotDialog
+                label={slot.label}
+                slot={slot.parent_of}
+                candidates={candidates}
+                genders={genders}
+                religions={religions}
+            />
+        );
     }
 
     return null;
@@ -98,7 +127,17 @@ function ChildrenRows({ children }: Pick<FamilySheetData, 'children'>) {
     );
 }
 
-export function FamilySheet({ sheet }: { sheet: FamilySheetData }) {
+export function FamilySheet({
+    sheet,
+    parentCandidates,
+    genders,
+    religions,
+}: {
+    sheet: FamilySheetData;
+    parentCandidates: ParentCandidate[] | undefined;
+    genders: Gender[];
+    religions: Religion[];
+}) {
     const order: BlockKey[] =
         sheet.focus_side === 'right'
             ? ['partner', 'focus']
@@ -117,6 +156,9 @@ export function FamilySheet({ sheet }: { sheet: FamilySheetData }) {
                         >
                             <Slot
                                 slot={slot}
+                                candidates={parentCandidates}
+                                genders={genders}
+                                religions={religions}
                                 spouse={slotSpouse(
                                     sheet.grandparents[block].slice(
                                         i < 2 ? 0 : 2,
@@ -151,6 +193,9 @@ export function FamilySheet({ sheet }: { sheet: FamilySheetData }) {
                         >
                             <Slot
                                 slot={slot}
+                                candidates={parentCandidates}
+                                genders={genders}
+                                religions={religions}
                                 spouse={slotSpouse(sheet.parents[block], i)}
                             />
                         </div>
@@ -176,6 +221,9 @@ export function FamilySheet({ sheet }: { sheet: FamilySheetData }) {
                         ) : (
                             <Slot
                                 slot={sheet.partner}
+                                candidates={parentCandidates}
+                                genders={genders}
+                                religions={religions}
                                 spouse={String(sheet.focus.id)}
                             />
                         )}

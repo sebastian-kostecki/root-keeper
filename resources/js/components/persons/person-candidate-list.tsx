@@ -2,17 +2,27 @@ import { Link } from '@inertiajs/react';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { index as personsIndex } from '@/routes/persons';
-import type { RelationCandidate } from '@/types';
 
-type Props = {
+type CandidateRow = {
+    id: number;
+    display_name: string;
+    birth_date: string | null;
+};
+
+type Props<T extends CandidateRow> = {
     loading: boolean;
     loaded: boolean;
-    list: RelationCandidate[] | undefined;
+    list: T[] | undefined;
     filter: string;
     onFilterChange: (filter: string) => void;
     onSelect: (candidateId: number) => void;
-    getBlockedReason: (candidate: RelationCandidate) => string | null;
+    /** Rows with a reason render disabled; omit to offer every row. */
+    getBlockedReason?: (candidate: T) => string | null;
     processingId: number | null;
+    /** Replaces the default "no other people yet" text. */
+    emptyState?: React.ReactNode;
+    /** Rendered under the list, also when the list is empty. */
+    footer?: React.ReactNode;
 };
 
 function matchesFilter(displayName: string, filter: string): boolean {
@@ -27,7 +37,7 @@ function matchesFilter(displayName: string, filter: string): boolean {
  * marriage pickers: load-on-open skeleton, an empty state pointing at
  * "Dodaj osobę", a name filter, and disabled rows carrying a reason.
  */
-export function PersonCandidateList({
+export function PersonCandidateList<T extends CandidateRow>({
     loading,
     loaded,
     list,
@@ -36,7 +46,9 @@ export function PersonCandidateList({
     onSelect,
     getBlockedReason,
     processingId,
-}: Props) {
+    emptyState,
+    footer,
+}: Props<T>) {
     if (loading) {
         return (
             <div className="space-y-2">
@@ -57,16 +69,21 @@ export function PersonCandidateList({
 
     if (list.length === 0) {
         return (
-            <p className="text-muted-foreground text-sm">
-                Nie masz jeszcze innych osób.{' '}
-                <Link
-                    href={personsIndex()}
-                    className="text-primary underline-offset-4 hover:underline"
-                >
-                    Dodaj osobę
-                </Link>
-                .
-            </p>
+            <div className="space-y-3">
+                {emptyState ?? (
+                    <p className="text-muted-foreground text-sm">
+                        Nie masz jeszcze innych osób.{' '}
+                        <Link
+                            href={personsIndex()}
+                            className="text-primary underline-offset-4 hover:underline"
+                        >
+                            Dodaj osobę
+                        </Link>
+                        .
+                    </p>
+                )}
+                {footer}
+            </div>
         );
     }
 
@@ -86,7 +103,7 @@ export function PersonCandidateList({
 
             <div className="max-h-96 space-y-1 overflow-y-auto">
                 {filtered.map((candidate) => {
-                    const blockedReason = getBlockedReason(candidate);
+                    const blockedReason = getBlockedReason?.(candidate) ?? null;
 
                     return (
                         <button
@@ -114,7 +131,10 @@ export function PersonCandidateList({
                         </button>
                     );
                 })}
+                {filtered.length === 0 && emptyState}
             </div>
+
+            {footer}
         </div>
     );
 }

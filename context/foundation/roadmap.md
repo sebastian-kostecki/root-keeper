@@ -79,7 +79,7 @@ Po przeniesieniu formularza osoby do modala zostały dwie luki (prd-v4): ogląda
 | S-17 | source-description-in-modal     | dodać źródło w modalu (plik i rodzaj) z opcjonalnym opisem, poprawić rodzaj i opis i widzieć numer wpisu i notatkę przy źródle | S-16, S-24 | v3:FR-006, v3:FR-007, v3:US-02, v2:FR-001, v2:FR-002, v2:FR-003, v2:FR-004, v2:FR-005, v2:FR-014, v2:US-01 | proposed |
 | S-18 | fact-confirmed-by-any-source    | potwierdzić urodzenie, małżeństwo i zgon źródłem każdego rodzaju i widzieć rodzaj źródła przy fakcie | S-16, S-24 | v3:FR-008, v3:US-02 | proposed |
 | S-19 | matching-sources-first          | przy wiązaniu źródła z wydarzeniem widzieć najpierw akty o pasującym typie, potem resztę | S-17, S-18 | v3:FR-009, v2:FR-015, v2:FR-012 | proposed |
-| S-25 | tree-parent-slot-existing-or-new | z pustego slotu rodzica na drzewie podłączyć istniejącą osobę (wybór filtrowany płcią i regułami) albo utworzyć nową i od razu widzieć ją na drzewie | S-24, S-06 | v4:FR-004, v4:FR-011, v4:US-01, v3:FR-001, v3:FR-012, v3:US-01 | planning |
+| S-25 | tree-parent-slot-existing-or-new | z pustego slotu rodzica na drzewie podłączyć istniejącą osobę (wybór filtrowany płcią i regułami) albo utworzyć nową i od razu widzieć ją na drzewie | S-24, S-06 | v4:FR-004, v4:FR-011, v4:US-01, v3:FR-001, v3:FR-012, v3:US-01 | in-progress |
 | S-26 | tree-child-existing-or-new      | dodać z drzewa dziecko pokazanej pary — istniejącą osobę albo nową — i od razu widzieć je na drzewie | S-24, S-06 | v4:FR-005, v4:FR-011, v3:FR-002, v3:FR-012 | proposed |
 | S-27 | tree-spouse-existing-or-new     | z pustego slotu małżonka przy centrum podłączyć istniejącą osobę albo nowego małżonka i połączyć pokazanych rodziców w małżeństwo | S-24, S-07 | v4:FR-006, v4:FR-011, v3:FR-003 | proposed |
 | S-28 | tree-relation-removal           | usunąć z drzewa relację rodzic–dziecko i małżeństwo po potwierdzeniu, widząc przy małżeństwie tracone dane | S-24, S-06, S-07 | v4:FR-007 | proposed |
@@ -379,7 +379,7 @@ Foundations below assume these are present and do NOT re-scaffold them. The prd-
 - **Unknowns:**
   - Czy wybór istniejącej osoby i utworzenie nowej są w jednym modalu (np. wyszukiwarka z przyciskiem „Nowa osoba”), czy to dwie osobne akcje slotu? Owner: `/10x-plan`. Block: no.
 - **Risk:** Gwiazda v4 (zastępuje S-21 `parent-from-tree-slot`, nierozpoczęty) — domyka v4:US-01 i jako pierwszy buduje wybór istniejącej osoby z filtrem reguł, który S-26 i S-27 użyją ponownie. Ryzykiem jest wybór pokazujący osoby łamiące reguły (maks. dwoje rodziców, brak cyklu) albo obejście tych reguł przy tworzeniu z drzewa.
-- **Status:** planning
+- **Status:** in-progress
 
 ### S-26: Dziecko pokazanej pary — istniejące lub nowe
 

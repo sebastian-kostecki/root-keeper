@@ -4,6 +4,7 @@ use App\Http\Controllers\EventScanController;
 use App\Http\Controllers\MarriageController;
 use App\Http\Controllers\ParentChildRelationController;
 use App\Http\Controllers\PersonController;
+use App\Http\Controllers\PersonParentController;
 use App\Http\Controllers\ScanController;
 use App\Http\Controllers\TreeController;
 use App\Http\Controllers\TreeRootPersonController;
@@ -24,6 +25,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::post('events/{event}/scans', [EventScanController::class, 'store'])->name('events.scans.store');
     Route::delete('events/{event}/scans/{scan}', [EventScanController::class, 'destroy'])->name('events.scans.destroy');
+
+    Route::post('persons/{person}/parents', [PersonParentController::class, 'store'])->name('persons.parents.store');
 
     Route::resource('parent-child-relations', ParentChildRelationController::class)->only(['store', 'destroy']);
 

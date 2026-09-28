@@ -9,14 +9,28 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { index as personsIndex } from '@/routes/persons';
 import { index as treeIndex, show as treeShow } from '@/routes/tree';
-import type { FamilySheet as FamilySheetData } from '@/types';
+import type {
+    FamilySheet as FamilySheetData,
+    Gender,
+    ParentCandidate,
+    Religion,
+} from '@/types';
 
 type Props = {
     sheet: FamilySheetData | null;
     rootPersonId: number | null;
+    parentCandidates?: ParentCandidate[];
+    genders: Gender[];
+    religions: Religion[];
 };
 
-export default function Show({ sheet, rootPersonId }: Props) {
+export default function Show({
+    sheet,
+    rootPersonId,
+    parentCandidates,
+    genders,
+    religions,
+}: Props) {
     setLayoutProps({
         breadcrumbs: [
             { title: 'Drzewo', href: treeIndex() },
@@ -101,7 +115,12 @@ export default function Show({ sheet, rootPersonId }: Props) {
                     selected={sheet.selected_union}
                 />
 
-                <FamilySheet sheet={sheet} />
+                <FamilySheet
+                    sheet={sheet}
+                    parentCandidates={parentCandidates}
+                    genders={genders}
+                    religions={religions}
+                />
             </div>
         </>
     );

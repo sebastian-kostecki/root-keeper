@@ -273,16 +273,17 @@ test('missing parents are labelled placeholders depending on the known parent', 
     $tree = $user->tree;
 
     $noParents = Person::factory()->for($tree)->create();
-    expect(sheetFor($this, $user, $noParents)['parents']['focus'])->toBe([
-        ['kind' => 'unknown', 'label' => 'Nieznany ojciec'],
-        ['kind' => 'unknown', 'label' => 'Nieznana matka'],
+    $slots = sheetFor($this, $user, $noParents)['parents']['focus'];
+    expect(array_map(unknownShape(...), $slots))->toBe([
+        ['kind' => 'unknown', 'label' => 'Nieznany ojciec', 'role' => 'father', 'parent_id' => $noParents->id],
+        ['kind' => 'unknown', 'label' => 'Nieznana matka', 'role' => 'mother', 'parent_id' => $noParents->id],
     ]);
 
     $withMother = Person::factory()->for($tree)->create();
     $mother = Person::factory()->for($tree)->female()->create();
     linkParent($mother, $withMother);
     $slots = sheetFor($this, $user, $withMother)['parents']['focus'];
-    expect($slots[0])->toBe(['kind' => 'unknown', 'label' => 'Nieznany ojciec']);
+    expect(unknownShape($slots[0]))->toBe(['kind' => 'unknown', 'label' => 'Nieznany ojciec', 'role' => 'father', 'parent_id' => $withMother->id]);
     expect($slots[1]['person']['id'])->toBe($mother->id);
 
     $withFather = Person::factory()->for($tree)->create();
@@ -290,14 +291,105 @@ test('missing parents are labelled placeholders depending on the known parent', 
     linkParent($father, $withFather);
     $slots = sheetFor($this, $user, $withFather)['parents']['focus'];
     expect($slots[0]['person']['id'])->toBe($father->id);
-    expect($slots[1])->toBe(['kind' => 'unknown', 'label' => 'Nieznana matka']);
+    expect(unknownShape($slots[1]))->toBe(['kind' => 'unknown', 'label' => 'Nieznana matka', 'role' => 'mother', 'parent_id' => $withFather->id]);
 
     $withUnknownGender = Person::factory()->for($tree)->create();
     $parent = Person::factory()->for($tree)->create();
     linkParent($parent, $withUnknownGender);
     $slots = sheetFor($this, $user, $withUnknownGender)['parents']['focus'];
     expect($slots[0]['person']['id'])->toBe($parent->id);
-    expect($slots[1])->toBe(['kind' => 'unknown', 'label' => 'Nieznany rodzic']);
+    expect(unknownShape($slots[1]))->toBe(['kind' => 'unknown', 'label' => 'Nieznany rodzic', 'role' => 'parent', 'parent_id' => $withUnknownGender->id]);
+});
+
+/**
+ * Reduce an unknown slot to its kind, label and the slot target's person and role.
+ *
+ * @param  array<string, mixed>  $slot
+ * @return array<string, mixed>
+ */
+function unknownShape(array $slot): array
+{
+    return [
+        'kind' => $slot['kind'],
+        'label' => $slot['label'],
+        'role' => $slot['parent_of']['role'] ?? null,
+        'parent_id' => $slot['parent_of']['id'] ?? null,
+    ];
+}
+
+test('a parent slot excludes the person, their parents and their descendants', function () {
+    $user = User::factory()->create();
+    $tree = $user->tree;
+    $focus = Person::factory()->for($tree)->create();
+    $father = Person::factory()->for($tree)->male()->create();
+    $child = Person::factory()->for($tree)->create();
+    $grandchild = Person::factory()->for($tree)->create();
+    $stranger = Person::factory()->for($tree)->create();
+
+    linkParent($father, $focus);
+    linkParent($focus, $child);
+    linkParent($child, $grandchild);
+
+    $motherSlot = sheetFor($this, $user, $focus)['parents']['focus'][1];
+
+    expect($motherSlot['parent_of']['display_name'])->toBe($focus->displayName());
+    expect($motherSlot['parent_of']['last_name'])->toBe($focus->last_name);
+    expect($motherSlot['parent_of']['excluded_ids'])->toEqualCanonicalizing([$focus->id, $father->id, $child->id, $grandchild->id]);
+    expect($motherSlot['parent_of']['excluded_ids'])->not->toContain($stranger->id);
+});
+
+test('a grandparent slot belongs to the known parent above it', function () {
+    $user = User::factory()->create();
+    $tree = $user->tree;
+    $focus = Person::factory()->for($tree)->create();
+    $father = Person::factory()->for($tree)->male()->create();
+
+    linkParent($father, $focus);
+
+    $grandparents = sheetFor($this, $user, $focus)['grandparents']['focus'];
+
+    expect(unknownShape($grandparents[0]))->toBe(['kind' => 'unknown', 'label' => 'Nieznany ojciec', 'role' => 'father', 'parent_id' => $father->id]);
+    expect(unknownShape($grandparents[1]))->toBe(['kind' => 'unknown', 'label' => 'Nieznana matka', 'role' => 'mother', 'parent_id' => $father->id]);
+});
+
+test('the parent candidates are an optional prop ordered like the person list, with gender', function () {
+    $user = User::factory()->create();
+    $tree = $user->tree;
+    $focus = Person::factory()->for($tree)->create(['first_name' => 'Jan', 'last_name' => 'Kowalski']);
+    $noSurname = Person::factory()->for($tree)->male()->create(['first_name' => 'Adam', 'last_name' => null]);
+    $woman = Person::factory()->for($tree)->female()->create(['first_name' => 'Anna', 'last_name' => 'Nowak']);
+    Person::factory()->for(User::factory()->create()->tree)->create();
+
+    $this->actingAs($user)->get(route('tree.show', $focus))
+        ->assertInertia(fn ($page) => $page
+            ->component('tree/show')
+            ->missing('parentCandidates'));
+
+    $version = $this->actingAs($user)->get(route('tree.show', $focus), ['X-Inertia' => 'true'])->headers->get('X-Inertia-Version');
+
+    $response = $this->actingAs($user)->get(route('tree.show', $focus), [
+        'X-Inertia' => 'true',
+        'X-Inertia-Version' => $version,
+        'X-Inertia-Partial-Data' => 'parentCandidates',
+        'X-Inertia-Partial-Component' => 'tree/show',
+    ]);
+
+    $response->assertOk();
+
+    $candidates = $response->json('props.parentCandidates');
+
+    expect(collect($candidates)->pluck('id')->all())->toBe([$focus->id, $woman->id, $noSurname->id]);
+    expect(collect($candidates)->pluck('gender')->all())->toBe([null, 'female', 'male']);
+});
+
+test('the tree page exposes the person form options', function () {
+    $user = User::factory()->create();
+    $focus = Person::factory()->for($user->tree)->create();
+
+    $this->actingAs($user)->get(route('tree.show', $focus))
+        ->assertInertia(fn ($page) => $page
+            ->has('genders', 2)
+            ->has('religions', 6));
 });
 
 test('grandparents are filled above known parents and empty above placeholders', function () {
@@ -313,7 +405,7 @@ test('grandparents are filled above known parents and empty above placeholders',
     $grandparents = sheetFor($this, $user, $focus)['grandparents']['focus'];
 
     expect($grandparents[0]['person']['id'])->toBe($grandfather->id);
-    expect($grandparents[1])->toBe(['kind' => 'unknown', 'label' => 'Nieznana matka']);
+    expect(unknownShape($grandparents[1]))->toBe(['kind' => 'unknown', 'label' => 'Nieznana matka', 'role' => 'mother', 'parent_id' => $father->id]);
     expect($grandparents[2])->toBe(['kind' => 'empty']);
     expect($grandparents[3])->toBe(['kind' => 'empty']);
 });

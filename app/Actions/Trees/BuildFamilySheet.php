@@ -15,7 +15,8 @@ use Illuminate\Support\Collection;
  * slots for one selected union, using a constant number of queries.
  *
  * @phpstan-type SheetPerson array{id: int, display_name: string, gender: 'male'|'female'|null, lifespan: string|null, is_deceased: bool}
- * @phpstan-type Slot array{kind: 'person', person: SheetPerson}|array{kind: 'unknown', label: string}|array{kind: 'empty'}
+ * @phpstan-type ParentOf array{id: int, display_name: string, last_name: string|null, role: 'father'|'mother'|'parent', excluded_ids: list<int>}
+ * @phpstan-type Slot array{kind: 'person', person: SheetPerson}|array{kind: 'unknown', label: string, parent_of?: ParentOf}|array{kind: 'empty'}
  * @phpstan-type Union array{key: string, partner_id: int|null, label: string, is_marriage: bool, marriage_year: string|null, children_count: int}
  */
 class BuildFamilySheet
@@ -237,15 +238,18 @@ class BuildFamilySheet
         }
 
         if ($known->isEmpty()) {
-            return [$this->unknownSlot('Nieznany ojciec'), $this->unknownSlot('Nieznana matka')];
+            return [
+                $this->unknownSlot('Nieznany ojciec', 'father', $person),
+                $this->unknownSlot('Nieznana matka', 'mother', $person),
+            ];
         }
 
         $only = $known[0];
 
         return match ($only->gender) {
-            Gender::Male => [$this->personSlot($only), $this->unknownSlot('Nieznana matka')],
-            Gender::Female => [$this->unknownSlot('Nieznany ojciec'), $this->personSlot($only)],
-            null => [$this->personSlot($only), $this->unknownSlot('Nieznany rodzic')],
+            Gender::Male => [$this->personSlot($only), $this->unknownSlot('Nieznana matka', 'mother', $person)],
+            Gender::Female => [$this->unknownSlot('Nieznany ojciec', 'father', $person), $this->personSlot($only)],
+            null => [$this->personSlot($only), $this->unknownSlot('Nieznany rodzic', 'parent', $person)],
         };
     }
 
@@ -276,11 +280,30 @@ class BuildFamilySheet
     }
 
     /**
-     * @return array{kind: 'unknown', label: string}
+     * An empty parent slot above the given person, carrying what the client
+     * needs to fill it: whose parent, in which role, and whom the relation
+     * rules exclude (the person, their parents and their descendants).
+     *
+     * @param  'father'|'mother'|'parent'  $role
+     * @return array{kind: 'unknown', label: string, parent_of: ParentOf}
      */
-    private function unknownSlot(string $label): array
+    private function unknownSlot(string $label, string $role, Person $person): array
     {
-        return ['kind' => 'unknown', 'label' => $label];
+        return [
+            'kind' => 'unknown',
+            'label' => $label,
+            'parent_of' => [
+                'id' => $person->id,
+                'display_name' => $person->displayName(),
+                'last_name' => $person->last_name,
+                'role' => $role,
+                'excluded_ids' => array_values(array_unique([
+                    $person->id,
+                    ...$this->graph->parentsOf($person->id),
+                    ...$this->graph->descendantsOf($person->id),
+                ])),
+            ],
+        ];
     }
 
     private function rank(Person $person): int

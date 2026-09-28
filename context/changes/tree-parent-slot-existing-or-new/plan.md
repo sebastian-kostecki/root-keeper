@@ -288,12 +288,12 @@ None — no schema changes. Existing data with two same-sex parents (if any) is 
 
 #### Automated
 
-- [ ] 1.1 Affected feature tests pass: `vendor/bin/sail artisan test --compact tests/Feature/ParentChildRelationsTest.php tests/Feature/TreeTest.php tests/Feature/PersonsTest.php`
-- [ ] 1.2 Larastan passes: `vendor/bin/sail composer types:check`
-- [ ] 1.3 Format and lint pass: `vendor/bin/sail npm run check`
-- [ ] 1.4 Type check passes: `vendor/bin/sail npm run types:check`
-- [ ] 1.5 Production build succeeds: `vendor/bin/sail npm run build`
-- [ ] 1.6 PHP style is clean: `vendor/bin/sail bin pint --dirty --format agent`
+- [x] 1.1 Affected feature tests pass: `vendor/bin/sail artisan test --compact tests/Feature/ParentChildRelationsTest.php tests/Feature/TreeTest.php tests/Feature/PersonsTest.php`
+- [x] 1.2 Larastan passes: `vendor/bin/sail composer types:check`
+- [x] 1.3 Format and lint pass: `vendor/bin/sail npm run check`
+- [x] 1.4 Type check passes: `vendor/bin/sail npm run types:check`
+- [x] 1.5 Production build succeeds: `vendor/bin/sail npm run build`
+- [x] 1.6 PHP style is clean: `vendor/bin/sail bin pint --dirty --format agent`
 
 #### Manual
 
@@ -308,18 +308,18 @@ None — no schema changes. Existing data with two same-sex parents (if any) is 
 
 #### Automated
 
-- [ ] 2.1 Affected feature tests pass: `vendor/bin/sail artisan test --compact tests/Feature/ParentChildRelationsTest.php tests/Feature/TreeTest.php tests/Feature/PersonsTest.php`
-- [ ] 2.2 Larastan passes: `vendor/bin/sail composer types:check`
-- [ ] 2.3 Format and lint pass: `vendor/bin/sail npm run check`
-- [ ] 2.4 Type check passes: `vendor/bin/sail npm run types:check`
-- [ ] 2.5 Production build succeeds: `vendor/bin/sail npm run build`
-- [ ] 2.6 PHP style is clean: `vendor/bin/sail bin pint --dirty --format agent`
+- [x] 2.1 Affected feature tests pass: `vendor/bin/sail artisan test --compact tests/Feature/ParentChildRelationsTest.php tests/Feature/TreeTest.php tests/Feature/PersonsTest.php`
+- [x] 2.2 Larastan passes: `vendor/bin/sail composer types:check`
+- [x] 2.3 Format and lint pass: `vendor/bin/sail npm run check`
+- [x] 2.4 Type check passes: `vendor/bin/sail npm run types:check`
+- [x] 2.5 Production build succeeds: `vendor/bin/sail npm run build`
+- [x] 2.6 PHP style is clean: `vendor/bin/sail bin pint --dirty --format agent`
 
 #### Manual
 
-- [ ] 2.7 „Nieznany ojciec" → „Nowa osoba": sex shows „Mężczyzna" and cannot be changed, surname starts as the child's surname; saving shows the new father on the tree with „Dodano rodzica", centre and union unchanged
-- [ ] 2.8 „Nieznana matka" → „Nowa osoba": sex locked to „Kobieta", surname empty
-- [ ] 2.9 „Nieznany rodzic" → „Nowa osoba": sex freely selectable, surname empty
-- [ ] 2.10 „Wróć do listy" returns to the list with candidates still loaded; closing and reopening starts on the list
-- [ ] 2.11 Submitting an empty form shows the name error inside the dialog and creates nothing
-- [ ] 2.12 Visual gate: form view at 375px (full screen, scrolling, pinned header/footer) and 1280px, light and dark, locked select state; screenshots attached to the review
+- [x] 2.7 „Nieznany ojciec" → „Nowa osoba": sex shows „Mężczyzna" and cannot be changed, surname starts as the child's surname; saving shows the new father on the tree with „Dodano rodzica", centre and union unchanged
+- [x] 2.8 „Nieznana matka" → „Nowa osoba": sex locked to „Kobieta", surname empty
+- [x] 2.9 „Nieznany rodzic" → „Nowa osoba": sex freely selectable, surname empty
+- [x] 2.10 „Wróć do listy" returns to the list with candidates still loaded; closing and reopening starts on the list
+- [x] 2.11 Submitting an empty form shows the name error inside the dialog and creates nothing
+- [x] 2.12 Visual gate: form view at 375px (full screen, scrolling, pinned header/footer) and 1280px, light and dark, locked select state; screenshots attached to the review

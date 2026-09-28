@@ -3,6 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Actions\Trees\BuildFamilySheet;
+use App\Actions\Trees\ListParentCandidates;
+use App\Enums\Gender;
+use App\Enums\Religion;
 use App\Models\Person;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -14,7 +17,7 @@ class TreeController extends Controller
     /**
      * Display the family sheet of the tree's proband.
      */
-    public function index(Request $request, BuildFamilySheet $buildFamilySheet): Response
+    public function index(Request $request, BuildFamilySheet $buildFamilySheet, ListParentCandidates $listParentCandidates): Response
     {
         $tree = $request->user()->tree;
         $proband = $tree->rootPerson;
@@ -22,19 +25,27 @@ class TreeController extends Controller
         return Inertia::render('tree/show', [
             'sheet' => $proband === null ? null : $buildFamilySheet->handle($proband, $this->spouseParameter($request)),
             'rootPersonId' => $tree->root_person_id,
+            'parentCandidates' => Inertia::optional(fn (): array => $listParentCandidates->handle($tree)),
+            'genders' => Gender::options(),
+            'religions' => Religion::options(),
         ]);
     }
 
     /**
      * Display the family sheet centred on the given person.
      */
-    public function show(Request $request, Person $person, BuildFamilySheet $buildFamilySheet): Response
+    public function show(Request $request, Person $person, BuildFamilySheet $buildFamilySheet, ListParentCandidates $listParentCandidates): Response
     {
         Gate::authorize('view', $person);
 
+        $tree = $request->user()->tree;
+
         return Inertia::render('tree/show', [
             'sheet' => $buildFamilySheet->handle($person, $this->spouseParameter($request)),
-            'rootPersonId' => $request->user()->tree->root_person_id,
+            'rootPersonId' => $tree->root_person_id,
+            'parentCandidates' => Inertia::optional(fn (): array => $listParentCandidates->handle($tree)),
+            'genders' => Gender::options(),
+            'religions' => Religion::options(),
         ]);
     }
 

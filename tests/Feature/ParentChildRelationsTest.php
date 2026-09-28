@@ -299,3 +299,238 @@ test('a partial reload of relationCandidates excludes the current person and oth
     expect($candidates[$linkable->id]['as_parent_blocked_reason'])->toBeNull();
     expect($candidates[$linkable->id]['as_child_blocked_reason'])->toBeNull();
 });
+
+test('a child cannot get a second father or a second mother', function (string $gender, string $message) {
+    $user = User::factory()->create();
+    $first = Person::factory()->for($user->tree)->{$gender}()->create();
+    $second = Person::factory()->for($user->tree)->{$gender}()->create();
+    $child = Person::factory()->for($user->tree)->create();
+    linkParent($first, $child);
+
+    $response = $this->actingAs($user)->post(route('parent-child-relations.store'), ['parent_id' => $second->id, 'child_id' => $child->id]);
+
+    $response->assertSessionHasErrors(['relation' => $message]);
+    $this->assertDatabaseCount('parent_child_relations', 1);
+})->with([
+    'father' => ['male', 'Ta osoba ma już ojca.'],
+    'mother' => ['female', 'Ta osoba ma już matkę.'],
+]);
+
+test('an unknown-sex parent never conflicts with a known-sex parent', function () {
+    $user = User::factory()->create();
+    $unknown = Person::factory()->for($user->tree)->create();
+    $man = Person::factory()->for($user->tree)->male()->create();
+    $otherMan = Person::factory()->for($user->tree)->male()->create();
+    $childOne = Person::factory()->for($user->tree)->create();
+    $childTwo = Person::factory()->for($user->tree)->create();
+
+    linkParent($unknown, $childOne);
+    $this->actingAs($user)->post(route('parent-child-relations.store'), ['parent_id' => $man->id, 'child_id' => $childOne->id])
+        ->assertSessionHasNoErrors();
+
+    linkParent($otherMan, $childTwo);
+    $this->actingAs($user)->post(route('parent-child-relations.store'), ['parent_id' => $unknown->id, 'child_id' => $childTwo->id])
+        ->assertSessionHasNoErrors();
+
+    $this->assertDatabaseCount('parent_child_relations', 4);
+});
+
+test('a slot role must match the sex of the chosen parent', function (string $role, ?string $gender, bool $accepted) {
+    $user = User::factory()->create();
+    $factory = Person::factory()->for($user->tree);
+    $parent = ($gender === null ? $factory : $factory->{$gender}())->create();
+    $child = Person::factory()->for($user->tree)->create();
+
+    $response = $this->actingAs($user)->post(route('parent-child-relations.store'), [
+        'parent_id' => $parent->id,
+        'child_id' => $child->id,
+        'role' => $role,
+    ]);
+
+    if ($accepted) {
+        $response->assertSessionHasNoErrors();
+        $this->assertDatabaseCount('parent_child_relations', 1);
+    } else {
+        $response->assertSessionHasErrors(['relation' => 'Wybrana osoba nie pasuje do tego miejsca na drzewie.']);
+        $this->assertDatabaseCount('parent_child_relations', 0);
+    }
+})->with([
+    'father slot, woman' => ['father', 'female', false],
+    'father slot, unknown sex' => ['father', null, false],
+    'father slot, man' => ['father', 'male', true],
+    'mother slot, woman' => ['mother', 'female', true],
+    'mother slot, man' => ['mother', 'male', false],
+    'parent slot, woman' => ['parent', 'female', true],
+    'parent slot, unknown sex' => ['parent', null, true],
+]);
+
+test('an unknown role is rejected', function () {
+    $user = User::factory()->create();
+    $parent = Person::factory()->for($user->tree)->create();
+    $child = Person::factory()->for($user->tree)->create();
+
+    $this->actingAs($user)->post(route('parent-child-relations.store'), ['parent_id' => $parent->id, 'child_id' => $child->id, 'role' => 'uncle'])
+        ->assertSessionHasErrors('role');
+
+    $this->assertDatabaseCount('parent_child_relations', 0);
+});
+
+test('linking from a tree slot redirects back to the tree with its union preserved', function () {
+    $user = User::factory()->create();
+    $father = Person::factory()->for($user->tree)->male()->create();
+    $child = Person::factory()->for($user->tree)->create();
+    $spouse = Person::factory()->for($user->tree)->female()->create();
+    $treeUrl = route('tree.show', ['person' => $child->id, 'spouse' => $spouse->id]);
+
+    $response = $this->from($treeUrl)
+        ->actingAs($user)
+        ->post(route('parent-child-relations.store'), ['parent_id' => $father->id, 'child_id' => $child->id, 'role' => 'father']);
+
+    $response->assertRedirect($treeUrl);
+    $response->assertSessionHas('inertia.flash_data.toast', ['type' => 'success', 'message' => 'Dodano relację']);
+});
+
+test('the preview candidates block a second parent of the same sex in both directions', function () {
+    $user = User::factory()->create();
+    $tree = $user->tree;
+    $person = Person::factory()->for($tree)->create();
+    $father = Person::factory()->for($tree)->male()->create();
+    $otherMan = Person::factory()->for($tree)->male()->create();
+    $otherWoman = Person::factory()->for($tree)->female()->create();
+    $childWithFather = Person::factory()->for($tree)->create();
+    $unknownChild = Person::factory()->for($tree)->create();
+    $manPerson = Person::factory()->for($tree)->male()->create();
+    linkParent($father, $person);
+    linkParent($otherMan, $childWithFather);
+
+    $candidatesFor = function (Person $subject) use ($user) {
+        $version = $this->actingAs($user)->get(personPreviewUrl($subject), ['X-Inertia' => 'true'])->headers->get('X-Inertia-Version');
+
+        $response = $this->actingAs($user)->get(personPreviewUrl($subject), [
+            'X-Inertia' => 'true',
+            'X-Inertia-Version' => $version,
+            'X-Inertia-Partial-Data' => 'relationCandidates',
+            'X-Inertia-Partial-Component' => 'persons/index',
+        ]);
+
+        return collect($response->json('props.relationCandidates'))->keyBy('id');
+    };
+
+    $candidates = $candidatesFor($person);
+
+    expect($candidates[$otherMan->id]['as_parent_blocked_reason'])->toBe('Ma już ojca');
+    expect($candidates[$otherWoman->id]['as_parent_blocked_reason'])->toBeNull();
+    expect($candidates[$unknownChild->id]['as_parent_blocked_reason'])->toBeNull();
+
+    $candidates = $candidatesFor($manPerson);
+
+    expect($candidates[$childWithFather->id]['as_child_blocked_reason'])->toBe('Ma już ojca');
+    expect($candidates[$unknownChild->id]['as_child_blocked_reason'])->toBeNull();
+});
+
+test('guests are redirected to the login page from the create-parent route', function () {
+    $child = Person::factory()->create();
+
+    $this->post(route('persons.parents.store', $child), [])->assertRedirect(route('login'));
+});
+
+test('creating a parent from a slot stores the person with a birth event and the relation, redirects back and flashes the toast', function () {
+    $user = User::factory()->create();
+    $child = Person::factory()->for($user->tree)->create();
+    $spouse = Person::factory()->for($user->tree)->female()->create();
+    $treeUrl = route('tree.show', ['person' => $child->id, 'spouse' => $spouse->id]);
+
+    $response = $this->from($treeUrl)
+        ->actingAs($user)
+        ->post(route('persons.parents.store', $child), [
+            'role' => 'father',
+            'first_name' => 'Józef',
+            'last_name' => 'Kowalski',
+            'gender' => 'male',
+            'birth' => ['year' => 1900],
+        ]);
+
+    $response->assertRedirect($treeUrl);
+    $response->assertSessionHas('inertia.flash_data.toast', ['type' => 'success', 'message' => 'Dodano rodzica']);
+
+    $father = Person::where('first_name', 'Józef')->firstOrFail();
+
+    $this->assertDatabaseHas('parent_child_relations', [
+        'tree_id' => $user->tree->id,
+        'parent_id' => $father->id,
+        'child_id' => $child->id,
+    ]);
+    $this->assertDatabaseHas('events', ['tree_id' => $user->tree->id, 'type' => 'birth', 'year' => 1900]);
+});
+
+test('a generic parent slot accepts a person without a sex', function () {
+    $user = User::factory()->create();
+    $child = Person::factory()->for($user->tree)->create();
+    $peopleBefore = Person::count();
+
+    $this->actingAs($user)
+        ->post(route('persons.parents.store', $child), ['role' => 'parent', 'first_name' => 'Anna'])
+        ->assertSessionHasNoErrors();
+
+    expect(Person::count())->toBe($peopleBefore + 1);
+    $this->assertDatabaseCount('parent_child_relations', 1);
+});
+
+test('the sex of a new parent must match the slot role and nothing is created otherwise', function (string $role, ?string $gender) {
+    $user = User::factory()->create();
+    $child = Person::factory()->for($user->tree)->create();
+    $peopleBefore = Person::count();
+
+    $response = $this->actingAs($user)
+        ->post(route('persons.parents.store', $child), ['role' => $role, 'first_name' => 'Anna', 'gender' => $gender]);
+
+    $response->assertSessionHasErrors(['gender' => 'Płeć musi pasować do miejsca na drzewie.']);
+    expect(Person::count())->toBe($peopleBefore);
+    $this->assertDatabaseCount('parent_child_relations', 0);
+})->with([
+    'father slot, woman' => ['father', 'female'],
+    'father slot, unknown sex' => ['father', null],
+    'mother slot, man' => ['mother', 'male'],
+]);
+
+test('a same-sex rule failure on the relation rolls the new person back', function () {
+    $user = User::factory()->create();
+    $child = Person::factory()->for($user->tree)->create();
+    linkParent(Person::factory()->for($user->tree)->male()->create(), $child);
+    $peopleBefore = Person::count();
+
+    $response = $this->actingAs($user)
+        ->post(route('persons.parents.store', $child), ['role' => 'parent', 'first_name' => 'Józef', 'gender' => 'male']);
+
+    $response->assertSessionHasErrors(['relation' => 'Ta osoba ma już ojca.']);
+    expect(Person::count())->toBe($peopleBefore);
+    $this->assertDatabaseCount('parent_child_relations', 1);
+});
+
+test('a child with two parents cannot get a third and the person is not created', function () {
+    $user = User::factory()->create();
+    $child = Person::factory()->for($user->tree)->create();
+    linkParent(Person::factory()->for($user->tree)->create(), $child);
+    linkParent(Person::factory()->for($user->tree)->create(), $child);
+    $peopleBefore = Person::count();
+
+    $this->actingAs($user)
+        ->post(route('persons.parents.store', $child), ['role' => 'parent', 'first_name' => 'Anna'])
+        ->assertSessionHasErrors('relation');
+
+    expect(Person::count())->toBe($peopleBefore);
+    $this->assertDatabaseCount('parent_child_relations', 2);
+});
+
+test('creating a parent for another trees child returns not found and creates nothing', function () {
+    $user = User::factory()->create();
+    $foreignChild = Person::factory()->for(User::factory()->create()->tree)->create();
+    $peopleBefore = Person::count();
+
+    $this->actingAs($user)
+        ->post(route('persons.parents.store', $foreignChild), ['role' => 'parent', 'first_name' => 'Anna'])
+        ->assertNotFound();
+
+    expect(Person::count())->toBe($peopleBefore);
+    $this->assertDatabaseCount('parent_child_relations', 0);
+});

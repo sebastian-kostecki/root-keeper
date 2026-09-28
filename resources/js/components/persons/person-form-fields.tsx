@@ -20,6 +20,10 @@ type Props = {
     religions: Religion[];
     errors: Partial<Record<string, string>>;
     person?: PersonFormData;
+    /** Fixes the sex (select disabled, value still submitted), e.g. by a tree slot. */
+    lockedGender?: 'male' | 'female';
+    /** Starting values for a new person. */
+    defaults?: { last_name?: string | null };
 };
 
 /** Radix Select does not allow an empty item value, so "no religion" uses a sentinel. */
@@ -37,9 +41,12 @@ export function PersonFormFields({
     religions,
     errors,
     person,
+    lockedGender,
+    defaults,
 }: Props) {
     const [isDeceased, setIsDeceased] = useState(person?.is_deceased ?? false);
-    const [gender, setGender] = useState(person?.gender ?? '');
+    const [selectedGender, setGender] = useState(person?.gender ?? '');
+    const gender = lockedGender ?? selectedGender;
     const [religion, setReligion] = useState(person?.religion ?? '');
 
     return (
@@ -63,7 +70,10 @@ export function PersonFormFields({
                         id="last_name"
                         name="last_name"
                         maxLength={255}
-                        defaultValue={person?.last_name ?? undefined}
+                        defaultValue={
+                            (person ? person.last_name : defaults?.last_name) ??
+                            undefined
+                        }
                     />
                     <InputError message={errors.last_name} />
                 </div>
@@ -87,6 +97,7 @@ export function PersonFormFields({
                     onValueChange={(value) =>
                         setGender(value === NO_GENDER ? '' : value)
                     }
+                    disabled={lockedGender !== undefined}
                 >
                     <SelectTrigger id="gender" className="w-full">
                         <SelectValue placeholder="Nieznana" />
