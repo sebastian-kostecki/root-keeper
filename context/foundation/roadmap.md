@@ -1,10 +1,10 @@
 ---
 project: root-keeper
-version: 2
+version: 3
 status: draft
 created: 2026-09-21
 updated: 2026-09-28
-prd_version: 2
+prd_version: 3
 main_goal: speed
 top_blocker: time
 milestone_id: sourced-family-tree
@@ -14,8 +14,8 @@ milestone_status: open
 
 # Roadmap: root-keeper
 
-> Derived from `context/foundation/prd.md` (v1) + `context/foundation/prd-v2.md` (v2, brownfield) + auto-researched codebase baseline.
-> Previous version (v1 only): `context/foundation/archive/2026-09-28-roadmap-sourced-family-tree.md`.
+> Derived from `context/foundation/prd.md` (v1) + `context/foundation/prd-v2.md` (v2, brownfield) + `context/foundation/prd-v3.md` (v3, brownfield) + auto-researched codebase baseline.
+> Previous versions: v1 only — `context/foundation/archive/2026-09-28-roadmap-sourced-family-tree.md`; v1 + v2 — `context/foundation/archive/2026-09-28-roadmap-sourced-family-tree-2.md`.
 > Edit-in-place; archive when superseded.
 > Slices below are listed in dependency order. The "At a glance" table is the index.
 
@@ -24,10 +24,12 @@ milestone_status: open
 **M-1: Drzewo potwierdzone źródłami** — Status: open
 
 - **Intent:** Prawdziwe drzewo autora (min. 3 pokolenia) jest w aplikacji; każdą osobę da się odnaleźć, a fakty urodzenia, małżeństwa i zgonu prowadzą do skanu aktu, na którym się opierają — bez sięgania do rozproszonych notatek.
-- **Rozszerzenie (2026-09-28, prd-v2):** skan niesie nazwę, typ, rok, pochodzenie oraz numer i notatkę interesującego wpisu, a miejsca (zamieszkanie, urodzenie, ślub, zgon) pochodzą z prywatnego spisu miejscowości drzewa. Idzie równolegle z S-09; przy braku czasu pierwszeństwo mają S-09 i termin 2026-11-04.
-- **Source materials:** `context/foundation/prd.md` (v1); `context/foundation/prd-v2.md` (v2, zmiana brownfield).
+- **Rozszerzenie (2026-09-28, prd-v2):** skan niesie nazwę, typ, rok, pochodzenie oraz numer i notatkę interesującego wpisu, a miejsca (zamieszkanie, urodzenie, ślub, zgon) pochodzą z prywatnego spisu miejscowości drzewa.
+- **Rozszerzenie (2026-09-28, prd-v3):** brakującego rodzica, dziecko i małżonka tworzy się z drzewa w modalu; osobę dodaje się i poprawia w modalu; skany stają się źródłami z rodzajem (akt metrykalny, zdjęcie nagrobka, inne), a potwierdzać fakt może źródło każdego rodzaju. Opis skanu z prd-v2 dotyczy teraz źródła. Przy braku czasu pierwszeństwo ma prd-v3, a spis miejscowości (S-12 – S-15) przesuwa się za termin 2026-11-04.
+- **Zastąpione przez prd-v3:** S-10 `scan-description` (#18) → S-17 `source-description-in-modal`; S-11 `scan-type-first-when-linking` (#19) → S-19 `matching-sources-first`. Żaden z nich nie był rozpoczęty.
+- **Source materials:** `context/foundation/prd.md` (v1); `context/foundation/prd-v2.md` (v2, zmiana brownfield); `context/foundation/prd-v3.md` (v3, zmiana brownfield).
 - **Done when:** every F-NN and S-NN below is `done`, plus prawdziwe drzewo zostało wprowadzone na produkcję po zakończeniu F-01.
-- **Scope anchors:** v1: FR-001 – FR-016 (wszystkie konieczne), US-01. FR-018 (nice-to-have) odłożone — patrz `## Parked`. v2 (identyfikatory z prefiksem `v2:`, bo prd-v2 numeruje FR od nowa): v2:FR-001 – v2:FR-005, v2:FR-007 – v2:FR-015 (wszystkie konieczne, w tym zachowane v2:FR-012 – v2:FR-014), v2:US-01, v2:US-02. v2:FR-006 (nice-to-have) odłożone.
+- **Scope anchors:** v1: FR-001 – FR-016 (wszystkie konieczne), US-01. FR-018 (nice-to-have) odłożone — patrz `## Parked`. v2 (identyfikatory z prefiksem `v2:`, bo prd-v2 numeruje FR od nowa): v2:FR-001 – v2:FR-005, v2:FR-007 – v2:FR-015 (wszystkie konieczne, w tym zachowane v2:FR-012 – v2:FR-014), v2:US-01, v2:US-02. v2:FR-006 (nice-to-have) odłożone. v3 (prefiks `v3:`): v3:FR-001 – v3:FR-012 (wszystkie konieczne, w tym zachowane v3:FR-009 – v3:FR-012), v3:US-01, v3:US-02; v3:FR-006 zmienia v2:FR-001 (nazwa nie jest już wymagana — tylko plik i rodzaj).
 
 ## Vision recap
 
@@ -35,13 +37,17 @@ Genealog prowadzący własne badania ma notatki, skany i zdjęcia rozproszone i 
 
 Wprowadzanie prawdziwego drzewa pokazało dwie luki (prd-v2): skan bez opisu zmusza do szukania „swojego” wpisu od nowa przy każdym powrocie, a jedno pole zamieszkania gubi historię przeprowadzek. Stąd opis skanu i wspólny spis miejscowości dla wszystkich miejsc w aplikacji.
 
+Kolejne trzy luki (prd-v3): drzewo służy tylko do oglądania — brakującego ojca, dziecka czy małżonka nie da się dodać bez wychodzenia z drzewa; każde dodanie i poprawka osoby to osobna strona; a „skan” to za wąskie pojęcie — zdjęć nagrobków z datami nie ma gdzie podłączyć jako dowodu. Stąd tworzenie osób z drzewa w modalu i źródła z rodzajem zamiast skanów.
+
 ## North star
 
 **S-03: Użytkownik otwiera podgląd osoby, widzi urodzenie potwierdzone aktem i otwiera jego skan** — to najmniejszy przepływ, który dowodzi sensu produktu, więc przy celu `speed` idzie tak wcześnie, jak pozwalają zależności.
 
 > „Gwiazda przewodnia” (north star) oznacza tu najmniejszy kompletny wycinek, którego dostarczenie dowodzi, że produkt działa zgodnie z wizją. Stoi tak wcześnie, jak pozwalają jego zależności, bo reszta ma znaczenie tylko wtedy, gdy on działa.
 
-**Rozszerzenie prd-v2 — S-10: Użytkownik nadaje skanowi nazwę, typ, rok i pochodzenie, zapisuje numer i notatkę interesującego wpisu i widzi je obok skanu** — codzienny ból z prd-v2 („za każdym razem autor wraca do skanu i szuka »swojego« wpisu od nowa”), niezależny od spisu miejscowości, więc przy celu `speed` idzie pierwszy (równolegle z S-09).
+**Rozszerzenie prd-v2** — dotychczasowa gwiazda S-10 (opis skanu) została zastąpiona przez S-17 (opis źródła w modalu) w ramach prd-v3.
+
+**Rozszerzenie prd-v3 — S-21: Użytkownik klika na drzewie „nieznany ojciec”, tworzy go w modalu i widzi go od razu na drzewie** — v3:US-01 zamyka lukę nr 1 z prd-v3 („drzewo tylko do oglądania”); przy celu `speed` idzie zaraz po modalu osoby (S-20), równolegle ze strumieniem źródeł.
 
 ## At a glance
 
@@ -57,12 +63,18 @@ Wprowadzanie prawdziwego drzewa pokazało dwie luki (prd-v2): skan bez opisu zmu
 | S-07 | marriage-with-shared-source     | dodać małżeństwo z datą i miejscem i potwierdzić je jednym aktem u obojga małżonków    | S-03          | FR-010, FR-012, FR-014, US-01          | done        |
 | S-08 | scan-delete-with-impact         | usunąć skan po zobaczeniu listy faktów, które stracą źródło                            | S-03          | FR-015                                 | done |
 | S-09 | graphical-tree-view             | oglądać swoje drzewo graficznie i przechodzić z niego do osób                          | S-06, S-07    | FR-004, US-01                          | done |
-| S-10 | scan-description                | nadać skanowi nazwę, typ, rok i pochodzenie oraz numer i notatkę wpisu, poprawiać je i widzieć przy skanie | S-02 | v2:FR-001, v2:FR-002, v2:FR-003, v2:FR-004, v2:FR-005, v2:FR-014, v2:US-01 | ready    |
-| S-11 | scan-type-first-when-linking    | przy wiązaniu skanu z wydarzeniem widzieć najpierw skany o pasującym typie             | S-10, S-03    | v2:FR-015, v2:FR-012                   | proposed |
 | S-12 | places-gazetteer                | prowadzić prywatny spis miejscowości: dodawać i poprawiać nazwę, istnienie, jednostkę/parafię/notatkę i współrzędne | S-01 | v2:FR-007, v2:FR-009                   | ready    |
 | S-13 | fact-places-from-gazetteer      | wybrać miejsce urodzenia, ślubu i zgonu ze spisu (z podpowiedziami i dodaniem brakującej) i widzieć je na podglądzie | S-12, S-03, S-07 | v2:FR-011, v2:FR-008, v2:FR-013, v2:US-02 | proposed |
 | S-14 | residence-history               | dodać osobie kilka miejsc zamieszkania ze spisu, widocznych jako chipy, i usunąć każde | S-12          | v2:FR-010, v2:FR-008, v2:US-02         | proposed |
 | S-15 | place-delete-with-impact        | usunąć miejscowość po zobaczeniu osób i faktów, które stracą miejsce                   | S-13, S-14    | v2:FR-009                              | proposed |
+| S-16 | scans-become-sources            | widzieć dotychczasowe skany jako źródła rodzaju „akt metrykalny”, wgrywać źródło z rodzajem (akt / nagrobek / inne) i usuwać je jak dziś | S-02, S-03, S-08 | v3:FR-005, v3:FR-009, v3:FR-010, v3:FR-011 | ready |
+| S-17 | source-description-in-modal     | dodać źródło w modalu (plik i rodzaj) z opcjonalnym opisem, poprawić rodzaj i opis i widzieć numer wpisu i notatkę przy źródle | S-16 | v3:FR-006, v3:FR-007, v3:US-02, v2:FR-001, v2:FR-002, v2:FR-003, v2:FR-004, v2:FR-005, v2:FR-014, v2:US-01 | proposed |
+| S-18 | fact-confirmed-by-any-source    | potwierdzić urodzenie, małżeństwo i zgon źródłem każdego rodzaju i widzieć rodzaj źródła przy fakcie | S-16 | v3:FR-008, v3:US-02 | proposed |
+| S-19 | matching-sources-first          | przy wiązaniu źródła z wydarzeniem widzieć najpierw akty o pasującym typie, potem resztę | S-17, S-18 | v3:FR-009, v2:FR-015, v2:FR-012 | proposed |
+| S-20 | person-form-in-modal            | dodawać i poprawiać osobę w modalu zamiast na osobnych stronach                        | S-01, S-05    | v3:FR-004                              | ready    |
+| S-21 | parent-from-tree-slot           | z pustego slotu rodzica na drzewie utworzyć w modalu nowego rodzica i od razu widzieć go na drzewie | S-20, S-09, S-06 | v3:FR-001, v3:FR-012, v3:US-01 | proposed |
+| S-22 | child-from-tree                 | dodać z drzewa w modalu nowe dziecko pokazanej pary i od razu widzieć je na drzewie     | S-20, S-09    | v3:FR-002, v3:FR-012                   | proposed |
+| S-23 | spouse-from-tree-slot           | z pustego slotu małżonka przy osobie w centrum utworzyć w modalu nowego małżonka        | S-20, S-09, S-07 | v3:FR-003                           | proposed |
 
 ## Streams
 
@@ -70,22 +82,22 @@ Navigation aid — groups items that share a Prerequisites chain. Canonical orde
 
 | Stream | Theme                      | Chain                                  | Note                                                                                       |
 | ------ | -------------------------- | -------------------------------------- | ------------------------------------------------------------------------------------------ |
-| A      | Fakt potwierdzony źródłem  | `S-01` → `S-02` → `S-03` → `S-08`; odgałęzienia `S-01` → `S-04`, `S-01` → `S-05` | Najkrótsza droga do gwiazdy przewodniej M-1; `S-04` i `S-05` odchodzą od `S-01` (zakończone). |
-| B      | Rodzina i drzewo           | `S-06` → `S-07` → `S-09`               | Dołącza do strumienia A w `S-01` (S-06) i `S-03` (S-07). `S-09` ma pierwszeństwo przed prd-v2. |
-| C      | Opisy skanów (prd-v2)      | `S-10` → `S-11`                        | Dołącza do strumienia A w `S-02` (S-10) i `S-03` (S-11); gwiazda przewodnia rozszerzenia.  |
-| D      | Spis miejscowości (prd-v2) | `S-12` → `S-13`, `S-14` → `S-15`       | `S-13` i `S-14` mogą iść równolegle po `S-12`; `S-15` czeka na oba, bo pokazuje ich użycia. |
-| E      | Bezpieczeństwo danych      | `F-01`                                 | Bez zależności od kodu; zakończone przed wprowadzeniem prawdziwych danych.                 |
+| A      | Fakt potwierdzony źródłem  | `F-01`; `S-01` → `S-02` → `S-03` → `S-08`; odgałęzienia `S-01` → `S-04`, `S-01` → `S-05` | Najkrótsza droga do gwiazdy przewodniej M-1 (zakończone); `F-01` szło równolegle, bez zależności od kodu. |
+| B      | Rodzina i drzewo           | `S-06` → `S-07` → `S-09`               | Dołącza do strumienia A w `S-01` (S-06) i `S-03` (S-07). Zakończone.                       |
+| C      | Źródła (prd-v3)            | `S-16` → `S-17`, `S-18` → `S-19`       | Dołącza do strumienia A w `S-08`; `S-17` i `S-18` mogą iść równolegle po `S-16`. Wchłania opis skanu z prd-v2. |
+| D      | Drzewo edytowalne (prd-v3) | `S-20` → `S-21`, `S-22`, `S-23`        | Dołącza do A w `S-05` i do B w `S-09`; niezależny od strumienia C, więc oba mogą iść równolegle. Gwiazda v3: `S-21`. |
+| E      | Spis miejscowości (prd-v2) | `S-12` → `S-13`, `S-14` → `S-15`       | Przy braku czasu przesuwa się za termin 2026-11-04 (pierwszeństwo ma prd-v3); `S-15` czeka na `S-13` i `S-14`. |
 
 ## Baseline
 
-What's already in place in the codebase as of `2026-09-28` (auto-researched + user-confirmed; refreshed for the prd-v2 extension — the 2026-09-21 baseline predated all domain code).
-Foundations below assume these are present and do NOT re-scaffold them. The prd-v2 extension needs no new foundation.
+What's already in place in the codebase as of `2026-09-28` (auto-researched + user-confirmed; refreshed for the prd-v3 extension, after S-09).
+Foundations below assume these are present and do NOT re-scaffold them. The prd-v2 and prd-v3 extensions need no new foundation.
 
-- **Frontend:** present — strony osób (lista, dodawanie, edycja, podgląd) i skanów (lista, wgrywanie, podgląd); formularz osoby, karty wydarzeń, wybór krewnych i skanów (`resources/js/pages/`, `resources/js/components/{persons,scans}/`).
+- **Frontend:** present — strony osób (lista, dodawanie, edycja, podgląd) i skanów (lista, wgrywanie, podgląd); widok drzewa z S-09 (arkusz rodziny, sloty „nieznany” bez akcji, `resources/js/components/tree/`); komponenty okien dialogowych i paneli już używane w 11 okienkach — małżeństwo, wybór krewnego i skanu, usuwanie (`resources/js/components/ui/dialog.tsx`, `resources/js/components/{persons,scans}/`).
 - **Backend / API:** present — kontrolery zasobów osób, skanów, małżeństw, relacji i powiązań wydarzenie–skan; akcje, polityki własności drzewa i zasoby API (`routes/web.php`, `app/Actions/`, `app/Policies/`, `app/Http/Resources/`).
-- **Data:** present — PostgreSQL; osoby, wydarzenia, skany, powiązania wydarzenie–skan, relacje rodzic–dziecko (`database/migrations/`). Miejsca dziś: zamieszkanie osoby i miejsce wydarzenia to wolny tekst; skan ma tylko dane pliku, bez opisu; brak spisu miejscowości. Wyszukiwanie osób bez rozróżniania wielkości liter istnieje (`PersonController`).
+- **Data:** present — PostgreSQL; osoby (z płcią, opcjonalną), wydarzenia, skany, powiązania wydarzenie–skan, relacje rodzic–dziecko (`database/migrations/`). Skan ma tylko dane pliku — bez rodzaju i opisu (`app/Models/Scan.php`). Miejsca dziś: zamieszkanie osoby i miejsce wydarzenia to wolny tekst; brak spisu miejscowości. Wyszukiwanie osób bez rozróżniania wielkości liter istnieje (`PersonController`).
 - **Auth:** present — rejestracja, logowanie, 2FA, passkeys (`app/Providers/FortifyServiceProvider.php`); własność danych przez polityki drzewa.
-- **Deploy / infra:** present — `docker-compose.prod.yml`, ręczny `scripts/deploy.sh`, backupy całej bazy i `storage/app` (obejmują nowe dane z prd-v2), CI lint/static-analysis/tests na PostgreSQL od PR #17.
+- **Deploy / infra:** present — `docker-compose.prod.yml`, ręczny `scripts/deploy.sh`, backupy całej bazy i `storage/app` (obejmują nowe dane z prd-v2 i prd-v3), CI lint/static-analysis/tests na PostgreSQL od PR #17.
 - **Observability:** partial — domyślny stack logów i `backup:monitor`; brak śledzenia błędów (usługi zewnętrzne wyklucza NFR).
 
 ## Foundations
@@ -212,37 +224,12 @@ Foundations below assume these are present and do NOT re-scaffold them. The prd-
 - **Change ID:** graphical-tree-view
 - **PRD refs:** FR-004, US-01
 - **Prerequisites:** S-06, S-07
-- **Parallel with:** F-01, S-04, S-05, S-08, S-10, S-11, S-12, S-13, S-14, S-15
+- **Parallel with:** F-01, S-04, S-05, S-08, S-12, S-13, S-14, S-15, S-16, S-17, S-18, S-19
 - **Blockers:** —
 - **Unknowns:**
   - Jak czytelnie pokazać wiele małżeństw jednej osoby i dziecko z jednym znanym rodzicem? Owner: `/10x-plan`. Block: no. Rozstrzygnięte w planie: jeden partner naraz z przełącznikiem związków; brakujący rodzic jako przerywany znacznik »Nieznany ojciec/matka/rodzic«.
 - **Risk:** Na końcu M-1 v1, bo potrzebuje obu rodzajów relacji; to najbardziej niepewny element interfejsu, więc przy braku czasu grozi mu uproszczenie, ale nie wypada z zakresu (FR-004 jest konieczne). Ma pierwszeństwo przed wycinkami z prd-v2.
 - **Status:** done
-
-### S-10: Opis skanu (gwiazda przewodnia rozszerzenia)
-
-- **Outcome:** użytkownik może przy wgrywaniu nadać skanowi nazwę (wymaganą) oraz opcjonalnie typ (urodzenia, małżeństwa, zgonu, inny), rok, pochodzenie (wolny tekst: parafia, archiwum, sygnatura), numer interesującego wpisu i notatkę; może je później poprawić, a na podglądzie skanu widzi numer wpisu i notatkę obok obrazu. Istniejące skany dostają nazwę równą nazwie pliku.
-- **Change ID:** scan-description
-- **PRD refs:** v2:FR-001, v2:FR-002, v2:FR-003, v2:FR-004, v2:FR-005, v2:FR-014, v2:US-01
-- **Prerequisites:** S-02
-- **Parallel with:** S-09, S-12, S-13, S-14, S-15
-- **Blockers:** —
-- **Unknowns:**
-  - Czy lista skanów pokazuje obok nazwy także typ i rok, żeby dało się odnaleźć skan bez wyszukiwania (v2:FR-006 odłożone)? Owner: `/10x-plan`. Block: no.
-- **Risk:** Pierwszy z prd-v2, bo to codzienny ból i nie zależy od spisu miejscowości; ryzykiem jest spowolnienie wgrywania wielu skanów — dlatego wymagana jest tylko nazwa, a wgrywanie, podgląd i usuwanie muszą działać jak dziś (v2:FR-014).
-- **Status:** ready
-
-### S-11: Skany o pasującym typie najpierw przy wiązaniu
-
-- **Outcome:** użytkownik przy wiązaniu skanu z urodzeniem, małżeństwem lub zgonem widzi najpierw skany o typie pasującym do wydarzenia, a pozostałe nadal może wybrać; powiązania i stan „potwierdzone/niepotwierdzone” działają jak dziś.
-- **Change ID:** scan-type-first-when-linking
-- **PRD refs:** v2:FR-015, v2:FR-012
-- **Prerequisites:** S-10, S-03
-- **Parallel with:** S-09, S-12, S-13, S-14, S-15
-- **Blockers:** —
-- **Unknowns:** —
-- **Risk:** Po S-10, bo potrzebuje typu skanu; typ tylko porządkuje wybór i nie może blokować wiązania ani zmieniać reguły potwierdzania.
-- **Status:** proposed
 
 ### S-12: Spis miejscowości
 
@@ -250,11 +237,11 @@ Foundations below assume these are present and do NOT re-scaffold them. The prd-
 - **Change ID:** places-gazetteer
 - **PRD refs:** v2:FR-007, v2:FR-009
 - **Prerequisites:** S-01
-- **Parallel with:** S-09, S-10, S-11
+- **Parallel with:** S-09, S-16, S-17, S-18, S-19, S-20, S-21, S-22, S-23
 - **Blockers:** —
 - **Unknowns:**
   - Czy dopuszczać dwie miejscowości o tej samej nazwie (np. dwie Lipnice w różnych parafiach), rozróżniane jednostką / parafią? Owner: `/10x-plan`. Block: no.
-- **Risk:** Otwiera strumień miejscowości i nie zmienia jeszcze istniejących danych; ryzykiem jest model spisu, który nie udźwignie podpowiedzi z jednostką (v2:FR-008) w S-13 i S-14. Usuwanie miejscowości czeka na S-15, bo lista użyć ma sens dopiero, gdy miejscowości są używane.
+- **Risk:** Otwiera strumień miejscowości i nie zmienia jeszcze istniejących danych; ryzykiem jest model spisu, który nie udźwignie podpowiedzi z jednostką (v2:FR-008) w S-13 i S-14. Usuwanie miejscowości czeka na S-15, bo lista użyć ma sens dopiero, gdy miejscowości są używane. Od prd-v3 przy braku czasu ustępuje wycinkom v3.
 - **Status:** ready
 
 ### S-13: Miejsca faktów ze spisu
@@ -263,7 +250,7 @@ Foundations below assume these are present and do NOT re-scaffold them. The prd-
 - **Change ID:** fact-places-from-gazetteer
 - **PRD refs:** v2:FR-011, v2:FR-008, v2:FR-013, v2:US-02
 - **Prerequisites:** S-12, S-03, S-07
-- **Parallel with:** S-09, S-10, S-11, S-14
+- **Parallel with:** S-09, S-14, S-16, S-17, S-18, S-19, S-20, S-21, S-22, S-23
 - **Blockers:** —
 - **Unknowns:**
   - Co z dotychczasowymi miejscami faktów zapisanymi wolnym tekstem: usunąć przy zmianie czy zostawić do wglądu, dopóki użytkownik nie wprowadzi ich ze spisu? PRD dopuszcza ich utratę. Owner: user. Block: no.
@@ -276,10 +263,11 @@ Foundations below assume these are present and do NOT re-scaffold them. The prd-
 - **Change ID:** residence-history
 - **PRD refs:** v2:FR-010, v2:FR-008, v2:US-02
 - **Prerequisites:** S-12
-- **Parallel with:** S-09, S-10, S-11, S-13
+- **Parallel with:** S-09, S-13, S-16, S-17, S-18, S-19, S-20, S-21, S-22, S-23
 - **Blockers:** —
 - **Unknowns:**
   - Co z dotychczasowym zamieszkaniem zapisanym wolnym tekstem: usunąć przy zmianie czy zostawić do wglądu do czasu ponownego wprowadzenia? PRD dopuszcza utratę. Owner: user. Block: no.
+  - Pole zamieszkania jest częścią formularza osoby, który w S-20 przechodzi do modala — jeśli S-20 jest już zrobione, chipy powstają od razu w modalu. Owner: `/10x-plan`. Block: no.
 - **Risk:** Zastępuje jedno pole tekstowe listą miejsc bez okresów i bez źródeł (poza zakresem); jeśli idzie przed S-13, to on pierwszy buduje wybór miejscowości z podpowiedziami.
 - **Status:** proposed
 
@@ -289,15 +277,114 @@ Foundations below assume these are present and do NOT re-scaffold them. The prd-
 - **Change ID:** place-delete-with-impact
 - **PRD refs:** v2:FR-009
 - **Prerequisites:** S-13, S-14
-- **Parallel with:** S-09, S-10, S-11
+- **Parallel with:** S-09, S-16, S-17, S-18, S-19, S-20, S-21, S-22, S-23
 - **Blockers:** —
 - **Unknowns:** —
 - **Risk:** Na końcu, bo lista użyć wymaga zamieszkań (S-14) i miejsc faktów (S-13); ciche odpięcie miejsca łamie regułę z prd-v2, a bez kosza usunięcie jest nieodwracalne — ten sam wzorzec co usuwanie skanu (S-08).
 - **Status:** proposed
 
+### S-16: Skany stają się źródłami z rodzajem
+
+- **Outcome:** użytkownik widzi dotychczasowe skany w sekcji „Źródła” jako źródła rodzaju „akt metrykalny”, przy wgrywaniu nowego źródła wybiera rodzaj (akt metrykalny, zdjęcie nagrobka, inne), a pliki, miniatury, powiększenie i istniejące potwierdzenia faktów działają jak dziś; źródło bez powiązań usuwa po prostym potwierdzeniu, a źródło z powiązaniami — po liście faktów, które stracą potwierdzenie.
+- **Change ID:** scans-become-sources
+- **PRD refs:** v3:FR-005, v3:FR-009, v3:FR-010, v3:FR-011
+- **Prerequisites:** S-02, S-03, S-08
+- **Parallel with:** S-12, S-13, S-14, S-15, S-20, S-21, S-22, S-23
+- **Blockers:** —
+- **Unknowns:**
+  - Czy wgrywanie do czasu S-17 zostaje na obecnej osobnej stronie (z nowym wyborem rodzaju), czy modal wgrywania wchodzi już tutaj? Owner: `/10x-plan`. Block: no.
+- **Risk:** Pierwszy w strumieniu źródeł, bo każda dalsza zmiana stoi na nowym pojęciu „źródło”; to jedyna zmiana istniejących danych w prd-v3 — każdy fakt musi mieć ten sam stan „potwierdzone/niepotwierdzone” przed i po, więc przed wdrożeniem backup (procedura z F-01). Stare adresy `/scans` mogą przestać działać (prd-v3).
+- **Status:** ready
+
+### S-17: Źródło dodawane i opisywane w modalu
+
+- **Outcome:** użytkownik dodaje źródło w modalu — wymagane tylko plik i rodzaj — z opcjonalnym opisem: nazwa, rok, pochodzenie, notatka, a dla aktu metrykalnego także typ (urodzenia, małżeństwa, zgonu, inny) i numer wpisu; poprawia rodzaj i opis w modalu, przy czym zmiana rodzaju z aktu na inny najpierw pokazuje znikające pola i wymaga potwierdzenia; na podglądzie źródła widzi numer wpisu i notatkę obok obrazu.
+- **Change ID:** source-description-in-modal
+- **PRD refs:** v3:FR-006, v3:FR-007, v3:US-02, v2:FR-001, v2:FR-002, v2:FR-003, v2:FR-004, v2:FR-005, v2:FR-014, v2:US-01
+- **Prerequisites:** S-16
+- **Parallel with:** S-18, S-12, S-13, S-14, S-15, S-20, S-21, S-22, S-23
+- **Blockers:** —
+- **Unknowns:**
+  - Czy lista źródeł pokazuje obok nazwy także rodzaj, typ i rok, żeby dało się odnaleźć źródło bez wyszukiwania (v2:FR-006 odłożone)? Owner: `/10x-plan`. Block: no.
+- **Risk:** Zastępuje S-10 (#18); prd-v3 zmienia v2:FR-001 — nazwa nie jest już wymagana, żeby nie spowalniać wgrywania zdjęć z cmentarza. Ryzykiem jest ciche skasowanie typu i numeru wpisu przy zmianie rodzaju.
+- **Status:** proposed
+
+### S-18: Fakt potwierdzony źródłem każdego rodzaju
+
+- **Outcome:** użytkownik wiąże z urodzeniem, małżeństwem lub zgonem źródło dowolnego rodzaju (np. zdjęcie nagrobka ze zgonem); fakt dostaje stan „potwierdzone”, a przy fakcie widać rodzaj źródła (np. „potwierdzone: nagrobek”) i można otworzyć źródło w powiększeniu.
+- **Change ID:** fact-confirmed-by-any-source
+- **PRD refs:** v3:FR-008, v3:US-02
+- **Prerequisites:** S-16
+- **Parallel with:** S-17, S-12, S-13, S-14, S-15, S-20, S-21, S-22, S-23
+- **Blockers:** —
+- **Unknowns:** —
+- **Risk:** Zmienia regułę potwierdzania: jeden stan dla każdego rodzaju, więc rodzaj widoczny przy fakcie jest jedynym sygnałem wagi dowodu; nie może zmienić stanu żadnego istniejącego faktu. v3:US-02 jest kompletna dopiero razem z S-17 (dodanie nagrobka w modalu).
+- **Status:** proposed
+
+### S-19: Pasujące akty najpierw przy wyborze źródła
+
+- **Outcome:** użytkownik przy wiązaniu źródła z urodzeniem, małżeństwem lub zgonem widzi najpierw akty metrykalne o typie pasującym do wydarzenia, a potem pozostałe źródła (nagrobki, inne), które nadal może wybrać; powiązania i stan „potwierdzone/niepotwierdzone” działają jak dziś.
+- **Change ID:** matching-sources-first
+- **PRD refs:** v3:FR-009, v2:FR-015, v2:FR-012
+- **Prerequisites:** S-17, S-18
+- **Parallel with:** S-12, S-13, S-14, S-15, S-20, S-21, S-22, S-23
+- **Blockers:** —
+- **Unknowns:** —
+- **Risk:** Zastępuje S-11 (#19); potrzebuje typu aktu (S-17) i wiązania źródeł każdego rodzaju (S-18). Porządek tylko pomaga wybrać — nie może blokować wiązania ani zmieniać reguły potwierdzania.
+- **Status:** proposed
+
+### S-20: Osoba dodawana i poprawiana w modalu
+
+- **Outcome:** użytkownik dodaje i poprawia osobę w modalu (z listy osób i z podglądu osoby) bez przechodzenia na osobną stronę; strony dodawania i edycji osoby znikają, a na wąskim ekranie modal zajmuje cały ekran i się przewija.
+- **Change ID:** person-form-in-modal
+- **PRD refs:** v3:FR-004
+- **Prerequisites:** S-01, S-05
+- **Parallel with:** S-12, S-13, S-14, S-15, S-16, S-17, S-18, S-19
+- **Blockers:** —
+- **Unknowns:** —
+- **Risk:** Pierwszy w strumieniu drzewa, bo modal osoby jest wspólnym elementem S-21 – S-23; ryzykiem jest długi formularz (daty częściowe, miejsca) nieczytelny w modalu na telefonie.
+- **Status:** ready
+
+### S-21: Nowy rodzic z pustego slotu na drzewie (gwiazda przewodnia v3)
+
+- **Outcome:** użytkownik klika na drzewie slot „nieznany ojciec / matka / rodzic”, w modalu tworzy nową osobę (slot ustawia i blokuje płeć; przy „nieznany rodzic” wybiera ją sam) i widzi ją od razu na drzewie jako rodzica, bez opuszczania drzewa; nie da się w ten sposób dodać trzeciego rodzica ani uczynić nikogo własnym przodkiem.
+- **Change ID:** parent-from-tree-slot
+- **PRD refs:** v3:FR-001, v3:FR-012, v3:US-01
+- **Prerequisites:** S-20, S-09, S-06
+- **Parallel with:** S-22, S-23, S-12, S-13, S-14, S-15, S-16, S-17, S-18, S-19
+- **Blockers:** —
+- **Unknowns:** —
+- **Risk:** Gwiazda v3 — najwcześniej po modalu osoby; pierwszy buduje tworzenie osoby z drzewa, które S-22 i S-23 użyją ponownie. Ryzykiem jest duplikat osoby (zaakceptowany w prd-v3) i obejście ograniczeń relacji przy tworzeniu z drzewa.
+- **Status:** proposed
+
+### S-22: Dziecko dodane z drzewa
+
+- **Outcome:** użytkownik dodaje z drzewa w modalu nowe dziecko pary aktualnie pokazanej (parę wybiera przełącznik związku; bez małżonka — dziecko tylko tej osoby); modal pokazuje obojga rodziców, a dziecko od razu pojawia się na drzewie.
+- **Change ID:** child-from-tree
+- **PRD refs:** v3:FR-002, v3:FR-012
+- **Prerequisites:** S-20, S-09
+- **Parallel with:** S-21, S-23, S-12, S-13, S-14, S-15, S-16, S-17, S-18, S-19
+- **Blockers:** —
+- **Unknowns:** —
+- **Risk:** U osoby z kilkoma małżeństwami dziecko może trafić do złej pary — dlatego para z przełącznika i jawni rodzice w modalu. Jeśli idzie przed S-21, to on pierwszy buduje tworzenie osoby z drzewa.
+- **Status:** proposed
+
+### S-23: Pusty slot małżonka i nowy małżonek z drzewa
+
+- **Outcome:** użytkownik widzi pusty slot małżonka przy osobie w centrum drzewa, gdy nie ma ona małżonka, tworzy z niego w modalu nowego małżonka i widzi go od razu na drzewie.
+- **Change ID:** spouse-from-tree-slot
+- **PRD refs:** v3:FR-003
+- **Prerequisites:** S-20, S-09, S-07
+- **Parallel with:** S-21, S-22, S-12, S-13, S-14, S-15, S-16, S-17, S-18, S-19
+- **Blockers:** —
+- **Unknowns:**
+  - Czy utworzenie małżonka z drzewa zakłada małżeństwo bez daty i miejsca (fakt niepotwierdzony do uzupełnienia), skoro małżeństwo jest jednym wydarzeniem obojga (S-07)? Owner: `/10x-plan`. Block: no.
+- **Risk:** Pusty slot tylko przy osobie w centrum, żeby nie zaśmiecać drzewa (prd-v3); ryzykiem jest ukryte założenie małżeństwa, którego użytkownik nie zamierzał.
+- **Status:** proposed
+
 ## Backlog Handoff
 
-GitHub milestone: [M-1](https://github.com/sebastian-kostecki/root-keeper/milestone/1).
+GitHub milestone: [M-1](https://github.com/sebastian-kostecki/root-keeper/milestone/1). Issues #18 (S-10) i #19 (S-11) są zastąpione przez S-17 i S-19; S-16 – S-23 nie mają jeszcze issues.
 
 | Roadmap ID | Issue | Change ID                     | Suggested issue title                                          | Ready for `/10x-plan` | Notes                                                        |
 | ---------- | ----- | ----------------------------- | -------------------------------------------------------------- | --------------------- | ------------------------------------------------------------ |
@@ -311,20 +398,29 @@ GitHub milestone: [M-1](https://github.com/sebastian-kostecki/root-keeper/milest
 | S-07       | #9    | marriage-with-shared-source   | Małżeństwa z aktem widocznym u obojga małżonków                | yes                   | S-03 done → odblokowane. Run `/10x-plan marriage-with-shared-source` |
 | S-08       | #10   | scan-delete-with-impact       | Usuwanie skanu z listą faktów tracących źródło                 | yes                   | S-03 done → odblokowane. Run `/10x-plan scan-delete-with-impact` |
 | S-09       | #11   | graphical-tree-view           | Graficzny widok drzewa                                         | yes                   | S-06, S-07 done → odblokowane. Run `/10x-plan graphical-tree-view`; pierwszeństwo przed prd-v2 |
-| S-10       | #18   | scan-description              | Opis skanu: nazwa, typ, rok, pochodzenie, numer wpisu i notatka | yes                   | Gwiazda przewodnia rozszerzenia. Run `/10x-plan scan-description` |
-| S-11       | #19   | scan-type-first-when-linking  | Skany o pasującym typie najpierw przy wiązaniu z wydarzeniem   | no                    | Czeka na S-10                                                |
-| S-12       | #20   | places-gazetteer              | Prywatny spis miejscowości drzewa                              | yes                   | Run `/10x-plan places-gazetteer`                             |
+| S-12       | #20   | places-gazetteer              | Prywatny spis miejscowości drzewa                              | yes                   | Run `/10x-plan places-gazetteer`; przy braku czasu ustępuje prd-v3 |
 | S-13       | #21   | fact-places-from-gazetteer    | Miejsca urodzenia, ślubu i zgonu wybierane ze spisu            | no                    | Czeka na S-12                                                |
 | S-14       | #22   | residence-history             | Historia zamieszkania osoby ze spisu miejscowości              | no                    | Czeka na S-12                                                |
 | S-15       | #23   | place-delete-with-impact      | Usuwanie miejscowości z listą użyć                             | no                    | Czeka na S-13, S-14                                          |
+| S-16       | —     | scans-become-sources          | Skany jako źródła z rodzajem (akt / nagrobek / inne)           | yes                   | Run `/10x-plan scans-become-sources`; backup przed wdrożeniem |
+| S-17       | —     | source-description-in-modal   | Dodawanie i opis źródła w modalu (zastępuje #18)               | no                    | Czeka na S-16                                                |
+| S-18       | —     | fact-confirmed-by-any-source  | Fakt potwierdzony źródłem każdego rodzaju, rodzaj widoczny przy fakcie | no            | Czeka na S-16                                                |
+| S-19       | —     | matching-sources-first        | Pasujące akty najpierw przy wyborze źródła (zastępuje #19)     | no                    | Czeka na S-17, S-18                                          |
+| S-20       | —     | person-form-in-modal          | Dodawanie i edycja osoby w modalu                              | yes                   | Run `/10x-plan person-form-in-modal`; odblokowuje gwiazdę v3 S-21 |
+| S-21       | —     | parent-from-tree-slot         | Nowy rodzic z pustego slotu na drzewie                         | no                    | Gwiazda v3; czeka na S-20                                    |
+| S-22       | —     | child-from-tree               | Dodawanie dziecka z drzewa                                     | no                    | Czeka na S-20                                                |
+| S-23       | —     | spouse-from-tree-slot         | Pusty slot małżonka i nowy małżonek z drzewa                   | no                    | Czeka na S-20                                                |
 
 ## Open Roadmap Questions
 
-Brak otwartych pytań. Ani PRD v1, ani prd-v2 nie mają otwartych pytań; pytania w wycinkach S-10 – S-15 nie blokują planowania.
+1. **Porządek na GitHubie** — zamknąć #18 i #19 jako zastąpione przez S-17 i S-19 oraz założyć issues dla S-16 – S-23 w kamieniu M-1. Owner: user. Block: no (planowanie może ruszyć bez tego).
+
+Pytania w wycinkach S-12 – S-23 nie blokują planowania.
 
 Rozstrzygnięte:
 
 - **Deploy ręczny czy automatyczny po merge'u?** (#12, 2026-09-21) — Ręczny: właściciel uruchamia `scripts/deploy.sh` na VPS po merge'u do `main`. Workflow deployu nie powstaje; `tech-stack.md` poprawiony (`ci_default_flow: manual-promotion`).
+- **Przeplanowanie S-10 i S-11 w roadmapie** (prd-v3, Otwarte pytania nr 1; 2026-09-28) — S-10 → S-17 `source-description-in-modal`, S-11 → S-19 `matching-sources-first`; oba jako część strumienia źródeł po S-16.
 
 ## Parked
 
@@ -334,20 +430,25 @@ Rozstrzygnięte:
 - **Zbiorcza lista faktów bez źródła** — Why parked: PRD §Non-Goals; odróżnienie na podglądzie osoby (S-03) wystarcza.
 - **Źródła dla wyznania i miejsca zamieszkania** — Why parked: PRD §Non-Goals (FR-014).
 - **Wiele drzew, role, współdzielenie** — Why parked: PRD §Non-Goals (FR-003, Access Control).
-- **Kosz i cofanie, historia zmian** — Why parked: PRD §Non-Goals. (Opis skanów wrócił do zakresu z prd-v2 — S-10.)
+- **Kosz i cofanie, historia zmian** — Why parked: PRD §Non-Goals. (Opis skanów wrócił do zakresu z prd-v2, a od prd-v3 jako opis źródła — S-17.)
 - **Pilnowanie zgodności faktu z aktem, stan „sprzeczny”** — Why parked: PRD §Non-Goals, Logika biznesowa.
 - **Rozróżnienie rodzica biologicznego i przybranego** — Why parked: PRD §Non-Goals (FR-011).
 - **Stan potwierdzenia w widoku drzewa** — Why parked: PRD §Non-Goals.
 - **GEDCOM, OCR, warianty pisowni, integracje zewnętrzne** — Why parked: PRD §Non-Goals.
 - **Odzyskiwanie hasła** — Why parked: PRD §Non-Goals; istniejący reset ze starter kitu do usunięcia (Unknown w S-01).
 - **Urządzenia mobilne, wielojęzyczność** — Why parked: PRD §Non-Goals (non-functional).
-- **Wyszukiwanie skanu po nazwie (v2:FR-006)** — Why parked: nice-to-have, a cel `speed` i ryzyko `time` odkładają wszystko poza koniecznym; nazwy na liście skanów (S-10) wystarczają do odnalezienia skanu.
+- **Wyszukiwanie skanu po nazwie (v2:FR-006)** — Why parked: nice-to-have, a cel `speed` i ryzyko `time` odkładają wszystko poza koniecznym; nazwy na liście źródeł (S-17) wystarczają do odnalezienia źródła.
 - **Zaznaczanie obszaru wpisu na obrazie skanu** — Why parked: prd-v2 §Non-Goals; numer wpisu i notatka wystarczają.
 - **Wiele wpisów na skan i powiązanie wpisu z wydarzeniem** — Why parked: prd-v2 §Non-Goals; jeden numer wpisu i jedna notatka, źródłem faktu pozostaje cały skan.
 - **Wyszukiwanie skanów po treści notatki** — Why parked: prd-v2 §Non-Goals.
 - **Mapa w aplikacji i zewnętrzni dostawcy map** — Why parked: prd-v2 §Non-Goals; współrzędne wpisywane ręcznie (NFR o podmiotach trzecich).
 - **Okresy przy miejscach zamieszkania** — Why parked: prd-v2 §Non-Goals; chipy pokazują tylko miejscowość.
 - **Przeniesienie istniejących miejsc z wolnego tekstu do spisu** — Why parked: prd-v2 §Non-Goals; użytkownik wprowadzi je ponownie.
+- **Modale dla faktów i relacji** — Why parked: prd-v3 §Non-Goals; urodzenie, zgon, ślub i relacje zostają w obecnej formie.
+- **Wybór istniejącej osoby z pustego slotu drzewa i scalanie duplikatów** — Why parked: prd-v3 §Non-Goals i v3:FR-001; z drzewa zawsze powstaje nowa osoba, łączenie z istniejącą zostaje na podglądzie osoby, duplikaty poprawiane ręcznie.
+- **Wgrywanie wielu plików naraz** — Why parked: prd-v3 §Non-Goals; jedno źródło = jeden plik (v3:FR-006).
+- **Słabszy stan potwierdzenia dla nagrobka i „innych”** — Why parked: prd-v3 §Non-Goals; jeden stan „potwierdzone” + widoczny rodzaj (v3:FR-008).
+- **Przekierowania ze starych adresów `/scans`** — Why parked: prd-v3 §Non-Goals; jedynym użytkownikiem jest autor (v3:FR-010).
 
 ## Milestone History
 
