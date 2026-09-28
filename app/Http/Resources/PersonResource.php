@@ -82,9 +82,9 @@ class PersonResource extends JsonResource
 
         return [
             $date?->year === null ? 1 : 0,
-            $date?->year ?? 0,
-            $date?->month ?? 0,
-            $date?->day ?? 0,
+            $date->year ?? 0,
+            $date->month ?? 0,
+            $date->day ?? 0,
             $person->last_name === null ? 1 : 0,
             $person->last_name ?? '',
             $person->first_name ?? '',

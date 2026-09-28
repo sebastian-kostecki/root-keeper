@@ -30,8 +30,8 @@ class MarriageResource extends JsonResource
      *     type: string,
      *     date: string|null,
      *     place: string|null,
-     *     is_confirmed: bool,
-     *     scans: list<array{id: int, original_name: string, has_thumbnail: bool}>,
+     *     is_confirmed?: bool,
+     *     scans?: list<array{id: int, original_name: string, has_thumbnail: bool}>,
      *     date_parts: array{year: int|null, month: int|null, day: int|null, is_approximate: bool},
      *     spouse: array{id: int, display_name: string, birth_date: string|null, death_date: string|null}|null,
      * }
@@ -41,7 +41,7 @@ class MarriageResource extends JsonResource
         $spouse = $this->participants->firstWhere('id', '!=', $this->viewedPerson->id);
 
         return [
-            ...EventResource::make($this->resource)->resolve($request),
+            ...EventResource::make($this->resource)->toArray($request),
             'date_parts' => [
                 'year' => $this->date_year,
                 'month' => $this->date_month,

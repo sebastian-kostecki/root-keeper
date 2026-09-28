@@ -18,8 +18,8 @@ class ParentChildRelationController extends Controller
     {
         $tree = $request->user()->tree;
 
-        $parent = $tree->people()->findOrFail($request->validated('parent_id'));
-        $child = $tree->people()->findOrFail($request->validated('child_id'));
+        $parent = $tree->people()->findOrFail($request->safe()->integer('parent_id'));
+        $child = $tree->people()->findOrFail($request->safe()->integer('child_id'));
 
         $createParentChildRelation->handle($tree, $parent, $child);
 

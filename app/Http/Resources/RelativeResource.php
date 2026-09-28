@@ -8,6 +8,7 @@ use Illuminate\Http\Resources\Json\JsonResource;
 
 /**
  * @property-read Person $resource
+ * @property-read object{id: int} $pivot
  *
  * @mixin Person
  */
