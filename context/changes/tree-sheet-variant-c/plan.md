@@ -468,30 +468,30 @@ No data migration. `label` is removed from the Inertia payload in the same deplo
 
 #### Automated
 
-- [x] 1.1 Sheet payload tests pass: `vendor/bin/sail artisan test --compact tests/Feature/TreeTest.php`
-- [x] 1.2 PHP style is clean: `vendor/bin/sail bin pint --dirty --format agent`
-- [x] 1.3 Static analysis passes: `vendor/bin/sail composer run types:check`
-- [x] 1.4 Types check: `vendor/bin/sail npm run types:check`
-- [x] 1.5 Format and lint pass: `vendor/bin/sail npm run check`
+- [x] 1.1 Sheet payload tests pass: `vendor/bin/sail artisan test --compact tests/Feature/TreeTest.php` — 418a3ff
+- [x] 1.2 PHP style is clean: `vendor/bin/sail bin pint --dirty --format agent` — 418a3ff
+- [x] 1.3 Static analysis passes: `vendor/bin/sail composer run types:check` — 418a3ff
+- [x] 1.4 Types check: `vendor/bin/sail npm run types:check` — 418a3ff
+- [x] 1.5 Format and lint pass: `vendor/bin/sail npm run check` — 418a3ff
 
 #### Manual
 
-- [x] 1.6 `/tree` still renders; union chips show partner names (temporary); sheet looks unchanged
+- [x] 1.6 `/tree` still renders; union chips show partner names (temporary); sheet looks unchanged — 418a3ff
 
 ### Phase 2: Cards, placeholders and lines (C1, C2)
 
 #### Automated
 
-- [ ] 2.1 Types check: `vendor/bin/sail npm run types:check`
-- [ ] 2.2 Format and lint pass: `vendor/bin/sail npm run check`
-- [ ] 2.3 Build succeeds: `vendor/bin/sail npm run build`
+- [x] 2.1 Types check: `vendor/bin/sail npm run types:check`
+- [x] 2.2 Format and lint pass: `vendor/bin/sail npm run check`
+- [x] 2.3 Build succeeds: `vendor/bin/sail npm run build`
 
 #### Manual
 
-- [ ] 2.4 Tinted male/female cards, centred text, no icons; unknown-gender card neutral (light and dark)
-- [ ] 2.5 Hover changes only the border to the gender colour; Tab shows the ring halo on cards and placeholders
-- [ ] 2.6 Missing parent reads „Dodaj ojca/matkę/rodzica” dashed; static unknown is a borderless grey block
-- [ ] 2.7 Screen reader still reads „mężczyzna” / „kobieta” on cards
+- [x] 2.4 Tinted male/female cards, centred text, no icons; unknown-gender card neutral (light and dark)
+- [x] 2.5 Hover changes only the border to the gender colour; Tab shows the ring halo on cards and placeholders
+- [x] 2.6 Missing parent reads „Dodaj ojca/matkę/rodzica” dashed; static unknown is a borderless grey block
+- [x] 2.7 Screen reader still reads „mężczyzna” / „kobieta” on cards
 
 ### Phase 3: Union node with a dropdown (C3, C3b)
 

@@ -58,7 +58,6 @@ function Slot({
             <UnknownPersonCard label={slot.label} />
         ) : (
             <ParentSlotDialog
-                label={slot.label}
                 slot={slot.parent_of}
                 candidates={candidates}
                 genders={genders}
@@ -95,11 +94,11 @@ function PairConnector({
             {visible && (
                 <>
                     <div
-                        className="absolute inset-x-[25%] top-0 h-3 rounded-b-sm border-x border-b"
+                        className="border-tree-line absolute inset-x-[25%] top-0 h-3 rounded-b-md border-x border-b"
                         aria-hidden="true"
                     />
                     <div
-                        className="bg-border absolute top-3 bottom-0 left-1/2 w-px"
+                        className="bg-tree-line absolute top-3 bottom-0 left-1/2 w-px"
                         aria-hidden="true"
                     />
                 </>
@@ -150,7 +149,7 @@ function ChildrenRows({ children }: Pick<FamilySheetData, 'children'>) {
                     >
                         {row.length > 1 && (
                             <div
-                                className="col-span-8 h-3 rounded-t-sm border-x border-t"
+                                className="border-tree-line col-span-8 h-3 rounded-t-sm border-x border-t"
                                 style={{
                                     marginLeft: `${inset}%`,
                                     marginRight: `${inset}%`,
@@ -285,7 +284,7 @@ export function FamilySheet({
                 <div className="relative col-span-8 grid grid-cols-8 gap-x-2">
                     {sheet.partner.kind !== 'empty' && (
                         <div
-                            className="bg-border absolute top-1/2 right-[25%] left-[25%] h-px"
+                            className="bg-tree-line absolute top-1/2 right-[25%] left-[25%] h-px"
                             aria-hidden="true"
                         />
                     )}
@@ -324,7 +323,7 @@ export function FamilySheet({
                 >
                     {hasChildren && (
                         <div
-                            className="bg-border absolute inset-y-0 left-1/2 w-px"
+                            className="bg-tree-line absolute inset-y-0 left-1/2 w-px"
                             aria-hidden="true"
                         />
                     )}

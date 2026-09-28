@@ -1,26 +1,31 @@
 import { Plus } from 'lucide-react';
 import type * as React from 'react';
-import { cardInteractive, cardSurface } from '@/components/tree/card-styles';
+import {
+    cardSurface,
+    placeholderAction,
+    placeholderStatic,
+} from '@/components/tree/card-styles';
 import { cn } from '@/lib/utils';
 
 type Props = Omit<React.ComponentProps<'button'>, 'children'> & {
+    /** Visible text: the missing person's label, or the verb when `addLabel` is set. */
     label: string;
     /** When set, the card is a button (a dialog trigger) with this aria-label. */
     addLabel?: string;
 };
 
 /**
- * A dashed placeholder for a person the tree does not know. With `addLabel`
- * it is a button (a dialog trigger); without, a static label.
+ * A placeholder for a person the tree does not know. With `addLabel` it is a
+ * dashed button (a dialog trigger) showing a plus and the verb; without, a
+ * static muted block with the label.
  */
 export function UnknownPersonCard({ label, addLabel, ...props }: Props) {
-    const base = cn(
-        cardSurface,
-        'text-muted-foreground flex items-center border-dashed text-sm',
-    );
-
     if (addLabel === undefined) {
-        return <div className={base}>{label}</div>;
+        return (
+            <div className={cn(cardSurface, placeholderStatic, 'text-sm')}>
+                {label}
+            </div>
+        );
     }
 
     return (
@@ -29,13 +34,13 @@ export function UnknownPersonCard({ label, addLabel, ...props }: Props) {
             aria-label={addLabel}
             {...props}
             className={cn(
-                base,
-                cardInteractive,
-                'hover:border-l-foreground/20 hover:text-foreground w-full cursor-pointer justify-between gap-2 text-left',
+                cardSurface,
+                placeholderAction,
+                'w-full cursor-pointer flex-row gap-1 text-sm',
             )}
         >
-            <span>{label}</span>
             <Plus className="size-4 shrink-0" aria-hidden="true" />
+            <span>{label}</span>
         </button>
     );
 }
