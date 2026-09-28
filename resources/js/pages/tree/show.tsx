@@ -52,7 +52,7 @@ export default function Show({
                 <Head title="Drzewo" />
 
                 <div className="space-y-6">
-                    <Heading title="Drzewo" />
+                    <Heading title="Drzewo" variant="page" />
 
                     <Card>
                         <CardContent className="flex flex-col items-start gap-4 text-sm">
@@ -80,8 +80,8 @@ export default function Show({
             <Head title={`Drzewo: ${sheet.focus.display_name}`} />
 
             <div className="space-y-6">
-                <div className="flex flex-wrap items-start justify-between gap-4">
-                    <Heading title={sheet.focus.display_name} />
+                <div className="flex flex-wrap items-center justify-between gap-4">
+                    <Heading title={sheet.focus.display_name} variant="page" />
 
                     <div className="flex flex-wrap items-center gap-2">
                         {isProband ? (
