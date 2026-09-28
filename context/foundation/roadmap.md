@@ -71,7 +71,7 @@ Kolejne trzy luki (prd-v3): drzewo służy tylko do oglądania — brakującego 
 | S-17 | source-description-in-modal     | dodać źródło w modalu (plik i rodzaj) z opcjonalnym opisem, poprawić rodzaj i opis i widzieć numer wpisu i notatkę przy źródle | S-16 | v3:FR-006, v3:FR-007, v3:US-02, v2:FR-001, v2:FR-002, v2:FR-003, v2:FR-004, v2:FR-005, v2:FR-014, v2:US-01 | proposed |
 | S-18 | fact-confirmed-by-any-source    | potwierdzić urodzenie, małżeństwo i zgon źródłem każdego rodzaju i widzieć rodzaj źródła przy fakcie | S-16 | v3:FR-008, v3:US-02 | proposed |
 | S-19 | matching-sources-first          | przy wiązaniu źródła z wydarzeniem widzieć najpierw akty o pasującym typie, potem resztę | S-17, S-18 | v3:FR-009, v2:FR-015, v2:FR-012 | proposed |
-| S-20 | person-form-in-modal            | dodawać i poprawiać osobę w modalu zamiast na osobnych stronach                        | S-01, S-05    | v3:FR-004                              | ready    |
+| S-20 | person-form-in-modal            | dodawać i poprawiać osobę w modalu zamiast na osobnych stronach                        | S-01, S-05    | v3:FR-004                              | done |
 | S-21 | parent-from-tree-slot           | z pustego slotu rodzica na drzewie utworzyć w modalu nowego rodzica i od razu widzieć go na drzewie | S-20, S-09, S-06 | v3:FR-001, v3:FR-012, v3:US-01 | proposed |
 | S-22 | child-from-tree                 | dodać z drzewa w modalu nowe dziecko pokazanej pary i od razu widzieć je na drzewie     | S-20, S-09    | v3:FR-002, v3:FR-012                   | proposed |
 | S-23 | spouse-from-tree-slot           | z pustego slotu małżonka przy osobie w centrum utworzyć w modalu nowego małżonka        | S-20, S-09, S-07 | v3:FR-003                           | proposed |
@@ -343,7 +343,7 @@ Foundations below assume these are present and do NOT re-scaffold them. The prd-
 - **Blockers:** —
 - **Unknowns:** —
 - **Risk:** Pierwszy w strumieniu drzewa, bo modal osoby jest wspólnym elementem S-21 – S-23; ryzykiem jest długi formularz (daty częściowe, miejsca) nieczytelny w modalu na telefonie.
-- **Status:** ready
+- **Status:** done
 
 ### S-21: Nowy rodzic z pustego slotu na drzewie (gwiazda przewodnia v3)
 
@@ -464,3 +464,4 @@ Rozstrzygnięte:
 - **S-08: użytkownik może usunąć skan po potwierdzeniu, widząc wcześniej listę faktów, które stracą źródło; fakty bez ostatniego skanu stają się niepotwierdzone.** — Archived 2026-09-25 → `context/archive/2026-09-25-scan-delete-with-impact/`. Lesson: —.
 - **S-07: użytkownik może połączyć dwie osoby małżeństwem z datą i miejscem ślubu (osoba może mieć kilka małżeństw), powiązać z nim skan aktu, który widać jako źródło u obojga małżonków bez dodawania go dwa razy, i usunąć relację po jawnym potwierdzeniu.** — Archived 2026-09-25 → `context/archive/2026-09-25-marriage-with-shared-source/`. Lesson: —.
 - **S-09: użytkownik może oglądać swoje drzewo w widoku graficznym i przechodzić z niego do podglądu osób.** — Archived 2026-09-28 → `context/archive/2026-09-28-graphical-tree-view/`. Lesson: —.
+- **S-20: użytkownik dodaje i poprawia osobę w modalu (z listy osób i z podglądu osoby) bez przechodzenia na osobną stronę; strony dodawania i edycji osoby znikają, a na wąskim ekranie modal zajmuje cały ekran i się przewija.** — Archived 2026-09-28 → `context/archive/2026-09-28-person-form-in-modal/`. Lesson: —.
