@@ -37,7 +37,7 @@ export function PersonFormDialog(props: Props) {
     const scrollFirstErrorIntoView = () => {
         requestAnimationFrame(() => {
             bodyRef.current
-                ?.querySelector('[class*="text-red-600"]')
+                ?.querySelector('[data-slot="input-error"]')
                 ?.scrollIntoView({ block: 'center', behavior: 'smooth' });
         });
     };
