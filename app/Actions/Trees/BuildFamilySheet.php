@@ -182,16 +182,20 @@ class BuildFamilySheet
         $excludedIds = array_values(array_unique($excludedIds));
         $candidateIds = array_values(array_diff($this->graph->childIds(), $excludedIds));
 
-        $otherParentGenders = [];
+        $otherParentIds = [];
 
-        if ($partner === null && $focus->gender !== null) {
-            $otherParentIds = [];
+        foreach ($candidateIds as $childId) {
+            array_push($otherParentIds, ...array_diff($this->graph->parentsOf($childId), $parentIds));
+        }
 
-            foreach ($candidateIds as $childId) {
-                array_push($otherParentIds, ...array_diff($this->graph->parentsOf($childId), $parentIds));
-            }
+        $genders = [];
 
-            $otherParentGenders = $focus->tree->people()
+        foreach ($parents as $parent) {
+            $genders[$parent->id] = $parent->gender;
+        }
+
+        if ($otherParentIds !== []) {
+            $genders += $focus->tree->people()
                 ->whereIn('id', array_values(array_unique($otherParentIds)))
                 ->pluck('gender', 'id')
                 ->all();
@@ -201,16 +205,9 @@ class BuildFamilySheet
 
         foreach ($candidateIds as $childId) {
             $childParentIds = $this->graph->parentsOf($childId);
+            $finalParentIds = array_values(array_unique([...$childParentIds, ...$parentIds]));
 
-            if (count(array_unique([...$childParentIds, ...$parentIds])) > 2) {
-                $blockedIds[] = $childId;
-
-                continue;
-            }
-
-            $others = array_values(array_diff($childParentIds, $parentIds));
-
-            if (count($others) === 1 && $focus->gender !== null && ($otherParentGenders[$others[0]] ?? null) === $focus->gender) {
+            if (count($finalParentIds) > 2 || $this->addsSecondParentOfSameSex($parentIds, $childParentIds, $finalParentIds, $genders)) {
                 $blockedIds[] = $childId;
             }
         }
@@ -226,6 +223,35 @@ class BuildFamilySheet
             'excluded_ids' => $excludedIds,
             'blocked_ids' => $blockedIds,
         ];
+    }
+
+    /**
+     * Whether linking the pair would give the child two parents of the same
+     * known sex: a newly added parent clashing with a parent the child keeps
+     * or with the other newly added one. Unknown sex never conflicts.
+     *
+     * @param  list<int>  $pairIds
+     * @param  list<int>  $currentParentIds
+     * @param  list<int>  $finalParentIds
+     * @param  array<int, Gender|null>  $genders
+     */
+    private function addsSecondParentOfSameSex(array $pairIds, array $currentParentIds, array $finalParentIds, array $genders): bool
+    {
+        foreach (array_diff($pairIds, $currentParentIds) as $newId) {
+            $gender = $genders[$newId] ?? null;
+
+            if ($gender === null) {
+                continue;
+            }
+
+            foreach ($finalParentIds as $otherId) {
+                if ($otherId !== $newId && ($genders[$otherId] ?? null) === $gender) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 
     /**

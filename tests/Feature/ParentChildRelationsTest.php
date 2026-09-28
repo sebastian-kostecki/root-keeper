@@ -595,13 +595,12 @@ test('a child with an outside parent is rejected for a pair and the first link i
     $partner = Person::factory()->for($user->tree)->female()->create();
     $child = Person::factory()->for($user->tree)->create();
     linkParent(Person::factory()->for($user->tree)->create(), $child);
-    linkParent(Person::factory()->for($user->tree)->create(), $child);
 
     $this->actingAs($user)
         ->post(route('persons.children.attach', $focus), ['child_id' => $child->id, 'other_parent_id' => $partner->id])
         ->assertSessionHasErrors(['relation' => 'Ta osoba ma już dwoje rodziców.']);
 
-    $this->assertDatabaseCount('parent_child_relations', 2);
+    $this->assertDatabaseCount('parent_child_relations', 1);
     $this->assertDatabaseMissing('parent_child_relations', ['parent_id' => $focus->id]);
 });
 
@@ -771,6 +770,56 @@ test('a pair of the same known sex is rejected and the new person and the first 
         ->assertSessionHasErrors(['relation' => 'Ta osoba ma już ojca.']);
 
     expect(Person::count())->toBe($peopleBefore);
+    $this->assertDatabaseCount('parent_child_relations', 0);
+});
+
+test('the route person cannot be their own other parent when creating a child', function () {
+    $user = User::factory()->create();
+    $focus = Person::factory()->for($user->tree)->create();
+    $peopleBefore = Person::count();
+
+    $this->actingAs($user)
+        ->post(route('persons.children.store', $focus), ['first_name' => 'Marta', 'other_parent_id' => $focus->id])
+        ->assertSessionHasErrors('other_parent_id');
+
+    expect(Person::count())->toBe($peopleBefore);
+    $this->assertDatabaseCount('parent_child_relations', 0);
+});
+
+test('the route person cannot be their own other parent when attaching a child', function () {
+    $user = User::factory()->create();
+    $focus = Person::factory()->for($user->tree)->create();
+    $child = Person::factory()->for($user->tree)->create();
+
+    $this->actingAs($user)
+        ->post(route('persons.children.attach', $focus), ['child_id' => $child->id, 'other_parent_id' => $focus->id])
+        ->assertSessionHasErrors('other_parent_id');
+
+    $this->assertDatabaseCount('parent_child_relations', 0);
+});
+
+test('the attached child cannot also be the other parent', function () {
+    $user = User::factory()->create();
+    $focus = Person::factory()->for($user->tree)->create();
+    $child = Person::factory()->for($user->tree)->create();
+
+    $this->actingAs($user)
+        ->post(route('persons.children.attach', $focus), ['child_id' => $child->id, 'other_parent_id' => $child->id])
+        ->assertSessionHasErrors('child_id');
+
+    $this->assertDatabaseCount('parent_child_relations', 0);
+});
+
+test('attaching a child to a pair of the same known sex is rejected and nothing is linked', function () {
+    $user = User::factory()->create();
+    $focus = Person::factory()->for($user->tree)->male()->create();
+    $otherMan = Person::factory()->for($user->tree)->male()->create();
+    $child = Person::factory()->for($user->tree)->create();
+
+    $this->actingAs($user)
+        ->post(route('persons.children.attach', $focus), ['child_id' => $child->id, 'other_parent_id' => $otherMan->id])
+        ->assertSessionHasErrors(['relation' => 'Ta osoba ma już ojca.']);
+
     $this->assertDatabaseCount('parent_child_relations', 0);
 });
 

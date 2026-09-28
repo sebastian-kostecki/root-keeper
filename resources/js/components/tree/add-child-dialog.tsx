@@ -19,9 +19,8 @@ type Props = {
 /**
  * The "Dodaj dziecko" card of the children row and its dialog: pick an
  * existing person of the tree to become the child of the shown pair, or add
- * a new one with the default surname. People
- * the sheet marks as excluded or blocked are not offered; the server stays
- * the authority.
+ * a new one with the default surname. People the sheet marks as excluded or
+ * blocked are not offered; the server stays the authority.
  */
 export function AddChildDialog({
     target,

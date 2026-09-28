@@ -589,6 +589,39 @@ test('a lone parent is blocked by another parent of the same known sex only', fu
     expect($addChild['blocked_ids'])->toBe([$withFather->id]);
 });
 
+test('a pair is blocked for a child whose kept parent has the sex of the newly added one', function () {
+    $user = User::factory()->create();
+    $tree = $user->tree;
+    $focus = Person::factory()->for($tree)->male()->create();
+    $partner = Person::factory()->for($tree)->male()->create();
+    $womanFocus = Person::factory()->for($tree)->female()->create();
+    $womanPartner = Person::factory()->for($tree)->female()->create();
+    $keepsFocus = Person::factory()->for($tree)->create();
+    $keepsWoman = Person::factory()->for($tree)->create();
+    attachMarriage($focus, $partner, 1950);
+    attachMarriage($womanFocus, $womanPartner, 1950);
+    linkParent($focus, $keepsFocus);
+    linkParent($womanFocus, $keepsWoman);
+
+    $menPair = sheetFor($this, $user, $focus, (string) $partner->id)['add_child'];
+    $womenPair = sheetFor($this, $user, $womanFocus, (string) $womanPartner->id)['add_child'];
+
+    expect($menPair['blocked_ids'])->toContain($keepsFocus->id)
+        ->and($womenPair['blocked_ids'])->toContain($keepsWoman->id);
+});
+
+test('a mixed pair keeps a child of one parent selectable', function () {
+    $user = User::factory()->create();
+    $tree = $user->tree;
+    $focus = Person::factory()->for($tree)->male()->create();
+    $partner = Person::factory()->for($tree)->female()->create();
+    $keepsFocus = Person::factory()->for($tree)->create();
+    attachMarriage($focus, $partner, 1950);
+    linkParent($focus, $keepsFocus);
+
+    expect(sheetFor($this, $user, $focus, (string) $partner->id)['add_child']['blocked_ids'])->toBe([]);
+});
+
 test('the default surname is the first mans, else the focus persons', function () {
     $user = User::factory()->create();
     $tree = $user->tree;
