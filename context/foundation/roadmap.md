@@ -56,7 +56,7 @@ Wprowadzanie prawdziwego drzewa pokazało dwie luki (prd-v2): skan bez opisu zmu
 | S-06 | parent-child-relations          | połączyć rodzica z dzieckiem, zobaczyć relacje na podglądzie i usunąć relację          | S-01          | FR-011, FR-012, FR-008                 | done |
 | S-07 | marriage-with-shared-source     | dodać małżeństwo z datą i miejscem i potwierdzić je jednym aktem u obojga małżonków    | S-03          | FR-010, FR-012, FR-014, US-01          | done        |
 | S-08 | scan-delete-with-impact         | usunąć skan po zobaczeniu listy faktów, które stracą źródło                            | S-03          | FR-015                                 | done |
-| S-09 | graphical-tree-view             | oglądać swoje drzewo graficznie i przechodzić z niego do osób                          | S-06, S-07    | FR-004, US-01                          | ready    |
+| S-09 | graphical-tree-view             | oglądać swoje drzewo graficznie i przechodzić z niego do osób                          | S-06, S-07    | FR-004, US-01                          | planning |
 | S-10 | scan-description                | nadać skanowi nazwę, typ, rok i pochodzenie oraz numer i notatkę wpisu, poprawiać je i widzieć przy skanie | S-02 | v2:FR-001, v2:FR-002, v2:FR-003, v2:FR-004, v2:FR-005, v2:FR-014, v2:US-01 | ready    |
 | S-11 | scan-type-first-when-linking    | przy wiązaniu skanu z wydarzeniem widzieć najpierw skany o pasującym typie             | S-10, S-03    | v2:FR-015, v2:FR-012                   | proposed |
 | S-12 | places-gazetteer                | prowadzić prywatny spis miejscowości: dodawać i poprawiać nazwę, istnienie, jednostkę/parafię/notatkę i współrzędne | S-01 | v2:FR-007, v2:FR-009                   | ready    |
@@ -217,7 +217,7 @@ Foundations below assume these are present and do NOT re-scaffold them. The prd-
 - **Unknowns:**
   - Jak czytelnie pokazać wiele małżeństw jednej osoby i dziecko z jednym znanym rodzicem? Owner: `/10x-plan`. Block: no.
 - **Risk:** Na końcu M-1 v1, bo potrzebuje obu rodzajów relacji; to najbardziej niepewny element interfejsu, więc przy braku czasu grozi mu uproszczenie, ale nie wypada z zakresu (FR-004 jest konieczne). Ma pierwszeństwo przed wycinkami z prd-v2.
-- **Status:** ready
+- **Status:** planning
 
 ### S-10: Opis skanu (gwiazda przewodnia rozszerzenia)
 
