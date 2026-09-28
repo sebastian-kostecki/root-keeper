@@ -436,36 +436,36 @@ None: no schema changes and no data changes.
 
 #### Automated
 
-- [x] 2.1 Affected feature tests pass: `vendor/bin/sail artisan test --compact tests/Feature/MarriagesTest.php tests/Feature/TreeTest.php tests/Feature/PersonsTest.php`
-- [x] 2.2 Larastan passes: `vendor/bin/sail composer types:check`
-- [x] 2.3 Format and lint pass: `vendor/bin/sail npm run check`
-- [x] 2.4 Type check passes: `vendor/bin/sail npm run types:check`
-- [x] 2.5 Production build succeeds: `vendor/bin/sail npm run build`
-- [x] 2.6 PHP style is clean: `vendor/bin/sail bin pint --dirty --format agent`
+- [x] 2.1 Affected feature tests pass: `vendor/bin/sail artisan test --compact tests/Feature/MarriagesTest.php tests/Feature/TreeTest.php tests/Feature/PersonsTest.php` — eecd845
+- [x] 2.2 Larastan passes: `vendor/bin/sail composer types:check` — eecd845
+- [x] 2.3 Format and lint pass: `vendor/bin/sail npm run check` — eecd845
+- [x] 2.4 Type check passes: `vendor/bin/sail npm run types:check` — eecd845
+- [x] 2.5 Production build succeeds: `vendor/bin/sail npm run build` — eecd845
+- [x] 2.6 PHP style is clean: `vendor/bin/sail bin pint --dirty --format agent` — eecd845
 
 #### Manual
 
-- [x] 2.7 Jan (male, no union) → „Dodaj małżonka" → „Nowa osoba": sex locked to female, surname empty. Saving shows the new wife in the partner slot with „Dodano małżonka"; her preview lists the undated marriage.
-- [x] 2.8 Jan already married → „Nowa osoba" from the switcher: the new union is selected after saving.
-- [x] 2.9 Centre of unknown sex → the sex is freely selectable.
-- [x] 2.10 „Wróć do listy" returns to the list with candidates still loaded; closing and reopening starts on the list.
-- [x] 2.11 Submitting an empty form shows the name error inside the dialog and creates nothing.
-- [x] 2.12 Visual gate: form view at 375px (full screen, scrolling, pinned header/footer) and 1280px, light and dark; screenshots attached to the review.
+- [x] 2.7 Jan (male, no union) → „Dodaj małżonka" → „Nowa osoba": sex locked to female, surname empty. Saving shows the new wife in the partner slot with „Dodano małżonka"; her preview lists the undated marriage. — eecd845
+- [x] 2.8 Jan already married → „Nowa osoba" from the switcher: the new union is selected after saving. — eecd845
+- [x] 2.9 Centre of unknown sex → the sex is freely selectable. — eecd845
+- [x] 2.10 „Wróć do listy" returns to the list with candidates still loaded; closing and reopening starts on the list. — eecd845
+- [x] 2.11 Submitting an empty form shows the name error inside the dialog and creates nothing. — eecd845
+- [x] 2.12 Visual gate: form view at 375px (full screen, scrolling, pinned header/footer) and 1280px, light and dark; screenshots attached to the review. — eecd845
 
 ### Phase 3: „Połącz jako małżeństwo" for shown pairs
 
 #### Automated
 
-- [ ] 3.1 Affected feature tests pass: `vendor/bin/sail artisan test --compact tests/Feature/MarriagesTest.php tests/Feature/TreeTest.php tests/Feature/PersonsTest.php`
-- [ ] 3.2 Larastan passes: `vendor/bin/sail composer types:check`
-- [ ] 3.3 Format and lint pass: `vendor/bin/sail npm run check`
-- [ ] 3.4 Type check passes: `vendor/bin/sail npm run types:check`
-- [ ] 3.5 Production build succeeds: `vendor/bin/sail npm run build`
-- [ ] 3.6 PHP style is clean: `vendor/bin/sail bin pint --dirty --format agent`
+- [x] 3.1 Affected feature tests pass: `vendor/bin/sail artisan test --compact tests/Feature/MarriagesTest.php tests/Feature/TreeTest.php tests/Feature/PersonsTest.php`
+- [x] 3.2 Larastan passes: `vendor/bin/sail composer types:check`
+- [x] 3.3 Format and lint pass: `vendor/bin/sail npm run check`
+- [x] 3.4 Type check passes: `vendor/bin/sail npm run types:check`
+- [x] 3.5 Production build succeeds: `vendor/bin/sail npm run build`
+- [x] 3.6 PHP style is clean: `vendor/bin/sail bin pint --dirty --format agent`
 
 #### Manual
 
-- [ ] 3.7 Jan's parents Piotr and Zofia without a marriage → „Połącz jako małżeństwo" on their connector. „Anuluj" creates nothing. „Połącz" closes the dialog, the button disappears, centre and union unchanged, toast „Dodano małżeństwo". Recentring on Piotr shows „Zofia · ślub ?".
-- [ ] 3.8 The partner's unmarried parents get the same button on the partner block; married or incomplete parent pairs never show it.
-- [ ] 3.9 Selected union „Anna Nowak · bez ślubu" → the button under the couple. After „Połącz" the chip reads „Anna Nowak · ślub ?" and the button is gone.
-- [ ] 3.10 Visual gate: the parents' connector with and without the button, the centre-couple button over the line to the children, the confirmation dialog, all at rest / hover / keyboard focus. At 375px (horizontal scroll of the sheet) and 1280px, light and dark. Screenshots attached to the review.
+- [x] 3.7 Jan's parents Piotr and Zofia without a marriage → „Połącz jako małżeństwo" on their connector. „Anuluj" creates nothing. „Połącz" closes the dialog, the button disappears, centre and union unchanged, toast „Dodano małżeństwo". Recentring on Piotr shows „Zofia · ślub ?".
+- [x] 3.8 The partner's unmarried parents get the same button on the partner block; married or incomplete parent pairs never show it.
+- [x] 3.9 Selected union „Anna Nowak · bez ślubu" → the button under the couple. After „Połącz" the chip reads „Anna Nowak · ślub ?" and the button is gone.
+- [x] 3.10 Visual gate: the parents' connector with and without the button, the centre-couple button over the line to the children, the confirmation dialog, all at rest / hover / keyboard focus. At 375px (horizontal scroll of the sheet) and 1280px, light and dark. Screenshots attached to the review.

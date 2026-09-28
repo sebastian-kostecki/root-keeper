@@ -59,4 +59,5 @@ export type FamilySheet = {
     children: SheetPerson[];
     add_child: AddChildTarget;
     add_spouse: AddSpouseTarget;
+    unmarried_parents: { focus: boolean; partner: boolean };
 };

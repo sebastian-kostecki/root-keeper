@@ -2,6 +2,7 @@
 
 namespace App\Actions\Trees;
 
+use App\Enums\EventType;
 use App\Enums\Gender;
 use App\Http\Resources\SheetPersonResource;
 use App\Models\Event;
@@ -9,6 +10,7 @@ use App\Models\Person;
 use App\Support\ParentChildGraph;
 use App\Support\PersonOrdering;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Assembles the fixed-shape family sheet of a focus person: four rows of
@@ -19,6 +21,7 @@ use Illuminate\Support\Collection;
  * @phpstan-type Slot array{kind: 'person', person: SheetPerson}|array{kind: 'unknown', label: string, parent_of?: ParentOf}|array{kind: 'empty'}
  * @phpstan-type AddChild array{parents: list<array{id: int, display_name: string}>, default_last_name: string|null, excluded_ids: list<int>, blocked_ids: list<int>}
  * @phpstan-type AddSpouse array{excluded_ids: list<int>}
+ * @phpstan-type UnmarriedParents array{focus: bool, partner: bool}
  * @phpstan-type Union array{key: string, partner_id: int|null, label: string, is_marriage: bool, marriage_year: string|null, children_count: int}
  */
 class BuildFamilySheet
@@ -44,6 +47,7 @@ class BuildFamilySheet
      *     children: list<SheetPerson>,
      *     add_child: AddChild,
      *     add_spouse: AddSpouse,
+     *     unmarried_parents: UnmarriedParents,
      * }
      */
     public function handle(Person $focus, ?string $spouse): array
@@ -134,6 +138,10 @@ class BuildFamilySheet
         );
 
         $focusPerson = $this->people->get($focus->id) ?? $focus;
+        $parentSlots = [
+            'focus' => $this->parentSlots($focusPerson),
+            'partner' => $this->parentSlots($partnerPerson),
+        ];
 
         return [
             'focus' => $this->render($focusPerson),
@@ -141,10 +149,7 @@ class BuildFamilySheet
             'selected_union' => $selected['key'] ?? null,
             'partner' => $partner,
             'focus_side' => $partnerPerson !== null && $this->rank($partnerPerson) < $this->rank($focusPerson) ? 'right' : 'left',
-            'parents' => [
-                'focus' => $this->parentSlots($focusPerson),
-                'partner' => $this->parentSlots($partnerPerson),
-            ],
+            'parents' => $parentSlots,
             'grandparents' => [
                 'focus' => $this->grandparentSlots($focusPerson),
                 'partner' => $this->grandparentSlots($partnerPerson),
@@ -162,6 +167,57 @@ class BuildFamilySheet
                     ...$this->graph->descendantsOf($focus->id),
                 ])),
             ],
+            'unmarried_parents' => $this->unmarriedParents($focus, $parentSlots),
+        ];
+    }
+
+    /**
+     * Whether each shown parent pair is two known people without a marriage
+     * between them; the marriages of the up to four parents come from one query.
+     *
+     * @param  array{focus: list<Slot>, partner: list<Slot>}  $parentSlots
+     * @return UnmarriedParents
+     */
+    private function unmarriedParents(Person $focus, array $parentSlots): array
+    {
+        $pairs = [];
+
+        foreach (['focus', 'partner'] as $block) {
+            $ids = [];
+
+            foreach ($parentSlots[$block] as $slot) {
+                if ($slot['kind'] === 'person') {
+                    $ids[] = $slot['person']['id'];
+                }
+            }
+
+            $pairs[$block] = count($ids) === 2 ? $ids : null;
+        }
+
+        $parentIds = array_values(array_unique(array_merge(...array_map(
+            fn (?array $ids): array => $ids ?? [],
+            array_values($pairs),
+        ))));
+
+        $participantsByMarriage = DB::table('event_participants')
+            ->join('events', 'events.id', '=', 'event_participants.event_id')
+            ->where('events.tree_id', $focus->tree_id)
+            ->where('events.type', EventType::Marriage->value)
+            ->whereIn('event_participants.person_id', $parentIds)
+            ->get(['event_participants.event_id', 'event_participants.person_id'])
+            ->groupBy('event_id');
+
+        $marriedPairs = $participantsByMarriage
+            ->map(fn (Collection $rows): array => $rows->pluck('person_id')->map(fn (mixed $id): int => (int) $id)->all())
+            ->values()
+            ->all();
+
+        $isUnmarried = fn (?array $ids): bool => $ids !== null
+            && collect($marriedPairs)->every(fn (array $married): bool => array_diff($ids, $married) !== []);
+
+        return [
+            'focus' => $isUnmarried($pairs['focus']),
+            'partner' => $isUnmarried($pairs['partner']),
         ];
     }
 

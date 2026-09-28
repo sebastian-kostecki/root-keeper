@@ -1,5 +1,6 @@
 import { AddChildDialog } from '@/components/tree/add-child-dialog';
 import { AddSpouseDialog } from '@/components/tree/add-spouse-dialog';
+import { MarryCoupleDialog } from '@/components/tree/marry-couple-dialog';
 import { ParentSlotDialog } from '@/components/tree/parent-slot-dialog';
 import { SheetPersonCard } from '@/components/tree/sheet-person-card';
 import { UnknownPersonCard } from '@/components/tree/unknown-person-card';
@@ -71,22 +72,53 @@ function RowLabel({ children }: { children: string }) {
 function PairConnector({
     slots,
     className,
+    action,
 }: {
     slots: SheetSlot[];
     className: string;
+    action?: React.ReactNode;
 }) {
     const visible = slots.some((slot) => slot.kind !== 'empty');
 
     return (
-        <div className={`relative h-6 ${className}`} aria-hidden="true">
+        <div className={`relative ${action ? 'h-12' : 'h-6'} ${className}`}>
             {visible && (
                 <>
-                    <div className="absolute inset-x-[25%] top-0 h-3 rounded-b-sm border-x border-b" />
-                    <div className="bg-border absolute top-3 bottom-0 left-1/2 w-px" />
+                    <div
+                        className="absolute inset-x-[25%] top-0 h-3 rounded-b-sm border-x border-b"
+                        aria-hidden="true"
+                    />
+                    <div
+                        className="bg-border absolute top-3 bottom-0 left-1/2 w-px"
+                        aria-hidden="true"
+                    />
                 </>
+            )}
+            {action && (
+                <div className="bg-background absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-md">
+                    {action}
+                </div>
             )}
         </div>
     );
+}
+
+/** The "Połącz jako małżeństwo" button for a block's unmarried known parents. */
+function parentPairAction(
+    sheet: FamilySheetData,
+    block: BlockKey,
+): React.ReactNode {
+    const [first, second] = sheet.parents[block];
+
+    if (
+        !sheet.unmarried_parents[block] ||
+        first?.kind !== 'person' ||
+        second?.kind !== 'person'
+    ) {
+        return undefined;
+    }
+
+    return <MarryCoupleDialog first={first.person} second={second.person} />;
 }
 
 function ChildrenRows({ children }: Pick<FamilySheetData, 'children'>) {
@@ -145,6 +177,17 @@ export function FamilySheet({
             ? ['partner', 'focus']
             : ['focus', 'partner'];
     const hasChildren = sheet.children.length > 0;
+    const selectedUnion = sheet.unions.find(
+        (union) => union.key === sheet.selected_union,
+    );
+    const marryCentreCouple =
+        selectedUnion?.is_marriage === false &&
+        sheet.partner.kind === 'person' ? (
+            <MarryCoupleDialog
+                first={sheet.focus}
+                second={sheet.partner.person}
+            />
+        ) : null;
 
     return (
         <div className="overflow-x-auto pb-2">
@@ -209,6 +252,7 @@ export function FamilySheet({
                         key={`${block}-parent-connector`}
                         slots={sheet.parents[block]}
                         className="col-span-4"
+                        action={parentPairAction(sheet, block)}
                     />
                 ))}
 
@@ -241,9 +285,19 @@ export function FamilySheet({
                     </div>
                 ))}
 
-                <div className="relative col-span-8 h-6" aria-hidden="true">
+                <div
+                    className={`relative col-span-8 ${marryCentreCouple ? 'h-12' : 'h-6'}`}
+                >
                     {hasChildren && (
-                        <div className="bg-border absolute inset-y-0 left-1/2 w-px" />
+                        <div
+                            className="bg-border absolute inset-y-0 left-1/2 w-px"
+                            aria-hidden="true"
+                        />
+                    )}
+                    {marryCentreCouple && (
+                        <div className="bg-background absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-md">
+                            {marryCentreCouple}
+                        </div>
                     )}
                 </div>
 

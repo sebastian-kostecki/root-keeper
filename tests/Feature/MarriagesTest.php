@@ -477,3 +477,20 @@ test('store returns not found for a centre person from another users tree', func
     $this->assertDatabaseCount('people', 1);
     expect(Event::where('type', EventType::Marriage)->count())->toBe(0);
 });
+
+test('store without a date creates one marriage with no date and no place', function () {
+    $user = User::factory()->create();
+    $person = Person::factory()->for($user->tree)->create();
+    $spouse = Person::factory()->for($user->tree)->create();
+
+    $this->actingAs($user)
+        ->post(route('marriages.store'), ['person_id' => $person->id, 'spouse_id' => $spouse->id])
+        ->assertSessionHasNoErrors();
+
+    $marriage = Event::where('type', EventType::Marriage)->sole();
+    expect($marriage->date_year)->toBeNull();
+    expect($marriage->date_month)->toBeNull();
+    expect($marriage->date_day)->toBeNull();
+    expect($marriage->place)->toBeNull();
+    expect($marriage->participants()->count())->toBe(2);
+});
