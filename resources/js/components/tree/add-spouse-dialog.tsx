@@ -24,11 +24,18 @@ type Props = {
 
 /**
  * The "Dodaj małżonka" trigger and its dialog: pick an existing person of the
- * tree to marry the centre person. People the sheet marks as excluded and
+ * tree to marry the centre person, or add a new one with the opposite sex. People the sheet marks as excluded and
  * people of the centre's known sex are not offered; the server stays the
  * authority.
  */
-export function AddSpouseDialog({ focus, target, candidates, variant }: Props) {
+export function AddSpouseDialog({
+    focus,
+    target,
+    candidates,
+    genders,
+    religions,
+    variant,
+}: Props) {
     const addLabel = `Dodaj małżonka: ${focus.display_name}`;
     const isSameSex = (candidate: PersonCandidate) =>
         focus.gender !== null && candidate.gender === focus.gender;
@@ -79,6 +86,18 @@ export function AddSpouseDialog({ focus, target, candidates, variant }: Props) {
                 url: PersonSpouseController.attach(focus.id).url,
                 data: { spouse_id: candidateId },
             })}
+            form={{
+                definition: PersonSpouseController.store.form(focus.id),
+                lockedGender:
+                    focus.gender === 'male'
+                        ? 'female'
+                        : focus.gender === 'female'
+                          ? 'male'
+                          : undefined,
+                genders,
+                religions,
+                submitTestId: 'create-spouse-button',
+            }}
         />
     );
 }

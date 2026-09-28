@@ -415,42 +415,42 @@ None: no schema changes and no data changes.
 
 #### Automated
 
-- [x] 1.1 Affected feature tests pass: `vendor/bin/sail artisan test --compact tests/Feature/MarriagesTest.php tests/Feature/TreeTest.php tests/Feature/PersonsTest.php`
-- [x] 1.2 Larastan passes: `vendor/bin/sail composer types:check`
-- [x] 1.3 Format and lint pass: `vendor/bin/sail npm run check`
-- [x] 1.4 Type check passes: `vendor/bin/sail npm run types:check`
-- [x] 1.5 Production build succeeds: `vendor/bin/sail npm run build`
-- [x] 1.6 PHP style is clean: `vendor/bin/sail bin pint --dirty --format agent`
+- [x] 1.1 Affected feature tests pass: `vendor/bin/sail artisan test --compact tests/Feature/MarriagesTest.php tests/Feature/TreeTest.php tests/Feature/PersonsTest.php` — 84baf5c
+- [x] 1.2 Larastan passes: `vendor/bin/sail composer types:check` — 84baf5c
+- [x] 1.3 Format and lint pass: `vendor/bin/sail npm run check` — 84baf5c
+- [x] 1.4 Type check passes: `vendor/bin/sail npm run types:check` — 84baf5c
+- [x] 1.5 Production build succeeds: `vendor/bin/sail npm run build` — 84baf5c
+- [x] 1.6 PHP style is clean: `vendor/bin/sail bin pint --dirty --format agent` — 84baf5c
 
 #### Manual
 
-- [x] 1.7 A tree centred on Jan with no union shows the „Dodaj małżonka" card in the partner slot. Picking Anna shows her in the partner slot and „Anna Nowak · ślub ?" in the switcher. Toast „Dodano małżonka". Jan's preview lists the undated marriage with Anna.
-- [x] 1.8 Jan married to Anna → the switcher shows the single chip „Anna Nowak · ślub ?" and „Dodaj małżonka". Picking Maria selects Maria's union right away; switching back to Anna still works.
-- [x] 1.9 The same flow started from `/tree` (the proband) lands on `/tree/{id}?spouse=…` with the new union selected.
-- [x] 1.10 The list never shows Jan, his current spouses, his parents/grandparents or his children/grandchildren. Other men are hidden and counted in „… tej samej płci ukryto."; people of unknown sex are listed.
-- [x] 1.11 Centre of unknown sex → nobody is hidden by sex and no hint is shown.
-- [x] 1.12 S-25 parent slots and the S-26 „Dodaj dziecko" card behave exactly as before.
-- [x] 1.13 Visual gate: the slot card and the switcher button at rest / hover / keyboard focus; the switcher with one union and with several (wrapping); the dialog with results, filter with no matches, the same-sex hint, loading skeleton and an error message. At 375px and 1280px, light and dark. Screenshots attached to the review.
+- [x] 1.7 A tree centred on Jan with no union shows the „Dodaj małżonka" card in the partner slot. Picking Anna shows her in the partner slot and „Anna Nowak · ślub ?" in the switcher. Toast „Dodano małżonka". Jan's preview lists the undated marriage with Anna. — 84baf5c
+- [x] 1.8 Jan married to Anna → the switcher shows the single chip „Anna Nowak · ślub ?" and „Dodaj małżonka". Picking Maria selects Maria's union right away; switching back to Anna still works. — 84baf5c
+- [x] 1.9 The same flow started from `/tree` (the proband) lands on `/tree/{id}?spouse=…` with the new union selected. — 84baf5c
+- [x] 1.10 The list never shows Jan, his current spouses, his parents/grandparents or his children/grandchildren. Other men are hidden and counted in „… tej samej płci ukryto."; people of unknown sex are listed. — 84baf5c
+- [x] 1.11 Centre of unknown sex → nobody is hidden by sex and no hint is shown. — 84baf5c
+- [x] 1.12 S-25 parent slots and the S-26 „Dodaj dziecko" card behave exactly as before. — 84baf5c
+- [x] 1.13 Visual gate: the slot card and the switcher button at rest / hover / keyboard focus; the switcher with one union and with several (wrapping); the dialog with results, filter with no matches, the same-sex hint, loading skeleton and an error message. At 375px and 1280px, light and dark. Screenshots attached to the review. — 84baf5c
 
 ### Phase 2: New spouse from the same dialog
 
 #### Automated
 
-- [ ] 2.1 Affected feature tests pass: `vendor/bin/sail artisan test --compact tests/Feature/MarriagesTest.php tests/Feature/TreeTest.php tests/Feature/PersonsTest.php`
-- [ ] 2.2 Larastan passes: `vendor/bin/sail composer types:check`
-- [ ] 2.3 Format and lint pass: `vendor/bin/sail npm run check`
-- [ ] 2.4 Type check passes: `vendor/bin/sail npm run types:check`
-- [ ] 2.5 Production build succeeds: `vendor/bin/sail npm run build`
-- [ ] 2.6 PHP style is clean: `vendor/bin/sail bin pint --dirty --format agent`
+- [x] 2.1 Affected feature tests pass: `vendor/bin/sail artisan test --compact tests/Feature/MarriagesTest.php tests/Feature/TreeTest.php tests/Feature/PersonsTest.php`
+- [x] 2.2 Larastan passes: `vendor/bin/sail composer types:check`
+- [x] 2.3 Format and lint pass: `vendor/bin/sail npm run check`
+- [x] 2.4 Type check passes: `vendor/bin/sail npm run types:check`
+- [x] 2.5 Production build succeeds: `vendor/bin/sail npm run build`
+- [x] 2.6 PHP style is clean: `vendor/bin/sail bin pint --dirty --format agent`
 
 #### Manual
 
-- [ ] 2.7 Jan (male, no union) → „Dodaj małżonka" → „Nowa osoba": sex locked to female, surname empty. Saving shows the new wife in the partner slot with „Dodano małżonka"; her preview lists the undated marriage.
-- [ ] 2.8 Jan already married → „Nowa osoba" from the switcher: the new union is selected after saving.
-- [ ] 2.9 Centre of unknown sex → the sex is freely selectable.
-- [ ] 2.10 „Wróć do listy" returns to the list with candidates still loaded; closing and reopening starts on the list.
-- [ ] 2.11 Submitting an empty form shows the name error inside the dialog and creates nothing.
-- [ ] 2.12 Visual gate: form view at 375px (full screen, scrolling, pinned header/footer) and 1280px, light and dark; screenshots attached to the review.
+- [x] 2.7 Jan (male, no union) → „Dodaj małżonka" → „Nowa osoba": sex locked to female, surname empty. Saving shows the new wife in the partner slot with „Dodano małżonka"; her preview lists the undated marriage.
+- [x] 2.8 Jan already married → „Nowa osoba" from the switcher: the new union is selected after saving.
+- [x] 2.9 Centre of unknown sex → the sex is freely selectable.
+- [x] 2.10 „Wróć do listy" returns to the list with candidates still loaded; closing and reopening starts on the list.
+- [x] 2.11 Submitting an empty form shows the name error inside the dialog and creates nothing.
+- [x] 2.12 Visual gate: form view at 375px (full screen, scrolling, pinned header/footer) and 1280px, light and dark; screenshots attached to the review.
 
 ### Phase 3: „Połącz jako małżeństwo" for shown pairs
 

@@ -427,3 +427,53 @@ test('attach returns not found for a centre person from another users tree', fun
 
     $this->assertDatabaseCount('events', 0);
 });
+
+test('guests are redirected to the login page from the spouse store route', function () {
+    $person = Person::factory()->create();
+
+    $this->post(route('persons.spouses.store', $person), [])->assertRedirect(route('login'));
+});
+
+test('store creates a new person married to the centre without a date and shows the new union', function () {
+    $user = User::factory()->create();
+    $focus = Person::factory()->for($user->tree)->male()->create();
+
+    $response = $this->actingAs($user)
+        ->post(route('persons.spouses.store', $focus), ['first_name' => 'Anna', 'last_name' => 'Nowak', 'gender' => 'female']);
+
+    $spouse = Person::where('first_name', 'Anna')->sole();
+
+    $response->assertRedirect(route('tree.show', ['person' => $focus->id, 'spouse' => $spouse->id]));
+    $response->assertSessionHas('inertia.flash_data.toast', ['type' => 'success', 'message' => 'Dodano małżonka']);
+
+    $this->assertDatabaseCount('people', 2);
+    $marriage = Event::where('type', EventType::Marriage)->sole();
+    expect($marriage->date_year)->toBeNull();
+    expect($marriage->place)->toBeNull();
+    expect($marriage->participants()->pluck('people.id')->sort()->values()->all())
+        ->toBe(collect([$focus->id, $spouse->id])->sort()->values()->all());
+});
+
+test('store without a first name creates no person and no marriage', function () {
+    $user = User::factory()->create();
+    $focus = Person::factory()->for($user->tree)->create();
+
+    $this->actingAs($user)
+        ->post(route('persons.spouses.store', $focus), ['first_name' => ''])
+        ->assertSessionHasErrors('first_name');
+
+    $this->assertDatabaseCount('people', 1);
+    expect(Event::where('type', EventType::Marriage)->count())->toBe(0);
+});
+
+test('store returns not found for a centre person from another users tree', function () {
+    $user = User::factory()->create();
+    $foreignFocus = Person::factory()->for(User::factory()->create()->tree)->create();
+
+    $this->actingAs($user)
+        ->post(route('persons.spouses.store', $foreignFocus), ['first_name' => 'Anna'])
+        ->assertNotFound();
+
+    $this->assertDatabaseCount('people', 1);
+    expect(Event::where('type', EventType::Marriage)->count())->toBe(0);
+});
