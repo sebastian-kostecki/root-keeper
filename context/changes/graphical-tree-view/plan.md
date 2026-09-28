@@ -711,27 +711,27 @@ trees have no proband. Both are reversible with `migrate:rollback`.
 
 #### Automated
 
-- [x] 4.1 Format and lint
-- [x] 4.2 Types
-- [x] 4.3 Production build
-- [x] 4.4 Backend still green
+- [x] 4.1 Format and lint — 22143d1
+- [x] 4.2 Types — 22143d1
+- [x] 4.3 Production build — 22143d1
+- [x] 4.4 Backend still green — 22143d1
 
 #### Manual
 
-- [x] 4.5 Card click recentres with expected union, Podgląd opens preview, Back restores
-- [x] 4.6 Union switch changes partner, partner ancestors and children
-- [x] 4.7 Keyboard reachability and visible focus
+- [x] 4.5 Card click recentres with expected union, Podgląd opens preview, Back restores — 22143d1
+- [x] 4.6 Union switch changes partner, partner ancestors and children — 22143d1
+- [x] 4.7 Keyboard reachability and visible focus — 22143d1
 
 ### Phase 5: Visual gate (kitchen-sink tree and screenshots)
 
 #### Automated
 
-- [ ] 5.1 Seeder runs and re-runs without wiping the dev DB
-- [ ] 5.2 Full check suite
+- [x] 5.1 Seeder runs and re-runs without wiping the dev DB
+- [x] 5.2 Full check suite
 
 #### Manual
 
 - [ ] 5.3 Screenshots of every state saved and matching decisions
-- [ ] 5.4 Dark mode legible
-- [ ] 5.5 390px horizontal scroll keeps alignment
-- [ ] 5.6 User runs the full suite
+- [x] 5.4 Dark mode legible
+- [x] 5.5 390px horizontal scroll keeps alignment
+- [x] 5.6 User runs the full suite

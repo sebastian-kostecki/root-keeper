@@ -215,7 +215,7 @@ Foundations below assume these are present and do NOT re-scaffold them. The prd-
 - **Parallel with:** F-01, S-04, S-05, S-08, S-10, S-11, S-12, S-13, S-14, S-15
 - **Blockers:** —
 - **Unknowns:**
-  - Jak czytelnie pokazać wiele małżeństw jednej osoby i dziecko z jednym znanym rodzicem? Owner: `/10x-plan`. Block: no.
+  - Jak czytelnie pokazać wiele małżeństw jednej osoby i dziecko z jednym znanym rodzicem? Owner: `/10x-plan`. Block: no. Rozstrzygnięte w planie: jeden partner naraz z przełącznikiem związków; brakujący rodzic jako przerywany znacznik »Nieznany ojciec/matka/rodzic«.
 - **Risk:** Na końcu M-1 v1, bo potrzebuje obu rodzajów relacji; to najbardziej niepewny element interfejsu, więc przy braku czasu grozi mu uproszczenie, ale nie wypada z zakresu (FR-004 jest konieczne). Ma pierwszeństwo przed wycinkami z prd-v2.
 - **Status:** in-progress
 
