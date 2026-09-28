@@ -284,18 +284,18 @@ None — no schema or data changes. Removing the routes makes old bookmarks to t
 
 #### Automated
 
-- [x] 2.1 Person feature tests pass: `vendor/bin/sail artisan test --compact tests/Feature/PersonsTest.php`
-- [x] 2.2 Format and lint pass: `vendor/bin/sail npm run check`
-- [x] 2.3 Type check passes: `vendor/bin/sail npm run types:check`
-- [x] 2.4 Production build succeeds: `vendor/bin/sail npm run build`
-- [x] 2.5 PHP style is clean: `vendor/bin/sail bin pint --dirty --format agent`
-- [x] 2.6 No references to the removed pages remain: `grep -rn "persons/create\|persons/edit\|PersonController.create\|PersonController.edit" resources/js app routes tests` returns nothing outside generated Wayfinder dirs
+- [x] 2.1 Person feature tests pass: `vendor/bin/sail artisan test --compact tests/Feature/PersonsTest.php` — 9c9fea4
+- [x] 2.2 Format and lint pass: `vendor/bin/sail npm run check` — 9c9fea4
+- [x] 2.3 Type check passes: `vendor/bin/sail npm run types:check` — 9c9fea4
+- [x] 2.4 Production build succeeds: `vendor/bin/sail npm run build` — 9c9fea4
+- [x] 2.5 PHP style is clean: `vendor/bin/sail bin pint --dirty --format agent` — 9c9fea4
+- [x] 2.6 No references to the removed pages remain: `grep -rn "persons/create\|persons/edit\|PersonController.create\|PersonController.edit" resources/js app routes tests` returns nothing outside generated Wayfinder dirs — 9c9fea4
 
 #### Manual
 
-- [x] 2.7 On a person preview, "Edytuj" opens the modal prefilled with names, residence, gender, religion, birth and (for a deceased person) death
-- [x] 2.8 Saving changes closes the modal, shows "Zapisano zmiany" and the preview shows the new values; reopening shows the saved values
-- [x] 2.9 For a person whose birth is confirmed by a scan, the "Potwierdzone aktem…" hint shows in the modal
-- [x] 2.10 Unchecking "Zmarły/a" on a death with a linked scan shows the validation error inside the modal
-- [x] 2.11 At 375px and 1280px the edit modal behaves like the add modal (pinned header/footer, scrolling body)
-- [x] 2.12 `/persons/create` and `/persons/{id}/edit` show the 404 page
+- [x] 2.7 On a person preview, "Edytuj" opens the modal prefilled with names, residence, gender, religion, birth and (for a deceased person) death — 9c9fea4
+- [x] 2.8 Saving changes closes the modal, shows "Zapisano zmiany" and the preview shows the new values; reopening shows the saved values — 9c9fea4
+- [x] 2.9 For a person whose birth is confirmed by a scan, the "Potwierdzone aktem…" hint shows in the modal — 9c9fea4
+- [x] 2.10 Unchecking "Zmarły/a" on a death with a linked scan shows the validation error inside the modal — 9c9fea4
+- [x] 2.11 At 375px and 1280px the edit modal behaves like the add modal (pinned header/footer, scrolling body) — 9c9fea4
+- [x] 2.12 `/persons/create` and `/persons/{id}/edit` show the 404 page — 9c9fea4
