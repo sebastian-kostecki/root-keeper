@@ -110,7 +110,8 @@ export function PickOrCreatePersonDialog({
                     errors.relation ??
                         errors.child_id ??
                         errors.parent_id ??
-                        errors.other_parent_id,
+                        errors.other_parent_id ??
+                        errors.spouse_id,
                 ),
             onFinish: () => setProcessingId(null),
         });

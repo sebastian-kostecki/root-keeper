@@ -35,6 +35,10 @@ export type AddChildTarget = {
     blocked_ids: number[];
 };
 
+export type AddSpouseTarget = {
+    excluded_ids: number[];
+};
+
 export type SheetUnion = {
     key: string;
     partner_id: number | null;
@@ -54,4 +58,5 @@ export type FamilySheet = {
     grandparents: { focus: SheetSlot[]; partner: SheetSlot[] };
     children: SheetPerson[];
     add_child: AddChildTarget;
+    add_spouse: AddSpouseTarget;
 };

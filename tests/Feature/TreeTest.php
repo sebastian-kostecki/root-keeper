@@ -639,3 +639,33 @@ test('the default surname is the first mans, else the focus persons', function (
 
     expect(sheetFor($this, $user, $otherWoman, (string) $twin->id)['add_child']['default_last_name'])->toBe('Wiśniewska');
 });
+
+test('the spouse exclusions cover the centre, spouses, ancestors and descendants only', function () {
+    $user = User::factory()->create();
+    $tree = $user->tree;
+    $focus = Person::factory()->for($tree)->male()->create();
+    $spouse = Person::factory()->for($tree)->female()->create();
+    $parent = Person::factory()->for($tree)->create();
+    $grandparent = Person::factory()->for($tree)->create();
+    $child = Person::factory()->for($tree)->create();
+    $grandchild = Person::factory()->for($tree)->create();
+    $sibling = Person::factory()->for($tree)->create();
+    $coParent = Person::factory()->for($tree)->female()->create();
+    $coParentChild = Person::factory()->for($tree)->create();
+    $stranger = Person::factory()->for($tree)->create();
+
+    attachMarriage($focus, $spouse, 1950);
+    linkParent($parent, $focus);
+    linkParent($grandparent, $parent);
+    linkParent($parent, $sibling);
+    linkParent($focus, $child);
+    linkParent($child, $grandchild);
+    linkParent($focus, $coParentChild);
+    linkParent($coParent, $coParentChild);
+
+    $excluded = sheetFor($this, $user, $focus)['add_spouse']['excluded_ids'];
+
+    expect($excluded)->toContain($focus->id, $spouse->id, $parent->id, $grandparent->id, $child->id, $grandchild->id);
+    expect($excluded)->not->toContain($sibling->id, $coParent->id, $stranger->id);
+    expect($excluded)->toBe(array_values(array_unique($excluded)));
+});

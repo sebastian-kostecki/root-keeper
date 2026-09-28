@@ -1,4 +1,5 @@
 import { AddChildDialog } from '@/components/tree/add-child-dialog';
+import { AddSpouseDialog } from '@/components/tree/add-spouse-dialog';
 import { ParentSlotDialog } from '@/components/tree/parent-slot-dialog';
 import { SheetPersonCard } from '@/components/tree/sheet-person-card';
 import { UnknownPersonCard } from '@/components/tree/unknown-person-card';
@@ -219,6 +220,15 @@ export function FamilySheet({
                     >
                         {block === 'focus' ? (
                             <SheetPersonCard person={sheet.focus} isFocus />
+                        ) : sheet.partner.kind === 'empty' ? (
+                            <AddSpouseDialog
+                                variant="slot"
+                                focus={sheet.focus}
+                                target={sheet.add_spouse}
+                                candidates={personCandidates}
+                                genders={genders}
+                                religions={religions}
+                            />
                         ) : (
                             <Slot
                                 slot={sheet.partner}

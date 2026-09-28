@@ -18,6 +18,7 @@ use Illuminate\Support\Collection;
  * @phpstan-type ParentOf array{id: int, display_name: string, last_name: string|null, role: 'father'|'mother'|'parent', excluded_ids: list<int>}
  * @phpstan-type Slot array{kind: 'person', person: SheetPerson}|array{kind: 'unknown', label: string, parent_of?: ParentOf}|array{kind: 'empty'}
  * @phpstan-type AddChild array{parents: list<array{id: int, display_name: string}>, default_last_name: string|null, excluded_ids: list<int>, blocked_ids: list<int>}
+ * @phpstan-type AddSpouse array{excluded_ids: list<int>}
  * @phpstan-type Union array{key: string, partner_id: int|null, label: string, is_marriage: bool, marriage_year: string|null, children_count: int}
  */
 class BuildFamilySheet
@@ -42,6 +43,7 @@ class BuildFamilySheet
      *     grandparents: array{focus: list<Slot>, partner: list<Slot>},
      *     children: list<SheetPerson>,
      *     add_child: AddChild,
+     *     add_spouse: AddSpouse,
      * }
      */
     public function handle(Person $focus, ?string $spouse): array
@@ -152,6 +154,14 @@ class BuildFamilySheet
                 array_values($children->all()),
             ),
             'add_child' => $this->addChild($focusPerson, $partnerPerson),
+            'add_spouse' => [
+                'excluded_ids' => array_values(array_unique([
+                    $focus->id,
+                    ...$marriagePartnerIds,
+                    ...$this->graph->ancestorsOf($focus->id),
+                    ...$this->graph->descendantsOf($focus->id),
+                ])),
+            ],
         ];
     }
 
