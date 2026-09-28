@@ -3,6 +3,7 @@
 use App\Enums\EventType;
 use App\Enums\ParticipantRole;
 use App\Models\Event;
+use App\Models\ParentChildRelation;
 use App\Models\Person;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -56,4 +57,31 @@ function attachMarriage(Person $person, Person $spouse, ?int $year = null, ?int 
     ]);
 
     return $event;
+}
+
+/**
+ * Make the parent a parent of the child in the parent's tree.
+ */
+function linkParent(Person $parent, Person $child): void
+{
+    ParentChildRelation::factory()->create([
+        'tree_id' => $parent->tree_id,
+        'parent_id' => $parent->id,
+        'child_id' => $child->id,
+    ]);
+}
+
+/**
+ * Attach a death event with the given year to a person.
+ */
+function attachDeath(Person $person, ?int $year, bool $approximate = false): void
+{
+    $event = Event::factory()->for($person->tree)->death()->create([
+        'date_year' => $year,
+        'date_month' => null,
+        'date_day' => null,
+        'date_is_approximate' => $approximate,
+    ]);
+
+    $event->participants()->attach($person, ['role' => ParticipantRole::Subject]);
 }

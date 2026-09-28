@@ -151,6 +151,10 @@ The new shared components live in `resources/js/components/tree/`.
 - **Lifespan label.** The birth part is `PartialDate::formatYear()` of the birth event („1850” / „ok. 1850”) or „?”.
   - No death event: „<birth> –”, or `null` (line omitted) when the birth year is also unknown.
   - Death event: „<birth> – <death>” with „?” for a missing year.
+- **Addendum (impl review 2026-09-28).** Two behaviours were added during implementation:
+  - Repeat marriages to the same partner form one union. It is labelled with the earliest marriage by the marriage
+    sort key (`BuildFamilySheet`, tested in `TreeTest`).
+  - The tree toolbar has a „Podgląd” button that links to `persons.show` of the focus person.
 - **Circular FK on delete.** `trees.root_person_id → people` with `nullOnDelete`, while `people.tree_id → trees` and
   `trees.user_id → users` cascade. Deleting an account with a proband set must still succeed on PostgreSQL 18. This
   needs an explicit test.

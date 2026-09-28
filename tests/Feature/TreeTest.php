@@ -1,11 +1,12 @@
 <?php
 
+use App\Actions\Trees\SetTreeRootPerson;
 use App\Enums\ParticipantRole;
 use App\Models\Event;
-use App\Models\ParentChildRelation;
 use App\Models\Person;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 test('setting the proband stores root_person_id and flashes a toast', function () {
     $user = User::factory()->create();
@@ -27,6 +28,16 @@ test('setting the proband for a person from another users tree returns not found
 
     expect($user->tree->fresh()->root_person_id)->toBeNull();
     expect($otherUser->tree->fresh()->root_person_id)->toBeNull();
+});
+
+test('the proband action refuses a person from another tree', function () {
+    $user = User::factory()->create();
+    $foreign = Person::factory()->create();
+
+    expect(fn () => app(SetTreeRootPerson::class)->handle($user->tree, $foreign))
+        ->toThrow(NotFoundHttpException::class);
+
+    expect($user->tree->fresh()->root_person_id)->toBeNull();
 });
 
 test('setting a new proband replaces the old one', function () {
@@ -86,33 +97,6 @@ test('person show exposes whether the person is the proband', function () {
             ->component('persons/show')
             ->where('isRootPerson', false));
 });
-
-/**
- * Make the parent a parent of the child in the parent's tree.
- */
-function linkParent(Person $parent, Person $child): void
-{
-    ParentChildRelation::factory()->create([
-        'tree_id' => $parent->tree_id,
-        'parent_id' => $parent->id,
-        'child_id' => $child->id,
-    ]);
-}
-
-/**
- * Attach a death event with the given year to a person.
- */
-function attachDeath(Person $person, ?int $year, bool $approximate = false): void
-{
-    $event = Event::factory()->for($person->tree)->death()->create([
-        'date_year' => $year,
-        'date_month' => null,
-        'date_day' => null,
-        'date_is_approximate' => $approximate,
-    ]);
-
-    $event->participants()->attach($person, ['role' => ParticipantRole::Subject]);
-}
 
 /**
  * Fetch the sheet prop of the tree page centred on the person.
@@ -237,6 +221,19 @@ test('an invalid or foreign spouse falls back to the first union', function () {
     }
 });
 
+test('repeat marriages to the same partner form one union labelled with the earliest marriage', function () {
+    $user = User::factory()->create();
+    $focus = Person::factory()->for($user->tree)->male()->create();
+    $wife = Person::factory()->for($user->tree)->female()->create();
+    attachMarriage($focus, $wife, 1890);
+    attachMarriage($focus, $wife, 1880);
+
+    $sheet = sheetFor($this, $user, $focus);
+
+    expect($sheet['unions'])->toHaveCount(1);
+    expect($sheet['unions'][0]['label'])->toBe("{$wife->displayName()} · ślub 1880");
+});
+
 test('a focus without unions has an empty partner column', function () {
     $user = User::factory()->create();
     $focus = Person::factory()->for($user->tree)->create();
@@ -252,20 +249,24 @@ test('a focus without unions has an empty partner column', function () {
     expect($sheet['focus_side'])->toBe('left');
 });
 
-test('parents are ordered male first regardless of insertion order', function () {
+test('parents are ordered male first regardless of insertion order', function (bool $motherFirst) {
     $user = User::factory()->create();
     $focus = Person::factory()->for($user->tree)->create();
     $mother = Person::factory()->for($user->tree)->female()->create();
     $father = Person::factory()->for($user->tree)->male()->create();
 
-    linkParent($mother, $focus);
-    linkParent($father, $focus);
+    foreach ($motherFirst ? [$mother, $father] : [$father, $mother] as $parent) {
+        linkParent($parent, $focus);
+    }
 
     $sheet = sheetFor($this, $user, $focus);
 
     expect($sheet['parents']['focus'][0]['person']['id'])->toBe($father->id);
     expect($sheet['parents']['focus'][1]['person']['id'])->toBe($mother->id);
-});
+})->with([
+    'mother linked first' => [true],
+    'father linked first' => [false],
+]);
 
 test('missing parents are labelled placeholders depending on the known parent', function () {
     $user = User::factory()->create();
@@ -413,6 +414,12 @@ test('the sheet query count does not grow with the size of the tree', function (
             $father = Person::factory()->for($tree)->male()->create();
             attachBirth($father, 1800 + $i);
             linkParent($father, $i % 2 === 0 ? $wife : $coParent);
+
+            $extraCoParent = Person::factory()->for($tree)->female()->create();
+            attachBirth($extraCoParent, 1860 + $i);
+            $halfSibling = Person::factory()->for($tree)->create();
+            linkParent($focus, $halfSibling);
+            linkParent($extraCoParent, $halfSibling);
         }
 
         DB::flushQueryLog();

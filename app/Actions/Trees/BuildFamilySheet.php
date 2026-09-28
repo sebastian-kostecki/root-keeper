@@ -123,7 +123,9 @@ class BuildFamilySheet
 
         $childIds = $selected === null ? [] : ($childrenByOtherParent[$selected['partner_id'] ?? 0] ?? []);
         $children = PersonOrdering::relatives(
-            (new Collection($childIds))->map(fn (int $id): Person => $this->people->get($id))
+            (new Collection($childIds))
+                ->map(fn (int $id): ?Person => $this->people->get($id))
+                ->filter()
         );
 
         $focusPerson = $this->people->get($focus->id) ?? $focus;

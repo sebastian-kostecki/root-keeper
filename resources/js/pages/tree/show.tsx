@@ -1,8 +1,8 @@
-import { Head, Link, router, setLayoutProps } from '@inertiajs/react';
+import { Head, Link, setLayoutProps } from '@inertiajs/react';
 import PersonController from '@/actions/App/Http/Controllers/PersonController';
-import TreeRootPersonController from '@/actions/App/Http/Controllers/TreeRootPersonController';
 import Heading from '@/components/heading';
 import { FamilySheet } from '@/components/tree/family-sheet';
+import { SetRootPersonButton } from '@/components/tree/set-root-person-button';
 import { UnionSwitch } from '@/components/tree/union-switch';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -81,19 +81,9 @@ export default function Show({ sheet, rootPersonId }: Props) {
                                     </Button>
                                 )}
 
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() =>
-                                        router.put(
-                                            TreeRootPersonController.update(
-                                                sheet.focus.id,
-                                            ).url,
-                                        )
-                                    }
-                                >
-                                    Ustaw jako probanta
-                                </Button>
+                                <SetRootPersonButton
+                                    personId={sheet.focus.id}
+                                />
                             </>
                         )}
 

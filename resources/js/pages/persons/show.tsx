@@ -1,10 +1,10 @@
-import { Head, Link, router, setLayoutProps } from '@inertiajs/react';
+import { Head, Link, setLayoutProps } from '@inertiajs/react';
 import PersonController from '@/actions/App/Http/Controllers/PersonController';
-import TreeRootPersonController from '@/actions/App/Http/Controllers/TreeRootPersonController';
 import { DeletePersonDialog } from '@/components/persons/delete-person-dialog';
 import { EventCard } from '@/components/persons/event-card';
 import { MarriagesSection } from '@/components/persons/marriages-section';
 import { RelativesCard } from '@/components/persons/relatives-card';
+import { SetRootPersonButton } from '@/components/tree/set-root-person-button';
 import Heading from '@/components/heading';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -48,19 +48,7 @@ export default function Show({
                         {isRootPerson ? (
                             <Badge variant="secondary">Probant</Badge>
                         ) : (
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() =>
-                                    router.put(
-                                        TreeRootPersonController.update(
-                                            person.id,
-                                        ).url,
-                                    )
-                                }
-                            >
-                                Ustaw jako probanta
-                            </Button>
+                            <SetRootPersonButton personId={person.id} />
                         )}
 
                         <Button variant="outline" size="sm" asChild>

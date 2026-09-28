@@ -12,6 +12,8 @@ class SetTreeRootPerson
      */
     public function handle(Tree $tree, Person $person): void
     {
+        abort_unless($person->tree_id === $tree->id, 404);
+
         $tree->update(['root_person_id' => $person->id]);
     }
 }
