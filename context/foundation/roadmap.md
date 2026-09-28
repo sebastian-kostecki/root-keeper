@@ -81,7 +81,7 @@ Po przeniesieniu formularza osoby do modala zostały dwie luki (prd-v4): ogląda
 | S-19 | matching-sources-first          | przy wiązaniu źródła z wydarzeniem widzieć najpierw akty o pasującym typie, potem resztę | S-17, S-18 | v3:FR-009, v2:FR-015, v2:FR-012 | proposed |
 | S-25 | tree-parent-slot-existing-or-new | z pustego slotu rodzica na drzewie podłączyć istniejącą osobę (wybór filtrowany płcią i regułami) albo utworzyć nową i od razu widzieć ją na drzewie | S-24, S-06 | v4:FR-004, v4:FR-011, v4:US-01, v3:FR-001, v3:FR-012, v3:US-01 | done |
 | S-26 | tree-child-existing-or-new      | dodać z drzewa dziecko pokazanej pary — istniejącą osobę albo nową — i od razu widzieć je na drzewie | S-24, S-06 | v4:FR-005, v4:FR-011, v3:FR-002, v3:FR-012 | done |
-| S-27 | tree-spouse-existing-or-new     | z pustego slotu małżonka przy centrum podłączyć istniejącą osobę albo nowego małżonka i połączyć pokazanych rodziców w małżeństwo | S-24, S-07 | v4:FR-006, v4:FR-011, v3:FR-003 | proposed |
+| S-27 | tree-spouse-existing-or-new     | z pustego slotu małżonka przy centrum podłączyć istniejącą osobę albo nowego małżonka i połączyć pokazanych rodziców w małżeństwo | S-24, S-07 | v4:FR-006, v4:FR-011, v3:FR-003 | done |
 | S-28 | tree-relation-removal           | usunąć z drzewa relację rodzic–dziecko i małżeństwo po potwierdzeniu, widząc przy małżeństwie tracone dane | S-24, S-06, S-07 | v4:FR-007 | proposed |
 | S-29 | preview-relations-read-only     | widzieć relacje w podglądzie tylko do odczytu z odnośnikiem „Pokaż na drzewie”; strona podglądu osoby znika | S-25, S-26, S-27, S-28 | v4:FR-008, v4:FR-009 | proposed |
 
@@ -405,7 +405,7 @@ Foundations below assume these are present and do NOT re-scaffold them. The prd-
 - **Unknowns:**
   - Czy małżeństwo utworzone z drzewa (slot małżonka i „Połącz jako małżeństwo”) powstaje bez daty i miejsca jako fakt niepotwierdzony do uzupełnienia w podglądzie (małżeństwo jest jednym wydarzeniem obojga — S-07)? Owner: `/10x-plan`. Block: no.
 - **Risk:** Zastępuje S-23 `spouse-from-tree-slot` (nierozpoczęty); pusty slot tylko przy centrum, żeby nie zaśmiecać drzewa. Ryzykiem jest ukryte założenie małżeństwa, którego użytkownik nie zamierzał.
-- **Status:** proposed
+- **Status:** done
 
 ### S-28: Usuwanie relacji z drzewa
 
@@ -524,3 +524,4 @@ Rozstrzygnięte:
 - **S-24: użytkownik otwiera podgląd osoby w modalu z drzewa, listy osób i podglądu skanu, a zamknięcie modala zostawia stronę pod spodem bez zmian; w modalu przechodzi do krewnego (rodzic, dziecko, małżonek) i wraca przyciskiem „Wstecz”; widzi fakty z potwierdzeniami (otwarcie skanu prowadzi na pełną stronę podglądu skanu), ustawia probanta i usuwa osobę z tym samym potwierdzeniem co dziś (po usunięciu osoby z centrum drzewo wraca do probanta); po dodaniu osoby z listy trafia na drzewo wyśrodkowane na nowej osobie; na wąskim ekranie modal zajmuje cały ekran. Edycja relacji tymczasowo zostaje w modalu (do S-29).** — Archived 2026-09-28 → `context/archive/2026-09-28-person-preview-in-modal/`. Lesson: —.
 - **S-25: użytkownik klika na drzewie slot „nieznany ojciec / matka / rodzic” (także przy dziadkach) i podłącza istniejącą osobę — w slocie ojca/matki wybór pokazuje tylko osoby pasującej płci i ukrywa osoby, których podłączenie złamałoby reguły relacji — albo tworzy w modalu nową osobę (płeć ustawiona i zablokowana przez slot; przy „nieznany rodzic” wybiera ją sam); rodzic od razu pojawia się na drzewie, bez opuszczania drzewa.** — Archived 2026-09-28 → `context/archive/2026-09-28-tree-parent-slot-existing-or-new/`. Lesson: —.
 - **S-26: użytkownik dodaje z drzewa dziecko pary aktualnie pokazanej (parę wybiera przełącznik związku; bez małżonka — dziecko tylko tej osoby): wybiera istniejącą osobę albo tworzy nową w modalu, który pokazuje obojga rodziców; dziecko od razu pojawia się na drzewie, a podłączenie dające dziecku trzeciego rodzica się nie udaje.** — Archived 2026-09-28 → `context/archive/2026-09-28-tree-child-existing-or-new/`. Lesson: —.
+- **S-27: użytkownik widzi pusty slot małżonka przy osobie w centrum drzewa, gdy nie ma ona małżonka, i podłącza z niego istniejącą osobę albo tworzy nowego małżonka w modalu; gdy pokazani na arkuszu ojciec i matka nie mają małżeństwa, łączy ich akcją „Połącz jako małżeństwo”; nowe małżeństwo od razu widać na drzewie, a datę, miejsce i potwierdzenie uzupełnia w podglądzie osoby.** — Archived 2026-09-28 → `context/archive/2026-09-28-tree-spouse-existing-or-new/`. Lesson: —.
