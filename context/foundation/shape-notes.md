@@ -7,244 +7,223 @@ product_type: web-app
 target_scale:
   users: small
 timeline_budget:
-  delivery_weeks: 4
+  delivery_weeks: 5
   hard_deadline: 2026-11-04
   after_hours_only: true
 checkpoint:
   current_phase: 8
   phases_completed: [1, 2, 3, 4, 5, 6, 7]
   gray_areas_resolved:
-    - topic: "change category"
-      decision: "significant feature (scan description) + new module (places gazetteer) + data model change (one residence -> residence history)"
-    - topic: "trigger / insight"
-      decision: "entering real data: I keep going back to the scan to find 'my' entry; people moved and one residence field loses that"
-    - topic: "gazetteer scope"
-      decision: "every place in the app points to the gazetteer (residence, birth, marriage, death)"
-    - topic: "existing free-text places"
-      decision: "may be lost — user will re-enter them"
-    - topic: "timing vs milestone M-1"
-      decision: "in parallel with S-09; if time runs out, S-09 and the 2026-11-04 MVP deadline win"
+    - topic: "pain moment"
+      decision: "all three: entering the real tree from the tree view, every small edit on a separate page, gravestone photos with nowhere to attach"
+    - topic: "meaning of 'scan -> source'"
+      decision: "one 'source' concept with a kind (vital record, gravestone photo, ...); every kind can confirm facts"
+    - topic: "relation to prd-v2"
+      decision: "sources absorb S-10 (description designed for source, not scan); S-10/S-11 to be replanned; gazetteer S-12-S-15 unchanged"
+    - topic: "must preserve (phase 1)"
+      decision: "existing scan-event confirmations and confirmed/unconfirmed state; uploaded files, thumbnails and zoom preview"
     - topic: "primary persona"
-      decision: "unchanged — the author (assumption stated, not contested)"
+      decision: "unchanged — the author"
     - topic: "auth / roles"
-      decision: "no change — open registration, own data only, no roles"
-    - topic: "gazetteer ownership"
-      decision: "private per tree, invisible to other users"
+      decision: "no change — own tree only, other user's record is 404"
     - topic: "scope vs 3-week budget"
-      decision: "whole change at once (no staging); longer timeline accepted — 4 weeks after hours, in parallel with S-09"
-    - topic: "scan entry form"
-      decision: "entry number + free-text description (who, when, what, how) — narrowed to one per scan in Socrates FR-004"
-    - topic: "'oznaczenie miejsca'"
-      decision: "means the scan's place of origin, not marking a region on the image"
-    - topic: "scan type"
-      decision: "one type per scan: birth / marriage / death / other"
-    - topic: "residence UI"
-      decision: "residences as chips (place only, no period); fact places (birth, marriage, death) as a dropdown"
-    - topic: "gazetteer fields"
-      decision: "name, whether it still exists, administrative unit / parish / note (no coordinates)"
-    - topic: "gazetteer management"
-      decision: "add-new from the picker + separate gazetteer page to edit/delete"
-    - topic: "scan search"
-      decision: "by scan name (nice-to-have)"
-    - topic: "assumptions stated, not contested"
-      decision: "scan entries are not linked to events — the whole scan stays the source"
-    - topic: "scan origin (Socrates FR-003)"
-      decision: "free text (parish, archive, signature), not a gazetteer place — exception to 'every place from the gazetteer'"
-    - topic: "scan entries (Socrates FR-004)"
-      decision: "one entry number + one note per scan, no list of entries"
+      decision: "whole change at once (no staging); longer timeline accepted — 5 weeks after hours, to 2026-11-04"
+    - topic: "modal scope"
+      decision: "person add/edit + source add/edit; facts and relations stay as they are"
+    - topic: "empty slot on tree"
+      decision: "always creates a NEW person; linking an existing person stays on person preview"
+    - topic: "guardrails"
+      decision: "confirmations 1:1, files/preview intact, relation correctness, source delete shows impact + confirmation"
+    - topic: "blast radius"
+      decision: "/scans URLs; persons/create and persons/edit pages"
+    - topic: "source kinds"
+      decision: "vital record, gravestone photo, other"
+    - topic: "source description"
+      decision: "common: name, year, origin, note; vital record adds type + entry number; only file + kind required"
+    - topic: "child from tree"
+      decision: "child of the pair shown on tree (union switch picks the pair); modal shows both parents"
+    - topic: "person pages"
+      decision: "persons/create and persons/edit removed; full-screen modal on narrow screens"
     - topic: "Socrates round"
-      decision: "FR-005 promoted to must-have; FR-008 suggests existing places; FR-009 usage list + confirmation; FR-014 only name required; FR-015 added (matching-type scans first)"
-    - topic: "place location (FR-007, resolved in cross-check)"
-      decision: "optional coordinates entered manually; no in-app map, no external map providers"
+      decision: "FR-001 duplicates risk accepted; FR-003 spouse slot only at focus; FR-005 existing scans -> vital record; FR-007 warn on kind change; FR-008 one 'confirmed' state + visible kind; FR-009 matching vital records first (absorbs S-11); FR-010 old /scans URLs may break; FR-011 simple confirm when no links; FR-012 slot sets and locks gender"
     - topic: "business logic"
-      decision: "confirmation rule unchanged; new data is descriptive"
-    - topic: "existing scans"
-      decision: "name = original file name; other new fields empty"
+      decision: "confirmation rule modified: any source kind confirms, kind visible; new tree-slot rules (role + gender, child to shown pair)"
+    - topic: "migration rollback"
+      decision: "backups (F-01) right before deploy"
     - topic: "NFR"
-      decision: "no new NFRs; existing ones cover new data"
+      decision: "no new NFRs"
+    - topic: "priority vs gazetteer"
+      decision: "this change wins; S-12-S-15 slip past 2026-11-04 if needed"
     - topic: "product framing"
-      decision: "no change — web-app, small user base (assumption stated, not contested)"
-    - topic: "deadline"
-      decision: "hard 2026-11-04 (same as MVP), after hours; S-09 keeps priority"
-  frs_drafted: 15
+      decision: "no change — web-app, small; hard deadline 2026-11-04, after hours"
+    - topic: "non-goals"
+      decision: "no modals for facts/relations; no duplicate merging; no multi-file upload; no weaker confirmation state; no /scans redirects"
+  frs_drafted: 12
   quality_check_status: accepted
 ---
 
 # root-keeper — shape notes (brownfield)
 
-Poprzednia sesja (MVP, greenfield): `context/foundation/archive/shape-notes-2026-09-28-0612.md`.
+Poprzednie sesje: MVP `context/foundation/archive/shape-notes-2026-09-28-0612.md`, prd-v2 (opisy skanów + spis miejscowości) `context/foundation/archive/shape-notes-2026-09-28-1130.md`.
 
 ## Seed idea
 
-> Potrzebuje kilku zmian w aplikacji: Skany - moim zdaniem potrzebują nazwy, typu, informacji ktore za sobą noszą, na ktory numer zwrocic uwage, moze jakie informacje mają. Zazwyczaj jeden skan zawiera kilka wpisów metrykalnych - mnie interesuje zwykle jeden - tam jest numer, jakies informacje - chcialbym to zapisać gdzies w rekordzie o skanie, może oznaczenie miejsca; po drugie na karcie osoby chcialbym moc jako miejsce zamieszkania kilka lokalizacji, zeby byla zapisana niejako historia gdzei ta osoba była, moze dobrym pomyslem byloby zrobic jakis spis roznych miejscowosci z dodatkowymi informacjami (np. czy miejscowosc jeszcze istenieje, czy juz nie istnieje, jakie dane lokalizacyjne);
+> - drzewo
+>     - modal na dodawanie osoby
+>     - modale na dodawanie czegos/edycje (wszystkiego)
+>     - jak drzewo - nieznany ojciec to dać możliwość utworzenia go z drzewa
+>     - jak drzewo dać mozliwosc dodawania dzieci
+>     - jak drzewo dac mozliwosc dodawania wspolmazonka (jeśli nie ma to ma byc widoczny pusty slot)
+> - zamiast skany -> źródła (to musi być traktowane jako źródła)
+> - do źródeł należy również zaliczyć zdjęcia nagrobków
 
 ## Current System
 
-root-keeper — prywatne drzewo genealogiczne (Laravel + Inertia/React), jedno drzewo na konto, otwarta rejestracja, każdy widzi tylko swoje dane. Fakty osoby (urodzenie, małżeństwo, zgon) są potwierdzane skanami aktów metrykalnych; jeden skan może potwierdzać wiele wydarzeń, małżeństwo jest jednym wydarzeniem obojga małżonków. Kamień milowy M-1 (MVP) jest otwarty — zostało S-09 (graficzny widok drzewa), termin 2026-11-04.
+root-keeper — prywatne drzewo genealogiczne (Laravel + Inertia/React z TypeScript, shadcn/ui, PostgreSQL, samodzielny hosting w Dockerze), jedno drzewo na konto, otwarta rejestracja, każdy widzi tylko swoje dane. Kamień milowy M-1 (MVP) ma wszystkie slice'y v1 zrobione (S-01 – S-09); rozszerzenie prd-v2 (S-10 – S-15: opis skanu, spis miejscowości) nie zostało rozpoczęte.
 
 Stan istotny dla tej zmiany:
-- Skan to sam plik (nazwa oryginału, rozmiar, miniatura, wymiary) bez żadnego opisu — świadoma decyzja MVP (FR-013, Non-Goals: „Brak opisu skanów: skan sam jest aktem”).
-- Miejsce zamieszkania to jedno pole tekstowe osoby; miejsca urodzenia, ślubu i zgonu to wolny tekst na wydarzeniu.
-- Nie ma spisu miejscowości.
+- **Widok drzewa (S-09)** to arkusz rodziny: osoba w centrum, rodzice, dziadkowie, małżonek, dzieci. Brakująca osoba to przerywana karta „nieznany” z samą etykietą — bez żadnej akcji. Drzewo służy tylko do oglądania i przechodzenia do osób.
+- **Dodawanie i edycja** osoby odbywa się na osobnych stronach (`persons/create`, `persons/edit`); część akcji (małżeństwo, wybór krewnego, wybór skanu, usunięcia) ma już jednorazowe okna dialogowe.
+- **Skany** to pliki aktów metrykalnych (nazwa oryginału, rozmiar, miniatura, powiększenie), które potwierdzają urodzenie, małżeństwo i zgon; jeden skan może potwierdzać wiele wydarzeń. Nie ma innego rodzaju dowodu.
 
 Użytkownicy: autor (genealog pracujący na własnych materiałach).
 
 ## Vision & Problem Statement
 
-Wprowadzanie prawdziwego drzewa pokazało dwie luki:
+Wprowadzanie prawdziwego drzewa i codzienne poprawki pokazały trzy luki:
 
-1. **Skan bez opisu.** Jeden skan zwykle zawiera kilka wpisów metrykalnych, a autora interesuje zazwyczaj jeden. Nie ma gdzie zapisać, który to wpis (numer), jakie informacje niesie, jakiego typu jest skan ani oznaczyć miejsca wpisu na skanie — więc za każdym razem autor wraca do skanu i szuka „swojego” wpisu od nowa. Skan potrzebuje nazwy, typu i informacji, które niesie.
-2. **Jedno miejsce zamieszkania.** Osoby się przeprowadzały, a jedno pole gubi historię, gdzie mieszkały. Autor chce móc zapisać kilka miejsc zamieszkania i mieć spis miejscowości z dodatkowymi informacjami (np. czy miejscowość jeszcze istnieje, dane lokalizacyjne), używany wszędzie, gdzie aplikacja zapisuje miejsce.
+1. **Drzewo tylko do oglądania.** Widząc na drzewie „nieznany ojciec”, autor musi wyjść na stronę dodawania osoby, a potem wrócić i połączyć relację — gubi kontekst. Z drzewa nie da się utworzyć brakującego rodzica, dodać dzieci ani małżonka (brak małżonka ma być widoczny jako pusty slot).
+2. **Formularze na osobnych stronach.** Każde dodanie i każda drobna poprawka (data, miejsce) to przejście na osobną stronę i z powrotem. Autor chce dodawania osoby i dodawania/edycji wszystkiego w oknach modalnych.
+3. **„Skan” to za wąskie pojęcie.** Autor ma zdjęcia nagrobków z datami, a aplikacja przyjmuje tylko skany aktów, więc nie ma gdzie podłączyć ich jako dowodu. Skan ma stać się **źródłem** z rodzajem (np. akt metrykalny, zdjęcie nagrobka), traktowanym jako źródło faktów.
 
-Zmiana odwraca decyzję MVP „skan sam jest aktem, bez opisu”. Idzie równolegle z S-09; przy braku czasu pierwszeństwo mają S-09 i termin MVP 2026-11-04.
+Zmiana wchłania S-10 z prd-v2: opis (nazwa, typ, rok, pochodzenie, numer i notatka wpisu) projektujemy od razu dla źródła, nie dla skanu; S-10/S-11 do przeplanowania. Spis miejscowości (S-12 – S-15) bez zmian.
 
 ## User & Persona
 
-Bez zmian: jedynym realnym użytkownikiem jest autor aplikacji, genealog prowadzący badania na własnych materiałach. Zmiana dotyczy chwil, gdy wraca do skanu, żeby odnaleźć wpis dotyczący konkretnej osoby, i gdy zapisuje, gdzie osoba mieszkała w różnych okresach życia.
+Bez zmian: jedynym realnym użytkownikiem jest autor aplikacji, genealog prowadzący badania na własnych materiałach. Zmiana dotyczy chwil, gdy uzupełnia drzewo patrząc na nie, gdy poprawia drobne dane oraz gdy wraca z cmentarza ze zdjęciami nagrobków.
 
 ## Access Control
 
-No changes planned — current model preserved: otwarta rejestracja, każdy zalogowany użytkownik ma pełny dostęp wyłącznie do własnych danych, bez ról i współdzielenia; niezalogowany nie widzi żadnych danych.
+No changes planned — current model preserved: otwarta rejestracja, jedno drzewo na konto, każdy zalogowany użytkownik ma pełny dostęp wyłącznie do własnych danych, bez ról i współdzielenia; cudzy rekord to 404.
 
-Nowe dane wchodzą pod tę samą zasadę: opis skanu, historia zamieszkania i spis miejscowości należą do drzewa użytkownika. Spis miejscowości jest prywatny dla każdego drzewa i niewidoczny dla innych użytkowników.
+Nowe dane i akcje wchodzą pod tę samą zasadę: źródła (w tym zdjęcia nagrobków) oraz dodawanie/edycja z drzewa działają tylko na własnym drzewie.
 
 ## Success Criteria
 
-Przepływ zmiany (w słowach użytkownika):
+Przepływ zmiany (potwierdzony przez użytkownika, całość naraz — bez etapów):
 
-1. Dodaję skan: załączam plik, nadaję mu nazwę (np. kogo dotyczy) — żeby identyfikować skany później, np. przy przeszukiwaniu.
-2. Opisuję jeden pojedynczy wpis ze skanu (albo więcej, jak potrzebuję): kto, kiedy, co i jak zrobił.
-3. Oznaczam rok oraz miejsce, skąd skan pochodzi.
-4. Na karcie osoby dodaję kolejne miejsce zamieszkania i widzę miejsca jako chipy w polu zamieszkania.
-5. Przy faktach wybieram miejscowość z listy.
+1. Na drzewie klikam pusty slot „nieznany ojciec/matka” → modal „dodaj osobę” → zapis → osoba od razu na drzewie jako rodzic, bez opuszczania drzewa.
+2. Przy osobie na drzewie dodaję dziecko → modal → dziecko na drzewie.
+3. Brak małżonka widać jako pusty slot → klik → modal → małżonek na drzewie.
+4. Dodaję i poprawiam osobę w modalu (nie na osobnej stronie).
+5. W „Źródłach” (dawniej „Skany”) dodaję źródło w modalu: plik + rodzaj (akt metrykalny / zdjęcie nagrobka) + opis; potwierdzam nim fakt jak dziś skanem.
 
-Doprecyzowane w rundzie Sokratesa: zamiast wielu wpisów — jeden numer wpisu + jedna notatka na skan; pochodzenie skanu to wolny tekst (parafia, archiwum, sygnatura), nie miejscowość ze spisu.
+Z pustego slotu na drzewie powstaje zawsze **nowa** osoba; łączenie z osobą już istniejącą w drzewie zostaje na podglądzie osoby jak dziś.
+
+Zakres modali: dodawanie/edycja osoby oraz dodawanie/edycja źródła. Fakty (urodzenie, zgon, ślub) i relacje zostają w obecnej formie.
+
+Blast radius wskazany przez użytkownika: adresy `/scans` (zakładki, linki) po zmianie na źródła; strony `persons/create` i `persons/edit` (znikają albo zostają obok modali).
 
 ### Primary
-- Powyższy przepływ działa na prawdziwych danych: skan ma nazwę, typ, rok, pochodzenie oraz numer i notatkę interesującego mnie wpisu, a odnajduję go później bez przeszukiwania skanu od nowa; osoba ma historię zamieszkania z kilku miejscowości, a fakty wskazują miejscowości ze spisu.
+- Powyższy przepływ 1–5 działa na prawdziwych danych: brakującego rodzica, dziecko i małżonka tworzę z drzewa w modalu i widzę ich od razu na drzewie; osobę dodaję i poprawiam w modalu; zdjęcie nagrobka dodaję jako źródło rodzaju „nagrobek” i potwierdzam nim fakt.
 
 ### Secondary
-- Brak (użytkownik nie wskazał).
+- Mniej kliknięć przy wpisywaniu: rodzinę osoby (rodzice, małżonek, dzieci) uzupełniam w całości bez opuszczania drzewa.
 
 ### Guardrails
-- Istniejące powiązania skan–wydarzenie i stan „potwierdzone/niepotwierdzone” działają jak dziś.
-- Opisy skanów, historia zamieszkania i spis miejscowości są niewidoczne dla innych użytkowników i niezalogowanych.
+- Istniejące powiązania skan–wydarzenie i stan „potwierdzone/niepotwierdzone” przechodzą 1:1 na źródła.
+- Wgrane pliki, miniatury i powiększenie działają; żaden plik nie ginie.
+- Poprawność relacji: z drzewa nie da się dodać trzeciego rodzica, drugiego ojca ani uczynić kogoś własnym przodkiem.
+- Usunięcie źródła dalej pokazuje fakty, które stracą potwierdzenie, i wymaga jawnego potwierdzenia.
 
 ## Timeline acknowledgment
 
-Acknowledged on 2026-09-28: 4-week change (after hours, in parallel with S-09) requires sustained dedication; user accepted. Przy braku czasu pierwszeństwo mają S-09 i termin MVP 2026-11-04.
+Acknowledged on 2026-09-28: 5-week change (after hours, all at once, no staging) requires sustained dedication; user accepted.
 
-Termin zmiany: twardo 2026-11-04 (ten sam co MVP), po godzinach. Do terminu zostaje ok. 5 tygodni na S-09 i tę zmianę razem.
+Termin: 2026-11-04 — ten sam, na który celuje nierozpoczęty prd-v2 (spis miejscowości S-12 – S-15 konkuruje o ten sam czas).
 
 ## User Stories
 
-### US-01: Odnalezienie „mojego” wpisu na skanie
+### US-01: Nieznany ojciec utworzony z drzewa
 
-- **Given** zalogowany użytkownik ze skanem, któremu nadał nazwę, typ, rok i pochodzenie oraz zapisał numer interesującego go wpisu (np. nr 47) z notatką
-- **When** odnajduje skan po nazwie na liście skanów i otwiera go
-- **Then** widzi numer wpisu 47 i notatkę (kto, kiedy, co i jak zrobił) obok skanu i nie musi przeszukiwać skanu od nowa
+- **Given** zalogowany użytkownik z osobą na drzewie, której ojciec jest nieznany (slot „Nieznany ojciec”)
+- **When** klika slot, w modalu wpisuje dane nowej osoby (płeć ustawiona na mężczyznę) i zapisuje
+- **Then** widzi ojca na drzewie połączonego z dzieckiem, nie opuszczając widoku drzewa
 
-Wcześniej: skan był samym plikiem, bez nazwy i opisu.
+Wcześniej: slot „nieznany” był samą etykietą; trzeba było wyjść na stronę dodawania osoby, wrócić na podgląd dziecka i połączyć relację.
 
-### US-02: Historia zamieszkania i miejsca faktów ze spisu
+### US-02: Nagrobek potwierdza zgon
 
-- **Given** zalogowany użytkownik z osobą w drzewie
-- **When** na karcie osoby dodaje kolejne miejsca zamieszkania (wybierając miejscowość ze spisu albo dodając brakującą) i wybiera miejsce urodzenia z listy rozwijanej
-- **Then** widzi miejsca zamieszkania jako chipy, a miejsce urodzenia jako miejscowość ze spisu
+- **Given** zalogowany użytkownik ze zdjęciem nagrobka z datą zgonu osoby
+- **When** w „Źródłach” dodaje w modalu źródło rodzaju „zdjęcie nagrobka” (plik + rodzaj, opis opcjonalny), a potem wiąże je ze zgonem osoby
+- **Then** zgon ma stan „potwierdzone”, a przy fakcie widać rodzaj źródła („nagrobek”) i można otworzyć zdjęcie w powiększeniu
 
-Wcześniej: jedno pole tekstowe zamieszkania, miejsca faktów jako wolny tekst.
+Wcześniej: aplikacja przyjmowała tylko „skany” aktów; zdjęcia nagrobka nie było gdzie podłączyć jako dowodu.
 
 ## Functional Requirements
 
-### Skany
-- FR-001: Użytkownik może nadać skanowi nazwę — dowolną etykietę, wymaganą przy dodawaniu. Priority: must-have. Change: modified
-  > Socrates: Counter-argument considered: "nazwa »kogo dotyczy« dubluje opisy wpisów — skan z kilkoma wpisami dotyczy wielu osób." Resolution: changed — nazwa jest dowolną etykietą (np. „Urodzenia Lipnica 1878 s. 12”), bez sugestii „kogo dotyczy”; osoby opisuje notatka.
-- FR-002: Użytkownik może oznaczyć typ skanu: urodzenia, małżeństwa, zgonu lub inny. Priority: must-have. Change: new
-  > Socrates: Counter-argument considered: "księga mieszana ma na jednej stronie wpisy różnych typów — jeden typ skanu wtedy kłamie." Resolution: kept; mieszane księgi to wyjątek, „inny” wystarcza.
-- FR-003: Użytkownik może oznaczyć rok skanu i jego pochodzenie wolnym tekstem (parafia, archiwum, sygnatura). Priority: must-have. Change: new
-  > Socrates: Counter-argument considered: "skan pochodzi z parafii lub archiwum, nie z miejscowości — spis miejscowości nie pasuje." Resolution: changed — pochodzenie jest wolnym tekstem, nie miejscowością ze spisu (było: „miejsce pochodzenia — miejscowość ze spisu”).
-- FR-004: Użytkownik może zapisać przy skanie numer interesującego go wpisu i jedną notatkę tekstową (kto, kiedy, co i jak zrobił) oraz je poprawić. Priority: must-have. Change: new
-  > Socrates: Counter-argument considered: "kilka wpisów na skan to więcej pracy; jedna notatka zrobi to samo." Resolution: changed — jedna notatka + numer wpisu na skan, bez listy wpisów (było: „opis jednego lub kilku wpisów”).
-- FR-005: Użytkownik może poprawić nazwę, typ, rok i pochodzenie istniejącego skanu. Priority: must-have. Change: new
-  > Socrates: Counter-argument considered: "literówka w nazwie przy dodawaniu zostaje na zawsze i psuje odnajdywanie skanu." Resolution: changed — awans z nice-to-have na must-have (przy okazji istniejące skany można uzupełnić).
-- FR-006: Użytkownik może wyszukać skan po nazwie na liście skanów. Priority: nice-to-have. Change: new
-  > Socrates: No counter-argument; it stands as written.
+### Drzewo
+- FR-001: Użytkownik może z pustego slotu rodzica na drzewie utworzyć w modalu nową osobę, która od razu staje się rodzicem tej osoby i pojawia się na drzewie; slot ustawia płeć (ojciec → mężczyzna, matka → kobieta, „nieznany rodzic” → wybór w modalu), a płeć jest w modalu zablokowana. Priority: must-have. Change: new
+  > Socrates: Counter-argument considered: "ojciec często już jest w drzewie (wpisany z innej gałęzi) — »zawsze nowa osoba« produkuje duplikaty." Resolution: kept; ryzyko duplikatów zaakceptowane — łączenie z istniejącą osobą zostaje na podglądzie osoby, duplikaty poprawiane ręcznie.
+- FR-002: Użytkownik może z drzewa dodać w modalu nowe dziecko pary pokazanej na drzewie (z małżonkiem — oboje rodzice, bez małżonka — tylko ta osoba); modal pokazuje, do kogo trafi dziecko, a dziecko od razu pojawia się na drzewie. Priority: must-have. Change: new
+  > Socrates: Counter-argument considered: "osoba z kilkoma małżonkami (przełącznik związku) — dziecko może trafić do złej pary." Resolution: changed — dziecko trafia do pary aktualnie wybranej przełącznikiem związku, a modal jawnie pokazuje obojga rodziców.
+- FR-003: Użytkownik widzi pusty slot małżonka przy osobie w centrum drzewa, gdy nie ma ona małżonka, i może z niego utworzyć w modalu nowego małżonka, widocznego od razu na drzewie. Priority: must-have. Change: new
+  > Socrates: Counter-argument considered: "pusty slot małżonka przy każdym dziecku i młodej osobie zaśmieca drzewo." Resolution: changed — pusty slot tylko przy osobie w centrum; żeby dodać małżonka komuś innemu, przestawiam go na środek.
 
-### Miejscowości
-- FR-007: Użytkownik może prowadzić spis miejscowości swojego drzewa: nazwa, czy miejscowość nadal istnieje, jednostka / parafia / notatka oraz opcjonalne współrzędne geograficzne wpisywane ręcznie. Priority: must-have. Change: new
-  > Socrates: Counter-argument considered: "bez danych lokalizacyjnych (wymienionych w pierwszym opisie) spis traci sens — nie wiadomo, gdzie miejscowość leżała." Resolution: changed (rozstrzygnięte w fazie 7) — dodane opcjonalne współrzędne wpisywane ręcznie, bez mapy w aplikacji i bez usług zewnętrznych.
-- FR-008: Użytkownik może dodać brakującą miejscowość do spisu bezpośrednio z listy wyboru; lista przy wpisywaniu podpowiada istniejące miejscowości (z jednostką), a dodanie nowej jest proponowane, gdy nic nie pasuje. Priority: must-have. Change: new
-  > Socrates: Counter-argument considered: "szybkie dodawanie z listy produkuje literówki i duplikaty tej samej miejscowości." Resolution: changed — podpowiedzi istniejących miejscowości przy wpisywaniu, „dodaj nową” dopiero gdy nic nie pasuje.
-- FR-009: Użytkownik może edytować i usuwać miejscowości na osobnej stronie spisu; przed usunięciem widzi osoby i fakty, które stracą miejsce, i potwierdza usunięcie. Priority: must-have. Change: new
-  > Socrates: Counter-argument considered: "usunięcie używanej miejscowości po cichu czyści zamieszkanie i miejsca faktów." Resolution: changed — lista użyć + jawne potwierdzenie przed usunięciem (spójnie z usuwaniem skanu, FR-015 MVP).
-- FR-010: Użytkownik może dodać osobie kilka miejsc zamieszkania ze spisu, widocznych jako chipy, i usunąć każde z nich. Priority: must-have. Change: modified
-  > Socrates: Counter-argument considered: "zamieszkanie bez źródła — nie wiadomo, z którego aktu wiem o zamieszkaniu." Resolution: kept; Non-Goal MVP „brak źródeł dla zamieszkania” obowiązuje dalej.
-- FR-011: Użytkownik może wybrać miejsce urodzenia, ślubu i zgonu z listy rozwijanej miejscowości ze spisu. Priority: must-have. Change: modified
-  > Socrates: Counter-argument considered: "ślub odbywa się w parafii, nie w miejscowości." Resolution: kept; parafię zapisuję w polu „jednostka / parafia” miejscowości.
+### Osoba
+- FR-004: Użytkownik może dodać i poprawić osobę w modalu; strony `persons/create` i `persons/edit` znikają, a na wąskim ekranie modal zajmuje cały ekran i się przewija. Priority: must-have. Change: modified
+  > Socrates: Counter-argument considered: "formularz osoby jest długi (daty częściowe, miejsca) — w modalu na telefonie nieczytelny." Resolution: changed — pełnoekranowy, przewijany modal na wąskim ekranie; na komputerze zwykły modal.
+
+### Źródła
+- FR-005: „Skany” stają się „Źródłami”; każde źródło ma rodzaj: akt metrykalny, zdjęcie nagrobka lub inne. Istniejące skany stają się źródłami rodzaju „akt metrykalny”. Priority: must-have. Change: modified
+  > Socrates: Counter-argument considered: "istniejące skany dostaną rodzaj automatycznie, a wśród nich mogą już być zdjęcia nagrobków." Resolution: changed — wszystkie istniejące skany → „akt metrykalny”; błędne rodzaje poprawiam ręcznie przez edycję (FR-007).
+- FR-006: Użytkownik może dodać źródło w modalu: plik i rodzaj (wymagane) oraz opcjonalny opis — każde źródło: nazwa, rok, pochodzenie, notatka; akt metrykalny dodatkowo typ (urodzenia / małżeństwa / zgonu / inny) i numer wpisu. Priority: must-have. Change: new
+  > Socrates: Counter-argument considered: "po cmentarzu mam dziesiątki zdjęć — opis przy każdym pliku z osobna spowalnia wrzucanie." Resolution: changed — wymagane tylko plik i rodzaj; opis uzupełniany później w edycji. Jedno źródło = jeden plik.
+- FR-007: Użytkownik może poprawić rodzaj i opis źródła w modalu; zmiana rodzaju z aktu metrykalnego na inny pokazuje, które pola (typ, numer wpisu) znikną, i wymaga potwierdzenia. Priority: must-have. Change: new
+  > Socrates: Counter-argument considered: "zmiana rodzaju z aktu na nagrobek kasuje typ i numer wpisu bez ostrzeżenia." Resolution: changed — ostrzeżenie z listą znikających pól i potwierdzenie przed zapisem.
+- FR-008: Użytkownik może potwierdzić urodzenie, małżeństwo i zgon źródłem każdego rodzaju; stan pozostaje „potwierdzone”, a przy fakcie widać rodzaj źródła (np. „potwierdzone: nagrobek”). Priority: must-have. Change: modified
+  > Socrates: Counter-argument considered: "nagrobek nie jest dowodem na równi z aktem — ten sam stan »potwierdzone« zawyża pewność." Resolution: changed — jeden stan „potwierdzone”, ale rodzaj źródła widoczny przy fakcie; o wadze dowodu decyduje użytkownik.
 
 ### Zachowane
-- FR-012: Użytkownik może powiązać skan z urodzeniem, małżeństwem lub zgonem, a stan „potwierdzone/niepotwierdzone” działa jak dziś. Priority: must-have. Change: preserved
-  > Socrates: Counter-argument considered: "typ skanu może kłócić się z wydarzeniem (skan »zgonu« przy urodzeniu)." Resolution: kept (wiązanie i stan bez zmian) + FR-015: skany o pasującym typie proponowane jako pierwsze.
-- FR-013: Użytkownik widzi na podglądzie osoby miejsce faktu wraz ze wskazaniem aktu. Priority: must-have. Change: preserved
-  > Socrates: Counter-argument considered: "zmiana nazwy w spisie zmienia miejsce historycznego faktu u wszystkich osób, a akt podaje dawną nazwę." Resolution: kept; edycja miejscowości to poprawka tej samej miejscowości, dawne nazwy w notatce miejscowości.
-- FR-014: Użytkownik może wgrać, podejrzeć i usunąć skan (z listą faktów tracących źródło) jak dziś. Priority: must-have. Change: preserved
-  > Socrates: Counter-argument considered: "obowiązkowe nowe pola spowolnią wgrywanie wielu skanów." Resolution: changed — przy wgrywaniu wymagana jest tylko nazwa (FR-001); typ, rok, pochodzenie, numer wpisu i notatka są opcjonalne.
-
-### Wynik rundy Sokratesa
-- FR-015: Przy wiązaniu skanu z wydarzeniem użytkownik widzi najpierw skany o typie pasującym do wydarzenia; pozostałe nadal może wybrać. Priority: must-have. Change: modified
-  > Socrates: Dodane jako rozstrzygnięcie kontrargumentu do FR-012 (niezgodność typu skanu z wydarzeniem).
+- FR-009: Istniejące powiązania skan–wydarzenie i stan „potwierdzone/niepotwierdzone” przechodzą 1:1 na źródła; przy wyborze źródła dla faktu najpierw widać akty metrykalne o typie pasującym do faktu, potem resztę. Priority: must-have. Change: preserved
+  > Socrates: Counter-argument considered: "wybór źródła przy fakcie pokaże też nagrobki i »inne« — trudniej znaleźć właściwy akt." Resolution: changed — pasujące akty najpierw (wchłania v2:FR-015 / S-11 z prd-v2).
+- FR-010: Wgrane pliki, miniatury i powiększenie działają dla każdego źródła; żaden plik nie ginie. Priority: must-have. Change: preserved
+  > Socrates: Counter-argument considered: "zakładki i linki do /scans przestaną działać po zmianie na źródła." Resolution: kept; stare adresy `/scans` mogą przestać działać — jedynym użytkownikiem jest autor, zakładki poprawi sam.
+- FR-011: Usunięcie źródła z powiązaniami pokazuje fakty, które stracą potwierdzenie, i wymaga jawnego potwierdzenia; źródło bez powiązań usuwa się po prostym potwierdzeniu. Priority: must-have. Change: preserved
+  > Socrates: Counter-argument considered: "źródło wgrane przez pomyłkę, bez powiązań — dialog skutków to zbędny krok." Resolution: changed — bez powiązań krótkie „Usunąć?”, z powiązaniami lista faktów jak dziś.
+- FR-012: Relacje pozostają poprawne także przy tworzeniu z drzewa: maks. dwoje rodziców, nikt nie jest własnym przodkiem. Priority: must-have. Change: preserved
+  > Socrates: Counter-argument considered: "poprawność to też płeć — osoba utworzona w slocie »ojciec« musi być mężczyzną, inaczej drzewo kłamie." Resolution: changed — slot ustawia i blokuje płeć (zapisane w FR-001).
 
 ## Business Logic
 
-Reguła potwierdzania bez zmian: wydarzenie osoby (urodzenie, małżeństwo, zgon) jest potwierdzone wtedy i tylko wtedy, gdy powiązany jest z nim co najmniej jeden skan aktu metrykalnego.
+Fakt osoby jest „potwierdzony”, gdy jest powiązany z co najmniej jednym źródłem dowolnego rodzaju, a przy fakcie zawsze widać rodzaj źródła, które go potwierdza.
 
-Nowe dane — nazwa, typ, rok, pochodzenie, numer wpisu i notatka skanu, spis miejscowości, historia zamieszkania — są opisowe i nie wpływają na stan potwierdzenia. Źródłem faktu nadal jest cały skan; numer wpisu i notatka nie są powiązane z konkretnym wydarzeniem.
+Regułę modyfikujemy: dziś fakt (urodzenie, małżeństwo, zgon) jest „potwierdzony”, gdy ma co najmniej jeden powiązany skan aktu metrykalnego. Po zmianie potwierdzać może źródło każdego rodzaju (akt metrykalny, zdjęcie nagrobka, inne); stan pozostaje jeden, a o wadze dowodu decyduje użytkownik, widząc rodzaj źródła przy fakcie. Jedno źródło nadal może potwierdzać wiele wydarzeń, a małżeństwo nadal jest jednym wydarzeniem obojga małżonków.
 
-Drobne reguły wynikające ze zmiany:
-- Przy wiązaniu skanu z wydarzeniem skany o typie pasującym do wydarzenia są proponowane jako pierwsze (FR-015); typ nie blokuje wiązania.
-- Usunięcie miejscowości odpina ją od wszystkich osób i faktów, które jej używały — dopiero po pokazaniu listy użyć i jawnym potwierdzeniu (FR-009).
-- Edycja miejscowości jest poprawką tej samej miejscowości i zmienia miejsce wszędzie, gdzie jest użyta.
+Nowe reguły drzewa: pusty slot wyznacza rolę i płeć nowej osoby — slot „nieznany ojciec” tworzy ojca-mężczyznę, „nieznana matka” matkę-kobietę, „nieznany rodzic” rodzica o płci wybranej przez użytkownika. Dziecko utworzone z drzewa należy do pary aktualnie pokazanej na drzewie. Pusty slot małżonka istnieje tylko przy osobie w centrum drzewa. Tworzenie z drzewa podlega tym samym ograniczeniom relacji co dziś (maks. dwoje rodziców, nikt nie jest własnym przodkiem).
 
 ## Constraints & Preserved Behavior
 
-Preserved (nie może się zepsuć):
-- Istniejące powiązania skan–wydarzenie i stan „potwierdzone/niepotwierdzone” (FR-012).
-- Wgrane skany, ich pliki i miniatury oraz podgląd z powiększeniem (FR-014).
-- Miejsce faktu widoczne na podglądzie osoby ze wskazaniem aktu — po zmianie jako miejscowość ze spisu (FR-013).
-- Usuwanie skanu z listą faktów tracących źródło (S-08, FR-014).
-- Izolacja danych: nowe dane widoczne wyłącznie dla właściciela drzewa.
-
-Migracja danych:
-- Istniejące skany dostają nazwę równą nazwie oryginalnego pliku; typ, rok, pochodzenie, numer wpisu i notatka zostają puste do uzupełnienia (FR-005).
-- Istniejące miejsca zapisane wolnym tekstem (zamieszkanie osoby, miejsca urodzenia, ślubu i zgonu) mogą zostać utracone — użytkownik wprowadzi je ponownie ze spisu. Świadoma decyzja użytkownika.
-
-Zgodność wsteczna / integracje: brak zewnętrznych integracji ani konsumentów API; aplikacja ma jednego realnego użytkownika.
+- **Migracja danych:** wszystkie istniejące skany stają się źródłami rodzaju „akt metrykalny”; pliki, miniatury i powiązania z wydarzeniami przechodzą 1:1; stan „potwierdzone/niepotwierdzone” każdego faktu jest taki sam przed i po migracji. Opis źródła startuje pusty poza nazwą oryginału pliku.
+- **Plan wycofania:** backupy danych i plików (F-01) wykonane tuż przed wdrożeniem.
+- **Kompatybilność wsteczna:** stare adresy `/scans` mogą przestać działać (jedynym użytkownikiem jest autor). Strony `persons/create` i `persons/edit` znikają.
+- **Zachowane:** potwierdzenia faktów 1:1; pliki, miniatury i powiększenie; usuwanie źródła z listą faktów tracących potwierdzenie; ograniczenia relacji; prywatność drzewa (cudzy rekord = 404).
+- **prd-v2:** zmiana wchłania v2:FR-001 – v2:FR-005 i v2:FR-014 (S-10, opis — teraz opis źródła) oraz v2:FR-015 (S-11, pasujące najpierw). Spis miejscowości (S-12 – S-15) bez zmian, ale przy braku czasu przesuwa się za termin 2026-11-04 — ta zmiana ma pierwszeństwo.
 
 ## Non-Functional Requirements
 
-Brak nowych. Obowiązują dotychczasowe i obejmują nowe dane (opisy skanów, spis miejscowości, historia zamieszkania):
-- Żadne dane użytkownika nie są dostępne dla niezalogowanych ani dla innych użytkowników.
-- Dane nie trafiają do podmiotów trzecich ani usług zewnętrznych, nad którymi właściciel instancji nie ma kontroli.
-- Po awarii tracone są najwyżej dane z ostatnich 24 h.
-- Aplikacja jest w pełni użyteczna w aktualnych przeglądarkach na komputerze.
+Brak nowych NFR — istniejące (prywatność danych drzewa, czytelność powiększenia skanu) obejmują źródła każdego rodzaju i modale.
 
-Ograniczenia istniejącego systemu (faza 6): deploy ręczny (`scripts/deploy.sh` po merge'u do `main`); backupy danych i skanów z F-01 muszą objąć nowe dane; typ produktu (aplikacja webowa) i skala użytkowników bez zmian.
+## Product framing
+
+- Typ produktu: bez zmian — aplikacja webowa (`web-app`).
+- Skala: bez zmian — autor, mała (`small`).
+- Termin: twardo 2026-11-04, praca po godzinach; 5 tygodni. Przy braku czasu ta zmiana ma pierwszeństwo przed spisem miejscowości (S-12 – S-15).
 
 ## Non-Goals
 
-### Functional
-- Brak zaznaczania obszaru wpisu na obrazie skanu: numer wpisu i notatka wystarczają (faza 4 — „oznaczenie miejsca” oznaczało pochodzenie skanu).
-- Brak wyszukiwania skanów po treści notatki: wyszukiwanie tylko po nazwie (FR-006).
-- Brak mapy w aplikacji i zewnętrznych dostawców map: lokalizacja miejscowości to ręcznie wpisane współrzędne (FR-007, faza 7).
-- Brak przenoszenia istniejących miejsc zapisanych wolnym tekstem do spisu miejscowości: użytkownik wprowadzi je ponownie (Constraints & Preserved Behavior).
-- Non-Goals z PRD MVP obowiązują dalej, w tym brak źródeł dla zamieszkania (potwierdzone w rundzie Sokratesa, FR-010) — z wyjątkiem „Brak opisu skanów”, który ta zmiana świadomie odwraca.
-
-### Non-functional
-- Brak nowych celów jakościowych — obowiązują NFR z PRD MVP.
-
-## Open Questions
-
-Brak otwartych pytań.
-
-Rozstrzygnięte w fazie 7 (2026-09-28):
-- Dane lokalizacyjne miejscowości (FR-007) → opcjonalne współrzędne wpisywane ręcznie; bez mapy w aplikacji i bez zewnętrznych dostawców map (zgodnie z NFR o podmiotach trzecich).
+- **Brak modali dla faktów i relacji** — urodzenie, zgon, ślub i relacje zostają w obecnej formie; modale obejmują tylko osobę i źródło.
+- **Brak scalania duplikatów osób** — tworzenie z drzewa zawsze robi nową osobę (ryzyko zaakceptowane w FR-001); duplikaty poprawiane ręcznie.
+- **Brak wgrywania wielu plików naraz** — jedno źródło = jeden plik, dodawany pojedynczo (wymagane tylko plik i rodzaj, FR-006).
+- **Brak słabszego stanu potwierdzenia dla nagrobka** — jeden stan „potwierdzone” + widoczny rodzaj źródła (FR-008).
+- **Brak przekierowań ze starych adresów `/scans`** — jedynym użytkownikiem jest autor (FR-010).
