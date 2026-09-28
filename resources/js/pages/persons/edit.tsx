@@ -4,14 +4,15 @@ import Heading from '@/components/heading';
 import { PersonFormFields } from '@/components/persons/person-form-fields';
 import { Button } from '@/components/ui/button';
 import { index as personsIndex } from '@/routes/persons';
-import type { PersonFormData, Religion } from '@/types';
+import type { Gender, PersonFormData, Religion } from '@/types';
 
 type Props = {
     person: PersonFormData;
+    genders: Gender[];
     religions: Religion[];
 };
 
-export default function Edit({ person, religions }: Props) {
+export default function Edit({ person, genders, religions }: Props) {
     setLayoutProps({
         breadcrumbs: [
             { title: 'Osoby', href: personsIndex() },
@@ -37,6 +38,7 @@ export default function Edit({ person, religions }: Props) {
                     {({ processing, errors }) => (
                         <>
                             <PersonFormFields
+                                genders={genders}
                                 religions={religions}
                                 errors={errors}
                                 person={person}

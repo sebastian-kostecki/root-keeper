@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\EventType;
+use App\Enums\Gender;
 use App\Enums\Religion;
 use Database\Factories\PersonFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -17,12 +18,13 @@ use Illuminate\Support\Carbon;
  * @property int $tree_id
  * @property string|null $first_name
  * @property string|null $last_name
+ * @property Gender|null $gender
  * @property string|null $residence
  * @property Religion|null $religion
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
-#[Fillable(['tree_id', 'first_name', 'last_name', 'residence', 'religion'])]
+#[Fillable(['tree_id', 'first_name', 'last_name', 'gender', 'residence', 'religion'])]
 class Person extends Model
 {
     /** @use HasFactory<PersonFactory> */
@@ -36,6 +38,7 @@ class Person extends Model
     protected function casts(): array
     {
         return [
+            'gender' => Gender::class,
             'religion' => Religion::class,
         ];
     }

@@ -23,6 +23,7 @@ class PersonResource extends JsonResource
      *     first_name: string|null,
      *     last_name: string|null,
      *     display_name: string,
+     *     gender: array{value: string, label: string}|null,
      *     residence: string|null,
      *     religion: array{value: string, label: string}|null,
      *     birth: array<string, mixed>|null,
@@ -39,6 +40,10 @@ class PersonResource extends JsonResource
             'first_name' => $this->first_name,
             'last_name' => $this->last_name,
             'display_name' => $this->displayName(),
+            'gender' => $this->gender === null ? null : [
+                'value' => $this->gender->value,
+                'label' => $this->gender->label(),
+            ],
             'residence' => $this->residence,
             'religion' => $this->religion === null ? null : [
                 'value' => $this->religion->value,

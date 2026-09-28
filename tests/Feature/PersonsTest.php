@@ -436,6 +436,97 @@ test('store rejects an unknown religion', function () {
     $response->assertSessionHasErrors('religion');
 });
 
+test('store persists a valid gender and null when unset or sent empty', function (?string $sent, ?string $expected) {
+    $user = User::factory()->create();
+
+    $payload = ['first_name' => 'Jan'];
+
+    if ($sent !== null) {
+        $payload['gender'] = $sent;
+    }
+
+    $this->actingAs($user)->post(route('persons.store'), $payload)->assertSessionHasNoErrors();
+
+    expect($user->tree->people()->firstOrFail()->gender?->value)->toBe($expected);
+})->with([
+    'male' => ['male', 'male'],
+    'female' => ['female', 'female'],
+    'empty string' => ['', null],
+    'omitted' => [null, null],
+]);
+
+test('store rejects an unknown gender', function () {
+    $user = User::factory()->create();
+
+    $response = $this->actingAs($user)->post(route('persons.store'), [
+        'first_name' => 'Jan',
+        'gender' => 'other',
+    ]);
+
+    $response->assertSessionHasErrors('gender');
+});
+
+test('update persists and clears gender and rejects an unknown value', function () {
+    $user = User::factory()->create();
+    $person = Person::factory()->for($user->tree)->create(['first_name' => 'Jan']);
+
+    $this->actingAs($user)->put(route('persons.update', $person), [
+        'first_name' => 'Jan',
+        'gender' => 'female',
+    ])->assertSessionHasNoErrors();
+    expect($person->fresh()->gender->value)->toBe('female');
+
+    $this->actingAs($user)->put(route('persons.update', $person), [
+        'first_name' => 'Jan',
+        'gender' => 'male',
+    ])->assertSessionHasNoErrors();
+    expect($person->fresh()->gender->value)->toBe('male');
+
+    $this->actingAs($user)->put(route('persons.update', $person), [
+        'first_name' => 'Jan',
+        'gender' => '',
+    ])->assertSessionHasNoErrors();
+    expect($person->fresh()->gender)->toBeNull();
+
+    $this->actingAs($user)->put(route('persons.update', $person), [
+        'first_name' => 'Jan',
+        'gender' => 'other',
+    ])->assertSessionHasErrors('gender');
+});
+
+test('person show exposes gender as value and label, or null', function () {
+    $user = User::factory()->create();
+    $female = Person::factory()->for($user->tree)->female()->create();
+    $unknown = Person::factory()->for($user->tree)->create();
+
+    $this->actingAs($user)->get(route('persons.show', $female))
+        ->assertInertia(fn ($page) => $page
+            ->component('persons/show')
+            ->where('person.gender', ['value' => 'female', 'label' => 'Kobieta']));
+
+    $this->actingAs($user)->get(route('persons.show', $unknown))
+        ->assertInertia(fn ($page) => $page
+            ->component('persons/show')
+            ->where('person.gender', null));
+});
+
+test('create and edit pages pass gender options and edit prefills the person gender', function () {
+    $user = User::factory()->create();
+    $person = Person::factory()->for($user->tree)->male()->create();
+
+    $this->actingAs($user)->get(route('persons.create'))
+        ->assertInertia(fn ($page) => $page
+            ->component('persons/create')
+            ->has('genders', 2)
+            ->where('genders.0', ['value' => 'male', 'label' => 'Mężczyzna']));
+
+    $this->actingAs($user)->get(route('persons.edit', $person))
+        ->assertInertia(fn ($page) => $page
+            ->component('persons/edit')
+            ->has('genders', 2)
+            ->where('person.gender', 'male'));
+});
+
 test('store rejects death fields when the person is not marked deceased', function () {
     $user = User::factory()->create();
 

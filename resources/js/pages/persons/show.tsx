@@ -73,6 +73,19 @@ export default function Show({
 
                         <div>
                             <p className="text-muted-foreground text-sm">
+                                Płeć
+                            </p>
+                            {person.gender ? (
+                                <Badge variant="secondary">
+                                    {person.gender.label}
+                                </Badge>
+                            ) : (
+                                <p>brak danych</p>
+                            )}
+                        </div>
+
+                        <div>
+                            <p className="text-muted-foreground text-sm">
                                 Wyznanie
                             </p>
                             {person.religion ? (

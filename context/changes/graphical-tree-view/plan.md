@@ -674,15 +674,15 @@ trees have no proband. Both are reversible with `migrate:rollback`.
 
 #### Automated
 
-- [ ] 1.1 Migration applies and rolls back
-- [ ] 1.2 Person tests pass
-- [ ] 1.3 Static analysis passes
-- [ ] 1.4 PHP style
-- [ ] 1.5 Frontend check and types
+- [x] 1.1 Migration applies and rolls back
+- [x] 1.2 Person tests pass
+- [x] 1.3 Static analysis passes
+- [x] 1.4 PHP style
+- [x] 1.5 Frontend check and types
 
 #### Manual
 
-- [ ] 1.6 Create/edit with each gender saves, prefills and shows on preview
+- [x] 1.6 Create/edit with each gender saves, prefills and shows on preview
 
 ### Phase 2: Proband (tree root person)
 

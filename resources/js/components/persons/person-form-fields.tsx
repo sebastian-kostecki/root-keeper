@@ -13,9 +13,10 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
-import type { PersonFormData, Religion } from '@/types';
+import type { Gender, PersonFormData, Religion } from '@/types';
 
 type Props = {
+    genders: Gender[];
     religions: Religion[];
     errors: Partial<Record<string, string>>;
     person?: PersonFormData;
@@ -24,12 +25,21 @@ type Props = {
 /** Radix Select does not allow an empty item value, so "no religion" uses a sentinel. */
 const NO_RELIGION = 'none';
 
+/** Same sentinel technique for an unknown gender. */
+const NO_GENDER = 'none';
+
 /** Shown under a birth/death heading when that event is backed by a linked scan. */
 const CONFIRMED_HINT =
     'Potwierdzone aktem — upewnij się, że zmiana zgadza się ze skanem.';
 
-export function PersonFormFields({ religions, errors, person }: Props) {
+export function PersonFormFields({
+    genders,
+    religions,
+    errors,
+    person,
+}: Props) {
     const [isDeceased, setIsDeceased] = useState(person?.is_deceased ?? false);
+    const [gender, setGender] = useState(person?.gender ?? '');
     const [religion, setReligion] = useState(person?.religion ?? '');
 
     return (
@@ -68,6 +78,30 @@ export function PersonFormFields({ religions, errors, person }: Props) {
                     defaultValue={person?.residence ?? undefined}
                 />
                 <InputError message={errors.residence} />
+            </div>
+
+            <div className="grid gap-2">
+                <Label htmlFor="gender">Płeć</Label>
+                <Select
+                    value={gender || NO_GENDER}
+                    onValueChange={(value) =>
+                        setGender(value === NO_GENDER ? '' : value)
+                    }
+                >
+                    <SelectTrigger id="gender" className="w-full">
+                        <SelectValue placeholder="Nieznana" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value={NO_GENDER}>Nieznana</SelectItem>
+                        {genders.map((option) => (
+                            <SelectItem key={option.value} value={option.value}>
+                                {option.label}
+                            </SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+                <input type="hidden" name="gender" value={gender} />
+                <InputError message={errors.gender} />
             </div>
 
             <div className="grid gap-2">

@@ -1,7 +1,7 @@
 ---
 change_id: graphical-tree-view
 title: Graphical tree view
-status: planned
+status: implementing
 created: 2026-09-28
 updated: 2026-09-28
 archived_at: null
