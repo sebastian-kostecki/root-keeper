@@ -278,16 +278,16 @@ None — no schema or data changes. Old `/persons/{id}` bookmarks stop working (
 
 #### Automated
 
-- [x] 2.1 Full affected suite passes: `vendor/bin/sail artisan test --compact tests/Feature/PersonsTest.php tests/Feature/TreeTest.php tests/Feature/MarriagesTest.php tests/Feature/ParentChildRelationsTest.php tests/Feature/EventScansTest.php tests/Feature/ScansTest.php`
-- [x] 2.2 Larastan passes: `vendor/bin/sail composer types:check`
-- [x] 2.3 Format and lint pass: `vendor/bin/sail npm run check`
-- [x] 2.4 Type check passes: `vendor/bin/sail npm run types:check`
-- [x] 2.5 Production build succeeds: `vendor/bin/sail npm run build`
-- [x] 2.6 PHP style is clean: `vendor/bin/sail bin pint --dirty --format agent`
-- [x] 2.7 No references to the removed page remain: `grep -rn "persons/show\|PersonController.show\|persons.show" resources/js app routes tests` returns nothing outside generated Wayfinder dirs
+- [x] 2.1 Full affected suite passes: `vendor/bin/sail artisan test --compact tests/Feature/PersonsTest.php tests/Feature/TreeTest.php tests/Feature/MarriagesTest.php tests/Feature/ParentChildRelationsTest.php tests/Feature/EventScansTest.php tests/Feature/ScansTest.php` — 73d4fa4
+- [x] 2.2 Larastan passes: `vendor/bin/sail composer types:check` — 73d4fa4
+- [x] 2.3 Format and lint pass: `vendor/bin/sail npm run check` — 73d4fa4
+- [x] 2.4 Type check passes: `vendor/bin/sail npm run types:check` — 73d4fa4
+- [x] 2.5 Production build succeeds: `vendor/bin/sail npm run build` — 73d4fa4
+- [x] 2.6 PHP style is clean: `vendor/bin/sail bin pint --dirty --format agent` — 73d4fa4
+- [x] 2.7 No references to the removed page remain: `grep -rn "persons/show\|PersonController.show\|persons.show" resources/js app routes tests` returns nothing outside generated Wayfinder dirs — 73d4fa4
 
 #### Manual
 
-- [x] 2.8 Adding "Jan Testowy" from the list lands on `/tree/{id}` centred on him with the "Dodano osobę" toast
-- [x] 2.9 `/persons/{id}` typed in the address bar no longer shows a preview page
-- [x] 2.10 No link anywhere (list, tree, scans, modal breadcrumbs) leads to the removed page
+- [x] 2.8 Adding "Jan Testowy" from the list lands on `/tree/{id}` centred on him with the "Dodano osobę" toast — 73d4fa4
+- [x] 2.9 `/persons/{id}` typed in the address bar no longer shows a preview page — 73d4fa4
+- [x] 2.10 No link anywhere (list, tree, scans, modal breadcrumbs) leads to the removed page — 73d4fa4

@@ -1,7 +1,7 @@
 ---
 change_id: person-preview-in-modal
 title: Person preview in modal
-status: implementing
+status: implemented
 created: 2026-09-28
 updated: 2026-09-28
 archived_at: null
