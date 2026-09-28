@@ -87,15 +87,15 @@ test('person show exposes whether the person is the proband', function () {
     $other = Person::factory()->for($user->tree)->create();
     $user->tree->update(['root_person_id' => $proband->id]);
 
-    $this->actingAs($user)->get(route('persons.show', $proband))
+    $this->actingAs($user)->get(personPreviewUrl($proband))
         ->assertInertia(fn ($page) => $page
-            ->component('persons/show')
-            ->where('isRootPerson', true));
+            ->component('persons/index')
+            ->where('personPreview.isRootPerson', true));
 
-    $this->actingAs($user)->get(route('persons.show', $other))
+    $this->actingAs($user)->get(personPreviewUrl($other))
         ->assertInertia(fn ($page) => $page
-            ->component('persons/show')
-            ->where('isRootPerson', false));
+            ->component('persons/index')
+            ->where('personPreview.isRootPerson', false));
 });
 
 /**

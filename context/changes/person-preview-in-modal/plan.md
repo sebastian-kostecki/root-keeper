@@ -253,41 +253,41 @@ None — no schema or data changes. Old `/persons/{id}` bookmarks stop working (
 
 #### Automated
 
-- [x] 1.1 Affected feature tests pass: `vendor/bin/sail artisan test --compact tests/Feature/PersonsTest.php tests/Feature/TreeTest.php tests/Feature/MarriagesTest.php tests/Feature/ParentChildRelationsTest.php tests/Feature/EventScansTest.php tests/Feature/ScansTest.php`
-- [x] 1.2 Larastan passes: `vendor/bin/sail composer types:check`
-- [x] 1.3 Format and lint pass: `vendor/bin/sail npm run check`
-- [x] 1.4 Type check passes: `vendor/bin/sail npm run types:check`
-- [x] 1.5 Production build succeeds: `vendor/bin/sail npm run build`
-- [x] 1.6 PHP style is clean: `vendor/bin/sail bin pint --dirty --format agent`
+- [x] 1.1 Affected feature tests pass: `vendor/bin/sail artisan test --compact tests/Feature/PersonsTest.php tests/Feature/TreeTest.php tests/Feature/MarriagesTest.php tests/Feature/ParentChildRelationsTest.php tests/Feature/EventScansTest.php tests/Feature/ScansTest.php` — 5e191be
+- [x] 1.2 Larastan passes: `vendor/bin/sail composer types:check` — 5e191be
+- [x] 1.3 Format and lint pass: `vendor/bin/sail npm run check` — 5e191be
+- [x] 1.4 Type check passes: `vendor/bin/sail npm run types:check` — 5e191be
+- [x] 1.5 Production build succeeds: `vendor/bin/sail npm run build` — 5e191be
+- [x] 1.6 PHP style is clean: `vendor/bin/sail bin pint --dirty --format agent` — 5e191be
 
 #### Manual
 
-- [x] 1.7 On the tree, the eye button of a non-centre card opens the modal; the tree behind stays on the same centre and union; closing with X or Esc leaves it unchanged
-- [x] 1.8 Clicking a card body still re-centres the tree; the header "Podgląd" opens the centre person's modal
-- [x] 1.9 On `/persons?q=Kow`, clicking a row opens the modal; closing returns to the same filtered list with the search text intact
-- [x] 1.10 On a scan preview, a "Potwierdza" entry opens the modal over the scan page
-- [x] 1.11 In the modal, clicking parent → grandparent → uncle swaps the content; "Wstecz" returns uncle → grandparent → parent → start and then disappears
-- [x] 1.12 Adding a parent in the modal (opened from the tree) shows the parent in the modal and on the tree behind it; "Wstecz" still works afterwards
-- [x] 1.13 Linking and unlinking a scan on birth/marriage/death works inside the modal; clicking a scan thumbnail opens the full scan page, and browser back returns to the tree with the modal reopened
-- [x] 1.14 "Edytuj" opens the person form over the preview; saving updates the modal and closes only the form
-- [x] 1.15 "Ustaw jako probanta" in the modal swaps to the "Probant" badge
-- [x] 1.16 Deleting a non-centre person from the tree modal keeps the tree on the same centre; deleting the centre person returns the tree to the proband; deleting from the list keeps the filtered list
-- [x] 1.17 At 375px the modal fills the screen, title/"Wstecz"/X stay pinned and the content scrolls; at 1280px it is centred with an inner scroll for long content; dark mode looks correct
+- [x] 1.7 On the tree, the eye button of a non-centre card opens the modal; the tree behind stays on the same centre and union; closing with X or Esc leaves it unchanged — 5e191be
+- [x] 1.8 Clicking a card body still re-centres the tree; the header "Podgląd" opens the centre person's modal — 5e191be
+- [x] 1.9 On `/persons?q=Kow`, clicking a row opens the modal; closing returns to the same filtered list with the search text intact — 5e191be
+- [x] 1.10 On a scan preview, a "Potwierdza" entry opens the modal over the scan page — 5e191be
+- [x] 1.11 In the modal, clicking parent → grandparent → uncle swaps the content; "Wstecz" returns uncle → grandparent → parent → start and then disappears — 5e191be
+- [x] 1.12 Adding a parent in the modal (opened from the tree) shows the parent in the modal and on the tree behind it; "Wstecz" still works afterwards — 5e191be
+- [x] 1.13 Linking and unlinking a scan on birth/marriage/death works inside the modal; clicking a scan thumbnail opens the full scan page, and browser back returns to the tree with the modal reopened — 5e191be
+- [x] 1.14 "Edytuj" opens the person form over the preview; saving updates the modal and closes only the form — 5e191be
+- [x] 1.15 "Ustaw jako probanta" in the modal swaps to the "Probant" badge — 5e191be
+- [x] 1.16 Deleting a non-centre person from the tree modal keeps the tree on the same centre; deleting the centre person returns the tree to the proband; deleting from the list keeps the filtered list — 5e191be
+- [x] 1.17 At 375px the modal fills the screen, title/"Wstecz"/X stay pinned and the content scrolls; at 1280px it is centred with an inner scroll for long content; dark mode looks correct — 5e191be
 
 ### Phase 2: Adding lands on the tree; remove the preview page
 
 #### Automated
 
-- [ ] 2.1 Full affected suite passes: `vendor/bin/sail artisan test --compact tests/Feature/PersonsTest.php tests/Feature/TreeTest.php tests/Feature/MarriagesTest.php tests/Feature/ParentChildRelationsTest.php tests/Feature/EventScansTest.php tests/Feature/ScansTest.php`
-- [ ] 2.2 Larastan passes: `vendor/bin/sail composer types:check`
-- [ ] 2.3 Format and lint pass: `vendor/bin/sail npm run check`
-- [ ] 2.4 Type check passes: `vendor/bin/sail npm run types:check`
-- [ ] 2.5 Production build succeeds: `vendor/bin/sail npm run build`
-- [ ] 2.6 PHP style is clean: `vendor/bin/sail bin pint --dirty --format agent`
-- [ ] 2.7 No references to the removed page remain: `grep -rn "persons/show\|PersonController.show\|persons.show" resources/js app routes tests` returns nothing outside generated Wayfinder dirs
+- [x] 2.1 Full affected suite passes: `vendor/bin/sail artisan test --compact tests/Feature/PersonsTest.php tests/Feature/TreeTest.php tests/Feature/MarriagesTest.php tests/Feature/ParentChildRelationsTest.php tests/Feature/EventScansTest.php tests/Feature/ScansTest.php`
+- [x] 2.2 Larastan passes: `vendor/bin/sail composer types:check`
+- [x] 2.3 Format and lint pass: `vendor/bin/sail npm run check`
+- [x] 2.4 Type check passes: `vendor/bin/sail npm run types:check`
+- [x] 2.5 Production build succeeds: `vendor/bin/sail npm run build`
+- [x] 2.6 PHP style is clean: `vendor/bin/sail bin pint --dirty --format agent`
+- [x] 2.7 No references to the removed page remain: `grep -rn "persons/show\|PersonController.show\|persons.show" resources/js app routes tests` returns nothing outside generated Wayfinder dirs
 
 #### Manual
 
-- [ ] 2.8 Adding "Jan Testowy" from the list lands on `/tree/{id}` centred on him with the "Dodano osobę" toast
-- [ ] 2.9 `/persons/{id}` typed in the address bar no longer shows a preview page
-- [ ] 2.10 No link anywhere (list, tree, scans, modal breadcrumbs) leads to the removed page
+- [x] 2.8 Adding "Jan Testowy" from the list lands on `/tree/{id}` centred on him with the "Dodano osobę" toast
+- [x] 2.9 `/persons/{id}` typed in the address bar no longer shows a preview page
+- [x] 2.10 No link anywhere (list, tree, scans, modal breadcrumbs) leads to the removed page

@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Actions\Persons\BuildPersonPreview;
 use App\Actions\Persons\CreatePerson;
 use App\Actions\Persons\DeletePerson;
 use App\Actions\Persons\UpdatePerson;
@@ -76,17 +75,7 @@ class PersonController extends Controller
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Dodano osobę')]);
 
-        return redirect()->back(fallback: route('persons.index'));
-    }
-
-    /**
-     * Display the given person.
-     */
-    public function show(Request $request, Person $person, BuildPersonPreview $buildPersonPreview): Response
-    {
-        Gate::authorize('view', $person);
-
-        return Inertia::render('persons/show', $buildPersonPreview->handle($person, $request->user()));
+        return to_route('tree.show', $person);
     }
 
     /**
@@ -118,8 +107,7 @@ class PersonController extends Controller
     /**
      * Resolve where to go after deleting the person: the referring page without its `person` preview key.
      *
-     * Falls back to the persons list when the referrer is missing, external, or a page that no longer exists
-     * (the deleted person's own page); a tree centred on the deleted person returns to the proband's tree.
+     * Falls back to the persons list when the referrer is missing, external or unmatchable; a tree centred on the deleted person returns to the proband's tree.
      */
     private function urlAfterDelete(Request $request, Person $person): string
     {
@@ -137,10 +125,6 @@ class PersonController extends Controller
         }
 
         $name = $route->getName();
-
-        if ($name === 'persons.show') {
-            return $fallback;
-        }
 
         if ($name === 'tree.show' && $route->originalParameter('person') === (string) $person->id) {
             return route('tree.index');

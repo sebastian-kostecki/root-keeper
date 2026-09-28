@@ -12,7 +12,6 @@ test('guests are redirected to the login page from persons routes', function () 
     $person = Person::factory()->create();
 
     $this->get(route('persons.index'))->assertRedirect(route('login'));
-    $this->get(route('persons.show', $person))->assertRedirect(route('login'));
     $this->post(route('persons.store'), [])->assertRedirect(route('login'));
     $this->put(route('persons.update', $person), [])->assertRedirect(route('login'));
     $this->delete(route('persons.destroy', $person))->assertRedirect(route('login'));
@@ -205,13 +204,13 @@ test('person show exposes birth is_confirmed false with no scans and true with o
     $event = Event::factory()->for($user->tree)->birth()->create();
     $event->participants()->attach($person, ['role' => ParticipantRole::Subject]);
 
-    $response = $this->actingAs($user)->get(route('persons.show', $person));
+    $response = $this->actingAs($user)->get(personPreviewUrl($person));
 
     $response->assertOk();
     $response->assertInertia(fn ($page) => $page
-        ->component('persons/show')
-        ->where('person.birth.is_confirmed', false)
-        ->where('person.birth.scans', []));
+        ->component('persons/index')
+        ->where('personPreview.person.birth.is_confirmed', false)
+        ->where('personPreview.person.birth.scans', []));
 
     $olderScan = Scan::factory()->for($user->tree)->create();
     $newerScan = Scan::factory()->for($user->tree)->create();
@@ -219,64 +218,21 @@ test('person show exposes birth is_confirmed false with no scans and true with o
     $this->travel(1)->minute();
     $event->scans()->attach($olderScan);
 
-    $response = $this->actingAs($user)->get(route('persons.show', $person));
+    $response = $this->actingAs($user)->get(personPreviewUrl($person));
 
     $response->assertOk();
     $response->assertInertia(fn ($page) => $page
-        ->component('persons/show')
-        ->where('person.birth.is_confirmed', true)
-        ->where('person.birth.scans.0.id', $newerScan->id)
-        ->where('person.birth.scans.1.id', $olderScan->id));
+        ->component('persons/index')
+        ->where('personPreview.person.birth.is_confirmed', true)
+        ->where('personPreview.person.birth.scans.0.id', $newerScan->id)
+        ->where('personPreview.person.birth.scans.1.id', $olderScan->id));
 });
 
-test('person show does not include availableScans on a normal visit', function () {
+test('the person URL itself no longer renders a page', function () {
     $user = User::factory()->create();
     $person = Person::factory()->for($user->tree)->create();
 
-    $response = $this->actingAs($user)->get(route('persons.show', $person));
-
-    $response->assertOk();
-    $response->assertInertia(fn ($page) => $page
-        ->component('persons/show')
-        ->missing('availableScans'));
-});
-
-test('a partial reload of availableScans returns only the user own scans, newest first', function () {
-    $user = User::factory()->create();
-    $otherUser = User::factory()->create();
-    $person = Person::factory()->for($user->tree)->create();
-
-    $newer = Scan::factory()->for($user->tree)->create();
-    $older = Scan::factory()->for($user->tree)->create(['created_at' => now()->subDay()]);
-    Scan::factory()->for($otherUser->tree)->create();
-
-    $initial = $this->actingAs($user)->get(route('persons.show', $person), ['X-Inertia' => 'true']);
-    $version = $initial->headers->get('X-Inertia-Version');
-
-    $response = $this->actingAs($user)->get(route('persons.show', $person), [
-        'X-Inertia' => 'true',
-        'X-Inertia-Version' => $version,
-        'X-Inertia-Partial-Data' => 'availableScans',
-        'X-Inertia-Partial-Component' => 'persons/show',
-    ]);
-
-    $response->assertOk();
-    $props = $response->json('props');
-
-    expect($props)->not->toHaveKey('person');
-    expect($props['availableScans'])->toHaveCount(2);
-    expect($props['availableScans'][0]['id'])->toBe($newer->id);
-    expect($props['availableScans'][1]['id'])->toBe($older->id);
-});
-
-test('persons show returns not found for a person from another users tree', function () {
-    $user = User::factory()->create();
-    $otherUser = User::factory()->create();
-    $person = Person::factory()->for($otherUser->tree)->create();
-
-    $response = $this->actingAs($user)->get(route('persons.show', $person));
-
-    $response->assertNotFound();
+    $this->actingAs($user)->get("/persons/{$person->id}")->assertStatus(405);
 });
 
 test('store creates a person and a birth event even when birth fields are empty', function () {
@@ -291,7 +247,7 @@ test('store creates a person and a birth event even when birth fields are empty'
 
     $person = Person::where('first_name', 'Jan')->where('last_name', 'Kowalski')->firstOrFail();
 
-    $response->assertRedirect(route('persons.index', ['q' => 'Kowal']));
+    $response->assertRedirect(route('tree.show', $person));
 
     expect($person->tree_id)->toBe($user->tree->id);
 
@@ -499,15 +455,15 @@ test('person show exposes gender as value and label, or null', function () {
     $female = Person::factory()->for($user->tree)->female()->create();
     $unknown = Person::factory()->for($user->tree)->create();
 
-    $this->actingAs($user)->get(route('persons.show', $female))
+    $this->actingAs($user)->get(personPreviewUrl($female))
         ->assertInertia(fn ($page) => $page
-            ->component('persons/show')
-            ->where('person.gender', ['value' => 'female', 'label' => 'Kobieta']));
+            ->component('persons/index')
+            ->where('personPreview.person.gender', ['value' => 'female', 'label' => 'Kobieta']));
 
-    $this->actingAs($user)->get(route('persons.show', $unknown))
+    $this->actingAs($user)->get(personPreviewUrl($unknown))
         ->assertInertia(fn ($page) => $page
-            ->component('persons/show')
-            ->where('person.gender', null));
+            ->component('persons/index')
+            ->where('personPreview.person.gender', null));
 });
 
 test('persons index passes gender and religion options', function () {
@@ -526,12 +482,12 @@ test('person show passes gender and religion options and prefills personForm.gen
     $user = User::factory()->create();
     $person = Person::factory()->for($user->tree)->male()->create();
 
-    $this->actingAs($user)->get(route('persons.show', $person))
+    $this->actingAs($user)->get(personPreviewUrl($person))
         ->assertInertia(fn ($page) => $page
-            ->component('persons/show')
-            ->has('genders', 2)
-            ->has('religions', 6)
-            ->where('personForm.gender', 'male'));
+            ->component('persons/index')
+            ->has('personPreview.genders', 2)
+            ->has('personPreview.religions', 6)
+            ->where('personPreview.personForm.gender', 'male'));
 });
 
 test('the old create and edit urls return not found', function () {
@@ -542,12 +498,12 @@ test('the old create and edit urls return not found', function () {
     $this->actingAs($user)->get("/persons/{$person->id}/edit")->assertNotFound();
 });
 
-test('store without a previous url redirects to the persons list', function () {
+test('store redirects to the tree of the created person regardless of the referrer', function () {
     $user = User::factory()->create();
 
     $this->actingAs($user)
         ->post(route('persons.store'), ['first_name' => 'Jan'])
-        ->assertRedirect(route('persons.index'));
+        ->assertRedirect(route('tree.show', Person::where('first_name', 'Jan')->firstOrFail()));
 });
 
 test('store rejects death fields when the person is not marked deceased', function () {
@@ -578,28 +534,28 @@ test('person show exposes personForm with raw date parts, religion value, is_dec
     $birth = Event::factory()->for($user->tree)->birth()->create(['date_year' => 1900, 'date_month' => 5, 'date_day' => 10]);
     $birth->participants()->attach($person, ['role' => ParticipantRole::Subject]);
 
-    $response = $this->actingAs($user)->get(route('persons.show', $person));
+    $response = $this->actingAs($user)->get(personPreviewUrl($person));
 
     $response->assertOk();
     $response->assertInertia(fn ($page) => $page
-        ->component('persons/show')
-        ->where('personForm.religion', 'roman_catholic')
-        ->where('personForm.is_deceased', false)
-        ->where('personForm.birth.year', 1900)
-        ->where('personForm.birth.month', 5)
-        ->where('personForm.birth.day', 10)
-        ->where('personForm.birth.is_confirmed', false)
-        ->where('personForm.death', null));
+        ->component('persons/index')
+        ->where('personPreview.personForm.religion', 'roman_catholic')
+        ->where('personPreview.personForm.is_deceased', false)
+        ->where('personPreview.personForm.birth.year', 1900)
+        ->where('personPreview.personForm.birth.month', 5)
+        ->where('personPreview.personForm.birth.day', 10)
+        ->where('personPreview.personForm.birth.is_confirmed', false)
+        ->where('personPreview.personForm.death', null));
 
     $scan = Scan::factory()->for($user->tree)->create();
     $birth->scans()->attach($scan);
 
-    $response = $this->actingAs($user)->get(route('persons.show', $person));
+    $response = $this->actingAs($user)->get(personPreviewUrl($person));
 
     $response->assertOk();
     $response->assertInertia(fn ($page) => $page
-        ->component('persons/show')
-        ->where('personForm.birth.is_confirmed', true));
+        ->component('persons/index')
+        ->where('personPreview.personForm.birth.is_confirmed', true));
 });
 
 test('persons update returns not found for a person from another users tree', function () {
@@ -916,19 +872,14 @@ test('destroy from the filtered list keeps the search and drops the person param
         ->assertRedirect(route('persons.index', ['q' => 'Kow']));
 });
 
-test('destroy without a referrer or from an external or legacy page goes to the persons list', function () {
+test('destroy without a referrer or from an external page goes to the persons list', function () {
     $user = User::factory()->create();
     $first = Person::factory()->for($user->tree)->create();
     $second = Person::factory()->for($user->tree)->create();
-    $third = Person::factory()->for($user->tree)->create();
 
     $this->actingAs($user)->delete(route('persons.destroy', $first))->assertRedirect(route('persons.index'));
 
     $this->actingAs($user)->from('https://example.com/persons?person=1')
         ->delete(route('persons.destroy', $second))
-        ->assertRedirect(route('persons.index'));
-
-    $this->actingAs($user)->from(route('persons.show', $third))
-        ->delete(route('persons.destroy', $third))
         ->assertRedirect(route('persons.index'));
 });

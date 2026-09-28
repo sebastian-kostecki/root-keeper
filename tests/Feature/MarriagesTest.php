@@ -20,7 +20,7 @@ test('store creates exactly one marriage event with both people as spouses, redi
     $person = Person::factory()->for($user->tree)->create();
     $spouse = Person::factory()->for($user->tree)->create();
 
-    $response = $this->from(route('persons.show', $person))
+    $response = $this->from(personPreviewUrl($person))
         ->actingAs($user)
         ->post(route('marriages.store'), [
             'person_id' => $person->id,
@@ -28,7 +28,7 @@ test('store creates exactly one marriage event with both people as spouses, redi
             'marriage' => ['year' => 1850, 'month' => 6, 'day' => 12, 'is_approximate' => true, 'place' => 'Kraków'],
         ]);
 
-    $response->assertRedirect(route('persons.show', $person));
+    $response->assertRedirect(personPreviewUrl($person));
     $response->assertSessionHas('inertia.flash_data.toast', ['type' => 'success', 'message' => 'Dodano małżeństwo']);
 
     $this->assertDatabaseCount('events', 1);
@@ -46,17 +46,17 @@ test('store creates exactly one marriage event with both people as spouses, redi
     expect($participants->pluck('id')->sort()->values()->all())->toBe(collect([$person->id, $spouse->id])->sort()->values()->all());
     expect($participants->every(fn (Person $participant): bool => $participant->pivot->role === ParticipantRole::Spouse))->toBeTrue();
 
-    $this->actingAs($user)->get(route('persons.show', $person))
+    $this->actingAs($user)->get(personPreviewUrl($person))
         ->assertInertia(fn ($page) => $page
-            ->component('persons/show')
-            ->has('person.marriages', 1)
-            ->where('person.marriages.0.place', 'Kraków')
-            ->where('person.marriages.0.spouse.id', $spouse->id));
+            ->component('persons/index')
+            ->has('personPreview.person.marriages', 1)
+            ->where('personPreview.person.marriages.0.place', 'Kraków')
+            ->where('personPreview.person.marriages.0.spouse.id', $spouse->id));
 
-    $this->actingAs($user)->get(route('persons.show', $spouse))
+    $this->actingAs($user)->get(personPreviewUrl($spouse))
         ->assertInertia(fn ($page) => $page
-            ->has('person.marriages', 1)
-            ->where('person.marriages.0.spouse.id', $person->id));
+            ->has('personPreview.person.marriages', 1)
+            ->where('personPreview.person.marriages.0.spouse.id', $person->id));
 });
 
 test('an impossible calendar date is rejected with the shared message', function () {
@@ -149,16 +149,16 @@ test('a person with several marriages sees them ordered by date with unknown dat
     $yearOnly = Person::factory()->for($user->tree)->create();
     attachMarriage($person, $yearOnly, year: 1850);
 
-    $response = $this->actingAs($user)->get(route('persons.show', $person));
+    $response = $this->actingAs($user)->get(personPreviewUrl($person));
 
     $response->assertOk();
     $response->assertInertia(fn ($page) => $page
-        ->component('persons/show')
-        ->has('person.marriages', 4)
-        ->where('person.marriages.0.spouse.id', $yearOnly->id)
-        ->where('person.marriages.1.spouse.id', $yearAndMonth->id)
-        ->where('person.marriages.2.spouse.id', $laterYear->id)
-        ->where('person.marriages.3.spouse.id', $noDate->id));
+        ->component('persons/index')
+        ->has('personPreview.person.marriages', 4)
+        ->where('personPreview.person.marriages.0.spouse.id', $yearOnly->id)
+        ->where('personPreview.person.marriages.1.spouse.id', $yearAndMonth->id)
+        ->where('personPreview.person.marriages.2.spouse.id', $laterYear->id)
+        ->where('personPreview.person.marriages.3.spouse.id', $noDate->id));
 });
 
 test('a scan linked to a marriage confirms it on both previews and lists both spouses on the scan', function () {
@@ -170,11 +170,11 @@ test('a scan linked to a marriage confirms it on both previews and lists both sp
 
     $this->actingAs($user)->post(route('events.scans.store', $marriage), ['scan_id' => $scan->id]);
 
-    $this->actingAs($user)->get(route('persons.show', $person))
-        ->assertInertia(fn ($page) => $page->where('person.marriages.0.is_confirmed', true));
+    $this->actingAs($user)->get(personPreviewUrl($person))
+        ->assertInertia(fn ($page) => $page->where('personPreview.person.marriages.0.is_confirmed', true));
 
-    $this->actingAs($user)->get(route('persons.show', $spouse))
-        ->assertInertia(fn ($page) => $page->where('person.marriages.0.is_confirmed', true));
+    $this->actingAs($user)->get(personPreviewUrl($spouse))
+        ->assertInertia(fn ($page) => $page->where('personPreview.person.marriages.0.is_confirmed', true));
 
     $response = $this->actingAs($user)->get(route('scans.show', $scan));
 
@@ -201,13 +201,13 @@ test('update changes the date and place and keeps linked scans', function () {
     $scan = Scan::factory()->for($user->tree)->create();
     $marriage->scans()->attach($scan);
 
-    $response = $this->from(route('persons.show', $person))
+    $response = $this->from(personPreviewUrl($person))
         ->actingAs($user)
         ->put(route('marriages.update', $marriage), [
             'marriage' => ['year' => 1851, 'month' => 7, 'day' => 2, 'is_approximate' => false, 'place' => 'Kraków'],
         ]);
 
-    $response->assertRedirect(route('persons.show', $person));
+    $response->assertRedirect(personPreviewUrl($person));
     $response->assertSessionHas('inertia.flash_data.toast', ['type' => 'success', 'message' => 'Zapisano zmiany']);
 
     $marriage->refresh();
@@ -271,11 +271,11 @@ test('destroy removes the event, its participants and its scan links, but keeps 
     $scan = Scan::factory()->for($user->tree)->create();
     $marriage->scans()->attach($scan);
 
-    $response = $this->from(route('persons.show', $person))
+    $response = $this->from(personPreviewUrl($person))
         ->actingAs($user)
         ->delete(route('marriages.destroy', $marriage));
 
-    $response->assertRedirect(route('persons.show', $person));
+    $response->assertRedirect(personPreviewUrl($person));
     $response->assertSessionHas('inertia.flash_data.toast', ['type' => 'success', 'message' => 'Usunięto małżeństwo']);
 
     $this->assertDatabaseMissing('events', ['id' => $marriage->id]);
@@ -283,11 +283,11 @@ test('destroy removes the event, its participants and its scan links, but keeps 
     $this->assertDatabaseMissing('event_scan', ['event_id' => $marriage->id]);
     $this->assertDatabaseHas('scans', ['id' => $scan->id]);
 
-    $this->actingAs($user)->get(route('persons.show', $person))
-        ->assertInertia(fn ($page) => $page->has('person.marriages', 0));
+    $this->actingAs($user)->get(personPreviewUrl($person))
+        ->assertInertia(fn ($page) => $page->has('personPreview.person.marriages', 0));
 
-    $this->actingAs($user)->get(route('persons.show', $spouse))
-        ->assertInertia(fn ($page) => $page->has('person.marriages', 0));
+    $this->actingAs($user)->get(personPreviewUrl($spouse))
+        ->assertInertia(fn ($page) => $page->has('personPreview.person.marriages', 0));
 });
 
 test('deleting one spouse removes the marriage but keeps the other spouse and the scan', function () {
@@ -305,8 +305,8 @@ test('deleting one spouse removes the marriage but keeps the other spouse and th
     $this->assertDatabaseHas('people', ['id' => $spouse->id]);
     $this->assertDatabaseHas('scans', ['id' => $scan->id]);
 
-    $this->actingAs($user)->get(route('persons.show', $spouse))
-        ->assertInertia(fn ($page) => $page->has('person.marriages', 0));
+    $this->actingAs($user)->get(personPreviewUrl($spouse))
+        ->assertInertia(fn ($page) => $page->has('personPreview.person.marriages', 0));
 });
 
 test('relationCandidates marks the existing spouse and leaves other people unblocked', function () {
@@ -318,14 +318,14 @@ test('relationCandidates marks the existing spouse and leaves other people unblo
     $other = Person::factory()->for($tree)->create();
     attachMarriage($person, $spouse);
 
-    $initial = $this->actingAs($user)->get(route('persons.show', $person), ['X-Inertia' => 'true']);
+    $initial = $this->actingAs($user)->get(personPreviewUrl($person), ['X-Inertia' => 'true']);
     $version = $initial->headers->get('X-Inertia-Version');
 
-    $response = $this->actingAs($user)->get(route('persons.show', $person), [
+    $response = $this->actingAs($user)->get(personPreviewUrl($person), [
         'X-Inertia' => 'true',
         'X-Inertia-Version' => $version,
         'X-Inertia-Partial-Data' => 'relationCandidates',
-        'X-Inertia-Partial-Component' => 'persons/show',
+        'X-Inertia-Partial-Component' => 'persons/index',
     ]);
 
     $response->assertOk();

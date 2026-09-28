@@ -57,7 +57,7 @@ class HandleInertiaRequests extends Middleware
                 $request->user()->tree->scans()->latest()->orderByDesc('id')->get()
             )->resolve()),
             'relationCandidates' => Inertia::optional(function () use ($request): array {
-                $person = $this->previewPerson($request) ?? $this->routePerson($request);
+                $person = $this->previewPerson($request);
 
                 return $person === null ? [] : app(ListRelationCandidates::class)->handle($person);
             }),
@@ -83,15 +83,5 @@ class HandleInertiaRequests extends Middleware
         Gate::authorize('view', $person);
 
         return $person;
-    }
-
-    /**
-     * The person bound to the legacy `persons.show` page, until that page is removed.
-     */
-    private function routePerson(Request $request): ?Person
-    {
-        $person = $request->route('person');
-
-        return $request->route()?->getName() === 'persons.show' && $person instanceof Person ? $person : null;
     }
 }

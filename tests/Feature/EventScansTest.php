@@ -139,11 +139,11 @@ test('one scan linked to two events confirms both', function () {
 
     expect($scan->events()->count())->toBe(2);
 
-    $this->actingAs($user)->get(route('persons.show', $personA))
-        ->assertInertia(fn ($page) => $page->where('person.birth.is_confirmed', true));
+    $this->actingAs($user)->get(personPreviewUrl($personA))
+        ->assertInertia(fn ($page) => $page->where('personPreview.person.birth.is_confirmed', true));
 
-    $this->actingAs($user)->get(route('persons.show', $personB))
-        ->assertInertia(fn ($page) => $page->where('person.death.is_confirmed', true));
+    $this->actingAs($user)->get(personPreviewUrl($personB))
+        ->assertInertia(fn ($page) => $page->where('personPreview.person.death.is_confirmed', true));
 });
 
 test('unlinking another trees scan from an own event returns not found', function () {

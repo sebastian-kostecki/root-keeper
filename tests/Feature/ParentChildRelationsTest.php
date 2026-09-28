@@ -199,18 +199,18 @@ test('the preview returns parents and children with the relation id, ordered by 
     ParentChildRelation::factory()->create(['tree_id' => $user->tree->id, 'parent_id' => $person->id, 'child_id' => $yearAndMonth->id]);
     $relationYearOnly = ParentChildRelation::factory()->create(['tree_id' => $user->tree->id, 'parent_id' => $person->id, 'child_id' => $yearOnly->id]);
 
-    $response = $this->actingAs($user)->get(route('persons.show', $person));
+    $response = $this->actingAs($user)->get(personPreviewUrl($person));
 
     $response->assertOk();
     $response->assertInertia(fn ($page) => $page
-        ->component('persons/show')
-        ->where('person.parents.0.id', $parent->id)
-        ->where('person.parents.0.relation_id', $relationParent->id)
-        ->where('person.children.0.id', $yearOnly->id)
-        ->where('person.children.0.relation_id', $relationYearOnly->id)
-        ->where('person.children.1.id', $yearAndMonth->id)
-        ->where('person.children.2.id', $laterYear->id)
-        ->where('person.children.3.id', $noBirth->id));
+        ->component('persons/index')
+        ->where('personPreview.person.parents.0.id', $parent->id)
+        ->where('personPreview.person.parents.0.relation_id', $relationParent->id)
+        ->where('personPreview.person.children.0.id', $yearOnly->id)
+        ->where('personPreview.person.children.0.relation_id', $relationYearOnly->id)
+        ->where('personPreview.person.children.1.id', $yearAndMonth->id)
+        ->where('personPreview.person.children.2.id', $laterYear->id)
+        ->where('personPreview.person.children.3.id', $noBirth->id));
 });
 
 test('two children born on the same date are ordered by name', function () {
@@ -226,24 +226,24 @@ test('two children born on the same date are ordered by name', function () {
     ParentChildRelation::factory()->create(['tree_id' => $user->tree->id, 'parent_id' => $person->id, 'child_id' => $zChild->id]);
     ParentChildRelation::factory()->create(['tree_id' => $user->tree->id, 'parent_id' => $person->id, 'child_id' => $aChild->id]);
 
-    $response = $this->actingAs($user)->get(route('persons.show', $person));
+    $response = $this->actingAs($user)->get(personPreviewUrl($person));
 
     $response->assertOk();
     $response->assertInertia(fn ($page) => $page
-        ->component('persons/show')
-        ->where('person.children.0.id', $aChild->id)
-        ->where('person.children.1.id', $zChild->id));
+        ->component('persons/index')
+        ->where('personPreview.person.children.0.id', $aChild->id)
+        ->where('personPreview.person.children.1.id', $zChild->id));
 });
 
 test('person show does not include relationCandidates on a normal visit', function () {
     $user = User::factory()->create();
     $person = Person::factory()->for($user->tree)->create();
 
-    $response = $this->actingAs($user)->get(route('persons.show', $person));
+    $response = $this->actingAs($user)->get(personPreviewUrl($person));
 
     $response->assertOk();
     $response->assertInertia(fn ($page) => $page
-        ->component('persons/show')
+        ->component('persons/index')
         ->missing('relationCandidates'));
 });
 
@@ -271,14 +271,14 @@ test('a partial reload of relationCandidates excludes the current person and oth
     $otherUser = User::factory()->create();
     $foreignPerson = Person::factory()->for($otherUser->tree)->create();
 
-    $initial = $this->actingAs($user)->get(route('persons.show', $person), ['X-Inertia' => 'true']);
+    $initial = $this->actingAs($user)->get(personPreviewUrl($person), ['X-Inertia' => 'true']);
     $version = $initial->headers->get('X-Inertia-Version');
 
-    $response = $this->actingAs($user)->get(route('persons.show', $person), [
+    $response = $this->actingAs($user)->get(personPreviewUrl($person), [
         'X-Inertia' => 'true',
         'X-Inertia-Version' => $version,
         'X-Inertia-Partial-Data' => 'relationCandidates',
-        'X-Inertia-Partial-Component' => 'persons/show',
+        'X-Inertia-Partial-Component' => 'persons/index',
     ]);
 
     $response->assertOk();
