@@ -425,35 +425,35 @@ None. There is no schema or data change. The seeder is dev-only and idempotent: 
 
 #### Automated
 
-- [x] 2.1 PHP formatting applied: `vendor/bin/sail bin pint --dirty --format agent`
-- [x] 2.2 Seeder runs: `vendor/bin/sail artisan db:seed --class=TreeViewDemoSeeder --no-interaction`
-- [x] 2.3 Format + lint pass: `vendor/bin/sail npm run check`
-- [x] 2.4 Types pass: `vendor/bin/sail npm run types:check`
-- [x] 2.5 Build passes: `vendor/bin/sail npm run build`
+- [x] 2.1 PHP formatting applied: `vendor/bin/sail bin pint --dirty --format agent` — e1bf02b
+- [x] 2.2 Seeder runs: `vendor/bin/sail artisan db:seed --class=TreeViewDemoSeeder --no-interaction` — e1bf02b
+- [x] 2.3 Format + lint pass: `vendor/bin/sail npm run check` — e1bf02b
+- [x] 2.4 Types pass: `vendor/bin/sail npm run types:check` — e1bf02b
+- [x] 2.5 Build passes: `vendor/bin/sail npm run build` — e1bf02b
 
 #### Manual
 
-- [x] 2.6 Proband sheet (Jan + Anna, 2 children): the couple line joins both cards, the descent meets the bracket's midpoint, and the children are centred under the couple
-- [x] 2.7 Co-parent (Jan + Marta, 1 child): Oliwia sits directly under the couple axis, and the line passes behind the „Połącz jako małżeństwo” button into her card
-- [x] 2.8 Unknown partner and a union with no children: the couple line is shown and there is no descent; „Brak dzieci w tym związku.” and „Dodaj dziecko” are centred
-- [x] 2.9 Person without unions (Kuba): no couple line next to „Dodaj małżonka”
-- [x] 2.10 5-children couple: two centred rows, each with a symmetric bracket
-- [x] 2.11 1440px: no horizontal scrollbar on the sheet, in light and dark
+- [x] 2.6 Proband sheet (Jan + Anna, 2 children): the couple line joins both cards, the descent meets the bracket's midpoint, and the children are centred under the couple — e1bf02b
+- [x] 2.7 Co-parent (Jan + Marta, 1 child): Oliwia sits directly under the couple axis, and the line passes behind the „Połącz jako małżeństwo” button into her card — e1bf02b
+- [x] 2.8 Unknown partner and a union with no children: the couple line is shown and there is no descent; „Brak dzieci w tym związku.” and „Dodaj dziecko” are centred — e1bf02b
+- [x] 2.9 Person without unions (Kuba): no couple line next to „Dodaj małżonka” — e1bf02b
+- [x] 2.10 5-children couple: two centred rows, each with a symmetric bracket — e1bf02b
+- [x] 2.11 1440px: no horizontal scrollbar on the sheet, in light and dark — e1bf02b
 
 ### Phase 3: Interaction states — selected, hover, focus (C3, C4, D3)
 
 #### Automated
 
-- [ ] 3.1 Format + lint pass: `vendor/bin/sail npm run check`
-- [ ] 3.2 Types pass: `vendor/bin/sail npm run types:check`
-- [ ] 3.3 Build passes: `vendor/bin/sail npm run build`
+- [x] 3.1 Format + lint pass: `vendor/bin/sail npm run check`
+- [x] 3.2 Types pass: `vendor/bin/sail npm run types:check`
+- [x] 3.3 Build passes: `vendor/bin/sail npm run build`
 
 #### Manual
 
-- [ ] 3.4 Light mode: the selected union is obvious among the chips; switching unions moves the mark
-- [ ] 3.5 Light and dark: hover on a person card and on a „Nieznany ojciec +” placeholder is visible, and the gender strip keeps its colour on hover
-- [ ] 3.6 Keyboard: tabbing through the sheet shows a detached ≥3:1 ring on cards, placeholders and eye buttons, visually distinct from the focus person's static ring
-- [ ] 3.7 Dark mode: selected, hover and focus remain visible and not glaring
+- [x] 3.4 Light mode: the selected union is obvious among the chips; switching unions moves the mark
+- [x] 3.5 Light and dark: hover on a person card and on a „Nieznany ojciec +” placeholder is visible, and the gender strip keeps its colour on hover
+- [x] 3.6 Keyboard: tabbing through the sheet shows a detached ≥3:1 ring on cards, placeholders and eye buttons, visually distinct from the focus person's static ring
+- [x] 3.7 Dark mode: selected, hover and focus remain visible and not glaring
 
 ### Phase 4: Mobile — scroll to focus, edge fade, one-row union switch (C5)
 

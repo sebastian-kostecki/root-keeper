@@ -50,7 +50,7 @@ export function UnionSwitch({ focusId, unions, selected, action }: Props) {
                     <ToggleGroupItem
                         key={union.key}
                         value={union.key}
-                        className="h-auto flex-col items-start rounded-md px-3 py-2 text-left whitespace-normal data-[variant=outline]:border-l"
+                        className="data-[state=on]:border-primary data-[state=on]:ring-primary h-auto flex-col items-start rounded-md px-3 py-2 text-left whitespace-normal data-[state=on]:ring-1 data-[variant=outline]:border-l"
                     >
                         <span>{union.label}</span>
                         <span className="text-muted-foreground text-xs font-normal">

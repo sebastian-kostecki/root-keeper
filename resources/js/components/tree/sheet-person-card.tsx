@@ -2,6 +2,7 @@ import { Link } from '@inertiajs/react';
 import { Eye, Mars, Venus } from 'lucide-react';
 import { PersonPreviewLink } from '@/components/persons/person-preview-link';
 import { Button } from '@/components/ui/button';
+import { cardInteractive, cardSurface } from '@/components/tree/card-styles';
 import { cn } from '@/lib/utils';
 import { show as treeShow } from '@/routes/tree';
 import type { SheetPerson } from '@/types';
@@ -52,7 +53,8 @@ function CardBody({ person }: { person: SheetPerson }) {
 
 export function SheetPersonCard({ person, spouse, isFocus = false }: Props) {
     const body = cn(
-        'bg-card text-card-foreground block h-full min-h-16 rounded-md border border-l-4 p-2 pr-9 shadow-xs',
+        cardSurface,
+        'bg-card text-card-foreground block border-l-4 pr-9 shadow-xs',
         strip[person.gender ?? 'unknown'],
     );
 
@@ -67,10 +69,7 @@ export function SheetPersonCard({ person, spouse, isFocus = false }: Props) {
                     href={treeShow(person.id, {
                         query: spouse === undefined ? undefined : { spouse },
                     })}
-                    className={cn(
-                        body,
-                        'hover:bg-accent/50 focus-visible:ring-ring focus-visible:ring-[3px] focus-visible:outline-none',
-                    )}
+                    className={cn(body, cardInteractive)}
                 >
                     <CardBody person={person} />
                 </Link>
@@ -79,7 +78,7 @@ export function SheetPersonCard({ person, spouse, isFocus = false }: Props) {
             <Button
                 variant="ghost"
                 size="icon"
-                className="absolute top-1 right-1 size-7"
+                className="focus-visible:ring-ring absolute top-1 right-1 size-7"
                 asChild
             >
                 <PersonPreviewLink

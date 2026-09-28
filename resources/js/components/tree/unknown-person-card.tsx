@@ -1,5 +1,7 @@
 import { Plus } from 'lucide-react';
 import type * as React from 'react';
+import { cardInteractive, cardSurface } from '@/components/tree/card-styles';
+import { cn } from '@/lib/utils';
 
 type Props = Omit<React.ComponentProps<'button'>, 'children'> & {
     label: string;
@@ -12,8 +14,10 @@ type Props = Omit<React.ComponentProps<'button'>, 'children'> & {
  * it is a button (a dialog trigger); without, a static label.
  */
 export function UnknownPersonCard({ label, addLabel, ...props }: Props) {
-    const base =
-        'text-muted-foreground flex h-full min-h-16 items-center rounded-md border border-dashed p-2 text-sm';
+    const base = cn(
+        cardSurface,
+        'text-muted-foreground flex items-center border-dashed text-sm',
+    );
 
     if (addLabel === undefined) {
         return <div className={base}>{label}</div>;
@@ -24,7 +28,11 @@ export function UnknownPersonCard({ label, addLabel, ...props }: Props) {
             type="button"
             aria-label={addLabel}
             {...props}
-            className={`${base} hover:bg-accent/50 hover:text-foreground focus-visible:ring-ring w-full cursor-pointer justify-between gap-2 text-left focus-visible:ring-[3px] focus-visible:outline-none`}
+            className={cn(
+                base,
+                cardInteractive,
+                'hover:border-l-foreground/20 hover:text-foreground w-full cursor-pointer justify-between gap-2 text-left',
+            )}
         >
             <span>{label}</span>
             <Plus className="size-4 shrink-0" aria-hidden="true" />
