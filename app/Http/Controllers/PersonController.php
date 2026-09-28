@@ -100,6 +100,7 @@ class PersonController extends Controller
 
         return Inertia::render('persons/show', [
             'person' => PersonResource::make($person)->resolve(),
+            'isRootPerson' => $request->user()->tree->root_person_id === $person->id,
             'availableScans' => Inertia::optional(fn (): array => ScanResource::collection(
                 $request->user()->tree->scans()->latest()->orderByDesc('id')->get()
             )->resolve()),

@@ -674,29 +674,29 @@ trees have no proband. Both are reversible with `migrate:rollback`.
 
 #### Automated
 
-- [x] 1.1 Migration applies and rolls back
-- [x] 1.2 Person tests pass
-- [x] 1.3 Static analysis passes
-- [x] 1.4 PHP style
-- [x] 1.5 Frontend check and types
+- [x] 1.1 Migration applies and rolls back — ba65515
+- [x] 1.2 Person tests pass — ba65515
+- [x] 1.3 Static analysis passes — ba65515
+- [x] 1.4 PHP style — ba65515
+- [x] 1.5 Frontend check and types — ba65515
 
 #### Manual
 
-- [x] 1.6 Create/edit with each gender saves, prefills and shows on preview
+- [x] 1.6 Create/edit with each gender saves, prefills and shows on preview — ba65515
 
 ### Phase 2: Proband (tree root person)
 
 #### Automated
 
-- [ ] 2.1 Migration applies and rolls back
-- [ ] 2.2 Tree tests pass
-- [ ] 2.3 Account deletion still passes
-- [ ] 2.4 PHP style and static analysis
-- [ ] 2.5 Frontend check and types
+- [x] 2.1 Migration applies and rolls back
+- [x] 2.2 Tree tests pass
+- [x] 2.3 Account deletion still passes
+- [x] 2.4 PHP style and static analysis
+- [x] 2.5 Frontend check and types
 
 #### Manual
 
-- [ ] 2.6 Set proband from preview shows toast and badge; delete dialog warns
+- [x] 2.6 Set proband from preview shows toast and badge; delete dialog warns
 
 ### Phase 3: Family sheet backend
 
