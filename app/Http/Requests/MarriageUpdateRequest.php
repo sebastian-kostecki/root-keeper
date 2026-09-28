@@ -4,6 +4,7 @@ namespace App\Http\Requests;
 
 use App\Concerns\PartialDateValidationRules;
 use App\Enums\EventType;
+use App\Models\Event;
 use Illuminate\Auth\Access\Response;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
@@ -22,7 +23,7 @@ class MarriageUpdateRequest extends FormRequest
     {
         $marriage = $this->route('marriage');
 
-        if ($marriage->type !== EventType::Marriage) {
+        if (! $marriage instanceof Event || $marriage->type !== EventType::Marriage) {
             return Response::denyAsNotFound();
         }
 

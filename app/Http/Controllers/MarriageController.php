@@ -21,8 +21,8 @@ class MarriageController extends Controller
     {
         $tree = $request->user()->tree;
 
-        $person = $tree->people()->findOrFail($request->validated('person_id'));
-        $spouse = $tree->people()->findOrFail($request->validated('spouse_id'));
+        $person = $tree->people()->findOrFail($request->safe()->integer('person_id'));
+        $spouse = $tree->people()->findOrFail($request->safe()->integer('spouse_id'));
 
         $createMarriage->handle($tree, $person, $spouse, $request->validated('marriage', []));
 

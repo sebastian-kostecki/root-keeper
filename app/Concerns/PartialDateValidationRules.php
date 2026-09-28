@@ -2,7 +2,6 @@
 
 namespace App\Concerns;
 
-use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Validation\Validator;
 
@@ -13,7 +12,7 @@ trait PartialDateValidationRules
      * approximate flag and a place) nested under the given prefix, e.g.
      * "birth" or "marriage".
      *
-     * @return array<string, ValidationRule|array<mixed>|string>
+     * @return array<string, list<string>>
      */
     protected function partialDateRules(string $prefix): array
     {

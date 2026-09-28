@@ -14,6 +14,11 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
+    # No database needed here; `composer setup` migrates into a throwaway in-memory SQLite.
+    env:
+      DB_CONNECTION: sqlite
+      DB_DATABASE: ':memory:'
+
     steps:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1

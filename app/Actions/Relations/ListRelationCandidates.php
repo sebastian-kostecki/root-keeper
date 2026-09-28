@@ -47,7 +47,7 @@ class ListRelationCandidates
             ->orderBy('id')
             ->get();
 
-        return $candidates->map(fn (Person $candidate): array => [
+        return array_values($candidates->map(fn (Person $candidate): array => [
             'id' => $candidate->id,
             'display_name' => $candidate->displayName(),
             'birth_date' => $candidate->birth()?->date->format(),
@@ -63,6 +63,6 @@ class ListRelationCandidates
                 default => null,
             },
             'as_spouse_blocked_reason' => in_array($candidate->id, $spouseIdsOfPerson, true) ? 'Już jest małżonkiem' : null,
-        ])->all();
+        ])->all());
     }
 }
