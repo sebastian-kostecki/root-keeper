@@ -1,237 +1,250 @@
 ---
 project: "root-keeper"
-context_type: greenfield
-created: 2026-09-16
-updated: 2026-09-16
+context_type: brownfield
+created: 2026-09-28
+updated: 2026-09-28
 product_type: web-app
 target_scale:
   users: small
 timeline_budget:
-  mvp_weeks: 7
+  delivery_weeks: 4
   hard_deadline: 2026-11-04
   after_hours_only: true
 checkpoint:
   current_phase: 8
   phases_completed: [1, 2, 3, 4, 5, 6, 7]
   gray_areas_resolved:
-    - topic: "pain category"
-      decision: "scattered/trapped data; unverifiable facts; search friction; dependency on third-party licence"
-    - topic: "insight"
-      decision: "full data ownership, independent of licences/subscriptions"
-    - topic: "why build instead of adopting a free self-hosted tool"
-      decision: "existing tools too heavy for the person → fact → source → scan flow; building is also a learning goal"
-    - topic: "primary persona scope"
-      decision: "single user — the author"
-    - topic: "access model"
-      decision: "open registration + login; each user sees only own data; no roles, no sharing"
-    - topic: "MVP scope cut"
-      decision: "person portrait photo and burial moved to v2; graphical tree and registration kept in MVP"
-    - topic: "MVP timeline"
-      decision: "7 weeks (full time until 2026-11-04 deadline); sustained-effort cost acknowledged"
-    - topic: "one tree vs many"
-      decision: "one tree per user in MVP"
-    - topic: "relations"
-      decision: "separate add/remove of relations between existing persons (marriage with wedding data; parent–child)"
-    - topic: "record editing"
-      decision: "records: add/remove + change links to events; no editing of the record itself"
-    - topic: "what a source is (Socratic FR-013)"
-      decision: "the scan itself is the metrical record — the source facts are derived from; no scan description in MVP"
-    - topic: "dates"
-      decision: "full, partial (year / year+month) and approximate ('about') dates allowed"
-    - topic: "sourceable facts in MVP"
-      decision: "only birth, marriage, death; religion and residence without sources until v2"
-    - topic: "fact vs source (seed open question)"
-      decision: "event is confirmed iff ≥1 record scan linked; 'confirmed' = has a source, not 'true'; one scan → many events; marriage is one event of both spouses"
-    - topic: "where confirmation state is shown"
-      decision: "person view only; tree shows no state in MVP"
-    - topic: "scans local vs cloud (seed open question) — user-facing side"
-      decision: "data and scans never leave the user's control / no third parties; storage location deferred to tech-stack selection"
-    - topic: "devices"
-      decision: "desktop browsers only in MVP"
+    - topic: "change category"
+      decision: "significant feature (scan description) + new module (places gazetteer) + data model change (one residence -> residence history)"
+    - topic: "trigger / insight"
+      decision: "entering real data: I keep going back to the scan to find 'my' entry; people moved and one residence field loses that"
+    - topic: "gazetteer scope"
+      decision: "every place in the app points to the gazetteer (residence, birth, marriage, death)"
+    - topic: "existing free-text places"
+      decision: "may be lost — user will re-enter them"
+    - topic: "timing vs milestone M-1"
+      decision: "in parallel with S-09; if time runs out, S-09 and the 2026-11-04 MVP deadline win"
+    - topic: "primary persona"
+      decision: "unchanged — the author (assumption stated, not contested)"
+    - topic: "auth / roles"
+      decision: "no change — open registration, own data only, no roles"
+    - topic: "gazetteer ownership"
+      decision: "private per tree, invisible to other users"
+    - topic: "scope vs 3-week budget"
+      decision: "whole change at once (no staging); longer timeline accepted — 4 weeks after hours, in parallel with S-09"
+    - topic: "scan entry form"
+      decision: "entry number + free-text description (who, when, what, how) — narrowed to one per scan in Socrates FR-004"
+    - topic: "'oznaczenie miejsca'"
+      decision: "means the scan's place of origin, not marking a region on the image"
+    - topic: "scan type"
+      decision: "one type per scan: birth / marriage / death / other"
+    - topic: "residence UI"
+      decision: "residences as chips (place only, no period); fact places (birth, marriage, death) as a dropdown"
+    - topic: "gazetteer fields"
+      decision: "name, whether it still exists, administrative unit / parish / note (no coordinates)"
+    - topic: "gazetteer management"
+      decision: "add-new from the picker + separate gazetteer page to edit/delete"
+    - topic: "scan search"
+      decision: "by scan name (nice-to-have)"
+    - topic: "assumptions stated, not contested"
+      decision: "scan entries are not linked to events — the whole scan stays the source"
+    - topic: "scan origin (Socrates FR-003)"
+      decision: "free text (parish, archive, signature), not a gazetteer place — exception to 'every place from the gazetteer'"
+    - topic: "scan entries (Socrates FR-004)"
+      decision: "one entry number + one note per scan, no list of entries"
+    - topic: "Socrates round"
+      decision: "FR-005 promoted to must-have; FR-008 suggests existing places; FR-009 usage list + confirmation; FR-014 only name required; FR-015 added (matching-type scans first)"
+    - topic: "place location (FR-007, resolved in cross-check)"
+      decision: "optional coordinates entered manually; no in-app map, no external map providers"
+    - topic: "business logic"
+      decision: "confirmation rule unchanged; new data is descriptive"
+    - topic: "existing scans"
+      decision: "name = original file name; other new fields empty"
+    - topic: "NFR"
+      decision: "no new NFRs; existing ones cover new data"
     - topic: "product framing"
-      decision: "web-app; small user scale (author + handful); hard deadline 2026-11-04; after hours ~10 h/week"
-    - topic: "100x scale (Socratic)"
-      decision: "domain rule does not change with scale"
-    - topic: "password recovery"
-      decision: "excluded from MVP"
-    - topic: "data ownership vs export"
-      decision: "export of all data and scans added as FR-018 nice-to-have; risk it won't ship accepted"
-    - topic: "interface language"
-      decision: "Polish only"
-  frs_drafted: 17
+      decision: "no change — web-app, small user base (assumption stated, not contested)"
+    - topic: "deadline"
+      decision: "hard 2026-11-04 (same as MVP), after hours; S-09 keeps priority"
+  frs_drafted: 15
   quality_check_status: accepted
 ---
 
-# Shape notes
+# root-keeper — shape notes (brownfield)
 
-## Seed idea (verbatim)
+Poprzednia sesja (MVP, greenfield): `context/foundation/archive/shape-notes-2026-09-28-0612.md`.
 
-> Aplikacja dla genealogów: osoby z drzewa wraz ze źródłami (akta metrykalne, skany). Dane własne: notatki, zdjęcia, skany — bez importu GEDCOM. Termin: 4 listopada 2026, 10 h/tydz.
-> Otwarte pytania: jak modelować fakt kontra źródło, czy skany trzymać lokalnie czy w chmurze, czy MVP obsługuje jedno drzewo czy wiele.
+## Seed idea
+
+> Potrzebuje kilku zmian w aplikacji: Skany - moim zdaniem potrzebują nazwy, typu, informacji ktore za sobą noszą, na ktory numer zwrocic uwage, moze jakie informacje mają. Zazwyczaj jeden skan zawiera kilka wpisów metrykalnych - mnie interesuje zwykle jeden - tam jest numer, jakies informacje - chcialbym to zapisać gdzies w rekordzie o skanie, może oznaczenie miejsca; po drugie na karcie osoby chcialbym moc jako miejsce zamieszkania kilka lokalizacji, zeby byla zapisana niejako historia gdzei ta osoba była, moze dobrym pomyslem byloby zrobic jakis spis roznych miejscowosci z dodatkowymi informacjami (np. czy miejscowosc jeszcze istenieje, czy juz nie istnieje, jakie dane lokalizacyjne);
+
+## Current System
+
+root-keeper — prywatne drzewo genealogiczne (Laravel + Inertia/React), jedno drzewo na konto, otwarta rejestracja, każdy widzi tylko swoje dane. Fakty osoby (urodzenie, małżeństwo, zgon) są potwierdzane skanami aktów metrykalnych; jeden skan może potwierdzać wiele wydarzeń, małżeństwo jest jednym wydarzeniem obojga małżonków. Kamień milowy M-1 (MVP) jest otwarty — zostało S-09 (graficzny widok drzewa), termin 2026-11-04.
+
+Stan istotny dla tej zmiany:
+- Skan to sam plik (nazwa oryginału, rozmiar, miniatura, wymiary) bez żadnego opisu — świadoma decyzja MVP (FR-013, Non-Goals: „Brak opisu skanów: skan sam jest aktem”).
+- Miejsce zamieszkania to jedno pole tekstowe osoby; miejsca urodzenia, ślubu i zgonu to wolny tekst na wydarzeniu.
+- Nie ma spisu miejscowości.
+
+Użytkownicy: autor (genealog pracujący na własnych materiałach).
 
 ## Vision & Problem Statement
 
-Jako genealog prowadzący własne badania mam dane (notatki, skany, zdjęcia) rozproszone i niepowiązane ze sobą. Fakty, np. daty urodzenia, nie są powiązane ze źródłami, np. aktami metrykalnymi. Najbardziej odczuwam to, gdy muszę znaleźć konkretną osobę i gdy chcę potwierdzić fakt: każdorazowo ręcznie przeszukuję notatki i sprawdzam, czy fakt ma podstawę w źródle. Poprzednia aplikacja genealogiczna przestała być dostępna po wygaśnięciu licencji.
+Wprowadzanie prawdziwego drzewa pokazało dwie luki:
 
-Wgląd: dane genealogiczne muszą pozostać w pełni moje, niezależne od licencji i abonamentu. Istniejące darmowe narzędzia samodzielnie hostowane są zbyt ciężkie jak na mój przepływ pracy (osoba → fakt → źródło → skan). Budowa własnej aplikacji jest też celem samym w sobie: to projekt rozwojowy.
+1. **Skan bez opisu.** Jeden skan zwykle zawiera kilka wpisów metrykalnych, a autora interesuje zazwyczaj jeden. Nie ma gdzie zapisać, który to wpis (numer), jakie informacje niesie, jakiego typu jest skan ani oznaczyć miejsca wpisu na skanie — więc za każdym razem autor wraca do skanu i szuka „swojego” wpisu od nowa. Skan potrzebuje nazwy, typu i informacji, które niesie.
+2. **Jedno miejsce zamieszkania.** Osoby się przeprowadzały, a jedno pole gubi historię, gdzie mieszkały. Autor chce móc zapisać kilka miejsc zamieszkania i mieć spis miejscowości z dodatkowymi informacjami (np. czy miejscowość jeszcze istnieje, dane lokalizacyjne), używany wszędzie, gdzie aplikacja zapisuje miejsce.
+
+Zmiana odwraca decyzję MVP „skan sam jest aktem, bez opisu”. Idzie równolegle z S-09; przy braku czasu pierwszeństwo mają S-09 i termin MVP 2026-11-04.
 
 ## User & Persona
 
-Jedyny użytkownik MVP to autor aplikacji, genealog prowadzący własne badania na podstawie własnych materiałów (notatki, zdjęcia, skany akt). Sięga po aplikację, gdy szuka konkretnej osoby i gdy weryfikuje, na jakim źródle opiera się fakt.
+Bez zmian: jedynym realnym użytkownikiem jest autor aplikacji, genealog prowadzący badania na własnych materiałach. Zmiana dotyczy chwil, gdy wraca do skanu, żeby odnaleźć wpis dotyczący konkretnej osoby, i gdy zapisuje, gdzie osoba mieszkała w różnych okresach życia.
 
 ## Access Control
 
-Rejestracja jest otwarta: każdy może założyć konto i zalogować się. Każdy zalogowany użytkownik ma pełny dostęp wyłącznie do własnych danych (osób, faktów, źródeł, notatek, zdjęć, skanów) i nie widzi danych innych użytkowników. Nie ma ról ani współdzielenia. Niezalogowany użytkownik nie widzi żadnych danych; próba dostępu kieruje do logowania lub rejestracji.
+No changes planned — current model preserved: otwarta rejestracja, każdy zalogowany użytkownik ma pełny dostęp wyłącznie do własnych danych, bez ról i współdzielenia; niezalogowany nie widzi żadnych danych.
 
-Główna persona MVP pozostaje bez zmian (autor aplikacji), ale aplikacja nie zakłada, że ma tylko jednego użytkownika.
-
-## MVP flow (working draft)
-
-1. Rejestracja / logowanie.
-2. Dodanie osoby: imię, nazwisko, data i miejsce urodzenia, miejsce zamieszkania, wyznanie → zapis.
-3. Dołączenie aktu urodzenia (skan) jako źródła faktu urodzenia.
-4. Dodanie małżonka i powiązanie relacją małżeństwa; dane ślubu (data, miejsce) + akt małżeństwa jako źródło.
-5. Dodanie rodziców i dziadków z relacjami rodzic–dziecko, ich danymi i źródłami.
-6. Dla osób zmarłych: data i miejsce śmierci + akt zgonu (jeśli jest).
-7. Przeglądanie osób przez graficzne drzewo lub wyszukiwanie na liście.
-
-Przesunięte do v2 (decyzja zakresu z Fazy 3): zdjęcie osoby (portret); data i miejsce pogrzebu.
+Nowe dane wchodzą pod tę samą zasadę: opis skanu, historia zamieszkania i spis miejscowości należą do drzewa użytkownika. Spis miejscowości jest prywatny dla każdego drzewa i niewidoczny dla innych użytkowników.
 
 ## Success Criteria
 
+Przepływ zmiany (w słowach użytkownika):
+
+1. Dodaję skan: załączam plik, nadaję mu nazwę (np. kogo dotyczy) — żeby identyfikować skany później, np. przy przeszukiwaniu.
+2. Opisuję jeden pojedynczy wpis ze skanu (albo więcej, jak potrzebuję): kto, kiedy, co i jak zrobił.
+3. Oznaczam rok oraz miejsce, skąd skan pochodzi.
+4. Na karcie osoby dodaję kolejne miejsce zamieszkania i widzę miejsca jako chipy w polu zamieszkania.
+5. Przy faktach wybieram miejscowość z listy.
+
+Doprecyzowane w rundzie Sokratesa: zamiast wielu wpisów — jeden numer wpisu + jedna notatka na skan; pochodzenie skanu to wolny tekst (parafia, archiwum, sygnatura), nie miejscowość ze spisu.
+
 ### Primary
-- Do 4.11.2026 moje realne drzewo (min. 3 pokolenia) z faktami opartymi na skanach akt jest w aplikacji; odnajduję w niej osoby i źródła faktów i przestaję do tego używać rozproszonych notatek.
+- Powyższy przepływ działa na prawdziwych danych: skan ma nazwę, typ, rok, pochodzenie oraz numer i notatkę interesującego mnie wpisu, a odnajduję go później bez przeszukiwania skanu od nowa; osoba ma historię zamieszkania z kilku miejscowości, a fakty wskazują miejscowości ze spisu.
 
 ### Secondary
-- Łatwo zobaczyć, które fakty nie mają jeszcze źródła.
+- Brak (użytkownik nie wskazał).
 
 ### Guardrails
-- Żadne dane ani skany nie są dostępne dla niezalogowanych ani dla innych użytkowników.
-- Wprowadzone dane i wgrane skany nie giną.
+- Istniejące powiązania skan–wydarzenie i stan „potwierdzone/niepotwierdzone” działają jak dziś.
+- Opisy skanów, historia zamieszkania i spis miejscowości są niewidoczne dla innych użytkowników i niezalogowanych.
 
 ## Timeline acknowledgment
 
-Acknowledged on 2026-09-16: 7-week MVP requires sustained dedication; user accepted.
+Acknowledged on 2026-09-28: 4-week change (after hours, in parallel with S-09) requires sustained dedication; user accepted. Przy braku czasu pierwszeństwo mają S-09 i termin MVP 2026-11-04.
+
+Termin zmiany: twardo 2026-11-04 (ten sam co MVP), po godzinach. Do terminu zostaje ok. 5 tygodni na S-09 i tę zmianę razem.
 
 ## User Stories
 
-### US-01: Potwierdzenie faktu źródłem
+### US-01: Odnalezienie „mojego” wpisu na skanie
 
-- **Given** zalogowany użytkownik z osobą w drzewie i aktem urodzenia powiązanym z jej urodzeniem
-- **When** odnajduje tę osobę (w drzewie lub na liście) i otwiera jej podgląd
-- **Then** widzi datę i miejsce urodzenia wraz ze wskazaniem aktu, na którym się opiera, i może otworzyć jego skan
+- **Given** zalogowany użytkownik ze skanem, któremu nadał nazwę, typ, rok i pochodzenie oraz zapisał numer interesującego go wpisu (np. nr 47) z notatką
+- **When** odnajduje skan po nazwie na liście skanów i otwiera go
+- **Then** widzi numer wpisu 47 i notatkę (kto, kiedy, co i jak zrobił) obok skanu i nie musi przeszukiwać skanu od nowa
 
-#### Acceptance Criteria
-- Na podglądzie osoby fakt bez powiązanego aktu jest wyraźnie odróżniony od faktu potwierdzonego.
-- Akt małżeństwa jest widoczny jako źródło u obojga małżonków, bez dodawania go dwa razy.
-- Skan można powiększyć na tyle, by odczytać treść aktu.
+Wcześniej: skan był samym plikiem, bez nazwy i opisu.
+
+### US-02: Historia zamieszkania i miejsca faktów ze spisu
+
+- **Given** zalogowany użytkownik z osobą w drzewie
+- **When** na karcie osoby dodaje kolejne miejsca zamieszkania (wybierając miejscowość ze spisu albo dodając brakującą) i wybiera miejsce urodzenia z listy rozwijanej
+- **Then** widzi miejsca zamieszkania jako chipy, a miejsce urodzenia jako miejscowość ze spisu
+
+Wcześniej: jedno pole tekstowe zamieszkania, miejsca faktów jako wolny tekst.
 
 ## Functional Requirements
 
-### Konto
-- FR-001: Gość może zarejestrować konto. Priority: must-have
-  > Socrates: Counter-argument considered: "rejestracja + izolacja danych to realny koszt z ~70 h, a jedynym faktycznym użytkownikiem MVP jest autor." Resolution: kept as must-have; koszt świadomie zaakceptowany.
-- FR-002: Użytkownik może zalogować się. Priority: must-have
+### Skany
+- FR-001: Użytkownik może nadać skanowi nazwę — dowolną etykietę, wymaganą przy dodawaniu. Priority: must-have. Change: modified
+  > Socrates: Counter-argument considered: "nazwa »kogo dotyczy« dubluje opisy wpisów — skan z kilkoma wpisami dotyczy wielu osób." Resolution: changed — nazwa jest dowolną etykietą (np. „Urodzenia Lipnica 1878 s. 12”), bez sugestii „kogo dotyczy”; osoby opisuje notatka.
+- FR-002: Użytkownik może oznaczyć typ skanu: urodzenia, małżeństwa, zgonu lub inny. Priority: must-have. Change: new
+  > Socrates: Counter-argument considered: "księga mieszana ma na jednej stronie wpisy różnych typów — jeden typ skanu wtedy kłamie." Resolution: kept; mieszane księgi to wyjątek, „inny” wystarcza.
+- FR-003: Użytkownik może oznaczyć rok skanu i jego pochodzenie wolnym tekstem (parafia, archiwum, sygnatura). Priority: must-have. Change: new
+  > Socrates: Counter-argument considered: "skan pochodzi z parafii lub archiwum, nie z miejscowości — spis miejscowości nie pasuje." Resolution: changed — pochodzenie jest wolnym tekstem, nie miejscowością ze spisu (było: „miejsce pochodzenia — miejscowość ze spisu”).
+- FR-004: Użytkownik może zapisać przy skanie numer interesującego go wpisu i jedną notatkę tekstową (kto, kiedy, co i jak zrobił) oraz je poprawić. Priority: must-have. Change: new
+  > Socrates: Counter-argument considered: "kilka wpisów na skan to więcej pracy; jedna notatka zrobi to samo." Resolution: changed — jedna notatka + numer wpisu na skan, bez listy wpisów (było: „opis jednego lub kilku wpisów”).
+- FR-005: Użytkownik może poprawić nazwę, typ, rok i pochodzenie istniejącego skanu. Priority: must-have. Change: new
+  > Socrates: Counter-argument considered: "literówka w nazwie przy dodawaniu zostaje na zawsze i psuje odnajdywanie skanu." Resolution: changed — awans z nice-to-have na must-have (przy okazji istniejące skany można uzupełnić).
+- FR-006: Użytkownik może wyszukać skan po nazwie na liście skanów. Priority: nice-to-have. Change: new
   > Socrates: No counter-argument; it stands as written.
 
-### Drzewo
-- FR-003: Użytkownik ma jedno drzewo, dostępne od razu po rejestracji. Priority: must-have
-  > Socrates: Counter-argument considered: "skoro drzewo jest dokładnie jedno, jawne tworzenie drzewa to zbędny krok." Resolution: changed — drzewo powstaje automatycznie wraz z kontem (było: „Użytkownik może utworzyć jedno drzewo”).
-- FR-004: Użytkownik może oglądać swoje drzewo w widoku graficznym i przechodzić z niego do osób. Priority: must-have
-  > Socrates: No counter-argument; it stands as written.
+### Miejscowości
+- FR-007: Użytkownik może prowadzić spis miejscowości swojego drzewa: nazwa, czy miejscowość nadal istnieje, jednostka / parafia / notatka oraz opcjonalne współrzędne geograficzne wpisywane ręcznie. Priority: must-have. Change: new
+  > Socrates: Counter-argument considered: "bez danych lokalizacyjnych (wymienionych w pierwszym opisie) spis traci sens — nie wiadomo, gdzie miejscowość leżała." Resolution: changed (rozstrzygnięte w fazie 7) — dodane opcjonalne współrzędne wpisywane ręcznie, bez mapy w aplikacji i bez usług zewnętrznych.
+- FR-008: Użytkownik może dodać brakującą miejscowość do spisu bezpośrednio z listy wyboru; lista przy wpisywaniu podpowiada istniejące miejscowości (z jednostką), a dodanie nowej jest proponowane, gdy nic nie pasuje. Priority: must-have. Change: new
+  > Socrates: Counter-argument considered: "szybkie dodawanie z listy produkuje literówki i duplikaty tej samej miejscowości." Resolution: changed — podpowiedzi istniejących miejscowości przy wpisywaniu, „dodaj nową” dopiero gdy nic nie pasuje.
+- FR-009: Użytkownik może edytować i usuwać miejscowości na osobnej stronie spisu; przed usunięciem widzi osoby i fakty, które stracą miejsce, i potwierdza usunięcie. Priority: must-have. Change: new
+  > Socrates: Counter-argument considered: "usunięcie używanej miejscowości po cichu czyści zamieszkanie i miejsca faktów." Resolution: changed — lista użyć + jawne potwierdzenie przed usunięciem (spójnie z usuwaniem skanu, FR-015 MVP).
+- FR-010: Użytkownik może dodać osobie kilka miejsc zamieszkania ze spisu, widocznych jako chipy, i usunąć każde z nich. Priority: must-have. Change: modified
+  > Socrates: Counter-argument considered: "zamieszkanie bez źródła — nie wiadomo, z którego aktu wiem o zamieszkaniu." Resolution: kept; Non-Goal MVP „brak źródeł dla zamieszkania” obowiązuje dalej.
+- FR-011: Użytkownik może wybrać miejsce urodzenia, ślubu i zgonu z listy rozwijanej miejscowości ze spisu. Priority: must-have. Change: modified
+  > Socrates: Counter-argument considered: "ślub odbywa się w parafii, nie w miejscowości." Resolution: kept; parafię zapisuję w polu „jednostka / parafia” miejscowości.
 
-### Osoby
-- FR-005: Użytkownik może dodać osobę z danymi: imię, nazwisko, data i miejsce urodzenia, miejsce zamieszkania, wyznanie oraz (dla zmarłych) data i miejsce śmierci; daty mogą być pełne, niepełne (rok+miesiąc, sam rok) lub oznaczone jako przybliżone („około”). Priority: must-have
-  > Socrates: Counter-argument considered: "dane genealogiczne często są przybliżone — pola dokładnej daty wymuszą zgadywanie." Resolution: changed — daty niepełne i przybliżone dopuszczone.
-- FR-006: Użytkownik może edytować dane osoby. Priority: must-have
-  > Socrates: Counter-argument considered: "po zmianie wartości faktu akt nadal jest pokazywany jako jego potwierdzenie — fakt rozjedzie się z aktem." Resolution: kept; ryzyko zaakceptowane w MVP, zgodność faktu z aktem jest odpowiedzialnością użytkownika. Otwarte pytanie na v2.
-- FR-007: Użytkownik może usunąć osobę po jawnym potwierdzeniu. Priority: must-have
-  > Socrates: Counter-argument considered: "bez potwierdzenia jedno kliknięcie niszczy pracę." Resolution: changed — usunięcie wymaga jawnego potwierdzenia; bez kosza/cofania w MVP.
-- FR-008: Użytkownik może zobaczyć podgląd jednej osoby: jej dane, relacje i źródła faktów. Priority: must-have
-  > Socrates: No counter-argument; it stands as written.
-- FR-009: Użytkownik może wyszukać osobę na liście. Priority: must-have
-  > Socrates: No counter-argument; it stands as written.
+### Zachowane
+- FR-012: Użytkownik może powiązać skan z urodzeniem, małżeństwem lub zgonem, a stan „potwierdzone/niepotwierdzone” działa jak dziś. Priority: must-have. Change: preserved
+  > Socrates: Counter-argument considered: "typ skanu może kłócić się z wydarzeniem (skan »zgonu« przy urodzeniu)." Resolution: kept (wiązanie i stan bez zmian) + FR-015: skany o pasującym typie proponowane jako pierwsze.
+- FR-013: Użytkownik widzi na podglądzie osoby miejsce faktu wraz ze wskazaniem aktu. Priority: must-have. Change: preserved
+  > Socrates: Counter-argument considered: "zmiana nazwy w spisie zmienia miejsce historycznego faktu u wszystkich osób, a akt podaje dawną nazwę." Resolution: kept; edycja miejscowości to poprawka tej samej miejscowości, dawne nazwy w notatce miejscowości.
+- FR-014: Użytkownik może wgrać, podejrzeć i usunąć skan (z listą faktów tracących źródło) jak dziś. Priority: must-have. Change: preserved
+  > Socrates: Counter-argument considered: "obowiązkowe nowe pola spowolnią wgrywanie wielu skanów." Resolution: changed — przy wgrywaniu wymagana jest tylko nazwa (FR-001); typ, rok, pochodzenie, numer wpisu i notatka są opcjonalne.
 
-### Relacje
-- FR-010: Użytkownik może połączyć dwie osoby relacją małżeństwa z datą i miejscem ślubu; jedna osoba może mieć kilka małżeństw. Priority: must-have
-  > Socrates: Counter-argument considered: "powtórne małżeństwa po owdowieniu są w metrykach częste." Resolution: changed — osoba może mieć wiele relacji małżeństwa, każda z własną datą i miejscem ślubu.
-- FR-011: Użytkownik może połączyć dwie osoby relacją rodzic–dziecko; dziecko może mieć tylko jednego znanego rodzica. Priority: must-have
-  > Socrates: Counter-argument considered: "dzieci nieślubne, przybrane, nieznany ojciec — relacja bez rozróżnienia może zafałszować drzewo." Resolution: changed — dopuszczony jeden znany rodzic; brak rozróżnienia biologiczny/przybrany w MVP.
-- FR-012: Użytkownik może usunąć relację po jawnym potwierdzeniu. Priority: must-have
-  > Socrates: Counter-argument considered: "bez potwierdzenia łatwo zniszczyć strukturę drzewa." Resolution: changed — usunięcie relacji wymaga jawnego potwierdzenia (spójnie z FR-007).
-
-### Akty metrykalne
-- FR-013: Użytkownik może dodać skan aktu metrykalnego (bez dodatkowego opisu). Priority: must-have
-  > Socrates: Counter-argument considered (user's own framing): "skan sam jest aktem metrykalnym — źródłem, z którego wyprowadzamy dane; osobny opis aktu jest zbędny w MVP." Resolution: changed — akt = skan; brak opisu skanów w MVP (było: „dodać akt metrykalny ze skanem”).
-- FR-014: Użytkownik może powiązać skan aktu z wydarzeniem osoby (urodzenie, małżeństwo, zgon) i zmienić to powiązanie. Priority: must-have
-  > Socrates: Counter-argument considered: "wyznania i miejsca zamieszkania nie da się potwierdzić aktem, choć akty je zawierają." Resolution: kept; w MVP źródła tylko dla urodzenia, małżeństwa i zgonu — wyznanie i miejsce zamieszkania bez źródeł do v2.
-- FR-015: Użytkownik może usunąć skan aktu po potwierdzeniu, widząc wcześniej listę faktów, które stracą źródło. Priority: must-have
-  > Socrates: Counter-argument considered: "usunięcie skanu po cichu zmienia powiązane fakty na »bez źródła«." Resolution: changed — przed usunięciem aplikacja pokazuje fakty, które stracą źródło, i wymaga potwierdzenia.
-- FR-016: Użytkownik może podejrzeć skan aktu. Priority: must-have
-  > Socrates: No counter-argument; it stands as written.
-
-### Dane
-- FR-018: Użytkownik może wyeksportować wszystkie swoje dane i skany w otwartym formacie. Priority: nice-to-have
-  > Socrates: Counter-argument considered: "przy ~70 h nice-to-have realnie nie powstanie, a napięcie z wizją pełnej własności danych zostanie nierozwiązane." Resolution: kept as nice-to-have; ryzyko świadomie zaakceptowane (dodane w Fazie 7 przy rozstrzyganiu napięcia wizja ↔ brak eksportu).
-
-Usunięte w rundzie Sokratesa:
-- ~~FR-017: Użytkownik może zobaczyć listę faktów bez źródła. Priority: nice-to-have~~
-  > Socrates: Counter-argument considered: "skoro fakt bez źródła jest wyraźnie odróżniony na podglądzie osoby (kryterium US-01), osobna lista jest zbędna." Resolution: removed from MVP; lista zbiorcza w v2 (kandydat do Non-Goals).
+### Wynik rundy Sokratesa
+- FR-015: Przy wiązaniu skanu z wydarzeniem użytkownik widzi najpierw skany o typie pasującym do wydarzenia; pozostałe nadal może wybrać. Priority: must-have. Change: modified
+  > Socrates: Dodane jako rozstrzygnięcie kontrargumentu do FR-012 (niezgodność typu skanu z wydarzeniem).
 
 ## Business Logic
 
-Wydarzenie osoby (urodzenie, małżeństwo, zgon) jest potwierdzone wtedy i tylko wtedy, gdy powiązany jest z nim co najmniej jeden skan aktu metrykalnego; w przeciwnym razie jest niepotwierdzone.
+Reguła potwierdzania bez zmian: wydarzenie osoby (urodzenie, małżeństwo, zgon) jest potwierdzone wtedy i tylko wtedy, gdy powiązany jest z nim co najmniej jeden skan aktu metrykalnego.
 
-Dane wejściowe to wydarzenia wprowadzone przez użytkownika oraz powiązania wydarzeń ze skanami aktów. Jeden skan może być źródłem dla wielu wydarzeń. Jedno wydarzenie ma zwykle jeden skan, ale może mieć kilka. Małżeństwo jest jednym wydarzeniem obojga małżonków, więc powiązany z nim akt potwierdza je u obu osób.
+Nowe dane — nazwa, typ, rok, pochodzenie, numer wpisu i notatka skanu, spis miejscowości, historia zamieszkania — są opisowe i nie wpływają na stan potwierdzenia. Źródłem faktu nadal jest cały skan; numer wpisu i notatka nie są powiązane z konkretnym wydarzeniem.
 
-„Potwierdzone” znaczy „ma źródło”, a nie „jest prawdziwe”. Zgodność wpisanej wartości z treścią skanu jest odpowiedzialnością użytkownika. Usunięcie ostatniego powiązanego skanu zmienia wydarzenie na niepotwierdzone (FR-015).
+Drobne reguły wynikające ze zmiany:
+- Przy wiązaniu skanu z wydarzeniem skany o typie pasującym do wydarzenia są proponowane jako pierwsze (FR-015); typ nie blokuje wiązania.
+- Usunięcie miejscowości odpina ją od wszystkich osób i faktów, które jej używały — dopiero po pokazaniu listy użyć i jawnym potwierdzeniu (FR-009).
+- Edycja miejscowości jest poprawką tej samej miejscowości i zmienia miejsce wszędzie, gdzie jest użyta.
 
-Użytkownik widzi stan na podglądzie osoby: niepotwierdzone wydarzenie jest wyraźnie odróżnione od potwierdzonego. Drzewo w MVP nie pokazuje stanu.
+## Constraints & Preserved Behavior
+
+Preserved (nie może się zepsuć):
+- Istniejące powiązania skan–wydarzenie i stan „potwierdzone/niepotwierdzone” (FR-012).
+- Wgrane skany, ich pliki i miniatury oraz podgląd z powiększeniem (FR-014).
+- Miejsce faktu widoczne na podglądzie osoby ze wskazaniem aktu — po zmianie jako miejscowość ze spisu (FR-013).
+- Usuwanie skanu z listą faktów tracących źródło (S-08, FR-014).
+- Izolacja danych: nowe dane widoczne wyłącznie dla właściciela drzewa.
+
+Migracja danych:
+- Istniejące skany dostają nazwę równą nazwie oryginalnego pliku; typ, rok, pochodzenie, numer wpisu i notatka zostają puste do uzupełnienia (FR-005).
+- Istniejące miejsca zapisane wolnym tekstem (zamieszkanie osoby, miejsca urodzenia, ślubu i zgonu) mogą zostać utracone — użytkownik wprowadzi je ponownie ze spisu. Świadoma decyzja użytkownika.
+
+Zgodność wsteczna / integracje: brak zewnętrznych integracji ani konsumentów API; aplikacja ma jednego realnego użytkownika.
 
 ## Non-Functional Requirements
 
-- Żadne dane ani skany użytkownika nie są dostępne dla niezalogowanych ani dla innych użytkowników.
-- Dane i skany użytkownika nie trafiają do podmiotów trzecich ani usług zewnętrznych, nad którymi właściciel instancji nie ma kontroli.
-- Po awarii tracone są najwyżej dane wprowadzone w ciągu ostatnich 24 h (wartość domyślna zaakceptowana przez użytkownika).
-- Aplikacja jest w pełni użyteczna w aktualnych przeglądarkach na komputerze; urządzenia mobilne nie są celem MVP.
+Brak nowych. Obowiązują dotychczasowe i obejmują nowe dane (opisy skanów, spis miejscowości, historia zamieszkania):
+- Żadne dane użytkownika nie są dostępne dla niezalogowanych ani dla innych użytkowników.
+- Dane nie trafiają do podmiotów trzecich ani usług zewnętrznych, nad którymi właściciel instancji nie ma kontroli.
+- Po awarii tracone są najwyżej dane z ostatnich 24 h.
+- Aplikacja jest w pełni użyteczna w aktualnych przeglądarkach na komputerze.
+
+Ograniczenia istniejącego systemu (faza 6): deploy ręczny (`scripts/deploy.sh` po merge'u do `main`); backupy danych i skanów z F-01 muszą objąć nowe dane; typ produktu (aplikacja webowa) i skala użytkowników bez zmian.
 
 ## Non-Goals
 
 ### Functional
-- Brak zdjęcia osoby (portretu): przesunięte do v2 przy cięciu zakresu w Fazie 3.
-- Brak danych o pogrzebie (data, miejsce): przesunięte do v2 przy cięciu zakresu w Fazie 3.
-- Brak zbiorczej listy faktów bez źródła: odróżnienie na podglądzie osoby wystarcza (runda Sokratesa, FR-017).
-- Brak źródeł dla wyznania i miejsca zamieszkania: w MVP potwierdzane są tylko urodzenie, małżeństwo i zgon (FR-014).
-- Brak wielu drzew na użytkownika: jedno drzewo, tworzone automatycznie z kontem (FR-003).
-- Brak ról i współdzielenia danych między użytkownikami: każdy widzi wyłącznie własne dane (Access Control).
-- Brak opisu skanów: skan sam jest aktem (FR-013).
-- Brak kosza i cofania usunięć: w zamian jawne potwierdzenie (FR-007, FR-012, FR-015).
-- Brak historii zmian: edycja nadpisuje poprzednią wartość.
-- Brak stanu „sprzeczny” dla faktu: „potwierdzone” znaczy tylko „ma źródło” (Business Logic).
-- Brak rozróżnienia rodzica biologicznego i przybranego (FR-011).
-- Brak oznaczeń stanu potwierdzenia w widoku drzewa: stan widoczny tylko na podglądzie osoby.
-- Brak importu i eksportu GEDCOM: materiały są własne, wprowadzane ręcznie.
-- Brak automatycznego odczytywania skanów (OCR/transkrypcja) i proponowania faktów ze skanu.
-- Brak wyszukiwania wariantów pisowni imion i nazwisk.
-- Brak integracji z zewnętrznymi serwisami i bazami genealogicznymi.
-- Brak odzyskiwania hasła (resetu przez e-mail): utrata hasła wymaga kontaktu z właścicielem instancji.
+- Brak zaznaczania obszaru wpisu na obrazie skanu: numer wpisu i notatka wystarczają (faza 4 — „oznaczenie miejsca” oznaczało pochodzenie skanu).
+- Brak wyszukiwania skanów po treści notatki: wyszukiwanie tylko po nazwie (FR-006).
+- Brak mapy w aplikacji i zewnętrznych dostawców map: lokalizacja miejscowości to ręcznie wpisane współrzędne (FR-007, faza 7).
+- Brak przenoszenia istniejących miejsc zapisanych wolnym tekstem do spisu miejscowości: użytkownik wprowadzi je ponownie (Constraints & Preserved Behavior).
+- Non-Goals z PRD MVP obowiązują dalej, w tym brak źródeł dla zamieszkania (potwierdzone w rundzie Sokratesa, FR-010) — z wyjątkiem „Brak opisu skanów”, który ta zmiana świadomie odwraca.
 
 ### Non-functional
-- Brak wsparcia urządzeń mobilnych: MVP celuje wyłącznie w przeglądarki na komputerze.
-- Brak wielojęzyczności: interfejs wyłącznie po polsku.
+- Brak nowych celów jakościowych — obowiązują NFR z PRD MVP.
 
-## Open Questions (running)
+## Open Questions
 
-1. **Rozjazd faktu i aktu po edycji (FR-006):** ryzyko zaakceptowane w MVP; do rozważenia w v2. Owner: user.
-2. **Wizja „pełna własność danych” a eksport jako nice-to-have (FR-018):** jeśli eksport nie powstanie do 2026-11-04, napięcie z wizją pozostaje nierozwiązane. Owner: user. By: 2026-11-04.
+Brak otwartych pytań.
 
-Rozstrzygnięte w Fazie 7: odzyskiwanie hasła → wykluczone (Non-Goals); eksport danych → FR-018 nice-to-have; język interfejsu → polski.
-
-## Forward: tech-stack
-
-- Preferencja: aplikacja hostowana na własnym serwerze użytkownika (zgłoszone w Fazie 1).
-- Otwarte pytanie z pomysłu wyjściowego: skany lokalnie czy w chmurze — decyzja o przechowywaniu należy do wyboru stacku; zobowiązania widoczne dla użytkownika uchwycone jako NFR w Fazie 5 (dane i skany nie trafiają do podmiotów trzecich poza kontrolą właściciela instancji; utrata danych po awarii ≤ 24 h).
-
-## Quality cross-check
-
-Run on 2026-09-16 — all items present (Access Control, Business Logic one-sentence rule, project artifacts, timeline-cost acknowledgment, Non-Goals; preserved behavior n/a for greenfield). Open questions resolved in Phase 7: password recovery, data export, interface language. Status: accepted.
+Rozstrzygnięte w fazie 7 (2026-09-28):
+- Dane lokalizacyjne miejscowości (FR-007) → opcjonalne współrzędne wpisywane ręcznie; bez mapy w aplikacji i bez zewnętrznych dostawców map (zgodnie z NFR o podmiotach trzecich).

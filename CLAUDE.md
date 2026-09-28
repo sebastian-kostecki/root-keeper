@@ -34,6 +34,30 @@ Treat a visual change as a **10x change with a design-system contract**, not a "
 
 <!-- END @przeprogramowani/10x-cli -->
 
+## Frontend toolchain — Vite+ (vite-plus 0.3.0)
+
+- The frontend toolchain is Vite+ (`vp` CLI), not plain Vite. Lint = Oxlint, format = Oxfmt, both configured in the `lint` and `fmt` blocks of `vite.config.ts`. There is no ESLint or Prettier in this repo — never add `.eslintrc*`, `eslint.config.*`, `.prettierrc*` or install those packages.
+- `vite.config.ts` imports `defineConfig` and `lazyPlugins` from `'vite-plus'`, not from `'vite'`. Add new plugins inside the `lazyPlugins(() => [...])` array.
+- Commands (run through Sail): `vendor/bin/sail npm run check` (format + lint, must pass in CI), `vendor/bin/sail npm run check:fix` (auto-fix), `vendor/bin/sail npm run types:check` (tsc), `vendor/bin/sail npm run build`.
+- Lint runs with `denyWarnings: true` and `typeAware: true`: a warning fails CI. Fix the code; do not add ignore patterns except for generated dirs (`resources/js/actions`, `resources/js/routes`, `resources/js/wayfinder`) and shadcn `resources/js/components/ui/*`.
+- Before changing toolchain config, read the version-matched docs in `node_modules/vite-plus/docs/guide/` (`check.md`, `lint.md`, `fmt.md`, `build.md`) and `node_modules/vite-plus/AGENTS.md` — your training data likely predates this tool.
+
+## Installed versions (check before relying on an API)
+
+PHP 8.5 · Laravel 13 · Inertia v3 (inertia-laravel 3.3, @inertiajs/react 3) · React 19 (React Compiler on) · TypeScript 7 · Tailwind v4 · Pest 5 / PHPUnit 13 · Larastan 3 (level 7) · Fortify 1.39 · Wayfinder 0.1 (pre-1.0) · PostgreSQL 18 · Vite 8 via vite-plus 0.3.
+
+- These are newer than most training data. Use Boost `search-docs` for Laravel/Inertia/Pest APIs instead of recalling them.
+- Frontend routes come from Wayfinder: import from `@/actions/...` or `@/routes/...`; never hardcode URLs. After adding or renaming a route, regenerate with `vendor/bin/sail artisan wayfinder:generate` (the Vite plugin also does it in dev).
+
+## Backend conventions for tree-owned data
+
+- Every domain record belongs to a tree (`tree_id`). Scope reads through the user's tree (`$request->user()->tree->scans()`), never through a global query.
+- Authorization: one Policy per model in `app/Policies/`; ownership check is `$model->tree_id === $user->tree->id`, denial is `Response::denyAsNotFound()` (another user's record is a 404, not a 403).
+- Write path: controller → Form Request (`app/Http/Requests/<Model><Action>Request.php`) → Action class (`app/Actions/<Domain>/<Verb><Model>.php` with a `handle()` method) → redirect with `Inertia::flash('toast', ['type' => 'success', 'message' => __('...')])`. UI strings are Polish.
+- Read path: pass data to Inertia pages through API Resources (`app/Http/Resources/`) with `->resolve()`; pages live in `resources/js/pages/<domain>/{index,create,show,edit}.tsx`, domain components in `resources/js/components/<domain>/`.
+- Deleting a record that others reference shows the affected items first and requires explicit confirmation (pattern: `resources/js/components/scans/delete-scan-dialog.tsx`).
+- Every new endpoint gets a Pest feature test in `tests/Feature/<Domain>Test.php` covering the happy path and the other-user 404.
+
 ===
 
 <laravel-boost-guidelines>
