@@ -1,9 +1,11 @@
+import { useRef } from 'react';
 import { AddChildDialog } from '@/components/tree/add-child-dialog';
 import { AddSpouseDialog } from '@/components/tree/add-spouse-dialog';
 import { MarryCoupleDialog } from '@/components/tree/marry-couple-dialog';
 import { ParentSlotDialog } from '@/components/tree/parent-slot-dialog';
 import { SheetPersonCard } from '@/components/tree/sheet-person-card';
 import { UnknownPersonCard } from '@/components/tree/unknown-person-card';
+import { useCentreInScroll } from '@/hooks/use-centre-in-scroll';
 import type {
     FamilySheet as FamilySheetData,
     Gender,
@@ -199,8 +201,21 @@ export function FamilySheet({
             />
         ) : null;
 
+    const scrollRef = useRef<HTMLDivElement>(null);
+    const focusRef = useRef<HTMLDivElement>(null);
+    const { canScrollLeft, canScrollRight } = useCentreInScroll(
+        scrollRef,
+        focusRef,
+        `${sheet.focus.id}:${sheet.selected_union ?? ''}`,
+    );
+    const fadeLeft = canScrollLeft ? 'mask-l-from-90%' : '';
+    const fadeRight = canScrollRight ? 'mask-r-from-90%' : '';
+
     return (
-        <div className="overflow-x-auto pb-2">
+        <div
+            ref={scrollRef}
+            className={`overflow-x-auto pb-2 ${fadeLeft} ${fadeRight}`}
+        >
             <div className="grid min-w-[68rem] grid-cols-8 gap-x-2 gap-y-1">
                 <RowLabel>Dziadkowie</RowLabel>
                 {order.map((block) =>
@@ -277,6 +292,7 @@ export function FamilySheet({
                     {order.map((block) => (
                         <div
                             key={`${block}-couple`}
+                            ref={block === 'focus' ? focusRef : undefined}
                             className="relative col-span-4 mx-auto w-full max-w-72"
                         >
                             {block === 'focus' ? (

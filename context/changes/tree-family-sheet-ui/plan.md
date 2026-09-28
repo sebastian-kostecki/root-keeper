@@ -444,30 +444,30 @@ None. There is no schema or data change. The seeder is dev-only and idempotent: 
 
 #### Automated
 
-- [x] 3.1 Format + lint pass: `vendor/bin/sail npm run check`
-- [x] 3.2 Types pass: `vendor/bin/sail npm run types:check`
-- [x] 3.3 Build passes: `vendor/bin/sail npm run build`
+- [x] 3.1 Format + lint pass: `vendor/bin/sail npm run check` — 03db005
+- [x] 3.2 Types pass: `vendor/bin/sail npm run types:check` — 03db005
+- [x] 3.3 Build passes: `vendor/bin/sail npm run build` — 03db005
 
 #### Manual
 
-- [x] 3.4 Light mode: the selected union is obvious among the chips; switching unions moves the mark
-- [x] 3.5 Light and dark: hover on a person card and on a „Nieznany ojciec +” placeholder is visible, and the gender strip keeps its colour on hover
-- [x] 3.6 Keyboard: tabbing through the sheet shows a detached ≥3:1 ring on cards, placeholders and eye buttons, visually distinct from the focus person's static ring
-- [x] 3.7 Dark mode: selected, hover and focus remain visible and not glaring
+- [x] 3.4 Light mode: the selected union is obvious among the chips; switching unions moves the mark — 03db005
+- [x] 3.5 Light and dark: hover on a person card and on a „Nieznany ojciec +” placeholder is visible, and the gender strip keeps its colour on hover — 03db005
+- [x] 3.6 Keyboard: tabbing through the sheet shows a detached ≥3:1 ring on cards, placeholders and eye buttons, visually distinct from the focus person's static ring — 03db005
+- [x] 3.7 Dark mode: selected, hover and focus remain visible and not glaring — 03db005
 
 ### Phase 4: Mobile — scroll to focus, edge fade, one-row union switch (C5)
 
 #### Automated
 
-- [ ] 4.1 Format + lint pass: `vendor/bin/sail npm run check`
-- [ ] 4.2 Types pass: `vendor/bin/sail npm run types:check`
-- [ ] 4.3 Build passes: `vendor/bin/sail npm run build`
+- [x] 4.1 Format + lint pass: `vendor/bin/sail npm run check`
+- [x] 4.2 Types pass: `vendor/bin/sail npm run types:check`
+- [x] 4.3 Build passes: `vendor/bin/sail npm run build`
 
 #### Manual
 
-- [ ] 4.4 390px `/tree`: first viewport shows the focus person centred, a right/left edge fade, and the union switch as one row with the selected union visible
-- [ ] 4.5 390px: switching union and re-centring on another person re-centres the sheet without the page jumping vertically
-- [ ] 4.6 1440px: no fade, no forced scroll, union switch wraps as before
+- [x] 4.4 390px `/tree`: first viewport shows the focus person centred, a right/left edge fade, and the union switch as one row with the selected union visible
+- [x] 4.5 390px: switching union and re-centring on another person re-centres the sheet without the page jumping vertically
+- [x] 4.6 1440px: no fade, no forced scroll, union switch wraps as before
 
 ### Phase 5: Screenshot gate
 
