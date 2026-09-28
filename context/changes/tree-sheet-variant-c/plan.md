@@ -515,31 +515,31 @@ No data migration. `label` is removed from the Inertia payload in the same deplo
 
 #### Automated
 
-- [x] 4.1 Types check: `vendor/bin/sail npm run types:check`
-- [x] 4.2 Format and lint pass: `vendor/bin/sail npm run check`
-- [x] 4.3 Build succeeds: `vendor/bin/sail npm run build`
-- [x] 4.4 Headings stay in the DOM as `sr-only`
+- [x] 4.1 Types check: `vendor/bin/sail npm run types:check` — 136d40c
+- [x] 4.2 Format and lint pass: `vendor/bin/sail npm run check` — 136d40c
+- [x] 4.3 Build succeeds: `vendor/bin/sail npm run build` — 136d40c
+- [x] 4.4 Headings stay in the DOM as `sr-only` — 136d40c
 
 #### Manual
 
-- [x] 4.5 No visible generation labels; the couple-to-children line is continuous
-- [x] 4.6 Jan + Anna: children and „Dodaj dziecko” in one row, bracket over the children only
-- [x] 4.7 Nowicki: 4 children, then 1 child + placeholder next to it
-- [x] 4.8 Kacper: „Brak dzieci w tym związku.” with the placeholder centred
-- [x] 4.9 New 3-child couple shows the placeholder on its own centred row
-- [x] 4.10 Jan + Marta: marry chip on the descent line below the node, not overlapping
+- [x] 4.5 No visible generation labels; the couple-to-children line is continuous — 136d40c
+- [x] 4.6 Jan + Anna: children and „Dodaj dziecko” in one row, bracket over the children only — 136d40c
+- [x] 4.7 Nowicki: 4 children, then 1 child + placeholder next to it — 136d40c
+- [x] 4.8 Kacper: „Brak dzieci w tym związku.” with the placeholder centred — 136d40c
+- [x] 4.9 New 3-child couple shows the placeholder on its own centred row — 136d40c
+- [x] 4.10 Jan + Marta: marry chip on the descent line below the node, not overlapping — 136d40c
 
 ### Phase 5: Screenshot gate
 
 #### Automated
 
-- [ ] 5.1 Gate script runs without errors into `screenshots/after`
-- [ ] 5.2 Full checks pass: check, types:check, build
-- [ ] 5.3 Sheet tests pass: `vendor/bin/sail artisan test --compact tests/Feature/TreeTest.php`
+- [x] 5.1 Gate script runs without errors into `screenshots/after`
+- [x] 5.2 Full checks pass: check, types:check, build
+- [x] 5.3 Sheet tests pass: `vendor/bin/sail artisan test --compact tests/Feature/TreeTest.php`
 
 #### Manual
 
-- [ ] 5.4 Every state in the audit's inventory has a shot (light/dark where asked)
-- [ ] 5.5 `verdict.md` shows C1–C4 passing against the before set
-- [ ] 5.6 390px shots show no regression beyond the known sideways scroll
-- [ ] 5.7 User runs the full suite: `vendor/bin/sail artisan test --compact`
+- [x] 5.4 Every state in the audit's inventory has a shot (light/dark where asked)
+- [x] 5.5 `verdict.md` shows C1–C4 passing against the before set
+- [x] 5.6 390px shots show no regression beyond the known sideways scroll
+- [x] 5.7 User runs the full suite: `vendor/bin/sail artisan test --compact`
