@@ -456,16 +456,16 @@ None: no schema changes and no data changes.
 
 #### Automated
 
-- [x] 3.1 Affected feature tests pass: `vendor/bin/sail artisan test --compact tests/Feature/MarriagesTest.php tests/Feature/TreeTest.php tests/Feature/PersonsTest.php`
-- [x] 3.2 Larastan passes: `vendor/bin/sail composer types:check`
-- [x] 3.3 Format and lint pass: `vendor/bin/sail npm run check`
-- [x] 3.4 Type check passes: `vendor/bin/sail npm run types:check`
-- [x] 3.5 Production build succeeds: `vendor/bin/sail npm run build`
-- [x] 3.6 PHP style is clean: `vendor/bin/sail bin pint --dirty --format agent`
+- [x] 3.1 Affected feature tests pass: `vendor/bin/sail artisan test --compact tests/Feature/MarriagesTest.php tests/Feature/TreeTest.php tests/Feature/PersonsTest.php` — f2dd6df
+- [x] 3.2 Larastan passes: `vendor/bin/sail composer types:check` — f2dd6df
+- [x] 3.3 Format and lint pass: `vendor/bin/sail npm run check` — f2dd6df
+- [x] 3.4 Type check passes: `vendor/bin/sail npm run types:check` — f2dd6df
+- [x] 3.5 Production build succeeds: `vendor/bin/sail npm run build` — f2dd6df
+- [x] 3.6 PHP style is clean: `vendor/bin/sail bin pint --dirty --format agent` — f2dd6df
 
 #### Manual
 
-- [x] 3.7 Jan's parents Piotr and Zofia without a marriage → „Połącz jako małżeństwo" on their connector. „Anuluj" creates nothing. „Połącz" closes the dialog, the button disappears, centre and union unchanged, toast „Dodano małżeństwo". Recentring on Piotr shows „Zofia · ślub ?".
-- [x] 3.8 The partner's unmarried parents get the same button on the partner block; married or incomplete parent pairs never show it.
-- [x] 3.9 Selected union „Anna Nowak · bez ślubu" → the button under the couple. After „Połącz" the chip reads „Anna Nowak · ślub ?" and the button is gone.
-- [x] 3.10 Visual gate: the parents' connector with and without the button, the centre-couple button over the line to the children, the confirmation dialog, all at rest / hover / keyboard focus. At 375px (horizontal scroll of the sheet) and 1280px, light and dark. Screenshots attached to the review.
+- [x] 3.7 Jan's parents Piotr and Zofia without a marriage → „Połącz jako małżeństwo" on their connector. „Anuluj" creates nothing. „Połącz" closes the dialog, the button disappears, centre and union unchanged, toast „Dodano małżeństwo". Recentring on Piotr shows „Zofia · ślub ?". — f2dd6df
+- [x] 3.8 The partner's unmarried parents get the same button on the partner block; married or incomplete parent pairs never show it. — f2dd6df
+- [x] 3.9 Selected union „Anna Nowak · bez ślubu" → the button under the couple. After „Połącz" the chip reads „Anna Nowak · ślub ?" and the button is gone. — f2dd6df
+- [x] 3.10 Visual gate: the parents' connector with and without the button, the centre-couple button over the line to the children, the confirmation dialog, all at rest / hover / keyboard focus. At 375px (horizontal scroll of the sheet) and 1280px, light and dark. Screenshots attached to the review. — f2dd6df

@@ -1,7 +1,7 @@
 ---
 change_id: tree-spouse-existing-or-new
 title: Tree spouse existing or new
-status: implementing
+status: implemented
 created: 2026-09-28
 updated: 2026-09-28
 archived_at: null
