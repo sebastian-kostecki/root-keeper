@@ -117,6 +117,22 @@ class TreeViewDemoSeeder extends Seeder
             );
         }
 
+        // Married couple with 3 children -> add-child placeholder on its own row.
+        $koniecznyFather = $this->person('Marek', 'Konieczny', 'male', 1975);
+        $koniecznyMother = $this->person('Ilona', 'Konieczna', 'female', 1977);
+        $this->marry($koniecznyFather, $koniecznyMother, ['year' => 2000]);
+
+        foreach ([
+            ['Hubert', 'male', 2002],
+            ['Lena', 'female', 2005],
+            ['Igor', 'male', 2009],
+        ] as [$firstName, $gender, $birthYear]) {
+            $this->parents(
+                $this->person($firstName, 'Konieczny', $gender, $birthYear),
+                [$koniecznyFather, $koniecznyMother],
+            );
+        }
+
         (new SetTreeRootPerson)->handle($this->tree, $jan);
     }
 

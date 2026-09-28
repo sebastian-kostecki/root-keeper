@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { Fragment, useRef } from 'react';
 import { AddChildDialog } from '@/components/tree/add-child-dialog';
 import { AddSpouseDialog } from '@/components/tree/add-spouse-dialog';
 import { MarryCoupleDialog } from '@/components/tree/marry-couple-dialog';
@@ -71,11 +71,7 @@ function Slot({
 }
 
 function RowLabel({ children }: { children: string }) {
-    return (
-        <h3 className="text-muted-foreground col-span-8 mt-2 text-xs font-medium tracking-wide uppercase first:mt-0">
-            {children}
-        </h3>
-    );
+    return <h3 className="sr-only">{children}</h3>;
 }
 
 /** Bracket joining a pair of cards to the person below them. */
@@ -131,42 +127,70 @@ function parentPairAction(
     return <MarryCoupleDialog first={first.person} second={second.person} />;
 }
 
-function ChildrenRows({ children }: Pick<FamilySheetData, 'children'>) {
+function ChildrenRows({
+    children,
+    addChild,
+}: Pick<FamilySheetData, 'children'> & { addChild: React.ReactNode }) {
     const rows: FamilySheetData['children'][] = [];
 
     for (let i = 0; i < children.length; i += CHILDREN_PER_ROW) {
         rows.push(children.slice(i, i + CHILDREN_PER_ROW));
     }
 
+    if (rows.length === 0) {
+        return (
+            <>
+                <p className="text-muted-foreground col-span-8 text-center text-sm">
+                    Brak dzieci w tym związku.
+                </p>
+                <div className="col-span-2 col-start-4">{addChild}</div>
+            </>
+        );
+    }
+
     return (
         <>
-            {rows.map((row) => {
+            {rows.map((row, rowIndex) => {
                 const inset = (CHILDREN_PER_ROW + 1 - row.length) * 12.5;
+                const isLastRow = rowIndex === rows.length - 1;
+                const placeholderInRow = isLastRow && row.length <= 2;
+                const placeholderOwnRow = isLastRow && row.length > 2;
 
                 return (
-                    <div
-                        key={row[0].id}
-                        className="col-span-8 grid grid-cols-8 gap-x-2"
-                    >
-                        {row.length > 1 && (
-                            <div
-                                className="border-tree-line col-span-8 h-3 rounded-t-sm border-x border-t"
-                                style={{
-                                    marginLeft: `${inset}%`,
-                                    marginRight: `${inset}%`,
-                                }}
-                                aria-hidden="true"
-                            />
-                        )}
-                        {row.map((child, i) => (
-                            <div
-                                key={child.id}
-                                className={`col-span-2 pb-2 ${i === 0 ? CHILDREN_ROW_START[row.length] : ''}`}
-                            >
-                                <SheetPersonCard person={child} />
+                    <Fragment key={row[0].id}>
+                        <div className="col-span-8 grid grid-cols-8 gap-x-2">
+                            {row.length > 1 && (
+                                <div
+                                    className="border-tree-line col-span-8 h-[13px] rounded-t-sm border-x border-t"
+                                    style={{
+                                        marginLeft: `${inset}%`,
+                                        marginRight: `${inset}%`,
+                                    }}
+                                    aria-hidden="true"
+                                />
+                            )}
+                            {row.map((child, i) => (
+                                <div
+                                    key={child.id}
+                                    className={`col-span-2 pb-2 ${i === 0 ? CHILDREN_ROW_START[row.length] : ''}`}
+                                >
+                                    <SheetPersonCard person={child} />
+                                </div>
+                            ))}
+                            {placeholderInRow && (
+                                <div className="col-span-2 pb-2">
+                                    {addChild}
+                                </div>
+                            )}
+                        </div>
+                        {placeholderOwnRow && (
+                            <div className="col-span-8 grid grid-cols-8 gap-x-2">
+                                <div className="col-span-2 col-start-4 pb-2">
+                                    {addChild}
+                                </div>
                             </div>
-                        ))}
-                    </div>
+                        )}
+                    </Fragment>
                 );
             })}
         </>
@@ -188,7 +212,6 @@ export function FamilySheet({
         sheet.focus_side === 'right'
             ? ['partner', 'focus']
             : ['focus', 'partner'];
-    const hasChildren = sheet.children.length > 0;
     const selectedUnion = sheet.unions.find(
         (union) => union.key === sheet.selected_union,
     );
@@ -331,14 +354,12 @@ export function FamilySheet({
                 </div>
 
                 <div
-                    className={`relative col-span-8 ${marryCentreCouple ? 'h-12' : 'h-6'}`}
+                    className={`relative col-span-8 ${marryCentreCouple ? 'h-12' : 'h-[30px]'}`}
                 >
-                    {hasChildren && (
-                        <div
-                            className="bg-tree-line absolute inset-y-0 left-1/2 w-px"
-                            aria-hidden="true"
-                        />
-                    )}
+                    <div
+                        className="bg-tree-line absolute inset-y-0 left-1/2 w-px"
+                        aria-hidden="true"
+                    />
                     {marryCentreCouple && (
                         <div className="bg-background absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-md">
                             {marryCentreCouple}
@@ -347,21 +368,17 @@ export function FamilySheet({
                 </div>
 
                 <RowLabel>Dzieci</RowLabel>
-                {hasChildren ? (
-                    <ChildrenRows children={sheet.children} />
-                ) : (
-                    <p className="text-muted-foreground col-span-8 text-sm">
-                        Brak dzieci w tym związku.
-                    </p>
-                )}
-                <div className="col-span-2 col-start-4">
-                    <AddChildDialog
-                        target={sheet.add_child}
-                        candidates={personCandidates}
-                        genders={genders}
-                        religions={religions}
-                    />
-                </div>
+                <ChildrenRows
+                    children={sheet.children}
+                    addChild={
+                        <AddChildDialog
+                            target={sheet.add_child}
+                            candidates={personCandidates}
+                            genders={genders}
+                            religions={religions}
+                        />
+                    }
+                />
             </div>
         </div>
     );

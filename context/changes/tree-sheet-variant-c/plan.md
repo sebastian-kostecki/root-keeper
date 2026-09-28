@@ -497,37 +497,37 @@ No data migration. `label` is removed from the Inertia payload in the same deplo
 
 #### Automated
 
-- [x] 3.1 Types check: `vendor/bin/sail npm run types:check`
-- [x] 3.2 Format and lint pass: `vendor/bin/sail npm run check`
-- [x] 3.3 Build succeeds: `vendor/bin/sail npm run build`
-- [x] 3.4 No reference to the removed switcher remains
-- [x] 3.5 Sheet tests still pass: `vendor/bin/sail artisan test --compact tests/Feature/TreeTest.php`
+- [x] 3.1 Types check: `vendor/bin/sail npm run types:check` — d90b69a
+- [x] 3.2 Format and lint pass: `vendor/bin/sail npm run check` — d90b69a
+- [x] 3.3 Build succeeds: `vendor/bin/sail npm run build` — d90b69a
+- [x] 3.4 No reference to the removed switcher remains — d90b69a
+- [x] 3.5 Sheet tests still pass: `vendor/bin/sail artisan test --compact tests/Feature/TreeTest.php` — d90b69a
 
 #### Manual
 
-- [x] 3.6 Jan's node reads „1 z 4 · ślub 2001”; menu lists 4 unions; picking Marta gives „3 z 4 · bez ślubu” with scroll kept
-- [x] 3.7 Unknown union shows „4 z 4” and „Nieznany partner / 1 dziecko”
-- [x] 3.8 Anna: no „1 z 1”; Sasza shows „Związki”; Kacper: no node
-- [x] 3.9 „Dodaj małżonka” from the menu opens the dialog with candidates; focus returns to the node; page stays clickable
-- [x] 3.10 Keyboard: Tab, Enter, arrows, Esc work and focus returns to the node
+- [x] 3.6 Jan's node reads „1 z 4 · ślub 2001”; menu lists 4 unions; picking Marta gives „3 z 4 · bez ślubu” with scroll kept — d90b69a
+- [x] 3.7 Unknown union shows „4 z 4” and „Nieznany partner / 1 dziecko” — d90b69a
+- [x] 3.8 Anna: no „1 z 1”; Sasza shows „Związki”; Kacper: no node — d90b69a
+- [x] 3.9 „Dodaj małżonka” from the menu opens the dialog with candidates; focus returns to the node; page stays clickable — d90b69a
+- [x] 3.10 Keyboard: Tab, Enter, arrows, Esc work and focus returns to the node — d90b69a
 
 ### Phase 4: Sheet geometry — headings off the lines, „Dodaj dziecko” in the row (C4)
 
 #### Automated
 
-- [ ] 4.1 Types check: `vendor/bin/sail npm run types:check`
-- [ ] 4.2 Format and lint pass: `vendor/bin/sail npm run check`
-- [ ] 4.3 Build succeeds: `vendor/bin/sail npm run build`
-- [ ] 4.4 Headings stay in the DOM as `sr-only`
+- [x] 4.1 Types check: `vendor/bin/sail npm run types:check`
+- [x] 4.2 Format and lint pass: `vendor/bin/sail npm run check`
+- [x] 4.3 Build succeeds: `vendor/bin/sail npm run build`
+- [x] 4.4 Headings stay in the DOM as `sr-only`
 
 #### Manual
 
-- [ ] 4.5 No visible generation labels; the couple-to-children line is continuous
-- [ ] 4.6 Jan + Anna: children and „Dodaj dziecko” in one row, bracket over the children only
-- [ ] 4.7 Nowicki: 4 children, then 1 child + placeholder next to it
-- [ ] 4.8 Kacper: „Brak dzieci w tym związku.” with the placeholder centred
-- [ ] 4.9 New 3-child couple shows the placeholder on its own centred row
-- [ ] 4.10 Jan + Marta: marry chip on the descent line below the node, not overlapping
+- [x] 4.5 No visible generation labels; the couple-to-children line is continuous
+- [x] 4.6 Jan + Anna: children and „Dodaj dziecko” in one row, bracket over the children only
+- [x] 4.7 Nowicki: 4 children, then 1 child + placeholder next to it
+- [x] 4.8 Kacper: „Brak dzieci w tym związku.” with the placeholder centred
+- [x] 4.9 New 3-child couple shows the placeholder on its own centred row
+- [x] 4.10 Jan + Marta: marry chip on the descent line below the node, not overlapping
 
 ### Phase 5: Screenshot gate
 
