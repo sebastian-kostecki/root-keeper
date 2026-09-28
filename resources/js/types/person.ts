@@ -78,6 +78,14 @@ export type PersonPreview = Omit<Person, 'birth' | 'death'> & {
     marriages: Marriage[];
 };
 
+export type PersonPreviewPayload = {
+    person: PersonPreview;
+    personForm: PersonFormData;
+    genders: Gender[];
+    religions: Religion[];
+    isRootPerson: boolean;
+};
+
 export type PersonFormEvent = {
     year: number | null;
     month: number | null;

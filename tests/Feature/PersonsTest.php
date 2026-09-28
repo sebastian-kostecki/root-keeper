@@ -626,7 +626,7 @@ test('update changes names, residence, religion, birth date parts and place, and
         'birth' => ['year' => 1950, 'month' => 3, 'day' => 4, 'place' => 'Warszawa'],
     ]);
 
-    $response->assertRedirect(route('persons.show', $person));
+    $response->assertRedirect(route('persons.index'));
     $response->assertSessionHas('inertia.flash_data.toast', ['type' => 'success', 'message' => 'Zapisano zmiany']);
 
     $person->refresh();
@@ -653,7 +653,7 @@ test('update of a birth with a linked scan keeps the same birth event id and the
     $this->actingAs($user)->put(route('persons.update', $person), [
         'first_name' => 'Jan',
         'birth' => ['year' => 1888],
-    ])->assertRedirect(route('persons.show', $person));
+    ])->assertRedirect(route('persons.index'));
 
     $person->refresh()->load('events');
     $updatedBirth = $person->birth();
@@ -778,4 +778,157 @@ test('destroy of a person from another users tree returns not found and deletes 
 
     $response->assertNotFound();
     expect(Person::find($person->id))->not->toBeNull();
+});
+
+test('persons index carries the preview props of the person named by the person query parameter', function () {
+    $user = User::factory()->create();
+    $person = Person::factory()->for($user->tree)->male()->create(['first_name' => 'Jan', 'last_name' => 'Kowalski']);
+
+    $this->actingAs($user)->get(personPreviewUrl($person))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('persons/index')
+            ->where('personPreview.person.id', $person->id)
+            ->where('personPreview.isRootPerson', false)
+            ->where('personPreview.personForm.id', $person->id)
+            ->has('personPreview.genders', 2)
+            ->has('personPreview.religions', 6));
+});
+
+test('the tree and scan pages carry the preview props and flag the proband', function () {
+    $user = User::factory()->create();
+    $person = Person::factory()->for($user->tree)->create();
+    $user->tree->update(['root_person_id' => $person->id]);
+    $scan = Scan::factory()->for($user->tree)->create();
+
+    $this->actingAs($user)->get(personPreviewUrl($person, 'tree.show', [$person]))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('tree/show')
+            ->where('personPreview.person.id', $person->id)
+            ->where('personPreview.isRootPerson', true)
+            ->has('personPreview.personForm'));
+
+    $this->actingAs($user)->get(personPreviewUrl($person, 'scans.show', [$scan]))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('scans/show')
+            ->where('personPreview.person.id', $person->id)
+            ->has('personPreview.personForm'));
+});
+
+test('personPreview is null without the person parameter and with a non-numeric one', function (string $query) {
+    $user = User::factory()->create();
+    Person::factory()->for($user->tree)->create();
+
+    $this->actingAs($user)->get(route('persons.index').$query)
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('persons/index')
+            ->where('personPreview', null));
+})->with([
+    'absent' => [''],
+    'non-numeric' => ['?person=abc'],
+    'array' => ['?person[]=1'],
+]);
+
+test('the preview of another users person or a missing person is not found', function () {
+    $user = User::factory()->create();
+    $otherPerson = Person::factory()->for(User::factory()->create()->tree)->create();
+
+    $this->actingAs($user)->get(personPreviewUrl($otherPerson))->assertNotFound();
+    $this->actingAs($user)->get(route('persons.index').'?person=999999')->assertNotFound();
+});
+
+test('relation candidates and available scans load through a partial reload of a host page with a person parameter', function () {
+    $user = User::factory()->create();
+    $person = Person::factory()->for($user->tree)->create();
+    $other = Person::factory()->for($user->tree)->create(['first_name' => 'Anna']);
+    $newer = Scan::factory()->for($user->tree)->create();
+    $older = Scan::factory()->for($user->tree)->create(['created_at' => now()->subDay()]);
+    Scan::factory()->for(User::factory()->create()->tree)->create();
+    $url = personPreviewUrl($person);
+
+    $version = $this->actingAs($user)->get($url, ['X-Inertia' => 'true'])->headers->get('X-Inertia-Version');
+
+    $normal = $this->actingAs($user)->get($url);
+    $normal->assertInertia(fn ($page) => $page->missing('availableScans')->missing('relationCandidates'));
+
+    $response = $this->actingAs($user)->get($url, [
+        'X-Inertia' => 'true',
+        'X-Inertia-Version' => $version,
+        'X-Inertia-Partial-Data' => 'relationCandidates,availableScans',
+        'X-Inertia-Partial-Component' => 'persons/index',
+    ]);
+
+    $response->assertOk();
+    $props = $response->json('props');
+
+    expect($props)->not->toHaveKey('personPreview');
+    expect(collect($props['relationCandidates'])->pluck('id')->all())->toBe([$other->id]);
+    expect(collect($props['availableScans'])->pluck('id')->all())->toBe([$newer->id, $older->id]);
+});
+
+test('update redirects back to the page the preview is open over', function () {
+    $user = User::factory()->create();
+    $person = Person::factory()->for($user->tree)->create(['first_name' => 'Jan']);
+    $from = personPreviewUrl($person);
+
+    $this->actingAs($user)->from($from)
+        ->put(route('persons.update', $person), ['first_name' => 'Janusz'])
+        ->assertRedirect($from);
+});
+
+test('destroy from the tree centred on the deleted person returns to the proband tree', function () {
+    $user = User::factory()->create();
+    $person = Person::factory()->for($user->tree)->create();
+
+    $this->actingAs($user)->from(personPreviewUrl($person, 'tree.show', [$person]))
+        ->delete(route('persons.destroy', $person))
+        ->assertRedirect(route('tree.index'));
+
+    expect(Person::find($person->id))->toBeNull();
+});
+
+test('destroy from another persons tree keeps that tree without the person parameter and it still renders', function () {
+    $user = User::factory()->create();
+    $centre = Person::factory()->for($user->tree)->create();
+    $spouse = Person::factory()->for($user->tree)->create();
+    attachMarriage($centre, $spouse);
+
+    $from = personPreviewUrl($spouse, 'tree.show', [$centre, 'spouse' => $spouse->id]);
+
+    $this->actingAs($user)->from($from)
+        ->delete(route('persons.destroy', $spouse))
+        ->assertRedirect(route('tree.show', [$centre, 'spouse' => $spouse->id]));
+
+    $this->actingAs($user)->get(route('tree.show', [$centre, 'spouse' => $spouse->id]))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page->component('tree/show')->where('personPreview', null));
+});
+
+test('destroy from the filtered list keeps the search and drops the person parameter', function () {
+    $user = User::factory()->create();
+    $person = Person::factory()->for($user->tree)->create(['last_name' => 'Kowalski']);
+
+    $this->actingAs($user)->from(personPreviewUrl($person, 'persons.index', ['q' => 'Kow']))
+        ->delete(route('persons.destroy', $person))
+        ->assertRedirect(route('persons.index', ['q' => 'Kow']));
+});
+
+test('destroy without a referrer or from an external or legacy page goes to the persons list', function () {
+    $user = User::factory()->create();
+    $first = Person::factory()->for($user->tree)->create();
+    $second = Person::factory()->for($user->tree)->create();
+    $third = Person::factory()->for($user->tree)->create();
+
+    $this->actingAs($user)->delete(route('persons.destroy', $first))->assertRedirect(route('persons.index'));
+
+    $this->actingAs($user)->from('https://example.com/persons?person=1')
+        ->delete(route('persons.destroy', $second))
+        ->assertRedirect(route('persons.index'));
+
+    $this->actingAs($user)->from(route('persons.show', $third))
+        ->delete(route('persons.destroy', $third))
+        ->assertRedirect(route('persons.index'));
 });

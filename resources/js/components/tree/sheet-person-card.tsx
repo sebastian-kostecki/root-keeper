@@ -1,6 +1,6 @@
 import { Link } from '@inertiajs/react';
 import { Eye, Mars, Venus } from 'lucide-react';
-import PersonController from '@/actions/App/Http/Controllers/PersonController';
+import { PersonPreviewLink } from '@/components/persons/person-preview-link';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { show as treeShow } from '@/routes/tree';
@@ -82,13 +82,13 @@ export function SheetPersonCard({ person, spouse, isFocus = false }: Props) {
                 className="absolute top-1 right-1 size-7"
                 asChild
             >
-                <Link
-                    href={PersonController.show(person.id)}
+                <PersonPreviewLink
+                    personId={person.id}
                     aria-label={`Podgląd: ${person.display_name}`}
                     title="Podgląd"
                 >
                     <Eye />
-                </Link>
+                </PersonPreviewLink>
             </Button>
         </div>
     );

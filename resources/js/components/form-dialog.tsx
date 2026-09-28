@@ -31,11 +31,16 @@ export function FormDialogContent({
 export function FormDialogHeader({
     title,
     description,
+    descriptionClassName,
+    leading,
     className,
     ...props
 }: Omit<React.ComponentProps<'div'>, 'title'> & {
     title: string;
     description?: string;
+    descriptionClassName?: string;
+    /** Optional element rendered above the title, e.g. a "Wstecz" button. */
+    leading?: React.ReactNode;
 }) {
     return (
         <div
@@ -45,9 +50,12 @@ export function FormDialogHeader({
             )}
             {...props}
         >
+            {leading}
             <DialogTitle>{title}</DialogTitle>
             {description && (
-                <DialogDescription>{description}</DialogDescription>
+                <DialogDescription className={descriptionClassName}>
+                    {description}
+                </DialogDescription>
             )}
         </div>
     );

@@ -1,6 +1,6 @@
 import { Head, Link, setLayoutProps } from '@inertiajs/react';
-import PersonController from '@/actions/App/Http/Controllers/PersonController';
 import Heading from '@/components/heading';
+import { PersonPreviewLink } from '@/components/persons/person-preview-link';
 import { FamilySheet } from '@/components/tree/family-sheet';
 import { SetRootPersonButton } from '@/components/tree/set-root-person-button';
 import { UnionSwitch } from '@/components/tree/union-switch';
@@ -88,9 +88,9 @@ export default function Show({ sheet, rootPersonId }: Props) {
                         )}
 
                         <Button variant="outline" size="sm" asChild>
-                            <Link href={PersonController.show(sheet.focus.id)}>
+                            <PersonPreviewLink personId={sheet.focus.id}>
                                 Podgląd
-                            </Link>
+                            </PersonPreviewLink>
                         </Button>
                     </div>
                 </div>

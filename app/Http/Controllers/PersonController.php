@@ -2,23 +2,22 @@
 
 namespace App\Http\Controllers;
 
+use App\Actions\Persons\BuildPersonPreview;
 use App\Actions\Persons\CreatePerson;
 use App\Actions\Persons\DeletePerson;
 use App\Actions\Persons\UpdatePerson;
-use App\Actions\Relations\ListRelationCandidates;
 use App\Enums\Gender;
 use App\Enums\Religion;
 use App\Http\Requests\PersonStoreRequest;
 use App\Http\Requests\PersonUpdateRequest;
-use App\Http\Resources\PersonFormResource;
 use App\Http\Resources\PersonResource;
-use App\Http\Resources\ScanResource;
 use App\Models\Person;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 
 class PersonController extends Controller
 {
@@ -83,23 +82,11 @@ class PersonController extends Controller
     /**
      * Display the given person.
      */
-    public function show(Request $request, Person $person, ListRelationCandidates $listRelationCandidates): Response
+    public function show(Request $request, Person $person, BuildPersonPreview $buildPersonPreview): Response
     {
         Gate::authorize('view', $person);
 
-        $person->load(['events.scans', 'parents.events', 'children.events', 'marriages.scans', 'marriages.participants.events']);
-
-        return Inertia::render('persons/show', [
-            'person' => PersonResource::make($person)->resolve(),
-            'personForm' => PersonFormResource::make($person)->resolve(),
-            'genders' => Gender::options(),
-            'religions' => Religion::options(),
-            'isRootPerson' => $request->user()->tree->root_person_id === $person->id,
-            'availableScans' => Inertia::optional(fn (): array => ScanResource::collection(
-                $request->user()->tree->scans()->latest()->orderByDesc('id')->get()
-            )->resolve()),
-            'relationCandidates' => Inertia::optional(fn (): array => $listRelationCandidates->handle($person)),
-        ]);
+        return Inertia::render('persons/show', $buildPersonPreview->handle($person, $request->user()));
     }
 
     /**
@@ -111,13 +98,13 @@ class PersonController extends Controller
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Zapisano zmiany')]);
 
-        return to_route('persons.show', $person);
+        return redirect()->back(fallback: route('persons.index'));
     }
 
     /**
      * Remove the given person.
      */
-    public function destroy(Person $person, DeletePerson $deletePerson): RedirectResponse
+    public function destroy(Request $request, Person $person, DeletePerson $deletePerson): RedirectResponse
     {
         Gate::authorize('delete', $person);
 
@@ -125,6 +112,43 @@ class PersonController extends Controller
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Usunięto osobę')]);
 
-        return to_route('persons.index');
+        return redirect($this->urlAfterDelete($request, $person));
+    }
+
+    /**
+     * Resolve where to go after deleting the person: the referring page without its `person` preview key.
+     *
+     * Falls back to the persons list when the referrer is missing, external, or a page that no longer exists
+     * (the deleted person's own page); a tree centred on the deleted person returns to the proband's tree.
+     */
+    private function urlAfterDelete(Request $request, Person $person): string
+    {
+        $fallback = route('persons.index');
+        $parts = parse_url(url()->previous($fallback));
+
+        if ($parts === false || ($parts['host'] ?? null) !== $request->getHost() || ! isset($parts['path'])) {
+            return $fallback;
+        }
+
+        try {
+            $route = app('router')->getRoutes()->match(Request::create($parts['path']));
+        } catch (HttpException) {
+            return $fallback;
+        }
+
+        $name = $route->getName();
+
+        if ($name === 'persons.show') {
+            return $fallback;
+        }
+
+        if ($name === 'tree.show' && $route->originalParameter('person') === (string) $person->id) {
+            return route('tree.index');
+        }
+
+        parse_str($parts['query'] ?? '', $query);
+        unset($query['person']);
+
+        return url($parts['path'].($query === [] ? '' : '?'.http_build_query($query)));
     }
 }

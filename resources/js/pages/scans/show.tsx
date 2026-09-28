@@ -1,7 +1,7 @@
-import { Head, Link, setLayoutProps } from '@inertiajs/react';
-import PersonController from '@/actions/App/Http/Controllers/PersonController';
+import { Head, setLayoutProps } from '@inertiajs/react';
 import ScanController from '@/actions/App/Http/Controllers/ScanController';
 import Heading from '@/components/heading';
+import { PersonPreviewLink } from '@/components/persons/person-preview-link';
 import { DeleteScanDialog } from '@/components/scans/delete-scan-dialog';
 import { ScanViewer } from '@/components/scans/scan-viewer';
 import { Button } from '@/components/ui/button';
@@ -79,15 +79,13 @@ export default function Show({ scan, confirms }: Props) {
                                         key={`${confirmation.event_id}-${confirmation.person.id}`}
                                         className="text-sm"
                                     >
-                                        <Link
-                                            href={PersonController.show(
-                                                confirmation.person.id,
-                                            )}
+                                        <PersonPreviewLink
+                                            personId={confirmation.person.id}
                                             className="text-primary underline-offset-4 hover:underline"
                                         >
                                             {confirmation.event_label} —{' '}
                                             {confirmation.person.display_name}
-                                        </Link>
+                                        </PersonPreviewLink>
                                     </li>
                                 ))}
                             </ul>

@@ -85,3 +85,15 @@ function attachDeath(Person $person, ?int $year, bool $approximate = false): voi
 
     $event->participants()->attach($person, ['role' => ParticipantRole::Subject]);
 }
+
+/**
+ * Build a host-page URL that opens the preview modal of the given person.
+ *
+ * @param  array<int|string, mixed>  $parameters  Route parameters and query values of the host page.
+ */
+function personPreviewUrl(Person $person, string $route = 'persons.index', array $parameters = []): string
+{
+    $url = route($route, $parameters);
+
+    return $url.(str_contains($url, '?') ? '&' : '?').http_build_query(['person' => $person->id]);
+}

@@ -1,3 +1,5 @@
+import { PersonPreviewDialog } from '@/components/persons/person-preview-dialog';
+import { PersonPreviewProvider } from '@/components/persons/person-preview-provider';
 import AppLayoutTemplate from '@/layouts/app/app-sidebar-layout';
 import type { BreadcrumbItem } from '@/types';
 
@@ -9,8 +11,11 @@ export default function AppLayout({
     children: React.ReactNode;
 }) {
     return (
-        <AppLayoutTemplate breadcrumbs={breadcrumbs}>
-            {children}
-        </AppLayoutTemplate>
+        <PersonPreviewProvider>
+            <AppLayoutTemplate breadcrumbs={breadcrumbs}>
+                {children}
+            </AppLayoutTemplate>
+            <PersonPreviewDialog />
+        </PersonPreviewProvider>
     );
 }

@@ -1,7 +1,8 @@
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, router } from '@inertiajs/react';
 import { useEffect, useState } from 'react';
 import PersonController from '@/actions/App/Http/Controllers/PersonController';
 import Heading from '@/components/heading';
+import { PersonPreviewLink } from '@/components/persons/person-preview-link';
 import { PersonFormDialog } from '@/components/persons/person-form-dialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -94,9 +95,9 @@ export default function Index({ persons, genders, religions, filters }: Props) {
                 ) : (
                     <div className="grid gap-3">
                         {persons.map((person) => (
-                            <Link
+                            <PersonPreviewLink
                                 key={person.id}
-                                href={PersonController.show(person.id)}
+                                personId={person.id}
                             >
                                 <Card className="hover:bg-accent/50 transition-colors">
                                     <CardContent className="flex items-center justify-between">
@@ -115,7 +116,7 @@ export default function Index({ persons, genders, religions, filters }: Props) {
                                         </span>
                                     </CardContent>
                                 </Card>
-                            </Link>
+                            </PersonPreviewLink>
                         ))}
                     </div>
                 )}

@@ -1,4 +1,6 @@
 import type { Auth } from '@/types/auth';
+import type { PersonPreviewPayload, RelationCandidate } from '@/types/person';
+import type { Scan } from '@/types/scan';
 
 declare module 'react' {
     interface InputHTMLAttributes<T> {
@@ -12,6 +14,9 @@ declare module '@inertiajs/core' {
             name: string;
             auth: Auth;
             sidebarOpen: boolean;
+            personPreview: PersonPreviewPayload | null;
+            availableScans?: Scan[];
+            relationCandidates?: RelationCandidate[];
             [key: string]: unknown;
         };
     }

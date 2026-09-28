@@ -1,7 +1,6 @@
-import { Link } from '@inertiajs/react';
-import PersonController from '@/actions/App/Http/Controllers/PersonController';
 import Heading from '@/components/heading';
 import { EventCard } from '@/components/persons/event-card';
+import { PersonPreviewLink } from '@/components/persons/person-preview-link';
 import { MarriageFormDialog } from '@/components/persons/marriage-form-dialog';
 import { RemoveMarriageDialog } from '@/components/persons/remove-marriage-dialog';
 import { Button } from '@/components/ui/button';
@@ -54,10 +53,8 @@ export function MarriagesSection({
                                     <>
                                         Małżeństwo z{' '}
                                         {marriage.spouse ? (
-                                            <Link
-                                                href={PersonController.show(
-                                                    marriage.spouse.id,
-                                                )}
+                                            <PersonPreviewLink
+                                                personId={marriage.spouse.id}
                                                 className="underline-offset-4 hover:underline"
                                             >
                                                 {spouseName}
@@ -77,7 +74,7 @@ export function MarriagesSection({
                                                             .join(' · ')}
                                                     </span>
                                                 )}
-                                            </Link>
+                                            </PersonPreviewLink>
                                         ) : (
                                             spouseName
                                         )}

@@ -1,5 +1,4 @@
-import { Link } from '@inertiajs/react';
-import PersonController from '@/actions/App/Http/Controllers/PersonController';
+import { PersonPreviewLink } from '@/components/persons/person-preview-link';
 import { RelativePickerDialog } from '@/components/persons/relative-picker-dialog';
 import { RemoveRelationDialog } from '@/components/persons/remove-relation-dialog';
 import { Button } from '@/components/ui/button';
@@ -49,8 +48,8 @@ export function RelativesCard({ kind, person, relatives, candidates }: Props) {
                                 key={relative.relation_id}
                                 className="flex items-center justify-between gap-2"
                             >
-                                <Link
-                                    href={PersonController.show(relative.id)}
+                                <PersonPreviewLink
+                                    personId={relative.id}
                                     className="underline-offset-4 hover:underline"
                                 >
                                     {relative.display_name}
@@ -67,7 +66,7 @@ export function RelativesCard({ kind, person, relatives, candidates }: Props) {
                                                 .join(' · ')}
                                         </span>
                                     )}
-                                </Link>
+                                </PersonPreviewLink>
 
                                 <RemoveRelationDialog
                                     relationId={relative.relation_id}
