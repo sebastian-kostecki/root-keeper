@@ -1,10 +1,10 @@
 ---
 change_id: tree-sheet-variant-c
 title: Arkusz rodziny w wariancie C — karty w kolorze płci i związki na węźle
-status: implemented
+status: archived
 created: 2026-09-29
-updated: 2026-09-29
-archived_at: null
+updated: 2026-09-28
+archived_at: 2026-09-28T22:44:09Z
 ---
 
 ## Notes
