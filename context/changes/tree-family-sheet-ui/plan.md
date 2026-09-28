@@ -411,34 +411,34 @@ None. There is no schema or data change. The seeder is dev-only and idempotent: 
 
 #### Automated
 
-- [x] 1.1 Format + lint pass: `vendor/bin/sail npm run check`
-- [x] 1.2 Types pass: `vendor/bin/sail npm run types:check`
-- [x] 1.3 Build passes: `vendor/bin/sail npm run build`
+- [x] 1.1 Format + lint pass: `vendor/bin/sail npm run check` — 685383d
+- [x] 1.2 Types pass: `vendor/bin/sail npm run types:check` — 685383d
+- [x] 1.3 Build passes: `vendor/bin/sail npm run build` — 685383d
 
 #### Manual
 
-- [x] 1.4 `/tree`, `/persons`, `/scans` and `/settings/profile` at 1440px and 390px: content has a gutter aligned with the breadcrumb bar, and settings is not double-padded
-- [x] 1.5 `/tree` title is an `h1` with no dead gap before the union switch (DevTools)
-- [x] 1.6 Tabbing through `/tree` in light and dark mode shows a clearly visible grey ring on cards (full check in Phase 3)
+- [x] 1.4 `/tree`, `/persons`, `/scans` and `/settings/profile` at 1440px and 390px: content has a gutter aligned with the breadcrumb bar, and settings is not double-padded — 685383d
+- [x] 1.5 `/tree` title is an `h1` with no dead gap before the union switch (DevTools) — 685383d
+- [x] 1.6 Tabbing through `/tree` in light and dark mode shows a clearly visible grey ring on cards (full check in Phase 3) — 685383d
 
 ### Phase 2: Sheet geometry — children hang from the couple (C2)
 
 #### Automated
 
-- [ ] 2.1 PHP formatting applied: `vendor/bin/sail bin pint --dirty --format agent`
-- [ ] 2.2 Seeder runs: `vendor/bin/sail artisan db:seed --class=TreeViewDemoSeeder --no-interaction`
-- [ ] 2.3 Format + lint pass: `vendor/bin/sail npm run check`
-- [ ] 2.4 Types pass: `vendor/bin/sail npm run types:check`
-- [ ] 2.5 Build passes: `vendor/bin/sail npm run build`
+- [x] 2.1 PHP formatting applied: `vendor/bin/sail bin pint --dirty --format agent`
+- [x] 2.2 Seeder runs: `vendor/bin/sail artisan db:seed --class=TreeViewDemoSeeder --no-interaction`
+- [x] 2.3 Format + lint pass: `vendor/bin/sail npm run check`
+- [x] 2.4 Types pass: `vendor/bin/sail npm run types:check`
+- [x] 2.5 Build passes: `vendor/bin/sail npm run build`
 
 #### Manual
 
-- [ ] 2.6 Proband sheet (Jan + Anna, 2 children): the couple line joins both cards, the descent meets the bracket's midpoint, and the children are centred under the couple
-- [ ] 2.7 Co-parent (Jan + Marta, 1 child): Oliwia sits directly under the couple axis, and the line passes behind the „Połącz jako małżeństwo” button into her card
-- [ ] 2.8 Unknown partner and a union with no children: the couple line is shown and there is no descent; „Brak dzieci w tym związku.” and „Dodaj dziecko” are centred
-- [ ] 2.9 Person without unions (Kuba): no couple line next to „Dodaj małżonka”
-- [ ] 2.10 5-children couple: two centred rows, each with a symmetric bracket
-- [ ] 2.11 1440px: no horizontal scrollbar on the sheet, in light and dark
+- [x] 2.6 Proband sheet (Jan + Anna, 2 children): the couple line joins both cards, the descent meets the bracket's midpoint, and the children are centred under the couple
+- [x] 2.7 Co-parent (Jan + Marta, 1 child): Oliwia sits directly under the couple axis, and the line passes behind the „Połącz jako małżeństwo” button into her card
+- [x] 2.8 Unknown partner and a union with no children: the couple line is shown and there is no descent; „Brak dzieci w tym związku.” and „Dodaj dziecko” are centred
+- [x] 2.9 Person without unions (Kuba): no couple line next to „Dodaj małżonka”
+- [x] 2.10 5-children couple: two centred rows, each with a symmetric bracket
+- [x] 2.11 1440px: no horizontal scrollbar on the sheet, in light and dark
 
 ### Phase 3: Interaction states — selected, hover, focus (C3, C4, D3)
 

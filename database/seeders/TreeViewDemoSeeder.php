@@ -99,6 +99,24 @@ class TreeViewDemoSeeder extends Seeder
         $kuba = $this->person('Kuba', 'Mazur', null, 2016);
         $this->parents($kuba, [$sasza]);
 
+        // Unrelated married couple with 5 children -> children wrap into a second row.
+        $nowickiFather = $this->person('Robert', 'Nowicki', 'male', 1970);
+        $nowickiMother = $this->person('Agnieszka', 'Nowicka', 'female', 1972);
+        $this->marry($nowickiFather, $nowickiMother, ['year' => 1996]);
+
+        foreach ([
+            ['Filip', 'male', 1998],
+            ['Julia', 'female', 2000],
+            ['Antoni', 'male', 2003],
+            ['Maja', 'female', 2006],
+            ['Franciszek', 'male', 2010],
+        ] as [$firstName, $gender, $birthYear]) {
+            $this->parents(
+                $this->person($firstName, 'Nowicki', $gender, $birthYear),
+                [$nowickiFather, $nowickiMother],
+            );
+        }
+
         (new SetTreeRootPerson)->handle($this->tree, $jan);
     }
 
