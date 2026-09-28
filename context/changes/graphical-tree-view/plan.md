@@ -726,12 +726,12 @@ trees have no proband. Both are reversible with `migrate:rollback`.
 
 #### Automated
 
-- [x] 5.1 Seeder runs and re-runs without wiping the dev DB
-- [x] 5.2 Full check suite
+- [x] 5.1 Seeder runs and re-runs without wiping the dev DB — dbe1b1e
+- [x] 5.2 Full check suite — dbe1b1e
 
 #### Manual
 
 - [ ] 5.3 Screenshots of every state saved and matching decisions
-- [x] 5.4 Dark mode legible
-- [x] 5.5 390px horizontal scroll keeps alignment
-- [x] 5.6 User runs the full suite
+- [x] 5.4 Dark mode legible — dbe1b1e
+- [x] 5.5 390px horizontal scroll keeps alignment — dbe1b1e
+- [x] 5.6 User runs the full suite — dbe1b1e
