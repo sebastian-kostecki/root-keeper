@@ -507,32 +507,32 @@ None. No schema change. `date_parts` and `is_confirmed` are additive for existin
 
 #### Automated
 
-- [x] 2.1 JS unit tests pass: `vendor/bin/sail npm run test:js`
-- [x] 2.2 Types pass: `vendor/bin/sail npm run types:check`
-- [x] 2.3 Format + lint pass: `vendor/bin/sail npm run check`
+- [x] 2.1 JS unit tests pass: `vendor/bin/sail npm run test:js` — 947f6c7
+- [x] 2.2 Types pass: `vendor/bin/sail npm run types:check` — 947f6c7
+- [x] 2.3 Format + lint pass: `vendor/bin/sail npm run check` — 947f6c7
 
 #### Manual
 
-- [x] 2.4 The person modal header avatar looks unchanged in light and dark mode (open any person from `/tree`)
+- [x] 2.4 The person modal header avatar looks unchanged in light and dark mode (open any person from `/tree`) — 947f6c7
 
 ### Phase 3: The view — toolbar, Lista, Tabela, states
 
 #### Automated
 
-- [ ] 3.1 Format + lint pass: `vendor/bin/sail npm run check`
-- [ ] 3.2 Types pass: `vendor/bin/sail npm run types:check`
-- [ ] 3.3 JS unit tests pass: `vendor/bin/sail npm run test:js`
-- [ ] 3.4 Build passes: `vendor/bin/sail npm run build`
-- [ ] 3.5 Persons feature tests still pass: `vendor/bin/sail artisan test --compact tests/Feature/PersonsTest.php`
+- [x] 3.1 Format + lint pass: `vendor/bin/sail npm run check`
+- [x] 3.2 Types pass: `vendor/bin/sail npm run types:check`
+- [x] 3.3 JS unit tests pass: `vendor/bin/sail npm run test:js`
+- [x] 3.4 Build passes: `vendor/bin/sail npm run build`
+- [x] 3.5 Persons feature tests still pass: `vendor/bin/sail artisan test --compact tests/Feature/PersonsTest.php`
 
 #### Manual
 
-- [ ] 3.6 Typing in search on `?view=tabela&sort=-urodzenie` keeps the table and the sort, and Back does not step through keystrokes
-- [ ] 3.7 Switching Lista ↔ Tabela keeps `q`, the Lista URL has no `sort`, and refresh restores the chosen view
-- [ ] 3.8 Opening a person from either view and closing the modal returns to the same view, search and sort
-- [ ] 3.9 Table sort by Urodzenie/Zgon puts people without dates last in both directions
-- [ ] 3.10 Keyboard: Tab reaches the switcher, sort headers, row links and ⋯ menus, with visible focus
-- [ ] 3.11 At 390 px the list reads well and the table scrolls sideways with the Osoba column sticky
+- [x] 3.6 Typing in search on `?view=tabela&sort=-urodzenie` keeps the table and the sort, and Back does not step through keystrokes
+- [x] 3.7 Switching Lista ↔ Tabela keeps `q`, the Lista URL has no `sort`, and refresh restores the chosen view
+- [x] 3.8 Opening a person from either view and closing the modal returns to the same view, search and sort
+- [x] 3.9 Table sort by Urodzenie/Zgon puts people without dates last in both directions
+- [x] 3.10 Keyboard: Tab reaches the switcher, sort headers, row links and ⋯ menus, with visible focus
+- [x] 3.11 At 390 px the list reads well and the table scrolls sideways with the Osoba column sticky
 
 ### Phase 4: Kitchen sink and screenshot gate
 
