@@ -519,29 +519,29 @@ None. No schema change. `date_parts` and `is_confirmed` are additive for existin
 
 #### Automated
 
-- [x] 3.1 Format + lint pass: `vendor/bin/sail npm run check`
-- [x] 3.2 Types pass: `vendor/bin/sail npm run types:check`
-- [x] 3.3 JS unit tests pass: `vendor/bin/sail npm run test:js`
-- [x] 3.4 Build passes: `vendor/bin/sail npm run build`
-- [x] 3.5 Persons feature tests still pass: `vendor/bin/sail artisan test --compact tests/Feature/PersonsTest.php`
+- [x] 3.1 Format + lint pass: `vendor/bin/sail npm run check` — b02e4f1
+- [x] 3.2 Types pass: `vendor/bin/sail npm run types:check` — b02e4f1
+- [x] 3.3 JS unit tests pass: `vendor/bin/sail npm run test:js` — b02e4f1
+- [x] 3.4 Build passes: `vendor/bin/sail npm run build` — b02e4f1
+- [x] 3.5 Persons feature tests still pass: `vendor/bin/sail artisan test --compact tests/Feature/PersonsTest.php` — b02e4f1
 
 #### Manual
 
-- [x] 3.6 Typing in search on `?view=tabela&sort=-urodzenie` keeps the table and the sort, and Back does not step through keystrokes
-- [x] 3.7 Switching Lista ↔ Tabela keeps `q`, the Lista URL has no `sort`, and refresh restores the chosen view
-- [x] 3.8 Opening a person from either view and closing the modal returns to the same view, search and sort
-- [x] 3.9 Table sort by Urodzenie/Zgon puts people without dates last in both directions
-- [x] 3.10 Keyboard: Tab reaches the switcher, sort headers, row links and ⋯ menus, with visible focus
-- [x] 3.11 At 390 px the list reads well and the table scrolls sideways with the Osoba column sticky
+- [x] 3.6 Typing in search on `?view=tabela&sort=-urodzenie` keeps the table and the sort, and Back does not step through keystrokes — b02e4f1
+- [x] 3.7 Switching Lista ↔ Tabela keeps `q`, the Lista URL has no `sort`, and refresh restores the chosen view — b02e4f1
+- [x] 3.8 Opening a person from either view and closing the modal returns to the same view, search and sort — b02e4f1
+- [x] 3.9 Table sort by Urodzenie/Zgon puts people without dates last in both directions — b02e4f1
+- [x] 3.10 Keyboard: Tab reaches the switcher, sort headers, row links and ⋯ menus, with visible focus — b02e4f1
+- [x] 3.11 At 390 px the list reads well and the table scrolls sideways with the Osoba column sticky — b02e4f1
 
 ### Phase 4: Kitchen sink and screenshot gate
 
 #### Automated
 
-- [ ] 4.1 Seeder runs cleanly: `vendor/bin/sail artisan db:seed --class=TreeViewDemoSeeder`
-- [ ] 4.2 Screenshot script completes and writes every listed shot to `screenshots/after/`
+- [x] 4.1 Seeder runs cleanly: `vendor/bin/sail artisan db:seed --class=TreeViewDemoSeeder`
+- [x] 4.2 Screenshot script completes and writes every listed shot to `screenshots/after/`
 
 #### Manual
 
-- [ ] 4.3 `verdict.md` shows every state matching the canvas (A, B, Stany, Mobile), with differences explained or fixed
-- [ ] 4.4 The person-modal gate's `/persons` person lookup still resolves ids
+- [x] 4.3 `verdict.md` shows every state matching the canvas (A, B, Stany, Mobile), with differences explained or fixed
+- [x] 4.4 The person-modal gate's `/persons` person lookup still resolves ids

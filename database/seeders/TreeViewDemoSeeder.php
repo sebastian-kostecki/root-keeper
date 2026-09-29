@@ -7,6 +7,7 @@ use App\Actions\Relations\CreateParentChildRelation;
 use App\Actions\Trees\SetTreeRootPerson;
 use App\Enums\EventType;
 use App\Enums\ParticipantRole;
+use App\Enums\Religion;
 use App\Models\Event;
 use App\Models\Person;
 use App\Models\Scan;
@@ -154,7 +155,57 @@ class TreeViewDemoSeeder extends Seeder
         $wiktor = $this->person('Wiktor', 'Skanowski', 'male', 1935, deceased: 2001);
         $this->attachScan($this->eventOf($wiktor, EventType::Death), 'akt-zgonu-wiktor.jpg');
 
+        $this->fullDataPerson();
+        $this->nameOnlyPerson();
+
         (new SetTreeRootPerson)->handle($this->tree, $jan);
+    }
+
+    /**
+     * Persons-list state: day-precise birth with place and a linked scan, death with place, residence, religion.
+     */
+    private function fullDataPerson(): void
+    {
+        $person = Person::factory()->for($this->tree)->create([
+            'first_name' => 'Genowefa',
+            'last_name' => 'Pełnodanowska',
+            'gender' => 'female',
+            'residence' => 'Zakopane',
+            'religion' => Religion::RomanCatholic,
+        ]);
+
+        $birth = Event::factory()->for($this->tree)->birth()->create([
+            'date_year' => 1932,
+            'date_month' => 3,
+            'date_day' => 14,
+            'date_is_approximate' => false,
+            'place' => 'Nowy Targ',
+        ]);
+        $birth->participants()->attach($person, ['role' => ParticipantRole::Subject]);
+        $this->attachScan($birth, 'akt-urodzenia-genowefa.jpg');
+
+        $death = Event::factory()->for($this->tree)->death()->create([
+            'date_year' => 2011,
+            'date_month' => 11,
+            'date_day' => 2,
+            'date_is_approximate' => false,
+            'place' => 'Kraków',
+        ]);
+        $death->participants()->attach($person, ['role' => ParticipantRole::Subject]);
+    }
+
+    /**
+     * Persons-list state: no surname, no dates, no events.
+     */
+    private function nameOnlyPerson(): void
+    {
+        Person::factory()->for($this->tree)->create([
+            'first_name' => 'Bezimienna',
+            'last_name' => null,
+            'gender' => null,
+            'residence' => null,
+            'religion' => null,
+        ]);
     }
 
     /**
