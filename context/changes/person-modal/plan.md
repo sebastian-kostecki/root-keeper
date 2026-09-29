@@ -804,28 +804,28 @@ The additions are appended after the existing persons, and the comment block is 
 
 #### Automated
 
-- [x] 5.1 Format and lint pass
-- [x] 5.2 TS types check
-- [x] 5.3 Build succeeds
-- [x] 5.4 Person, relation and marriage create feature tests pass
+- [x] 5.1 Format and lint pass — e0d9a28
+- [x] 5.2 TS types check — e0d9a28
+- [x] 5.3 Build succeeds — e0d9a28
+- [x] 5.4 Person, relation and marriage create feature tests pass — e0d9a28
 
 #### Manual
 
-- [x] 5.5 Persons list „Dodaj osobę” shows the „Nowa osoba” board; saving lands on the tree with the new person's preview open
-- [x] 5.6 Creating with an invalid date shows the error in the Urodzenie card and scrolls to it
-- [x] 5.7 Closing a create form with typed data shows the guard bar
-- [x] 5.8 Tree: adding a new parent (locked gender), child and spouse still works and saves dates typed as text
+- [x] 5.5 Persons list „Dodaj osobę” shows the „Nowa osoba” board; saving lands on the tree with the new person's preview open — e0d9a28
+- [x] 5.6 Creating with an invalid date shows the error in the Urodzenie card and scrolls to it — e0d9a28
+- [x] 5.7 Closing a create form with typed data shows the guard bar — e0d9a28
+- [x] 5.8 Tree: adding a new parent (locked gender), child and spouse still works and saves dates typed as text — e0d9a28
 
 ### Phase 6: Screenshot gate
 
 #### Automated
 
-- [ ] 6.1 Seeder runs cleanly
-- [ ] 6.2 Tree view feature tests still pass
-- [ ] 6.3 Shots script writes every listed state
+- [x] 6.1 Seeder runs cleanly
+- [x] 6.2 Tree view feature tests still pass
+- [x] 6.3 Shots script writes every listed state
 
 #### Manual
 
-- [ ] 6.4 Every shot judged against its board in `verdict.md`, with no open fail
-- [ ] 6.5 Dark mode shots readable (chips, dimmed cards, guard bar, gender rows)
-- [ ] 6.6 Variant C tree shots re-run unchanged for the moved `genderCard` (spot-check sheet cards)
+- [x] 6.4 Every shot judged against its board in `verdict.md`, with no open fail
+- [x] 6.5 Dark mode shots readable (chips, dimmed cards, guard bar, gender rows)
+- [x] 6.6 Variant C tree shots re-run unchanged for the moved `genderCard` (spot-check sheet cards)

@@ -5,17 +5,24 @@ namespace Database\Seeders;
 use App\Actions\Relations\CreateMarriage;
 use App\Actions\Relations\CreateParentChildRelation;
 use App\Actions\Trees\SetTreeRootPerson;
+use App\Enums\EventType;
 use App\Enums\ParticipantRole;
 use App\Models\Event;
 use App\Models\Person;
+use App\Models\Scan;
 use App\Models\Tree;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
 /**
- * Kitchen-sink tree for the family-sheet visual gate. Run explicitly:
+ * Kitchen-sink tree for the family-sheet and person-modal visual gates. Run explicitly:
  * `sail artisan db:seed --class=TreeViewDemoSeeder`. Not part of DatabaseSeeder.
+ *
+ * Person-modal states (appended after the tree-sheet persons, so their creation order and id offsets
+ * stay intact): the proband Jan carries a birth scan and a marriage scan (Anna, 2001); Leon Kowalski
+ * has an approximate death and no scan; Nina Rzadka is sparse (name and gender only, one relative:
+ * Leon); Wiktor Skanowski has a death scan (unchecking "Osoba nie żyje" must fail).
  */
 class TreeViewDemoSeeder extends Seeder
 {
@@ -79,7 +86,7 @@ class TreeViewDemoSeeder extends Seeder
         // Co-parent without a marriage; no known parents.
         $marta = $this->person('Marta', 'Lewandowska', 'female', 1982);
 
-        $this->marry($jan, $anna, ['year' => 2001, 'month' => 6, 'day' => 15, 'place' => 'Kraków']);
+        $janAnnaMarriage = $this->marry($jan, $anna, ['year' => 2001, 'month' => 6, 'day' => 15, 'place' => 'Kraków']);
         $this->marry($jan, $ewa, []);
 
         // Children: one per union, one with a very long name, one with only the proband as parent.
@@ -133,7 +140,48 @@ class TreeViewDemoSeeder extends Seeder
             );
         }
 
+        // Person-modal states, appended last: scans on the proband's birth and marriage, an approximate
+        // death without a scan, a sparse person, and a death with a scan.
+        $this->attachScan($this->eventOf($jan, EventType::Birth), 'akt-urodzenia-jan.jpg');
+        $this->attachScan($janAnnaMarriage, 'akt-slubu-jan-anna.jpg');
+
+        $leon = $this->person('Leon', 'Kowalski', 'male', 1940, deceased: 2015);
+        $this->eventOf($leon, EventType::Death)->update(['date_is_approximate' => true]);
+
+        $nina = $this->sparsePerson('Nina', 'Rzadka', 'female');
+        $this->parents($nina, [$leon]);
+
+        $wiktor = $this->person('Wiktor', 'Skanowski', 'male', 1935, deceased: 2001);
+        $this->attachScan($this->eventOf($wiktor, EventType::Death), 'akt-zgonu-wiktor.jpg');
+
         (new SetTreeRootPerson)->handle($this->tree, $jan);
+    }
+
+    /**
+     * A person with only a name and a gender: no birth, no death, no dates.
+     */
+    private function sparsePerson(string $firstName, string $lastName, ?string $gender): Person
+    {
+        return Person::factory()->for($this->tree)->create([
+            'first_name' => $firstName,
+            'last_name' => $lastName,
+            'gender' => $gender,
+            'residence' => null,
+        ]);
+    }
+
+    private function eventOf(Person $person, EventType $type): Event
+    {
+        return Event::query()
+            ->where('type', $type)
+            ->whereHas('participants', fn ($query) => $query->whereKey($person->id))
+            ->firstOrFail();
+    }
+
+    private function attachScan(Event $event, string $originalName): void
+    {
+        $scan = Scan::factory()->for($this->tree)->create(['original_name' => $originalName]);
+        $event->scans()->attach($scan);
     }
 
     /**
@@ -185,8 +233,8 @@ class TreeViewDemoSeeder extends Seeder
     /**
      * @param  array{year?: int, month?: int, day?: int, place?: string}  $date
      */
-    private function marry(Person $person, Person $spouse, array $date): void
+    private function marry(Person $person, Person $spouse, array $date): Event
     {
-        (new CreateMarriage)->handle($this->tree, $person, $spouse, $date);
+        return (new CreateMarriage)->handle($this->tree, $person, $spouse, $date);
     }
 }

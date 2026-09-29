@@ -96,7 +96,7 @@ export function SectionEditorProvider({
     const markDirty = useCallback((dirty: boolean) => {
         setIsDirty(dirty);
 
-        if (dirty) {
+        if (!dirty) {
             setPending(null);
         }
     }, []);
