@@ -21,9 +21,13 @@ use Illuminate\Support\Facades\DB;
  * `sail artisan db:seed --class=TreeViewDemoSeeder`. Not part of DatabaseSeeder.
  *
  * Person-modal states (appended after the tree-sheet persons, so their creation order and id offsets
- * stay intact): the proband Jan carries a birth scan and a marriage scan (Anna, 2001); Leon Kowalski
- * has an approximate death and no scan; Nina Rzadka is sparse (name and gender only, one relative:
- * Leon); Wiktor Skanowski has a death scan (unchecking "Osoba nie żyje" must fail).
+ * stay intact): the proband Jan carries a birth source and a marriage source (Anna, 2001); Leon Kowalski
+ * has an approximate death and no source; Nina Rzadka is sparse (name and gender only, one relative:
+ * Leon); Wiktor Skanowski has a death source (unchecking "Osoba nie żyje" must fail).
+ *
+ * Source states (appended last): one unlinked gravestone and one unlinked other source (short delete
+ * dialog, kind badges), and one akt linked to two events, Jan's birth (also confirmed by another akt)
+ * and Kacper's birth (only this akt), so the linked delete dialog shows both impact suffixes.
  */
 class TreeViewDemoSeeder extends Seeder
 {
@@ -141,10 +145,10 @@ class TreeViewDemoSeeder extends Seeder
             );
         }
 
-        // Person-modal states, appended last: scans on the proband's birth and marriage, an approximate
-        // death without a scan, a sparse person, and a death with a scan.
-        $this->attachScan($this->eventOf($jan, EventType::Birth), 'akt-urodzenia-jan.jpg');
-        $this->attachScan($janAnnaMarriage, 'akt-slubu-jan-anna.jpg');
+        // Person-modal states, appended last: sources on the proband's birth and marriage, an approximate
+        // death without a source, a sparse person, and a death with a source.
+        $this->attachSource($this->eventOf($jan, EventType::Birth), 'akt-urodzenia-jan.jpg');
+        $this->attachSource($janAnnaMarriage, 'akt-slubu-jan-anna.jpg');
 
         $leon = $this->person('Leon', 'Kowalski', 'male', 1940, deceased: 2015);
         $this->eventOf($leon, EventType::Death)->update(['date_is_approximate' => true]);
@@ -153,16 +157,17 @@ class TreeViewDemoSeeder extends Seeder
         $this->parents($nina, [$leon]);
 
         $wiktor = $this->person('Wiktor', 'Skanowski', 'male', 1935, deceased: 2001);
-        $this->attachScan($this->eventOf($wiktor, EventType::Death), 'akt-zgonu-wiktor.jpg');
+        $this->attachSource($this->eventOf($wiktor, EventType::Death), 'akt-zgonu-wiktor.jpg');
 
         $this->fullDataPerson();
         $this->nameOnlyPerson();
+        $this->sourceStates($jan, $kacper);
 
         (new SetTreeRootPerson)->handle($this->tree, $jan);
     }
 
     /**
-     * Persons-list state: day-precise birth with place and a linked scan, death with place, residence, religion.
+     * Persons-list state: day-precise birth with place and a linked source, death with place, residence, religion.
      */
     private function fullDataPerson(): void
     {
@@ -182,7 +187,7 @@ class TreeViewDemoSeeder extends Seeder
             'place' => 'Nowy Targ',
         ]);
         $birth->participants()->attach($person, ['role' => ParticipantRole::Subject]);
-        $this->attachScan($birth, 'akt-urodzenia-genowefa.jpg');
+        $this->attachSource($birth, 'akt-urodzenia-genowefa.jpg');
 
         $death = Event::factory()->for($this->tree)->death()->create([
             'date_year' => 2011,
@@ -229,7 +234,20 @@ class TreeViewDemoSeeder extends Seeder
             ->firstOrFail();
     }
 
-    private function attachScan(Event $event, string $originalName): void
+    /**
+     * Source-library states: unlinked gravestone and other sources, and one akt confirming two events.
+     */
+    private function sourceStates(Person $jan, Person $kacper): void
+    {
+        Source::factory()->for($this->tree)->gravestone()->create(['original_name' => 'nagrobek-kowalskich.jpg']);
+        Source::factory()->for($this->tree)->other()->create(['original_name' => 'list-rodzinny.jpg']);
+
+        $shared = Source::factory()->for($this->tree)->create(['original_name' => 'akt-wspolny-jan-kacper.jpg']);
+        $this->eventOf($jan, EventType::Birth)->sources()->attach($shared);
+        $this->eventOf($kacper, EventType::Birth)->sources()->attach($shared);
+    }
+
+    private function attachSource(Event $event, string $originalName): void
     {
         $source = Source::factory()->for($this->tree)->create(['original_name' => $originalName]);
         $event->sources()->attach($source);

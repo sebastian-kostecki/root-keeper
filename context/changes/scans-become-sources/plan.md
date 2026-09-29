@@ -540,26 +540,26 @@ The file-move migration does one filesystem rename per file on the same disk, wh
 
 #### Automated
 
-- [x] 2.1 Feature tests still pass
-- [x] 2.2 Types, lint and format
-- [x] 2.3 Production build
-- [x] 2.4 No user-visible skan left outside intentional skan aktu
+- [x] 2.1 Feature tests still pass — 137688b
+- [x] 2.2 Types, lint and format — 137688b
+- [x] 2.3 Production build — 137688b
+- [x] 2.4 No user-visible skan left outside intentional skan aktu — 137688b
 
 #### Manual
 
-- [x] 2.5 Upload without kind shows the error; gravestone upload shows its badge
-- [x] 2.6 Deleting an unlinked source shows the short confirmation
-- [x] 2.7 Deleting a linked source shows the impact list
-- [x] 2.8 Picker lists only akts
-- [x] 2.9 Light/dark, desktop/390 px, visible focus on the kind toggle
+- [x] 2.5 Upload without kind shows the error; gravestone upload shows its badge — 137688b
+- [x] 2.6 Deleting an unlinked source shows the short confirmation — 137688b
+- [x] 2.7 Deleting a linked source shows the impact list — 137688b
+- [x] 2.8 Picker lists only akts — 137688b
+- [x] 2.9 Light/dark, desktop/390 px, visible focus on the kind toggle — 137688b
 
 ### Phase 3: Kitchen sink, screenshot gate and deploy
 
 #### Automated
 
-- [ ] 3.1 Demo seeder runs
-- [ ] 3.2 Screenshots produced
-- [ ] 3.3 Full suite green
+- [x] 3.1 Demo seeder runs
+- [x] 3.2 Screenshots produced
+- [x] 3.3 Full suite green
 
 #### Manual
 
