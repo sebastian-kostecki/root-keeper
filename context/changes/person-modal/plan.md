@@ -820,12 +820,12 @@ The additions are appended after the existing persons, and the comment block is 
 
 #### Automated
 
-- [x] 6.1 Seeder runs cleanly
-- [x] 6.2 Tree view feature tests still pass
-- [x] 6.3 Shots script writes every listed state
+- [x] 6.1 Seeder runs cleanly — 8ae1849
+- [x] 6.2 Tree view feature tests still pass — 8ae1849
+- [x] 6.3 Shots script writes every listed state — 8ae1849
 
 #### Manual
 
-- [x] 6.4 Every shot judged against its board in `verdict.md`, with no open fail
-- [x] 6.5 Dark mode shots readable (chips, dimmed cards, guard bar, gender rows)
-- [x] 6.6 Variant C tree shots re-run unchanged for the moved `genderCard` (spot-check sheet cards)
+- [x] 6.4 Every shot judged against its board in `verdict.md`, with no open fail — 8ae1849
+- [x] 6.5 Dark mode shots readable (chips, dimmed cards, guard bar, gender rows) — 8ae1849
+- [x] 6.6 Variant C tree shots re-run unchanged for the moved `genderCard` (spot-check sheet cards) — 8ae1849
