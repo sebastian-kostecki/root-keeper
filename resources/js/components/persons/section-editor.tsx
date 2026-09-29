@@ -159,14 +159,16 @@ export function SectionEditorProvider({
 
         setIsSaving(true);
 
-        void submit().then((isSaved) => {
-            setIsSaving(false);
-            setPending(null);
+        void submit()
+            .catch(() => false)
+            .then((isSaved) => {
+                setIsSaving(false);
+                setPending(null);
 
-            if (isSaved) {
-                action();
-            }
-        });
+                if (isSaved) {
+                    action();
+                }
+            });
     };
 
     return (

@@ -196,7 +196,10 @@ export function OverviewTab({ preview, availableScans }: Props) {
                     setFailure({ id, errors });
                     resolve(false);
                 },
-                onFinish: () => setSavingId(null),
+                onFinish: () => {
+                    setSavingId(null);
+                    resolve(false);
+                },
             });
         });
 

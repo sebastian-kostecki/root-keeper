@@ -229,6 +229,7 @@ function SectionCardEditor({
                     variant="ghost"
                     size="icon"
                     aria-label="Wróć"
+                    disabled={processing}
                     onClick={() => requestExit(cancel)}
                 >
                     <ArrowLeft />
@@ -259,7 +260,12 @@ function SectionCardEditor({
                 </div>
 
                 <FormDialogFooter className="sm:border-t-0 sm:px-4 sm:pt-0 sm:pb-4">
-                    <Button type="button" variant="secondary" onClick={cancel}>
+                    <Button
+                        type="button"
+                        variant="secondary"
+                        disabled={processing}
+                        onClick={cancel}
+                    >
                         Anuluj
                     </Button>
                     <Button type="submit" disabled={processing}>

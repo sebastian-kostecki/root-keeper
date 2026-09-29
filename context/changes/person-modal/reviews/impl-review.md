@@ -37,7 +37,7 @@ Accepted drifts (not findings): hand-written `ui/tabs.tsx`; `useSetRootPerson` h
   - Tradeoff: None significant.
   - Confidence: HIGH — Inertia calls `onFinish` on every outcome.
   - Blind spot: Create dialog's own promise wiring should get the same treatment.
-- **Decision**: PENDING
+- **Decision**: FIXED — `onFinish` resolves false; `saveAndExit` catches rejection and always resets `isSaving`/`pending`
 
 ### F2 — Failed guarded save silently drops the blocked exit
 
@@ -47,7 +47,7 @@ Accepted drifts (not findings): hand-written `ui/tabs.tsx`; `useSetRootPerson` h
 - **Location**: resources/js/components/persons/section-editor.tsx:157-171
 - **Detail**: After a failed Zapisz on the guard bar, `setPending(null)` closes the bar and the requested exit (tab, navigation, other card) is dropped without explanation. The user stays in the dirty editor and sees the server error in the card. Arguably intended.
 - **Fix**: Keep as is and record it as accepted, or leave the bar open showing „Nie udało się zapisać” with Porzuć still available.
-- **Decision**: PENDING
+- **Decision**: ACCEPTED — intended: the server error stays visible in the card
 
 ### F3 — Parser accepts impossible calendar dates and year 0000
 
@@ -57,7 +57,7 @@ Accepted drifts (not findings): hand-written `ui/tabs.tsx`; `useSetRootPerson` h
 - **Location**: resources/js/lib/partial-date.ts:150-190
 - **Detail**: `31.02.1900` and `31.04.1948` show a valid hint; the server's `checkdate` rejects them after submit (plan says the server stays the authority). Year `0000` is passed on; the server range rule (1000..current year) rejects it.
 - **Fix**: Accept the server round trip (plan-conformant), or add a client day-in-month check.
-- **Decision**: PENDING
+- **Decision**: ACCEPTED — server is the authority (plan); round trip is fine
 
 ### F4 — Cancel and back are enabled while a save is in flight
 
@@ -67,7 +67,7 @@ Accepted drifts (not findings): hand-written `ui/tabs.tsx`; `useSetRootPerson` h
 - **Location**: resources/js/components/persons/section-card.tsx:194-198, 271-279
 - **Detail**: Anuluj, mobile „Wróć” and Esc are not disabled during `processing`/`isSaving`; cancelling mid-save unmounts the editor and `onSuccess` calls `cancel()` on it later. Benign but inconsistent.
 - **Fix**: Disable Anuluj/Wróć while `processing`.
-- **Decision**: PENDING
+- **Decision**: FIXED — Anuluj and mobile Wróć disabled while processing
 
 ### F5 — No test for the death-with-scans uncheck guard
 
