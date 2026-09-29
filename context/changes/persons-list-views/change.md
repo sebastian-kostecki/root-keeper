@@ -1,7 +1,7 @@
 ---
 change_id: persons-list-views
 title: Lista osób — widoki Lista i Tabela do wyboru (?view=tabela)
-status: implementing
+status: implemented
 created: 2026-09-29
 updated: 2026-09-29
 archived_at: null

@@ -538,10 +538,10 @@ None. No schema change. `date_parts` and `is_confirmed` are additive for existin
 
 #### Automated
 
-- [x] 4.1 Seeder runs cleanly: `vendor/bin/sail artisan db:seed --class=TreeViewDemoSeeder`
-- [x] 4.2 Screenshot script completes and writes every listed shot to `screenshots/after/`
+- [x] 4.1 Seeder runs cleanly: `vendor/bin/sail artisan db:seed --class=TreeViewDemoSeeder` — 408697f
+- [x] 4.2 Screenshot script completes and writes every listed shot to `screenshots/after/` — 408697f
 
 #### Manual
 
 - [x] 4.3 `verdict.md` shows every state matching the canvas (A, B, Stany, Mobile), with differences explained or fixed
-- [x] 4.4 The person-modal gate's `/persons` person lookup still resolves ids
+- [x] 4.4 The person-modal gate's `/persons` person lookup still resolves ids — 408697f
