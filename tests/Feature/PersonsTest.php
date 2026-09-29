@@ -3,6 +3,7 @@
 use App\Enums\EventType;
 use App\Enums\ParticipantRole;
 use App\Models\Event;
+use App\Models\ParentChildRelation;
 use App\Models\Person;
 use App\Models\Scan;
 use App\Models\User;
@@ -247,7 +248,7 @@ test('store creates a person and a birth event even when birth fields are empty'
 
     $person = Person::where('first_name', 'Jan')->where('last_name', 'Kowalski')->firstOrFail();
 
-    $response->assertRedirect(route('tree.show', $person));
+    $response->assertRedirect(personPreviewUrl($person, 'tree.show', [$person]));
 
     expect($person->tree_id)->toBe($user->tree->id);
 
@@ -501,9 +502,11 @@ test('the old create and edit urls return not found', function () {
 test('store redirects to the tree of the created person regardless of the referrer', function () {
     $user = User::factory()->create();
 
-    $this->actingAs($user)
-        ->post(route('persons.store'), ['first_name' => 'Jan'])
-        ->assertRedirect(route('tree.show', Person::where('first_name', 'Jan')->firstOrFail()));
+    $response = $this->actingAs($user)->post(route('persons.store'), ['first_name' => 'Jan']);
+
+    $person = Person::where('first_name', 'Jan')->firstOrFail();
+
+    $response->assertRedirect(personPreviewUrl($person, 'tree.show', [$person]));
 });
 
 test('store rejects death fields when the person is not marked deceased', function () {
@@ -880,4 +883,23 @@ test('destroy without a referrer or from an external page goes to the persons li
     $this->actingAs($user)->from('https://example.com/persons?person=1')
         ->delete(route('persons.destroy', $second))
         ->assertRedirect(route('persons.index'));
+});
+
+test('the preview carries relative and spouse gender and the upload date of linked scans', function () {
+    $user = User::factory()->create();
+    $person = Person::factory()->for($user->tree)->create();
+    $parent = Person::factory()->for($user->tree)->female()->create();
+    $spouse = Person::factory()->for($user->tree)->male()->create();
+    ParentChildRelation::factory()->create(['tree_id' => $user->tree->id, 'parent_id' => $parent->id, 'child_id' => $person->id]);
+    attachBirth($person, year: 1850);
+    $birth = $person->birth();
+    $scan = Scan::factory()->for($user->tree)->create();
+    $birth->scans()->attach($scan);
+    attachMarriage($person, $spouse);
+
+    $this->actingAs($user)->get(personPreviewUrl($person))
+        ->assertInertia(fn ($page) => $page
+            ->where('personPreview.person.parents.0.gender', 'female')
+            ->where('personPreview.person.marriages.0.spouse.gender', 'male')
+            ->where('personPreview.person.birth.scans.0.uploaded_at', $scan->created_at->toIso8601String()));
 });

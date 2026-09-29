@@ -75,7 +75,7 @@ class PersonController extends Controller
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Dodano osobę')]);
 
-        return to_route('tree.show', $person);
+        return redirect(route('tree.show', $person).'?'.http_build_query(['person' => $person->id]));
     }
 
     /**

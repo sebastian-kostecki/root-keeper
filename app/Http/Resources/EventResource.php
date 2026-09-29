@@ -23,7 +23,7 @@ class EventResource extends JsonResource
      *     date: string|null,
      *     place: string|null,
      *     is_confirmed?: bool,
-     *     scans?: list<array{id: int, original_name: string, has_thumbnail: bool}>,
+     *     scans?: list<array{id: int, original_name: string, has_thumbnail: bool, uploaded_at: string|null}>,
      * }
      */
     public function toArray(Request $request): array
@@ -38,6 +38,7 @@ class EventResource extends JsonResource
                 'id' => $scan->id,
                 'original_name' => $scan->original_name,
                 'has_thumbnail' => $scan->thumbnail_path !== null,
+                'uploaded_at' => $scan->created_at?->toIso8601String(),
             ])->all()),
         ];
     }

@@ -19,6 +19,7 @@ export type LinkedScan = {
     id: number;
     original_name: string;
     has_thumbnail: boolean;
+    uploaded_at: string | null;
 };
 
 export type SourcedPersonEvent = PersonEvent & {
@@ -36,6 +37,7 @@ export type Marriage = SourcedPersonEvent & {
     spouse: {
         id: number;
         display_name: string;
+        gender: 'male' | 'female' | null;
         birth_date: string | null;
         death_date: string | null;
     } | null;
@@ -57,6 +59,7 @@ export type Relative = {
     relation_id: number;
     id: number;
     display_name: string;
+    gender: 'male' | 'female' | null;
     birth_date: string | null;
     death_date: string | null;
 };

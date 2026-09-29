@@ -21,6 +21,7 @@ class RelativeResource extends JsonResource
      *     relation_id: int,
      *     id: int,
      *     display_name: string,
+     *     gender: 'male'|'female'|null,
      *     birth_date: string|null,
      *     death_date: string|null,
      * }
@@ -31,6 +32,7 @@ class RelativeResource extends JsonResource
             'relation_id' => $this->pivot->id,
             'id' => $this->id,
             'display_name' => $this->displayName(),
+            'gender' => $this->gender?->value,
             'birth_date' => $this->birth()?->date->format(),
             'death_date' => $this->death()?->date->format(),
         ];

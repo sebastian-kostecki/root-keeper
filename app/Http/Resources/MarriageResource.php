@@ -31,9 +31,9 @@ class MarriageResource extends JsonResource
      *     date: string|null,
      *     place: string|null,
      *     is_confirmed?: bool,
-     *     scans?: list<array{id: int, original_name: string, has_thumbnail: bool}>,
+     *     scans?: list<array{id: int, original_name: string, has_thumbnail: bool, uploaded_at: string|null}>,
      *     date_parts: array{year: int|null, month: int|null, day: int|null, is_approximate: bool},
-     *     spouse: array{id: int, display_name: string, birth_date: string|null, death_date: string|null}|null,
+     *     spouse: array{id: int, display_name: string, gender: 'male'|'female'|null, birth_date: string|null, death_date: string|null}|null,
      * }
      */
     public function toArray(Request $request): array
@@ -51,6 +51,7 @@ class MarriageResource extends JsonResource
             'spouse' => $spouse === null ? null : [
                 'id' => $spouse->id,
                 'display_name' => $spouse->displayName(),
+                'gender' => $spouse->gender?->value,
                 'birth_date' => $spouse->birth()?->date->format(),
                 'death_date' => $spouse->death()?->date->format(),
             ],
