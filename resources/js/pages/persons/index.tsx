@@ -1,6 +1,6 @@
 import { Head, router } from '@inertiajs/react';
 import { LayoutListIcon, SearchIcon, TableIcon } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import PersonController from '@/actions/App/Http/Controllers/PersonController';
 import Heading from '@/components/heading';
 import { PersonCreateDialog } from '@/components/persons/person-create-dialog';
@@ -14,7 +14,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Spinner } from '@/components/ui/spinner';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
-import { buildPersonsQuery } from '@/lib/persons-index';
+import { buildPersonsQuery, peopleCount } from '@/lib/persons-index';
 import type {
     PersonsFilters,
     PersonsSort,
@@ -46,9 +46,15 @@ export default function Index({
 }: Props) {
     const [search, setSearch] = useState(filters.q);
     const [isSearching, setIsSearching] = useState(false);
+    const lastVisitedQuery = useRef(filters.q);
+    const latestSearchVisit = useRef(0);
 
     /** Full reload with the search visit options: no history entry per keystroke. */
     const visitSearch = (next: Partial<PersonsFilters>) => {
+        const visitId = ++latestSearchVisit.current;
+
+        lastVisitedQuery.current = next.q ?? filters.q;
+
         router.get(
             PersonController.index({
                 query: buildPersonsQuery({ ...filters, ...next }),
@@ -59,7 +65,18 @@ export default function Index({
                 preserveScroll: true,
                 replace: true,
                 onStart: () => setIsSearching(true),
-                onFinish: () => setIsSearching(false),
+                // A cancelled visit must not be treated as done: let the effect re-issue it.
+                onCancel: () => {
+                    if (visitId === latestSearchVisit.current) {
+                        lastVisitedQuery.current = filters.q;
+                    }
+                },
+                // Only the latest search visit owns the spinner.
+                onFinish: () => {
+                    if (visitId === latestSearchVisit.current) {
+                        setIsSearching(false);
+                    }
+                },
             },
         );
     };
@@ -79,34 +96,26 @@ export default function Index({
         );
     };
 
+    // History navigation changes `q` without a visit of ours: show it in the input.
+    useEffect(() => {
+        if (filters.q !== lastVisitedQuery.current) {
+            lastVisitedQuery.current = filters.q;
+            setSearch(filters.q);
+        }
+    }, [filters.q]);
+
     useEffect(() => {
         const trimmed = search.trim();
 
-        if (trimmed === filters.q) {
+        if (trimmed === filters.q || trimmed === lastVisitedQuery.current) {
             return;
         }
 
-        const timeoutId = setTimeout(() => {
-            router.get(
-                PersonController.index({
-                    query: buildPersonsQuery({
-                        q: trimmed,
-                        view: filters.view,
-                        sort: filters.sort,
-                    }),
-                }),
-                {},
-                {
-                    preserveState: true,
-                    preserveScroll: true,
-                    replace: true,
-                    onStart: () => setIsSearching(true),
-                    onFinish: () => setIsSearching(false),
-                },
-            );
-        }, 300);
+        const timeoutId = setTimeout(() => visitSearch({ q: trimmed }), 300);
 
         return () => clearTimeout(timeoutId);
+        // visitSearch closes over `filters`; only its display fields matter here.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [search, filters.q, filters.view, filters.sort]);
 
     const clearSearch = () => {
@@ -185,6 +194,14 @@ export default function Index({
                         </ToggleGroup>
                     </div>
                 )}
+
+                <p className="sr-only" role="status" aria-live="polite">
+                    {filters.q === ''
+                        ? ''
+                        : persons.length === 0
+                          ? 'Brak wyników'
+                          : `Znaleziono: ${peopleCount(persons.length)}`}
+                </p>
 
                 {persons.length === 0 && filters.q === '' ? (
                     <PersonsEmptyTree

@@ -22,7 +22,7 @@ Canvas: https://claude.ai/artifact/LT3qzYRdcYfkxZchBJ7LEN (boards Main, Tabela, 
 
 ## Stany
 
-- Empty tree (light/dark desktop, light mobile): match. Dashed container, icon, title, hint, "Dodaj osobę".
+- Empty tree (light/dark, desktop and 390 px): match. Dashed container, icon, title, hint, "Dodaj osobę".
 - No results: match. Icon, "Brak wyników", `Nie znaleziono osób pasujących do „zzzzzz”.`, "Wyczyść wyszukiwanie" (outline button), view kept.
 - Searching: match. Focus ring on the input, spinner in the field, previous results dimmed. The canvas shows a clear (x) button in the field and the app shows one too (blue x while the query is set).
 - Row states (hover, focus-visible, probant, unknown gender, long name): hover/probant/long name seen and match; keyboard focus was not captured by the script.

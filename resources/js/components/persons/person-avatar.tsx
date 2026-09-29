@@ -6,6 +6,8 @@ type Props = {
     name: string;
     gender: 'male' | 'female' | null;
     size?: 'sm' | 'md' | 'lg';
+    /** Set false where the avatar sits inside a link that already carries the name. */
+    announceGender?: boolean;
     className?: string;
 };
 
@@ -21,7 +23,13 @@ const genderLabels = {
 } as const;
 
 /** Gender-coloured initials avatar; the initials are decorative, the gender is read out. */
-export function PersonAvatar({ name, gender, size = 'md', className }: Props) {
+export function PersonAvatar({
+    name,
+    gender,
+    size = 'md',
+    announceGender = true,
+    className,
+}: Props) {
     const getInitials = useInitials();
 
     return (
@@ -34,7 +42,9 @@ export function PersonAvatar({ name, gender, size = 'md', className }: Props) {
             )}
         >
             <span aria-hidden="true">{getInitials(name)}</span>
-            {gender && <span className="sr-only">{genderLabels[gender]}</span>}
+            {gender && announceGender && (
+                <span className="sr-only">{genderLabels[gender]}</span>
+            )}
         </span>
     );
 }

@@ -214,6 +214,7 @@ export function PersonsTable({
                                         name={person.display_name}
                                         gender={person.gender?.value ?? null}
                                         size="sm"
+                                        announceGender={false}
                                     />
                                     <span className="min-w-0 font-medium whitespace-normal">
                                         {person.display_name}

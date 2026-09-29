@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Actions\Persons\CreatePerson;
 use App\Actions\Persons\DeletePerson;
 use App\Actions\Persons\UpdatePerson;
+use App\Enums\EventType;
 use App\Enums\Gender;
 use App\Enums\Religion;
 use App\Http\Requests\PersonStoreRequest;
@@ -33,7 +34,9 @@ class PersonController extends Controller
         return Inertia::render('persons/index', [
             'persons' => fn (): array => PersonResource::collection(
                 $tree->people()
-                    ->with(['events' => fn ($events) => $events->withExists('scans')])
+                    ->with(['events' => fn ($events) => $events
+                        ->whereIn('type', [EventType::Birth, EventType::Death])
+                        ->withExists('scans')])
                     ->when($query !== '', function ($builder) use ($query): void {
                         $words = preg_split('/\s+/u', $query, -1, PREG_SPLIT_NO_EMPTY) ?: [];
 

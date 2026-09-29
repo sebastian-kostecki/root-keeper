@@ -118,5 +118,6 @@ for (const scheme of ['light', 'dark']) {
 await emptyTree('light', 1280, 900);
 await emptyTree('dark', 1280, 900);
 await emptyTree('light', 390, 844);
+await emptyTree('dark', 390, 844);
 
 await browser.close();

@@ -17,6 +17,9 @@ class EventResource extends JsonResource
     /**
      * Transform the resource into an array.
      *
+     * `is_confirmed` needs either the `scans` relation (preview) or the `scans_exists`
+     * attribute from `withExists('scans')` (persons index, which never sends scan bodies).
+     *
      * @return array{
      *     id: int,
      *     type: string,

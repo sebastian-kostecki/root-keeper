@@ -5,33 +5,17 @@ import {
 } from '@/components/persons/person-list-parts';
 import { PersonAvatar } from '@/components/persons/person-avatar';
 import { PersonPreviewLink } from '@/components/persons/person-preview-link';
-import { formatEventMeta, groupBySurnameInitial } from '@/lib/persons-index';
+import {
+    formatEventMeta,
+    groupBySurnameInitial,
+    peopleCount,
+} from '@/lib/persons-index';
 import type { IndexPersonEvent, Person } from '@/types';
 
 type Props = {
     persons: Person[];
     rootPersonId: number | null;
 };
-
-/** „1 osoba”, „3 osoby”, „6 osób”, „12 osób”, „22 osoby”. */
-function peopleCount(count: number): string {
-    const lastDigit = count % 10;
-    const lastTwoDigits = count % 100;
-
-    if (count === 1) {
-        return '1 osoba';
-    }
-
-    if (
-        lastDigit >= 2 &&
-        lastDigit <= 4 &&
-        !(lastTwoDigits >= 12 && lastTwoDigits <= 14)
-    ) {
-        return `${count} osoby`;
-    }
-
-    return `${count} osób`;
-}
 
 function EventMeta({
     prefix,
@@ -78,6 +62,7 @@ function PersonRow({
                 name={person.display_name}
                 gender={person.gender?.value ?? null}
                 size="sm"
+                announceGender={false}
             />
             <span className="min-w-0 flex-1">
                 <span className="flex flex-wrap items-center gap-x-2 gap-y-1">

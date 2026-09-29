@@ -95,7 +95,13 @@ export function groupBySurnameInitial(persons: Person[]): PersonGroup[] {
         if (initial === null) {
             withoutSurname.push(person);
         } else {
-            byInitial.set(initial, [...(byInitial.get(initial) ?? []), person]);
+            const group = byInitial.get(initial);
+
+            if (group) {
+                group.push(person);
+            } else {
+                byInitial.set(initial, [person]);
+            }
         }
     }
 
@@ -193,4 +199,24 @@ export function formatEventMeta(
     const label = [date, event.place].filter(Boolean).join(', ');
 
     return label === '' ? null : `${prefix} ${label}`;
+}
+
+/** „1 osoba”, „3 osoby”, „6 osób”, „12 osób”, „22 osoby”. */
+export function peopleCount(count: number): string {
+    const lastDigit = count % 10;
+    const lastTwoDigits = count % 100;
+
+    if (count === 1) {
+        return '1 osoba';
+    }
+
+    if (
+        lastDigit >= 2 &&
+        lastDigit <= 4 &&
+        !(lastTwoDigits >= 12 && lastTwoDigits <= 14)
+    ) {
+        return `${count} osoby`;
+    }
+
+    return `${count} osób`;
 }
