@@ -1,17 +1,9 @@
-import { useState } from 'react';
 import Heading from '@/components/heading';
-import InputError from '@/components/input-error';
-import { PartialDateInput } from '@/components/persons/partial-date-input';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select';
+    BirthFields,
+    DeathFields,
+    PersonalFields,
+} from '@/components/persons/person-section-fields';
 import { Separator } from '@/components/ui/separator';
 import type { Gender, PersonFormData, Religion } from '@/types';
 
@@ -20,172 +12,47 @@ type Props = {
     religions: Religion[];
     errors: Partial<Record<string, string>>;
     person?: PersonFormData;
-    /** Fixes the sex (select disabled, value still submitted), e.g. by a tree slot. */
+    /** Fixes the sex (value still submitted), e.g. by a tree slot. */
     lockedGender?: 'male' | 'female';
     /** Starting values for a new person. */
     defaults?: { last_name?: string | null };
 };
 
-/** Radix Select does not allow an empty item value, so "no religion" uses a sentinel. */
-const NO_RELIGION = 'none';
-
-/** Same sentinel technique for an unknown gender. */
-const NO_GENDER = 'none';
-
-/** Shown under a birth/death heading when that event is backed by a linked scan. */
-const CONFIRMED_HINT =
-    'Potwierdzone aktem — upewnij się, że zmiana zgadza się ze skanem.';
-
+/** The person form as one stack: the same section fields the modal cards use. */
 export function PersonFormFields({
-    genders,
     religions,
     errors,
     person,
     lockedGender,
     defaults,
 }: Props) {
-    const [isDeceased, setIsDeceased] = useState(person?.is_deceased ?? false);
-    const [selectedGender, setGender] = useState(person?.gender ?? '');
-    const gender = lockedGender ?? selectedGender;
-    const [religion, setReligion] = useState(person?.religion ?? '');
-
     return (
         <>
-            <div className="grid gap-4 sm:grid-cols-2">
-                <div className="grid gap-2">
-                    <Label htmlFor="first_name">Imię</Label>
-                    <Input
-                        id="first_name"
-                        name="first_name"
-                        maxLength={255}
-                        autoFocus
-                        defaultValue={person?.first_name ?? undefined}
-                    />
-                    <InputError message={errors.first_name} />
-                </div>
-
-                <div className="grid gap-2">
-                    <Label htmlFor="last_name">Nazwisko</Label>
-                    <Input
-                        id="last_name"
-                        name="last_name"
-                        maxLength={255}
-                        defaultValue={
-                            (person ? person.last_name : defaults?.last_name) ??
-                            undefined
-                        }
-                    />
-                    <InputError message={errors.last_name} />
-                </div>
-            </div>
-
-            <div className="grid gap-2">
-                <Label htmlFor="residence">Miejsce zamieszkania</Label>
-                <Input
-                    id="residence"
-                    name="residence"
-                    maxLength={255}
-                    defaultValue={person?.residence ?? undefined}
-                />
-                <InputError message={errors.residence} />
-            </div>
-
-            <div className="grid gap-2">
-                <Label htmlFor="gender">Płeć</Label>
-                <Select
-                    value={gender || NO_GENDER}
-                    onValueChange={(value) =>
-                        setGender(value === NO_GENDER ? '' : value)
-                    }
-                    disabled={lockedGender !== undefined}
-                >
-                    <SelectTrigger id="gender" className="w-full">
-                        <SelectValue placeholder="Nieznana" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value={NO_GENDER}>Nieznana</SelectItem>
-                        {genders.map((option) => (
-                            <SelectItem key={option.value} value={option.value}>
-                                {option.label}
-                            </SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
-                <input type="hidden" name="gender" value={gender} />
-                <InputError message={errors.gender} />
-            </div>
-
-            <div className="grid gap-2">
-                <Label htmlFor="religion">Wyznanie</Label>
-                <Select
-                    value={religion || NO_RELIGION}
-                    onValueChange={(value) =>
-                        setReligion(value === NO_RELIGION ? '' : value)
-                    }
-                >
-                    <SelectTrigger id="religion" className="w-full">
-                        <SelectValue placeholder="Brak danych" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value={NO_RELIGION}>Brak danych</SelectItem>
-                        {religions.map((option) => (
-                            <SelectItem key={option.value} value={option.value}>
-                                {option.label}
-                            </SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
-                <input type="hidden" name="religion" value={religion} />
-                <InputError message={errors.religion} />
-            </div>
+            <PersonalFields
+                religions={religions}
+                errors={errors}
+                person={person}
+                lockedGender={lockedGender}
+                defaults={defaults}
+            />
 
             <Separator />
 
             <div className="space-y-4">
                 <Heading variant="small" title="Urodzenie" />
-                {person?.birth?.is_confirmed && (
-                    <p className="text-muted-foreground text-sm">
-                        {CONFIRMED_HINT}
-                    </p>
-                )}
-                <PartialDateInput
-                    prefix="birth"
-                    errors={errors}
-                    defaultValue={person?.birth ?? undefined}
-                />
+                <BirthFields errors={errors} birth={person?.birth ?? null} />
             </div>
 
             <Separator />
 
-            <div className="flex items-center space-x-3">
-                <Checkbox
-                    id="is_deceased"
-                    name="is_deceased"
-                    value="1"
-                    checked={isDeceased}
-                    onCheckedChange={(checked) =>
-                        setIsDeceased(checked === true)
-                    }
+            <div className="space-y-4">
+                <Heading variant="small" title="Zgon" />
+                <DeathFields
+                    errors={errors}
+                    death={person?.death ?? null}
+                    isDeceased={person?.is_deceased ?? false}
                 />
-                <Label htmlFor="is_deceased">Zmarły/a</Label>
             </div>
-            <InputError message={errors.is_deceased} />
-
-            {isDeceased && (
-                <div className="space-y-4">
-                    <Heading variant="small" title="Zgon" />
-                    {person?.death?.is_confirmed && (
-                        <p className="text-muted-foreground text-sm">
-                            {CONFIRMED_HINT}
-                        </p>
-                    )}
-                    <PartialDateInput
-                        prefix="death"
-                        errors={errors}
-                        defaultValue={person?.death ?? undefined}
-                    />
-                </div>
-            )}
         </>
     );
 }

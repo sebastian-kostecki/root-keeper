@@ -40,7 +40,7 @@ const SectionEditorContext = createContext<SectionEditorContextValue | null>(
 /** Locative form used in "Masz niezapisane zmiany w …". */
 function labelFor(id: SectionId | null): string {
     if (id === null) {
-        return '';
+        return 'nowej osobie';
     }
 
     if (id === 'personal') {

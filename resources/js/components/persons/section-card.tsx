@@ -24,7 +24,7 @@ type Props = {
     error?: string;
 };
 
-function serialize(form: HTMLFormElement): string {
+export function serialize(form: HTMLFormElement): string {
     return JSON.stringify(Array.from(new FormData(form).entries()));
 }
 

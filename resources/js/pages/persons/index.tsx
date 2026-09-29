@@ -2,8 +2,8 @@ import { Head, router } from '@inertiajs/react';
 import { useEffect, useState } from 'react';
 import PersonController from '@/actions/App/Http/Controllers/PersonController';
 import Heading from '@/components/heading';
+import { PersonCreateDialog } from '@/components/persons/person-create-dialog';
 import { PersonPreviewLink } from '@/components/persons/person-preview-link';
-import { PersonFormDialog } from '@/components/persons/person-form-dialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -27,7 +27,7 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
-export default function Index({ persons, genders, religions, filters }: Props) {
+export default function Index({ persons, religions, filters }: Props) {
     const [search, setSearch] = useState(filters.q);
 
     useEffect(() => {
@@ -61,9 +61,7 @@ export default function Index({ persons, genders, religions, filters }: Props) {
                         description="Osoby zapisane w Twoim drzewie genealogicznym"
                     />
 
-                    <PersonFormDialog
-                        mode="create"
-                        genders={genders}
+                    <PersonCreateDialog
                         religions={religions}
                         trigger={<Button>Dodaj osobę</Button>}
                     />

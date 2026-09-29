@@ -783,38 +783,38 @@ The additions are appended after the existing persons, and the comment block is 
 
 #### Automated
 
-- [x] 4.1 Format and lint pass
-- [x] 4.2 TS types check
-- [x] 4.3 Build succeeds
-- [x] 4.4 Person, marriage and scan-link feature tests still pass (payload shape unchanged)
-- [x] 4.5 Parser unit tests pass
+- [x] 4.1 Format and lint pass — 6dbc3c5
+- [x] 4.2 TS types check — 6dbc3c5
+- [x] 4.3 Build succeeds — 6dbc3c5
+- [x] 4.4 Person, marriage and scan-link feature tests still pass (payload shape unchanged) — 6dbc3c5
+- [x] 4.5 Parser unit tests pass — 6dbc3c5
 
 #### Manual
 
-- [x] 4.6 Editing „Dane osobowe” of a deceased person with a death scan saves and the death event and its scan link survive
-- [x] 4.7 Editing only the Urodzenie place keeps name, gender, religion, residence and death unchanged
-- [x] 4.8 „Oznacz zgon” opens Zgon in edit with „Osoba nie żyje” checked; saving creates the death; unchecking it with a linked death scan shows the server error in the card
-- [x] 4.9 Marriage card edit saves date/place and keeps the certificate link
-- [x] 4.10 With a dirty card each exit (other pencil, tab, X, Esc, Wstecz, relative link, Pokaż na drzewie, ⋯ items, Źródła Otwórz/Powiąż) shows the bar; Porzuć continues, Zapisz saves then continues, a failing Zapisz stays with errors
-- [x] 4.11 A card with no edits (or edits reverted) never shows the bar
-- [x] 4.12 At 390px, editing a section shows the full-screen „Edycja sekcji” view with pinned Anuluj/Zapisz visible while the keyboard is open
-- [x] 4.13 Keyboard: pencil, fields and Zapisz are reachable by Tab; focus returns to the pencil after save/cancel
+- [x] 4.6 Editing „Dane osobowe” of a deceased person with a death scan saves and the death event and its scan link survive — 6dbc3c5
+- [x] 4.7 Editing only the Urodzenie place keeps name, gender, religion, residence and death unchanged — 6dbc3c5
+- [x] 4.8 „Oznacz zgon” opens Zgon in edit with „Osoba nie żyje” checked; saving creates the death; unchecking it with a linked death scan shows the server error in the card — 6dbc3c5
+- [x] 4.9 Marriage card edit saves date/place and keeps the certificate link — 6dbc3c5
+- [x] 4.10 With a dirty card each exit (other pencil, tab, X, Esc, Wstecz, relative link, Pokaż na drzewie, ⋯ items, Źródła Otwórz/Powiąż) shows the bar; Porzuć continues, Zapisz saves then continues, a failing Zapisz stays with errors — 6dbc3c5
+- [x] 4.11 A card with no edits (or edits reverted) never shows the bar — 6dbc3c5
+- [x] 4.12 At 390px, editing a section shows the full-screen „Edycja sekcji” view with pinned Anuluj/Zapisz visible while the keyboard is open — 6dbc3c5
+- [x] 4.13 Keyboard: pencil, fields and Zapisz are reachable by Tab; focus returns to the pencil after save/cancel — 6dbc3c5
 
 ### Phase 5: Create mode on the shared shell
 
 #### Automated
 
-- [ ] 5.1 Format and lint pass
-- [ ] 5.2 TS types check
-- [ ] 5.3 Build succeeds
-- [ ] 5.4 Person, relation and marriage create feature tests pass
+- [x] 5.1 Format and lint pass
+- [x] 5.2 TS types check
+- [x] 5.3 Build succeeds
+- [x] 5.4 Person, relation and marriage create feature tests pass
 
 #### Manual
 
-- [ ] 5.5 Persons list „Dodaj osobę” shows the „Nowa osoba” board; saving lands on the tree with the new person's preview open
-- [ ] 5.6 Creating with an invalid date shows the error in the Urodzenie card and scrolls to it
-- [ ] 5.7 Closing a create form with typed data shows the guard bar
-- [ ] 5.8 Tree: adding a new parent (locked gender), child and spouse still works and saves dates typed as text
+- [x] 5.5 Persons list „Dodaj osobę” shows the „Nowa osoba” board; saving lands on the tree with the new person's preview open
+- [x] 5.6 Creating with an invalid date shows the error in the Urodzenie card and scrolls to it
+- [x] 5.7 Closing a create form with typed data shows the guard bar
+- [x] 5.8 Tree: adding a new parent (locked gender), child and spouse still works and saves dates typed as text
 
 ### Phase 6: Screenshot gate
 
