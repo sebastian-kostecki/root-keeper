@@ -83,7 +83,7 @@ Po przeniesieniu formularza osoby do modala zostały dwie luki (prd-v4): ogląda
 | S-25 | tree-parent-slot-existing-or-new | z pustego slotu rodzica na drzewie podłączyć istniejącą osobę (wybór filtrowany płcią i regułami) albo utworzyć nową i od razu widzieć ją na drzewie | S-24, S-06 | v4:FR-004, v4:FR-011, v4:US-01, v3:FR-001, v3:FR-012, v3:US-01 | done |
 | S-26 | tree-child-existing-or-new      | dodać z drzewa dziecko pokazanej pary — istniejącą osobę albo nową — i od razu widzieć je na drzewie | S-24, S-06 | v4:FR-005, v4:FR-011, v3:FR-002, v3:FR-012 | done |
 | S-27 | tree-spouse-existing-or-new     | z pustego slotu małżonka przy centrum podłączyć istniejącą osobę albo nowego małżonka i połączyć pokazanych rodziców w małżeństwo | S-24, S-07 | v4:FR-006, v4:FR-011, v3:FR-003 | done |
-| S-29 | preview-relations-read-only     | widzieć relacje w podglądzie bez dodawania (usuwanie zostaje) z przyciskiem „Pokaż na drzewie” | S-25, S-26, S-27 | v4:FR-008 | in-progress |
+| S-29 | preview-relations-read-only     | widzieć relacje w podglądzie bez dodawania (usuwanie zostaje) z przyciskiem „Pokaż na drzewie” | S-25, S-26, S-27 | v4:FR-008 | done |
 
 ## Streams
 
@@ -417,7 +417,7 @@ Foundations below assume these are present and do NOT re-scaffold them. The prd-
 - **Blockers:** —
 - **Unknowns:** —
 - **Risk:** Ostatni w strumieniu: akcje dodawania znikają z podglądu dopiero, gdy każdą relację da się dodać z drzewa (S-25 – S-27).
-- **Status:** in-progress
+- **Status:** done
 
 ## Backlog Handoff
 
@@ -512,3 +512,4 @@ Rozstrzygnięte:
 - **S-25: użytkownik klika na drzewie slot „nieznany ojciec / matka / rodzic” (także przy dziadkach) i podłącza istniejącą osobę — w slocie ojca/matki wybór pokazuje tylko osoby pasującej płci i ukrywa osoby, których podłączenie złamałoby reguły relacji — albo tworzy w modalu nową osobę (płeć ustawiona i zablokowana przez slot; przy „nieznany rodzic” wybiera ją sam); rodzic od razu pojawia się na drzewie, bez opuszczania drzewa.** — Archived 2026-09-28 → `context/archive/2026-09-28-tree-parent-slot-existing-or-new/`. Lesson: —.
 - **S-26: użytkownik dodaje z drzewa dziecko pary aktualnie pokazanej (parę wybiera przełącznik związku; bez małżonka — dziecko tylko tej osoby): wybiera istniejącą osobę albo tworzy nową w modalu, który pokazuje obojga rodziców; dziecko od razu pojawia się na drzewie, a podłączenie dające dziecku trzeciego rodzica się nie udaje.** — Archived 2026-09-28 → `context/archive/2026-09-28-tree-child-existing-or-new/`. Lesson: —.
 - **S-27: użytkownik widzi pusty slot małżonka przy osobie w centrum drzewa, gdy nie ma ona małżonka, i podłącza z niego istniejącą osobę albo tworzy nowego małżonka w modalu; gdy pokazani na arkuszu ojciec i matka nie mają małżeństwa, łączy ich akcją „Połącz jako małżeństwo”; nowe małżeństwo od razu widać na drzewie, a datę, miejsce i potwierdzenie uzupełnia w podglądzie osoby.** — Archived 2026-09-28 → `context/archive/2026-09-28-tree-spouse-existing-or-new/`. Lesson: —.
+- **S-29: użytkownik widzi w modalu podglądu rodziców, dzieci i małżonków bez akcji dodawania (dodaje się je na drzewie); usuwanie relacji i małżeństwa oraz datę, miejsce i potwierdzenie małżeństwa nadal obsługuje w podglądzie; przycisk „Pokaż na drzewie” wyśrodkowuje drzewo na tej osobie.** — Archived 2026-09-29 → `context/archive/2026-09-29-preview-relations-read-only/`. Lesson: —.
