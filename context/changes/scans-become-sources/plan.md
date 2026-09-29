@@ -563,6 +563,6 @@ The file-move migration does one filesystem rename per file on the same disk, wh
 
 #### Manual
 
-- [x] 3.4 verdict.md reviewed
-- [x] 3.5 Rehearsal on real-shaped data: equal confirmed counts, only seeded file-less rows reported
-- [x] 3.6 Deploy runbook followed on production
+- [x] 3.4 verdict.md reviewed — db31846
+- [x] 3.5 Rehearsal on real-shaped data: equal confirmed counts, only seeded file-less rows reported — db31846
+- [x] 3.6 Deploy runbook followed on production — db31846
