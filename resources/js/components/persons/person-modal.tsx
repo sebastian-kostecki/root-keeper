@@ -4,11 +4,11 @@ import { OverviewTab } from '@/components/persons/overview-tab';
 import { useSectionEditor } from '@/components/persons/section-editor';
 import { SourcesTab } from '@/components/persons/sources-tab';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import type { PersonPreviewPayload, Scan } from '@/types';
+import type { PersonPreviewPayload, Source } from '@/types';
 
 type Props = {
     preview: PersonPreviewPayload;
-    availableScans?: Scan[];
+    availableSources?: Source[];
 };
 
 function TabCount({ count }: { count: number }) {
@@ -24,7 +24,7 @@ function TabCount({ count }: { count: number }) {
 }
 
 /** Tabbed body of the person modal (view mode): Przegląd, Rodzina, Źródła. */
-export function PersonModal({ preview, availableScans }: Props) {
+export function PersonModal({ preview, availableSources }: Props) {
     const { person } = preview;
     const { requestExit } = useSectionEditor();
     const [tab, setTab] = useState('przeglad');
@@ -42,10 +42,10 @@ export function PersonModal({ preview, availableScans }: Props) {
 
     const sourceCount = new Set(
         [
-            ...(person.birth?.scans ?? []),
-            ...(person.death?.scans ?? []),
-            ...person.marriages.flatMap((marriage) => marriage.scans),
-        ].map((scan) => scan.id),
+            ...(person.birth?.sources ?? []),
+            ...(person.death?.sources ?? []),
+            ...person.marriages.flatMap((marriage) => marriage.sources),
+        ].map((source) => source.id),
     ).size;
 
     return (
@@ -74,7 +74,7 @@ export function PersonModal({ preview, availableScans }: Props) {
             >
                 <OverviewTab
                     preview={preview}
-                    availableScans={availableScans}
+                    availableSources={availableSources}
                 />
             </TabsContent>
             <TabsContent
@@ -87,7 +87,10 @@ export function PersonModal({ preview, availableScans }: Props) {
                 value="zrodla"
                 className="min-h-0 flex-1 overflow-y-auto px-6 py-4"
             >
-                <SourcesTab person={person} availableScans={availableScans} />
+                <SourcesTab
+                    person={person}
+                    availableSources={availableSources}
+                />
             </TabsContent>
         </Tabs>
     );

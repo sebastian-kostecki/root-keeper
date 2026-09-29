@@ -1,16 +1,16 @@
 import { Link, router } from '@inertiajs/react';
-import ScanController from '@/actions/App/Http/Controllers/ScanController';
+import SourceController from '@/actions/App/Http/Controllers/SourceController';
 import { EventSourceStatus } from '@/components/persons/event-source-status';
 import { useGuardedClick } from '@/components/persons/section-editor';
-import { ScanPickerDialog } from '@/components/scans/scan-picker-dialog';
-import { ScanThumbnail } from '@/components/scans/scan-thumbnail';
-import { UnlinkScanDialog } from '@/components/scans/unlink-scan-dialog';
+import { SourcePickerDialog } from '@/components/sources/source-picker-dialog';
+import { SourceThumbnail } from '@/components/sources/source-thumbnail';
+import { UnlinkSourceDialog } from '@/components/sources/unlink-source-dialog';
 import { Button } from '@/components/ui/button';
-import type { PersonPreview, Scan, SourcedPersonEvent } from '@/types';
+import type { PersonPreview, Source, SourcedPersonEvent } from '@/types';
 
 type Props = {
     person: PersonPreview;
-    availableScans?: Scan[];
+    availableSources?: Source[];
 };
 
 type GroupProps = {
@@ -18,7 +18,7 @@ type GroupProps = {
     /** Genitive form used in the empty-state hint, e.g. "urodzenia". */
     eventGenitive: string;
     event: SourcedPersonEvent;
-    availableScans: Scan[] | undefined;
+    availableSources: Source[] | undefined;
 };
 
 function formatUploadedAt(uploadedAt: string | null): string | null {
@@ -41,10 +41,10 @@ function SourceGroup({
     label,
     eventGenitive,
     event,
-    availableScans,
+    availableSources,
 }: GroupProps) {
     const summary = [event.date, event.place].filter(Boolean).join(', ');
-    const hasScans = event.scans.length > 0;
+    const hasSources = event.sources.length > 0;
     const guardClick = useGuardedClick();
 
     return (
@@ -61,26 +61,26 @@ function SourceGroup({
                 <EventSourceStatus isConfirmed={event.is_confirmed} />
             </div>
 
-            {hasScans ? (
+            {hasSources ? (
                 <ul className="space-y-2">
-                    {event.scans.map((scan) => {
-                        const uploadedAt = formatUploadedAt(scan.uploaded_at);
+                    {event.sources.map((source) => {
+                        const uploadedAt = formatUploadedAt(source.uploaded_at);
 
                         return (
                             <li
-                                key={scan.id}
+                                key={source.id}
                                 className="flex items-center gap-3"
                             >
-                                <ScanThumbnail
-                                    scan={scan}
+                                <SourceThumbnail
+                                    source={source}
                                     className="size-14 shrink-0 rounded-md"
                                 />
                                 <div className="min-w-0 flex-1">
                                     <p
                                         className="truncate text-sm font-medium"
-                                        title={scan.original_name}
+                                        title={source.original_name}
                                     >
-                                        {scan.original_name}
+                                        {source.original_name}
                                     </p>
                                     {uploadedAt && (
                                         <p className="text-muted-foreground text-xs">
@@ -91,25 +91,29 @@ function SourceGroup({
                                 <div className="flex shrink-0 items-center gap-1">
                                     <Button variant="outline" size="sm" asChild>
                                         <Link
-                                            href={ScanController.show(scan.id)}
+                                            href={SourceController.show(
+                                                source.id,
+                                            )}
                                             onClick={(event) =>
                                                 guardClick(event, () =>
                                                     router.visit(
-                                                        ScanController.show(
-                                                            scan.id,
+                                                        SourceController.show(
+                                                            source.id,
                                                         ),
                                                     ),
                                                 )
                                             }
-                                            aria-label={`Otwórz skan ${scan.original_name}`}
+                                            aria-label={`Otwórz skan ${source.original_name}`}
                                         >
                                             Otwórz
                                         </Link>
                                     </Button>
-                                    <UnlinkScanDialog
+                                    <UnlinkSourceDialog
                                         eventId={event.id}
-                                        scan={scan}
-                                        isLastScan={event.scans.length === 1}
+                                        source={source}
+                                        isLastSource={
+                                            event.sources.length === 1
+                                        }
                                         eventLabel={label}
                                         trigger={
                                             <Button
@@ -117,7 +121,7 @@ function SourceGroup({
                                                 variant="ghost"
                                                 size="sm"
                                                 className="text-muted-foreground hover:text-destructive"
-                                                aria-label={`Odepnij skan ${scan.original_name}`}
+                                                aria-label={`Odepnij skan ${source.original_name}`}
                                             >
                                                 Odepnij
                                             </Button>
@@ -135,13 +139,13 @@ function SourceGroup({
                 </p>
             )}
 
-            <ScanPickerDialog
+            <SourcePickerDialog
                 eventId={event.id}
-                linkedScanIds={event.scans.map((scan) => scan.id)}
-                availableScans={availableScans}
+                linkedSourceIds={event.sources.map((source) => source.id)}
+                availableSources={availableSources}
                 trigger={
                     <Button type="button" variant="outline" size="sm">
-                        {hasScans ? 'Powiąż kolejny skan' : 'Powiąż skan'}
+                        {hasSources ? 'Powiąż kolejny skan' : 'Powiąż skan'}
                     </Button>
                 }
             />
@@ -149,7 +153,7 @@ function SourceGroup({
     );
 }
 
-export function SourcesTab({ person, availableScans }: Props) {
+export function SourcesTab({ person, availableSources }: Props) {
     return (
         <div className="space-y-4">
             {person.birth && (
@@ -157,7 +161,7 @@ export function SourcesTab({ person, availableScans }: Props) {
                     label="Urodzenie"
                     eventGenitive="urodzenia"
                     event={person.birth}
-                    availableScans={availableScans}
+                    availableSources={availableSources}
                 />
             )}
 
@@ -167,7 +171,7 @@ export function SourcesTab({ person, availableScans }: Props) {
                     label={`Małżeństwo z ${marriage.spouse?.display_name ?? 'nieznanym małżonkiem'}`}
                     eventGenitive="małżeństwa"
                     event={marriage}
-                    availableScans={availableScans}
+                    availableSources={availableSources}
                 />
             ))}
 
@@ -176,7 +180,7 @@ export function SourcesTab({ person, availableScans }: Props) {
                     label="Zgon"
                     eventGenitive="zgonu"
                     event={person.death}
-                    availableScans={availableScans}
+                    availableSources={availableSources}
                 />
             )}
         </div>

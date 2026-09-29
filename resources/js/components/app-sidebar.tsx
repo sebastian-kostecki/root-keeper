@@ -14,7 +14,7 @@ import {
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
 import { index as personsIndex } from '@/routes/persons';
-import { index as scansIndex } from '@/routes/scans';
+import { index as sourcesIndex } from '@/routes/sources';
 import { index as treeIndex } from '@/routes/tree';
 import type { NavItem } from '@/types';
 
@@ -30,8 +30,8 @@ const mainNavItems: NavItem[] = [
         icon: Users,
     },
     {
-        title: 'Skany',
-        href: scansIndex(),
+        title: 'Źródła',
+        href: sourcesIndex(),
         icon: FileImage,
     },
 ];

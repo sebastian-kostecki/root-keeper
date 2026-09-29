@@ -1,14 +1,14 @@
 import { ImageOff } from 'lucide-react';
-import ScanController from '@/actions/App/Http/Controllers/ScanController';
+import SourceController from '@/actions/App/Http/Controllers/SourceController';
 import { cn } from '@/lib/utils';
-import type { LinkedScan } from '@/types';
+import type { LinkedSource } from '@/types';
 
 type Props = {
-    scan: LinkedScan;
+    source: LinkedSource;
     className?: string;
 };
 
-export function ScanThumbnail({ scan, className }: Props) {
+export function SourceThumbnail({ source, className }: Props) {
     return (
         <div
             className={cn(
@@ -16,10 +16,10 @@ export function ScanThumbnail({ scan, className }: Props) {
                 className,
             )}
         >
-            {scan.has_thumbnail ? (
+            {source.has_thumbnail ? (
                 <img
-                    src={ScanController.thumbnail.url(scan.id)}
-                    alt={scan.original_name}
+                    src={SourceController.thumbnail.url(source.id)}
+                    alt={source.original_name}
                     loading="lazy"
                     className="h-full w-full object-cover"
                 />

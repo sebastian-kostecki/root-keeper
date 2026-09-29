@@ -10,7 +10,7 @@ use App\Enums\ParticipantRole;
 use App\Enums\Religion;
 use App\Models\Event;
 use App\Models\Person;
-use App\Models\Scan;
+use App\Models\Source;
 use App\Models\Tree;
 use App\Models\User;
 use Illuminate\Database\Seeder;
@@ -231,8 +231,8 @@ class TreeViewDemoSeeder extends Seeder
 
     private function attachScan(Event $event, string $originalName): void
     {
-        $scan = Scan::factory()->for($this->tree)->create(['original_name' => $originalName]);
-        $event->scans()->attach($scan);
+        $source = Source::factory()->for($this->tree)->create(['original_name' => $originalName]);
+        $event->sources()->attach($source);
     }
 
     /**

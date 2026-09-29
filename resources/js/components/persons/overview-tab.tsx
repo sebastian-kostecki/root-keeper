@@ -12,7 +12,7 @@ import {
 import { SectionCard } from '@/components/persons/section-card';
 import { useSectionEditor } from '@/components/persons/section-editor';
 import type { SectionId } from '@/components/persons/section-editor';
-import { ScanPickerDialog } from '@/components/scans/scan-picker-dialog';
+import { SourcePickerDialog } from '@/components/sources/source-picker-dialog';
 import { Button } from '@/components/ui/button';
 import { mergeSectionIntoPayload } from '@/lib/person-payload';
 import type { PersonSection, SectionValues } from '@/lib/person-payload';
@@ -23,13 +23,13 @@ import type {
     Marriage,
     PersonFormEvent,
     PersonPreviewPayload,
-    Scan,
+    Source,
     SourcedPersonEvent,
 } from '@/types';
 
 type Props = {
     preview: PersonPreviewPayload;
-    availableScans?: Scan[];
+    availableSources?: Source[];
 };
 
 type Errors = Record<string, string>;
@@ -83,12 +83,12 @@ function Field({ label, value }: { label: string; value: string | null }) {
 type FactViewProps = {
     event: SourcedPersonEvent;
     parts: PersonFormEvent | Marriage['date_parts'] | null;
-    availableScans: Scan[] | undefined;
+    availableSources: Source[] | undefined;
 };
 
-function FactView({ event, parts, availableScans }: FactViewProps) {
+function FactView({ event, parts, availableSources }: FactViewProps) {
     const date = parts ? formatPartialDate(parts, 'long') : '';
-    const scanCount = event.scans.length;
+    const sourceCount = event.sources.length;
 
     return (
         <>
@@ -98,17 +98,17 @@ function FactView({ event, parts, availableScans }: FactViewProps) {
             </div>
 
             <div className="border-t pt-3 text-sm">
-                {scanCount > 0 ? (
+                {sourceCount > 0 ? (
                     <p className="text-muted-foreground">
-                        {scanCount}{' '}
-                        {pluralPhrase(scanCount, 'skan', 'skany', 'skanów')} ·{' '}
-                        {event.scans[0].original_name}
+                        {sourceCount}{' '}
+                        {pluralPhrase(sourceCount, 'skan', 'skany', 'skanów')} ·{' '}
+                        {event.sources[0].original_name}
                     </p>
                 ) : (
-                    <ScanPickerDialog
+                    <SourcePickerDialog
                         eventId={event.id}
-                        linkedScanIds={[]}
-                        availableScans={availableScans}
+                        linkedSourceIds={[]}
+                        availableSources={availableSources}
                         trigger={
                             <Button type="button" variant="outline" size="sm">
                                 Powiąż skan
@@ -140,7 +140,7 @@ function EmptyFact({
     );
 }
 
-export function OverviewTab({ preview, availableScans }: Props) {
+export function OverviewTab({ preview, availableSources }: Props) {
     const { person, personForm } = preview;
     const editor = useSectionEditor();
     const [savingId, setSavingId] = useState<SectionId | null>(null);
@@ -266,7 +266,7 @@ export function OverviewTab({ preview, availableScans }: Props) {
                                 <FactView
                                     event={person.birth}
                                     parts={personForm.birth}
-                                    availableScans={availableScans}
+                                    availableSources={availableSources}
                                 />
                             )
                         }
@@ -306,7 +306,7 @@ export function OverviewTab({ preview, availableScans }: Props) {
                                     <FactView
                                         event={marriage}
                                         parts={marriage.date_parts}
-                                        availableScans={availableScans}
+                                        availableSources={availableSources}
                                     />
                                 }
                                 edit={
@@ -342,7 +342,7 @@ export function OverviewTab({ preview, availableScans }: Props) {
                                 <FactView
                                     event={person.death}
                                     parts={personForm.death}
-                                    availableScans={availableScans}
+                                    availableSources={availableSources}
                                 />
                             )
                         }

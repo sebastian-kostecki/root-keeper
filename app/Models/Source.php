@@ -2,7 +2,8 @@
 
 namespace App\Models;
 
-use Database\Factories\ScanFactory;
+use App\Enums\SourceKind;
+use Database\Factories\SourceFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -13,6 +14,7 @@ use Illuminate\Support\Carbon;
 /**
  * @property int $id
  * @property int $tree_id
+ * @property SourceKind $kind
  * @property string $original_name
  * @property string $path
  * @property string|null $thumbnail_path
@@ -23,10 +25,10 @@ use Illuminate\Support\Carbon;
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
-#[Fillable(['tree_id', 'original_name', 'path', 'thumbnail_path', 'mime_type', 'size', 'width', 'height'])]
-class Scan extends Model
+#[Fillable(['tree_id', 'kind', 'original_name', 'path', 'thumbnail_path', 'mime_type', 'size', 'width', 'height'])]
+class Source extends Model
 {
-    /** @use HasFactory<ScanFactory> */
+    /** @use HasFactory<SourceFactory> */
     use HasFactory;
 
     /**
@@ -37,6 +39,7 @@ class Scan extends Model
     protected function casts(): array
     {
         return [
+            'kind' => SourceKind::class,
             'size' => 'integer',
             'width' => 'integer',
             'height' => 'integer',
@@ -56,9 +59,9 @@ class Scan extends Model
      */
     public function events(): BelongsToMany
     {
-        return $this->belongsToMany(Event::class, 'event_scan')
+        return $this->belongsToMany(Event::class, 'event_source')
             ->withTimestamps()
-            ->orderBy('event_scan.created_at')
-            ->orderBy('event_scan.id');
+            ->orderBy('event_source.created_at')
+            ->orderBy('event_source.id');
     }
 }

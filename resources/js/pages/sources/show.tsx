@@ -1,49 +1,49 @@
 import { Head, setLayoutProps } from '@inertiajs/react';
-import ScanController from '@/actions/App/Http/Controllers/ScanController';
+import SourceController from '@/actions/App/Http/Controllers/SourceController';
 import Heading from '@/components/heading';
 import { PersonPreviewLink } from '@/components/persons/person-preview-link';
-import { DeleteScanDialog } from '@/components/scans/delete-scan-dialog';
-import { ScanViewer } from '@/components/scans/scan-viewer';
+import { DeleteSourceDialog } from '@/components/sources/delete-source-dialog';
+import { SourceViewer } from '@/components/sources/source-viewer';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { index as scansIndex } from '@/routes/scans';
-import type { Scan, ScanConfirmation } from '@/types';
+import { index as sourcesIndex } from '@/routes/sources';
+import type { Source, SourceConfirmation } from '@/types';
 
 type Props = {
-    scan: Scan;
-    confirms: ScanConfirmation[];
+    source: Source;
+    confirms: SourceConfirmation[];
 };
 
-export default function Show({ scan, confirms }: Props) {
+export default function Show({ source, confirms }: Props) {
     setLayoutProps({
         breadcrumbs: [
-            { title: 'Skany', href: scansIndex() },
+            { title: 'Skany', href: sourcesIndex() },
             {
-                title: scan.original_name,
-                href: ScanController.show(scan.id),
+                title: source.original_name,
+                href: SourceController.show(source.id),
             },
         ],
     });
 
-    const sizeInMb = (scan.size / (1024 * 1024)).toFixed(1);
+    const sizeInMb = (source.size / (1024 * 1024)).toFixed(1);
     const dimensions =
-        scan.width !== null && scan.height !== null
-            ? `${scan.width}×${scan.height}`
+        source.width !== null && source.height !== null
+            ? `${source.width}×${source.height}`
             : 'brak danych';
 
     return (
         <>
-            <Head title={scan.original_name} />
+            <Head title={source.original_name} />
 
             <div className="space-y-6">
                 <div className="flex items-center justify-between gap-4">
                     <Heading
-                        title={scan.original_name}
-                        description={`${new Date(scan.uploaded_at).toLocaleDateString('pl-PL')} · ${sizeInMb} MB · ${dimensions}`}
+                        title={source.original_name}
+                        description={`${new Date(source.uploaded_at).toLocaleDateString('pl-PL')} · ${sizeInMb} MB · ${dimensions}`}
                     />
 
-                    <DeleteScanDialog
-                        scan={scan}
+                    <DeleteSourceDialog
+                        source={source}
                         confirms={confirms}
                         trigger={
                             <Button
@@ -57,9 +57,9 @@ export default function Show({ scan, confirms }: Props) {
                     />
                 </div>
 
-                <ScanViewer
-                    src={ScanController.file.url(scan.id)}
-                    alt={scan.original_name}
+                <SourceViewer
+                    src={SourceController.file.url(source.id)}
+                    alt={source.original_name}
                 />
 
                 <Card>

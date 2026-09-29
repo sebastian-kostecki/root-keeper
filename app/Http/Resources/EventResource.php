@@ -3,7 +3,7 @@
 namespace App\Http\Resources;
 
 use App\Models\Event;
-use App\Models\Scan;
+use App\Models\Source;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -17,8 +17,8 @@ class EventResource extends JsonResource
     /**
      * Transform the resource into an array.
      *
-     * `is_confirmed` needs either the `scans` relation (preview) or the `scans_exists`
-     * attribute from `withExists('scans')` (persons index, which never sends scan bodies).
+     * `is_confirmed` needs either the `sources` relation (preview) or the `sources_exists`
+     * attribute from `withExists('sources')` (persons index, which never sends source bodies).
      *
      * @return array{
      *     id: int,
@@ -27,7 +27,7 @@ class EventResource extends JsonResource
      *     place: string|null,
      *     date_parts: array{year: int|null, month: int|null, day: int|null, is_approximate: bool},
      *     is_confirmed?: bool,
-     *     scans?: list<array{id: int, original_name: string, has_thumbnail: bool, uploaded_at: string|null}>,
+     *     sources?: list<array{id: int, kind: string, original_name: string, has_thumbnail: bool, uploaded_at: string|null}>,
      * }
      */
     public function toArray(Request $request): array
@@ -44,16 +44,17 @@ class EventResource extends JsonResource
                 'is_approximate' => $this->date_is_approximate,
             ],
             'is_confirmed' => $this->when(
-                $this->relationLoaded('scans') || array_key_exists('scans_exists', $this->getAttributes()),
-                fn (): bool => $this->relationLoaded('scans')
-                    ? $this->scans->isNotEmpty()
-                    : (bool) $this->getAttribute('scans_exists'),
+                $this->relationLoaded('sources') || array_key_exists('sources_exists', $this->getAttributes()),
+                fn (): bool => $this->relationLoaded('sources')
+                    ? $this->sources->isNotEmpty()
+                    : (bool) $this->getAttribute('sources_exists'),
             ),
-            'scans' => $this->whenLoaded('scans', fn (): array => $this->scans->map(fn (Scan $scan): array => [
-                'id' => $scan->id,
-                'original_name' => $scan->original_name,
-                'has_thumbnail' => $scan->thumbnail_path !== null,
-                'uploaded_at' => $scan->created_at?->toIso8601String(),
+            'sources' => $this->whenLoaded('sources', fn (): array => $this->sources->map(fn (Source $source): array => [
+                'id' => $source->id,
+                'kind' => $source->kind->value,
+                'original_name' => $source->original_name,
+                'has_thumbnail' => $source->thumbnail_path !== null,
+                'uploaded_at' => $source->created_at?->toIso8601String(),
             ])->all()),
         ];
     }

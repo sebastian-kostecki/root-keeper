@@ -13,7 +13,7 @@ class UpdatePerson
 
     /**
      * Apply validated form data to an existing person, updating its birth
-     * and death events in place so linked scans are never dropped.
+     * and death events in place so linked sources are never dropped.
      *
      * @param  array{
      *     first_name?: string|null,

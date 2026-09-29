@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Actions\Scans;
+namespace App\Actions\Sources;
 
 class ReadExifOrientation
 {
     /**
-     * Read the EXIF Orientation tag (1–8) of a JPEG scan, or null when it is
+     * Read the EXIF Orientation tag (1–8) of a JPEG source, or null when it is
      * absent, unreadable, or the image is not a JPEG.
      */
     public function handle(string $absolutePath, string $mimeType): ?int

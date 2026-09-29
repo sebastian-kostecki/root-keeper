@@ -2,22 +2,24 @@
 
 namespace App\Http\Resources;
 
-use App\Models\Scan;
+use App\Models\Source;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 /**
- * @property-read Scan $resource
+ * @property-read Source $resource
  *
- * @mixin Scan
+ * @mixin Source
  */
-class ScanResource extends JsonResource
+class SourceResource extends JsonResource
 {
     /**
      * Transform the resource into an array.
      *
      * @return array{
      *     id: int,
+     *     kind: string,
+     *     kind_label: string,
      *     original_name: string,
      *     mime_type: string,
      *     size: int,
@@ -31,6 +33,8 @@ class ScanResource extends JsonResource
     {
         return [
             'id' => $this->id,
+            'kind' => $this->kind->value,
+            'kind_label' => $this->kind->label(),
             'original_name' => $this->original_name,
             'mime_type' => $this->mime_type,
             'size' => $this->size,

@@ -56,11 +56,11 @@ class Tree extends Model
     }
 
     /**
-     * @return HasMany<Scan, $this>
+     * @return HasMany<Source, $this>
      */
-    public function scans(): HasMany
+    public function sources(): HasMany
     {
-        return $this->hasMany(Scan::class);
+        return $this->hasMany(Source::class);
     }
 
     /**

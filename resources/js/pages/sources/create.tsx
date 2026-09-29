@@ -1,16 +1,16 @@
 import { Form, Head, Link } from '@inertiajs/react';
-import ScanController from '@/actions/App/Http/Controllers/ScanController';
+import SourceController from '@/actions/App/Http/Controllers/SourceController';
 import Heading from '@/components/heading';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { index as scansIndex } from '@/routes/scans';
+import { index as sourcesIndex } from '@/routes/sources';
 import type { BreadcrumbItem } from '@/types';
 
 const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Skany', href: scansIndex() },
-    { title: 'Dodaj skan', href: ScanController.create() },
+    { title: 'Skany', href: sourcesIndex() },
+    { title: 'Dodaj skan', href: SourceController.create() },
 ];
 
 export default function Create() {
@@ -24,14 +24,20 @@ export default function Create() {
                     description="Prześlij zdjęcie lub skan dokumentu"
                 />
 
-                <Form {...ScanController.store.form()} className="space-y-6">
+                <Form {...SourceController.store.form()} className="space-y-6">
                     {({ processing, errors, progress }) => (
                         <>
+                            <input
+                                type="hidden"
+                                name="kind"
+                                value="metrical_record"
+                            />
+
                             <div className="grid gap-2">
-                                <Label htmlFor="scan">Plik</Label>
+                                <Label htmlFor="file">Plik</Label>
                                 <Input
-                                    id="scan"
-                                    name="scan"
+                                    id="file"
+                                    name="file"
                                     type="file"
                                     accept="image/jpeg,image/png,image/webp"
                                     autoFocus
@@ -39,7 +45,7 @@ export default function Create() {
                                 <p className="text-muted-foreground text-sm">
                                     JPG, PNG lub WebP, do 20 MB
                                 </p>
-                                <InputError message={errors.scan} />
+                                <InputError message={errors.file} />
                             </div>
 
                             {progress && (
@@ -62,7 +68,7 @@ export default function Create() {
                                 <Button disabled={processing}>Zapisz</Button>
 
                                 <Button variant="outline" asChild>
-                                    <Link href={scansIndex()}>Anuluj</Link>
+                                    <Link href={sourcesIndex()}>Anuluj</Link>
                                 </Button>
                             </div>
                         </>

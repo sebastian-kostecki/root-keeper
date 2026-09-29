@@ -57,7 +57,7 @@ class ProfileController extends Controller
         $user->delete();
 
         if ($treeId !== null) {
-            Storage::disk('local')->deleteDirectory("scans/{$treeId}");
+            Storage::disk('local')->deleteDirectory("sources/{$treeId}");
         }
 
         $request->session()->invalidate();

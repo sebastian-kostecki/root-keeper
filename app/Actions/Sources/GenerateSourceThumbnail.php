@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Actions\Scans;
+namespace App\Actions\Sources;
 
 use GdImage;
 use Throwable;
 
-class GenerateScanThumbnail
+class GenerateSourceThumbnail
 {
     private const TARGET_WIDTH = 400;
 

@@ -1,6 +1,6 @@
 import { router } from '@inertiajs/react';
 import { useState } from 'react';
-import ScanController from '@/actions/App/Http/Controllers/ScanController';
+import SourceController from '@/actions/App/Http/Controllers/SourceController';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -11,22 +11,22 @@ import {
     DialogTitle,
     DialogTrigger,
 } from '@/components/ui/dialog';
-import type { Scan, ScanConfirmation } from '@/types';
+import type { Source, SourceConfirmation } from '@/types';
 
 type Props = {
-    scan: Scan;
-    confirms: ScanConfirmation[];
+    source: Source;
+    confirms: SourceConfirmation[];
     trigger: React.ReactNode;
 };
 
-export function DeleteScanDialog({ scan, confirms, trigger }: Props) {
+export function DeleteSourceDialog({ source, confirms, trigger }: Props) {
     const [open, setOpen] = useState(false);
     const [processing, setProcessing] = useState(false);
 
     const handleConfirm = () => {
         setProcessing(true);
 
-        router.delete(ScanController.destroy(scan.id).url, {
+        router.delete(SourceController.destroy(source.id).url, {
             preserveScroll: true,
             onSuccess: () => setOpen(false),
             onFinish: () => setProcessing(false),
@@ -39,7 +39,7 @@ export function DeleteScanDialog({ scan, confirms, trigger }: Props) {
             <DialogContent>
                 <DialogTitle>Usuń skan</DialogTitle>
                 <DialogDescription>
-                    Czy na pewno chcesz usunąć skan „{scan.original_name}
+                    Czy na pewno chcesz usunąć skan „{source.original_name}
                     ”? Skan i jego plik zostaną trwale usunięte. Tej operacji
                     nie można cofnąć.
                 </DialogDescription>
@@ -61,7 +61,7 @@ export function DeleteScanDialog({ scan, confirms, trigger }: Props) {
                                 >
                                     {confirmation.event_label} —{' '}
                                     {confirmation.person.display_name} —{' '}
-                                    {confirmation.is_last_scan ? (
+                                    {confirmation.is_last_source ? (
                                         <span className="text-destructive font-medium">
                                             stanie się niepotwierdzone
                                         </span>

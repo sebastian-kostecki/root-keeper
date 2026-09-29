@@ -37,8 +37,8 @@ class PersonUpdateRequest extends PersonStoreRequest
 
             $death = $person->death();
 
-            if ($death !== null && $death->scans()->exists()) {
-                $validator->errors()->add('is_deceased', __('Najpierw odepnij skany od zgonu na podglądzie osoby.'));
+            if ($death !== null && $death->sources()->exists()) {
+                $validator->errors()->add('is_deceased', __('Najpierw odepnij źródła od zgonu na podglądzie osoby.'));
             }
         });
     }

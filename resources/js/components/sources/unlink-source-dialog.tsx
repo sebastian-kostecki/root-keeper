@@ -1,6 +1,6 @@
 import { router } from '@inertiajs/react';
 import { useState } from 'react';
-import EventScanController from '@/actions/App/Http/Controllers/EventScanController';
+import EventSourceController from '@/actions/App/Http/Controllers/EventSourceController';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -11,20 +11,20 @@ import {
     DialogTitle,
     DialogTrigger,
 } from '@/components/ui/dialog';
-import type { LinkedScan } from '@/types';
+import type { LinkedSource } from '@/types';
 
 type Props = {
     eventId: number;
-    scan: LinkedScan;
-    isLastScan: boolean;
+    source: LinkedSource;
+    isLastSource: boolean;
     eventLabel: string;
     trigger: React.ReactNode;
 };
 
-export function UnlinkScanDialog({
+export function UnlinkSourceDialog({
     eventId,
-    scan,
-    isLastScan,
+    source,
+    isLastSource,
     eventLabel,
     trigger,
 }: Props) {
@@ -35,7 +35,8 @@ export function UnlinkScanDialog({
         setProcessing(true);
 
         router.delete(
-            EventScanController.destroy({ event: eventId, scan: scan.id }).url,
+            EventSourceController.destroy({ event: eventId, source: source.id })
+                .url,
             {
                 preserveScroll: true,
                 onSuccess: () => setOpen(false),
@@ -50,9 +51,11 @@ export function UnlinkScanDialog({
             <DialogContent>
                 <DialogTitle>Odepnij skan</DialogTitle>
                 <DialogDescription>
-                    Czy na pewno chcesz odpiąć skan „{scan.original_name}” od
+                    Czy na pewno chcesz odpiąć skan „{source.original_name}” od
                     wydarzenia „{eventLabel}”?
-                    {isLastScan && <> Wydarzenie stanie się niepotwierdzone.</>}
+                    {isLastSource && (
+                        <> Wydarzenie stanie się niepotwierdzone.</>
+                    )}
                 </DialogDescription>
 
                 <DialogFooter className="gap-2">

@@ -1,3 +1,5 @@
+import type { SourceKind } from './source';
+
 export type Religion = {
     value: string;
     label: string;
@@ -25,8 +27,9 @@ export type IndexPersonEvent = PersonEvent & {
     is_confirmed: boolean;
 };
 
-export type LinkedScan = {
+export type LinkedSource = {
     id: number;
+    kind: SourceKind;
     original_name: string;
     has_thumbnail: boolean;
     uploaded_at: string | null;
@@ -34,7 +37,7 @@ export type LinkedScan = {
 
 export type SourcedPersonEvent = PersonEvent & {
     is_confirmed: boolean;
-    scans: LinkedScan[];
+    sources: LinkedSource[];
 };
 
 export type Marriage = SourcedPersonEvent & {

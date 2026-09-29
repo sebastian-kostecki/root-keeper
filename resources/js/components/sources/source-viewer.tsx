@@ -6,7 +6,7 @@ type Props = {
     alt: string;
 };
 
-export function ScanViewer({ src, alt }: Props) {
+export function SourceViewer({ src, alt }: Props) {
     return (
         <TransformWrapper
             initialScale={1}

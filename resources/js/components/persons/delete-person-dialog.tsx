@@ -42,14 +42,14 @@ export function DeletePersonDialog({
     };
     const [processing, setProcessing] = useState(false);
 
-    const marriageScanCount = person.marriages.reduce(
-        (total, marriage) => total + marriage.scans.length,
+    const marriageSourceCount = person.marriages.reduce(
+        (total, marriage) => total + marriage.sources.length,
         0,
     );
     const linkCount =
-        (person.birth?.scans.length ?? 0) +
-        (person.death?.scans.length ?? 0) +
-        marriageScanCount;
+        (person.birth?.sources.length ?? 0) +
+        (person.death?.sources.length ?? 0) +
+        marriageSourceCount;
     const relationCount = person.parents.length + person.children.length;
     const marriageCount = person.marriages.length;
 

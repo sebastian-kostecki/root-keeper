@@ -2,22 +2,14 @@
 
 namespace App\Http\Requests;
 
-use Illuminate\Auth\Access\Response;
+use App\Enums\SourceKind;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Rules\File;
 
-class EventScanStoreRequest extends FormRequest
+class SourceStoreRequest extends FormRequest
 {
-    /**
-     * Determine if the user is authorized to make this request.
-     */
-    public function authorize(): Response
-    {
-        return Gate::inspect('update', $this->route('event'));
-    }
-
     /**
      * Get the validation rules that apply to the request.
      *
@@ -26,7 +18,8 @@ class EventScanStoreRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'scan_id' => ['required', 'integer', Rule::exists('scans', 'id')->where('tree_id', $this->user()->tree->id)],
+            'kind' => ['required', Rule::enum(SourceKind::class)],
+            'file' => ['required', File::image()->types(['jpg', 'jpeg', 'png', 'webp'])->max(20 * 1024)],
         ];
     }
 
@@ -38,7 +31,8 @@ class EventScanStoreRequest extends FormRequest
     public function attributes(): array
     {
         return [
-            'scan_id' => 'skan',
+            'file' => 'plik',
+            'kind' => 'rodzaj',
         ];
     }
 }

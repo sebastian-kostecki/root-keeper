@@ -1,8 +1,9 @@
 <?php
 
-namespace App\Actions\Scans;
+namespace App\Actions\Sources;
 
-use App\Models\Scan;
+use App\Enums\SourceKind;
+use App\Models\Source;
 use App\Models\Tree;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
@@ -10,35 +11,35 @@ use Illuminate\Support\Str;
 use RuntimeException;
 use Throwable;
 
-class StoreScan
+class StoreSource
 {
     public function __construct(
-        private GenerateScanThumbnail $generateScanThumbnail,
+        private GenerateSourceThumbnail $generateSourceThumbnail,
         private ReadExifOrientation $readExifOrientation,
     ) {}
 
     /**
-     * Store the uploaded scan (and, when possible, a thumbnail) on the private
+     * Store the uploaded source (and, when possible, a thumbnail) on the private
      * disk and create its row. Leaves no orphan files if creating the row fails.
      */
-    public function handle(Tree $tree, UploadedFile $file): Scan
+    public function handle(Tree $tree, UploadedFile $file, SourceKind $kind): Source
     {
         $uuid = (string) Str::uuid();
         $extension = $file->extension();
         $mimeType = $file->getMimeType();
-        $path = "scans/{$tree->id}/{$uuid}.{$extension}";
+        $path = "sources/{$tree->id}/{$uuid}.{$extension}";
 
-        if (Storage::disk('local')->putFileAs("scans/{$tree->id}", $file, "{$uuid}.{$extension}") === false) {
-            throw new RuntimeException("Unable to store scan file [{$path}].");
+        if (Storage::disk('local')->putFileAs("sources/{$tree->id}", $file, "{$uuid}.{$extension}") === false) {
+            throw new RuntimeException("Unable to store source file [{$path}].");
         }
 
         [$width, $height] = $this->dimensions($file->getRealPath(), $mimeType);
 
         $thumbnailPath = null;
-        $thumbnailContent = $this->generateScanThumbnail->handle($file->getRealPath(), $mimeType);
+        $thumbnailContent = $this->generateSourceThumbnail->handle($file->getRealPath(), $mimeType);
 
         if ($thumbnailContent !== null) {
-            $thumbnailPath = "scans/{$tree->id}/thumbnails/{$uuid}.jpg";
+            $thumbnailPath = "sources/{$tree->id}/thumbnails/{$uuid}.jpg";
 
             if (! Storage::disk('local')->put($thumbnailPath, $thumbnailContent)) {
                 $thumbnailPath = null;
@@ -46,7 +47,8 @@ class StoreScan
         }
 
         try {
-            return $tree->scans()->create([
+            return $tree->sources()->create([
+                'kind' => $kind,
                 'original_name' => $this->sanitizeOriginalName($file->getClientOriginalName(), $extension),
                 'path' => $path,
                 'thumbnail_path' => $thumbnailPath,
@@ -89,6 +91,6 @@ class StoreScan
         $sanitized = preg_replace('/[\x00-\x1F\x7F\/\\\\]/', '', $name) ?? '';
         $sanitized = Str::limit($sanitized, 255, '');
 
-        return $sanitized === '' ? "skan.{$extension}" : $sanitized;
+        return $sanitized === '' ? "zrodlo.{$extension}" : $sanitized;
     }
 }

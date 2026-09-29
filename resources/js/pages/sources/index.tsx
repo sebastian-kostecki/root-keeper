@@ -1,24 +1,24 @@
 import { Head, Link } from '@inertiajs/react';
-import ScanController from '@/actions/App/Http/Controllers/ScanController';
+import SourceController from '@/actions/App/Http/Controllers/SourceController';
 import Heading from '@/components/heading';
-import { ScanThumbnail } from '@/components/scans/scan-thumbnail';
+import { SourceThumbnail } from '@/components/sources/source-thumbnail';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { index as scansIndex } from '@/routes/scans';
-import type { BreadcrumbItem, Scan } from '@/types';
+import { index as sourcesIndex } from '@/routes/sources';
+import type { BreadcrumbItem, Source } from '@/types';
 
 type Props = {
-    scans: Scan[];
+    sources: Source[];
 };
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
         title: 'Skany',
-        href: scansIndex(),
+        href: sourcesIndex(),
     },
 ];
 
-export default function Index({ scans }: Props) {
+export default function Index({ sources }: Props) {
     return (
         <>
             <Head title="Skany" />
@@ -31,16 +31,16 @@ export default function Index({ scans }: Props) {
                     />
 
                     <Button asChild>
-                        <Link href={ScanController.create()}>Dodaj skan</Link>
+                        <Link href={SourceController.create()}>Dodaj skan</Link>
                     </Button>
                 </div>
 
-                {scans.length === 0 ? (
+                {sources.length === 0 ? (
                     <Card>
                         <CardContent className="text-muted-foreground text-sm">
                             Nie masz jeszcze żadnych skanów.{' '}
                             <Link
-                                href={ScanController.create()}
+                                href={SourceController.create()}
                                 className="text-primary underline-offset-4 hover:underline"
                             >
                                 Dodaj pierwszy skan
@@ -50,23 +50,23 @@ export default function Index({ scans }: Props) {
                     </Card>
                 ) : (
                     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                        {scans.map((scan) => (
+                        {sources.map((source) => (
                             <Link
-                                key={scan.id}
-                                href={ScanController.show(scan.id)}
+                                key={source.id}
+                                href={SourceController.show(source.id)}
                             >
                                 <Card className="hover:bg-accent/50 gap-3 overflow-hidden py-0 transition-colors">
-                                    <ScanThumbnail scan={scan} />
+                                    <SourceThumbnail source={source} />
                                     <CardContent className="space-y-0.5 pb-4">
                                         <p
                                             className="truncate text-sm font-medium"
-                                            title={scan.original_name}
+                                            title={source.original_name}
                                         >
-                                            {scan.original_name}
+                                            {source.original_name}
                                         </p>
                                         <p className="text-muted-foreground text-xs">
                                             {new Date(
-                                                scan.uploaded_at,
+                                                source.uploaded_at,
                                             ).toLocaleDateString('pl-PL')}
                                         </p>
                                     </CardContent>

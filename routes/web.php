@@ -1,13 +1,13 @@
 <?php
 
-use App\Http\Controllers\EventScanController;
+use App\Http\Controllers\EventSourceController;
 use App\Http\Controllers\MarriageController;
 use App\Http\Controllers\ParentChildRelationController;
 use App\Http\Controllers\PersonChildController;
 use App\Http\Controllers\PersonController;
 use App\Http\Controllers\PersonParentController;
 use App\Http\Controllers\PersonSpouseController;
-use App\Http\Controllers\ScanController;
+use App\Http\Controllers\SourceController;
 use App\Http\Controllers\TreeController;
 use App\Http\Controllers\TreeRootPersonController;
 use Illuminate\Support\Facades\Route;
@@ -21,12 +21,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('tree/{person}', [TreeController::class, 'show'])->name('tree.show');
     Route::put('tree/root-person/{person}', [TreeRootPersonController::class, 'update'])->name('tree.root-person.update');
 
-    Route::resource('scans', ScanController::class)->only(['index', 'create', 'store', 'show', 'destroy']);
-    Route::get('scans/{scan}/file', [ScanController::class, 'file'])->name('scans.file');
-    Route::get('scans/{scan}/thumbnail', [ScanController::class, 'thumbnail'])->name('scans.thumbnail');
+    Route::resource('sources', SourceController::class)->only(['index', 'create', 'store', 'show', 'destroy']);
+    Route::get('sources/{source}/file', [SourceController::class, 'file'])->name('sources.file');
+    Route::get('sources/{source}/thumbnail', [SourceController::class, 'thumbnail'])->name('sources.thumbnail');
 
-    Route::post('events/{event}/scans', [EventScanController::class, 'store'])->name('events.scans.store');
-    Route::delete('events/{event}/scans/{scan}', [EventScanController::class, 'destroy'])->name('events.scans.destroy');
+    Route::post('events/{event}/sources', [EventSourceController::class, 'store'])->name('events.sources.store');
+    Route::delete('events/{event}/sources/{source}', [EventSourceController::class, 'destroy'])->name('events.sources.destroy');
 
     Route::post('persons/{person}/parents', [PersonParentController::class, 'store'])->name('persons.parents.store');
     Route::post('persons/{person}/children/attach', [PersonChildController::class, 'attach'])->name('persons.children.attach');
