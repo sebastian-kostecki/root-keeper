@@ -331,25 +331,25 @@ None. No schema or data changes.
 
 #### Automated
 
-- [x] 2.1 Touched tests pass: ParentChildRelationsTest, MarriagesTest, PersonsTest
-- [x] 2.2 PHP style: `vendor/bin/sail bin pint --dirty --format agent`
-- [x] 2.3 Static analysis passes: `vendor/bin/sail bin phpstan analyse`
-- [x] 2.4 No references remain to relationCandidates or ListRelationCandidates in app, routes, tests
+- [x] 2.1 Touched tests pass: ParentChildRelationsTest, MarriagesTest, PersonsTest — b545ada
+- [x] 2.2 PHP style: `vendor/bin/sail bin pint --dirty --format agent` — b545ada
+- [x] 2.3 Static analysis passes: `vendor/bin/sail bin phpstan analyse` — b545ada
+- [x] 2.4 No references remain to relationCandidates or ListRelationCandidates in app, routes, tests — b545ada
 
 #### Manual
 
-- [x] 2.5 Linking a scan to a fact from the preview still works
+- [x] 2.5 Linking a scan to a fact from the preview still works — b545ada
 
 ### Phase 3: Record the S-28 drop in the foundation docs
 
 #### Automated
 
-- [ ] 3.1 The tree-relation-removal stub folder is gone
-- [ ] 3.2 No stale S-28 prerequisite in the roadmap
-- [ ] 3.3 S-28 is removed and noted as dropped
-- [ ] 3.4 No other S-28 mention in the roadmap
-- [ ] 3.5 No stale tree-removal text in the PRD
+- [x] 3.1 The tree-relation-removal stub folder is gone
+- [x] 3.2 No stale S-28 prerequisite in the roadmap
+- [x] 3.3 S-28 is removed and noted as dropped
+- [x] 3.4 No other S-28 mention in the roadmap
+- [x] 3.5 No stale tree-removal text in the PRD
 
 #### Manual
 
-- [ ] 3.6 Roadmap S-28/S-29 and PRD FR-007/FR-008 match this plan
+- [x] 3.6 Roadmap S-28/S-29 and PRD FR-007/FR-008 match this plan

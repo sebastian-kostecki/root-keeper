@@ -3,7 +3,7 @@ project: root-keeper
 version: 4
 status: draft
 created: 2026-09-21
-updated: 2026-09-28
+updated: 2026-09-29
 prd_version: 4
 main_goal: speed
 top_blocker: time
@@ -27,8 +27,9 @@ milestone_status: open
 - **Rozszerzenie (2026-09-28, prd-v2):** skan niesie nazwę, typ, rok, pochodzenie oraz numer i notatkę interesującego wpisu, a miejsca (zamieszkanie, urodzenie, ślub, zgon) pochodzą z prywatnego spisu miejscowości drzewa.
 - **Rozszerzenie (2026-09-28, prd-v3):** brakującego rodzica, dziecko i małżonka tworzy się z drzewa w modalu; osobę dodaje się i poprawia w modalu; skany stają się źródłami z rodzajem (akt metrykalny, zdjęcie nagrobka, inne), a potwierdzać fakt może źródło każdego rodzaju. Opis skanu z prd-v2 dotyczy teraz źródła. Przy braku czasu pierwszeństwo ma prd-v3, a spis miejscowości (S-12 – S-15) przesuwa się za termin 2026-11-04.
 - **Zastąpione przez prd-v3:** S-10 `scan-description` (#18) → S-17 `source-description-in-modal`; S-11 `scan-type-first-when-linking` (#19) → S-19 `matching-sources-first`. Żaden z nich nie był rozpoczęty.
-- **Rozszerzenie (2026-09-28, prd-v4):** podgląd osoby staje się modalem otwieranym z drzewa, listy i podglądu skanu, a strona podglądu osoby znika; drzewo przejmuje całą edycję relacji — z pustych slotów podłącza się istniejącą albo nową osobę (rodzic, dziecko, małżonek, połączenie pokazanych rodziców) i stamtąd usuwa relacje; podgląd pokazuje relacje tylko do odczytu. Etapami: najpierw modal (S-24), potem relacje na drzewie (S-25 – S-28), na końcu podgląd tylko do odczytu (S-29). Modal idzie przed S-17/S-18.
+- **Rozszerzenie (2026-09-28, prd-v4):** podgląd osoby staje się modalem otwieranym z drzewa, listy i podglądu skanu, a strona podglądu osoby znika; drzewo przejmuje dodawanie relacji — z pustych slotów podłącza się istniejącą albo nową osobę (rodzic, dziecko, małżonek, połączenie pokazanych rodziców), a usuwanie relacji i małżeństwa zostaje w podglądzie osoby; podgląd pokazuje relacje bez akcji dodawania. Etapami: najpierw modal (S-24), potem dodawanie relacji na drzewie (S-25 – S-27), na końcu podgląd bez dodawania (S-29). Modal idzie przed S-17/S-18.
 - **Zastąpione przez prd-v4:** S-21 `parent-from-tree-slot` → S-25 `tree-parent-slot-existing-or-new`; S-22 `child-from-tree` → S-26 `tree-child-existing-or-new`; S-23 `spouse-from-tree-slot` → S-27 `tree-spouse-existing-or-new`. Żaden z nich nie był rozpoczęty ani nie miał issue.
+- **Porzucone (2026-09-29, decyzja użytkownika):** S-28 `tree-relation-removal` — usuwanie relacji zostaje w podglądzie osoby.
 - **Source materials:** PRD v1 (MVP) — historia git, `git show e74243f:context/foundation/prd.md` (plik `prd.md` nadpisany przez prd-v4); `context/foundation/prd-v2.md` (v2, zmiana brownfield); `context/foundation/prd-v3.md` (v3, zmiana brownfield); `context/foundation/prd.md` (v4, zmiana brownfield).
 - **Done when:** every F-NN and S-NN below is `done`, plus prawdziwe drzewo zostało wprowadzone na produkcję po zakończeniu F-01.
 - **Scope anchors:** v1: FR-001 – FR-016 (wszystkie konieczne), US-01. FR-018 (nice-to-have) odłożone — patrz `## Parked`. v2 (identyfikatory z prefiksem `v2:`, bo prd-v2 numeruje FR od nowa): v2:FR-001 – v2:FR-005, v2:FR-007 – v2:FR-015 (wszystkie konieczne, w tym zachowane v2:FR-012 – v2:FR-014), v2:US-01, v2:US-02. v2:FR-006 (nice-to-have) odłożone. v3 (prefiks `v3:`): v3:FR-001 – v3:FR-012 (wszystkie konieczne, w tym zachowane v3:FR-009 – v3:FR-012), v3:US-01, v3:US-02; v3:FR-006 zmienia v2:FR-001 (nazwa nie jest już wymagana — tylko plik i rodzaj). v4 (prefiks `v4:`): v4:FR-001 – v4:FR-013 (wszystkie konieczne, w tym zachowane v4:FR-010 – v4:FR-013), v4:US-01; v4:FR-004 – v4:FR-006 rozszerzają v3:FR-001 – v3:FR-003 (istniejąca albo nowa osoba), a v4:US-01 wchłania v3:US-01. Identyfikatory bez prefiksu (`FR-001`) odnoszą się do PRD v1 z historii git.
@@ -41,7 +42,7 @@ Wprowadzanie prawdziwego drzewa pokazało dwie luki (prd-v2): skan bez opisu zmu
 
 Kolejne trzy luki (prd-v3): drzewo służy tylko do oglądania — brakującego ojca, dziecka czy małżonka nie da się dodać bez wychodzenia z drzewa; każde dodanie i poprawka osoby to osobna strona; a „skan” to za wąskie pojęcie — zdjęć nagrobków z datami nie ma gdzie podłączyć jako dowodu. Stąd tworzenie osób z drzewa w modalu i źródła z rodzajem zamiast skanów.
 
-Po przeniesieniu formularza osoby do modala zostały dwie luki (prd-v4): oglądanie osoby wciąż wyrywa autora z drzewa na osobną stronę, a dodawanie i edycja są w modalu, podgląd zaś nie. Stąd podgląd osoby w modalu i drzewo jako jedyne miejsce edycji relacji — podgląd pokazuje je tylko do odczytu.
+Po przeniesieniu formularza osoby do modala zostały dwie luki (prd-v4): oglądanie osoby wciąż wyrywa autora z drzewa na osobną stronę, a dodawanie i edycja są w modalu, podgląd zaś nie. Stąd podgląd osoby w modalu i drzewo jako miejsce dodawania relacji — podgląd pokazuje je bez akcji dodawania, a usuwanie relacji zostaje w podglądzie.
 
 ## North star
 
@@ -82,8 +83,7 @@ Po przeniesieniu formularza osoby do modala zostały dwie luki (prd-v4): ogląda
 | S-25 | tree-parent-slot-existing-or-new | z pustego slotu rodzica na drzewie podłączyć istniejącą osobę (wybór filtrowany płcią i regułami) albo utworzyć nową i od razu widzieć ją na drzewie | S-24, S-06 | v4:FR-004, v4:FR-011, v4:US-01, v3:FR-001, v3:FR-012, v3:US-01 | done |
 | S-26 | tree-child-existing-or-new      | dodać z drzewa dziecko pokazanej pary — istniejącą osobę albo nową — i od razu widzieć je na drzewie | S-24, S-06 | v4:FR-005, v4:FR-011, v3:FR-002, v3:FR-012 | done |
 | S-27 | tree-spouse-existing-or-new     | z pustego slotu małżonka przy centrum podłączyć istniejącą osobę albo nowego małżonka i połączyć pokazanych rodziców w małżeństwo | S-24, S-07 | v4:FR-006, v4:FR-011, v3:FR-003 | done |
-| S-28 | tree-relation-removal           | usunąć z drzewa relację rodzic–dziecko i małżeństwo po potwierdzeniu, widząc przy małżeństwie tracone dane | S-24, S-06, S-07 | v4:FR-007 | proposed |
-| S-29 | preview-relations-read-only     | widzieć relacje w podglądzie tylko do odczytu z odnośnikiem „Pokaż na drzewie”; strona podglądu osoby znika | S-25, S-26, S-27, S-28 | v4:FR-008, v4:FR-009 | proposed |
+| S-29 | preview-relations-read-only     | widzieć relacje w podglądzie bez dodawania (usuwanie zostaje) z przyciskiem „Pokaż na drzewie” | S-25, S-26, S-27 | v4:FR-008 | in-progress |
 
 ## Streams
 
@@ -94,7 +94,7 @@ Navigation aid — groups items that share a Prerequisites chain. Canonical orde
 | A      | Fakt potwierdzony źródłem  | `F-01`; `S-01` → `S-02` → `S-03` → `S-08`; odgałęzienia `S-01` → `S-04`, `S-01` → `S-05` | Najkrótsza droga do gwiazdy przewodniej M-1 (zakończone); `F-01` szło równolegle, bez zależności od kodu. |
 | B      | Rodzina i drzewo           | `S-06` → `S-07` → `S-09`               | Dołącza do strumienia A w `S-01` (S-06) i `S-03` (S-07). Zakończone.                       |
 | C      | Źródła (prd-v3)            | `S-16` → `S-17`, `S-18` → `S-19`       | Dołącza do strumienia A w `S-08` i do D w `S-24` (`S-17`, `S-18` powstają od razu w modalu podglądu); `S-17` i `S-18` mogą iść równolegle. Wchłania opis skanu z prd-v2. |
-| D      | Drzewo odpowiedzialne za relacje (prd-v3 + v4) | `S-20` → `S-24` → `S-25`, `S-26`, `S-27`, `S-28` → `S-29` | Dołącza do A w `S-05` i do B w `S-09`; `S-25` – `S-28` mogą iść równolegle po `S-24`, `S-29` na końcu (brak luki w edycji relacji). Gwiazda v4: `S-25`. |
+| D      | Drzewo odpowiedzialne za relacje (prd-v3 + v4) | `S-20` → `S-24` → `S-25`, `S-26`, `S-27` → `S-29` | Dołącza do A w `S-05` i do B w `S-09`; `S-25` – `S-27` mogą iść równolegle po `S-24`, `S-29` na końcu (dodawanie i usuwanie relacji mają po jednym miejscu). Gwiazda v4: `S-25`. |
 | E      | Spis miejscowości (prd-v2) | `S-12` → `S-13`, `S-14` → `S-15`       | Przy braku czasu przesuwa się za termin 2026-11-04 (pierwszeństwo ma prd-v3); `S-15` czeka na `S-13` i `S-14`. |
 
 ## Baseline
@@ -246,7 +246,7 @@ Foundations below assume these are present and do NOT re-scaffold them. The prd-
 - **Change ID:** places-gazetteer
 - **PRD refs:** v2:FR-007, v2:FR-009
 - **Prerequisites:** S-01
-- **Parallel with:** S-09, S-16, S-17, S-18, S-19, S-20, S-24, S-25, S-26, S-27, S-28, S-29
+- **Parallel with:** S-09, S-16, S-17, S-18, S-19, S-20, S-24, S-25, S-26, S-27, S-29
 - **Blockers:** —
 - **Unknowns:**
   - Czy dopuszczać dwie miejscowości o tej samej nazwie (np. dwie Lipnice w różnych parafiach), rozróżniane jednostką / parafią? Owner: `/10x-plan`. Block: no.
@@ -259,7 +259,7 @@ Foundations below assume these are present and do NOT re-scaffold them. The prd-
 - **Change ID:** fact-places-from-gazetteer
 - **PRD refs:** v2:FR-011, v2:FR-008, v2:FR-013, v2:US-02
 - **Prerequisites:** S-12, S-03, S-07
-- **Parallel with:** S-09, S-14, S-16, S-17, S-18, S-19, S-20, S-24, S-25, S-26, S-27, S-28, S-29
+- **Parallel with:** S-09, S-14, S-16, S-17, S-18, S-19, S-20, S-24, S-25, S-26, S-27, S-29
 - **Blockers:** —
 - **Unknowns:**
   - Co z dotychczasowymi miejscami faktów zapisanymi wolnym tekstem: usunąć przy zmianie czy zostawić do wglądu, dopóki użytkownik nie wprowadzi ich ze spisu? PRD dopuszcza ich utratę. Owner: user. Block: no.
@@ -272,7 +272,7 @@ Foundations below assume these are present and do NOT re-scaffold them. The prd-
 - **Change ID:** residence-history
 - **PRD refs:** v2:FR-010, v2:FR-008, v2:US-02
 - **Prerequisites:** S-12
-- **Parallel with:** S-09, S-13, S-16, S-17, S-18, S-19, S-20, S-24, S-25, S-26, S-27, S-28, S-29
+- **Parallel with:** S-09, S-13, S-16, S-17, S-18, S-19, S-20, S-24, S-25, S-26, S-27, S-29
 - **Blockers:** —
 - **Unknowns:**
   - Co z dotychczasowym zamieszkaniem zapisanym wolnym tekstem: usunąć przy zmianie czy zostawić do wglądu do czasu ponownego wprowadzenia? PRD dopuszcza utratę. Owner: user. Block: no.
@@ -286,7 +286,7 @@ Foundations below assume these are present and do NOT re-scaffold them. The prd-
 - **Change ID:** place-delete-with-impact
 - **PRD refs:** v2:FR-009
 - **Prerequisites:** S-13, S-14
-- **Parallel with:** S-09, S-16, S-17, S-18, S-19, S-20, S-24, S-25, S-26, S-27, S-28, S-29
+- **Parallel with:** S-09, S-16, S-17, S-18, S-19, S-20, S-24, S-25, S-26, S-27, S-29
 - **Blockers:** —
 - **Unknowns:** —
 - **Risk:** Na końcu, bo lista użyć wymaga zamieszkań (S-14) i miejsc faktów (S-13); ciche odpięcie miejsca łamie regułę z prd-v2, a bez kosza usunięcie jest nieodwracalne — ten sam wzorzec co usuwanie skanu (S-08).
@@ -324,7 +324,7 @@ Foundations below assume these are present and do NOT re-scaffold them. The prd-
 - **Change ID:** scans-become-sources
 - **PRD refs:** v3:FR-005, v3:FR-009, v3:FR-010, v3:FR-011
 - **Prerequisites:** S-02, S-03, S-08
-- **Parallel with:** S-12, S-13, S-14, S-15, S-20, S-24, S-25, S-26, S-27, S-28, S-29
+- **Parallel with:** S-12, S-13, S-14, S-15, S-20, S-24, S-25, S-26, S-27, S-29
 - **Blockers:** —
 - **Unknowns:**
   - Czy wgrywanie do czasu S-17 zostaje na obecnej osobnej stronie (z nowym wyborem rodzaju), czy modal wgrywania wchodzi już tutaj? Owner: `/10x-plan`. Block: no.
@@ -337,7 +337,7 @@ Foundations below assume these are present and do NOT re-scaffold them. The prd-
 - **Change ID:** source-description-in-modal
 - **PRD refs:** v3:FR-006, v3:FR-007, v3:US-02, v2:FR-001, v2:FR-002, v2:FR-003, v2:FR-004, v2:FR-005, v2:FR-014, v2:US-01
 - **Prerequisites:** S-16, S-24
-- **Parallel with:** S-18, S-12, S-13, S-14, S-15, S-25, S-26, S-27, S-28, S-29
+- **Parallel with:** S-18, S-12, S-13, S-14, S-15, S-25, S-26, S-27, S-29
 - **Blockers:** —
 - **Unknowns:**
   - Czy lista źródeł pokazuje obok nazwy także rodzaj, typ i rok, żeby dało się odnaleźć źródło bez wyszukiwania (v2:FR-006 odłożone)? Owner: `/10x-plan`. Block: no.
@@ -350,7 +350,7 @@ Foundations below assume these are present and do NOT re-scaffold them. The prd-
 - **Change ID:** fact-confirmed-by-any-source
 - **PRD refs:** v3:FR-008, v3:US-02
 - **Prerequisites:** S-16, S-24
-- **Parallel with:** S-17, S-12, S-13, S-14, S-15, S-25, S-26, S-27, S-28, S-29
+- **Parallel with:** S-17, S-12, S-13, S-14, S-15, S-25, S-26, S-27, S-29
 - **Blockers:** —
 - **Unknowns:** —
 - **Risk:** Zmienia regułę potwierdzania: jeden stan dla każdego rodzaju, więc rodzaj widoczny przy fakcie jest jedynym sygnałem wagi dowodu; nie może zmienić stanu żadnego istniejącego faktu. v3:US-02 jest kompletna dopiero razem z S-17 (dodanie nagrobka w modalu). Od prd-v4 czeka na S-24, bo rodzaj źródła przy fakcie powstaje od razu w modalu podglądu.
@@ -362,7 +362,7 @@ Foundations below assume these are present and do NOT re-scaffold them. The prd-
 - **Change ID:** matching-sources-first
 - **PRD refs:** v3:FR-009, v2:FR-015, v2:FR-012
 - **Prerequisites:** S-17, S-18
-- **Parallel with:** S-12, S-13, S-14, S-15, S-25, S-26, S-27, S-28, S-29
+- **Parallel with:** S-12, S-13, S-14, S-15, S-25, S-26, S-27, S-29
 - **Blockers:** —
 - **Unknowns:** —
 - **Risk:** Zastępuje S-11 (#19); potrzebuje typu aktu (S-17) i wiązania źródeł każdego rodzaju (S-18). Porządek tylko pomaga wybrać — nie może blokować wiązania ani zmieniać reguły potwierdzania.
@@ -374,7 +374,7 @@ Foundations below assume these are present and do NOT re-scaffold them. The prd-
 - **Change ID:** tree-parent-slot-existing-or-new
 - **PRD refs:** v4:FR-004, v4:FR-011, v4:US-01, v3:FR-001, v3:FR-012, v3:US-01
 - **Prerequisites:** S-24, S-06
-- **Parallel with:** S-26, S-27, S-28, S-12, S-13, S-14, S-15, S-16, S-17, S-18, S-19
+- **Parallel with:** S-26, S-27, S-12, S-13, S-14, S-15, S-16, S-17, S-18, S-19
 - **Blockers:** —
 - **Unknowns:**
   - Czy wybór istniejącej osoby i utworzenie nowej są w jednym modalu (np. wyszukiwarka z przyciskiem „Nowa osoba”), czy to dwie osobne akcje slotu? Owner: `/10x-plan`. Block: no.
@@ -387,7 +387,7 @@ Foundations below assume these are present and do NOT re-scaffold them. The prd-
 - **Change ID:** tree-child-existing-or-new
 - **PRD refs:** v4:FR-005, v4:FR-011, v3:FR-002, v3:FR-012
 - **Prerequisites:** S-24, S-06
-- **Parallel with:** S-25, S-27, S-28, S-12, S-13, S-14, S-15, S-16, S-17, S-18, S-19
+- **Parallel with:** S-25, S-27, S-12, S-13, S-14, S-15, S-16, S-17, S-18, S-19
 - **Blockers:** —
 - **Unknowns:**
   - v4:FR-005 mówi „reguły blokują, a komunikat mówi dlaczego”, a v4:FR-011 — „wybór ukrywa osoby łamiące regułę”: ukryć dziecko, które ma już rodzica spoza pary, czy pokazać je z wyjaśnieniem, dlaczego nie da się go podłączyć? Owner: `/10x-plan` (w razie wątpliwości user). Block: no.
@@ -400,36 +400,24 @@ Foundations below assume these are present and do NOT re-scaffold them. The prd-
 - **Change ID:** tree-spouse-existing-or-new
 - **PRD refs:** v4:FR-006, v4:FR-011, v3:FR-003
 - **Prerequisites:** S-24, S-07
-- **Parallel with:** S-25, S-26, S-28, S-12, S-13, S-14, S-15, S-16, S-17, S-18, S-19
+- **Parallel with:** S-25, S-26, S-12, S-13, S-14, S-15, S-16, S-17, S-18, S-19
 - **Blockers:** —
 - **Unknowns:**
   - Czy małżeństwo utworzone z drzewa (slot małżonka i „Połącz jako małżeństwo”) powstaje bez daty i miejsca jako fakt niepotwierdzony do uzupełnienia w podglądzie (małżeństwo jest jednym wydarzeniem obojga — S-07)? Owner: `/10x-plan`. Block: no.
 - **Risk:** Zastępuje S-23 `spouse-from-tree-slot` (nierozpoczęty); pusty slot tylko przy centrum, żeby nie zaśmiecać drzewa. Ryzykiem jest ukryte założenie małżeństwa, którego użytkownik nie zamierzał.
 - **Status:** done
 
-### S-28: Usuwanie relacji z drzewa
+### S-29: Relacje w podglądzie bez dodawania
 
-- **Outcome:** użytkownik usuwa z drzewa relację rodzic–dziecko i małżeństwo osoby w centrum po jawnym potwierdzeniu; potwierdzenie usunięcia małżeństwa wymienia, co zginie (data, miejsce, potwierdzenia); drzewo od razu pokazuje zmianę.
-- **Change ID:** tree-relation-removal
-- **PRD refs:** v4:FR-007
-- **Prerequisites:** S-24, S-06, S-07
-- **Parallel with:** S-25, S-26, S-27, S-12, S-13, S-14, S-15, S-16, S-17, S-18, S-19
-- **Blockers:** —
-- **Unknowns:** —
-- **Risk:** Brak kosza i cofania, więc usunięcie jest nieodwracalne; dziś to samo robi się z podglądu osoby, więc wycinek przenosi istniejące potwierdzenia na drzewo i dodaje listę traconych danych małżeństwa. Niezależny od S-25 – S-27.
-- **Status:** proposed
-
-### S-29: Relacje w podglądzie tylko do odczytu, koniec strony osoby
-
-- **Outcome:** użytkownik widzi w modalu podglądu rodziców, dzieci i małżonków bez akcji dodawania i usuwania, z odnośnikiem „Pokaż na drzewie” (drzewo wyśrodkowane na tej osobie); datę, miejsce i potwierdzenie małżeństwa nadal poprawia w podglądzie; strona `/persons/{id}` przestaje istnieć, a stare adresy mogą nie działać.
+- **Outcome:** użytkownik widzi w modalu podglądu rodziców, dzieci i małżonków bez akcji dodawania (dodaje się je na drzewie); usuwanie relacji i małżeństwa oraz datę, miejsce i potwierdzenie małżeństwa nadal obsługuje w podglądzie; przycisk „Pokaż na drzewie” wyśrodkowuje drzewo na tej osobie.
 - **Change ID:** preview-relations-read-only
-- **PRD refs:** v4:FR-008, v4:FR-009
-- **Prerequisites:** S-25, S-26, S-27, S-28
+- **PRD refs:** v4:FR-008
+- **Prerequisites:** S-25, S-26, S-27
 - **Parallel with:** S-12, S-13, S-14, S-15, S-16, S-17, S-18, S-19
 - **Blockers:** —
 - **Unknowns:** —
-- **Risk:** Ostatni w strumieniu z powodu guardrailu „brak luki w edycji relacji” (prd-v4): akcje znikają z podglądu dopiero, gdy każdą relację da się dodać i usunąć z drzewa. Stare adresy `/persons/{id}` mogą przestać działać (prd-v4 §Non-Goals).
-- **Status:** proposed
+- **Risk:** Ostatni w strumieniu: akcje dodawania znikają z podglądu dopiero, gdy każdą relację da się dodać z drzewa (S-25 – S-27).
+- **Status:** in-progress
 
 ## Backlog Handoff
 
@@ -460,8 +448,7 @@ GitHub milestone: [M-1](https://github.com/sebastian-kostecki/root-keeper/milest
 | S-25       | —     | tree-parent-slot-existing-or-new | Istniejący lub nowy rodzic z pustego slotu na drzewie (zastępuje S-21) | no           | Gwiazda v4; czeka na S-24                                    |
 | S-26       | —     | tree-child-existing-or-new    | Dziecko pokazanej pary z drzewa — istniejące lub nowe (zastępuje S-22) | no           | Czeka na S-24                                                |
 | S-27       | —     | tree-spouse-existing-or-new   | Małżonek z drzewa i połączenie pokazanych rodziców (zastępuje S-23) | no              | Czeka na S-24                                                |
-| S-28       | —     | tree-relation-removal         | Usuwanie relacji i małżeństwa z drzewa                         | no                    | Czeka na S-24                                                |
-| S-29       | —     | preview-relations-read-only   | Relacje w podglądzie tylko do odczytu, usunięcie strony osoby  | no                    | Czeka na S-25 – S-28                                         |
+| S-29       | —     | preview-relations-read-only   | Relacje w podglądzie bez dodawania, „Pokaż na drzewie”         | no                    | Czeka na S-25 – S-27                                         |
 
 ## Open Roadmap Questions
 
@@ -474,7 +461,7 @@ Rozstrzygnięte:
 
 - **Deploy ręczny czy automatyczny po merge'u?** (#12, 2026-09-21) — Ręczny: właściciel uruchamia `scripts/deploy.sh` na VPS po merge'u do `main`. Workflow deployu nie powstaje; `tech-stack.md` poprawiony (`ci_default_flow: manual-promotion`).
 - **Przeplanowanie S-10 i S-11 w roadmapie** (prd-v3, Otwarte pytania nr 1; 2026-09-28) — S-10 → S-17 `source-description-in-modal`, S-11 → S-19 `matching-sources-first`; oba jako część strumienia źródeł po S-16.
-- **Przeplanowanie S-21 – S-23 w roadmapie** (prd-v4, Otwarte pytania nr 1; 2026-09-28) — S-21 → S-25, S-22 → S-26, S-23 → S-27 (istniejąca albo nowa osoba), nowe S-24 (modal podglądu), S-28 (usuwanie relacji z drzewa) i S-29 (podgląd tylko do odczytu); S-24 przed S-17/S-18.
+- **Przeplanowanie S-21 – S-23 w roadmapie** (prd-v4, Otwarte pytania nr 1; 2026-09-28) — S-21 → S-25, S-22 → S-26, S-23 → S-27 (istniejąca albo nowa osoba), nowe S-24 (modal podglądu), S-28 (usuwanie relacji z drzewa; porzucone 2026-09-29) i S-29 (podgląd tylko do odczytu); S-24 przed S-17/S-18.
 
 ## Parked
 
@@ -498,7 +485,7 @@ Rozstrzygnięte:
 - **Mapa w aplikacji i zewnętrzni dostawcy map** — Why parked: prd-v2 §Non-Goals; współrzędne wpisywane ręcznie (NFR o podmiotach trzecich).
 - **Okresy przy miejscach zamieszkania** — Why parked: prd-v2 §Non-Goals; chipy pokazują tylko miejscowość.
 - **Przeniesienie istniejących miejsc z wolnego tekstu do spisu** — Why parked: prd-v2 §Non-Goals; użytkownik wprowadzi je ponownie.
-- **Modale dla faktów i relacji** — Why parked: prd-v3 §Non-Goals; od prd-v4 relacje edytuje się na drzewie (S-25 – S-28), a fakty zostają w podglądzie osoby (w modalu od S-24) w obecnej formie.
+- **Modale dla faktów i relacji** — Why parked: prd-v3 §Non-Goals; od prd-v4 relacje dodaje się na drzewie (S-25 – S-27), a fakty zostają w podglądzie osoby (w modalu od S-24) w obecnej formie.
 - **Scalanie duplikatów osób** — Why parked: prd-v3 i prd-v4 §Non-Goals; od prd-v4 slot na drzewie pozwala wybrać istniejącą osobę (S-25 – S-27), ale już zdublowanych osób się nie scala — poprawiane ręcznie.
 - **Wgrywanie wielu plików naraz** — Why parked: prd-v3 §Non-Goals; jedno źródło = jeden plik (v3:FR-006).
 - **Słabszy stan potwierdzenia dla nagrobka i „innych”** — Why parked: prd-v3 §Non-Goals; jeden stan „potwierdzone” + widoczny rodzaj (v3:FR-008).
