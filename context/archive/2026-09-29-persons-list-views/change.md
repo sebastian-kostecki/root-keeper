@@ -1,10 +1,10 @@
 ---
 change_id: persons-list-views
 title: Lista osób — widoki Lista i Tabela do wyboru (?view=tabela)
-status: impl_reviewed
+status: archived
 created: 2026-09-29
 updated: 2026-09-29
-archived_at: null
+archived_at: 2026-09-29T10:46:24Z
 ---
 
 ## Notes
