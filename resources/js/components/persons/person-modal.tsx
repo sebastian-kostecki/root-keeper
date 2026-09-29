@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { FamilyTab } from '@/components/persons/family-tab';
 import { OverviewTab } from '@/components/persons/overview-tab';
+import { useSectionEditor } from '@/components/persons/section-editor';
 import { SourcesTab } from '@/components/persons/sources-tab';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import type { PersonPreviewPayload, Scan } from '@/types';
@@ -25,6 +26,7 @@ function TabCount({ count }: { count: number }) {
 /** Tabbed body of the person modal (view mode): Przegląd, Rodzina, Źródła. */
 export function PersonModal({ preview, availableScans }: Props) {
     const { person } = preview;
+    const { requestExit } = useSectionEditor();
     const [tab, setTab] = useState('przeglad');
     const [shownPersonId, setShownPersonId] = useState(person.id);
 
@@ -49,7 +51,7 @@ export function PersonModal({ preview, availableScans }: Props) {
     return (
         <Tabs
             value={tab}
-            onValueChange={setTab}
+            onValueChange={(value) => requestExit(() => setTab(value))}
             className="min-h-0 flex-1 gap-0"
         >
             <div className="border-b px-6 pb-3">

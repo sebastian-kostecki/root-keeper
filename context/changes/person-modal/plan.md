@@ -765,40 +765,40 @@ The additions are appended after the existing persons, and the comment block is 
 
 #### Automated
 
-- [x] 3.1 Format and lint pass
-- [x] 3.2 TS types check
-- [x] 3.3 Build succeeds
-- [x] 3.4 Preview-props feature tests still pass
+- [x] 3.1 Format and lint pass — 8dc9d5d
+- [x] 3.2 TS types check — 8dc9d5d
+- [x] 3.3 Build succeeds — 8dc9d5d
+- [x] 3.4 Preview-props feature tests still pass — 8dc9d5d
 
 #### Manual
 
-- [x] 3.5 Header matches the `PersonModal-B` board: avatar colour, lifespan `A – B`, chips, „⋯” items (no „Ustaw jako probanta” for the proband)
-- [x] 3.6 „⋯ › Usuń osobę…” opens the existing confirmation with the impact list; „Ustaw jako probanta” works
-- [x] 3.7 Tab counters match (Rodzina n, Źródła distinct scans, hidden at 0); arrow keys move between tabs
-- [x] 3.8 Rodzina rows open the relative's preview and „Wstecz” returns; „⋯ › Usuń relację/małżeństwo” confirmations work
-- [x] 3.9 Źródła: Otwórz leaves the modal to the scan page; Odepnij confirms and unlinks; Powiąż opens the picker
-- [x] 3.10 Tree sheet cards look unchanged after the `genderCard` move
+- [x] 3.5 Header matches the `PersonModal-B` board: avatar colour, lifespan `A – B`, chips, „⋯” items (no „Ustaw jako probanta” for the proband) — 8dc9d5d
+- [x] 3.6 „⋯ › Usuń osobę…” opens the existing confirmation with the impact list; „Ustaw jako probanta” works — 8dc9d5d
+- [x] 3.7 Tab counters match (Rodzina n, Źródła distinct scans, hidden at 0); arrow keys move between tabs — 8dc9d5d
+- [x] 3.8 Rodzina rows open the relative's preview and „Wstecz” returns; „⋯ › Usuń relację/małżeństwo” confirmations work — 8dc9d5d
+- [x] 3.9 Źródła: Otwórz leaves the modal to the scan page; Odepnij confirms and unlinks; Powiąż opens the picker — 8dc9d5d
+- [x] 3.10 Tree sheet cards look unchanged after the `genderCard` move — 8dc9d5d
 
 ### Phase 4: Per-section editing and the unsaved-changes guard
 
 #### Automated
 
-- [ ] 4.1 Format and lint pass
-- [ ] 4.2 TS types check
-- [ ] 4.3 Build succeeds
-- [ ] 4.4 Person, marriage and scan-link feature tests still pass (payload shape unchanged)
-- [ ] 4.5 Parser unit tests pass
+- [x] 4.1 Format and lint pass
+- [x] 4.2 TS types check
+- [x] 4.3 Build succeeds
+- [x] 4.4 Person, marriage and scan-link feature tests still pass (payload shape unchanged)
+- [x] 4.5 Parser unit tests pass
 
 #### Manual
 
-- [ ] 4.6 Editing „Dane osobowe” of a deceased person with a death scan saves and the death event and its scan link survive
-- [ ] 4.7 Editing only the Urodzenie place keeps name, gender, religion, residence and death unchanged
-- [ ] 4.8 „Oznacz zgon” opens Zgon in edit with „Osoba nie żyje” checked; saving creates the death; unchecking it with a linked death scan shows the server error in the card
-- [ ] 4.9 Marriage card edit saves date/place and keeps the certificate link
-- [ ] 4.10 With a dirty card each exit (other pencil, tab, X, Esc, Wstecz, relative link, Pokaż na drzewie, ⋯ items, Źródła Otwórz/Powiąż) shows the bar; Porzuć continues, Zapisz saves then continues, a failing Zapisz stays with errors
-- [ ] 4.11 A card with no edits (or edits reverted) never shows the bar
-- [ ] 4.12 At 390px, editing a section shows the full-screen „Edycja sekcji” view with pinned Anuluj/Zapisz visible while the keyboard is open
-- [ ] 4.13 Keyboard: pencil, fields and Zapisz are reachable by Tab; focus returns to the pencil after save/cancel
+- [x] 4.6 Editing „Dane osobowe” of a deceased person with a death scan saves and the death event and its scan link survive
+- [x] 4.7 Editing only the Urodzenie place keeps name, gender, religion, residence and death unchanged
+- [x] 4.8 „Oznacz zgon” opens Zgon in edit with „Osoba nie żyje” checked; saving creates the death; unchecking it with a linked death scan shows the server error in the card
+- [x] 4.9 Marriage card edit saves date/place and keeps the certificate link
+- [x] 4.10 With a dirty card each exit (other pencil, tab, X, Esc, Wstecz, relative link, Pokaż na drzewie, ⋯ items, Źródła Otwórz/Powiąż) shows the bar; Porzuć continues, Zapisz saves then continues, a failing Zapisz stays with errors
+- [x] 4.11 A card with no edits (or edits reverted) never shows the bar
+- [x] 4.12 At 390px, editing a section shows the full-screen „Edycja sekcji” view with pinned Anuluj/Zapisz visible while the keyboard is open
+- [x] 4.13 Keyboard: pencil, fields and Zapisz are reachable by Tab; focus returns to the pencil after save/cancel
 
 ### Phase 5: Create mode on the shared shell
 

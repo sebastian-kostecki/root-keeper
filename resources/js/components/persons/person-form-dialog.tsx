@@ -10,27 +10,16 @@ import {
 import { PersonFormFields } from '@/components/persons/person-form-fields';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogTrigger } from '@/components/ui/dialog';
-import type { Gender, PersonFormData, Religion } from '@/types';
+import type { Gender, Religion } from '@/types';
 
-type Props =
-    | {
-          mode: 'create';
-          genders: Gender[];
-          religions: Religion[];
-          trigger: React.ReactNode;
-      }
-    | {
-          mode: 'edit';
-          person: PersonFormData;
-          genders: Gender[];
-          religions: Religion[];
-          trigger: React.ReactNode;
-      };
+type Props = {
+    mode: 'create';
+    genders: Gender[];
+    religions: Religion[];
+    trigger: React.ReactNode;
+};
 
-export function PersonFormDialog(props: Props) {
-    const { genders, religions, trigger } = props;
-    const person = props.mode === 'edit' ? props.person : undefined;
-    const isEdit = props.mode === 'edit';
+export function PersonFormDialog({ genders, religions, trigger }: Props) {
     const [open, setOpen] = useState(false);
     const bodyRef = useRef<HTMLDivElement>(null);
 
@@ -47,18 +36,12 @@ export function PersonFormDialog(props: Props) {
             <DialogTrigger asChild>{trigger}</DialogTrigger>
             <FormDialogContent>
                 <FormDialogHeader
-                    title={isEdit ? 'Edytuj osobę' : 'Dodaj osobę'}
-                    description={
-                        isEdit
-                            ? 'Zmień dane osoby'
-                            : 'Podaj dane osoby, którą chcesz dodać do drzewa'
-                    }
+                    title="Dodaj osobę"
+                    description="Podaj dane osoby, którą chcesz dodać do drzewa"
                 />
 
                 <Form
-                    {...(person
-                        ? PersonController.update.form(person.id)
-                        : PersonController.store.form())}
+                    {...PersonController.store.form()}
                     options={{ preserveScroll: true }}
                     onSuccess={() => setOpen(false)}
                     onError={scrollFirstErrorIntoView}
@@ -71,7 +54,6 @@ export function PersonFormDialog(props: Props) {
                                     genders={genders}
                                     religions={religions}
                                     errors={errors}
-                                    person={person}
                                 />
                             </FormDialogBody>
 
@@ -86,11 +68,7 @@ export function PersonFormDialog(props: Props) {
                                 <Button
                                     type="submit"
                                     disabled={processing}
-                                    data-test={
-                                        isEdit
-                                            ? 'update-person-button'
-                                            : 'create-person-button'
-                                    }
+                                    data-test="create-person-button"
                                 >
                                     Zapisz
                                 </Button>

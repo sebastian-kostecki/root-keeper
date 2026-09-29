@@ -1,7 +1,11 @@
-import { Link } from '@inertiajs/react';
+import { Link, router } from '@inertiajs/react';
 import { EllipsisIcon } from 'lucide-react';
 import { useState } from 'react';
 import { DeletePersonDialog } from '@/components/persons/delete-person-dialog';
+import {
+    useGuardedClick,
+    useSectionEditor,
+} from '@/components/persons/section-editor';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { DialogDescription, DialogTitle } from '@/components/ui/dialog';
@@ -32,6 +36,9 @@ export function PersonModalHeader({ person, isRootPerson, leading }: Props) {
     const getInitials = useInitials();
     const { setRootPerson, processing } = useSetRootPerson(person.id);
     const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+    const { requestExit } = useSectionEditor();
+    const guardClick = useGuardedClick();
+    const treeHref = treeShow(person.id);
 
     const lifespan = formatLifespan(person.birth?.date, person.death?.date);
 
@@ -84,7 +91,14 @@ export function PersonModalHeader({ person, isRootPerson, leading }: Props) {
                         className="hidden sm:inline-flex"
                         asChild
                     >
-                        <Link href={treeShow(person.id)}>Pokaż na drzewie</Link>
+                        <Link
+                            href={treeHref}
+                            onClick={(event) =>
+                                guardClick(event, () => router.visit(treeHref))
+                            }
+                        >
+                            Pokaż na drzewie
+                        </Link>
                     </Button>
 
                     <DropdownMenu>
@@ -100,14 +114,21 @@ export function PersonModalHeader({ person, isRootPerson, leading }: Props) {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                             <DropdownMenuItem asChild>
-                                <Link href={treeShow(person.id)}>
+                                <Link
+                                    href={treeHref}
+                                    onClick={(event) =>
+                                        guardClick(event, () =>
+                                            router.visit(treeHref),
+                                        )
+                                    }
+                                >
                                     Pokaż na drzewie
                                 </Link>
                             </DropdownMenuItem>
                             {!isRootPerson && (
                                 <DropdownMenuItem
                                     disabled={processing}
-                                    onSelect={setRootPerson}
+                                    onSelect={() => requestExit(setRootPerson)}
                                 >
                                     Ustaw jako probanta
                                 </DropdownMenuItem>
@@ -115,7 +136,9 @@ export function PersonModalHeader({ person, isRootPerson, leading }: Props) {
                             <DropdownMenuSeparator />
                             <DropdownMenuItem
                                 variant="destructive"
-                                onSelect={() => setIsDeleteOpen(true)}
+                                onSelect={() =>
+                                    requestExit(() => setIsDeleteOpen(true))
+                                }
                             >
                                 Usuń osobę…
                             </DropdownMenuItem>

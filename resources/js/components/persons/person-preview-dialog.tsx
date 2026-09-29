@@ -4,6 +4,11 @@ import { FormDialogContent } from '@/components/form-dialog';
 import { PersonModal } from '@/components/persons/person-modal';
 import { PersonModalHeader } from '@/components/persons/person-modal-header';
 import { usePersonPreview } from '@/components/persons/person-preview-provider';
+import {
+    SectionEditorProvider,
+    UnsavedChangesBar,
+    useSectionEditor,
+} from '@/components/persons/section-editor';
 import { Button } from '@/components/ui/button';
 import { Dialog } from '@/components/ui/dialog';
 
@@ -11,8 +16,23 @@ import { Dialog } from '@/components/ui/dialog';
  * Modal hosted by the layout; open whenever the page carries a `personPreview`.
  */
 export function PersonPreviewDialog() {
+    const { personPreview } = usePage().props;
+
+    if (personPreview === null) {
+        return null;
+    }
+
+    return (
+        <SectionEditorProvider personId={personPreview.person.id}>
+            <PersonPreviewDialogContent />
+        </SectionEditorProvider>
+    );
+}
+
+function PersonPreviewDialogContent() {
     const { personPreview, availableScans } = usePage().props;
     const { stack, back, close } = usePersonPreview();
+    const { isDirty, requestExit } = useSectionEditor();
 
     if (personPreview === null) {
         return null;
@@ -23,11 +43,19 @@ export function PersonPreviewDialog() {
             open
             onOpenChange={(isOpen) => {
                 if (!isOpen) {
-                    close();
+                    requestExit(close);
                 }
             }}
         >
-            <FormDialogContent className="sm:h-[90vh]">
+            <FormDialogContent
+                className="sm:h-[90vh]"
+                onEscapeKeyDown={(event) => {
+                    if (isDirty) {
+                        event.preventDefault();
+                        requestExit(close);
+                    }
+                }}
+            >
                 <PersonModalHeader
                     person={personPreview.person}
                     isRootPerson={personPreview.isRootPerson}
@@ -38,7 +66,7 @@ export function PersonPreviewDialog() {
                                 variant="ghost"
                                 size="sm"
                                 className="-ml-3 self-start"
-                                onClick={back}
+                                onClick={() => requestExit(back)}
                             >
                                 <ArrowLeft />
                                 Wstecz
@@ -51,6 +79,8 @@ export function PersonPreviewDialog() {
                     preview={personPreview}
                     availableScans={availableScans}
                 />
+
+                <UnsavedChangesBar />
             </FormDialogContent>
         </Dialog>
     );

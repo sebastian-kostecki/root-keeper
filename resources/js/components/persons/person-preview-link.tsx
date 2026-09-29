@@ -1,10 +1,14 @@
-import { Link } from '@inertiajs/react';
+import { Link, router } from '@inertiajs/react';
 import { useRef } from 'react';
 import type * as React from 'react';
 import {
     previewVisitOptions,
     usePersonPreview,
 } from '@/components/persons/person-preview-provider';
+import {
+    isPlainClick,
+    useOptionalSectionEditor,
+} from '@/components/persons/section-editor';
 
 type Props = Omit<
     React.ComponentProps<typeof Link>,
@@ -26,27 +30,38 @@ export function PersonPreviewLink({
     const { currentId, hrefFor, push } = usePersonPreview();
     const fromId = useRef<number | null>(null);
 
+    const editor = useOptionalSectionEditor();
+    const href = hrefFor(personId);
+
     const handleClick = (event: React.MouseEvent) => {
         onClick?.(event);
 
-        const isPlainClick =
-            event.button === 0 &&
-            !event.metaKey &&
-            !event.ctrlKey &&
-            !event.shiftKey &&
-            !event.altKey;
+        const isIntercepted = isPlainClick(event) && !event.defaultPrevented;
+        const from = isIntercepted && currentId !== personId ? currentId : null;
 
-        fromId.current =
-            isPlainClick && !event.defaultPrevented && currentId !== personId
-                ? currentId
-                : null;
+        fromId.current = from;
+
+        if (isIntercepted && editor !== null && editor.isDirty) {
+            event.preventDefault();
+            fromId.current = null;
+            editor.requestExit(() =>
+                router.visit(href, {
+                    ...previewVisitOptions,
+                    onSuccess: () => {
+                        if (from !== null) {
+                            push(from);
+                        }
+                    },
+                }),
+            );
+        }
     };
 
     return (
         <Link
             {...props}
             {...previewVisitOptions}
-            href={hrefFor(personId)}
+            href={href}
             onClick={handleClick}
             onSuccess={() => {
                 if (fromId.current !== null) {

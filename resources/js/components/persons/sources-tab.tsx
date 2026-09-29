@@ -1,6 +1,7 @@
-import { Link } from '@inertiajs/react';
+import { Link, router } from '@inertiajs/react';
 import ScanController from '@/actions/App/Http/Controllers/ScanController';
 import { EventSourceStatus } from '@/components/persons/event-source-status';
+import { useGuardedClick } from '@/components/persons/section-editor';
 import { ScanPickerDialog } from '@/components/scans/scan-picker-dialog';
 import { ScanThumbnail } from '@/components/scans/scan-thumbnail';
 import { UnlinkScanDialog } from '@/components/scans/unlink-scan-dialog';
@@ -44,6 +45,7 @@ function SourceGroup({
 }: GroupProps) {
     const summary = [event.date, event.place].filter(Boolean).join(', ');
     const hasScans = event.scans.length > 0;
+    const guardClick = useGuardedClick();
 
     return (
         <section className="bg-card space-y-3 rounded-lg border p-4">
@@ -90,6 +92,15 @@ function SourceGroup({
                                     <Button variant="outline" size="sm" asChild>
                                         <Link
                                             href={ScanController.show(scan.id)}
+                                            onClick={(event) =>
+                                                guardClick(event, () =>
+                                                    router.visit(
+                                                        ScanController.show(
+                                                            scan.id,
+                                                        ),
+                                                    ),
+                                                )
+                                            }
                                             aria-label={`Otwórz skan ${scan.original_name}`}
                                         >
                                             Otwórz
