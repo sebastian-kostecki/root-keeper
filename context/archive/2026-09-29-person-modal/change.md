@@ -1,10 +1,10 @@
 ---
 change_id: person-modal
 title: Person modal
-status: impl_reviewed
+status: archived
 created: 2026-09-29
 updated: 2026-09-29
-archived_at: null
+archived_at: 2026-09-29T09:18:58Z
 ---
 
 ## Notes
