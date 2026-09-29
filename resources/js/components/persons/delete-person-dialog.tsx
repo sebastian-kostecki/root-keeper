@@ -17,11 +17,29 @@ import type { PersonPreview } from '@/types';
 type Props = {
     person: PersonPreview;
     isRootPerson: boolean;
-    trigger: React.ReactNode;
+    trigger?: React.ReactNode;
+    /** Controlled mode: when given, no trigger is rendered. */
+    open?: boolean;
+    onOpenChange?: (open: boolean) => void;
 };
 
-export function DeletePersonDialog({ person, isRootPerson, trigger }: Props) {
-    const [open, setOpen] = useState(false);
+export function DeletePersonDialog({
+    person,
+    isRootPerson,
+    trigger,
+    open: controlledOpen,
+    onOpenChange,
+}: Props) {
+    const [internalOpen, setInternalOpen] = useState(false);
+    const isControlled = controlledOpen !== undefined;
+    const open = isControlled ? controlledOpen : internalOpen;
+    const setOpen = (next: boolean) => {
+        if (!isControlled) {
+            setInternalOpen(next);
+        }
+
+        onOpenChange?.(next);
+    };
     const [processing, setProcessing] = useState(false);
 
     const marriageScanCount = person.marriages.reduce(
@@ -66,7 +84,7 @@ export function DeletePersonDialog({ person, isRootPerson, trigger }: Props) {
 
     return (
         <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>{trigger}</DialogTrigger>
+            {trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
             <DialogContent>
                 <DialogTitle>Usuń osobę</DialogTitle>
                 <DialogDescription>

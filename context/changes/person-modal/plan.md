@@ -747,37 +747,37 @@ The additions are appended after the existing persons, and the comment block is 
 
 #### Automated
 
-- [x] 2.1 Parser unit tests pass
-- [x] 2.2 Format and lint pass
-- [x] 2.3 TS types check
-- [x] 2.4 Build succeeds
-- [x] 2.5 Date validation feature tests still pass
+- [x] 2.1 Parser unit tests pass — a392d82
+- [x] 2.2 Format and lint pass — a392d82
+- [x] 2.3 TS types check — a392d82
+- [x] 2.4 Build succeeds — a392d82
+- [x] 2.5 Date validation feature tests still pass — a392d82
 
 #### Manual
 
-- [x] 2.6 Edit dialog: typing `12 marca 1948` shows „12.03.1948 dokładna data”, saves, and the preview shows `12.03.1948`
-- [x] 2.7 Edit dialog: `12.3.48` and `przed wojną` block submit with the board's hint text
-- [x] 2.8 `31.2.1948` reaches the server and its „Podana data jest nieprawidłowa.” error shows under the single date field
-- [x] 2.9 Clearing the birth date text saves an empty birth date
-- [x] 2.10 Tree „dodaj nową osobę” (parent/child/spouse slot) and the marriage „Edytuj” dialog both use the new field and save correctly
+- [x] 2.6 Edit dialog: typing `12 marca 1948` shows „12.03.1948 dokładna data”, saves, and the preview shows `12.03.1948` — a392d82
+- [x] 2.7 Edit dialog: `12.3.48` and `przed wojną` block submit with the board's hint text — a392d82
+- [x] 2.8 `31.2.1948` reaches the server and its „Podana data jest nieprawidłowa.” error shows under the single date field — a392d82
+- [x] 2.9 Clearing the birth date text saves an empty birth date — a392d82
+- [x] 2.10 Tree „dodaj nową osobę” (parent/child/spouse slot) and the marriage „Edytuj” dialog both use the new field and save correctly — a392d82
 
 ### Phase 3: Modal shell and read-only tabs
 
 #### Automated
 
-- [ ] 3.1 Format and lint pass
-- [ ] 3.2 TS types check
-- [ ] 3.3 Build succeeds
-- [ ] 3.4 Preview-props feature tests still pass
+- [x] 3.1 Format and lint pass
+- [x] 3.2 TS types check
+- [x] 3.3 Build succeeds
+- [x] 3.4 Preview-props feature tests still pass
 
 #### Manual
 
-- [ ] 3.5 Header matches the `PersonModal-B` board: avatar colour, lifespan `A – B`, chips, „⋯” items (no „Ustaw jako probanta” for the proband)
-- [ ] 3.6 „⋯ › Usuń osobę…” opens the existing confirmation with the impact list; „Ustaw jako probanta” works
-- [ ] 3.7 Tab counters match (Rodzina n, Źródła distinct scans, hidden at 0); arrow keys move between tabs
-- [ ] 3.8 Rodzina rows open the relative's preview and „Wstecz” returns; „⋯ › Usuń relację/małżeństwo” confirmations work
-- [ ] 3.9 Źródła: Otwórz leaves the modal to the scan page; Odepnij confirms and unlinks; Powiąż opens the picker
-- [ ] 3.10 Tree sheet cards look unchanged after the `genderCard` move
+- [x] 3.5 Header matches the `PersonModal-B` board: avatar colour, lifespan `A – B`, chips, „⋯” items (no „Ustaw jako probanta” for the proband)
+- [x] 3.6 „⋯ › Usuń osobę…” opens the existing confirmation with the impact list; „Ustaw jako probanta” works
+- [x] 3.7 Tab counters match (Rodzina n, Źródła distinct scans, hidden at 0); arrow keys move between tabs
+- [x] 3.8 Rodzina rows open the relative's preview and „Wstecz” returns; „⋯ › Usuń relację/małżeństwo” confirmations work
+- [x] 3.9 Źródła: Otwórz leaves the modal to the scan page; Odepnij confirms and unlinks; Powiąż opens the picker
+- [x] 3.10 Tree sheet cards look unchanged after the `genderCard` move
 
 ### Phase 4: Per-section editing and the unsaved-changes guard
 

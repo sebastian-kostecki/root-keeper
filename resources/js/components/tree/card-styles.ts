@@ -5,18 +5,11 @@
 export const cardSurface =
     'flex h-full min-h-16 flex-col items-center justify-center rounded-xl border px-7 py-2.5 text-center';
 
-/** Per-gender fill, border and hover border of a person card. */
-export const genderCard: Record<'male' | 'female' | 'unknown', string> = {
-    male: 'bg-gender-male-surface border-gender-male-border hover:border-gender-male',
-    female: 'bg-gender-female-surface border-gender-female-border hover:border-gender-female',
-    unknown: 'bg-card border-tree-line hover:border-foreground/40',
-};
-
 /**
  * Keyboard focus for a card that acts as a link or button.
  *
  * Hover never touches a person card's fill; it only darkens the border (see
- * `genderCard`). Focus is a detached, offset halo, distinct from the focus
+ * `genderCard` in `lib/gender-styles`). Focus is a detached, offset halo, distinct from the focus
  * person's attached border.
  */
 export const cardInteractive =

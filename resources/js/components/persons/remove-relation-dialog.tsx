@@ -16,7 +16,10 @@ type Props = {
     relationId: number;
     parentName: string;
     childName: string;
-    trigger: React.ReactNode;
+    trigger?: React.ReactNode;
+    /** Controlled mode: when given, no trigger is rendered. */
+    open?: boolean;
+    onOpenChange?: (open: boolean) => void;
 };
 
 export function RemoveRelationDialog({
@@ -24,8 +27,19 @@ export function RemoveRelationDialog({
     parentName,
     childName,
     trigger,
+    open: controlledOpen,
+    onOpenChange,
 }: Props) {
-    const [open, setOpen] = useState(false);
+    const [internalOpen, setInternalOpen] = useState(false);
+    const isControlled = controlledOpen !== undefined;
+    const open = isControlled ? controlledOpen : internalOpen;
+    const setOpen = (next: boolean) => {
+        if (!isControlled) {
+            setInternalOpen(next);
+        }
+
+        onOpenChange?.(next);
+    };
     const [processing, setProcessing] = useState(false);
 
     const handleConfirm = () => {
@@ -40,7 +54,7 @@ export function RemoveRelationDialog({
 
     return (
         <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>{trigger}</DialogTrigger>
+            {trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
             <DialogContent>
                 <DialogTitle>Usuń relację</DialogTitle>
                 <DialogDescription>

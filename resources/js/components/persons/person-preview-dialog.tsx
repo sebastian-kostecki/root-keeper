@@ -1,11 +1,8 @@
 import { usePage } from '@inertiajs/react';
 import { ArrowLeft } from 'lucide-react';
-import {
-    FormDialogBody,
-    FormDialogContent,
-    FormDialogHeader,
-} from '@/components/form-dialog';
-import { PersonPreview } from '@/components/persons/person-preview';
+import { FormDialogContent } from '@/components/form-dialog';
+import { PersonModal } from '@/components/persons/person-modal';
+import { PersonModalHeader } from '@/components/persons/person-modal-header';
 import { usePersonPreview } from '@/components/persons/person-preview-provider';
 import { Button } from '@/components/ui/button';
 import { Dialog } from '@/components/ui/dialog';
@@ -21,14 +18,6 @@ export function PersonPreviewDialog() {
         return null;
     }
 
-    const { person } = personPreview;
-    const lifespan = [
-        person.birth?.date && `ur. ${person.birth.date}`,
-        person.death?.date && `zm. ${person.death.date}`,
-    ]
-        .filter(Boolean)
-        .join(' · ');
-
     return (
         <Dialog
             open
@@ -38,11 +27,10 @@ export function PersonPreviewDialog() {
                 }
             }}
         >
-            <FormDialogContent>
-                <FormDialogHeader
-                    title={person.display_name}
-                    description={lifespan || 'Podgląd osoby'}
-                    descriptionClassName={lifespan ? undefined : 'sr-only'}
+            <FormDialogContent className="sm:h-[90vh]">
+                <PersonModalHeader
+                    person={personPreview.person}
+                    isRootPerson={personPreview.isRootPerson}
                     leading={
                         stack.length > 0 ? (
                             <Button
@@ -59,12 +47,10 @@ export function PersonPreviewDialog() {
                     }
                 />
 
-                <FormDialogBody>
-                    <PersonPreview
-                        preview={personPreview}
-                        availableScans={availableScans}
-                    />
-                </FormDialogBody>
+                <PersonModal
+                    preview={personPreview}
+                    availableScans={availableScans}
+                />
             </FormDialogContent>
         </Dialog>
     );

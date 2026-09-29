@@ -6,8 +6,8 @@ import {
     cardFocus,
     cardInteractive,
     cardSurface,
-    genderCard,
 } from '@/components/tree/card-styles';
+import { genderCard } from '@/lib/gender-styles';
 import { cn } from '@/lib/utils';
 import { show as treeShow } from '@/routes/tree';
 import type { SheetPerson } from '@/types';

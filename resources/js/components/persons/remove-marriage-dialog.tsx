@@ -18,7 +18,10 @@ type Props = {
     marriage: Marriage;
     personName: string;
     spouseName: string;
-    trigger: React.ReactNode;
+    trigger?: React.ReactNode;
+    /** Controlled mode: when given, no trigger is rendered. */
+    open?: boolean;
+    onOpenChange?: (open: boolean) => void;
 };
 
 export function RemoveMarriageDialog({
@@ -26,8 +29,19 @@ export function RemoveMarriageDialog({
     personName,
     spouseName,
     trigger,
+    open: controlledOpen,
+    onOpenChange,
 }: Props) {
-    const [open, setOpen] = useState(false);
+    const [internalOpen, setInternalOpen] = useState(false);
+    const isControlled = controlledOpen !== undefined;
+    const open = isControlled ? controlledOpen : internalOpen;
+    const setOpen = (next: boolean) => {
+        if (!isControlled) {
+            setInternalOpen(next);
+        }
+
+        onOpenChange?.(next);
+    };
     const [processing, setProcessing] = useState(false);
 
     const scanCount = marriage.scans.length;
@@ -44,7 +58,7 @@ export function RemoveMarriageDialog({
 
     return (
         <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>{trigger}</DialogTrigger>
+            {trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
             <DialogContent>
                 <DialogTitle>Usuń małżeństwo</DialogTitle>
                 <DialogDescription>

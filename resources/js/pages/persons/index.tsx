@@ -7,6 +7,7 @@ import { PersonFormDialog } from '@/components/persons/person-form-dialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { formatLifespan } from '@/lib/lifespan';
 import { index as personsIndex } from '@/routes/persons';
 import type { BreadcrumbItem, Gender, Person, Religion } from '@/types';
 
@@ -105,14 +106,10 @@ export default function Index({ persons, genders, religions, filters }: Props) {
                                             {person.display_name}
                                         </span>
                                         <span className="text-muted-foreground text-sm">
-                                            {[
-                                                person.birth?.date &&
-                                                    `ur. ${person.birth.date}`,
-                                                person.death?.date &&
-                                                    `zm. ${person.death.date}`,
-                                            ]
-                                                .filter(Boolean)
-                                                .join(' · ')}
+                                            {formatLifespan(
+                                                person.birth?.date,
+                                                person.death?.date,
+                                            )}
                                         </span>
                                     </CardContent>
                                 </Card>
