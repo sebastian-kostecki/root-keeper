@@ -46,3 +46,6 @@ jobs:
 
       - name: Check frontend formatting and lint (Vite+)
         run: npm run check
+
+      - name: Run frontend unit tests (Vitest)
+        run: npm run test:js

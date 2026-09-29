@@ -734,32 +734,32 @@ The additions are appended after the existing persons, and the comment block is 
 
 #### Automated
 
-- [x] 1.1 Person, marriage and scan-link feature tests pass
-- [x] 1.2 Larastan passes
-- [x] 1.3 Pint clean
-- [x] 1.4 TS types check
+- [x] 1.1 Person, marriage and scan-link feature tests pass — 418a964
+- [x] 1.2 Larastan passes — 418a964
+- [x] 1.3 Pint clean — 418a964
+- [x] 1.4 TS types check — 418a964
 
 #### Manual
 
-- [x] 1.5 Creating a person from the persons list lands on `/tree/<id>?person=<id>` with the (old) preview open over the tree
+- [x] 1.5 Creating a person from the persons list lands on `/tree/<id>?person=<id>` with the (old) preview open over the tree — 418a964
 
 ### Phase 2: Partial-date parser and text date input
 
 #### Automated
 
-- [ ] 2.1 Parser unit tests pass
-- [ ] 2.2 Format and lint pass
-- [ ] 2.3 TS types check
-- [ ] 2.4 Build succeeds
-- [ ] 2.5 Date validation feature tests still pass
+- [x] 2.1 Parser unit tests pass
+- [x] 2.2 Format and lint pass
+- [x] 2.3 TS types check
+- [x] 2.4 Build succeeds
+- [x] 2.5 Date validation feature tests still pass
 
 #### Manual
 
-- [ ] 2.6 Edit dialog: typing `12 marca 1948` shows „12.03.1948 dokładna data”, saves, and the preview shows `12.03.1948`
-- [ ] 2.7 Edit dialog: `12.3.48` and `przed wojną` block submit with the board's hint text
-- [ ] 2.8 `31.2.1948` reaches the server and its „Podana data jest nieprawidłowa.” error shows under the single date field
-- [ ] 2.9 Clearing the birth date text saves an empty birth date
-- [ ] 2.10 Tree „dodaj nową osobę” (parent/child/spouse slot) and the marriage „Edytuj” dialog both use the new field and save correctly
+- [x] 2.6 Edit dialog: typing `12 marca 1948` shows „12.03.1948 dokładna data”, saves, and the preview shows `12.03.1948`
+- [x] 2.7 Edit dialog: `12.3.48` and `przed wojną` block submit with the board's hint text
+- [x] 2.8 `31.2.1948` reaches the server and its „Podana data jest nieprawidłowa.” error shows under the single date field
+- [x] 2.9 Clearing the birth date text saves an empty birth date
+- [x] 2.10 Tree „dodaj nową osobę” (parent/child/spouse slot) and the marriage „Edytuj” dialog both use the new field and save correctly
 
 ### Phase 3: Modal shell and read-only tabs
 

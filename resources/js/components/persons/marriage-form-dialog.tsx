@@ -1,7 +1,7 @@
 import { Form } from '@inertiajs/react';
 import { useState } from 'react';
 import MarriageController from '@/actions/App/Http/Controllers/MarriageController';
-import { PartialDateFields } from '@/components/persons/partial-date-fields';
+import { PartialDateInput } from '@/components/persons/partial-date-input';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -44,16 +44,13 @@ export function MarriageFormDialog({ marriage, trigger }: Props) {
                                     'Nieznany małżonek'}
                             </p>
 
-                            <PartialDateFields
+                            <PartialDateInput
                                 prefix="marriage"
                                 errors={errors}
                                 defaultValue={{
                                     ...marriage.date_parts,
                                     place: marriage.place,
                                 }}
-                                defaultChecked={
-                                    marriage.date_parts.is_approximate
-                                }
                             />
 
                             <DialogFooter className="gap-2">

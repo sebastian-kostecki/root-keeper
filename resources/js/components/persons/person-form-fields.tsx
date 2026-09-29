@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import Heading from '@/components/heading';
 import InputError from '@/components/input-error';
-import { PartialDateFields } from '@/components/persons/partial-date-fields';
+import { PartialDateInput } from '@/components/persons/partial-date-input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -148,11 +148,10 @@ export function PersonFormFields({
                         {CONFIRMED_HINT}
                     </p>
                 )}
-                <PartialDateFields
+                <PartialDateInput
                     prefix="birth"
                     errors={errors}
                     defaultValue={person?.birth ?? undefined}
-                    defaultChecked={person?.birth?.is_approximate}
                 />
             </div>
 
@@ -180,11 +179,10 @@ export function PersonFormFields({
                             {CONFIRMED_HINT}
                         </p>
                     )}
-                    <PartialDateFields
+                    <PartialDateInput
                         prefix="death"
                         errors={errors}
                         defaultValue={person?.death ?? undefined}
-                        defaultChecked={person?.death?.is_approximate}
                     />
                 </div>
             )}
