@@ -235,71 +235,6 @@ test('two children born on the same date are ordered by name', function () {
         ->where('personPreview.person.children.1.id', $zChild->id));
 });
 
-test('person show does not include relationCandidates on a normal visit', function () {
-    $user = User::factory()->create();
-    $person = Person::factory()->for($user->tree)->create();
-
-    $response = $this->actingAs($user)->get(personPreviewUrl($person));
-
-    $response->assertOk();
-    $response->assertInertia(fn ($page) => $page
-        ->component('persons/index')
-        ->missing('relationCandidates'));
-});
-
-test('a partial reload of relationCandidates excludes the current person and other trees, and gives the expected reason per direction', function () {
-    $user = User::factory()->create();
-    $tree = $user->tree;
-
-    $grandparent = Person::factory()->for($tree)->create();
-    $parent = Person::factory()->for($tree)->create();
-    $person = Person::factory()->for($tree)->create();
-    $child = Person::factory()->for($tree)->create();
-    $grandchild = Person::factory()->for($tree)->create();
-    $parentA = Person::factory()->for($tree)->create();
-    $parentB = Person::factory()->for($tree)->create();
-    $twoParentsChild = Person::factory()->for($tree)->create();
-    $linkable = Person::factory()->for($tree)->create();
-
-    ParentChildRelation::factory()->create(['tree_id' => $tree->id, 'parent_id' => $grandparent->id, 'child_id' => $parent->id]);
-    ParentChildRelation::factory()->create(['tree_id' => $tree->id, 'parent_id' => $parent->id, 'child_id' => $person->id]);
-    ParentChildRelation::factory()->create(['tree_id' => $tree->id, 'parent_id' => $person->id, 'child_id' => $child->id]);
-    ParentChildRelation::factory()->create(['tree_id' => $tree->id, 'parent_id' => $child->id, 'child_id' => $grandchild->id]);
-    ParentChildRelation::factory()->create(['tree_id' => $tree->id, 'parent_id' => $parentA->id, 'child_id' => $twoParentsChild->id]);
-    ParentChildRelation::factory()->create(['tree_id' => $tree->id, 'parent_id' => $parentB->id, 'child_id' => $twoParentsChild->id]);
-
-    $otherUser = User::factory()->create();
-    $foreignPerson = Person::factory()->for($otherUser->tree)->create();
-
-    $initial = $this->actingAs($user)->get(personPreviewUrl($person), ['X-Inertia' => 'true']);
-    $version = $initial->headers->get('X-Inertia-Version');
-
-    $response = $this->actingAs($user)->get(personPreviewUrl($person), [
-        'X-Inertia' => 'true',
-        'X-Inertia-Version' => $version,
-        'X-Inertia-Partial-Data' => 'relationCandidates',
-        'X-Inertia-Partial-Component' => 'persons/index',
-    ]);
-
-    $response->assertOk();
-    $props = $response->json('props');
-
-    expect($props)->not->toHaveKey('person');
-
-    $candidates = collect($props['relationCandidates'])->keyBy('id');
-
-    expect($candidates->has($person->id))->toBeFalse();
-    expect($candidates->has($foreignPerson->id))->toBeFalse();
-
-    expect($candidates[$parent->id]['as_parent_blocked_reason'])->toBe('Już jest rodzicem');
-    expect($candidates[$grandchild->id]['as_parent_blocked_reason'])->toBe('Jest potomkiem tej osoby');
-    expect($candidates[$child->id]['as_child_blocked_reason'])->toBe('Już jest dzieckiem');
-    expect($candidates[$grandparent->id]['as_child_blocked_reason'])->toBe('Jest przodkiem tej osoby');
-    expect($candidates[$twoParentsChild->id]['as_child_blocked_reason'])->toBe('Ma już dwoje rodziców');
-    expect($candidates[$linkable->id]['as_parent_blocked_reason'])->toBeNull();
-    expect($candidates[$linkable->id]['as_child_blocked_reason'])->toBeNull();
-});
-
 test('a child cannot get a second father or a second mother', function (string $gender, string $message) {
     $user = User::factory()->create();
     $first = Person::factory()->for($user->tree)->{$gender}()->create();
@@ -388,44 +323,6 @@ test('linking from a tree slot redirects back to the tree with its union preserv
 
     $response->assertRedirect($treeUrl);
     $response->assertSessionHas('inertia.flash_data.toast', ['type' => 'success', 'message' => 'Dodano relację']);
-});
-
-test('the preview candidates block a second parent of the same sex in both directions', function () {
-    $user = User::factory()->create();
-    $tree = $user->tree;
-    $person = Person::factory()->for($tree)->create();
-    $father = Person::factory()->for($tree)->male()->create();
-    $otherMan = Person::factory()->for($tree)->male()->create();
-    $otherWoman = Person::factory()->for($tree)->female()->create();
-    $childWithFather = Person::factory()->for($tree)->create();
-    $unknownChild = Person::factory()->for($tree)->create();
-    $manPerson = Person::factory()->for($tree)->male()->create();
-    linkParent($father, $person);
-    linkParent($otherMan, $childWithFather);
-
-    $candidatesFor = function (Person $subject) use ($user) {
-        $version = $this->actingAs($user)->get(personPreviewUrl($subject), ['X-Inertia' => 'true'])->headers->get('X-Inertia-Version');
-
-        $response = $this->actingAs($user)->get(personPreviewUrl($subject), [
-            'X-Inertia' => 'true',
-            'X-Inertia-Version' => $version,
-            'X-Inertia-Partial-Data' => 'relationCandidates',
-            'X-Inertia-Partial-Component' => 'persons/index',
-        ]);
-
-        return collect($response->json('props.relationCandidates'))->keyBy('id');
-    };
-
-    $candidates = $candidatesFor($person);
-
-    expect($candidates[$otherMan->id]['as_parent_blocked_reason'])->toBe('Ma już ojca');
-    expect($candidates[$otherWoman->id]['as_parent_blocked_reason'])->toBeNull();
-    expect($candidates[$unknownChild->id]['as_parent_blocked_reason'])->toBeNull();
-
-    $candidates = $candidatesFor($manPerson);
-
-    expect($candidates[$childWithFather->id]['as_child_blocked_reason'])->toBe('Ma już ojca');
-    expect($candidates[$unknownChild->id]['as_child_blocked_reason'])->toBeNull();
 });
 
 test('guests are redirected to the login page from the create-parent route', function () {

@@ -796,10 +796,9 @@ test('the preview of another users person or a missing person is not found', fun
     $this->actingAs($user)->get(route('persons.index').'?person=999999')->assertNotFound();
 });
 
-test('relation candidates and available scans load through a partial reload of a host page with a person parameter', function () {
+test('available scans load through a partial reload of a host page with a person parameter', function () {
     $user = User::factory()->create();
     $person = Person::factory()->for($user->tree)->create();
-    $other = Person::factory()->for($user->tree)->create(['first_name' => 'Anna']);
     $newer = Scan::factory()->for($user->tree)->create();
     $older = Scan::factory()->for($user->tree)->create(['created_at' => now()->subDay()]);
     Scan::factory()->for(User::factory()->create()->tree)->create();
@@ -808,12 +807,12 @@ test('relation candidates and available scans load through a partial reload of a
     $version = $this->actingAs($user)->get($url, ['X-Inertia' => 'true'])->headers->get('X-Inertia-Version');
 
     $normal = $this->actingAs($user)->get($url);
-    $normal->assertInertia(fn ($page) => $page->missing('availableScans')->missing('relationCandidates'));
+    $normal->assertInertia(fn ($page) => $page->missing('availableScans'));
 
     $response = $this->actingAs($user)->get($url, [
         'X-Inertia' => 'true',
         'X-Inertia-Version' => $version,
-        'X-Inertia-Partial-Data' => 'relationCandidates,availableScans',
+        'X-Inertia-Partial-Data' => 'availableScans',
         'X-Inertia-Partial-Component' => 'persons/index',
     ]);
 
@@ -821,7 +820,6 @@ test('relation candidates and available scans load through a partial reload of a
     $props = $response->json('props');
 
     expect($props)->not->toHaveKey('personPreview');
-    expect(collect($props['relationCandidates'])->pluck('id')->all())->toBe([$other->id]);
     expect(collect($props['availableScans'])->pluck('id')->all())->toBe([$newer->id, $older->id]);
 });
 

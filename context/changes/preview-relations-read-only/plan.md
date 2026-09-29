@@ -314,31 +314,31 @@ None. No schema or data changes.
 
 #### Automated
 
-- [x] 1.1 Format and lint pass: `vendor/bin/sail npm run check`
-- [x] 1.2 Types pass: `vendor/bin/sail npm run types:check`
-- [x] 1.3 Build passes: `vendor/bin/sail npm run build`
-- [x] 1.4 No references remain to relationCandidates, RelationCandidate, RelativePickerDialog or useRelationCandidates in resources/js
+- [x] 1.1 Format and lint pass: `vendor/bin/sail npm run check` — a6baadc
+- [x] 1.2 Types pass: `vendor/bin/sail npm run types:check` — a6baadc
+- [x] 1.3 Build passes: `vendor/bin/sail npm run build` — a6baadc
+- [x] 1.4 No references remain to relationCandidates, RelationCandidate, RelativePickerDialog or useRelationCandidates in resources/js — a6baadc
 
 #### Manual
 
-- [x] 1.5 Jan's preview shows relations with no add buttons, removal and marriage edit kept
-- [x] 1.6 Marriage edit, relation removal and marriage removal still work from the preview
-- [x] 1.7 Kacper's and Marta's previews show the empty-state hints
-- [x] 1.8 „Pokaż na drzewie” from the list lands on the centred tree with the modal closed
-- [x] 1.9 Preview from tree, list and scan still navigates relatives and back
+- [x] 1.5 Jan's preview shows relations with no add buttons, removal and marriage edit kept — a6baadc
+- [x] 1.6 Marriage edit, relation removal and marriage removal still work from the preview — a6baadc
+- [x] 1.7 Kacper's and Marta's previews show the empty-state hints — a6baadc
+- [x] 1.8 „Pokaż na drzewie” from the list lands on the centred tree with the modal closed — a6baadc
+- [x] 1.9 Preview from tree, list and scan still navigates relatives and back — a6baadc
 
 ### Phase 2: Backend cleanup of relation candidates
 
 #### Automated
 
-- [ ] 2.1 Touched tests pass: ParentChildRelationsTest, MarriagesTest, PersonsTest
-- [ ] 2.2 PHP style: `vendor/bin/sail bin pint --dirty --format agent`
-- [ ] 2.3 Static analysis passes: `vendor/bin/sail bin phpstan analyse`
-- [ ] 2.4 No references remain to relationCandidates or ListRelationCandidates in app, routes, tests
+- [x] 2.1 Touched tests pass: ParentChildRelationsTest, MarriagesTest, PersonsTest
+- [x] 2.2 PHP style: `vendor/bin/sail bin pint --dirty --format agent`
+- [x] 2.3 Static analysis passes: `vendor/bin/sail bin phpstan analyse`
+- [x] 2.4 No references remain to relationCandidates or ListRelationCandidates in app, routes, tests
 
 #### Manual
 
-- [ ] 2.5 Linking a scan to a fact from the preview still works
+- [x] 2.5 Linking a scan to a fact from the preview still works
 
 ### Phase 3: Record the S-28 drop in the foundation docs
 

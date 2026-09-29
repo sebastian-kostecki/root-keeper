@@ -309,32 +309,6 @@ test('deleting one spouse removes the marriage but keeps the other spouse and th
         ->assertInertia(fn ($page) => $page->has('personPreview.person.marriages', 0));
 });
 
-test('relationCandidates marks the existing spouse and leaves other people unblocked', function () {
-    $user = User::factory()->create();
-    $tree = $user->tree;
-
-    $person = Person::factory()->for($tree)->create();
-    $spouse = Person::factory()->for($tree)->create();
-    $other = Person::factory()->for($tree)->create();
-    attachMarriage($person, $spouse);
-
-    $initial = $this->actingAs($user)->get(personPreviewUrl($person), ['X-Inertia' => 'true']);
-    $version = $initial->headers->get('X-Inertia-Version');
-
-    $response = $this->actingAs($user)->get(personPreviewUrl($person), [
-        'X-Inertia' => 'true',
-        'X-Inertia-Version' => $version,
-        'X-Inertia-Partial-Data' => 'relationCandidates',
-        'X-Inertia-Partial-Component' => 'persons/index',
-    ]);
-
-    $response->assertOk();
-    $candidates = collect($response->json('props.relationCandidates'))->keyBy('id');
-
-    expect($candidates[$spouse->id]['as_spouse_blocked_reason'])->toBe('Już jest małżonkiem');
-    expect($candidates[$other->id]['as_spouse_blocked_reason'])->toBeNull();
-});
-
 test('guests are redirected to the login page from the spouse attach route', function () {
     $person = Person::factory()->create();
 
