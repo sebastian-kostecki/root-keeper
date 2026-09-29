@@ -13,6 +13,16 @@ export type PersonEvent = {
     type: 'birth' | 'death' | 'marriage';
     date: string | null;
     place: string | null;
+    date_parts: {
+        year: number | null;
+        month: number | null;
+        day: number | null;
+        is_approximate: boolean;
+    };
+};
+
+export type IndexPersonEvent = PersonEvent & {
+    is_confirmed: boolean;
 };
 
 export type LinkedScan = {
@@ -28,12 +38,6 @@ export type SourcedPersonEvent = PersonEvent & {
 };
 
 export type Marriage = SourcedPersonEvent & {
-    date_parts: {
-        year: number | null;
-        month: number | null;
-        day: number | null;
-        is_approximate: boolean;
-    };
     spouse: {
         id: number;
         display_name: string;
@@ -51,8 +55,8 @@ export type Person = {
     gender: Gender | null;
     residence: string | null;
     religion: Religion | null;
-    birth: PersonEvent | null;
-    death: PersonEvent | null;
+    birth: IndexPersonEvent | null;
+    death: IndexPersonEvent | null;
 };
 
 export type Relative = {

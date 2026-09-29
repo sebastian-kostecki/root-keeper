@@ -26,32 +26,54 @@ class PersonController extends Controller
     public function index(Request $request): Response
     {
         $query = $this->normalizeSearchQuery($request->query('q'));
-
-        $people = $request->user()->tree->people()
-            ->with('events')
-            ->when($query !== '', function ($builder) use ($query): void {
-                $words = preg_split('/\s+/u', $query, -1, PREG_SPLIT_NO_EMPTY) ?: [];
-
-                foreach ($words as $word) {
-                    $pattern = '%'.str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $word).'%';
-
-                    $builder->where(fn ($builder) => $builder
-                        ->whereLike('first_name', $pattern)
-                        ->orWhereLike('last_name', $pattern));
-                }
-            })
-            ->orderByRaw('last_name is null')
-            ->orderBy('last_name')
-            ->orderBy('first_name')
-            ->orderBy('id')
-            ->get();
+        $view = $this->normalizeView($request->query('view'));
+        $sort = $view === 'lista' ? 'nazwisko' : $this->normalizeSort($request->query('sort'));
+        $tree = $request->user()->tree;
 
         return Inertia::render('persons/index', [
-            'persons' => PersonResource::collection($people)->resolve(),
-            'filters' => ['q' => $query],
+            'persons' => fn (): array => PersonResource::collection(
+                $tree->people()
+                    ->with(['events' => fn ($events) => $events->withExists('scans')])
+                    ->when($query !== '', function ($builder) use ($query): void {
+                        $words = preg_split('/\s+/u', $query, -1, PREG_SPLIT_NO_EMPTY) ?: [];
+
+                        foreach ($words as $word) {
+                            $pattern = '%'.str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $word).'%';
+
+                            $builder->where(fn ($builder) => $builder
+                                ->whereLike('first_name', $pattern)
+                                ->orWhereLike('last_name', $pattern));
+                        }
+                    })
+                    ->orderByRaw('last_name is null')
+                    ->orderBy('last_name')
+                    ->orderBy('first_name')
+                    ->orderBy('id')
+                    ->get()
+            )->resolve(),
+            'filters' => ['q' => $query, 'view' => $view, 'sort' => $sort],
+            'rootPersonId' => $tree->root_person_id,
             'genders' => Gender::options(),
             'religions' => Religion::options(),
         ]);
+    }
+
+    /**
+     * Normalize the raw `view` query parameter: `tabela` or the default `lista`.
+     */
+    private function normalizeView(mixed $view): string
+    {
+        return $view === 'tabela' ? 'tabela' : 'lista';
+    }
+
+    /**
+     * Normalize the raw `sort` query parameter: one of the six sort keys or the default `nazwisko`.
+     */
+    private function normalizeSort(mixed $sort): string
+    {
+        $allowed = ['nazwisko', '-nazwisko', 'urodzenie', '-urodzenie', 'zgon', '-zgon'];
+
+        return is_string($sort) && in_array($sort, $allowed, true) ? $sort : 'nazwisko';
     }
 
     /**

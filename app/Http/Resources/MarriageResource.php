@@ -42,12 +42,6 @@ class MarriageResource extends JsonResource
 
         return [
             ...EventResource::make($this->resource)->toArray($request),
-            'date_parts' => [
-                'year' => $this->date_year,
-                'month' => $this->date_month,
-                'day' => $this->date_day,
-                'is_approximate' => $this->date_is_approximate,
-            ],
             'spouse' => $spouse === null ? null : [
                 'id' => $spouse->id,
                 'display_name' => $spouse->displayName(),

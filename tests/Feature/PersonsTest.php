@@ -184,7 +184,7 @@ test('persons index caps the query at 100 characters without a trailing space', 
         ->where('filters.q', str_repeat('a', 99)));
 });
 
-test('persons index payload does not contain is_confirmed or scans on events', function () {
+test('persons index events carry is_confirmed from scan existence without exposing scans', function () {
     $user = User::factory()->create();
     $person = Person::factory()->for($user->tree)->create();
     $event = Event::factory()->for($user->tree)->birth()->create();
@@ -195,8 +195,111 @@ test('persons index payload does not contain is_confirmed or scans on events', f
     $response->assertOk();
     $response->assertInertia(fn ($page) => $page
         ->component('persons/index')
-        ->missing('persons.0.birth.is_confirmed')
+        ->where('persons.0.birth.is_confirmed', false)
         ->missing('persons.0.birth.scans'));
+
+    $event->scans()->attach(Scan::factory()->for($user->tree)->create());
+
+    $this->actingAs($user)->get(route('persons.index'))->assertInertia(fn ($page) => $page
+        ->where('persons.0.birth.is_confirmed', true)
+        ->missing('persons.0.birth.scans'));
+});
+
+test('persons index exposes date_parts on birth and death events', function () {
+    $user = User::factory()->create();
+    $person = Person::factory()->for($user->tree)->create();
+    $birth = Event::factory()->for($user->tree)->birth()->create();
+    $death = Event::factory()->for($user->tree)->death()->create();
+    $birth->participants()->attach($person, ['role' => ParticipantRole::Subject]);
+    $death->participants()->attach($person, ['role' => ParticipantRole::Subject]);
+
+    $this->actingAs($user)->get(route('persons.index'))->assertInertia(fn ($page) => $page
+        ->where('persons.0.birth.date_parts', [
+            'year' => $birth->date_year,
+            'month' => $birth->date_month,
+            'day' => $birth->date_day,
+            'is_approximate' => (bool) $birth->date_is_approximate,
+        ])
+        ->has('persons.0.death.date_parts.year'));
+});
+
+test('persons index filters default to the list view sorted by surname', function () {
+    $user = User::factory()->create();
+
+    $this->actingAs($user)->get(route('persons.index'))->assertInertia(fn ($page) => $page
+        ->where('filters.view', 'lista')
+        ->where('filters.sort', 'nazwisko'));
+});
+
+test('persons index echoes the table view and every sort value', function (string $sort) {
+    $user = User::factory()->create();
+
+    $this->actingAs($user)->get(route('persons.index', ['view' => 'tabela', 'sort' => $sort]))
+        ->assertInertia(fn ($page) => $page
+            ->where('filters.view', 'tabela')
+            ->where('filters.sort', $sort));
+})->with(['nazwisko', '-nazwisko', 'urodzenie', '-urodzenie', 'zgon', '-zgon']);
+
+test('persons index falls back to defaults for unknown, array and blank view and sort', function (mixed $view, mixed $sort) {
+    $user = User::factory()->create();
+
+    $this->actingAs($user)->get(route('persons.index', ['view' => $view, 'sort' => $sort]))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->where('filters.view', 'lista')
+            ->where('filters.sort', 'nazwisko'));
+})->with([
+    'unknown' => ['kafelki', 'wiek'],
+    'array' => [['tabela'], [['zgon']]],
+    'blank' => ['', ''],
+]);
+
+test('persons index keeps sort at surname when the view is not the table', function (?string $view) {
+    $user = User::factory()->create();
+
+    $this->actingAs($user)->get(route('persons.index', array_filter(['view' => $view, 'sort' => '-zgon'])))
+        ->assertInertia(fn ($page) => $page
+            ->where('filters.view', 'lista')
+            ->where('filters.sort', 'nazwisko'));
+})->with([null, 'lista']);
+
+test('persons index falls back to surname for an invalid sort in the table view', function () {
+    $user = User::factory()->create();
+
+    $this->actingAs($user)->get(route('persons.index', ['view' => 'tabela', 'sort' => 'wiek']))
+        ->assertInertia(fn ($page) => $page
+            ->where('filters.view', 'tabela')
+            ->where('filters.sort', 'nazwisko'));
+});
+
+test('persons index sends the tree proband id or null', function () {
+    $user = User::factory()->create();
+    $person = Person::factory()->for($user->tree)->create();
+
+    $this->actingAs($user)->get(route('persons.index'))
+        ->assertInertia(fn ($page) => $page->where('rootPersonId', null));
+
+    $user->tree->update(['root_person_id' => $person->id]);
+
+    $this->actingAs($user)->get(route('persons.index'))
+        ->assertInertia(fn ($page) => $page->where('rootPersonId', $person->id));
+});
+
+test('persons index partial reload of filters skips the people payload', function () {
+    $user = User::factory()->create();
+    Person::factory()->for($user->tree)->create();
+    $url = route('persons.index', ['view' => 'tabela']);
+    $version = $this->actingAs($user)->get($url, ['X-Inertia' => 'true'])->headers->get('X-Inertia-Version');
+
+    $response = $this->actingAs($user)->get($url, [
+        'X-Inertia' => 'true',
+        'X-Inertia-Version' => $version,
+        'X-Inertia-Partial-Data' => 'filters',
+        'X-Inertia-Partial-Component' => 'persons/index',
+    ]);
+
+    $response->assertOk();
+    expect($response->json('props'))->toHaveKey('filters')->not->toHaveKey('persons');
 });
 
 test('person show exposes birth is_confirmed false with no scans and true with one, listed in link order', function () {
@@ -902,4 +1005,14 @@ test('the preview carries relative and spouse gender and the upload date of link
             ->where('personPreview.person.parents.0.gender', 'female')
             ->where('personPreview.person.marriages.0.spouse.gender', 'male')
             ->where('personPreview.person.birth.scans.0.uploaded_at', $scan->created_at->toIso8601String()));
+});
+
+test('destroy from the table view keeps the search, view and sort and drops the person parameter', function () {
+    $user = User::factory()->create();
+    $person = Person::factory()->for($user->tree)->create(['last_name' => 'Kowalski']);
+    $parameters = ['q' => 'Kow', 'view' => 'tabela', 'sort' => '-urodzenie'];
+
+    $this->actingAs($user)->from(personPreviewUrl($person, 'persons.index', $parameters))
+        ->delete(route('persons.destroy', $person))
+        ->assertRedirect(route('persons.index', $parameters));
 });

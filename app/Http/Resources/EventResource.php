@@ -22,6 +22,7 @@ class EventResource extends JsonResource
      *     type: string,
      *     date: string|null,
      *     place: string|null,
+     *     date_parts: array{year: int|null, month: int|null, day: int|null, is_approximate: bool},
      *     is_confirmed?: bool,
      *     scans?: list<array{id: int, original_name: string, has_thumbnail: bool, uploaded_at: string|null}>,
      * }
@@ -33,7 +34,18 @@ class EventResource extends JsonResource
             'type' => $this->type->value,
             'date' => $this->date->format(),
             'place' => $this->place,
-            'is_confirmed' => $this->whenLoaded('scans', fn (): bool => $this->scans->isNotEmpty()),
+            'date_parts' => [
+                'year' => $this->date_year,
+                'month' => $this->date_month,
+                'day' => $this->date_day,
+                'is_approximate' => $this->date_is_approximate,
+            ],
+            'is_confirmed' => $this->when(
+                $this->relationLoaded('scans') || array_key_exists('scans_exists', $this->getAttributes()),
+                fn (): bool => $this->relationLoaded('scans')
+                    ? $this->scans->isNotEmpty()
+                    : (bool) $this->getAttribute('scans_exists'),
+            ),
             'scans' => $this->whenLoaded('scans', fn (): array => $this->scans->map(fn (Scan $scan): array => [
                 'id' => $scan->id,
                 'original_name' => $scan->original_name,
