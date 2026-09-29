@@ -557,9 +557,9 @@ The file-move migration does one filesystem rename per file on the same disk, wh
 
 #### Automated
 
-- [x] 3.1 Demo seeder runs
-- [x] 3.2 Screenshots produced
-- [x] 3.3 Full suite green
+- [x] 3.1 Demo seeder runs — 38a3426
+- [x] 3.2 Screenshots produced — 38a3426
+- [x] 3.3 Full suite green — 38a3426
 
 #### Manual
 
