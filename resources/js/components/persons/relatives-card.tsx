@@ -1,45 +1,28 @@
 import { PersonPreviewLink } from '@/components/persons/person-preview-link';
-import { RelativePickerDialog } from '@/components/persons/relative-picker-dialog';
 import { RemoveRelationDialog } from '@/components/persons/remove-relation-dialog';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import type { PersonPreview, Relative, RelationCandidate } from '@/types';
+import type { PersonPreview, Relative } from '@/types';
 
 type Props = {
     kind: 'parent' | 'child';
     person: PersonPreview;
     relatives: Relative[];
-    candidates: RelationCandidate[] | undefined;
 };
 
-export function RelativesCard({ kind, person, relatives, candidates }: Props) {
+export function RelativesCard({ kind, person, relatives }: Props) {
     const title = kind === 'parent' ? 'Rodzice' : 'Dzieci';
-    const addLabel = kind === 'parent' ? 'Dodaj rodzica' : 'Dodaj dziecko';
-    const canAddMore = kind !== 'parent' || relatives.length < 2;
 
     return (
         <Card>
-            <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-2">
+            <CardHeader>
                 <CardTitle>{title}</CardTitle>
-                {canAddMore && (
-                    <RelativePickerDialog
-                        kind={kind}
-                        person={person}
-                        candidates={candidates}
-                        trigger={
-                            <Button type="button" variant="outline" size="sm">
-                                {addLabel}
-                            </Button>
-                        }
-                    />
-                )}
             </CardHeader>
             <CardContent>
                 {relatives.length === 0 ? (
                     <p className="text-muted-foreground text-sm">
                         {kind === 'parent'
-                            ? 'Brak znanych rodziców.'
-                            : 'Brak znanych dzieci.'}
+                            ? 'Brak znanych rodziców. Dodasz ich na drzewie.'
+                            : 'Brak znanych dzieci. Dodasz je na drzewie.'}
                     </p>
                 ) : (
                     <div className="space-y-2">

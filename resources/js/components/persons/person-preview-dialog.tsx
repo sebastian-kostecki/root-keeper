@@ -14,8 +14,7 @@ import { Dialog } from '@/components/ui/dialog';
  * Modal hosted by the layout; open whenever the page carries a `personPreview`.
  */
 export function PersonPreviewDialog() {
-    const { personPreview, availableScans, relationCandidates } =
-        usePage().props;
+    const { personPreview, availableScans } = usePage().props;
     const { stack, back, close } = usePersonPreview();
 
     if (personPreview === null) {
@@ -64,7 +63,6 @@ export function PersonPreviewDialog() {
                     <PersonPreview
                         preview={personPreview}
                         availableScans={availableScans}
-                        relationCandidates={relationCandidates}
                     />
                 </FormDialogBody>
             </FormDialogContent>

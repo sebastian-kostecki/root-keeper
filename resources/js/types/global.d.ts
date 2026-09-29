@@ -1,5 +1,5 @@
 import type { Auth } from '@/types/auth';
-import type { PersonPreviewPayload, RelationCandidate } from '@/types/person';
+import type { PersonPreviewPayload } from '@/types/person';
 import type { Scan } from '@/types/scan';
 
 declare module 'react' {
@@ -16,7 +16,6 @@ declare module '@inertiajs/core' {
             sidebarOpen: boolean;
             personPreview: PersonPreviewPayload | null;
             availableScans?: Scan[];
-            relationCandidates?: RelationCandidate[];
             [key: string]: unknown;
         };
     }

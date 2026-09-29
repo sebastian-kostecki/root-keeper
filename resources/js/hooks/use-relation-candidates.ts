@@ -1,6 +1,5 @@
 import { router } from '@inertiajs/react';
 import { useState } from 'react';
-import type { RelationCandidate } from '@/types';
 
 export type UseOptionalListReturn<T> = {
     list: T[] | undefined;
@@ -8,9 +7,6 @@ export type UseOptionalListReturn<T> = {
     loaded: boolean;
     load: () => void;
 };
-
-export type UseRelationCandidatesReturn =
-    UseOptionalListReturn<RelationCandidate>;
 
 /**
  * Loads an optional list prop on demand (when a picker opens) and keeps the
@@ -42,13 +38,4 @@ export function useOptionalList<T>(
     };
 
     return { list, loading, loaded, load };
-}
-
-/**
- * Loads the optional `relationCandidates` prop on demand (when a picker opens).
- */
-export function useRelationCandidates(
-    candidates: RelationCandidate[] | undefined,
-): UseRelationCandidatesReturn {
-    return useOptionalList('relationCandidates', candidates);
 }
