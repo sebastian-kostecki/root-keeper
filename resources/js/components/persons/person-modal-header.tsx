@@ -2,6 +2,7 @@ import { Link, router } from '@inertiajs/react';
 import { EllipsisIcon } from 'lucide-react';
 import { useState } from 'react';
 import { DeletePersonDialog } from '@/components/persons/delete-person-dialog';
+import { PersonAvatar } from '@/components/persons/person-avatar';
 import {
     useGuardedClick,
     useSectionEditor,
@@ -16,11 +17,8 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { useInitials } from '@/hooks/use-initials';
 import { useSetRootPerson } from '@/hooks/use-set-root-person';
-import { genderCard } from '@/lib/gender-styles';
 import { formatLifespan } from '@/lib/lifespan';
-import { cn } from '@/lib/utils';
 import { show as treeShow } from '@/routes/tree';
 import type { PersonPreview } from '@/types';
 
@@ -33,7 +31,6 @@ type Props = {
 
 /** Identity header of the person modal: avatar, name, lifespan, chips and actions. */
 export function PersonModalHeader({ person, isRootPerson, leading }: Props) {
-    const getInitials = useInitials();
     const { setRootPerson, processing } = useSetRootPerson(person.id);
     const [isDeleteOpen, setIsDeleteOpen] = useState(false);
     const { requestExit } = useSectionEditor();
@@ -47,15 +44,10 @@ export function PersonModalHeader({ person, isRootPerson, leading }: Props) {
             {leading}
 
             <div className="flex items-start gap-4">
-                <div
-                    aria-hidden="true"
-                    className={cn(
-                        'flex size-14 shrink-0 items-center justify-center rounded-full border text-lg font-semibold',
-                        genderCard[person.gender?.value ?? 'unknown'],
-                    )}
-                >
-                    {getInitials(person.display_name)}
-                </div>
+                <PersonAvatar
+                    name={person.display_name}
+                    gender={person.gender?.value ?? null}
+                />
 
                 <div className="min-w-0 flex-1 space-y-1">
                     <DialogTitle className="text-xl leading-tight [overflow-wrap:anywhere]">

@@ -493,27 +493,27 @@ None. No schema change. `date_parts` and `is_confirmed` are additive for existin
 
 #### Automated
 
-- [x] 1.1 Persons feature tests pass: `vendor/bin/sail artisan test --compact tests/Feature/PersonsTest.php`
-- [x] 1.2 Marriage and preview tests still pass: `vendor/bin/sail artisan test --compact tests/Feature/MarriagesTest.php tests/Feature/ParentChildRelationsTest.php tests/Feature/EventScansTest.php`
-- [x] 1.3 Static analysis passes: `vendor/bin/sail bin phpstan analyse`
-- [x] 1.4 PHP formatting applied: `vendor/bin/sail bin pint --dirty --format agent`
-- [x] 1.5 Types pass: `vendor/bin/sail npm run types:check`
+- [x] 1.1 Persons feature tests pass: `vendor/bin/sail artisan test --compact tests/Feature/PersonsTest.php` — 69cbefa
+- [x] 1.2 Marriage and preview tests still pass: `vendor/bin/sail artisan test --compact tests/Feature/MarriagesTest.php tests/Feature/ParentChildRelationsTest.php tests/Feature/EventScansTest.php` — 69cbefa
+- [x] 1.3 Static analysis passes: `vendor/bin/sail bin phpstan analyse` — 69cbefa
+- [x] 1.4 PHP formatting applied: `vendor/bin/sail bin pint --dirty --format agent` — 69cbefa
+- [x] 1.5 Types pass: `vendor/bin/sail npm run types:check` — 69cbefa
 
 #### Manual
 
-- [x] 1.6 `/persons?view=foo&sort=bar` renders the list with no error, and the Inertia page props show `filters.view = 'lista'`, `filters.sort = 'nazwisko'`
+- [x] 1.6 `/persons?view=foo&sort=bar` renders the list with no error, and the Inertia page props show `filters.view = 'lista'`, `filters.sort = 'nazwisko'` — 69cbefa
 
 ### Phase 2: Shared pieces — table, person avatar, list helpers
 
 #### Automated
 
-- [ ] 2.1 JS unit tests pass: `vendor/bin/sail npm run test:js`
-- [ ] 2.2 Types pass: `vendor/bin/sail npm run types:check`
-- [ ] 2.3 Format + lint pass: `vendor/bin/sail npm run check`
+- [x] 2.1 JS unit tests pass: `vendor/bin/sail npm run test:js`
+- [x] 2.2 Types pass: `vendor/bin/sail npm run types:check`
+- [x] 2.3 Format + lint pass: `vendor/bin/sail npm run check`
 
 #### Manual
 
-- [ ] 2.4 The person modal header avatar looks unchanged in light and dark mode (open any person from `/tree`)
+- [x] 2.4 The person modal header avatar looks unchanged in light and dark mode (open any person from `/tree`)
 
 ### Phase 3: The view — toolbar, Lista, Tabela, states
 
