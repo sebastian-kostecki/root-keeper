@@ -344,12 +344,12 @@ None. No schema or data changes.
 
 #### Automated
 
-- [x] 3.1 The tree-relation-removal stub folder is gone
-- [x] 3.2 No stale S-28 prerequisite in the roadmap
-- [x] 3.3 S-28 is removed and noted as dropped
-- [x] 3.4 No other S-28 mention in the roadmap
-- [x] 3.5 No stale tree-removal text in the PRD
+- [x] 3.1 The tree-relation-removal stub folder is gone — 6dbc823
+- [x] 3.2 No stale S-28 prerequisite in the roadmap — 6dbc823
+- [x] 3.3 S-28 is removed and noted as dropped — 6dbc823
+- [x] 3.4 No other S-28 mention in the roadmap — 6dbc823
+- [x] 3.5 No stale tree-removal text in the PRD — 6dbc823
 
 #### Manual
 
-- [x] 3.6 Roadmap S-28/S-29 and PRD FR-007/FR-008 match this plan
+- [x] 3.6 Roadmap S-28/S-29 and PRD FR-007/FR-008 match this plan — 6dbc823

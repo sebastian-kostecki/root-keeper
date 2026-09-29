@@ -1,7 +1,7 @@
 ---
 change_id: preview-relations-read-only
 title: Preview without relation adding; S-28 dropped
-status: implementing
+status: implemented
 created: 2026-09-29
 updated: 2026-09-29
 archived_at: null
