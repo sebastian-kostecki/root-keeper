@@ -63,6 +63,12 @@
     --color-gender-male: var(--gender-male);
     --color-gender-female: var(--gender-female);
     --color-gender-unknown: var(--gender-unknown);
+    --color-gender-male-surface: var(--gender-male-surface);
+    --color-gender-male-border: var(--gender-male-border);
+    --color-gender-female-surface: var(--gender-female-surface);
+    --color-gender-female-border: var(--gender-female-border);
+    --color-tree-line: var(--tree-line);
+    --color-tree-meta: var(--tree-meta);
 }
 
 :root {
@@ -84,7 +90,8 @@
     --destructive-foreground: oklch(0.577 0.245 27.325);
     --border: oklch(0.922 0 0);
     --input: oklch(0.922 0 0);
-    --ring: oklch(0.87 0 0);
+    /* Source: Tailwind v4 neutral-500 (same as --muted-foreground), ~4.7:1 on --background; WCAG 2.2 SC 1.4.11 non-text contrast target is 3:1. */
+    --ring: oklch(0.556 0 0);
     --chart-1: oklch(0.646 0.222 41.116);
     --chart-2: oklch(0.6 0.118 184.704);
     --chart-3: oklch(0.398 0.07 227.392);
@@ -104,6 +111,13 @@
     --gender-male: oklch(0.55 0.17 250);
     --gender-female: oklch(0.6 0.19 5);
     --gender-unknown: oklch(0.556 0 0);
+    /* Source: context/changes/tree-sheet-variant-c/tokens.md, design canvas https://claude.ai/artifact/NUAmTZj36Pyx1aMj19mt3F */
+    --gender-male-surface: oklch(0.965 0.02 250);
+    --gender-male-border: oklch(0.86 0.06 250);
+    --gender-female-surface: oklch(0.965 0.02 5);
+    --gender-female-border: oklch(0.87 0.06 5);
+    --tree-line: oklch(0.8 0 0);
+    --tree-meta: oklch(0.48 0 0);
 }
 
 .dark {
@@ -125,7 +139,8 @@
     --destructive-foreground: oklch(0.637 0.237 25.331);
     --border: oklch(0.269 0 0);
     --input: oklch(0.269 0 0);
-    --ring: oklch(0.439 0 0);
+    /* Source: shadcn neutral dark preset (ui.shadcn.com/docs/theming), ~4:1 on --background; WCAG 2.2 SC 1.4.11 non-text contrast target is 3:1. */
+    --ring: oklch(0.556 0 0);
     --chart-1: oklch(0.488 0.243 264.376);
     --chart-2: oklch(0.696 0.17 162.48);
     --chart-3: oklch(0.769 0.188 70.08);
@@ -142,6 +157,12 @@
     --gender-male: oklch(0.72 0.14 250);
     --gender-female: oklch(0.75 0.15 5);
     --gender-unknown: oklch(0.708 0 0);
+    --gender-male-surface: oklch(0.25 0.04 250);
+    --gender-male-border: oklch(0.4 0.08 250);
+    --gender-female-surface: oklch(0.25 0.04 5);
+    --gender-female-border: oklch(0.42 0.08 5);
+    --tree-line: oklch(0.42 0 0);
+    --tree-meta: oklch(0.75 0 0);
 }
 
 @layer base {

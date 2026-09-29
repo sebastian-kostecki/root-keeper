@@ -33,8 +33,8 @@ function matchesFilter(displayName: string, filter: string): boolean {
 }
 
 /**
- * The filterable list of other people in the tree used by the relative and
- * marriage pickers: load-on-open skeleton, an empty state pointing at
+ * The filterable list of other people in the tree used by the tree's
+ * person pickers: load-on-open skeleton, an empty state pointing at
  * "Dodaj osobę", a name filter, and disabled rows carrying a reason.
  */
 export function PersonCandidateList<T extends CandidateRow>({

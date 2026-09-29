@@ -9,19 +9,14 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { show as treeShow } from '@/routes/tree';
-import type { PersonPreviewPayload, RelationCandidate, Scan } from '@/types';
+import type { PersonPreviewPayload, Scan } from '@/types';
 
 type Props = {
     preview: PersonPreviewPayload;
     availableScans?: Scan[];
-    relationCandidates?: RelationCandidate[];
 };
 
-export function PersonPreview({
-    preview,
-    availableScans,
-    relationCandidates,
-}: Props) {
+export function PersonPreview({ preview, availableScans }: Props) {
     const { person, personForm, genders, religions, isRootPerson } = preview;
 
     return (
@@ -34,7 +29,7 @@ export function PersonPreview({
                 )}
 
                 <Button variant="outline" size="sm" asChild>
-                    <Link href={treeShow(person.id)}>Pokaż w drzewie</Link>
+                    <Link href={treeShow(person.id)}>Pokaż na drzewie</Link>
                 </Button>
 
                 <PersonFormDialog
@@ -103,14 +98,12 @@ export function PersonPreview({
                 kind="parent"
                 person={person}
                 relatives={person.parents}
-                candidates={relationCandidates}
             />
 
             <RelativesCard
                 kind="child"
                 person={person}
                 relatives={person.children}
-                candidates={relationCandidates}
             />
 
             {person.birth && (
@@ -121,11 +114,7 @@ export function PersonPreview({
                 />
             )}
 
-            <MarriagesSection
-                person={person}
-                availableScans={availableScans}
-                candidates={relationCandidates}
-            />
+            <MarriagesSection person={person} availableScans={availableScans} />
 
             {person.death && (
                 <EventCard

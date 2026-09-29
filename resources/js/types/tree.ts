@@ -35,10 +35,14 @@ export type AddChildTarget = {
     blocked_ids: number[];
 };
 
+export type AddSpouseTarget = {
+    excluded_ids: number[];
+};
+
 export type SheetUnion = {
     key: string;
     partner_id: number | null;
-    label: string;
+    partner_name: string | null;
     is_marriage: boolean;
     marriage_year: string | null;
     children_count: number;
@@ -54,4 +58,6 @@ export type FamilySheet = {
     grandparents: { focus: SheetSlot[]; partner: SheetSlot[] };
     children: SheetPerson[];
     add_child: AddChildTarget;
+    add_spouse: AddSpouseTarget;
+    unmarried_parents: { focus: boolean; partner: boolean };
 };

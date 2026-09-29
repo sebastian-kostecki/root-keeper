@@ -3,7 +3,6 @@
 namespace App\Http\Middleware;
 
 use App\Actions\Persons\BuildPersonPreview;
-use App\Actions\Relations\ListRelationCandidates;
 use App\Http\Resources\ScanResource;
 use App\Models\Person;
 use Illuminate\Http\Request;
@@ -56,11 +55,6 @@ class HandleInertiaRequests extends Middleware
             'availableScans' => Inertia::optional(fn (): array => $request->user() === null ? [] : ScanResource::collection(
                 $request->user()->tree->scans()->latest()->orderByDesc('id')->get()
             )->resolve()),
-            'relationCandidates' => Inertia::optional(function () use ($request): array {
-                $person = $this->previewPerson($request);
-
-                return $person === null ? [] : app(ListRelationCandidates::class)->handle($person);
-            }),
         ];
     }
 
@@ -68,7 +62,7 @@ class HandleInertiaRequests extends Middleware
      * Resolve the person named by the `person` query parameter from the user's own tree.
      *
      * Returns null without an authenticated user or a numeric parameter; a missing or foreign id is a 404.
-     * The resolved person is memoized on the request so several shared props do not repeat the lookup.
+     * The resolved person is memoized on the request.
      */
     private function previewPerson(Request $request): ?Person
     {

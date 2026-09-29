@@ -309,28 +309,162 @@ test('deleting one spouse removes the marriage but keeps the other spouse and th
         ->assertInertia(fn ($page) => $page->has('personPreview.person.marriages', 0));
 });
 
-test('relationCandidates marks the existing spouse and leaves other people unblocked', function () {
+test('guests are redirected to the login page from the spouse attach route', function () {
+    $person = Person::factory()->create();
+
+    $this->post(route('persons.spouses.attach', $person), [])->assertRedirect(route('login'));
+});
+
+test('attach marries the centre to an existing person without a date and shows the new union', function () {
     $user = User::factory()->create();
-    $tree = $user->tree;
+    $focus = Person::factory()->for($user->tree)->male()->create();
+    $spouse = Person::factory()->for($user->tree)->female()->create();
 
-    $person = Person::factory()->for($tree)->create();
-    $spouse = Person::factory()->for($tree)->create();
-    $other = Person::factory()->for($tree)->create();
-    attachMarriage($person, $spouse);
+    $response = $this->actingAs($user)
+        ->post(route('persons.spouses.attach', $focus), ['spouse_id' => $spouse->id]);
 
-    $initial = $this->actingAs($user)->get(personPreviewUrl($person), ['X-Inertia' => 'true']);
-    $version = $initial->headers->get('X-Inertia-Version');
+    $response->assertRedirect(route('tree.show', ['person' => $focus->id, 'spouse' => $spouse->id]));
+    $response->assertSessionHas('inertia.flash_data.toast', ['type' => 'success', 'message' => 'Dodano małżonka']);
 
-    $response = $this->actingAs($user)->get(personPreviewUrl($person), [
-        'X-Inertia' => 'true',
-        'X-Inertia-Version' => $version,
-        'X-Inertia-Partial-Data' => 'relationCandidates',
-        'X-Inertia-Partial-Component' => 'persons/index',
-    ]);
+    $marriage = Event::where('type', EventType::Marriage)->sole();
+    expect($marriage->date_year)->toBeNull();
+    expect($marriage->place)->toBeNull();
+    expect($marriage->participants()->pluck('people.id')->sort()->values()->all())
+        ->toBe(collect([$focus->id, $spouse->id])->sort()->values()->all());
+    expect($marriage->participants()->get()->every(fn (Person $participant): bool => $participant->pivot->role === ParticipantRole::Spouse))->toBeTrue();
+});
 
-    $response->assertOk();
-    $candidates = collect($response->json('props.relationCandidates'))->keyBy('id');
+test('attach adds a second marriage and the redirected sheet selects the new union', function () {
+    $user = User::factory()->create();
+    $focus = Person::factory()->for($user->tree)->male()->create();
+    $first = Person::factory()->for($user->tree)->female()->create();
+    $second = Person::factory()->for($user->tree)->female()->create();
+    attachMarriage($focus, $first, 1880);
 
-    expect($candidates[$spouse->id]['as_spouse_blocked_reason'])->toBe('Już jest małżonkiem');
-    expect($candidates[$other->id]['as_spouse_blocked_reason'])->toBeNull();
+    $this->actingAs($user)
+        ->post(route('persons.spouses.attach', $focus), ['spouse_id' => $second->id])
+        ->assertRedirect(route('tree.show', ['person' => $focus->id, 'spouse' => $second->id]));
+
+    expect($focus->marriages()->count())->toBe(2);
+
+    $this->actingAs($user)
+        ->get(route('tree.show', ['person' => $focus->id, 'spouse' => $second->id]))
+        ->assertInertia(fn ($page) => $page
+            ->where('sheet.selected_union', "person-{$second->id}")
+            ->where('sheet.partner.person.id', $second->id));
+});
+
+test('attach rejects a pair that already has a marriage', function () {
+    $user = User::factory()->create();
+    $focus = Person::factory()->for($user->tree)->male()->create();
+    $spouse = Person::factory()->for($user->tree)->female()->create();
+    attachMarriage($focus, $spouse, 1880);
+
+    $this->actingAs($user)
+        ->post(route('persons.spouses.attach', $focus), ['spouse_id' => $spouse->id])
+        ->assertSessionHasErrors(['spouse_id' => 'Ta para ma już małżeństwo.']);
+
+    $this->assertDatabaseCount('events', 1);
+});
+
+test('attach rejects marrying the person to themselves', function () {
+    $user = User::factory()->create();
+    $focus = Person::factory()->for($user->tree)->create();
+
+    $this->actingAs($user)
+        ->post(route('persons.spouses.attach', $focus), ['spouse_id' => $focus->id])
+        ->assertSessionHasErrors(['spouse_id' => 'Osoba nie może poślubić samej siebie.']);
+
+    $this->assertDatabaseCount('events', 0);
+});
+
+test('attach rejects a spouse from another users tree', function () {
+    $user = User::factory()->create();
+    $focus = Person::factory()->for($user->tree)->create();
+    $foreign = Person::factory()->for(User::factory()->create()->tree)->create();
+
+    $this->actingAs($user)
+        ->post(route('persons.spouses.attach', $focus), ['spouse_id' => $foreign->id])
+        ->assertSessionHasErrors('spouse_id');
+
+    $this->assertDatabaseCount('events', 0);
+});
+
+test('attach returns not found for a centre person from another users tree', function () {
+    $user = User::factory()->create();
+    $foreignFocus = Person::factory()->for(User::factory()->create()->tree)->create();
+    $spouse = Person::factory()->for($user->tree)->create();
+
+    $this->actingAs($user)
+        ->post(route('persons.spouses.attach', $foreignFocus), ['spouse_id' => $spouse->id])
+        ->assertNotFound();
+
+    $this->assertDatabaseCount('events', 0);
+});
+
+test('guests are redirected to the login page from the spouse store route', function () {
+    $person = Person::factory()->create();
+
+    $this->post(route('persons.spouses.store', $person), [])->assertRedirect(route('login'));
+});
+
+test('store creates a new person married to the centre without a date and shows the new union', function () {
+    $user = User::factory()->create();
+    $focus = Person::factory()->for($user->tree)->male()->create();
+
+    $response = $this->actingAs($user)
+        ->post(route('persons.spouses.store', $focus), ['first_name' => 'Anna', 'last_name' => 'Nowak', 'gender' => 'female']);
+
+    $spouse = Person::where('first_name', 'Anna')->sole();
+
+    $response->assertRedirect(route('tree.show', ['person' => $focus->id, 'spouse' => $spouse->id]));
+    $response->assertSessionHas('inertia.flash_data.toast', ['type' => 'success', 'message' => 'Dodano małżonka']);
+
+    $this->assertDatabaseCount('people', 2);
+    $marriage = Event::where('type', EventType::Marriage)->sole();
+    expect($marriage->date_year)->toBeNull();
+    expect($marriage->place)->toBeNull();
+    expect($marriage->participants()->pluck('people.id')->sort()->values()->all())
+        ->toBe(collect([$focus->id, $spouse->id])->sort()->values()->all());
+});
+
+test('store without a first name creates no person and no marriage', function () {
+    $user = User::factory()->create();
+    $focus = Person::factory()->for($user->tree)->create();
+
+    $this->actingAs($user)
+        ->post(route('persons.spouses.store', $focus), ['first_name' => ''])
+        ->assertSessionHasErrors('first_name');
+
+    $this->assertDatabaseCount('people', 1);
+    expect(Event::where('type', EventType::Marriage)->count())->toBe(0);
+});
+
+test('store returns not found for a centre person from another users tree', function () {
+    $user = User::factory()->create();
+    $foreignFocus = Person::factory()->for(User::factory()->create()->tree)->create();
+
+    $this->actingAs($user)
+        ->post(route('persons.spouses.store', $foreignFocus), ['first_name' => 'Anna'])
+        ->assertNotFound();
+
+    $this->assertDatabaseCount('people', 1);
+    expect(Event::where('type', EventType::Marriage)->count())->toBe(0);
+});
+
+test('store without a date creates one marriage with no date and no place', function () {
+    $user = User::factory()->create();
+    $person = Person::factory()->for($user->tree)->create();
+    $spouse = Person::factory()->for($user->tree)->create();
+
+    $this->actingAs($user)
+        ->post(route('marriages.store'), ['person_id' => $person->id, 'spouse_id' => $spouse->id])
+        ->assertSessionHasNoErrors();
+
+    $marriage = Event::where('type', EventType::Marriage)->sole();
+    expect($marriage->date_year)->toBeNull();
+    expect($marriage->date_month)->toBeNull();
+    expect($marriage->date_day)->toBeNull();
+    expect($marriage->place)->toBeNull();
+    expect($marriage->participants()->count())->toBe(2);
 });

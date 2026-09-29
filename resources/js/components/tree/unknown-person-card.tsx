@@ -1,22 +1,31 @@
 import { Plus } from 'lucide-react';
 import type * as React from 'react';
+import {
+    cardSurface,
+    placeholderAction,
+    placeholderStatic,
+} from '@/components/tree/card-styles';
+import { cn } from '@/lib/utils';
 
 type Props = Omit<React.ComponentProps<'button'>, 'children'> & {
+    /** Visible text: the missing person's label, or the verb when `addLabel` is set. */
     label: string;
     /** When set, the card is a button (a dialog trigger) with this aria-label. */
     addLabel?: string;
 };
 
 /**
- * A dashed placeholder for a person the tree does not know. With `addLabel`
- * it is a button (a dialog trigger); without, a static label.
+ * A placeholder for a person the tree does not know. With `addLabel` it is a
+ * dashed button (a dialog trigger) showing a plus and the verb; without, a
+ * static muted block with the label.
  */
 export function UnknownPersonCard({ label, addLabel, ...props }: Props) {
-    const base =
-        'text-muted-foreground flex h-full min-h-16 items-center rounded-md border border-dashed p-2 text-sm';
-
     if (addLabel === undefined) {
-        return <div className={base}>{label}</div>;
+        return (
+            <div className={cn(cardSurface, placeholderStatic, 'text-sm')}>
+                {label}
+            </div>
+        );
     }
 
     return (
@@ -24,10 +33,14 @@ export function UnknownPersonCard({ label, addLabel, ...props }: Props) {
             type="button"
             aria-label={addLabel}
             {...props}
-            className={`${base} hover:bg-accent/50 hover:text-foreground focus-visible:ring-ring w-full cursor-pointer justify-between gap-2 text-left focus-visible:ring-[3px] focus-visible:outline-none`}
+            className={cn(
+                cardSurface,
+                placeholderAction,
+                'w-full cursor-pointer flex-row gap-1 text-sm',
+            )}
         >
-            <span>{label}</span>
             <Plus className="size-4 shrink-0" aria-hidden="true" />
+            <span>{label}</span>
         </button>
     );
 }

@@ -99,6 +99,40 @@ class TreeViewDemoSeeder extends Seeder
         $kuba = $this->person('Kuba', 'Mazur', null, 2016);
         $this->parents($kuba, [$sasza]);
 
+        // Unrelated married couple with 5 children -> children wrap into a second row.
+        $nowickiFather = $this->person('Robert', 'Nowicki', 'male', 1970);
+        $nowickiMother = $this->person('Agnieszka', 'Nowicka', 'female', 1972);
+        $this->marry($nowickiFather, $nowickiMother, ['year' => 1996]);
+
+        foreach ([
+            ['Filip', 'male', 1998],
+            ['Julia', 'female', 2000],
+            ['Antoni', 'male', 2003],
+            ['Maja', 'female', 2006],
+            ['Franciszek', 'male', 2010],
+        ] as [$firstName, $gender, $birthYear]) {
+            $this->parents(
+                $this->person($firstName, 'Nowicki', $gender, $birthYear),
+                [$nowickiFather, $nowickiMother],
+            );
+        }
+
+        // Married couple with 3 children -> add-child placeholder on its own row.
+        $koniecznyFather = $this->person('Marek', 'Konieczny', 'male', 1975);
+        $koniecznyMother = $this->person('Ilona', 'Konieczna', 'female', 1977);
+        $this->marry($koniecznyFather, $koniecznyMother, ['year' => 2000]);
+
+        foreach ([
+            ['Hubert', 'male', 2002],
+            ['Lena', 'female', 2005],
+            ['Igor', 'male', 2009],
+        ] as [$firstName, $gender, $birthYear]) {
+            $this->parents(
+                $this->person($firstName, 'Konieczny', $gender, $birthYear),
+                [$koniecznyFather, $koniecznyMother],
+            );
+        }
+
         (new SetTreeRootPerson)->handle($this->tree, $jan);
     }
 

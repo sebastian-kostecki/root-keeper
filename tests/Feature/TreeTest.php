@@ -179,12 +179,15 @@ test('unions are ordered marriage by date, then co-parent, then unknown, each wi
         'unknown',
     ]);
     expect(collect($sheet['unions'])->pluck('children_count')->all())->toBe([1, 1, 1, 1]);
-    expect($sheet['unions'][0]['label'])->toBe("{$earlierWife->displayName()} · ślub 1880");
+    expect($sheet['unions'][0])->not->toHaveKey('label');
+    expect($sheet['unions'][0]['partner_name'])->toBe($earlierWife->displayName());
     expect($sheet['unions'][0]['is_marriage'])->toBeTrue();
     expect($sheet['unions'][0]['marriage_year'])->toBe('1880');
-    expect($sheet['unions'][2]['label'])->toBe("{$coParent->displayName()} · bez ślubu");
+    expect($sheet['unions'][2]['partner_name'])->toBe($coParent->displayName());
+    expect($sheet['unions'][2]['marriage_year'])->toBeNull();
     expect($sheet['unions'][2]['is_marriage'])->toBeFalse();
-    expect($sheet['unions'][3]['label'])->toBe('Nieznany partner');
+    expect($sheet['unions'][3]['partner_name'])->toBeNull();
+    expect($sheet['unions'][3]['is_marriage'])->toBeFalse();
     expect($sheet['selected_union'])->toBe("person-{$earlierWife->id}");
 
     $expectations = [
@@ -231,7 +234,8 @@ test('repeat marriages to the same partner form one union labelled with the earl
     $sheet = sheetFor($this, $user, $focus);
 
     expect($sheet['unions'])->toHaveCount(1);
-    expect($sheet['unions'][0]['label'])->toBe("{$wife->displayName()} · ślub 1880");
+    expect($sheet['unions'][0]['partner_name'])->toBe($wife->displayName());
+    expect($sheet['unions'][0]['marriage_year'])->toBe('1880');
 });
 
 test('a focus without unions has an empty partner column', function () {
@@ -638,4 +642,69 @@ test('the default surname is the first mans, else the focus persons', function (
     attachMarriage($otherWoman, $twin, 1970);
 
     expect(sheetFor($this, $user, $otherWoman, (string) $twin->id)['add_child']['default_last_name'])->toBe('Wiśniewska');
+});
+
+test('the spouse exclusions cover the centre, spouses, ancestors and descendants only', function () {
+    $user = User::factory()->create();
+    $tree = $user->tree;
+    $focus = Person::factory()->for($tree)->male()->create();
+    $spouse = Person::factory()->for($tree)->female()->create();
+    $parent = Person::factory()->for($tree)->create();
+    $grandparent = Person::factory()->for($tree)->create();
+    $child = Person::factory()->for($tree)->create();
+    $grandchild = Person::factory()->for($tree)->create();
+    $sibling = Person::factory()->for($tree)->create();
+    $coParent = Person::factory()->for($tree)->female()->create();
+    $coParentChild = Person::factory()->for($tree)->create();
+    $stranger = Person::factory()->for($tree)->create();
+
+    attachMarriage($focus, $spouse, 1950);
+    linkParent($parent, $focus);
+    linkParent($grandparent, $parent);
+    linkParent($parent, $sibling);
+    linkParent($focus, $child);
+    linkParent($child, $grandchild);
+    linkParent($focus, $coParentChild);
+    linkParent($coParent, $coParentChild);
+
+    $excluded = sheetFor($this, $user, $focus)['add_spouse']['excluded_ids'];
+
+    expect($excluded)->toContain($focus->id, $spouse->id, $parent->id, $grandparent->id, $child->id, $grandchild->id);
+    expect($excluded)->not->toContain($sibling->id, $coParent->id, $stranger->id);
+    expect($excluded)->toBe(array_values(array_unique($excluded)));
+});
+
+test('two known unmarried parents of the centre can be married, a married or incomplete pair cannot', function () {
+    $user = User::factory()->create();
+    $tree = $user->tree;
+    $father = Person::factory()->for($tree)->male()->create();
+    $mother = Person::factory()->for($tree)->female()->create();
+    $focus = Person::factory()->for($tree)->create();
+    linkParent($father, $focus);
+    linkParent($mother, $focus);
+
+    expect(sheetFor($this, $user, $focus)['unmarried_parents'])->toBe(['focus' => true, 'partner' => false]);
+
+    attachMarriage($father, $mother, 1900);
+    expect(sheetFor($this, $user, $focus)['unmarried_parents']['focus'])->toBeFalse();
+
+    $lonelyChild = Person::factory()->for($tree)->create();
+    linkParent(Person::factory()->for($tree)->male()->create(), $lonelyChild);
+    expect(sheetFor($this, $user, $lonelyChild)['unmarried_parents']['focus'])->toBeFalse();
+});
+
+test('the partner block marks the partners unmarried parents only when there is a partner', function () {
+    $user = User::factory()->create();
+    $tree = $user->tree;
+    $focus = Person::factory()->for($tree)->male()->create();
+    $wife = Person::factory()->for($tree)->female()->create();
+    $wifeFather = Person::factory()->for($tree)->male()->create();
+    $wifeMother = Person::factory()->for($tree)->female()->create();
+    linkParent($wifeFather, $wife);
+    linkParent($wifeMother, $wife);
+
+    expect(sheetFor($this, $user, $focus)['unmarried_parents'])->toBe(['focus' => false, 'partner' => false]);
+
+    attachMarriage($focus, $wife, 1900);
+    expect(sheetFor($this, $user, $focus)['unmarried_parents'])->toBe(['focus' => false, 'partner' => true]);
 });

@@ -12,7 +12,6 @@ import type {
 } from '@/types';
 
 type Props = {
-    label: string;
     slot: ParentSlotTarget;
     candidates: PersonCandidate[] | undefined;
     genders: Gender[];
@@ -43,7 +42,6 @@ const ROLE_GENDER: Record<ParentSlotRole, 'male' | 'female' | null> = {
  * people the rules and the slot's sex exclude; the server stays the authority.
  */
 export function ParentSlotDialog({
-    label,
     slot,
     candidates,
     genders,
@@ -55,7 +53,7 @@ export function ParentSlotDialog({
         <PickOrCreatePersonDialog
             trigger={
                 <UnknownPersonCard
-                    label={label}
+                    label={ROLE_TITLE[slot.role]}
                     addLabel={`Dodaj ${ROLE_NOUN[slot.role]}: ${slot.display_name}`}
                 />
             }

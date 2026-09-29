@@ -37,7 +37,7 @@ Po przeniesieniu dodawania i edycji osoby do modala (S-20) zostały dwie luki:
 1. **Utrata kontekstu drzewa.** Oglądanie osoby to przejście z drzewa na osobną stronę i powrót — autor gubi miejsce, w którym pracował.
 2. **Niespójność.** Dodawanie i edycja są w modalu, a podgląd osoby nadal jest osobną stroną.
 
-Zmiana: podgląd osoby staje się modalem otwieranym z każdego miejsca (drzewo, lista, podgląd skanu), a strona `/persons/{id}` znika. Drzewo przejmuje całą edycję relacji — dodawanie i usuwanie rodzica, dziecka i małżonka, zarówno nowej, jak i istniejącej osoby. Podgląd nadal pokazuje relacje, ale tylko do odczytu.
+Zmiana: podgląd osoby staje się modalem otwieranym z każdego miejsca (drzewo, lista, podgląd skanu), a strona `/persons/{id}` znika. Drzewo przejmuje dodawanie relacji — rodzica, dziecka i małżonka, zarówno nowej, jak i istniejącej osoby. Podgląd nadal pokazuje relacje, bez akcji dodawania, i zachowuje ich usuwanie (poprawka 2026-09-29: usuwanie relacji nie przenosi się na drzewo).
 
 Dlaczego teraz: S-20 przeniósł formularz osoby do modala, więc podgląd na osobnej stronie jest ostatnim miejscem, które wyrywa autora z drzewa; a S-21 – S-23 (tworzenie osób z drzewa) nie są jeszcze rozpoczęte, więc drzewo można od razu zaprojektować jako jedyne miejsce edycji relacji. Obecne obejście: przejście z drzewa na stronę podglądu, edycja relacji tam i powrót na drzewo z ponownym wyśrodkowaniem.
 
@@ -51,10 +51,10 @@ Bez zmian: jedynym realnym użytkownikiem jest autor aplikacji, genealog prowadz
 
 Zmiana etapowa (bez okna, w którym jakiejś relacji nie da się edytować):
 1. **Etap 1 — podgląd w modalu:** kliknięcie osoby na drzewie, liście lub podglądzie skanu otwiera modal podglądu nad bieżącą stroną; kliknięcie krewnego podmienia treść modala; zamknięcie zostawia stronę pod spodem bez zmian. Edycja relacji tymczasowo zostaje w modalu podglądu.
-2. **Etap 2 — relacje na drzewie:** z drzewa dodaje się (istniejącą lub nową osobę) i usuwa rodzica, dziecko i małżonka. Dopiero wtedy relacje w podglądzie stają się tylko do odczytu, a strona `/persons/{id}` znika.
+2. **Etap 2 — relacje na drzewie:** z drzewa dodaje się (istniejącą lub nową osobę) rodzica, dziecko i małżonka. Dopiero wtedy w podglądzie znikają akcje dodawania relacji (usuwanie zostaje), a strona `/persons/{id}` znika. (Poprawka 2026-09-29: usuwanie relacji zostaje w podglądzie, nie przenosi się na drzewo.)
 
 ### Primary
-- Autor klika osobę na drzewie, ogląda jej dane, fakty z potwierdzeniami i relacje w modalu, przechodzi w modalu do rodzica, zamyka modal i jest dokładnie w tym samym miejscu drzewa; brakującego ojca podłącza z pustego slotu na drzewie (istniejąca osoba albo nowa), a zbędną relację usuwa z drzewa.
+- Autor klika osobę na drzewie, ogląda jej dane, fakty z potwierdzeniami i relacje w modalu, przechodzi w modalu do rodzica, zamyka modal i jest dokładnie w tym samym miejscu drzewa; brakującego ojca podłącza z pustego slotu na drzewie (istniejąca osoba albo nowa), a zbędną relację usuwa w podglądzie osoby.
 
 ### Secondary
 - Podłączenie istniejącego rodzica z drzewa wymaga mniej kroków niż dziś z podglądu osoby.
@@ -72,14 +72,14 @@ Zmiana etapowa (bez okna, w którym jakiejś relacji nie da się edytować):
 
 - **Given** drzewo wyśrodkowane na Janie, z pustym slotem „nieznany ojciec”, a Józef istnieje już w drzewie jako osoba bez relacji z Janem
 - **When** autor klika kartę Jana, ogląda w modalu jego fakty i relacje, zamyka modal, a następnie w slocie ojca wybiera istniejącego Józefa
-- **Then** drzewo, bez opuszczania go, pokazuje Józefa jako ojca Jana, a modal podglądu Jana pokazuje Józefa w sekcji „Rodzice” tylko do odczytu
+- **Then** drzewo, bez opuszczania go, pokazuje Józefa jako ojca Jana, a modal podglądu Jana pokazuje Józefa w sekcji „Rodzice” bez akcji dodawania
 
 Wcześniej: podgląd był osobną stroną, a ojca podłączało się z podglądu osoby, nie z drzewa.
 
 #### Acceptance Criteria
 - Zamknięcie modala zostawia drzewo w tym samym miejscu (ta sama osoba w centrum, ta sama para).
 - Podłączenie Józefa podlega regułom relacji (maks. dwoje rodziców, brak cyklu).
-- W modalu podglądu nie ma akcji dodawania ani usuwania rodzica.
+- W modalu podglądu nie ma akcji dodawania rodzica.
 
 ## Scope of Change
 
@@ -90,21 +90,21 @@ Wcześniej: podgląd był osobną stroną, a ojca podłączało się z podglądu
   > Socrates: Counter-argument considered: "po trzech przeskokach (ojciec → dziadek → wujek) nie wiadomo, jak wrócić." Resolution: changed — przycisk „Wstecz” w modalu.
 - [modified] FR-003: Po dodaniu osoby z listy użytkownik trafia na drzewo wyśrodkowane na nowej osobie. Priority: must-have. (Było: przekierowanie na stronę podglądu.)
   > Socrates: Counter-argument considered: "drzewo jest miejscem relacji — nowa osoba bez relacji wymaga podłączenia, nie oglądania." Resolution: changed — zamiast modala podglądu przejście na drzewo wyśrodkowane na nowej osobie (zmienia decyzję z fazy 1).
-- [modified] FR-008: Podgląd osoby pokazuje relacje (rodzice, dzieci, małżonkowie) tylko do odczytu, z odnośnikiem „Pokaż na drzewie” przy relacjach; data, miejsce i potwierdzenie małżeństwa nadal edytuje się w podglądzie. Priority: must-have. (Było: dodawanie i usuwanie rodziców, dzieci i małżeństw z podglądu osoby.)
+- [modified] FR-008: Podgląd osoby pokazuje relacje (rodzice, dzieci, małżonkowie) bez akcji dodawania i zachowuje ich usuwanie; data, miejsce i potwierdzenie małżeństwa nadal edytuje się w podglądzie; przycisk „Pokaż na drzewie” w nagłówku wyśrodkowuje drzewo na tej osobie. Priority: must-have. (Było: dodawanie i usuwanie rodziców, dzieci i małżeństw z podglądu osoby; poprawka 2026-09-29: usuwanie zostaje.)
   > Socrates: Counter-argument considered: "oglądając osobę z listy lub skanu i widząc błąd w relacji, trzeba jakoś trafić na drzewo." Resolution: changed — odnośnik „Pokaż na drzewie” przy relacjach (drzewo wyśrodkowane na tej osobie).
 - [removed] FR-009: Strona `/persons/{id}` znika; stare adresy mogą przestać działać. Priority: must-have. Uzasadnienie: podgląd żyje wyłącznie w modalu.
   > Socrates: Counter-argument considered: "bez adresu nie da się zapisać ani wysłać linku do konkretnej osoby." Resolution: kept; jedynym użytkownikiem jest autor, drzewo z centrum wystarcza jako adres.
 
 ### Relacje na drzewie
-Zakres: sloty rodziców każdej widocznej osoby (także dziadków), dziecko pokazanej pary, małżonek tylko przy osobie w centrum, połączenie pokazanych rodziców w małżeństwo, usuwanie relacji osoby w centrum; dla pozostałych — wyśrodkowanie drzewa na nich.
+Zakres: sloty rodziców każdej widocznej osoby (także dziadków), dziecko pokazanej pary, małżonek tylko przy osobie w centrum, połączenie pokazanych rodziców w małżeństwo; dla pozostałych — wyśrodkowanie drzewa na nich.
 - [modified] FR-004: Użytkownik z pustego slotu rodzica na drzewie podłącza istniejącą osobę albo tworzy nową; w slocie ojca/matki wybór pokazuje tylko osoby pasującej płci. Priority: must-have. (Było w v3:FR-001 / S-21: tylko nowa osoba.)
   > Socrates: Counter-argument considered: "do slotu »ojciec« można wybrać kobietę." Resolution: changed — w slocie ojca/matki wybór filtruje po płci (nowa osoba — płeć ustawiona i zablokowana jak w prd-v3).
 - [modified] FR-005: Użytkownik dodaje z drzewa dziecko pokazanej pary — istniejącą osobę albo nową. Priority: must-have. (Było w v3:FR-002 / S-22: tylko nowa osoba.)
   > Socrates: Counter-argument considered: "istniejące dziecko ma już jednego rodzica spoza pary — podłączenie dałoby mu troje rodziców." Resolution: kept; reguły relacji blokują, a komunikat mówi dlaczego.
 - [modified] FR-006: Użytkownik z pustego slotu małżonka przy osobie w centrum podłącza istniejącą osobę albo tworzy nowego małżonka; gdy pokazani na arkuszu ojciec i matka nie mają małżeństwa, drzewo oferuje „Połącz jako małżeństwo” między nimi. Priority: must-have. (Było w v3:FR-003 / S-23: tylko nowy małżonek.)
   > Socrates: Counter-argument considered: "rodzice na arkuszu często nie są w danych małżeństwem — trzeba wyśrodkować na ojcu, żeby ich połączyć." Resolution: changed — akcja „Połącz jako małżeństwo” między pokazanymi rodzicami; pusty slot małżonka nadal tylko przy centrum.
-- [modified] FR-007: Użytkownik usuwa z drzewa relację rodzic–dziecko i małżeństwo po potwierdzeniu; potwierdzenie usunięcia małżeństwa wymienia, co zginie (data, miejsce, potwierdzenia). Priority: must-have. (Było: usuwanie z podglądu osoby.)
-  > Socrates: Counter-argument considered: "małżeństwo to więcej niż relacja — usunięcie kasuje datę, miejsce i potwierdzenia." Resolution: changed — potwierdzenie wymienia tracone dane.
+- [modified] FR-007: Użytkownik usuwa relację rodzic–dziecko i małżeństwo w podglądzie osoby po potwierdzeniu; potwierdzenie zostaje takie jak dziś, bez listy traconych danych. Priority: must-have. (Poprawka 2026-09-29: usuwanie zostaje w podglądzie, nie przenosi się na drzewo; było: usuwanie z drzewa.)
+  > Socrates: Counter-argument considered: "małżeństwo to więcej niż relacja — usunięcie kasuje datę, miejsce i potwierdzenia." Resolution: changed — potwierdzenie wymienia tracone dane. [Wycofane poprawką 2026-09-29: usuwanie zostaje w podglądzie z dzisiejszym potwierdzeniem.]
 
 ### Zachowane
 - [preserved] FR-010: Fakty (urodzenie, małżeństwo, zgon) z potwierdzeniami działają w modalu; otwarcie skanu z faktu opuszcza modal i prowadzi na pełną stronę podglądu skanu. Priority: must-have.
@@ -117,7 +117,7 @@ Zakres: sloty rodziców każdej widocznej osoby (także dziadków), dziecko poka
   > Socrates: Counter-argument considered: "usunięcie osoby z centrum zostawia drzewo bez centrum." Resolution: changed — drzewo wraca do probanta; usunięcie samego probanta zachowuje dzisiejsze zachowanie.
 
 ### Wchłonięte z prd-v3
-- [modified] v3:FR-001 – v3:FR-003 (S-21 – S-23, nowy rodzic / dziecko / małżonek z drzewa) — rozszerzone o podłączanie istniejącej osoby, usuwanie relacji i połączenie rodziców (FR-004 – FR-007).
+- [modified] v3:FR-001 – v3:FR-003 (S-21 – S-23, nowy rodzic / dziecko / małżonek z drzewa) — rozszerzone o podłączanie istniejącej osoby i połączenie rodziców (FR-004 – FR-006; usuwanie relacji zostaje w podglądzie, FR-007).
 - [modified] Decyzja prd-v3 „pusty slot zawsze tworzy nową osobę; łączenie z istniejącą zostaje na podglądzie osoby” — zastąpiona: łączenie z istniejącą osobą odbywa się na drzewie (FR-004 – FR-006).
 - [modified] Non-goal prd-v3 „brak modali dla faktów i relacji” — relacje nie trafiają do modali, lecz na drzewo; fakty zostają w podglądzie (FR-008, FR-010).
 
@@ -125,9 +125,9 @@ Zakres: sloty rodziców każdej widocznej osoby (także dziadków), dziecko poka
 
 - **Dane istniejące:** bez zmian — osoby, relacje, małżeństwa i potwierdzenia pozostają takie same; zmienia się wyłącznie miejsce oglądania i edycji.
 - **Kompatybilność wsteczna:** strona `/persons/{id}` znika, stare adresy mogą przestać działać (jedynym użytkownikiem jest autor; bez przekierowań). 7 miejsc prowadzących dziś do podglądu (lista, nagłówek i karty drzewa, krewni i małżonek w podglądzie, podgląd skanu, przekierowanie po dodaniu osoby) dostaje nowy cel.
-- **Etapowanie:** etap 1 (podgląd w modalu, edycja relacji tymczasowo w modalu) przed etapem 2 (relacje na drzewie, podgląd tylko do odczytu) — w żadnym momencie nie może zabraknąć miejsca do dodania lub usunięcia którejś relacji.
+- **Etapowanie:** etap 1 (podgląd w modalu, dodawanie relacji tymczasowo w modalu) przed etapem 2 (dodawanie relacji na drzewie, podgląd bez dodawania) — dodawanie i usuwanie relacji mają każde dokładnie jedno miejsce (drzewo, podgląd) i w żadnym momencie nie może zabraknąć miejsca do dodania lub usunięcia którejś relacji.
 - **Kolejność względem źródeł (prd-v3):** modal podglądu (etap 1) idzie przed S-17/S-18, żeby rodzaj źródła przy fakcie i modale źródeł powstały od razu w modalu podglądu.
-- **S-21 – S-23 (prd-v3):** wchłonięte i rozszerzone (istniejąca albo nowa osoba, usuwanie, połączenie rodziców) — do przeplanowania.
+- **S-21 – S-23 (prd-v3):** wchłonięte i rozszerzone (istniejąca albo nowa osoba, połączenie rodziców) — do przeplanowania.
 - **Termin:** wspólny z prd-v3 — 2026-11-04, praca po godzinach; ta zmiana 2 tygodnie. Przy braku czasu spis miejscowości (S-12 – S-15) przesuwa się jako pierwszy.
 - **Zachowane:** fakty z potwierdzeniami i otwieranie podglądu skanu; reguły relacji; wyśrodkowanie drzewa i probant; usuwanie osoby z listą skutków i jawnym potwierdzeniem; prywatność drzewa (cudzy rekord = 404).
 - **Wymagania niefunkcjonalne:** brak nowych — istniejące (prywatność danych drzewa, czytelność powiększenia skanu) obejmują podgląd osoby i akcje relacji na drzewie.
@@ -150,4 +150,4 @@ No access control changes — current model preserved: otwarta rejestracja, jedn
 
 ## Open Questions
 
-1. **Przeplanowanie S-21 – S-23 w roadmapie** — ta zmiana wchłania i rozszerza tworzenie osób z drzewa (v3:FR-001 – v3:FR-003) o podłączanie istniejącej osoby, usuwanie relacji i połączenie rodziców; slice'y trzeba przepisać, a etap 1 (podgląd w modalu) ustawić przed S-17/S-18. Owner: `/10x-roadmap`. Block: no.
+1. **Przeplanowanie S-21 – S-23 w roadmapie** — ta zmiana wchłania i rozszerza tworzenie osób z drzewa (v3:FR-001 – v3:FR-003) o podłączanie istniejącej osoby i połączenie rodziców; slice'y trzeba przepisać, a etap 1 (podgląd w modalu) ustawić przed S-17/S-18. Owner: `/10x-roadmap`. Block: no.

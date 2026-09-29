@@ -61,15 +61,6 @@ export type Relative = {
     death_date: string | null;
 };
 
-export type RelationCandidate = {
-    id: number;
-    display_name: string;
-    birth_date: string | null;
-    as_parent_blocked_reason: string | null;
-    as_child_blocked_reason: string | null;
-    as_spouse_blocked_reason: string | null;
-};
-
 export type PersonPreview = Omit<Person, 'birth' | 'death'> & {
     birth: SourcedPersonEvent | null;
     death: SourcedPersonEvent | null;

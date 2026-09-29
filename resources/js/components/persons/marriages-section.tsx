@@ -4,39 +4,21 @@ import { PersonPreviewLink } from '@/components/persons/person-preview-link';
 import { MarriageFormDialog } from '@/components/persons/marriage-form-dialog';
 import { RemoveMarriageDialog } from '@/components/persons/remove-marriage-dialog';
 import { Button } from '@/components/ui/button';
-import type { PersonPreview, RelationCandidate, Scan } from '@/types';
+import type { PersonPreview, Scan } from '@/types';
 
 type Props = {
     person: PersonPreview;
     availableScans: Scan[] | undefined;
-    candidates: RelationCandidate[] | undefined;
 };
 
-export function MarriagesSection({
-    person,
-    availableScans,
-    candidates,
-}: Props) {
+export function MarriagesSection({ person, availableScans }: Props) {
     return (
         <div className="space-y-4">
-            <div className="flex items-center justify-between gap-4">
-                <Heading variant="small" title="Małżeństwa" />
-
-                <MarriageFormDialog
-                    mode="create"
-                    person={person}
-                    candidates={candidates}
-                    trigger={
-                        <Button type="button" variant="outline" size="sm">
-                            Dodaj małżeństwo
-                        </Button>
-                    }
-                />
-            </div>
+            <Heading variant="small" title="Małżeństwa" />
 
             {person.marriages.length === 0 ? (
                 <p className="text-muted-foreground text-sm">
-                    Brak znanych małżeństw.
+                    Brak znanych małżeństw. Dodasz je na drzewie.
                 </p>
             ) : (
                 <div className="space-y-4">
@@ -83,8 +65,6 @@ export function MarriagesSection({
                                 headerActions={
                                     <>
                                         <MarriageFormDialog
-                                            mode="edit"
-                                            person={person}
                                             marriage={marriage}
                                             trigger={
                                                 <Button

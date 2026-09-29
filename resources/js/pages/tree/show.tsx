@@ -3,7 +3,6 @@ import Heading from '@/components/heading';
 import { PersonPreviewLink } from '@/components/persons/person-preview-link';
 import { FamilySheet } from '@/components/tree/family-sheet';
 import { SetRootPersonButton } from '@/components/tree/set-root-person-button';
-import { UnionSwitch } from '@/components/tree/union-switch';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -51,7 +50,7 @@ export default function Show({
                 <Head title="Drzewo" />
 
                 <div className="space-y-6">
-                    <Heading title="Drzewo" />
+                    <Heading title="Drzewo" variant="page" />
 
                     <Card>
                         <CardContent className="flex flex-col items-start gap-4 text-sm">
@@ -79,8 +78,8 @@ export default function Show({
             <Head title={`Drzewo: ${sheet.focus.display_name}`} />
 
             <div className="space-y-6">
-                <div className="flex flex-wrap items-start justify-between gap-4">
-                    <Heading title={sheet.focus.display_name} />
+                <div className="flex flex-wrap items-center justify-between gap-4">
+                    <Heading title={sheet.focus.display_name} variant="page" />
 
                     <div className="flex flex-wrap items-center gap-2">
                         {isProband ? (
@@ -108,12 +107,6 @@ export default function Show({
                         </Button>
                     </div>
                 </div>
-
-                <UnionSwitch
-                    focusId={sheet.focus.id}
-                    unions={sheet.unions}
-                    selected={sheet.selected_union}
-                />
 
                 <FamilySheet
                     sheet={sheet}
