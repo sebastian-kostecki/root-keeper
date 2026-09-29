@@ -79,9 +79,9 @@ export function SourcePickerDialog({
         <Dialog open={open} onOpenChange={handleOpenChange}>
             <DialogTrigger asChild>{trigger}</DialogTrigger>
             <DialogContent>
-                <DialogTitle>Powiąż skan</DialogTitle>
+                <DialogTitle>Powiąż akt</DialogTitle>
                 <DialogDescription>
-                    Wybierz skan aktu, który potwierdza to wydarzenie.
+                    Wybierz akt metrykalny, który potwierdza to wydarzenie.
                 </DialogDescription>
 
                 {loading ? (
@@ -95,17 +95,17 @@ export function SourcePickerDialog({
                     </div>
                 ) : !loaded || sources === undefined ? (
                     <p className="text-muted-foreground text-sm">
-                        Nie udało się wczytać skanów. Zamknij okno i spróbuj
+                        Nie udało się wczytać źródeł. Zamknij okno i spróbuj
                         ponownie.
                     </p>
                 ) : sources.length === 0 ? (
                     <p className="text-muted-foreground text-sm">
-                        Nie masz jeszcze żadnych skanów.{' '}
+                        Nie masz jeszcze żadnych aktów metrykalnych.{' '}
                         <Link
                             href={SourceController.create()}
                             className="text-primary underline-offset-4 hover:underline"
                         >
-                            Dodaj skan
+                            Dodaj źródło
                         </Link>
                         .
                     </p>

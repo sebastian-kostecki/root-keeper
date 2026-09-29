@@ -37,43 +37,50 @@ export function DeleteSourceDialog({ source, confirms, trigger }: Props) {
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>{trigger}</DialogTrigger>
             <DialogContent>
-                <DialogTitle>Usuń skan</DialogTitle>
-                <DialogDescription>
-                    Czy na pewno chcesz usunąć skan „{source.original_name}
-                    ”? Skan i jego plik zostaną trwale usunięte. Tej operacji
-                    nie można cofnąć.
-                </DialogDescription>
-
                 {confirms.length === 0 ? (
-                    <p className="text-sm">
-                        Ten skan nie potwierdza żadnego wydarzenia.
-                    </p>
+                    <>
+                        <DialogTitle>Usunąć źródło?</DialogTitle>
+                        <DialogDescription>
+                            Źródło „{source.original_name}” i jego plik zostaną
+                            trwale usunięte.
+                        </DialogDescription>
+                    </>
                 ) : (
-                    <div className="space-y-1">
-                        <p className="text-muted-foreground text-sm">
-                            Te fakty stracą to źródło:
-                        </p>
-                        <ul className="space-y-1">
-                            {confirms.map((confirmation) => (
-                                <li
-                                    key={`${confirmation.event_id}-${confirmation.person.id}`}
-                                    className="text-sm"
-                                >
-                                    {confirmation.event_label} —{' '}
-                                    {confirmation.person.display_name} —{' '}
-                                    {confirmation.is_last_source ? (
-                                        <span className="text-destructive font-medium">
-                                            stanie się niepotwierdzone
-                                        </span>
-                                    ) : (
-                                        <span>
-                                            pozostanie potwierdzone innym skanem
-                                        </span>
-                                    )}
-                                </li>
-                            ))}
-                        </ul>
-                    </div>
+                    <>
+                        <DialogTitle>Usuń źródło</DialogTitle>
+                        <DialogDescription>
+                            Czy na pewno chcesz usunąć źródło „
+                            {source.original_name}”? Źródło i jego plik zostaną
+                            trwale usunięte. Tej operacji nie można cofnąć.
+                        </DialogDescription>
+
+                        <div className="space-y-1">
+                            <p className="text-muted-foreground text-sm">
+                                Te fakty stracą to źródło:
+                            </p>
+                            <ul className="space-y-1">
+                                {confirms.map((confirmation) => (
+                                    <li
+                                        key={`${confirmation.event_id}-${confirmation.person.id}`}
+                                        className="text-sm"
+                                    >
+                                        {confirmation.event_label} —{' '}
+                                        {confirmation.person.display_name} —{' '}
+                                        {confirmation.is_last_source ? (
+                                            <span className="text-destructive font-medium">
+                                                stanie się niepotwierdzone
+                                            </span>
+                                        ) : (
+                                            <span>
+                                                pozostanie potwierdzone innym
+                                                źródłem
+                                            </span>
+                                        )}
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                    </>
                 )}
 
                 <DialogFooter className="gap-2">

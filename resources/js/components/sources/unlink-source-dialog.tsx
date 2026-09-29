@@ -49,10 +49,10 @@ export function UnlinkSourceDialog({
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>{trigger}</DialogTrigger>
             <DialogContent>
-                <DialogTitle>Odepnij skan</DialogTitle>
+                <DialogTitle>Odepnij źródło</DialogTitle>
                 <DialogDescription>
-                    Czy na pewno chcesz odpiąć skan „{source.original_name}” od
-                    wydarzenia „{eventLabel}”?
+                    Czy na pewno chcesz odpiąć źródło „{source.original_name}”
+                    od wydarzenia „{eventLabel}”?
                     {isLastSource && (
                         <> Wydarzenie stanie się niepotwierdzone.</>
                     )}

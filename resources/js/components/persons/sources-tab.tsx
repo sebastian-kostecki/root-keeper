@@ -103,7 +103,7 @@ function SourceGroup({
                                                     ),
                                                 )
                                             }
-                                            aria-label={`Otwórz skan ${source.original_name}`}
+                                            aria-label={`Otwórz źródło ${source.original_name}`}
                                         >
                                             Otwórz
                                         </Link>
@@ -121,7 +121,7 @@ function SourceGroup({
                                                 variant="ghost"
                                                 size="sm"
                                                 className="text-muted-foreground hover:text-destructive"
-                                                aria-label={`Odepnij skan ${source.original_name}`}
+                                                aria-label={`Odepnij źródło ${source.original_name}`}
                                             >
                                                 Odepnij
                                             </Button>
@@ -134,7 +134,7 @@ function SourceGroup({
                 </ul>
             ) : (
                 <p className="text-muted-foreground text-sm">
-                    Brak skanu. Powiąż akt {eventGenitive}, żeby potwierdzić
+                    Brak aktu. Powiąż akt {eventGenitive}, żeby potwierdzić
                     zdarzenie.
                 </p>
             )}
@@ -145,7 +145,7 @@ function SourceGroup({
                 availableSources={availableSources}
                 trigger={
                     <Button type="button" variant="outline" size="sm">
-                        {hasSources ? 'Powiąż kolejny skan' : 'Powiąż skan'}
+                        {hasSources ? 'Powiąż kolejny akt' : 'Powiąż akt'}
                     </Button>
                 }
             />

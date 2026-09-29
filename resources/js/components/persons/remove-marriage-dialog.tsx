@@ -69,11 +69,11 @@ export function RemoveMarriageDialog({
                             ; {sourceCount}{' '}
                             {pluralPhrase(
                                 sourceCount,
-                                'powiązanie ze skanami zostanie odpięte',
-                                'powiązania ze skanami zostaną odpięte',
-                                'powiązań ze skanami zostanie odpiętych',
+                                'powiązanie ze źródłami zostanie odpięte',
+                                'powiązania ze źródłami zostaną odpięte',
+                                'powiązań ze źródłami zostanie odpiętych',
                             )}{' '}
-                            — skany pozostaną
+                            — źródła pozostaną
                         </>
                     )}
                     . Tej operacji nie można cofnąć.

@@ -101,8 +101,13 @@ function FactView({ event, parts, availableSources }: FactViewProps) {
                 {sourceCount > 0 ? (
                     <p className="text-muted-foreground">
                         {sourceCount}{' '}
-                        {pluralPhrase(sourceCount, 'skan', 'skany', 'skanów')} ·{' '}
-                        {event.sources[0].original_name}
+                        {pluralPhrase(
+                            sourceCount,
+                            'źródło',
+                            'źródła',
+                            'źródeł',
+                        )}{' '}
+                        · {event.sources[0].original_name}
                     </p>
                 ) : (
                     <SourcePickerDialog
@@ -111,7 +116,7 @@ function FactView({ event, parts, availableSources }: FactViewProps) {
                         availableSources={availableSources}
                         trigger={
                             <Button type="button" variant="outline" size="sm">
-                                Powiąż skan
+                                Powiąż akt
                             </Button>
                         }
                     />

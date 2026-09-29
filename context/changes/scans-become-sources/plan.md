@@ -523,35 +523,35 @@ The file-move migration does one filesystem rename per file on the same disk, wh
 
 #### Automated
 
-- [x] 1.1 Migrations apply and roll back cleanly
-- [x] 1.2 Wayfinder regenerated with no /scans routes
-- [x] 1.3 Source, event-source, migration, marriage and person tests pass
-- [x] 1.4 No scan identifiers left in app code
-- [x] 1.5 PHP style
-- [x] 1.6 Static analysis
-- [x] 1.7 Types and lint
+- [x] 1.1 Migrations apply and roll back cleanly — 162a2a1
+- [x] 1.2 Wayfinder regenerated with no /scans routes — 162a2a1
+- [x] 1.3 Source, event-source, migration, marriage and person tests pass — 162a2a1
+- [x] 1.4 No scan identifiers left in app code — 162a2a1
+- [x] 1.5 PHP style — 162a2a1
+- [x] 1.6 Static analysis — 162a2a1
+- [x] 1.7 Types and lint — 162a2a1
 
 #### Manual
 
-- [x] 1.8 Real uploads made before migration show under /sources with thumbnails and scans/ is gone
-- [x] 1.9 Upload on /sources/create still works and opens its preview with zoom
+- [x] 1.8 Real uploads made before migration show under /sources with thumbnails and scans/ is gone — 162a2a1
+- [x] 1.9 Upload on /sources/create still works and opens its preview with zoom — 162a2a1
 
 ### Phase 2: The view — kind, akt-only picker and the short delete
 
 #### Automated
 
-- [ ] 2.1 Feature tests still pass
-- [ ] 2.2 Types, lint and format
-- [ ] 2.3 Production build
-- [ ] 2.4 No user-visible skan left outside intentional skan aktu
+- [x] 2.1 Feature tests still pass
+- [x] 2.2 Types, lint and format
+- [x] 2.3 Production build
+- [x] 2.4 No user-visible skan left outside intentional skan aktu
 
 #### Manual
 
-- [ ] 2.5 Upload without kind shows the error; gravestone upload shows its badge
-- [ ] 2.6 Deleting an unlinked source shows the short confirmation
-- [ ] 2.7 Deleting a linked source shows the impact list
-- [ ] 2.8 Picker lists only akts
-- [ ] 2.9 Light/dark, desktop/390 px, visible focus on the kind toggle
+- [x] 2.5 Upload without kind shows the error; gravestone upload shows its badge
+- [x] 2.6 Deleting an unlinked source shows the short confirmation
+- [x] 2.7 Deleting a linked source shows the impact list
+- [x] 2.8 Picker lists only akts
+- [x] 2.9 Light/dark, desktop/390 px, visible focus on the kind toggle
 
 ### Phase 3: Kitchen sink, screenshot gate and deploy
 

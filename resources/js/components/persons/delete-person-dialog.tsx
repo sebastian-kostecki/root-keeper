@@ -57,7 +57,7 @@ export function DeletePersonDialog({
 
     if (linkCount > 0) {
         extras.push(
-            `${linkCount} ${pluralPhrase(linkCount, 'powiązanie', 'powiązania', 'powiązań')} ze skanami aktów`,
+            `${linkCount} ${pluralPhrase(linkCount, 'powiązanie', 'powiązania', 'powiązań')} ze źródłami`,
         );
     }
 
@@ -92,7 +92,7 @@ export function DeletePersonDialog({
                     ”? Usunięte zostaną jej dane i urodzenie
                     {person.death && <> oraz zgon</>}
                     {extras.length > 0 && <>, a także {extras.join(' i ')}</>}.
-                    Skany pozostaną w bibliotece skanów.
+                    Źródła pozostaną w bibliotece źródeł.
                     {relationCount > 0 && (
                         <> Powiązane osoby pozostaną w drzewie.</>
                     )}{' '}

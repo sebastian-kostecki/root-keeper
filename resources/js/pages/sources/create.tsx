@@ -2,35 +2,39 @@ import { Form, Head, Link } from '@inertiajs/react';
 import SourceController from '@/actions/App/Http/Controllers/SourceController';
 import Heading from '@/components/heading';
 import InputError from '@/components/input-error';
+import { SourceKindField } from '@/components/sources/source-kind-field';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { index as sourcesIndex } from '@/routes/sources';
-import type { BreadcrumbItem } from '@/types';
+import type { BreadcrumbItem, SourceKind } from '@/types';
 
 const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Skany', href: sourcesIndex() },
-    { title: 'Dodaj skan', href: SourceController.create() },
+    { title: 'Źródła', href: sourcesIndex() },
+    { title: 'Dodaj źródło', href: SourceController.create() },
 ];
 
-export default function Create() {
+type Props = {
+    kinds: { value: SourceKind; label: string }[];
+};
+
+export default function Create({ kinds }: Props) {
     return (
         <>
-            <Head title="Dodaj skan" />
+            <Head title="Dodaj źródło" />
 
             <div className="max-w-2xl space-y-6">
                 <Heading
-                    title="Dodaj skan"
-                    description="Prześlij zdjęcie lub skan dokumentu"
+                    title="Dodaj źródło"
+                    description="Prześlij skan aktu, zdjęcie nagrobka lub inny dokument"
                 />
 
                 <Form {...SourceController.store.form()} className="space-y-6">
                     {({ processing, errors, progress }) => (
                         <>
-                            <input
-                                type="hidden"
-                                name="kind"
-                                value="metrical_record"
+                            <SourceKindField
+                                kinds={kinds}
+                                error={errors.kind}
                             />
 
                             <div className="grid gap-2">

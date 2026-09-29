@@ -2,6 +2,7 @@ import { Head, Link } from '@inertiajs/react';
 import SourceController from '@/actions/App/Http/Controllers/SourceController';
 import Heading from '@/components/heading';
 import { SourceThumbnail } from '@/components/sources/source-thumbnail';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { index as sourcesIndex } from '@/routes/sources';
@@ -13,7 +14,7 @@ type Props = {
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
-        title: 'Skany',
+        title: 'Źródła',
         href: sourcesIndex(),
     },
 ];
@@ -21,29 +22,31 @@ const breadcrumbs: BreadcrumbItem[] = [
 export default function Index({ sources }: Props) {
     return (
         <>
-            <Head title="Skany" />
+            <Head title="Źródła" />
 
             <div className="space-y-6">
                 <div className="flex items-center justify-between">
                     <Heading
-                        title="Skany"
-                        description="Zeskanowane akty i dokumenty Twojego drzewa"
+                        title="Źródła"
+                        description="Akty, zdjęcia nagrobków i inne dokumenty Twojego drzewa"
                     />
 
                     <Button asChild>
-                        <Link href={SourceController.create()}>Dodaj skan</Link>
+                        <Link href={SourceController.create()}>
+                            Dodaj źródło
+                        </Link>
                     </Button>
                 </div>
 
                 {sources.length === 0 ? (
                     <Card>
                         <CardContent className="text-muted-foreground text-sm">
-                            Nie masz jeszcze żadnych skanów.{' '}
+                            Nie masz jeszcze żadnych źródeł.{' '}
                             <Link
                                 href={SourceController.create()}
                                 className="text-primary underline-offset-4 hover:underline"
                             >
-                                Dodaj pierwszy skan
+                                Dodaj pierwsze źródło
                             </Link>
                             .
                         </CardContent>
@@ -64,6 +67,9 @@ export default function Index({ sources }: Props) {
                                         >
                                             {source.original_name}
                                         </p>
+                                        <Badge variant="secondary">
+                                            {source.kind_label}
+                                        </Badge>
                                         <p className="text-muted-foreground text-xs">
                                             {new Date(
                                                 source.uploaded_at,

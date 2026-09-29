@@ -4,6 +4,7 @@ import Heading from '@/components/heading';
 import { PersonPreviewLink } from '@/components/persons/person-preview-link';
 import { DeleteSourceDialog } from '@/components/sources/delete-source-dialog';
 import { SourceViewer } from '@/components/sources/source-viewer';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { index as sourcesIndex } from '@/routes/sources';
@@ -17,7 +18,7 @@ type Props = {
 export default function Show({ source, confirms }: Props) {
     setLayoutProps({
         breadcrumbs: [
-            { title: 'Skany', href: sourcesIndex() },
+            { title: 'Źródła', href: sourcesIndex() },
             {
                 title: source.original_name,
                 href: SourceController.show(source.id),
@@ -37,10 +38,13 @@ export default function Show({ source, confirms }: Props) {
 
             <div className="space-y-6">
                 <div className="flex items-center justify-between gap-4">
-                    <Heading
-                        title={source.original_name}
-                        description={`${new Date(source.uploaded_at).toLocaleDateString('pl-PL')} · ${sizeInMb} MB · ${dimensions}`}
-                    />
+                    <div className="flex flex-wrap items-center gap-3">
+                        <Heading
+                            title={source.original_name}
+                            description={`${new Date(source.uploaded_at).toLocaleDateString('pl-PL')} · ${sizeInMb} MB · ${dimensions}`}
+                        />
+                        <Badge variant="secondary">{source.kind_label}</Badge>
+                    </div>
 
                     <DeleteSourceDialog
                         source={source}
@@ -69,7 +73,7 @@ export default function Show({ source, confirms }: Props) {
                         </p>
                         {confirms.length === 0 ? (
                             <p className="text-sm">
-                                Ten skan nie potwierdza jeszcze żadnego
+                                To źródło nie potwierdza jeszcze żadnego
                                 wydarzenia.
                             </p>
                         ) : (
