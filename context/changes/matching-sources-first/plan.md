@@ -331,38 +331,38 @@ The split is one pass over a list that is already in memory; the request and the
 
 #### Automated
 
-- [x] 1.1 JS unit tests pass
-- [x] 1.2 Types, lint and format
-- [x] 1.3 PHP style
-- [x] 1.4 Static analysis
-- [x] 1.5 Picker, linking and source tests pass unchanged
-- [x] 1.6 Demo seeder runs
-- [x] 1.7 Baseline screenshots produced
+- [x] 1.1 JS unit tests pass — 65a16e6
+- [x] 1.2 Types, lint and format — 65a16e6
+- [x] 1.3 PHP style — 65a16e6
+- [x] 1.4 Static analysis — 65a16e6
+- [x] 1.5 Picker, linking and source tests pass unchanged — 65a16e6
+- [x] 1.6 Demo seeder runs — 65a16e6
+- [x] 1.7 Baseline screenshots produced — 65a16e6
 
 #### Manual
 
-- [x] 1.8 The `before/` PNGs were opened
-- [x] 1.9 The baseline shows the defect
+- [x] 1.8 The `before/` PNGs were opened — 65a16e6
+- [x] 1.9 The baseline shows the defect — 65a16e6
 
 ### Phase 2: The view — sections and the tile
 
 #### Automated
 
-- [ ] 2.1 JS unit tests pass
-- [ ] 2.2 Types, lint and format
-- [ ] 2.3 Production build
-- [ ] 2.4 Picker, linking and source tests still pass
+- [x] 2.1 JS unit tests pass
+- [x] 2.2 Types, lint and format
+- [x] 2.3 Production build
+- [x] 2.4 Picker, linking and source tests still pass
 
 #### Manual
 
-- [ ] 2.5 Leon's death picker has both sections
-- [ ] 2.6 Jan's birth picker keeps a linked match in place
-- [ ] 2.7 Jan and Anna's marriage picker shows no headings and the same order as before
-- [ ] 2.8 A source from „Pozostałe źródła" still links
-- [ ] 2.9 Setting an untyped akt's type to „małżeństwa" moves it under „Pasujące akty" in a marriage picker, and clearing the type moves it back
-- [ ] 2.10 The tile line is right
-- [ ] 2.11 On a fresh account with a single akt urodzenia, the birth picker shows only „Pasujące akty" and the death picker shows the plain list without headings
-- [ ] 2.12 The picker behaves the same from „Przegląd" and from the „Źródła" tab; 390 px, dark mode and focus are fine
+- [x] 2.5 Leon's death picker has both sections
+- [x] 2.6 Jan's birth picker keeps a linked match in place
+- [x] 2.7 Jan and Anna's marriage picker shows no headings and the same order as before
+- [x] 2.8 A source from „Pozostałe źródła" still links
+- [x] 2.9 Setting an untyped akt's type to „małżeństwa" moves it under „Pasujące akty" in a marriage picker, and clearing the type moves it back
+- [x] 2.10 The tile line is right
+- [x] 2.11 On a fresh account with a single akt urodzenia, the birth picker shows only „Pasujące akty" and the death picker shows the plain list without headings
+- [x] 2.12 The picker behaves the same from „Przegląd" and from the „Źródła" tab; 390 px, dark mode and focus are fine
 
 ### Phase 3: Screenshot gate
 

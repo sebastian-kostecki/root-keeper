@@ -142,6 +142,7 @@ function SourceGroup({ label, event, availableSources }: GroupProps) {
 
             <SourcePickerDialog
                 eventId={event.id}
+                eventType={event.type}
                 linkedSourceIds={event.sources.map((source) => source.id)}
                 availableSources={availableSources}
                 trigger={

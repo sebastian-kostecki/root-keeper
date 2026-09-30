@@ -1,5 +1,5 @@
 import { Link, router } from '@inertiajs/react';
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import EventSourceController from '@/actions/App/Http/Controllers/EventSourceController';
 import { index as sourcesIndex } from '@/routes/sources';
 import InputError from '@/components/input-error';
@@ -14,10 +14,16 @@ import {
     DialogTrigger,
 } from '@/components/ui/dialog';
 import { Skeleton } from '@/components/ui/skeleton';
-import type { Source } from '@/types';
+import { formatSourceMeta } from '@/lib/source-description';
+import { splitSourcesForEvent } from '@/lib/source-matching';
+import type { PersonEvent, Source } from '@/types';
+
+const groupLabelClass =
+    'text-muted-foreground text-xs font-semibold tracking-wide uppercase';
 
 type Props = {
     eventId: number;
+    eventType: PersonEvent['type'];
     linkedSourceIds: number[];
     availableSources: Source[] | undefined;
     trigger: React.ReactNode;
@@ -25,10 +31,13 @@ type Props = {
 
 export function SourcePickerDialog({
     eventId,
+    eventType,
     linkedSourceIds,
     availableSources,
     trigger,
 }: Props) {
+    const matchingHeadingId = useId();
+    const restHeadingId = useId();
     const [open, setOpen] = useState(false);
     const [loading, setLoading] = useState(false);
     const [loaded, setLoaded] = useState(false);
@@ -76,6 +85,48 @@ export function SourcePickerDialog({
         );
     };
 
+    const renderTile = (source: Source) => {
+        const isLinked = linkedSourceIds.includes(source.id);
+        const meta = formatSourceMeta(source);
+
+        return (
+            <button
+                key={source.id}
+                type="button"
+                disabled={isLinked || processingSourceId !== null}
+                onClick={() => handleSelect(source.id)}
+                className="space-y-1 text-left disabled:cursor-not-allowed disabled:opacity-50"
+            >
+                <SourceThumbnail source={source} className="rounded-md" />
+                <p
+                    className="truncate text-xs font-medium"
+                    title={source.display_name}
+                >
+                    {source.display_name}
+                </p>
+                <Badge variant="secondary">{source.kind_short_label}</Badge>
+                {meta !== null && (
+                    <p className="text-muted-foreground text-xs">{meta}</p>
+                )}
+                {(isLinked || meta === null) && (
+                    <p className="text-muted-foreground text-xs">
+                        {isLinked
+                            ? 'Już powiązane'
+                            : new Date(source.uploaded_at).toLocaleDateString(
+                                  'pl-PL',
+                              )}
+                    </p>
+                )}
+            </button>
+        );
+    };
+
+    const renderGrid = (list: Source[]) => (
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+            {list.map(renderTile)}
+        </div>
+    );
+
     return (
         <Dialog open={open} onOpenChange={handleOpenChange}>
             <DialogTrigger asChild>{trigger}</DialogTrigger>
@@ -111,45 +162,48 @@ export function SourcePickerDialog({
                         .
                     </p>
                 ) : (
-                    <div className="grid max-h-96 grid-cols-2 gap-3 overflow-y-auto sm:grid-cols-3">
-                        {sources.map((source) => {
-                            const isLinked = linkedSourceIds.includes(
-                                source.id,
+                    <div className="max-h-96 space-y-4 overflow-y-auto">
+                        {(() => {
+                            const { matching, rest } = splitSourcesForEvent(
+                                sources,
+                                eventType,
                             );
 
+                            if (matching.length === 0) {
+                                return renderGrid(rest);
+                            }
+
                             return (
-                                <button
-                                    key={source.id}
-                                    type="button"
-                                    disabled={
-                                        isLinked || processingSourceId !== null
-                                    }
-                                    onClick={() => handleSelect(source.id)}
-                                    className="space-y-1 text-left disabled:cursor-not-allowed disabled:opacity-50"
-                                >
-                                    <SourceThumbnail
-                                        source={source}
-                                        className="rounded-md"
-                                    />
-                                    <p
-                                        className="truncate text-xs font-medium"
-                                        title={source.display_name}
+                                <>
+                                    <section
+                                        aria-labelledby={matchingHeadingId}
+                                        className="space-y-2"
                                     >
-                                        {source.display_name}
-                                    </p>
-                                    <Badge variant="secondary">
-                                        {source.kind_short_label}
-                                    </Badge>
-                                    <p className="text-muted-foreground text-xs">
-                                        {isLinked
-                                            ? 'Już powiązane'
-                                            : new Date(
-                                                  source.uploaded_at,
-                                              ).toLocaleDateString('pl-PL')}
-                                    </p>
-                                </button>
+                                        <h3
+                                            id={matchingHeadingId}
+                                            className={groupLabelClass}
+                                        >
+                                            Pasujące akty
+                                        </h3>
+                                        {renderGrid(matching)}
+                                    </section>
+                                    {rest.length > 0 && (
+                                        <section
+                                            aria-labelledby={restHeadingId}
+                                            className="space-y-2"
+                                        >
+                                            <h3
+                                                id={restHeadingId}
+                                                className={groupLabelClass}
+                                            >
+                                                Pozostałe źródła
+                                            </h3>
+                                            {renderGrid(rest)}
+                                        </section>
+                                    )}
+                                </>
                             );
-                        })}
+                        })()}
                     </div>
                 )}
 
