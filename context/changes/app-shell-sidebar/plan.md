@@ -517,37 +517,37 @@ No data migration. After deploy the human sets `APP_NAME="Root Keeper"` on the s
 
 #### Automated
 
-- [x] 3.1 Format and lint pass: `vendor/bin/sail npm run check`
-- [x] 3.2 Types pass: `vendor/bin/sail npm run types:check`
-- [x] 3.3 Production build passes: `vendor/bin/sail npm run build`
-- [x] 3.4 JS tests still pass: `vendor/bin/sail npm run test:js`
-- [x] 3.5 Deleted pieces are unreferenced: `grep -rnE "app-header|app-sidebar-header|nav-footer|AppVariant" resources/js` prints nothing
-- [x] 3.6 No literal colour and no starter link in the shell: `grep -rnE "neutral-|text-(white|black)|laravel\.com|react-starter-kit" resources/js/components/app-*.tsx resources/js/components/nav-*.tsx resources/js/components/user-*.tsx` prints nothing
-- [x] 3.7 PHP suite is unaffected: `vendor/bin/sail artisan test --compact tests/Feature/AppShellTest.php tests/Feature/Auth`
+- [x] 3.1 Format and lint pass: `vendor/bin/sail npm run check` — 8d4d2f0
+- [x] 3.2 Types pass: `vendor/bin/sail npm run types:check` — 8d4d2f0
+- [x] 3.3 Production build passes: `vendor/bin/sail npm run build` — 8d4d2f0
+- [x] 3.4 JS tests still pass: `vendor/bin/sail npm run test:js` — 8d4d2f0
+- [x] 3.5 Deleted pieces are unreferenced: `grep -rnE "app-header|app-sidebar-header|nav-footer|AppVariant" resources/js` prints nothing — 8d4d2f0
+- [x] 3.6 No literal colour and no starter link in the shell: `grep -rnE "neutral-|text-(white|black)|laravel\.com|react-starter-kit" resources/js/components/app-*.tsx resources/js/components/nav-*.tsx resources/js/components/user-*.tsx` prints nothing — 8d4d2f0
+- [x] 3.7 PHP suite is unaffected: `vendor/bin/sail artisan test --compact tests/Feature/AppShellTest.php tests/Feature/Auth` — 8d4d2f0
 
 #### Manual
 
-- [x] 3.8 1280 px, light: `/persons` matches board „A — bez górnej belki” — brand „RK Root Keeper”, collapse button, Drzewo / Osoby 41 / Źródła 18, account row with e-mail, no top bar, no footer links
-- [x] 3.9 `/tree` shows the link „Drzewo” above „Jan Kowalski”; a source page shows „Źródła” above the source name; `/persons`, `/sources` and `/settings/profile` show no trail
-- [x] 3.10 The brand link opens `/tree`; the account menu reads „Ustawienia” and „Wyloguj” and both work
-- [x] 3.11 390 px: the bar with the menu button and brand is visible, the button opens the sheet, the page has no sideways scroll
-- [x] 3.12 Adding a person raises the „Osoby” counter without a manual refresh
+- [x] 3.8 1280 px, light: `/persons` matches board „A — bez górnej belki” — brand „RK Root Keeper”, collapse button, Drzewo / Osoby 41 / Źródła 18, account row with e-mail, no top bar, no footer links — 8d4d2f0
+- [x] 3.9 `/tree` shows the link „Drzewo” above „Jan Kowalski”; a source page shows „Źródła” above the source name; `/persons`, `/sources` and `/settings/profile` show no trail — 8d4d2f0
+- [x] 3.10 The brand link opens `/tree`; the account menu reads „Ustawienia” and „Wyloguj” and both work — 8d4d2f0
+- [x] 3.11 390 px: the bar with the menu button and brand is visible, the button opens the sheet, the page has no sideways scroll — 8d4d2f0
+- [x] 3.12 Adding a person raises the „Osoby” counter without a manual refresh — 8d4d2f0
 
 ### Phase 4: States
 
 #### Automated
 
-- [ ] 4.1 Format and lint pass: `vendor/bin/sail npm run check`
-- [ ] 4.2 Types pass: `vendor/bin/sail npm run types:check`
-- [ ] 4.3 Production build passes: `vendor/bin/sail npm run build`
+- [x] 4.1 Format and lint pass: `vendor/bin/sail npm run check`
+- [x] 4.2 Types pass: `vendor/bin/sail npm run types:check`
+- [x] 4.3 Production build passes: `vendor/bin/sail npm run build`
 
 #### Manual
 
-- [ ] 4.4 1280 px collapsed, light and dark: rail as on board „A — zwinięty”; hovering „Źródła” shows „Źródła · 18”; the account menu opens to the right; Ctrl/Cmd+B and the button both toggle, and the state survives a reload
-- [ ] 4.5 Keyboard only: Tab walks brand, collapse button, three destinations, account row; each shows a visible ring in light and dark; Enter on the account row opens the menu and Escape returns focus to it
-- [ ] 4.6 390 px: rows are 44 px, the close button closes the sheet, tapping „Źródła” opens `/sources` with the sheet closed, „Ustawienia” from the account menu opens settings with the sheet closed
-- [ ] 4.7 Signed in as `tree-demo-empty@example.com`: no counters in the sidebar or in tooltips
-- [ ] 4.8 A screen reader (or the accessibility tree) names the controls „Zwiń panel boczny” / „Rozwiń panel boczny”, „Otwórz menu”, „Zamknij menu”, and marks the current destination
+- [x] 4.4 1280 px collapsed, light and dark: rail as on board „A — zwinięty”; hovering „Źródła” shows „Źródła · 18”; the account menu opens to the right; Ctrl/Cmd+B and the button both toggle, and the state survives a reload
+- [x] 4.5 Keyboard only: Tab walks brand, collapse button, three destinations, account row; each shows a visible ring in light and dark; Enter on the account row opens the menu and Escape returns focus to it
+- [x] 4.6 390 px: rows are 44 px, the close button closes the sheet, tapping „Źródła” opens `/sources` with the sheet closed, „Ustawienia” from the account menu opens settings with the sheet closed
+- [x] 4.7 Signed in as `tree-demo-empty@example.com`: no counters in the sidebar or in tooltips
+- [x] 4.8 A screen reader (or the accessibility tree) names the controls „Zwiń panel boczny” / „Rozwiń panel boczny”, „Otwórz menu”, „Zamknij menu”, and marks the current destination
 
 ### Phase 5: Screenshot gate
 

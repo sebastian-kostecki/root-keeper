@@ -13,13 +13,16 @@ export function AppMobileHeader() {
             <Button
                 variant="ghost"
                 size="icon"
-                className="size-11"
+                className="focus-visible:ring-sidebar-ring size-11 focus-visible:ring-2"
                 onClick={toggleSidebar}
             >
                 <Menu />
                 <span className="sr-only">Otwórz menu</span>
             </Button>
-            <Link href={treeIndex()} className="flex items-center gap-2">
+            <Link
+                href={treeIndex()}
+                className="focus-visible:ring-sidebar-ring flex items-center gap-2 rounded-md outline-hidden focus-visible:ring-2"
+            >
                 <AppLogo />
             </Link>
         </header>

@@ -8,7 +8,7 @@ export default function AppLogo() {
             <div className="bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-md text-xs font-semibold">
                 RK
             </div>
-            <div className="ml-1 grid flex-1 text-left text-sm">
+            <div className="ml-1 grid flex-1 text-left text-sm group-data-[collapsible=icon]:hidden">
                 <span className="mb-0.5 truncate leading-tight font-semibold">
                     {name}
                 </span>
