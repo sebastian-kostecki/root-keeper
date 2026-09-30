@@ -1,10 +1,10 @@
 ---
 change_id: sources-list-views
 title: Lista źródeł — widoki Galeria i Tabela do wyboru (?view=tabela)
-status: impl_reviewed
+status: archived
 created: 2026-09-30
 updated: 2026-09-30
-archived_at: null
+archived_at: 2026-09-30T14:02:04Z
 ---
 
 ## Notes
