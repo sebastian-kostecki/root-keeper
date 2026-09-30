@@ -607,13 +607,13 @@ None beyond today. The list still loads all sources of the tree in one query; th
 
 #### Automated
 
-- [x] 4.1 Demo seeder runs
-- [x] 4.2 Screenshots produced
-- [x] 4.3 No stray „skan" copy
-- [x] 4.4 Full suite green
-- [x] 4.5 Types, lint, format and build
+- [x] 4.1 Demo seeder runs — d834745
+- [x] 4.2 Screenshots produced — d834745
+- [x] 4.3 No stray „skan" copy — d834745
+- [x] 4.4 Full suite green — d834745
+- [x] 4.5 Types, lint, format and build — d834745
 
 #### Manual
 
-- [x] 4.6 `verdict.md` reviewed: every state has Expected and Seen filled, the list and preview are compared with `before/`, and every charge is marked closed
-- [x] 4.7 One real image uploaded through the modal and described: thumbnail, zoom and the description panel are judged next to an actual image
+- [x] 4.6 `verdict.md` reviewed: every state has Expected and Seen filled, the list and preview are compared with `before/`, and every charge is marked closed — d834745
+- [x] 4.7 One real image uploaded through the modal and described: thumbnail, zoom and the description panel are judged next to an actual image — d834745
