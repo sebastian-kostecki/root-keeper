@@ -10,7 +10,7 @@ export default function InputError({
         <p
             data-slot="input-error"
             {...props}
-            className={cn('text-sm text-red-600 dark:text-red-400', className)}
+            className={cn('text-destructive-foreground text-sm', className)}
         >
             {message}
         </p>
