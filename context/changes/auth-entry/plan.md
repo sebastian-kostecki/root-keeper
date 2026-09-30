@@ -427,29 +427,29 @@ Bookmarks to `/` keep working. Nothing in the database changes.
 
 #### Automated
 
-- [x] 2.1 Entry and affected tests pass
-- [x] 2.2 Pint: `vendor/bin/sail bin pint --dirty --format agent`
-- [x] 2.3 Types and build pass
+- [x] 2.1 Entry and affected tests pass — f2a5a8e
+- [x] 2.2 Pint: `vendor/bin/sail bin pint --dirty --format agent` — f2a5a8e
+- [x] 2.3 Types and build pass — f2a5a8e
 
 #### Manual
 
-- [x] 2.4 Logged out, `/` shows the login screen at `/login`
-- [x] 2.5 Logged in, `/` and `/login` both open „Osoby”; logging out returns to the login screen
+- [x] 2.4 Logged out, `/` shows the login screen at `/login` — f2a5a8e
+- [x] 2.5 Logged in, `/` and `/login` both open „Osoby”; logging out returns to the login screen — f2a5a8e
 
 ### Phase 3: The split layout
 
 #### Automated
 
-- [ ] 3.1 Format and lint pass: `vendor/bin/sail npm run check`
-- [ ] 3.2 Types pass: `vendor/bin/sail npm run types:check`
-- [ ] 3.3 Production build passes: `vendor/bin/sail npm run build`
-- [ ] 3.4 No literal colours in the layout and panel
+- [x] 3.1 Format and lint pass: `vendor/bin/sail npm run check`
+- [x] 3.2 Types pass: `vendor/bin/sail npm run types:check`
+- [x] 3.3 Production build passes: `vendor/bin/sail npm run build`
+- [x] 3.4 No literal colours in the layout and panel
 
 #### Manual
 
-- [ ] 3.5 1280 px, light and dark: the layout of `/login` matches boards „A — split z panelem marki” and „A — motyw ciemny”
-- [ ] 3.6 1024 px: the panel shows; 1023 px and 390 px: brand row on top, sentence at the bottom, no horizontal scroll
-- [ ] 3.7 The brand link opens the login screen and is reachable and visibly focused by keyboard
+- [x] 3.5 1280 px, light and dark: the layout of `/login` matches boards „A — split z panelem marki” and „A — motyw ciemny”
+- [x] 3.6 1024 px: the panel shows; 1023 px and 390 px: brand row on top, sentence at the bottom, no horizontal scroll
+- [x] 3.7 The brand link opens the login screen and is reachable and visibly focused by keyboard
 
 ### Phase 4: Pages, copy and states
 
