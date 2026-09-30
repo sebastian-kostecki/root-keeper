@@ -76,7 +76,7 @@ Po przeniesieniu formularza osoby do modala zostały dwie luki (prd-v4): ogląda
 | S-15 | place-delete-with-impact        | usunąć miejscowość po zobaczeniu osób i faktów, które stracą miejsce                   | S-13, S-14    | v2:FR-009                              | proposed |
 | S-20 | person-form-in-modal            | dodawać i poprawiać osobę w modalu zamiast na osobnych stronach                        | S-01, S-05    | v3:FR-004                              | done |
 | S-24 | person-preview-in-modal         | otworzyć podgląd osoby w modalu z drzewa, listy i podglądu skanu, przechodzić w nim do krewnych i wracać „Wstecz”, a po zamknięciu być w tym samym miejscu | S-20, S-09 | v4:FR-001, v4:FR-002, v4:FR-003, v4:FR-010, v4:FR-012, v4:FR-013, v4:US-01 | done |
-| S-16 | scans-become-sources            | widzieć dotychczasowe skany jako źródła rodzaju „akt metrykalny”, wgrywać źródło z rodzajem (akt / nagrobek / inne) i usuwać je jak dziś | S-02, S-03, S-08 | v3:FR-005, v3:FR-009, v3:FR-010, v3:FR-011 | ready |
+| S-16 | scans-become-sources            | widzieć dotychczasowe skany jako źródła rodzaju „akt metrykalny”, wgrywać źródło z rodzajem (akt / nagrobek / inne) i usuwać je jak dziś | S-02, S-03, S-08 | v3:FR-005, v3:FR-009, v3:FR-010, v3:FR-011 | in-progress |
 | S-17 | source-description-in-modal     | dodać źródło w modalu (plik i rodzaj) z opcjonalnym opisem, poprawić rodzaj i opis i widzieć numer wpisu i notatkę przy źródle | S-16, S-24 | v3:FR-006, v3:FR-007, v3:US-02, v2:FR-001, v2:FR-002, v2:FR-003, v2:FR-004, v2:FR-005, v2:FR-014, v2:US-01 | proposed |
 | S-18 | fact-confirmed-by-any-source    | potwierdzić urodzenie, małżeństwo i zgon źródłem każdego rodzaju i widzieć rodzaj źródła przy fakcie | S-16, S-24 | v3:FR-008, v3:US-02 | proposed |
 | S-19 | matching-sources-first          | przy wiązaniu źródła z wydarzeniem widzieć najpierw akty o pasującym typie, potem resztę | S-17, S-18 | v3:FR-009, v2:FR-015, v2:FR-012 | proposed |
@@ -329,7 +329,7 @@ Foundations below assume these are present and do NOT re-scaffold them. The prd-
 - **Unknowns:**
   - Czy wgrywanie do czasu S-17 zostaje na obecnej osobnej stronie (z nowym wyborem rodzaju), czy modal wgrywania wchodzi już tutaj? Owner: `/10x-plan`. Block: no.
 - **Risk:** Pierwszy w strumieniu źródeł, bo każda dalsza zmiana stoi na nowym pojęciu „źródło”; to jedyna zmiana istniejących danych w prd-v3 — każdy fakt musi mieć ten sam stan „potwierdzone/niepotwierdzone” przed i po, więc przed wdrożeniem backup (procedura z F-01). Stare adresy `/scans` mogą przestać działać (prd-v3).
-- **Status:** ready
+- **Status:** in-progress
 
 ### S-17: Źródło dodawane i opisywane w modalu
 
