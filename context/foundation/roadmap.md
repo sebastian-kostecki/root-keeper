@@ -78,7 +78,7 @@ Po przeniesieniu formularza osoby do modala zostały dwie luki (prd-v4): ogląda
 | S-24 | person-preview-in-modal         | otworzyć podgląd osoby w modalu z drzewa, listy i podglądu skanu, przechodzić w nim do krewnych i wracać „Wstecz”, a po zamknięciu być w tym samym miejscu | S-20, S-09 | v4:FR-001, v4:FR-002, v4:FR-003, v4:FR-010, v4:FR-012, v4:FR-013, v4:US-01 | done |
 | S-16 | scans-become-sources            | widzieć dotychczasowe skany jako źródła rodzaju „akt metrykalny”, wgrywać źródło z rodzajem (akt / nagrobek / inne) i usuwać je jak dziś | S-02, S-03, S-08 | v3:FR-005, v3:FR-009, v3:FR-010, v3:FR-011 | done |
 | S-17 | source-description-in-modal     | dodać źródło w modalu (plik i rodzaj) z opcjonalnym opisem, poprawić rodzaj i opis i widzieć numer wpisu i notatkę przy źródle | S-16, S-24 | v3:FR-006, v3:FR-007, v3:US-02, v2:FR-001, v2:FR-002, v2:FR-003, v2:FR-004, v2:FR-005, v2:FR-014, v2:US-01 | done |
-| S-18 | fact-confirmed-by-any-source    | potwierdzić urodzenie, małżeństwo i zgon źródłem każdego rodzaju i widzieć rodzaj źródła przy fakcie | S-16, S-24 | v3:FR-008, v3:US-02 | proposed |
+| S-18 | fact-confirmed-by-any-source    | potwierdzić urodzenie, małżeństwo i zgon źródłem każdego rodzaju i widzieć rodzaj źródła przy fakcie | S-16, S-24 | v3:FR-008, v3:US-02 | done |
 | S-19 | matching-sources-first          | przy wiązaniu źródła z wydarzeniem widzieć najpierw akty o pasującym typie, potem resztę | S-17, S-18 | v3:FR-009, v2:FR-015, v2:FR-012 | proposed |
 | S-25 | tree-parent-slot-existing-or-new | z pustego slotu rodzica na drzewie podłączyć istniejącą osobę (wybór filtrowany płcią i regułami) albo utworzyć nową i od razu widzieć ją na drzewie | S-24, S-06 | v4:FR-004, v4:FR-011, v4:US-01, v3:FR-001, v3:FR-012, v3:US-01 | done |
 | S-26 | tree-child-existing-or-new      | dodać z drzewa dziecko pokazanej pary — istniejącą osobę albo nową — i od razu widzieć je na drzewie | S-24, S-06 | v4:FR-005, v4:FR-011, v3:FR-002, v3:FR-012 | done |
@@ -354,7 +354,7 @@ Foundations below assume these are present and do NOT re-scaffold them. The prd-
 - **Blockers:** —
 - **Unknowns:** —
 - **Risk:** Zmienia regułę potwierdzania: jeden stan dla każdego rodzaju, więc rodzaj widoczny przy fakcie jest jedynym sygnałem wagi dowodu; nie może zmienić stanu żadnego istniejącego faktu. v3:US-02 jest kompletna dopiero razem z S-17 (dodanie nagrobka w modalu). Od prd-v4 czeka na S-24, bo rodzaj źródła przy fakcie powstaje od razu w modalu podglądu.
-- **Status:** proposed
+- **Status:** done
 
 ### S-19: Pasujące akty najpierw przy wyborze źródła
 
@@ -515,3 +515,4 @@ Rozstrzygnięte:
 - **S-29: użytkownik widzi w modalu podglądu rodziców, dzieci i małżonków bez akcji dodawania (dodaje się je na drzewie); usuwanie relacji i małżeństwa oraz datę, miejsce i potwierdzenie małżeństwa nadal obsługuje w podglądzie; przycisk „Pokaż na drzewie” wyśrodkowuje drzewo na tej osobie.** — Archived 2026-09-29 → `context/archive/2026-09-29-preview-relations-read-only/`. Lesson: —.
 - **S-16: użytkownik widzi dotychczasowe skany w sekcji „Źródła” jako źródła rodzaju „akt metrykalny”, przy wgrywaniu nowego źródła wybiera rodzaj (akt metrykalny, zdjęcie nagrobka, inne), a pliki, miniatury, powiększenie i istniejące potwierdzenia faktów działają jak dziś; źródło bez powiązań usuwa po prostym potwierdzeniu, a źródło z powiązaniami — po liście faktów, które stracą potwierdzenie.** — Archived 2026-09-30 → `context/archive/2026-09-29-scans-become-sources/`. Lesson: —.
 - **S-17: użytkownik dodaje źródło w modalu (wymagane tylko plik i rodzaj) z opcjonalnym opisem, poprawia rodzaj i opis w modalu (zmiana rodzaju z aktu wymaga potwierdzenia skasowania typu i numeru wpisu), a na podglądzie źródła widzi opis obok obrazu.** — Archived 2026-09-30 → `context/archive/2026-09-30-source-description-in-modal/`. Lesson: —.
+- **S-18: użytkownik wiąże z urodzeniem, małżeństwem lub zgonem źródło dowolnego rodzaju (np. zdjęcie nagrobka ze zgonem); fakt dostaje stan „potwierdzone”, a przy fakcie widać rodzaj źródła (np. „potwierdzone: nagrobek”) i można otworzyć źródło w powiększeniu.** — Archived 2026-09-30 → `context/archive/2026-09-30-fact-confirmed-by-any-source/`. Lesson: —.
