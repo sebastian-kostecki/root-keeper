@@ -31,7 +31,7 @@ test('the shell counts do not include another users people and sources', functio
 });
 
 test('the shell counts are null for a guest', function () {
-    $this->get('/')
+    $this->get('/login')
         ->assertOk()
         ->assertInertia(fn ($page) => $page->where('navCounts', null));
 });

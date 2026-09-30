@@ -414,27 +414,27 @@ Bookmarks to `/` keep working. Nothing in the database changes.
 
 #### Automated
 
-- [x] 1.1 Format and lint pass: `vendor/bin/sail npm run check`
-- [x] 1.2 Types pass: `vendor/bin/sail npm run types:check`
-- [x] 1.3 No literal neutral/red colour left in the three files
+- [x] 1.1 Format and lint pass: `vendor/bin/sail npm run check` — 66cb587
+- [x] 1.2 Types pass: `vendor/bin/sail npm run types:check` — 66cb587
+- [x] 1.3 No literal neutral/red colour left in the three files — 66cb587
 
 #### Manual
 
-- [x] 1.4 A validation error in a signed-in form reads clearly in light and dark
-- [x] 1.5 Links on `/settings/profile` keep a visible underline in both themes; hover darkens it
+- [x] 1.4 A validation error in a signed-in form reads clearly in light and dark — 66cb587
+- [x] 1.5 Links on `/settings/profile` keep a visible underline in both themes; hover darkens it — 66cb587
 
 ### Phase 2: `/` leads into the app
 
 #### Automated
 
-- [ ] 2.1 Entry and affected tests pass
-- [ ] 2.2 Pint: `vendor/bin/sail bin pint --dirty --format agent`
-- [ ] 2.3 Types and build pass
+- [x] 2.1 Entry and affected tests pass
+- [x] 2.2 Pint: `vendor/bin/sail bin pint --dirty --format agent`
+- [x] 2.3 Types and build pass
 
 #### Manual
 
-- [ ] 2.4 Logged out, `/` shows the login screen at `/login`
-- [ ] 2.5 Logged in, `/` and `/login` both open „Osoby”; logging out returns to the login screen
+- [x] 2.4 Logged out, `/` shows the login screen at `/login`
+- [x] 2.5 Logged in, `/` and `/login` both open „Osoby”; logging out returns to the login screen
 
 ### Phase 3: The split layout
 

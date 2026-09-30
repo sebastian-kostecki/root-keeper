@@ -12,7 +12,7 @@ use App\Http\Controllers\TreeController;
 use App\Http\Controllers\TreeRootPersonController;
 use Illuminate\Support\Facades\Route;
 
-Route::inertia('/', 'welcome')->name('home');
+Route::redirect('/', '/login')->name('home');
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('persons', PersonController::class)->only(['index', 'store', 'update', 'destroy']);
