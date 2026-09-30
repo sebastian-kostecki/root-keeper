@@ -588,32 +588,32 @@ None beyond today. The list still loads all sources of the tree in one query; th
 
 #### Automated
 
-- [x] 3.1 Source tests pass
-- [x] 3.2 JS unit tests pass, including the erase rule
-- [x] 3.3 Types, lint and format
-- [x] 3.4 Production build
+- [x] 3.1 Source tests pass — 2828295
+- [x] 3.2 JS unit tests pass, including the erase rule — 2828295
+- [x] 3.3 Types, lint and format — 2828295
+- [x] 3.4 Production build — 2828295
 
 #### Manual
 
-- [x] 3.5 „Edytuj" opens prefilled; saving shows „Zapisano źródło" and the preview updates in place
-- [x] 3.6 An akt with typ and numer wpisu switched to zdjęcie nagrobka lists both fields, asks for confirmation, cancels cleanly and erases both on confirm
-- [x] 3.7 An akt with empty typ and numer wpisu switched to another kind saves with no confirmation
-- [x] 3.8 A linked akt changed to zdjęcie nagrobka keeps its facts „Potwierdzone aktem" and its „Potwierdza" list
-- [x] 3.9 Wide screen: the panel is next to the image with numer wpisu and notatka; the link opens in a new tab; an undescribed source shows the empty state with „Dodaj opis"
-- [x] 3.10 390 px: the header line carries numer wpisu, the panel follows the image, „Edytuj" and „Usuń" fit beside the title
-- [x] 3.11 Esc, X and „Anuluj" discard edits; the buttons are disabled while saving
+- [x] 3.5 „Edytuj" opens prefilled; saving shows „Zapisano źródło" and the preview updates in place — 2828295
+- [x] 3.6 An akt with typ and numer wpisu switched to zdjęcie nagrobka lists both fields, asks for confirmation, cancels cleanly and erases both on confirm — 2828295
+- [x] 3.7 An akt with empty typ and numer wpisu switched to another kind saves with no confirmation — 2828295
+- [x] 3.8 A linked akt changed to zdjęcie nagrobka keeps its facts „Potwierdzone aktem" and its „Potwierdza" list — 2828295
+- [x] 3.9 Wide screen: the panel is next to the image with numer wpisu and notatka; the link opens in a new tab; an undescribed source shows the empty state with „Dodaj opis" — 2828295
+- [x] 3.10 390 px: the header line carries numer wpisu, the panel follows the image, „Edytuj" and „Usuń" fit beside the title — 2828295
+- [x] 3.11 Esc, X and „Anuluj" discard edits; the buttons are disabled while saving — 2828295
 
 ### Phase 4: Screenshot gate
 
 #### Automated
 
-- [ ] 4.1 Demo seeder runs
-- [ ] 4.2 Screenshots produced
-- [ ] 4.3 No stray „skan" copy
-- [ ] 4.4 Full suite green
-- [ ] 4.5 Types, lint, format and build
+- [x] 4.1 Demo seeder runs
+- [x] 4.2 Screenshots produced
+- [x] 4.3 No stray „skan" copy
+- [x] 4.4 Full suite green
+- [x] 4.5 Types, lint, format and build
 
 #### Manual
 
-- [ ] 4.6 `verdict.md` reviewed: every state has Expected and Seen filled, the list and preview are compared with `before/`, and every charge is marked closed
-- [ ] 4.7 One real image uploaded through the modal and described: thumbnail, zoom and the description panel are judged next to an actual image
+- [x] 4.6 `verdict.md` reviewed: every state has Expected and Seen filled, the list and preview are compared with `before/`, and every charge is marked closed
+- [x] 4.7 One real image uploaded through the modal and described: thumbnail, zoom and the description panel are judged next to an actual image
