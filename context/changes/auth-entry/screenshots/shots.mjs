@@ -5,7 +5,11 @@
 // States (light and dark, 1280 and 390):
 //   guest: `/`, /login, /login after a failed attempt (error), /login with keyboard focus on the submit button,
 //          /register, /register submitted empty (errors).
-//   signed in: `/`, /user/confirm-password.
+//   guest, submitting: /login with POST /login delayed, shot while the button shows the spinner (login-submitting).
+//   signed in: `/` (shows "Osoby"), /user/confirm-password.
+//   e-mail verification: /email/verify before (verify-email) and after "Wyślij link ponownie" (verify-email-sent).
+// NOTE: the verification shots CREATE A LOCAL USER (shots-<timestamp>@example.com) in the local database on every run
+//   (registration lands on /persons because verification is not enforced; /email/verify is then opened directly).
 // Playwright from the npx cache; not a repo dependency. Needs Sail up at localhost:8000 and the demo user
 // (TreeViewDemoSeeder). One real login per run; failed ones use unknown addresses (throttle is per e-mail + IP).
 // Output: <theme>-<width>-<state>.png
@@ -44,7 +48,23 @@ async function visit(page, url) {
     await page.waitForLoadState('networkidle');
 }
 
+// Registers a throwaway user (left in the local database) and returns its session.
+async function verifyState() {
+    const context = await browser.newContext();
+    const page = await context.newPage();
+    await visit(page, '/register');
+    await page.fill('input[name=name]', 'Shots Tester');
+    await page.fill('input[name=email]', `shots-${Date.now()}@example.com`);
+    await page.fill('input[name=password]', 'password-shots-123');
+    await page.fill('input[name=password_confirmation]', 'password-shots-123');
+    await Promise.all([page.waitForURL((u) => !u.pathname.startsWith('/register')), page.click('button[type=submit]')]);
+    const state = await context.storageState();
+    await context.close();
+    return state;
+}
+
 const signedIn = await signedInState();
+const verifying = await verifyState();
 
 for (const scheme of ['light', 'dark']) {
     for (const [width, height] of [
@@ -82,6 +102,32 @@ for (const scheme of ['light', 'dark']) {
         await failedPage.waitForSelector('[data-slot="input-error"]');
         await snap(failedPage, `${tag}-login-error`);
         await failedContext.close();
+
+        // Submitting: hold POST /login so the spinner stays on screen.
+        const slowContext = await browser.newContext({ viewport, colorScheme: scheme });
+        const slowPage = await slowContext.newPage();
+        await slowPage.route('**/login', async (route) => {
+            if (route.request().method() === 'POST') {
+                await new Promise((resolve) => setTimeout(resolve, 5000));
+            }
+            await route.continue();
+        });
+        await visit(slowPage, '/login');
+        await slowPage.fill('input[name=email]', `slow-${tag}@example.com`);
+        await slowPage.fill('input[name=password]', 'wrong-password');
+        await slowPage.click('button[type=submit]');
+        await slowPage.waitForSelector('button[type=submit][disabled]');
+        await snap(slowPage, `${tag}-login-submitting`);
+        await slowContext.close();
+
+        const verify = await browser.newContext({ viewport, colorScheme: scheme, storageState: verifying });
+        const verifyPage = await verify.newPage();
+        await visit(verifyPage, '/email/verify');
+        await snap(verifyPage, `${tag}-verify-email`);
+        await verifyPage.getByRole('button', { name: 'Wyślij link ponownie' }).click();
+        await verifyPage.getByText('Wysłaliśmy nowy link').waitFor();
+        await snap(verifyPage, `${tag}-verify-email-sent`);
+        await verify.close();
 
         const user = await browser.newContext({ viewport, colorScheme: scheme, storageState: signedIn });
         const userPage = await user.newPage();

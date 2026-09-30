@@ -455,30 +455,30 @@ Bookmarks to `/` keep working. Nothing in the database changes.
 
 #### Automated
 
-- [x] 4.1 Format and lint pass: `vendor/bin/sail npm run check`
-- [x] 4.2 Types pass: `vendor/bin/sail npm run types:check`
-- [x] 4.3 Production build passes: `vendor/bin/sail npm run build`
-- [x] 4.4 Pint, then auth, entry, settings and sources tests pass
-- [x] 4.5 No positive `tabIndex` left on auth pages
-- [x] 4.6 No English copy left on auth pages
+- [x] 4.1 Format and lint pass: `vendor/bin/sail npm run check` — 449621d
+- [x] 4.2 Types pass: `vendor/bin/sail npm run types:check` — 449621d
+- [x] 4.3 Production build passes: `vendor/bin/sail npm run build` — 449621d
+- [x] 4.4 Pint, then auth, entry, settings and sources tests pass — 449621d
+- [x] 4.5 No positive `tabIndex` left on auth pages — 449621d
+- [x] 4.6 No English copy left on auth pages — 449621d
 
 #### Manual
 
-- [x] 4.7 Wrong password at 1280 px, light and dark: matches „A — stany formularza” / „A — motyw ciemny”
-- [x] 4.8 Register submitted empty at 390 px, dark: matches „A — mobile, rejestracja z błędami, ciemny”
-- [x] 4.9 Keyboard only on `/login`: Tab follows the visual order (eye toggle included), each with a visible ring
-- [x] 4.10 An unverified local user opening `/email/verify` directly sees „A — weryfikacja e-mail”; resend shows the `Alert`
-- [x] 4.11 A local user with 2FA on sees the Polish challenge in both modes
+- [x] 4.7 Wrong password at 1280 px, light and dark: matches „A — stany formularza” / „A — motyw ciemny” — 449621d
+- [x] 4.8 Register submitted empty at 390 px, dark: matches „A — mobile, rejestracja z błędami, ciemny” — 449621d
+- [x] 4.9 Keyboard only on `/login`: Tab follows the visual order (eye toggle included), each with a visible ring — 449621d
+- [x] 4.10 An unverified local user opening `/email/verify` directly sees „A — weryfikacja e-mail”; resend shows the `Alert` — 449621d
+- [x] 4.11 A local user with 2FA on sees the Polish challenge in both modes — 449621d
 
 ### Phase 5: Screenshot gate
 
 #### Automated
 
-- [ ] 5.1 The script runs cleanly and writes `after/`
-- [ ] 5.2 Every `before/` shot name has an `after/` counterpart
+- [x] 5.1 The script runs cleanly and writes `after/`
+- [x] 5.2 Every `before/` shot name has an `after/` counterpart
 
 #### Manual
 
-- [ ] 5.3 Each `after/` shot matches its board
-- [ ] 5.4 `after/*-guest-home.png` shows the login screen, `after/*-signed-in-home.png` shows „Osoby”
-- [ ] 5.5 Contrast holds in dark: error text, muted description, `tree-meta` on the card surfaces
+- [x] 5.3 Each `after/` shot matches its board
+- [x] 5.4 `after/*-guest-home.png` shows the login screen, `after/*-signed-in-home.png` shows „Osoby”
+- [x] 5.5 Contrast holds in dark: error text, muted description, `tree-meta` on the card surfaces
