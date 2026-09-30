@@ -30,7 +30,7 @@ export function Breadcrumbs({
                                 <Link href={item.href}>{item.title}</Link>
                             </BreadcrumbLink>
                         </BreadcrumbItem>
-                        <BreadcrumbSeparator />
+                        {index < parents.length - 1 && <BreadcrumbSeparator />}
                     </Fragment>
                 ))}
             </BreadcrumbList>

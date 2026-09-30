@@ -537,26 +537,26 @@ No data migration. After deploy the human sets `APP_NAME="Root Keeper"` on the s
 
 #### Automated
 
-- [x] 4.1 Format and lint pass: `vendor/bin/sail npm run check`
-- [x] 4.2 Types pass: `vendor/bin/sail npm run types:check`
-- [x] 4.3 Production build passes: `vendor/bin/sail npm run build`
+- [x] 4.1 Format and lint pass: `vendor/bin/sail npm run check` — 3657421
+- [x] 4.2 Types pass: `vendor/bin/sail npm run types:check` — 3657421
+- [x] 4.3 Production build passes: `vendor/bin/sail npm run build` — 3657421
 
 #### Manual
 
-- [x] 4.4 1280 px collapsed, light and dark: rail as on board „A — zwinięty”; hovering „Źródła” shows „Źródła · 18”; the account menu opens to the right; Ctrl/Cmd+B and the button both toggle, and the state survives a reload
-- [x] 4.5 Keyboard only: Tab walks brand, collapse button, three destinations, account row; each shows a visible ring in light and dark; Enter on the account row opens the menu and Escape returns focus to it
-- [x] 4.6 390 px: rows are 44 px, the close button closes the sheet, tapping „Źródła” opens `/sources` with the sheet closed, „Ustawienia” from the account menu opens settings with the sheet closed
-- [x] 4.7 Signed in as `tree-demo-empty@example.com`: no counters in the sidebar or in tooltips
-- [x] 4.8 A screen reader (or the accessibility tree) names the controls „Zwiń panel boczny” / „Rozwiń panel boczny”, „Otwórz menu”, „Zamknij menu”, and marks the current destination
+- [x] 4.4 1280 px collapsed, light and dark: rail as on board „A — zwinięty”; hovering „Źródła” shows „Źródła · 18”; the account menu opens to the right; Ctrl/Cmd+B and the button both toggle, and the state survives a reload — 3657421
+- [x] 4.5 Keyboard only: Tab walks brand, collapse button, three destinations, account row; each shows a visible ring in light and dark; Enter on the account row opens the menu and Escape returns focus to it — 3657421
+- [x] 4.6 390 px: rows are 44 px, the close button closes the sheet, tapping „Źródła” opens `/sources` with the sheet closed, „Ustawienia” from the account menu opens settings with the sheet closed — 3657421
+- [x] 4.7 Signed in as `tree-demo-empty@example.com`: no counters in the sidebar or in tooltips — 3657421
+- [x] 4.8 A screen reader (or the accessibility tree) names the controls „Zwiń panel boczny” / „Rozwiń panel boczny”, „Otwórz menu”, „Zamknij menu”, and marks the current destination — 3657421
 
 ### Phase 5: Screenshot gate
 
 #### Automated
 
-- [ ] 5.1 The script runs to the end: `LD_LIBRARY_PATH=/tmp/chromelibs/x/usr/lib/x86_64-linux-gnu node context/changes/app-shell-sidebar/screenshots/shots.mjs context/changes/app-shell-sidebar/screenshots/after`
-- [ ] 5.2 Every „before” shot has an „after” twin: each file name of `screenshots/before/` exists in `screenshots/after/`
-- [ ] 5.3 Format, lint and types still pass: `vendor/bin/sail npm run check` and `vendor/bin/sail npm run types:check`
-- [ ] 5.4 The PHP tests of the change pass: `vendor/bin/sail artisan test --compact tests/Feature/AppShellTest.php tests/Feature/Auth`
+- [x] 5.1 The script runs to the end: `LD_LIBRARY_PATH=/tmp/chromelibs/x/usr/lib/x86_64-linux-gnu node context/changes/app-shell-sidebar/screenshots/shots.mjs context/changes/app-shell-sidebar/screenshots/after`
+- [x] 5.2 Every „before” shot has an „after” twin: each file name of `screenshots/before/` exists in `screenshots/after/`
+- [x] 5.3 Format, lint and types still pass: `vendor/bin/sail npm run check` and `vendor/bin/sail npm run types:check`
+- [x] 5.4 The PHP tests of the change pass: `vendor/bin/sail artisan test --compact tests/Feature/AppShellTest.php tests/Feature/Auth`
 
 #### Manual
 

@@ -8,7 +8,10 @@ function getInitial(name: string): string {
 
 export function useInitials(): GetInitialsFn {
     return useCallback((fullName: string): string => {
-        const names = fullName.trim().split(/\s+/u).filter(Boolean);
+        const names = fullName
+            .trim()
+            .split(/\s+/u)
+            .filter((part) => /^[\p{L}\p{N}]/u.test(part));
 
         if (names.length === 0) {
             return '';
