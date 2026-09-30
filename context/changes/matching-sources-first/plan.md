@@ -368,12 +368,12 @@ The split is one pass over a list that is already in memory; the request and the
 
 #### Automated
 
-- [x] 3.1 Demo seeder runs
-- [x] 3.2 Screenshots produced
-- [x] 3.3 Full suite green
-- [x] 3.4 JS tests, types, lint, format and build
+- [x] 3.1 Demo seeder runs — 421964f
+- [x] 3.2 Screenshots produced — 421964f
+- [x] 3.3 Full suite green — 421964f
+- [x] 3.4 JS tests, types, lint, format and build — 421964f
 
 #### Manual
 
-- [x] 3.5 `verdict.md` reviewed
-- [x] 3.6 One real akt checked end to end
+- [x] 3.5 `verdict.md` reviewed — 421964f
+- [x] 3.6 One real akt checked end to end — 421964f
