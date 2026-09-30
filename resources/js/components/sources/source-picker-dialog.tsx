@@ -95,7 +95,7 @@ export function SourcePickerDialog({
                 type="button"
                 disabled={isLinked || processingSourceId !== null}
                 onClick={() => handleSelect(source.id)}
-                className="space-y-1 text-left disabled:cursor-not-allowed disabled:opacity-50"
+                className="space-y-1 self-start text-left disabled:cursor-not-allowed disabled:opacity-50"
             >
                 <SourceThumbnail source={source} className="rounded-md" />
                 <p

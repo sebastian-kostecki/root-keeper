@@ -2,7 +2,7 @@
 
 Kitchen sink: `TreeViewDemoSeeder` (re-seeded before each shoot; the seeder deletes and recreates its own demo users). Script: `shots.mjs <out> before|after`. 16 PNGs in `before/` (Phase 1 baseline, before any picker edit), 16 in `after/` (4 states x light/dark x 1280/390). Seeded sources have no files on disk, so thumbnails show the broken-image placeholder (seed limitation, same in `before/`).
 
-Inspection: all four states were opened in light 1280; `picker-jan-birth` also in dark 390. The other theme/width variants were not each opened. Shots are viewport-sized and the picker scrolls inside its box, so tiles below the fold of the box are not seen except in the `-end` shot.
+Inspection: all four states were opened in light 1280; `picker-jan-birth` also in dark 390. After the impl review, dark 1280 and light/dark 390 of the death and marriage states were also opened: headings readable, no overflow, same structure as light 1280. Not every one of the 16 was opened. Shots are viewport-sized and the picker scrolls inside its box, so tiles below the fold of the box are not seen except in the `-end` shot.
 
 Shot naming: `<theme>-<width>-<state>.png`. "All 4" = light/dark x 1280/390.
 
@@ -26,7 +26,7 @@ Shot naming: `<theme>-<width>-<state>.png`. "All 4" = light/dark x 1280/390.
 | --- | --- | --- | --- |
 | Accidental architecture | The picker was not told which event it serves | closed | The death picker shows „zgonu" first, the birth picker „urodzenia" first, the marriage picker no match; both callers pass `eventType` |
 | Accidental architecture | The picker tile did not show „typ · rok" | closed | „zgonu · 1932", „urodzenia · 1878", „inny · 1890", „urodzenia"; the upload date only on untyped tiles |
-| Missing shared component | The modal's group label is a class string inlined in three places | open by decision | Copies at `overview-tab.tsx:69`, `family-tab.tsx:149` and the picker (`groupLabelClass`); follow-up GitHub issue: <link pending — to be created after the user's go-ahead> |
+| Missing shared component | The modal's group label is a class string inlined in three places | open by decision | Copies at `overview-tab.tsx:69`, `family-tab.tsx:149` and the picker (`groupLabelClass`); follow-up GitHub issue: https://github.com/sebastian-kostecki/root-keeper/issues/28 |
 | Missing tokens | None | closed | Headings use the existing muted label style; tiles keep `Badge variant="secondary"` |
 
 ## Not shot
