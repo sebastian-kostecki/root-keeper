@@ -1,6 +1,8 @@
 // Components
 import { Form, Head } from '@inertiajs/react';
+import { CircleCheck } from 'lucide-react';
 import TextLink from '@/components/text-link';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { logout } from '@/routes';
@@ -9,28 +11,35 @@ import { send } from '@/routes/verification';
 export default function VerifyEmail({ status }: { status?: string }) {
     return (
         <>
-            <Head title="Email verification" />
+            <Head title="Weryfikacja adresu e-mail" />
 
             {status === 'verification-link-sent' && (
-                <div className="mb-4 text-center text-sm font-medium text-green-600">
-                    A new verification link has been sent to the email address
-                    you provided during registration.
-                </div>
+                <Alert>
+                    <CircleCheck />
+                    <AlertTitle>Wysłaliśmy nowy link</AlertTitle>
+                    <AlertDescription>
+                        Sprawdź skrzynkę na adres podany przy rejestracji.
+                    </AlertDescription>
+                </Alert>
             )}
 
-            <Form {...send.form()} className="space-y-6 text-center">
+            <Form {...send.form()} className="flex flex-col gap-6 text-center">
                 {({ processing }) => (
                     <>
-                        <Button disabled={processing} variant="secondary">
+                        <Button
+                            disabled={processing}
+                            variant="secondary"
+                            className="w-full"
+                        >
                             {processing && <Spinner />}
-                            Resend verification email
+                            Wyślij link ponownie
                         </Button>
 
                         <TextLink
                             href={logout()}
                             className="mx-auto block text-sm"
                         >
-                            Log out
+                            Wyloguj się
                         </TextLink>
                     </>
                 )}
@@ -40,7 +49,7 @@ export default function VerifyEmail({ status }: { status?: string }) {
 }
 
 VerifyEmail.layout = {
-    title: 'Email verification',
+    title: 'Potwierdź adres e-mail',
     description:
-        'Please verify your email address by clicking on the link we just emailed to you.',
+        'Wysłaliśmy link na adres podany przy rejestracji. Kliknij go, aby wejść do drzewa.',
 };

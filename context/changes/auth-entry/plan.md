@@ -440,35 +440,35 @@ Bookmarks to `/` keep working. Nothing in the database changes.
 
 #### Automated
 
-- [x] 3.1 Format and lint pass: `vendor/bin/sail npm run check`
-- [x] 3.2 Types pass: `vendor/bin/sail npm run types:check`
-- [x] 3.3 Production build passes: `vendor/bin/sail npm run build`
-- [x] 3.4 No literal colours in the layout and panel
+- [x] 3.1 Format and lint pass: `vendor/bin/sail npm run check` — 9356b13
+- [x] 3.2 Types pass: `vendor/bin/sail npm run types:check` — 9356b13
+- [x] 3.3 Production build passes: `vendor/bin/sail npm run build` — 9356b13
+- [x] 3.4 No literal colours in the layout and panel — 9356b13
 
 #### Manual
 
-- [x] 3.5 1280 px, light and dark: the layout of `/login` matches boards „A — split z panelem marki” and „A — motyw ciemny”
-- [x] 3.6 1024 px: the panel shows; 1023 px and 390 px: brand row on top, sentence at the bottom, no horizontal scroll
-- [x] 3.7 The brand link opens the login screen and is reachable and visibly focused by keyboard
+- [x] 3.5 1280 px, light and dark: the layout of `/login` matches boards „A — split z panelem marki” and „A — motyw ciemny” — 9356b13
+- [x] 3.6 1024 px: the panel shows; 1023 px and 390 px: brand row on top, sentence at the bottom, no horizontal scroll — 9356b13
+- [x] 3.7 The brand link opens the login screen and is reachable and visibly focused by keyboard — 9356b13
 
 ### Phase 4: Pages, copy and states
 
 #### Automated
 
-- [ ] 4.1 Format and lint pass: `vendor/bin/sail npm run check`
-- [ ] 4.2 Types pass: `vendor/bin/sail npm run types:check`
-- [ ] 4.3 Production build passes: `vendor/bin/sail npm run build`
-- [ ] 4.4 Pint, then auth, entry, settings and sources tests pass
-- [ ] 4.5 No positive `tabIndex` left on auth pages
-- [ ] 4.6 No English copy left on auth pages
+- [x] 4.1 Format and lint pass: `vendor/bin/sail npm run check`
+- [x] 4.2 Types pass: `vendor/bin/sail npm run types:check`
+- [x] 4.3 Production build passes: `vendor/bin/sail npm run build`
+- [x] 4.4 Pint, then auth, entry, settings and sources tests pass
+- [x] 4.5 No positive `tabIndex` left on auth pages
+- [x] 4.6 No English copy left on auth pages
 
 #### Manual
 
-- [ ] 4.7 Wrong password at 1280 px, light and dark: matches „A — stany formularza” / „A — motyw ciemny”
-- [ ] 4.8 Register submitted empty at 390 px, dark: matches „A — mobile, rejestracja z błędami, ciemny”
-- [ ] 4.9 Keyboard only on `/login`: Tab follows the visual order (eye toggle included), each with a visible ring
-- [ ] 4.10 An unverified local user opening `/email/verify` directly sees „A — weryfikacja e-mail”; resend shows the `Alert`
-- [ ] 4.11 A local user with 2FA on sees the Polish challenge in both modes
+- [x] 4.7 Wrong password at 1280 px, light and dark: matches „A — stany formularza” / „A — motyw ciemny”
+- [x] 4.8 Register submitted empty at 390 px, dark: matches „A — mobile, rejestracja z błędami, ciemny”
+- [x] 4.9 Keyboard only on `/login`: Tab follows the visual order (eye toggle included), each with a visible ring
+- [x] 4.10 An unverified local user opening `/email/verify` directly sees „A — weryfikacja e-mail”; resend shows the `Alert`
+- [x] 4.11 A local user with 2FA on sees the Polish challenge in both modes
 
 ### Phase 5: Screenshot gate
 
