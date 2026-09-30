@@ -30,7 +30,7 @@ export function NavMain({ items }: { items: NavItem[] }) {
                                     isActive={isActive}
                                     tooltip={{
                                         children: hasCount
-                                            ? `${item.title} · ${item.count}`
+                                            ? `${item.title}\u00A0·\u00A0${item.count}`
                                             : item.title,
                                     }}
                                     className="[[data-mobile=true]_&]:h-11 [[data-mobile=true]_&]:text-base [[data-mobile=true]_&>svg]:size-5"

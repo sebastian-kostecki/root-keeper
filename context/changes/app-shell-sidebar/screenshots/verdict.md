@@ -27,7 +27,7 @@ Inspection: opened by eye — light 1280: persons, collapsed tree, source page, 
 
 ## Differences from the boards / End State
 
-Nothing was fixed in this phase (the gate does not change shell code). Left for the human and `/10x-impl-review`:
+Differences 1 and 2 were fixed during the gate (see their entries; the `use-initials.tsx` change is recorded in the plan addendum and covered by `use-initials.test.ts`); the rest are left for the human and `/10x-impl-review`:
 
 1. **Initials of the empty-tree user read „D(”.** The demo name is „Demo drzewa (pusty)”; the initials take the first letter of the last word, which is „(”. The seeded name triggers it; a real name would not. Seen in `*-expanded-empty-tree` and `*-sheet-empty-tree`. **Fixed:** `use-initials.tsx` now skips words that do not start with a letter or digit, so the initials are „DD”; shots re-taken.
 2. **Trail on `/tree` has a chevron after the single link** („Drzewo ›”). The plan says chevrons separate items when there is more than one; here one link is shown and the current page is not, so the chevron leads to nothing visible above the heading. **Fixed:** `breadcrumbs.tsx` renders a separator only between items; shots re-taken.

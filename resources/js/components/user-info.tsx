@@ -33,6 +33,7 @@ export function UserInfo({
                 <span className="truncate font-medium">{user.name}</span>
                 {showEmail && (
                     <span
+                        title={user.email}
                         className={cn(
                             'truncate text-xs',
                             onSidebar

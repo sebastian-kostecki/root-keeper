@@ -479,6 +479,10 @@ No data migration. After deploy the human sets `APP_NAME="Root Keeper"` on the s
 - Sidebar primitive: `resources/js/components/ui/sidebar.tsx:150-247`, `:249-273`, `:469-539`, `:573-593`
 - Shared props pattern: `app/Http/Middleware/HandleInertiaRequests.php:41-60`
 
+## Addendum (impl review F1)
+
+During the Phase 5 gate `resources/js/hooks/use-initials.tsx` was changed: words that do not start with a letter or digit are skipped, so „Demo drzewa (pusty)” gives „DD”. The hook also serves `person-avatar.tsx` and `family-tab.tsx`. The logic is now the exported pure function `getInitials`, covered by `resources/js/hooks/use-initials.test.ts`.
+
 ## Progress
 
 > Convention: `- [ ]` pending, `- [x]` done. Append ` — <commit sha>` when a step lands. Do not rename step titles. See `references/progress-format.md`.
@@ -553,10 +557,10 @@ No data migration. After deploy the human sets `APP_NAME="Root Keeper"` on the s
 
 #### Automated
 
-- [x] 5.1 The script runs to the end: `LD_LIBRARY_PATH=/tmp/chromelibs/x/usr/lib/x86_64-linux-gnu node context/changes/app-shell-sidebar/screenshots/shots.mjs context/changes/app-shell-sidebar/screenshots/after`
-- [x] 5.2 Every „before” shot has an „after” twin: each file name of `screenshots/before/` exists in `screenshots/after/`
-- [x] 5.3 Format, lint and types still pass: `vendor/bin/sail npm run check` and `vendor/bin/sail npm run types:check`
-- [x] 5.4 The PHP tests of the change pass: `vendor/bin/sail artisan test --compact tests/Feature/AppShellTest.php tests/Feature/Auth`
+- [x] 5.1 The script runs to the end: `LD_LIBRARY_PATH=/tmp/chromelibs/x/usr/lib/x86_64-linux-gnu node context/changes/app-shell-sidebar/screenshots/shots.mjs context/changes/app-shell-sidebar/screenshots/after` — 9e78058
+- [x] 5.2 Every „before” shot has an „after” twin: each file name of `screenshots/before/` exists in `screenshots/after/` — 9e78058
+- [x] 5.3 Format, lint and types still pass: `vendor/bin/sail npm run check` and `vendor/bin/sail npm run types:check` — 9e78058
+- [x] 5.4 The PHP tests of the change pass: `vendor/bin/sail artisan test --compact tests/Feature/AppShellTest.php tests/Feature/Auth` — 9e78058
 
 #### Manual
 
