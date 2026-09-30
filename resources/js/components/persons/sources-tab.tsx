@@ -70,25 +70,25 @@ function SourceGroup({ label, event, availableSources }: GroupProps) {
                                     className="size-14 shrink-0 rounded-md"
                                 />
                                 <div className="min-w-0 flex-1">
-                                    <div className="flex items-center gap-2">
-                                        <p
-                                            className="min-w-0 truncate text-sm font-medium"
-                                            title={source.display_name}
-                                        >
-                                            {source.display_name}
-                                        </p>
+                                    <p
+                                        className="truncate text-sm font-medium"
+                                        title={source.display_name}
+                                    >
+                                        {source.display_name}
+                                    </p>
+                                    <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                                         <Badge
                                             variant="secondary"
                                             className="shrink-0"
                                         >
                                             {source.kind_short_label}
                                         </Badge>
+                                        {uploadedAt && (
+                                            <p className="text-muted-foreground text-xs">
+                                                dodano {uploadedAt}
+                                            </p>
+                                        )}
                                     </div>
-                                    {uploadedAt && (
-                                        <p className="text-muted-foreground text-xs">
-                                            dodano {uploadedAt}
-                                        </p>
-                                    )}
                                 </div>
                                 <div className="flex shrink-0 items-center gap-1">
                                     <Button variant="outline" size="sm" asChild>

@@ -410,31 +410,31 @@ The picker list now holds every source of the tree instead of only akts. It is t
 
 #### Automated
 
-- [x] 2.1 Event-source, person and source tests still pass
-- [x] 2.2 JS unit tests pass
-- [x] 2.3 Types, lint and format
-- [x] 2.4 Production build
-- [x] 2.5 No akt wording left in the linking flow
+- [x] 2.1 Event-source, person and source tests still pass — 70af080
+- [x] 2.2 JS unit tests pass — 70af080
+- [x] 2.3 Types, lint and format — 70af080
+- [x] 2.4 Production build — 70af080
+- [x] 2.5 No akt wording left in the linking flow — 70af080
 
 #### Manual
 
-- [x] 2.6 The seeded facts read „Potwierdzone: nagrobek", „Potwierdzone: akt, nagrobek", „Potwierdzone: inne", „Bez źródła" and „Potwierdzone: akt, nagrobek, inne" on every surface
-- [x] 2.7 Link order does not change the badge, and unlinking updates it down to „Bez źródła"
-- [x] 2.8 On „Przegląd" each source of a fact is a link with its kind that opens the source page; while a section is edited the links of other cards are inert
-- [x] 2.9 The picker lists every kind with its kind shown, disables linked sources and the toast reads „Powiązano źródło"
-- [x] 2.10 The persons list shows the same ✓ for an akt-backed and a gravestone-backed date
-- [x] 2.11 At 390 px the longest badge and long source names fit; focus is visible; light and dark both read correctly
+- [x] 2.6 The seeded facts read „Potwierdzone: nagrobek", „Potwierdzone: akt, nagrobek", „Potwierdzone: inne", „Bez źródła" and „Potwierdzone: akt, nagrobek, inne" on every surface — 70af080
+- [x] 2.7 Link order does not change the badge, and unlinking updates it down to „Bez źródła" — 70af080
+- [x] 2.8 On „Przegląd" each source of a fact is a link with its kind that opens the source page; while a section is edited the links of other cards are inert — 70af080
+- [x] 2.9 The picker lists every kind with its kind shown, disables linked sources and the toast reads „Powiązano źródło" — 70af080
+- [x] 2.10 The persons list shows the same ✓ for an akt-backed and a gravestone-backed date — 70af080
+- [x] 2.11 At 390 px the longest badge and long source names fit; focus is visible; light and dark both read correctly — 70af080
 
 ### Phase 3: Screenshot gate
 
 #### Automated
 
-- [ ] 3.1 Demo seeder runs
-- [ ] 3.2 Screenshots produced
-- [ ] 3.3 Full suite green
-- [ ] 3.4 Types, lint, format and build
+- [x] 3.1 Demo seeder runs
+- [x] 3.2 Screenshots produced
+- [x] 3.3 Full suite green
+- [x] 3.4 Types, lint, format and build
 
 #### Manual
 
-- [ ] 3.5 `verdict.md` reviewed: every state has Expected and Seen filled, the views are compared with `before/`, and every charge is marked closed
-- [ ] 3.6 One real gravestone photo uploaded, linked to a death and opened from the link on „Przegląd"
+- [x] 3.5 `verdict.md` reviewed: every state has Expected and Seen filled, the views are compared with `before/`, and every charge is marked closed
+- [x] 3.6 One real gravestone photo uploaded, linked to a death and opened from the link on „Przegląd"

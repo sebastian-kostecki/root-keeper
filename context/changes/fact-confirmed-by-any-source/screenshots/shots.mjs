@@ -96,14 +96,16 @@ async function shoot(page, prefix, ids) {
     await snap(page, prefix, 'family-jan');
 
     // Picker from Leon's death (no source yet): "Powiąż ..." in the "Zgon" section.
+    // after flavour: the copy is "Powiąż źródło" / "Powiąż kolejne źródło"; before keeps the old "Powiąż akt" match.
+    const linkButton = flavour === 'after' ? /Powiąż (kolejne )?źródło/ : /Powiąż/;
     await openPerson(page, ids.leon, 'Przegląd');
-    await page.getByRole('region', { name: 'Zgon', exact: true }).getByRole('button', { name: /Powiąż/ }).click();
+    await page.getByRole('region', { name: 'Zgon', exact: true }).getByRole('button', { name: linkButton }).click();
     await snap(page, prefix, 'picker-leon-death');
     await closeDialogs(page);
 
     // Picker from Jan's birth: first "Powiąż ..." on the "Źródła" tab is the birth group; scroll to a disabled card.
     await openPerson(page, ids.jan, 'Źródła');
-    await page.getByRole('button', { name: /Powiąż/ }).first().click();
+    await page.getByRole('button', { name: linkButton }).first().click();
     await page.waitForTimeout(500);
     await page.locator('[role=dialog] button:disabled').first().scrollIntoViewIfNeeded();
     await snap(page, prefix, 'picker-jan-birth');
