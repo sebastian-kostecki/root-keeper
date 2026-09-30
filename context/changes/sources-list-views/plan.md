@@ -615,10 +615,10 @@ None. No schema change. `events_count` is additive and appears only on the index
 
 #### Automated
 
-- [x] 4.1 Seeder runs cleanly: `vendor/bin/sail artisan db:seed --class=TreeViewDemoSeeder`
-- [x] 4.2 The screenshot script completes and writes every listed `/sources` shot to `screenshots/after/`
+- [x] 4.1 Seeder runs cleanly: `vendor/bin/sail artisan db:seed --class=TreeViewDemoSeeder` — 4140008
+- [x] 4.2 The screenshot script completes and writes every listed `/sources` shot to `screenshots/after/` — 4140008
 
 #### Manual
 
-- [x] 4.3 `verdict.md` shows every state matching its canvas board (`Main`, `Rejestr`, `Stany`, `Mobile`), with each difference explained or fixed
-- [x] 4.4 `verdict.md` lists the three open follow-ups and records v2:FR-006 as met
+- [x] 4.3 `verdict.md` shows every state matching its canvas board (`Main`, `Rejestr`, `Stany`, `Mobile`), with each difference explained or fixed — 4140008
+- [x] 4.4 `verdict.md` lists the three open follow-ups and records v2:FR-006 as met — 4140008
