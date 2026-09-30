@@ -487,31 +487,31 @@ No data migration. After deploy the human sets `APP_NAME="Root Keeper"` on the s
 
 #### Automated
 
-- [x] 1.1 Format and lint pass: `vendor/bin/sail npm run check`
-- [x] 1.2 Types pass: `vendor/bin/sail npm run types:check`
-- [x] 1.3 No literal colour left in the two files: `grep -nE "neutral-|text-(white|black)|#[0-9A-Fa-f]{6}" resources/js/components/user-info.tsx resources/js/app.tsx` prints nothing
-- [x] 1.4 The five values are in place: `grep -nE "sidebar-(accent|ring|primary-foreground):" resources/css/app.css` shows `0.945`, `0.556` for light and `0.205`, `0.29`, `0.556` for dark
+- [x] 1.1 Format and lint pass: `vendor/bin/sail npm run check` — fb53d41
+- [x] 1.2 Types pass: `vendor/bin/sail npm run types:check` — fb53d41
+- [x] 1.3 No literal colour left in the two files: `grep -nE "neutral-|text-(white|black)|#[0-9A-Fa-f]{6}" resources/js/components/user-info.tsx resources/js/app.tsx` prints nothing — fb53d41
+- [x] 1.4 The five values are in place: `grep -nE "sidebar-(accent|ring|primary-foreground):" resources/css/app.css` shows `0.945`, `0.556` for light and `0.205`, `0.29`, `0.556` for dark — fb53d41
 
 #### Manual
 
-- [x] 1.5 At 1280 px, light and dark: on `/persons` the item „Osoby” is clearly filled, and Tab onto „Źródła” shows a ring that is easy to see
-- [x] 1.6 The progress bar during a slow navigation is dark in the light theme and light in the dark theme
-- [x] 1.7 `/persons`, `/sources` and `/tree` content looks as before (only `--sidebar-*` values changed)
+- [x] 1.5 At 1280 px, light and dark: on `/persons` the item „Osoby” is clearly filled, and Tab onto „Źródła” shows a ring that is easy to see — fb53d41
+- [x] 1.6 The progress bar during a slow navigation is dark in the light theme and light in the dark theme — fb53d41
+- [x] 1.7 `/persons`, `/sources` and `/tree` content looks as before (only `--sidebar-*` values changed) — fb53d41
 
 ### Phase 2: Server contract — counters and app name
 
 #### Automated
 
-- [ ] 2.1 New tests pass: `vendor/bin/sail artisan test --compact tests/Feature/AppShellTest.php`
-- [ ] 2.2 Auth redirects are untouched: `vendor/bin/sail artisan test --compact tests/Feature/Auth`
-- [ ] 2.3 PHP style is applied: `vendor/bin/sail bin pint --dirty --format agent`
-- [ ] 2.4 Static analysis passes: `vendor/bin/sail bin phpstan analyse`
-- [ ] 2.5 Types pass: `vendor/bin/sail npm run types:check`
+- [x] 2.1 New tests pass: `vendor/bin/sail artisan test --compact tests/Feature/AppShellTest.php`
+- [x] 2.2 Auth redirects are untouched: `vendor/bin/sail artisan test --compact tests/Feature/Auth`
+- [x] 2.3 PHP style is applied: `vendor/bin/sail bin pint --dirty --format agent`
+- [x] 2.4 Static analysis passes: `vendor/bin/sail bin phpstan analyse`
+- [x] 2.5 Types pass: `vendor/bin/sail npm run types:check`
 
 #### Manual
 
-- [ ] 2.6 Local `.env` has `APP_NAME="Root Keeper"` and the old sidebar prints „Root Keeper”
-- [ ] 2.7 The production `APP_NAME` is noted as a deployment step for the human
+- [x] 2.6 Local `.env` has `APP_NAME="Root Keeper"` and the old sidebar prints „Root Keeper”
+- [x] 2.7 The production `APP_NAME` is noted as a deployment step for the human
 
 ### Phase 3: The shell — sidebar, page header, account menu
 
