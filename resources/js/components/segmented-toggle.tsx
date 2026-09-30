@@ -46,7 +46,10 @@ export function SegmentedToggle<T extends string>({
                     key={item.value}
                     value={item.value}
                     disabled={item.disabled}
-                    className="px-3"
+                    className={cn(
+                        'px-3',
+                        item.count !== undefined && 'max-sm:px-1.5',
+                    )}
                 >
                     {item.icon}
                     <span className={cn(iconOnlyBelowSm && 'max-sm:sr-only')}>

@@ -593,32 +593,32 @@ None. No schema change. `events_count` is additive and appears only on the index
 
 #### Automated
 
-- [x] 3.1 Format + lint pass: `vendor/bin/sail npm run check`
-- [x] 3.2 Types pass: `vendor/bin/sail npm run types:check`
-- [x] 3.3 JS unit tests pass: `vendor/bin/sail npm run test:js`
-- [x] 3.4 Build passes: `vendor/bin/sail npm run build`
-- [x] 3.5 Sources feature tests still pass: `vendor/bin/sail artisan test --compact tests/Feature/SourcesTest.php`
+- [x] 3.1 Format + lint pass: `vendor/bin/sail npm run check` — f6ab8b3
+- [x] 3.2 Types pass: `vendor/bin/sail npm run types:check` — f6ab8b3
+- [x] 3.3 JS unit tests pass: `vendor/bin/sail npm run test:js` — f6ab8b3
+- [x] 3.4 Build passes: `vendor/bin/sail npm run build` — f6ab8b3
+- [x] 3.5 Sources feature tests still pass: `vendor/bin/sail artisan test --compact tests/Feature/SourcesTest.php` — f6ab8b3
 
 #### Manual
 
-- [x] 3.6 Typing filters the list at once, the URL gets `q` after a pause, and Back does not step through keystrokes
-- [x] 3.7 Kind filter: counters follow the search, a kind with counter 0 is disabled, and the chosen kind survives a view switch and a refresh
-- [x] 3.8 Switching Galeria ↔ Tabela keeps `q` and `kind`, the Galeria URL has no `sort`, and refresh restores the chosen view
-- [x] 3.9 Table sort: Rok keeps sources without a year last in both directions, `Dodano ↓` equals the gallery order, and Potwierdza ↑ starts with „bez powiązań”
-- [x] 3.10 Empty states: „Wyczyść wyszukiwanie” keeps the kind, „Pokaż wszystkie rodzaje” keeps the search text, and the empty tree offers „Dodaj źródło”
-- [x] 3.11 ⋯ → „Edytuj” saves, and the list keeps its view, search, kind and sort and shows the new values; ⋯ → „Otwórz” lands on the source page
-- [x] 3.12 Keyboard: Tab reaches the search, the kind filter, the switcher, cards or rows, sort headers and ⋯ menus, each with a visible focus ring
-- [x] 3.13 At 390 px the gallery has two columns with no sideways page scroll, and the table scrolls sideways with the Źródło column sticky
-- [x] 3.14 The page has one `<h1>` „Źródła” and „Dodaj źródło” is level with it
+- [x] 3.6 Typing filters the list at once, the URL gets `q` after a pause, and Back does not step through keystrokes — f6ab8b3
+- [x] 3.7 Kind filter: counters follow the search, a kind with counter 0 is disabled, and the chosen kind survives a view switch and a refresh — f6ab8b3
+- [x] 3.8 Switching Galeria ↔ Tabela keeps `q` and `kind`, the Galeria URL has no `sort`, and refresh restores the chosen view — f6ab8b3
+- [x] 3.9 Table sort: Rok keeps sources without a year last in both directions, `Dodano ↓` equals the gallery order, and Potwierdza ↑ starts with „bez powiązań” — f6ab8b3
+- [x] 3.10 Empty states: „Wyczyść wyszukiwanie” keeps the kind, „Pokaż wszystkie rodzaje” keeps the search text, and the empty tree offers „Dodaj źródło” — f6ab8b3
+- [x] 3.11 ⋯ → „Edytuj” saves, and the list keeps its view, search, kind and sort and shows the new values; ⋯ → „Otwórz” lands on the source page — f6ab8b3
+- [x] 3.12 Keyboard: Tab reaches the search, the kind filter, the switcher, cards or rows, sort headers and ⋯ menus, each with a visible focus ring — f6ab8b3
+- [x] 3.13 At 390 px the gallery has two columns with no sideways page scroll, and the table scrolls sideways with the Źródło column sticky — f6ab8b3
+- [x] 3.14 The page has one `<h1>` „Źródła” and „Dodaj źródło” is level with it — f6ab8b3
 
 ### Phase 4: Screenshot gate
 
 #### Automated
 
-- [ ] 4.1 Seeder runs cleanly: `vendor/bin/sail artisan db:seed --class=TreeViewDemoSeeder`
-- [ ] 4.2 The screenshot script completes and writes every listed `/sources` shot to `screenshots/after/`
+- [x] 4.1 Seeder runs cleanly: `vendor/bin/sail artisan db:seed --class=TreeViewDemoSeeder`
+- [x] 4.2 The screenshot script completes and writes every listed `/sources` shot to `screenshots/after/`
 
 #### Manual
 
-- [ ] 4.3 `verdict.md` shows every state matching its canvas board (`Main`, `Rejestr`, `Stany`, `Mobile`), with each difference explained or fixed
-- [ ] 4.4 `verdict.md` lists the three open follow-ups and records v2:FR-006 as met
+- [x] 4.3 `verdict.md` shows every state matching its canvas board (`Main`, `Rejestr`, `Stany`, `Mobile`), with each difference explained or fixed
+- [x] 4.4 `verdict.md` lists the three open follow-ups and records v2:FR-006 as met

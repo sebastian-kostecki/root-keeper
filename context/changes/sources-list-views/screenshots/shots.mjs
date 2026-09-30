@@ -1,6 +1,6 @@
 // Gate screenshot set for context/changes/sources-list-views (kitchen sink: TreeViewDemoSeeder).
 // Structure follows context/archive/2026-09-30-matching-sources-first/screenshots/shots.mjs.
-// Run:   LD_LIBRARY_PATH=/tmp/chromelibs/x/usr/lib/x86_64-linux-gnu node shots.mjs <out-dir> [persons|sources|all]
+// Run:   LD_LIBRARY_PATH=/tmp/chromelibs/x/usr/lib/x86_64-linux-gnu node shots.mjs <out-dir> [persons|sources|sources-after|all]
 // Compare: node shots.mjs --compare <dir-a> <dir-b>   (byte comparison of same-named PNGs, one line per file)
 //   Chromium needs the LD_LIBRARY_PATH above on this host (bare `node` fails on libnspr4.so).
 // Sets:
@@ -8,6 +8,9 @@
 //            -urodzenie, no results, empty tree; light and dark at 1280 and 390 px.
 //   sources: /sources as rendered now; light and dark at 1280 and 390 px. (The after-set for /sources is extended
 //            by the phases that build the new view.)
+//   sources-after: the states of the new /sources view (Phase 4): Galeria, Tabela, Tabela by year, search with counters,
+//            one kind, no match, empty kind, empty tree (light/dark x 1280/390), plus at 1280 the open menu, the edit
+//            dialog, and keyboard focus on a card and on a row link. `all` runs persons, sources and sources-after.
 // Playwright from the npx cache; not a repo dependency. Needs Sail up at localhost:8000 and the demo users.
 // Output: <theme>-<width>-<state>.png
 import fs from 'node:fs';
@@ -38,8 +41,8 @@ if (process.argv[2] === '--compare') {
 
 const out = process.argv[2];
 const set = process.argv[3] ?? 'all';
-if (!out || !['persons', 'sources', 'all'].includes(set)) {
-    throw new Error('Usage: node shots.mjs <out-dir> [persons|sources|all]');
+if (!out || !['persons', 'sources', 'sources-after', 'all'].includes(set)) {
+    throw new Error('Usage: node shots.mjs <out-dir> [persons|sources|sources-after|all]');
 }
 fs.mkdirSync(out, { recursive: true });
 const { chromium } = await import('/home/sebastian/.npm/_npx/e41f203b7505f1fb/node_modules/playwright/index.mjs');
@@ -77,7 +80,7 @@ for (const scheme of ['light', 'dark']) {
     for (const [width, height] of sizes) {
         const tag = `${scheme}-${width}`;
 
-        if (set !== 'sources') {
+        if (set === 'persons' || set === 'all') {
             const { context, page } = await session({ width, height, scheme });
             await visit(page, '/persons');
             await snap(page, `${tag}-persons-lista`);
@@ -95,11 +98,57 @@ for (const scheme of ['light', 'dark']) {
             await emptySession.context.close();
         }
 
-        if (set !== 'persons') {
+        if (set === 'sources' || set === 'all') {
             const { context, page } = await session({ width, height, scheme });
             await visit(page, '/sources');
             await snap(page, `${tag}-sources-list`);
             await context.close();
+        }
+
+        if (set === 'sources-after' || set === 'all') {
+            const { context, page } = await session({ width, height, scheme });
+            const states = {
+                galeria: '/sources',
+                tabela: '/sources?view=tabela',
+                'tabela-rok': '/sources?view=tabela&sort=rok',
+                'search-counters': '/sources?q=lipn',
+                'one-kind': '/sources?kind=nagrobki',
+                'no-match': '/sources?q=Kowalczyk',
+                'empty-kind': '/sources?q=lipn&kind=inne',
+            };
+            for (const [name, url] of Object.entries(states)) {
+                await visit(page, url);
+                await snap(page, `${tag}-sources-${name}`);
+            }
+
+            if (width === 1280) {
+                await visit(page, '/sources?view=tabela');
+                await page.getByRole('button', { name: /^Akcje:/ }).first().click();
+                await snap(page, `${tag}-sources-menu-open`);
+                await page.getByRole('menuitem', { name: 'Edytuj' }).click();
+                await page.getByRole('dialog').waitFor();
+                await snap(page, `${tag}-sources-edit-dialog`, false);
+
+                await visit(page, '/sources');
+                for (let i = 0; i < 30; i++) {
+                    await page.keyboard.press('Tab');
+                    if (await page.evaluate(() => !!document.activeElement?.closest('ul')?.querySelector('a[href*="/sources/"]') && document.activeElement?.tagName === 'A')) break;
+                }
+                await snap(page, `${tag}-sources-focus-card`, false);
+
+                await visit(page, '/sources?view=tabela');
+                for (let i = 0; i < 40; i++) {
+                    await page.keyboard.press('Tab');
+                    if (await page.evaluate(() => document.activeElement?.tagName === 'A' && !!document.activeElement.closest('td'))) break;
+                }
+                await snap(page, `${tag}-sources-focus-row-link`, false);
+            }
+            await context.close();
+
+            const emptySession = await session({ width, height, scheme, email: empty });
+            await visit(emptySession.page, '/sources');
+            await snap(emptySession.page, `${tag}-sources-empty-tree`);
+            await emptySession.context.close();
         }
     }
 }
