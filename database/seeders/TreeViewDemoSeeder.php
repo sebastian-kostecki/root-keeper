@@ -8,6 +8,7 @@ use App\Actions\Trees\SetTreeRootPerson;
 use App\Enums\EventType;
 use App\Enums\ParticipantRole;
 use App\Enums\Religion;
+use App\Enums\SourceRecordType;
 use App\Models\Event;
 use App\Models\Person;
 use App\Models\Source;
@@ -37,6 +38,13 @@ use Illuminate\Support\Facades\DB;
  * Anna's marriage by its akt, then an other source (zaproszenie-slubne.jpg), then a gravestone
  * (nagrobek-jana-i-anny.jpg), linked out of kind order; Helena Kowalska's death by an other source only
  * (nekrolog-heleny.jpg). Leon's death stays without a source.
+ *
+ * Matching states (appended last, after the confirmation states): three akty metrykalne for the source picker
+ * sections. An akt zgonu 1932 uploaded one year back (akt-zgonu-lipnica-1932.jpg), the only match for Leon's
+ * death: last in the newest-first list, first once matching akts lead. An odpis aktu urodzenia without a rok
+ * (odpis-aktu-urodzenia-jana.jpg), linked to Jan's birth as its third source: a match that is already linked.
+ * An akt typed "inny", 1890 (ksiega-ludnosci-lipnica.jpg): typed, but it matches no event. No akt is typed
+ * marriage, so the marriage picker is the state where nothing matches.
  */
 class TreeViewDemoSeeder extends Seeder
 {
@@ -172,6 +180,7 @@ class TreeViewDemoSeeder extends Seeder
         $this->nameOnlyPerson();
         $this->sourceStates($jan, $kacper);
         $this->confirmationStates($wiktor, $helena, $janAnnaMarriage);
+        $this->matchingStates($jan);
 
         (new SetTreeRootPerson)->handle($this->tree, $jan);
     }
@@ -299,6 +308,37 @@ class TreeViewDemoSeeder extends Seeder
 
         $obituary = Source::factory()->for($this->tree)->other()->create(['original_name' => 'nekrolog-heleny.jpg']);
         $this->eventOf($helena, EventType::Death)->sources()->attach($obituary);
+    }
+
+    /**
+     * Source-picker states: a matching akt far down the list, a matching akt already linked, a typed akt that matches nothing.
+     */
+    private function matchingStates(Person $jan): void
+    {
+        $oneYearAgo = now()->subYear();
+
+        Source::factory()->for($this->tree)->create([
+            'original_name' => 'akt-zgonu-lipnica-1932.jpg',
+            'name' => 'Zgony Lipnica 1932 nr 14',
+            'record_type' => SourceRecordType::Death,
+            'year' => 1932,
+            'created_at' => $oneYearAgo,
+            'updated_at' => $oneYearAgo,
+        ]);
+
+        $birthCopy = Source::factory()->for($this->tree)->create([
+            'original_name' => 'odpis-aktu-urodzenia-jana.jpg',
+            'name' => 'Odpis aktu urodzenia Jana Kowalskiego',
+            'record_type' => SourceRecordType::Birth,
+        ]);
+        $this->eventOf($jan, EventType::Birth)->sources()->attach($birthCopy);
+
+        Source::factory()->for($this->tree)->create([
+            'original_name' => 'ksiega-ludnosci-lipnica.jpg',
+            'name' => 'Księga ludności Lipnicy',
+            'record_type' => SourceRecordType::Other,
+            'year' => 1890,
+        ]);
     }
 
     private function attachSource(Event $event, string $originalName): void
