@@ -474,11 +474,11 @@ Bookmarks to `/` keep working. Nothing in the database changes.
 
 #### Automated
 
-- [x] 5.1 The script runs cleanly and writes `after/`
-- [x] 5.2 Every `before/` shot name has an `after/` counterpart
+- [x] 5.1 The script runs cleanly and writes `after/` — 89120f7
+- [x] 5.2 Every `before/` shot name has an `after/` counterpart — 89120f7
 
 #### Manual
 
-- [x] 5.3 Each `after/` shot matches its board
-- [x] 5.4 `after/*-guest-home.png` shows the login screen, `after/*-signed-in-home.png` shows „Osoby”
-- [x] 5.5 Contrast holds in dark: error text, muted description, `tree-meta` on the card surfaces
+- [x] 5.3 Each `after/` shot matches its board — 89120f7
+- [x] 5.4 `after/*-guest-home.png` shows the login screen, `after/*-signed-in-home.png` shows „Osoby” — 89120f7
+- [x] 5.5 Contrast holds in dark: error text, muted description, `tree-meta` on the card surfaces — 89120f7

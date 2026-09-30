@@ -1,7 +1,7 @@
 ---
 change_id: auth-entry
 title: Wejście dla niezalogowanych — logowanie jako strona startowa (layout split)
-status: implementing
+status: implemented
 created: 2026-09-30
 updated: 2026-09-30
 archived_at: null
