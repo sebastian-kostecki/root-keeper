@@ -9,7 +9,7 @@ export function ConfirmedMark() {
                 aria-hidden="true"
                 className="text-primary inline size-3.5 shrink-0 align-[-2px]"
             />
-            <span className="sr-only">potwierdzone aktem</span>
+            <span className="sr-only">potwierdzone źródłem</span>
         </>
     );
 }

@@ -5,6 +5,7 @@ import { useGuardedClick } from '@/components/persons/section-editor';
 import { SourcePickerDialog } from '@/components/sources/source-picker-dialog';
 import { SourceThumbnail } from '@/components/sources/source-thumbnail';
 import { UnlinkSourceDialog } from '@/components/sources/unlink-source-dialog';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import type { PersonPreview, Source, SourcedPersonEvent } from '@/types';
 
@@ -15,8 +16,6 @@ type Props = {
 
 type GroupProps = {
     label: string;
-    /** Genitive form used in the empty-state hint, e.g. "urodzenia". */
-    eventGenitive: string;
     event: SourcedPersonEvent;
     availableSources: Source[] | undefined;
 };
@@ -37,12 +36,7 @@ function formatUploadedAt(uploadedAt: string | null): string | null {
           });
 }
 
-function SourceGroup({
-    label,
-    eventGenitive,
-    event,
-    availableSources,
-}: GroupProps) {
+function SourceGroup({ label, event, availableSources }: GroupProps) {
     const summary = [event.date, event.place].filter(Boolean).join(', ');
     const hasSources = event.sources.length > 0;
     const guardClick = useGuardedClick();
@@ -58,7 +52,7 @@ function SourceGroup({
                         </p>
                     )}
                 </div>
-                <EventSourceStatus isConfirmed={event.is_confirmed} />
+                <EventSourceStatus kinds={event.confirmed_kinds} />
             </div>
 
             {hasSources ? (
@@ -76,12 +70,20 @@ function SourceGroup({
                                     className="size-14 shrink-0 rounded-md"
                                 />
                                 <div className="min-w-0 flex-1">
-                                    <p
-                                        className="truncate text-sm font-medium"
-                                        title={source.display_name}
-                                    >
-                                        {source.display_name}
-                                    </p>
+                                    <div className="flex items-center gap-2">
+                                        <p
+                                            className="min-w-0 truncate text-sm font-medium"
+                                            title={source.display_name}
+                                        >
+                                            {source.display_name}
+                                        </p>
+                                        <Badge
+                                            variant="secondary"
+                                            className="shrink-0"
+                                        >
+                                            {source.kind_short_label}
+                                        </Badge>
+                                    </div>
                                     {uploadedAt && (
                                         <p className="text-muted-foreground text-xs">
                                             dodano {uploadedAt}
@@ -134,8 +136,7 @@ function SourceGroup({
                 </ul>
             ) : (
                 <p className="text-muted-foreground text-sm">
-                    Brak aktu. Powiąż akt {eventGenitive}, żeby potwierdzić
-                    zdarzenie.
+                    Brak źródła. Powiąż źródło, żeby potwierdzić zdarzenie.
                 </p>
             )}
 
@@ -145,7 +146,7 @@ function SourceGroup({
                 availableSources={availableSources}
                 trigger={
                     <Button type="button" variant="outline" size="sm">
-                        {hasSources ? 'Powiąż kolejny akt' : 'Powiąż akt'}
+                        {hasSources ? 'Powiąż kolejne źródło' : 'Powiąż źródło'}
                     </Button>
                 }
             />
@@ -159,7 +160,6 @@ export function SourcesTab({ person, availableSources }: Props) {
             {person.birth && (
                 <SourceGroup
                     label="Urodzenie"
-                    eventGenitive="urodzenia"
                     event={person.birth}
                     availableSources={availableSources}
                 />
@@ -169,7 +169,6 @@ export function SourcesTab({ person, availableSources }: Props) {
                 <SourceGroup
                     key={marriage.id}
                     label={`Małżeństwo z ${marriage.spouse?.display_name ?? 'nieznanym małżonkiem'}`}
-                    eventGenitive="małżeństwa"
                     event={marriage}
                     availableSources={availableSources}
                 />
@@ -178,7 +177,6 @@ export function SourcesTab({ person, availableSources }: Props) {
             {person.death && (
                 <SourceGroup
                     label="Zgon"
-                    eventGenitive="zgonu"
                     event={person.death}
                     availableSources={availableSources}
                 />

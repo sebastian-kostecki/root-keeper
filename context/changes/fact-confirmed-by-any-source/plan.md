@@ -394,36 +394,36 @@ The picker list now holds every source of the tree instead of only akts. It is t
 
 #### Automated
 
-- [x] 1.1 Event-source, person and source tests pass
-- [x] 1.2 PHP style
-- [x] 1.3 Static analysis
-- [x] 1.4 Frontend still compiles and lints
-- [x] 1.5 Demo seeder runs
-- [x] 1.6 Baseline screenshots produced
+- [x] 1.1 Event-source, person and source tests pass — cc521a3
+- [x] 1.2 PHP style — cc521a3
+- [x] 1.3 Static analysis — cc521a3
+- [x] 1.4 Frontend still compiles and lints — cc521a3
+- [x] 1.5 Demo seeder runs — cc521a3
+- [x] 1.6 Baseline screenshots produced — cc521a3
 
 #### Manual
 
-- [x] 1.7 A gravestone chosen in the picker links to a death and the fact becomes confirmed
-- [x] 1.8 The `before/` PNGs were opened and show the real list, the three tabs, the picker and the edit hint in both themes and both widths
+- [x] 1.7 A gravestone chosen in the picker links to a death and the fact becomes confirmed — cc521a3
+- [x] 1.8 The `before/` PNGs were opened and show the real list, the three tabs, the picker and the edit hint in both themes and both widths — cc521a3
 
 ### Phase 2: The view — kind at the fact, links, picker and copy
 
 #### Automated
 
-- [ ] 2.1 Event-source, person and source tests still pass
-- [ ] 2.2 JS unit tests pass
-- [ ] 2.3 Types, lint and format
-- [ ] 2.4 Production build
-- [ ] 2.5 No akt wording left in the linking flow
+- [x] 2.1 Event-source, person and source tests still pass
+- [x] 2.2 JS unit tests pass
+- [x] 2.3 Types, lint and format
+- [x] 2.4 Production build
+- [x] 2.5 No akt wording left in the linking flow
 
 #### Manual
 
-- [ ] 2.6 The seeded facts read „Potwierdzone: nagrobek", „Potwierdzone: akt, nagrobek", „Potwierdzone: inne", „Bez źródła" and „Potwierdzone: akt, nagrobek, inne" on every surface
-- [ ] 2.7 Link order does not change the badge, and unlinking updates it down to „Bez źródła"
-- [ ] 2.8 On „Przegląd" each source of a fact is a link with its kind that opens the source page; while a section is edited the links of other cards are inert
-- [ ] 2.9 The picker lists every kind with its kind shown, disables linked sources and the toast reads „Powiązano źródło"
-- [ ] 2.10 The persons list shows the same ✓ for an akt-backed and a gravestone-backed date
-- [ ] 2.11 At 390 px the longest badge and long source names fit; focus is visible; light and dark both read correctly
+- [x] 2.6 The seeded facts read „Potwierdzone: nagrobek", „Potwierdzone: akt, nagrobek", „Potwierdzone: inne", „Bez źródła" and „Potwierdzone: akt, nagrobek, inne" on every surface
+- [x] 2.7 Link order does not change the badge, and unlinking updates it down to „Bez źródła"
+- [x] 2.8 On „Przegląd" each source of a fact is a link with its kind that opens the source page; while a section is edited the links of other cards are inert
+- [x] 2.9 The picker lists every kind with its kind shown, disables linked sources and the toast reads „Powiązano źródło"
+- [x] 2.10 The persons list shows the same ✓ for an akt-backed and a gravestone-backed date
+- [x] 2.11 At 390 px the longest badge and long source names fit; focus is visible; light and dark both read correctly
 
 ### Phase 3: Screenshot gate
 

@@ -8,6 +8,7 @@ export type Source = {
     id: number;
     kind: SourceKind;
     kind_label: string;
+    kind_short_label: string;
     name: string | null;
     display_name: string;
     record_type: SourceRecordType | null;

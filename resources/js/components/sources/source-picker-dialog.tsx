@@ -4,6 +4,7 @@ import EventSourceController from '@/actions/App/Http/Controllers/EventSourceCon
 import { index as sourcesIndex } from '@/routes/sources';
 import InputError from '@/components/input-error';
 import { SourceThumbnail } from '@/components/sources/source-thumbnail';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -79,9 +80,9 @@ export function SourcePickerDialog({
         <Dialog open={open} onOpenChange={handleOpenChange}>
             <DialogTrigger asChild>{trigger}</DialogTrigger>
             <DialogContent>
-                <DialogTitle>Powiąż akt</DialogTitle>
+                <DialogTitle>Powiąż źródło</DialogTitle>
                 <DialogDescription>
-                    Wybierz akt metrykalny, który potwierdza to wydarzenie.
+                    Wybierz źródło, które potwierdza to wydarzenie.
                 </DialogDescription>
 
                 {loading ? (
@@ -100,7 +101,7 @@ export function SourcePickerDialog({
                     </p>
                 ) : sources.length === 0 ? (
                     <p className="text-muted-foreground text-sm">
-                        Nie masz jeszcze żadnych aktów metrykalnych.{' '}
+                        Nie masz jeszcze żadnych źródeł.{' '}
                         <Link
                             href={sourcesIndex()}
                             className="text-primary underline-offset-4 hover:underline"
@@ -136,9 +137,12 @@ export function SourcePickerDialog({
                                     >
                                         {source.display_name}
                                     </p>
+                                    <Badge variant="secondary">
+                                        {source.kind_short_label}
+                                    </Badge>
                                     <p className="text-muted-foreground text-xs">
                                         {isLinked
-                                            ? 'Już powiązany'
+                                            ? 'Już powiązane'
                                             : new Date(
                                                   source.uploaded_at,
                                               ).toLocaleDateString('pl-PL')}

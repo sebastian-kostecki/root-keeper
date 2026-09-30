@@ -30,6 +30,7 @@ export type IndexPersonEvent = PersonEvent & {
 export type LinkedSource = {
     id: number;
     kind: SourceKind;
+    kind_short_label: string;
     original_name: string;
     display_name: string;
     has_thumbnail: boolean;
@@ -38,6 +39,7 @@ export type LinkedSource = {
 
 export type SourcedPersonEvent = PersonEvent & {
     is_confirmed: boolean;
+    confirmed_kinds: string[];
     sources: LinkedSource[];
 };
 

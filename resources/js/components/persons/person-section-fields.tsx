@@ -18,7 +18,7 @@ type Errors = Partial<Record<string, string>>;
 
 /** Shown under a birth/death date when that event is backed by a linked source. */
 const CONFIRMED_HINT =
-    'Potwierdzone aktem — upewnij się, że zmiana zgadza się z aktem.';
+    'Potwierdzone źródłem — upewnij się, że zmiana zgadza się ze źródłem.';
 
 /** Radix Select and ToggleGroup do not allow an empty item value. */
 const NONE = 'none';
