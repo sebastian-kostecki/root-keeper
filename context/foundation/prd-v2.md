@@ -17,6 +17,8 @@ timeline_budget:
 
 Poprzedni PRD (MVP, greenfield): `context/foundation/prd.md`. Notatki z kształtowania tej zmiany: `context/foundation/shape-notes.md`.
 
+> **Poprawka 2026-09-30 (decyzja użytkownika):** spis miejscowości i historia zamieszkania — FR-007 – FR-011, US-02 (wycinki S-12 – S-15) — są odłożone poza tę wersję. Zamieszkanie i miejsca faktów zostają wolnym tekstem, więc istniejące miejsca nie są tracone. Część o skanach (FR-001 – FR-005, FR-012 – FR-015, US-01) obowiązuje i jest realizowana przez prd-v3 jako opis źródła. Treść o miejscowościach poniżej zostaje jako zapis zamierzenia na kolejną wersję.
+
 ## Current System Overview
 
 root-keeper to prywatne drzewo genealogiczne: jedno drzewo na konto, otwarta rejestracja, każdy widzi tylko swoje dane.
@@ -58,7 +60,7 @@ Przepływ zmiany (w słowach użytkownika):
 Doprecyzowane w rundzie Sokratesa: zamiast wielu wpisów — jeden numer wpisu + jedna notatka na skan; pochodzenie skanu to wolny tekst (parafia, archiwum, sygnatura), nie miejscowość ze spisu.
 
 ### Primary
-- Powyższy przepływ działa na prawdziwych danych: skan ma nazwę, typ, rok, pochodzenie oraz numer i notatkę interesującego mnie wpisu, a odnajduję go później bez przeszukiwania skanu od nowa; osoba ma historię zamieszkania z kilku miejscowości, a fakty wskazują miejscowości ze spisu.
+- Powyższy przepływ działa na prawdziwych danych: skan ma nazwę, typ, rok, pochodzenie oraz numer i notatkę interesującego mnie wpisu, a odnajduję go później bez przeszukiwania skanu od nowa; osoba ma historię zamieszkania z kilku miejscowości, a fakty wskazują miejscowości ze spisu. (Poprawka 2026-09-30: historia zamieszkania i miejscowości ze spisu — kroki 4–5 przepływu — odłożone poza tę wersję.)
 
 ### Secondary
 - Brak (użytkownik nie wskazał).
@@ -78,6 +80,8 @@ Doprecyzowane w rundzie Sokratesa: zamiast wielu wpisów — jeden numer wpisu +
 Wcześniej: skan był samym plikiem, bez nazwy i opisu.
 
 ### US-02: Historia zamieszkania i miejsca faktów ze spisu
+
+Odłożone poza tę wersję (poprawka 2026-09-30).
 
 - **Given** zalogowany użytkownik z osobą w drzewie
 - **When** na karcie osoby dodaje kolejne miejsca zamieszkania (wybierając miejscowość ze spisu albo dodając brakującą) i wybiera miejsce urodzenia z listy rozwijanej
@@ -102,6 +106,7 @@ Wcześniej: jedno pole tekstowe zamieszkania, miejsca faktów jako wolny tekst.
   > Socrates: No counter-argument; it stands as written.
 
 ### Miejscowości
+Odłożone poza tę wersję (poprawka 2026-09-30): FR-007 – FR-011 nie wchodzą do kamienia M-1.
 - [new] FR-007: Użytkownik może prowadzić spis miejscowości swojego drzewa: nazwa, czy miejscowość nadal istnieje, jednostka / parafia / notatka oraz opcjonalne współrzędne geograficzne wpisywane ręcznie. Priority: must-have.
   > Socrates: Counter-argument considered: "bez danych lokalizacyjnych (wymienionych w pierwszym opisie) spis traci sens — nie wiadomo, gdzie miejscowość leżała." Resolution: changed (rozstrzygnięte w fazie 7) — dodane opcjonalne współrzędne wpisywane ręcznie, bez mapy w aplikacji i bez usług zewnętrznych.
 - [new] FR-008: Użytkownik może dodać brakującą miejscowość do spisu bezpośrednio z listy wyboru; lista przy wpisywaniu podpowiada istniejące miejscowości (z jednostką), a dodanie nowej jest proponowane, gdy nic nie pasuje. Priority: must-have.
@@ -136,7 +141,7 @@ Zachowane (nie może się zepsuć):
 
 Istniejące dane:
 - Istniejące skany dostają nazwę równą nazwie oryginalnego pliku; typ, rok, pochodzenie, numer wpisu i notatka zostają puste do uzupełnienia (FR-005).
-- Istniejące miejsca zapisane wolnym tekstem (zamieszkanie osoby, miejsca urodzenia, ślubu i zgonu) mogą zostać utracone — użytkownik wprowadzi je ponownie ze spisu. Świadoma decyzja użytkownika.
+- Istniejące miejsca zapisane wolnym tekstem (zamieszkanie osoby, miejsca urodzenia, ślubu i zgonu) mogą zostać utracone — użytkownik wprowadzi je ponownie ze spisu. Świadoma decyzja użytkownika. (Poprawka 2026-09-30: nie dotyczy tej wersji — spis miejscowości jest odłożony, wolne teksty zostają.)
 
 Zgodność wsteczna / integracje: brak zewnętrznych integracji ani konsumentów API; aplikacja ma jednego realnego użytkownika.
 
