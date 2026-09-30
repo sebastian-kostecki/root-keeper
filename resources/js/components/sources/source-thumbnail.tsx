@@ -6,9 +6,17 @@ import type { LinkedSource } from '@/types';
 type Props = {
     source: LinkedSource;
     className?: string;
+    iconClassName?: string;
+    /** The name is printed next to the image: the image gets an empty alt. */
+    decorative?: boolean;
 };
 
-export function SourceThumbnail({ source, className }: Props) {
+export function SourceThumbnail({
+    source,
+    className,
+    iconClassName = 'size-10',
+    decorative = false,
+}: Props) {
     return (
         <div
             className={cn(
@@ -19,12 +27,14 @@ export function SourceThumbnail({ source, className }: Props) {
             {source.has_thumbnail ? (
                 <img
                     src={SourceController.thumbnail.url(source.id)}
-                    alt={source.display_name}
+                    alt={decorative ? '' : source.display_name}
                     loading="lazy"
                     className="h-full w-full object-cover"
                 />
             ) : (
-                <ImageOff className="text-muted-foreground size-10" />
+                <ImageOff
+                    className={cn('text-muted-foreground', iconClassName)}
+                />
             )}
         </div>
     );

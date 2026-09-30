@@ -104,3 +104,54 @@ export function isUndescribed(source: DescriptionFields): boolean {
         source.note === null
     );
 }
+
+type SummaryFields = CardFields &
+    Pick<Source, 'kind' | 'kind_short_label' | 'entry_number' | 'uploaded_at'>;
+
+/** „akt urodzenia”, „akt metrykalny” (akt without a type), „nagrobek”, „inne”. */
+export function sourceKindText(
+    source: Pick<Source, 'kind' | 'kind_short_label' | 'record_type_label'>,
+): string {
+    if (source.kind !== 'metrical_record') {
+        return source.kind_short_label;
+    }
+
+    return present(source.record_type_label)
+        ? `${source.kind_short_label} ${source.record_type_label}`
+        : 'akt metrykalny';
+}
+
+function formatUploadDate(uploadedAt: string): string | null {
+    const date = new Date(uploadedAt);
+
+    return Number.isNaN(date.getTime())
+        ? null
+        : date.toLocaleDateString('pl-PL', {
+              day: '2-digit',
+              month: '2-digit',
+              year: 'numeric',
+          });
+}
+
+/** „akt urodzenia · 1878 · nr 47”; ends with „dodano {date}” when the upload date is shown. */
+export function formatSourceSummary(source: SummaryFields): string {
+    const parts = [sourceKindText(source)];
+
+    if (source.year !== null) {
+        parts.push(String(source.year));
+    }
+
+    if (present(source.entry_number)) {
+        parts.push(`nr ${source.entry_number}`);
+    }
+
+    if (showsUploadDate(source)) {
+        const date = formatUploadDate(source.uploaded_at);
+
+        if (date !== null) {
+            parts.push(`dodano ${date}`);
+        }
+    }
+
+    return parts.join(' · ');
+}

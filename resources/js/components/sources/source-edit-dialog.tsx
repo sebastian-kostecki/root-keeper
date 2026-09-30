@@ -26,7 +26,9 @@ import type { Source, SourceKind, SourceRecordType } from '@/types';
 
 type Props = {
     source: Source;
-    trigger: React.ReactNode;
+    trigger?: React.ReactNode;
+    open?: boolean;
+    onOpenChange?: (open: boolean) => void;
     kinds: { value: SourceKind; label: string }[];
     recordTypes: { value: SourceRecordType; label: string }[];
 };
@@ -60,16 +62,24 @@ function ErasedFieldList({ erased }: { erased: ErasedField[] }) {
 export function SourceEditDialog({
     source,
     trigger,
+    open: controlledOpen,
+    onOpenChange,
     kinds,
     recordTypes,
 }: Props) {
-    const [open, setOpen] = useState(false);
+    const [internalOpen, setInternalOpen] = useState(false);
+    const open = controlledOpen ?? internalOpen;
     const [kind, setKind] = useState<SourceKind>(source.kind);
     const [erased, setErased] = useState<ErasedField[]>([]);
     const [confirmOpen, setConfirmOpen] = useState(false);
     const formRef = useRef<FormHandle>(null);
     const discardRef = useRef<HTMLInputElement>(null);
     const bodyRef = useRef<HTMLDivElement>(null);
+
+    const setOpen = (next: boolean) => {
+        setInternalOpen(next);
+        onOpenChange?.(next);
+    };
 
     const reset = () => {
         setKind(source.kind);
@@ -114,7 +124,7 @@ export function SourceEditDialog({
                 reset();
             }}
         >
-            <DialogTrigger asChild>{trigger}</DialogTrigger>
+            {trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
             <FormDialogContent>
                 <FormDialogHeader
                     title="Edytuj źródło"

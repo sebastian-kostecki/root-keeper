@@ -1,5 +1,5 @@
 import { Head, router } from '@inertiajs/react';
-import { LayoutListIcon, SearchIcon, TableIcon } from 'lucide-react';
+import { LayoutListIcon, TableIcon } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import PersonController from '@/actions/App/Http/Controllers/PersonController';
 import Heading from '@/components/heading';
@@ -10,10 +10,9 @@ import {
 } from '@/components/persons/persons-empty-state';
 import { PersonsList } from '@/components/persons/persons-list';
 import { PersonsTable } from '@/components/persons/persons-table';
+import { SearchField } from '@/components/search-field';
+import { SegmentedToggle } from '@/components/segmented-toggle';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Spinner } from '@/components/ui/spinner';
-import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { buildPersonsQuery, peopleCount } from '@/lib/persons-index';
 import type {
     PersonsFilters,
@@ -144,54 +143,34 @@ export default function Index({
 
                 {(persons.length > 0 || filters.q !== '') && (
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-                        <div className="relative flex-1">
-                            {isSearching ? (
-                                <Spinner
-                                    aria-label="Wyszukiwanie"
-                                    className="text-muted-foreground absolute top-1/2 left-3 -translate-y-1/2"
-                                />
-                            ) : (
-                                <SearchIcon
-                                    aria-hidden="true"
-                                    className="text-muted-foreground pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2"
-                                />
-                            )}
-                            <Input
-                                type="search"
-                                placeholder="Szukaj po imieniu lub nazwisku"
-                                aria-label="Szukaj osoby"
-                                maxLength={100}
-                                className="pl-9"
-                                value={search}
-                                onChange={(event) =>
-                                    setSearch(event.target.value)
-                                }
-                            />
-                        </div>
+                        <SearchField
+                            value={search}
+                            onChange={setSearch}
+                            placeholder="Szukaj po imieniu lub nazwisku"
+                            ariaLabel="Szukaj osoby"
+                            busy={isSearching}
+                            busyLabel="Wyszukiwanie"
+                            maxLength={100}
+                        />
 
-                        <ToggleGroup
-                            type="single"
-                            variant="outline"
-                            aria-label="Widok listy osób"
+                        <SegmentedToggle<PersonsView>
                             value={filters.view}
-                            onValueChange={(value) => {
-                                if (value !== '') {
-                                    visitDisplay({
-                                        view: value as PersonsView,
-                                    });
-                                }
-                            }}
+                            onValueChange={(view) => visitDisplay({ view })}
+                            ariaLabel="Widok listy osób"
                             className="self-start"
-                        >
-                            <ToggleGroupItem value="lista" className="px-3">
-                                <LayoutListIcon />
-                                Lista
-                            </ToggleGroupItem>
-                            <ToggleGroupItem value="tabela" className="px-3">
-                                <TableIcon />
-                                Tabela
-                            </ToggleGroupItem>
-                        </ToggleGroup>
+                            items={[
+                                {
+                                    value: 'lista',
+                                    label: 'Lista',
+                                    icon: <LayoutListIcon />,
+                                },
+                                {
+                                    value: 'tabela',
+                                    label: 'Tabela',
+                                    icon: <TableIcon />,
+                                },
+                            ]}
+                        />
                     </div>
                 )}
 

@@ -560,34 +560,34 @@ None. No schema change. `events_count` is additive and appears only on the index
 
 #### Automated
 
-- [x] 1.1 Sources feature tests pass: `vendor/bin/sail artisan test --compact tests/Feature/SourcesTest.php`
-- [x] 1.2 Other consumers of the source payload still pass: `vendor/bin/sail artisan test --compact tests/Feature/PersonsTest.php tests/Feature/EventSourcesTest.php`
-- [x] 1.3 Static analysis passes: `vendor/bin/sail bin phpstan analyse`
-- [x] 1.4 PHP formatting applied: `vendor/bin/sail bin pint --dirty --format agent`
-- [x] 1.5 Types pass: `vendor/bin/sail npm run types:check`
-- [x] 1.6 Seeder runs twice in a row without error, and the demo tree's source folder then holds the files of one run only: `vendor/bin/sail artisan db:seed --class=TreeViewDemoSeeder`
+- [x] 1.1 Sources feature tests pass: `vendor/bin/sail artisan test --compact tests/Feature/SourcesTest.php` — e6c3093
+- [x] 1.2 Other consumers of the source payload still pass: `vendor/bin/sail artisan test --compact tests/Feature/PersonsTest.php tests/Feature/EventSourcesTest.php` — e6c3093
+- [x] 1.3 Static analysis passes: `vendor/bin/sail bin phpstan analyse` — e6c3093
+- [x] 1.4 PHP formatting applied: `vendor/bin/sail bin pint --dirty --format agent` — e6c3093
+- [x] 1.5 Types pass: `vendor/bin/sail npm run types:check` — e6c3093
+- [x] 1.6 Seeder runs twice in a row without error, and the demo tree's source folder then holds the files of one run only: `vendor/bin/sail artisan db:seed --class=TreeViewDemoSeeder` — e6c3093
 
 #### Manual
 
-- [x] 1.7 `/sources?view=foo&sort=bar&kind=baz` renders today's list with no error, and the Inertia page props show `filters.view = 'galeria'`, `filters.sort = '-dodano'`, `filters.kind = 'wszystkie'`
-- [x] 1.8 As `tree-demo@example.com`, `/sources` in its current layout shows a real image on the eight chosen sources and the fallback icon on the other ten
+- [x] 1.7 `/sources?view=foo&sort=bar&kind=baz` renders today's list with no error, and the Inertia page props show `filters.view = 'galeria'`, `filters.sort = '-dodano'`, `filters.kind = 'wszystkie'` — e6c3093
+- [x] 1.8 As `tree-demo@example.com`, `/sources` in its current layout shows a real image on the eight chosen sources and the fallback icon on the other ten — e6c3093
 
 ### Phase 2: Shared components and list helpers
 
 #### Automated
 
-- [ ] 2.1 JS unit tests pass: `vendor/bin/sail npm run test:js`
-- [ ] 2.2 Types pass: `vendor/bin/sail npm run types:check`
-- [ ] 2.3 Format + lint pass: `vendor/bin/sail npm run check`
-- [ ] 2.4 Build passes: `vendor/bin/sail npm run build`
-- [ ] 2.5 Persons and sources feature tests still pass: `vendor/bin/sail artisan test --compact tests/Feature/PersonsTest.php tests/Feature/SourcesTest.php`
-- [ ] 2.6 The script writes every `/persons` control shot to `screenshots/after/` and its compare step prints a result for each against `screenshots/before/`
+- [x] 2.1 JS unit tests pass: `vendor/bin/sail npm run test:js`
+- [x] 2.2 Types pass: `vendor/bin/sail npm run types:check`
+- [x] 2.3 Format + lint pass: `vendor/bin/sail npm run check`
+- [x] 2.4 Build passes: `vendor/bin/sail npm run build`
+- [x] 2.5 Persons and sources feature tests still pass: `vendor/bin/sail artisan test --compact tests/Feature/PersonsTest.php tests/Feature/SourcesTest.php`
+- [x] 2.6 The script writes every `/persons` control shot to `screenshots/after/` and its compare step prints a result for each against `screenshots/before/`
 
 #### Manual
 
-- [ ] 2.7 `/persons` looks and behaves as before in light and dark: search spinner, Lista | Tabela switcher, sort headers, both empty states; every control shot is identical or its difference is explained
-- [ ] 2.8 „Edytuj” on a source page still opens the dialog and saves
-- [ ] 2.9 Thumbnails in the source picker and in the person modal's „Źródła” tab look unchanged
+- [x] 2.7 `/persons` looks and behaves as before in light and dark: search spinner, Lista | Tabela switcher, sort headers, both empty states; every control shot is identical or its difference is explained
+- [x] 2.8 „Edytuj” on a source page still opens the dialog and saves
+- [x] 2.9 Thumbnails in the source picker and in the person modal's „Źródła” tab look unchanged
 
 ### Phase 3: The view — toolbar, Galeria, Tabela, states
 
