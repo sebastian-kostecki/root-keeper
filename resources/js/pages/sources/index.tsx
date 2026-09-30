@@ -78,7 +78,7 @@ export default function Index({ sources, kinds, recordTypes, filters }: Props) {
     useEffect(() => {
         const trimmed = search.trim();
 
-        if (trimmed === filters.q || trimmed === lastVisitedQuery.current) {
+        if (trimmed === lastVisitedQuery.current) {
             return;
         }
 
@@ -106,12 +106,16 @@ export default function Index({ sources, kinds, recordTypes, filters }: Props) {
         visit({ q: '' });
     };
 
+    // The status follows the committed query, so it is announced once per pause, not per keystroke.
+    const committedCount = filterSources(sources, filters.q, filters.kind)
+        .visible.length;
+
     const statusText =
-        trimmedSearch === '' && filters.kind === 'wszystkie'
+        filters.q === '' && filters.kind === 'wszystkie'
             ? ''
-            : visible.length === 0
+            : committedCount === 0
               ? 'Brak wyników'
-              : `Znaleziono: ${visible.length} ${pluralPhrase(visible.length, 'źródło', 'źródła', 'źródeł')}`;
+              : `Znaleziono: ${committedCount} ${pluralPhrase(committedCount, 'źródło', 'źródła', 'źródeł')}`;
 
     const createTrigger = <Button>Dodaj źródło</Button>;
 
@@ -135,7 +139,10 @@ export default function Index({ sources, kinds, recordTypes, filters }: Props) {
                 </div>
 
                 {sources.length > 0 && (
-                    <div className="flex flex-wrap items-center gap-3">
+                    <div
+                        role="search"
+                        className="flex flex-wrap items-center gap-3"
+                    >
                         <SearchField
                             value={search}
                             onChange={setSearch}

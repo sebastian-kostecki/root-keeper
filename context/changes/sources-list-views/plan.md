@@ -552,6 +552,10 @@ None. No schema change. `events_count` is additive and appears only on the index
 - Screenshot gate precedent: `context/archive/2026-09-30-matching-sources-first/screenshots/shots.mjs`, `verdict.md`
 - Plural helper: `resources/js/lib/plural.ts`
 
+## Addenda
+
+- **Phase 4 gate fix (2026-09-30):** `SegmentedToggle` items that carry a `count` get `max-sm:px-1.5`, so the four-item kind filter fits a 390 px row. Found by the screenshot gate (see `screenshots/verdict.md`); no new token, `/persons` switcher unaffected.
+
 ## Progress
 
 > Convention: `- [ ]` pending, `- [x]` done. Append ` — <commit sha>` when a step lands. Do not rename step titles. See `references/progress-format.md`.
@@ -620,5 +624,5 @@ None. No schema change. `events_count` is additive and appears only on the index
 
 #### Manual
 
-- [x] 4.3 `verdict.md` shows every state matching its canvas board (`Main`, `Rejestr`, `Stany`, `Mobile`), with each difference explained or fixed — 4140008
+- [ ] 4.3 `verdict.md` shows every state matching its canvas board (`Main`, `Rejestr`, `Stany`, `Mobile`), with each difference explained or fixed — board comparison still owed (verdict.md checks against plan text only)
 - [x] 4.4 `verdict.md` lists the three open follow-ups and records v2:FR-006 as met — 4140008

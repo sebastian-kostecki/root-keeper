@@ -61,7 +61,10 @@ export function SourcesTable({
     kinds,
     recordTypes,
 }: Props) {
+    // The dialog stays mounted after closing (exit animation); each opening remounts it with fresh values.
     const [editing, setEditing] = useState<IndexSource | null>(null);
+    const [editOpen, setEditOpen] = useState(false);
+    const [editSession, setEditSession] = useState(0);
     const rows = sortSources(sources, sort);
     const column = columnOf<SourcesSortColumn>(sort);
     const direction = sort.startsWith('-') ? 'malejąco' : 'rosnąco';
@@ -193,9 +196,14 @@ export function SourcesTable({
                                                 </Link>
                                             </DropdownMenuItem>
                                             <DropdownMenuItem
-                                                onSelect={() =>
-                                                    setEditing(source)
-                                                }
+                                                onSelect={() => {
+                                                    setEditing(source);
+                                                    setEditSession(
+                                                        (session) =>
+                                                            session + 1,
+                                                    );
+                                                    setEditOpen(true);
+                                                }}
                                             >
                                                 Edytuj
                                             </DropdownMenuItem>
@@ -210,14 +218,10 @@ export function SourcesTable({
 
             {editing !== null && (
                 <SourceEditDialog
-                    key={editing.id}
+                    key={editSession}
                     source={editing}
-                    open
-                    onOpenChange={(open) => {
-                        if (!open) {
-                            setEditing(null);
-                        }
-                    }}
+                    open={editOpen}
+                    onOpenChange={setEditOpen}
                     kinds={kinds}
                     recordTypes={recordTypes}
                 />
