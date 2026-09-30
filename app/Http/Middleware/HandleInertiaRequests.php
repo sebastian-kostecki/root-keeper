@@ -3,7 +3,6 @@
 namespace App\Http\Middleware;
 
 use App\Actions\Persons\BuildPersonPreview;
-use App\Enums\SourceKind;
 use App\Http\Resources\SourceResource;
 use App\Models\Person;
 use Illuminate\Http\Request;
@@ -54,7 +53,7 @@ class HandleInertiaRequests extends Middleware
                 return $person === null ? null : app(BuildPersonPreview::class)->handle($person, $request->user());
             },
             'availableSources' => Inertia::optional(fn (): array => $request->user() === null ? [] : SourceResource::collection(
-                $request->user()->tree->sources()->where('kind', SourceKind::MetricalRecord)->latest()->orderByDesc('id')->get()
+                $request->user()->tree->sources()->latest()->orderByDesc('id')->get()
             )->resolve()),
         ];
     }

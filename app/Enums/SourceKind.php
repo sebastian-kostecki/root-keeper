@@ -17,6 +17,15 @@ enum SourceKind: string
         };
     }
 
+    public function shortLabel(): string
+    {
+        return match ($this) {
+            self::MetricalRecord => 'akt',
+            self::Gravestone => 'nagrobek',
+            self::Other => 'inne',
+        };
+    }
+
     /**
      * @return array<int, array{value: string, label: string}>
      */

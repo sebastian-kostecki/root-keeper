@@ -2,9 +2,6 @@
 
 namespace App\Http\Requests;
 
-use App\Enums\SourceKind;
-use App\Models\Source;
-use Closure;
 use Illuminate\Auth\Access\Response;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
@@ -34,16 +31,6 @@ class EventSourceStoreRequest extends FormRequest
                 'required',
                 'integer',
                 Rule::exists('sources', 'id')->where('tree_id', $this->user()->tree->id),
-                function (string $attribute, mixed $value, Closure $fail): void {
-                    $isMetricalRecord = Source::query()
-                        ->whereKey($value)
-                        ->where('kind', SourceKind::MetricalRecord)
-                        ->exists();
-
-                    if (! $isMetricalRecord) {
-                        $fail(__('Do wydarzenia można na razie powiązać tylko akt metrykalny.'));
-                    }
-                },
             ],
         ];
     }

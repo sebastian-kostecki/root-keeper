@@ -44,7 +44,7 @@ test('sources index shows only the authenticated user own sources, newest first'
         ->component('sources/index')
         ->has('sources', 2)
         ->has('sources.0', fn ($source) => $source->hasAll([
-            'id', 'kind', 'kind_label', 'name', 'display_name', 'record_type', 'record_type_label', 'entry_number', 'year', 'provenance', 'url', 'note', 'original_name', 'mime_type', 'size', 'width', 'height', 'has_thumbnail', 'uploaded_at',
+            'id', 'kind', 'kind_label', 'kind_short_label', 'name', 'display_name', 'record_type', 'record_type_label', 'entry_number', 'year', 'provenance', 'url', 'note', 'original_name', 'mime_type', 'size', 'width', 'height', 'has_thumbnail', 'uploaded_at',
         ]))
         ->where('sources.0.id', $newer->id)
         ->where('sources.1.id', $older->id));

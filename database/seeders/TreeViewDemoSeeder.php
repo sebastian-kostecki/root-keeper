@@ -31,6 +31,12 @@ use Illuminate\Support\Facades\DB;
  * Then the description states: a fully described akt (opisany-akt-lipnica-1878.jpg), a gravestone with
  * only name and rok (nagrobek-opisany.jpg) and an akt whose name and pochodzenie truncate on a card
  * (akt-z-dlugim-opisem.jpg). The undescribed sources above are the empty state.
+ *
+ * Confirmation states (appended after the source states): Genowefa's death is confirmed by a gravestone
+ * only (nagrobek-genowefy.jpg); Wiktor's death by his akt plus a gravestone (nagrobek-wiktora.jpg); Jan and
+ * Anna's marriage by its akt, then an other source (zaproszenie-slubne.jpg), then a gravestone
+ * (nagrobek-jana-i-anny.jpg), linked out of kind order; Helena Kowalska's death by an other source only
+ * (nekrolog-heleny.jpg). Leon's death stays without a source.
  */
 class TreeViewDemoSeeder extends Seeder
 {
@@ -165,6 +171,7 @@ class TreeViewDemoSeeder extends Seeder
         $this->fullDataPerson();
         $this->nameOnlyPerson();
         $this->sourceStates($jan, $kacper);
+        $this->confirmationStates($wiktor, $helena, $janAnnaMarriage);
 
         (new SetTreeRootPerson)->handle($this->tree, $jan);
     }
@@ -267,6 +274,31 @@ class TreeViewDemoSeeder extends Seeder
             'name' => 'Akt urodzenia z parafii Świętego Jana Chrzciciela w Lipnicy Murowanej, księga urodzeń z lat 1875-1885',
             'provenance' => 'Archiwum Diecezjalne w Tarnowie, zespół akt parafialnych, sygnatura 1234/56/78',
         ]);
+    }
+
+    /**
+     * Facts confirmed by a non-akt source, and by several kinds linked out of kind order.
+     */
+    private function confirmationStates(Person $wiktor, Person $helena, Event $janAnnaMarriage): void
+    {
+        $genowefa = Person::query()->where('tree_id', $this->tree->id)->where('first_name', 'Genowefa')->firstOrFail();
+
+        $genowefaGravestone = Source::factory()->for($this->tree)->gravestone()->create([
+            'original_name' => 'nagrobek-genowefy.jpg',
+            'name' => 'Nagrobek Genowefy Pełnodanowskiej, Zakopane',
+        ]);
+        $this->eventOf($genowefa, EventType::Death)->sources()->attach($genowefaGravestone);
+
+        $wiktorGravestone = Source::factory()->for($this->tree)->gravestone()->create(['original_name' => 'nagrobek-wiktora.jpg']);
+        $this->eventOf($wiktor, EventType::Death)->sources()->attach($wiktorGravestone);
+
+        $invitation = Source::factory()->for($this->tree)->other()->create(['original_name' => 'zaproszenie-slubne.jpg']);
+        $couplesGravestone = Source::factory()->for($this->tree)->gravestone()->create(['original_name' => 'nagrobek-jana-i-anny.jpg']);
+        $janAnnaMarriage->sources()->attach($invitation);
+        $janAnnaMarriage->sources()->attach($couplesGravestone);
+
+        $obituary = Source::factory()->for($this->tree)->other()->create(['original_name' => 'nekrolog-heleny.jpg']);
+        $this->eventOf($helena, EventType::Death)->sources()->attach($obituary);
     }
 
     private function attachSource(Event $event, string $originalName): void

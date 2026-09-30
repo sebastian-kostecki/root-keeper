@@ -332,6 +332,93 @@ test('person show exposes birth is_confirmed false with no sources and true with
         ->where('personPreview.person.birth.sources.1.id', $olderSource->id));
 });
 
+test('the person preview lists the kinds confirming an event in a fixed order regardless of link order', function () {
+    $user = User::factory()->create();
+    $person = Person::factory()->for($user->tree)->create();
+    $event = Event::factory()->for($user->tree)->death()->create();
+    $event->participants()->attach($person, ['role' => ParticipantRole::Subject]);
+    $event->sources()->attach(Source::factory()->gravestone()->for($user->tree)->create());
+    $this->travel(1)->minute();
+    $event->sources()->attach(Source::factory()->for($user->tree)->create());
+
+    $this->actingAs($user)->get(personPreviewUrl($person))
+        ->assertInertia(fn ($page) => $page
+            ->where('personPreview.person.death.confirmed_kinds', ['akt', 'nagrobek'])
+            ->where('personPreview.person.death.sources.0.kind', 'gravestone'));
+});
+
+test('the person preview lists each confirming kind once', function () {
+    $user = User::factory()->create();
+    $person = Person::factory()->for($user->tree)->create();
+    $twoAkts = Event::factory()->for($user->tree)->birth()->create();
+    $allKinds = Event::factory()->for($user->tree)->death()->create();
+    $twoAkts->participants()->attach($person, ['role' => ParticipantRole::Subject]);
+    $allKinds->participants()->attach($person, ['role' => ParticipantRole::Subject]);
+    $twoAkts->sources()->attach(Source::factory()->count(2)->for($user->tree)->create());
+    $allKinds->sources()->attach(Source::factory()->other()->for($user->tree)->create());
+    $allKinds->sources()->attach(Source::factory()->gravestone()->for($user->tree)->create());
+    $allKinds->sources()->attach(Source::factory()->for($user->tree)->create());
+
+    $this->actingAs($user)->get(personPreviewUrl($person))
+        ->assertInertia(fn ($page) => $page
+            ->where('personPreview.person.birth.confirmed_kinds', ['akt'])
+            ->where('personPreview.person.death.confirmed_kinds', ['akt', 'nagrobek', 'inne']));
+});
+
+test('an event without sources has no confirming kinds', function () {
+    $user = User::factory()->create();
+    $person = Person::factory()->for($user->tree)->create();
+    $event = Event::factory()->for($user->tree)->birth()->create();
+    $event->participants()->attach($person, ['role' => ParticipantRole::Subject]);
+
+    $this->actingAs($user)->get(personPreviewUrl($person))
+        ->assertInertia(fn ($page) => $page->where('personPreview.person.birth.confirmed_kinds', []));
+});
+
+test('the person preview exposes the short kind label of each linked source', function () {
+    $user = User::factory()->create();
+    $person = Person::factory()->for($user->tree)->create();
+    $event = Event::factory()->for($user->tree)->birth()->create();
+    $event->participants()->attach($person, ['role' => ParticipantRole::Subject]);
+    $event->sources()->attach(Source::factory()->for($user->tree)->create());
+    $this->travel(1)->minute();
+    $event->sources()->attach(Source::factory()->gravestone()->for($user->tree)->create());
+    $this->travel(1)->minute();
+    $event->sources()->attach(Source::factory()->other()->for($user->tree)->create());
+
+    $this->actingAs($user)->get(personPreviewUrl($person))
+        ->assertInertia(fn ($page) => $page
+            ->where('personPreview.person.birth.sources.0.kind_short_label', 'akt')
+            ->where('personPreview.person.birth.sources.1.kind_short_label', 'nagrobek')
+            ->where('personPreview.person.birth.sources.2.kind_short_label', 'inne'));
+});
+
+test('a marriage confirmed by a gravestone lists nagrobek among its confirming kinds', function () {
+    $user = User::factory()->create();
+    $person = Person::factory()->for($user->tree)->create();
+    $spouse = Person::factory()->for($user->tree)->create();
+    $marriage = attachMarriage($person, $spouse);
+    $marriage->sources()->attach(Source::factory()->gravestone()->for($user->tree)->create());
+
+    $this->actingAs($user)->get(personPreviewUrl($person))
+        ->assertInertia(fn ($page) => $page
+            ->where('personPreview.person.marriages.0.is_confirmed', true)
+            ->where('personPreview.person.marriages.0.confirmed_kinds', ['nagrobek']));
+});
+
+test('the persons index marks a death backed only by a gravestone as confirmed', function () {
+    $user = User::factory()->create();
+    $person = Person::factory()->for($user->tree)->create();
+    $event = Event::factory()->for($user->tree)->death()->create();
+    $event->participants()->attach($person, ['role' => ParticipantRole::Subject]);
+    $event->sources()->attach(Source::factory()->gravestone()->for($user->tree)->create());
+
+    $this->actingAs($user)->get(route('persons.index'))
+        ->assertInertia(fn ($page) => $page
+            ->where('persons.0.death.is_confirmed', true)
+            ->missing('persons.0.death.confirmed_kinds'));
+});
+
 test('the person URL itself no longer renders a page', function () {
     $user = User::factory()->create();
     $person = Person::factory()->for($user->tree)->create();
@@ -905,11 +992,11 @@ test('the preview of another users person or a missing person is not found', fun
 test('available sources load through a partial reload of a host page with a person parameter', function () {
     $user = User::factory()->create();
     $person = Person::factory()->for($user->tree)->create();
-    $newer = Source::factory()->for($user->tree)->create();
-    $older = Source::factory()->for($user->tree)->create(['created_at' => now()->subDay()]);
-    Source::factory()->gravestone()->for($user->tree)->create();
-    Source::factory()->other()->for($user->tree)->create();
+    $oldest = Source::factory()->for($user->tree)->create(['created_at' => now()->subDays(2)]);
+    $older = Source::factory()->gravestone()->for($user->tree)->create(['created_at' => now()->subDay()]);
+    $newer = Source::factory()->other()->for($user->tree)->create();
     Source::factory()->for(User::factory()->create()->tree)->create();
+    Source::factory()->gravestone()->for(User::factory()->create()->tree)->create();
     $url = personPreviewUrl($person);
 
     $version = $this->actingAs($user)->get($url, ['X-Inertia' => 'true'])->headers->get('X-Inertia-Version');
@@ -928,7 +1015,7 @@ test('available sources load through a partial reload of a host page with a pers
     $props = $response->json('props');
 
     expect($props)->not->toHaveKey('personPreview');
-    expect(collect($props['availableSources'])->pluck('id')->all())->toBe([$newer->id, $older->id]);
+    expect(collect($props['availableSources'])->pluck('id')->all())->toBe([$newer->id, $older->id, $oldest->id]);
 });
 
 test('update redirects back to the page the preview is open over', function () {

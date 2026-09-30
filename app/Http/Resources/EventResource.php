@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Enums\SourceKind;
 use App\Models\Event;
 use App\Models\Source;
 use Illuminate\Http\Request;
@@ -27,7 +28,8 @@ class EventResource extends JsonResource
      *     place: string|null,
      *     date_parts: array{year: int|null, month: int|null, day: int|null, is_approximate: bool},
      *     is_confirmed?: bool,
-     *     sources?: list<array{id: int, kind: string, original_name: string, display_name: string, has_thumbnail: bool, uploaded_at: string|null}>,
+     *     confirmed_kinds?: list<string>,
+     *     sources?: list<array{id: int, kind: string, kind_short_label: string, original_name: string, display_name: string, has_thumbnail: bool, uploaded_at: string|null}>,
      * }
      */
     public function toArray(Request $request): array
@@ -49,9 +51,18 @@ class EventResource extends JsonResource
                     ? $this->sources->isNotEmpty()
                     : (bool) $this->getAttribute('sources_exists'),
             ),
+            'confirmed_kinds' => $this->whenLoaded('sources', function (): array {
+                $present = $this->sources->map(fn (Source $source): SourceKind => $source->kind)->unique();
+
+                return array_values(array_map(
+                    fn (SourceKind $kind): string => $kind->shortLabel(),
+                    array_filter(SourceKind::cases(), fn (SourceKind $kind): bool => $present->contains($kind)),
+                ));
+            }),
             'sources' => $this->whenLoaded('sources', fn (): array => $this->sources->map(fn (Source $source): array => [
                 'id' => $source->id,
                 'kind' => $source->kind->value,
+                'kind_short_label' => $source->kind->shortLabel(),
                 'original_name' => $source->original_name,
                 'display_name' => $source->displayName(),
                 'has_thumbnail' => $source->thumbnail_path !== null,

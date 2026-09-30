@@ -28,7 +28,7 @@ test('linking an own source to an own event creates the link, redirects back and
         ->post(route('events.sources.store', $event), ['source_id' => $source->id]);
 
     $response->assertRedirect(route('persons.index'));
-    $response->assertSessionHas('inertia.flash_data.toast', ['type' => 'success', 'message' => 'Powiązano akt']);
+    $response->assertSessionHas('inertia.flash_data.toast', ['type' => 'success', 'message' => 'Powiązano źródło']);
 
     $this->assertDatabaseHas('event_source', ['event_id' => $event->id, 'source_id' => $source->id]);
 });
@@ -56,18 +56,19 @@ test('linking another trees source fails validation and creates nothing', functi
     $this->assertDatabaseCount('event_source', 0);
 });
 
-test('linking a non-metrical source fails with the akt message and creates nothing', function (SourceKind $kind) {
+test('linking a source of any kind creates the link', function (SourceKind $kind) {
     $user = User::factory()->create();
     $event = Event::factory()->for($user->tree)->create();
     $source = Source::factory()->for($user->tree)->create(['kind' => $kind]);
 
     $response = $this->actingAs($user)->post(route('events.sources.store', $event), ['source_id' => $source->id]);
 
-    $response->assertSessionHasErrors(['source_id' => 'Do wydarzenia można na razie powiązać tylko akt metrykalny.']);
-    $this->assertDatabaseCount('event_source', 0);
-})->with([SourceKind::Gravestone, SourceKind::Other]);
+    $response->assertSessionDoesntHaveErrors();
+    $this->assertDatabaseHas('event_source', ['event_id' => $event->id, 'source_id' => $source->id]);
+    $this->assertDatabaseCount('event_source', 1);
+})->with(SourceKind::cases());
 
-test('linking another trees gravestone gives the generic message, not the akt one', function () {
+test('linking another trees gravestone fails validation and creates nothing', function () {
     $user = User::factory()->create();
     $event = Event::factory()->for($user->tree)->create();
     $source = Source::factory()->gravestone()->for(User::factory()->create()->tree)->create();

@@ -23,7 +23,7 @@ class EventSourceController extends Controller
             // A concurrent request already created the link; linking is idempotent.
         }
 
-        Inertia::flash('toast', ['type' => 'success', 'message' => __('Powiązano akt')]);
+        Inertia::flash('toast', ['type' => 'success', 'message' => __('Powiązano źródło')]);
 
         return back();
     }
