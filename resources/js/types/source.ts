@@ -25,7 +25,10 @@ export type Source = {
     height: number | null;
     has_thumbnail: boolean;
     uploaded_at: string;
+    events_count?: number;
 };
+
+export type IndexSource = Source & { events_count: number };
 
 export type SourceConfirmation = {
     event_id: number;

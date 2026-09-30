@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\EventType;
 use App\Enums\ParticipantRole;
 use App\Enums\SourceKind;
 use App\Enums\SourceRecordType;
@@ -44,7 +45,7 @@ test('sources index shows only the authenticated user own sources, newest first'
         ->component('sources/index')
         ->has('sources', 2)
         ->has('sources.0', fn ($source) => $source->hasAll([
-            'id', 'kind', 'kind_label', 'kind_short_label', 'name', 'display_name', 'record_type', 'record_type_label', 'entry_number', 'year', 'provenance', 'url', 'note', 'original_name', 'mime_type', 'size', 'width', 'height', 'has_thumbnail', 'uploaded_at',
+            'id', 'kind', 'kind_label', 'kind_short_label', 'name', 'display_name', 'record_type', 'record_type_label', 'entry_number', 'year', 'provenance', 'url', 'note', 'original_name', 'mime_type', 'size', 'width', 'height', 'has_thumbnail', 'uploaded_at', 'events_count',
         ]))
         ->where('sources.0.id', $newer->id)
         ->where('sources.1.id', $older->id));
@@ -774,4 +775,132 @@ test('the file download name ignores the source name', function () {
     $response = $this->actingAs($user)->get(route('sources.file', $source));
 
     expect($response->headers->get('Content-Disposition'))->toContain('oryginal.jpg')->not->toContain('Akt');
+});
+
+test('the index counts the linked events per source', function () {
+    $user = User::factory()->create();
+    $unlinked = Source::factory()->for($user->tree)->create();
+    $linked = Source::factory()->for($user->tree)->create();
+    $linked->events()->attach([
+        Event::factory()->for($user->tree)->birth()->create()->id,
+        Event::factory()->for($user->tree)->death()->create()->id,
+    ]);
+
+    $this->actingAs($user)->get(route('sources.index'))->assertInertia(fn ($page) => $page
+        ->where('sources.0.id', $linked->id)
+        ->where('sources.0.events_count', 2)
+        ->where('sources.1.id', $unlinked->id)
+        ->where('sources.1.events_count', 0));
+});
+
+test('a marriage event with two participants counts once', function () {
+    $user = User::factory()->create();
+    $source = Source::factory()->for($user->tree)->create();
+    $marriage = Event::factory()->for($user->tree)->create(['type' => EventType::Marriage]);
+    $marriage->participants()->attach(Person::factory()->for($user->tree)->create(), ['role' => ParticipantRole::Spouse]);
+    $marriage->participants()->attach(Person::factory()->for($user->tree)->create(), ['role' => ParticipantRole::Spouse]);
+    $marriage->sources()->attach($source);
+
+    $this->actingAs($user)->get(route('sources.index'))->assertInertia(fn ($page) => $page
+        ->where('sources.0.events_count', 1));
+});
+
+test('the show page and the picker payload carry no events count', function () {
+    $user = User::factory()->create();
+    $source = Source::factory()->for($user->tree)->create();
+    $source->events()->attach(Event::factory()->for($user->tree)->birth()->create());
+
+    $this->actingAs($user)->get(route('sources.show', $source))->assertInertia(fn ($page) => $page
+        ->has('source')
+        ->missing('source.events_count'));
+
+    $version = $this->actingAs($user)->get(route('sources.index'), ['X-Inertia' => 'true'])->headers->get('X-Inertia-Version');
+
+    $response = $this->actingAs($user)->get(route('sources.index'), [
+        'X-Inertia' => 'true',
+        'X-Inertia-Version' => $version,
+        'X-Inertia-Partial-Data' => 'availableSources',
+        'X-Inertia-Partial-Component' => 'sources/index',
+    ]);
+
+    expect($response->json('props.availableSources.0'))->not->toHaveKey('events_count');
+});
+
+test('the index filters default to all kinds, the gallery and newest first', function () {
+    $this->actingAs(User::factory()->create())->get(route('sources.index'))->assertInertia(fn ($page) => $page
+        ->where('filters', ['q' => '', 'kind' => 'wszystkie', 'view' => 'galeria', 'sort' => '-dodano']));
+});
+
+test('the index echoes each valid kind, the table view and each valid sort', function (array $query, string $key, string $expected) {
+    $this->actingAs(User::factory()->create())->get(route('sources.index', $query))->assertInertia(fn ($page) => $page
+        ->where("filters.{$key}", $expected));
+})->with([
+    'akty' => [['kind' => 'akty'], 'kind', 'akty'],
+    'nagrobki' => [['kind' => 'nagrobki'], 'kind', 'nagrobki'],
+    'inne' => [['kind' => 'inne'], 'kind', 'inne'],
+    'tabela' => [['view' => 'tabela'], 'view', 'tabela'],
+    ...collect(['nazwa', 'rodzaj', 'rok', 'potwierdza', 'dodano'])
+        ->flatMap(fn (string $key): array => [$key, "-{$key}"])
+        ->mapWithKeys(fn (string $sort): array => ["sort {$sort}" => [['view' => 'tabela', 'sort' => $sort], 'sort', $sort]])
+        ->all(),
+]);
+
+test('the index falls back to the defaults for unknown, array and blank parameters', function (array $query, string $key, string $expected) {
+    $this->actingAs(User::factory()->create())->get(route('sources.index', $query))->assertInertia(fn ($page) => $page
+        ->where("filters.{$key}", $expected));
+})->with([
+    'unknown kind' => [['kind' => 'zdjecia'], 'kind', 'wszystkie'],
+    'array kind' => [['kind' => ['akty']], 'kind', 'wszystkie'],
+    'blank kind' => [['kind' => ''], 'kind', 'wszystkie'],
+    'unknown view' => [['view' => 'lista'], 'view', 'galeria'],
+    'array view' => [['view' => ['tabela']], 'view', 'galeria'],
+    'blank view' => [['view' => ''], 'view', 'galeria'],
+    'unknown sort' => [['view' => 'tabela', 'sort' => 'kolor'], 'sort', '-dodano'],
+    'array sort' => [['view' => 'tabela', 'sort' => ['rok']], 'sort', '-dodano'],
+    'blank sort' => [['view' => 'tabela', 'sort' => ''], 'sort', '-dodano'],
+    'sort without the table view' => [['sort' => 'rok'], 'sort', '-dodano'],
+    'sort in the gallery view' => [['view' => 'galeria', 'sort' => '-nazwa'], 'sort', '-dodano'],
+]);
+
+test('the index search query is trimmed, cut to 100 characters and empty for a non-string', function (array $query, string $expected) {
+    $this->actingAs(User::factory()->create())->get(route('sources.index', $query))->assertInertia(fn ($page) => $page
+        ->where('filters.q', $expected));
+})->with([
+    'trimmed' => [['q' => '  akt  '], 'akt'],
+    'cut' => [['q' => str_repeat('a', 120)], str_repeat('a', 100)],
+    'array' => [['q' => ['akt']], ''],
+]);
+
+test('the index returns the whole tree in the same order whatever the filters say', function () {
+    $user = User::factory()->create();
+    $older = Source::factory()->for($user->tree)->create();
+    $newer = Source::factory()->gravestone()->for($user->tree)->create();
+
+    $this->actingAs($user)->get(route('sources.index', ['q' => 'xyz', 'kind' => 'nagrobki']))->assertInertia(fn ($page) => $page
+        ->has('sources', 2)
+        ->where('sources.0.id', $newer->id)
+        ->where('sources.1.id', $older->id));
+});
+
+test('a partial reload of the filters runs no sources query', function () {
+    $user = User::factory()->create();
+    Source::factory()->for($user->tree)->create();
+
+    $version = $this->actingAs($user)->get(route('sources.index'), ['X-Inertia' => 'true'])->headers->get('X-Inertia-Version');
+
+    DB::enableQueryLog();
+
+    $response = $this->actingAs($user)->get(route('sources.index', ['kind' => 'akty']), [
+        'X-Inertia' => 'true',
+        'X-Inertia-Version' => $version,
+        'X-Inertia-Partial-Data' => 'filters',
+        'X-Inertia-Partial-Component' => 'sources/index',
+    ]);
+
+    $sourceQueries = collect(DB::getQueryLog())->filter(fn (array $log): bool => str_contains($log['query'], '"sources"'));
+
+    $response->assertOk();
+    expect($response->json('props.filters.kind'))->toBe('akty');
+    expect($response->json('props'))->not->toHaveKey('sources');
+    expect($sourceQueries)->toBeEmpty();
 });

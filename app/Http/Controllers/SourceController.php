@@ -30,13 +30,61 @@ class SourceController extends Controller
      */
     public function index(Request $request): Response
     {
-        $sources = $request->user()->tree->sources()->latest()->orderByDesc('id')->get();
+        $query = $this->normalizeSearchQuery($request->query('q'));
+        $kind = $this->normalizeKind($request->query('kind'));
+        $view = $this->normalizeView($request->query('view'));
+        $sort = $view === 'tabela' ? $this->normalizeSort($request->query('sort')) : '-dodano';
+        $tree = $request->user()->tree;
 
         return Inertia::render('sources/index', [
-            'sources' => SourceResource::collection($sources)->resolve(),
+            'sources' => fn (): array => SourceResource::collection(
+                $tree->sources()->withCount('events')->latest()->orderByDesc('id')->get()
+            )->resolve(),
+            'filters' => ['q' => $query, 'kind' => $kind, 'view' => $view, 'sort' => $sort],
             'kinds' => SourceKind::options(),
             'recordTypes' => SourceRecordType::options(),
         ]);
+    }
+
+    /**
+     * Normalize the raw `q` query parameter into a trimmed, length-capped search string.
+     */
+    private function normalizeSearchQuery(mixed $q): string
+    {
+        if (! is_string($q)) {
+            return '';
+        }
+
+        return rtrim(mb_substr(trim($q), 0, 100));
+    }
+
+    /**
+     * Normalize the raw `kind` query parameter: one of the three kind filters or the default `wszystkie`.
+     */
+    private function normalizeKind(mixed $kind): string
+    {
+        return is_string($kind) && in_array($kind, ['akty', 'nagrobki', 'inne'], true) ? $kind : 'wszystkie';
+    }
+
+    /**
+     * Normalize the raw `view` query parameter: `tabela` or the default `galeria`.
+     */
+    private function normalizeView(mixed $view): string
+    {
+        return $view === 'tabela' ? 'tabela' : 'galeria';
+    }
+
+    /**
+     * Normalize the raw `sort` query parameter: one of the ten sort keys or the default `-dodano`.
+     */
+    private function normalizeSort(mixed $sort): string
+    {
+        $allowed = [
+            'nazwa', '-nazwa', 'rodzaj', '-rodzaj', 'rok', '-rok',
+            'potwierdza', '-potwierdza', 'dodano', '-dodano',
+        ];
+
+        return is_string($sort) && in_array($sort, $allowed, true) ? $sort : '-dodano';
     }
 
     /**

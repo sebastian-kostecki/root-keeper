@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Actions\Relations\CreateMarriage;
 use App\Actions\Relations\CreateParentChildRelation;
+use App\Actions\Sources\GenerateSourceThumbnail;
 use App\Actions\Trees\SetTreeRootPerson;
 use App\Enums\EventType;
 use App\Enums\ParticipantRole;
@@ -16,6 +17,9 @@ use App\Models\Tree;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
+use RuntimeException;
 
 /**
  * Kitchen-sink tree for the family-sheet and person-modal visual gates. Run explicitly:
@@ -45,6 +49,12 @@ use Illuminate\Support\Facades\DB;
  * (odpis-aktu-urodzenia-jana.jpg), linked to Jan's birth as its third source: a match that is already linked.
  * An akt typed "inny", 1890 (ksiega-ludnosci-lipnica.jpg): typed, but it matches no event. No akt is typed
  * marriage, so the marriage picker is the state where nothing matches.
+ *
+ * Image states (sources list gallery): eight sources carry a drawn image (paper tone with ruled lines, stone
+ * tone for gravestones) and a real thumbnail from GenerateSourceThumbnail: portrait akt-urodzenia-jan.jpg,
+ * opisany-akt-lipnica-1878.jpg and akt-zgonu-lipnica-1932.jpg; landscape akt-slubu-jan-anna.jpg,
+ * akt-z-dlugim-opisem.jpg and zaproszenie-slubne.jpg; portrait stone nagrobek-opisany.jpg; very tall stone
+ * nagrobek-genowefy.jpg. Every other source keeps the fallback (no file, no thumbnail), so each kind has both.
  */
 class TreeViewDemoSeeder extends Seeder
 {
@@ -56,6 +66,8 @@ class TreeViewDemoSeeder extends Seeder
 
     public function run(): void
     {
+        $this->deleteDemoSourceFiles();
+
         DB::transaction(function (): void {
             User::query()->whereIn('email', [self::DEMO_EMAIL, self::EMPTY_EMAIL])->delete();
 
@@ -72,6 +84,20 @@ class TreeViewDemoSeeder extends Seeder
             $this->tree = $user->tree;
             $this->seedTree();
         });
+    }
+
+    /**
+     * Remove the stored files of both demo trees; deleting the users with a plain query leaves them on disk.
+     */
+    private function deleteDemoSourceFiles(): void
+    {
+        $treeIds = Tree::query()
+            ->whereIn('user_id', User::query()->whereIn('email', [self::DEMO_EMAIL, self::EMPTY_EMAIL])->select('id'))
+            ->pluck('id');
+
+        foreach ($treeIds as $treeId) {
+            Storage::disk('local')->deleteDirectory("sources/{$treeId}");
+        }
     }
 
     private function seedTree(): void
@@ -181,6 +207,7 @@ class TreeViewDemoSeeder extends Seeder
         $this->sourceStates($jan, $kacper);
         $this->confirmationStates($wiktor, $helena, $janAnnaMarriage);
         $this->matchingStates($jan);
+        $this->imageStates();
 
         (new SetTreeRootPerson)->handle($this->tree, $jan);
     }
@@ -339,6 +366,91 @@ class TreeViewDemoSeeder extends Seeder
             'record_type' => SourceRecordType::Other,
             'year' => 1890,
         ]);
+    }
+
+    /**
+     * Gallery states: draw an image and a real thumbnail for eight existing sources, found by original name.
+     */
+    private function imageStates(): void
+    {
+        $images = [
+            'akt-urodzenia-jan.jpg' => [600, 850, false],
+            'opisany-akt-lipnica-1878.jpg' => [640, 900, false],
+            'akt-zgonu-lipnica-1932.jpg' => [620, 880, false],
+            'akt-slubu-jan-anna.jpg' => [900, 620, false],
+            'akt-z-dlugim-opisem.jpg' => [880, 600, false],
+            'zaproszenie-slubne.jpg' => [920, 640, false],
+            'nagrobek-opisany.jpg' => [640, 880, true],
+            'nagrobek-genowefy.jpg' => [420, 1400, true],
+        ];
+
+        $disk = Storage::disk('local');
+        $generateThumbnail = new GenerateSourceThumbnail;
+
+        foreach ($images as $originalName => [$width, $height, $isStone]) {
+            $source = Source::query()
+                ->where('tree_id', $this->tree->id)
+                ->where('original_name', $originalName)
+                ->firstOrFail();
+
+            $uuid = (string) Str::uuid();
+            $path = "sources/{$this->tree->id}/{$uuid}.jpg";
+            $thumbnailPath = "sources/{$this->tree->id}/thumbnails/{$uuid}.jpg";
+            $content = $this->drawImage($width, $height, $isStone);
+
+            $disk->put($path, $content);
+            $thumbnailContent = $generateThumbnail->handle($disk->path($path), 'image/jpeg');
+
+            if ($thumbnailContent !== null) {
+                $disk->put($thumbnailPath, $thumbnailContent);
+            }
+
+            $source->update([
+                'path' => $path,
+                'thumbnail_path' => $thumbnailContent !== null ? $thumbnailPath : null,
+                'width' => $width,
+                'height' => $height,
+                'size' => strlen($content),
+            ]);
+        }
+    }
+
+    /**
+     * Draw a paper (or stone) toned JPEG with ruled lines.
+     */
+    private function drawImage(int $width, int $height, bool $isStone): string
+    {
+        $width = max(1, $width);
+        $height = max(1, $height);
+        $image = imagecreatetruecolor($width, $height);
+
+        if ($image === false) {
+            throw new RuntimeException('GD could not create the demo image.');
+        }
+
+        [$background, $line] = $isStone
+            ? [[142, 145, 148], [104, 107, 110]]
+            : [[238, 228, 204], [176, 160, 128]];
+
+        $backgroundColor = imagecolorallocate($image, ...$background);
+        $lineColor = imagecolorallocate($image, ...$line);
+
+        if ($backgroundColor === false || $lineColor === false) {
+            throw new RuntimeException('GD could not allocate the demo image colours.');
+        }
+
+        imagefilledrectangle($image, 0, 0, $width, $height, $backgroundColor);
+
+        for ($y = (int) ($height * 0.08); $y < $height * 0.94; $y += max(18, (int) ($height / 30))) {
+            imageline($image, (int) ($width * 0.08), $y, (int) ($width * 0.92), $y, $lineColor);
+        }
+
+        imagerectangle($image, 6, 6, $width - 7, $height - 7, $lineColor);
+
+        ob_start();
+        imagejpeg($image, null, 85);
+
+        return (string) ob_get_clean();
     }
 
     private function attachSource(Event $event, string $originalName): void

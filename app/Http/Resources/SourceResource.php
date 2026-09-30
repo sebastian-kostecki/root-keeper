@@ -37,6 +37,7 @@ class SourceResource extends JsonResource
      *     height: int|null,
      *     has_thumbnail: bool,
      *     uploaded_at: string|null,
+     *     events_count?: int,
      * }
      */
     public function toArray(Request $request): array
@@ -62,6 +63,7 @@ class SourceResource extends JsonResource
             'height' => $this->height,
             'has_thumbnail' => $this->thumbnail_path !== null,
             'uploaded_at' => $this->created_at?->toIso8601String(),
+            'events_count' => $this->whenCounted('events'),
         ];
     }
 }
