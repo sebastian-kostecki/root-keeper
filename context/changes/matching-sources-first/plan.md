@@ -348,32 +348,32 @@ The split is one pass over a list that is already in memory; the request and the
 
 #### Automated
 
-- [x] 2.1 JS unit tests pass
-- [x] 2.2 Types, lint and format
-- [x] 2.3 Production build
-- [x] 2.4 Picker, linking and source tests still pass
+- [x] 2.1 JS unit tests pass — 63d7d90
+- [x] 2.2 Types, lint and format — 63d7d90
+- [x] 2.3 Production build — 63d7d90
+- [x] 2.4 Picker, linking and source tests still pass — 63d7d90
 
 #### Manual
 
-- [x] 2.5 Leon's death picker has both sections
-- [x] 2.6 Jan's birth picker keeps a linked match in place
-- [x] 2.7 Jan and Anna's marriage picker shows no headings and the same order as before
-- [x] 2.8 A source from „Pozostałe źródła" still links
-- [x] 2.9 Setting an untyped akt's type to „małżeństwa" moves it under „Pasujące akty" in a marriage picker, and clearing the type moves it back
-- [x] 2.10 The tile line is right
-- [x] 2.11 On a fresh account with a single akt urodzenia, the birth picker shows only „Pasujące akty" and the death picker shows the plain list without headings
-- [x] 2.12 The picker behaves the same from „Przegląd" and from the „Źródła" tab; 390 px, dark mode and focus are fine
+- [x] 2.5 Leon's death picker has both sections — 63d7d90
+- [x] 2.6 Jan's birth picker keeps a linked match in place — 63d7d90
+- [x] 2.7 Jan and Anna's marriage picker shows no headings and the same order as before — 63d7d90
+- [x] 2.8 A source from „Pozostałe źródła" still links — 63d7d90
+- [x] 2.9 Setting an untyped akt's type to „małżeństwa" moves it under „Pasujące akty" in a marriage picker, and clearing the type moves it back — 63d7d90
+- [x] 2.10 The tile line is right — 63d7d90
+- [x] 2.11 On a fresh account with a single akt urodzenia, the birth picker shows only „Pasujące akty" and the death picker shows the plain list without headings — 63d7d90
+- [x] 2.12 The picker behaves the same from „Przegląd" and from the „Źródła" tab; 390 px, dark mode and focus are fine — 63d7d90
 
 ### Phase 3: Screenshot gate
 
 #### Automated
 
-- [ ] 3.1 Demo seeder runs
-- [ ] 3.2 Screenshots produced
-- [ ] 3.3 Full suite green
-- [ ] 3.4 JS tests, types, lint, format and build
+- [x] 3.1 Demo seeder runs
+- [x] 3.2 Screenshots produced
+- [x] 3.3 Full suite green
+- [x] 3.4 JS tests, types, lint, format and build
 
 #### Manual
 
-- [ ] 3.5 `verdict.md` reviewed
-- [ ] 3.6 One real akt checked end to end
+- [x] 3.5 `verdict.md` reviewed
+- [x] 3.6 One real akt checked end to end
