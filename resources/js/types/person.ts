@@ -31,6 +31,7 @@ export type LinkedSource = {
     id: number;
     kind: SourceKind;
     original_name: string;
+    display_name: string;
     has_thumbnail: boolean;
     uploaded_at: string | null;
 };

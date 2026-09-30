@@ -51,8 +51,8 @@ export function UnlinkSourceDialog({
             <DialogContent>
                 <DialogTitle>Odepnij źródło</DialogTitle>
                 <DialogDescription>
-                    Czy na pewno chcesz odpiąć źródło „{source.original_name}”
-                    od wydarzenia „{eventLabel}”?
+                    Czy na pewno chcesz odpiąć źródło „{source.display_name}” od
+                    wydarzenia „{eventLabel}”?
                     {isLastSource && (
                         <> Wydarzenie stanie się niepotwierdzone.</>
                     )}

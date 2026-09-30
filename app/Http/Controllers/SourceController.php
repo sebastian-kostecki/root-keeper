@@ -40,16 +40,6 @@ class SourceController extends Controller
     }
 
     /**
-     * Show the form for uploading a new source.
-     */
-    public function create(): Response
-    {
-        return Inertia::render('sources/create', [
-            'kinds' => SourceKind::options(),
-        ]);
-    }
-
-    /**
      * Store a newly uploaded source in the tree.
      */
     public function store(SourceStoreRequest $request, StoreSource $storeSource): RedirectResponse

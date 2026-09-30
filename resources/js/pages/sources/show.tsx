@@ -20,7 +20,7 @@ export default function Show({ source, confirms }: Props) {
         breadcrumbs: [
             { title: 'Źródła', href: sourcesIndex() },
             {
-                title: source.original_name,
+                title: source.display_name,
                 href: SourceController.show(source.id),
             },
         ],
@@ -34,13 +34,13 @@ export default function Show({ source, confirms }: Props) {
 
     return (
         <>
-            <Head title={source.original_name} />
+            <Head title={source.display_name} />
 
             <div className="space-y-6">
                 <div className="flex items-center justify-between gap-4">
                     <div className="flex flex-wrap items-center gap-3">
                         <Heading
-                            title={source.original_name}
+                            title={source.display_name}
                             description={`${new Date(source.uploaded_at).toLocaleDateString('pl-PL')} · ${sizeInMb} MB · ${dimensions}`}
                         />
                         <Badge variant="secondary">{source.kind_label}</Badge>
@@ -63,7 +63,7 @@ export default function Show({ source, confirms }: Props) {
 
                 <SourceViewer
                     src={SourceController.file.url(source.id)}
-                    alt={source.original_name}
+                    alt={source.display_name}
                 />
 
                 <Card>

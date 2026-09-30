@@ -549,40 +549,40 @@ None beyond today. The list still loads all sources of the tree in one query; th
 
 #### Automated
 
-- [x] 1.1 Migration applies and rolls back cleanly
-- [x] 1.2 Wayfinder regenerated and the update route exists
-- [x] 1.3 Source, migration, event-source and person tests pass
-- [x] 1.4 PHP style
-- [x] 1.5 Static analysis
-- [x] 1.6 Frontend still compiles and lints
-- [x] 1.7 Demo seeder runs
-- [x] 1.8 Baseline screenshots produced
+- [x] 1.1 Migration applies and rolls back cleanly — 70d1e92
+- [x] 1.2 Wayfinder regenerated and the update route exists — 70d1e92
+- [x] 1.3 Source, migration, event-source and person tests pass — 70d1e92
+- [x] 1.4 PHP style — 70d1e92
+- [x] 1.5 Static analysis — 70d1e92
+- [x] 1.6 Frontend still compiles and lints — 70d1e92
+- [x] 1.7 Demo seeder runs — 70d1e92
+- [x] 1.8 Baseline screenshots produced — 70d1e92
 
 #### Manual
 
-- [x] 1.9 Uploading through the existing upload page still works and opens the preview of the new source
-- [x] 1.10 The `before/` PNGs were opened and show the real list, upload page, preview and person-modal tab in both themes and both widths
+- [x] 1.9 Uploading through the existing upload page still works and opens the preview of the new source — 70d1e92
+- [x] 1.10 The `before/` PNGs were opened and show the real list, upload page, preview and person-modal tab in both themes and both widths — 70d1e92
 
 ### Phase 2: Upload modal and the list
 
 #### Automated
 
-- [ ] 2.1 Source, event-source and person tests pass, including the 404 for the old upload page
-- [ ] 2.2 Wayfinder regenerated without the create route
-- [ ] 2.3 JS unit tests pass
-- [ ] 2.4 Types, lint and format
-- [ ] 2.5 Production build
-- [ ] 2.6 No source label read from the file name
-- [ ] 2.7 PHP style and static analysis
+- [x] 2.1 Source, event-source and person tests pass, including the 404 for the old upload page
+- [x] 2.2 Wayfinder regenerated without the create route
+- [x] 2.3 JS unit tests pass
+- [x] 2.4 Types, lint and format
+- [x] 2.5 Production build
+- [x] 2.6 No source label read from the file name
+- [x] 2.7 PHP style and static analysis
 
 #### Manual
 
-- [ ] 2.8 „Dodaj źródło" with only a file and a kind saves, shows „Dodano źródło" and opens the new source's preview
-- [ ] 2.9 „Typ aktu" and „Numer wpisu" appear only for akt metrykalny; typing them, switching to zdjęcie nagrobka and saving stores neither
-- [ ] 2.10 A validation error keeps the modal open with the typed description, the error is scrolled into view, and the progress bar shows while a large file uploads
-- [ ] 2.11 List cards show name, badge, „typ · rok" and pochodzenie when set, the file name and upload date when not, and truncate long values at 390 px
-- [ ] 2.12 The person modal shows source names; the empty „Powiąż akt" link leads to „Źródła"; `/sources/create` answers 404
-- [ ] 2.13 At 390 px the modal is full-screen with a scrolling body and a pinned footer; focus is visible; light and dark both read correctly
+- [x] 2.8 „Dodaj źródło" with only a file and a kind saves, shows „Dodano źródło" and opens the new source's preview
+- [x] 2.9 „Typ aktu" and „Numer wpisu" appear only for akt metrykalny; typing them, switching to zdjęcie nagrobka and saving stores neither
+- [x] 2.10 A validation error keeps the modal open with the typed description, the error is scrolled into view, and the progress bar shows while a large file uploads
+- [x] 2.11 List cards show name, badge, „typ · rok" and pochodzenie when set, the file name and upload date when not, and truncate long values at 390 px
+- [x] 2.12 The person modal shows source names; the empty „Powiąż akt" link leads to „Źródła"; `/sources/create` answers 404
+- [x] 2.13 At 390 px the modal is full-screen with a scrolling body and a pinned footer; focus is visible; light and dark both read correctly
 
 ### Phase 3: Edit modal and the preview
 

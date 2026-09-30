@@ -41,7 +41,7 @@ export function DeleteSourceDialog({ source, confirms, trigger }: Props) {
                     <>
                         <DialogTitle>Usunąć źródło?</DialogTitle>
                         <DialogDescription>
-                            Źródło „{source.original_name}” i jego plik zostaną
+                            Źródło „{source.display_name}” i jego plik zostaną
                             trwale usunięte.
                         </DialogDescription>
                     </>
@@ -50,7 +50,7 @@ export function DeleteSourceDialog({ source, confirms, trigger }: Props) {
                         <DialogTitle>Usuń źródło</DialogTitle>
                         <DialogDescription>
                             Czy na pewno chcesz usunąć źródło „
-                            {source.original_name}”? Źródło i jego plik zostaną
+                            {source.display_name}”? Źródło i jego plik zostaną
                             trwale usunięte. Tej operacji nie można cofnąć.
                         </DialogDescription>
 

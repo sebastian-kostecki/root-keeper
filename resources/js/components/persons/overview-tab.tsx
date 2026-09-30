@@ -107,7 +107,7 @@ function FactView({ event, parts, availableSources }: FactViewProps) {
                             'źródła',
                             'źródeł',
                         )}{' '}
-                        · {event.sources[0].original_name}
+                        · {event.sources[0].display_name}
                     </p>
                 ) : (
                     <SourcePickerDialog

@@ -19,7 +19,7 @@ export function SourceThumbnail({ source, className }: Props) {
             {source.has_thumbnail ? (
                 <img
                     src={SourceController.thumbnail.url(source.id)}
-                    alt={source.original_name}
+                    alt={source.display_name}
                     loading="lazy"
                     className="h-full w-full object-cover"
                 />

@@ -1,7 +1,7 @@
 import { Link, router } from '@inertiajs/react';
 import { useState } from 'react';
 import EventSourceController from '@/actions/App/Http/Controllers/EventSourceController';
-import SourceController from '@/actions/App/Http/Controllers/SourceController';
+import { index as sourcesIndex } from '@/routes/sources';
 import InputError from '@/components/input-error';
 import { SourceThumbnail } from '@/components/sources/source-thumbnail';
 import { Button } from '@/components/ui/button';
@@ -102,7 +102,7 @@ export function SourcePickerDialog({
                     <p className="text-muted-foreground text-sm">
                         Nie masz jeszcze żadnych aktów metrykalnych.{' '}
                         <Link
-                            href={SourceController.create()}
+                            href={sourcesIndex()}
                             className="text-primary underline-offset-4 hover:underline"
                         >
                             Dodaj źródło
@@ -132,9 +132,9 @@ export function SourcePickerDialog({
                                     />
                                     <p
                                         className="truncate text-xs font-medium"
-                                        title={source.original_name}
+                                        title={source.display_name}
                                     >
-                                        {source.original_name}
+                                        {source.display_name}
                                     </p>
                                     <p className="text-muted-foreground text-xs">
                                         {isLinked

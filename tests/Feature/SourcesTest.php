@@ -17,7 +17,6 @@ test('guests are redirected to the login page from sources routes', function () 
     $source = Source::factory()->create();
 
     $this->get(route('sources.index'))->assertRedirect(route('login'));
-    $this->get(route('sources.create'))->assertRedirect(route('login'));
     $this->get(route('sources.show', $source))->assertRedirect(route('login'));
     $this->post(route('sources.store'), [])->assertRedirect(route('login'));
     $this->get(route('sources.file', $source))->assertRedirect(route('login'));
@@ -51,15 +50,10 @@ test('sources index shows only the authenticated user own sources, newest first'
         ->where('sources.1.id', $older->id));
 });
 
-test('sources create shows the upload form', function () {
+test('the old upload page returns not found', function () {
     $user = User::factory()->create();
 
-    $response = $this->actingAs($user)->get(route('sources.create'));
-
-    $response->assertOk();
-    $response->assertInertia(fn ($page) => $page
-        ->component('sources/create')
-        ->where('kinds', SourceKind::options()));
+    $this->actingAs($user)->get('/sources/create')->assertNotFound();
 });
 
 test('sources show returns not found for a source from another users tree', function () {

@@ -78,9 +78,9 @@ function SourceGroup({
                                 <div className="min-w-0 flex-1">
                                     <p
                                         className="truncate text-sm font-medium"
-                                        title={source.original_name}
+                                        title={source.display_name}
                                     >
-                                        {source.original_name}
+                                        {source.display_name}
                                     </p>
                                     {uploadedAt && (
                                         <p className="text-muted-foreground text-xs">
@@ -103,7 +103,7 @@ function SourceGroup({
                                                     ),
                                                 )
                                             }
-                                            aria-label={`Otwórz źródło ${source.original_name}`}
+                                            aria-label={`Otwórz źródło ${source.display_name}`}
                                         >
                                             Otwórz
                                         </Link>
@@ -121,7 +121,7 @@ function SourceGroup({
                                                 variant="ghost"
                                                 size="sm"
                                                 className="text-muted-foreground hover:text-destructive"
-                                                aria-label={`Odepnij źródło ${source.original_name}`}
+                                                aria-label={`Odepnij źródło ${source.display_name}`}
                                             >
                                                 Odepnij
                                             </Button>
