@@ -20,7 +20,8 @@ class StoreSource
 
     /**
      * Store the uploaded source (and, when possible, a thumbnail) on the private
-     * disk and create its row. Leaves no orphan files if creating the row fails.
+     * disk and create its row. Leaves no orphan files if anything fails once the
+     * original is written.
      */
     public function handle(Tree $tree, UploadedFile $file, SourceKind $kind): Source
     {
@@ -33,20 +34,21 @@ class StoreSource
             throw new RuntimeException("Unable to store source file [{$path}].");
         }
 
-        [$width, $height] = $this->dimensions($file->getRealPath(), $mimeType);
-
         $thumbnailPath = null;
-        $thumbnailContent = $this->generateSourceThumbnail->handle($file->getRealPath(), $mimeType);
-
-        if ($thumbnailContent !== null) {
-            $thumbnailPath = "sources/{$tree->id}/thumbnails/{$uuid}.jpg";
-
-            if (! Storage::disk('local')->put($thumbnailPath, $thumbnailContent)) {
-                $thumbnailPath = null;
-            }
-        }
 
         try {
+            [$width, $height] = $this->dimensions($file->getRealPath(), $mimeType);
+
+            $thumbnailContent = $this->generateSourceThumbnail->handle($file->getRealPath(), $mimeType);
+
+            if ($thumbnailContent !== null) {
+                $thumbnailPath = "sources/{$tree->id}/thumbnails/{$uuid}.jpg";
+
+                if (! Storage::disk('local')->put($thumbnailPath, $thumbnailContent)) {
+                    $thumbnailPath = null;
+                }
+            }
+
             return $tree->sources()->create([
                 'kind' => $kind,
                 'original_name' => $this->sanitizeOriginalName($file->getClientOriginalName(), $extension),

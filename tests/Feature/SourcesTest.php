@@ -8,6 +8,7 @@ use App\Models\Source;
 use App\Models\User;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Exceptions;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
 
@@ -262,6 +263,23 @@ test('storing a webp is accepted', function () {
     Storage::disk('local')->assertExists($source->thumbnail_path);
 });
 
+test('storing leaves no source row and no orphan original when the thumbnail cannot be written', function () {
+    Storage::fake('local');
+
+    $user = User::factory()->create();
+    $blockedThumbnailsDirectory = "sources/{$user->tree->id}/thumbnails";
+    Storage::disk('local')->put($blockedThumbnailsDirectory, 'a file where the directory belongs');
+
+    $response = $this->actingAs($user)->post(route('sources.store'), [
+        'kind' => 'metrical_record',
+        'file' => UploadedFile::fake()->image('akt.jpg', 400, 300),
+    ]);
+
+    $response->assertInternalServerError();
+    expect(Source::count())->toBe(0);
+    expect(Storage::disk('local')->allFiles("sources/{$user->tree->id}"))->toBe([$blockedThumbnailsDirectory]);
+});
+
 test('storing without a file is rejected', function () {
     $user = User::factory()->create();
 
@@ -498,4 +516,18 @@ test('destroy succeeds when the file is already missing on disk', function () {
     $this->actingAs($user)->delete(route('sources.destroy', $source))->assertRedirect(route('sources.index'));
 
     expect(Source::find($source->id))->toBeNull();
+});
+
+test('destroy still removes the source and reports the failure when a file cannot be deleted', function () {
+    Storage::fake('local');
+
+    $user = User::factory()->create();
+    $source = Source::factory()->for($user->tree)->create();
+    Storage::disk('local')->makeDirectory($source->path);
+    Exceptions::fake();
+
+    $this->actingAs($user)->delete(route('sources.destroy', $source))->assertRedirect(route('sources.index'));
+
+    expect(Source::find($source->id))->toBeNull();
+    Exceptions::assertReported(fn (RuntimeException $e): bool => str_contains($e->getMessage(), $source->path));
 });

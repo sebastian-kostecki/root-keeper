@@ -1,17 +1,57 @@
 <?php
 
+use App\Enums\SourceKind;
 use App\Models\Event;
 use App\Models\Person;
 use App\Models\Source;
 use App\Models\User;
 use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\QueryException;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
+
+function renameScansToSourcesMigration(): Migration
+{
+    static $migration = null;
+
+    return $migration ??= require database_path('migrations/2026_09_29_100000_rename_scans_to_sources.php');
+}
 
 function moveSourceFilesMigration(): Migration
 {
     static $migration = null;
 
     return $migration ??= require database_path('migrations/2026_09_29_100100_move_source_files_to_sources_prefix.php');
+}
+
+/**
+ * Put the schema back to its pre-rename shape and link one legacy scan to the event.
+ *
+ * @return array{scan: int, link: int}
+ */
+function legacyScanLinkedTo(Event $event): array
+{
+    renameScansToSourcesMigration()->down();
+
+    $scan = DB::table('scans')->insertGetId([
+        'tree_id' => $event->tree_id,
+        'original_name' => 'akt.jpg',
+        'path' => "scans/{$event->tree_id}/akt.jpg",
+        'mime_type' => 'image/jpeg',
+        'size' => 1024,
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    $link = DB::table('event_scan')->insertGetId([
+        'event_id' => $event->id,
+        'scan_id' => $scan,
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    return ['scan' => $scan, 'link' => $link];
 }
 
 function legacySource(string $path, ?string $thumbnailPath): Source
@@ -21,6 +61,55 @@ function legacySource(string $path, ?string $thumbnailPath): Source
 
 beforeEach(function () {
     Storage::fake('local');
+});
+
+test('the rename keeps every event link under its id, so the event stays confirmed', function () {
+    $event = Event::factory()->for(User::factory()->create()->tree)->birth()->create();
+    $legacy = legacyScanLinkedTo($event);
+
+    renameScansToSourcesMigration()->up();
+
+    expect(DB::table('event_source')->where('id', $legacy['link'])->value('source_id'))->toBe($legacy['scan']);
+    expect($event->sources()->pluck('sources.id')->all())->toBe([$legacy['scan']]);
+});
+
+test('the rename turns every existing scan into a metrical record', function () {
+    $event = Event::factory()->for(User::factory()->create()->tree)->birth()->create();
+    $legacy = legacyScanLinkedTo($event);
+
+    renameScansToSourcesMigration()->up();
+
+    expect(Source::findOrFail($legacy['scan'])->kind)->toBe(SourceKind::MetricalRecord);
+});
+
+test('after the rename a source row without a kind is rejected', function () {
+    $event = Event::factory()->for(User::factory()->create()->tree)->birth()->create();
+    legacyScanLinkedTo($event);
+    renameScansToSourcesMigration()->up();
+
+    $insertWithoutKind = fn () => DB::transaction(fn () => DB::table('sources')->insert([
+        'tree_id' => $event->tree_id,
+        'original_name' => 'nagrobek.jpg',
+        'path' => "sources/{$event->tree_id}/nagrobek.jpg",
+        'mime_type' => 'image/jpeg',
+        'size' => 1024,
+    ]));
+
+    expect($insertWithoutKind)->toThrow(QueryException::class, 'kind');
+    expect(DB::table('sources')->count())->toBe(1);
+});
+
+test('rolling the rename back restores the scans names and keeps the event links', function () {
+    $event = Event::factory()->for(User::factory()->create()->tree)->birth()->create();
+    $legacy = legacyScanLinkedTo($event);
+    renameScansToSourcesMigration()->up();
+
+    renameScansToSourcesMigration()->down();
+
+    expect(Schema::hasTable('sources'))->toBeFalse();
+    expect(Schema::hasTable('event_source'))->toBeFalse();
+    expect(Schema::hasColumn('scans', 'kind'))->toBeFalse();
+    expect(DB::table('event_scan')->where('id', $legacy['link'])->value('scan_id'))->toBe($legacy['scan']);
 });
 
 test('the file move relocates originals and thumbnails and repoints the rows', function () {
