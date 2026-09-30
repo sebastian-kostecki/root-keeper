@@ -1,7 +1,8 @@
 import { AppContent } from '@/components/app-content';
+import { AppMobileHeader } from '@/components/app-mobile-header';
 import { AppShell } from '@/components/app-shell';
 import { AppSidebar } from '@/components/app-sidebar';
-import { AppSidebarHeader } from '@/components/app-sidebar-header';
+import { Breadcrumbs } from '@/components/breadcrumbs';
 import type { AppLayoutProps } from '@/types';
 
 export default function AppSidebarLayout({
@@ -9,11 +10,14 @@ export default function AppSidebarLayout({
     breadcrumbs = [],
 }: AppLayoutProps) {
     return (
-        <AppShell variant="sidebar">
+        <AppShell>
             <AppSidebar />
-            <AppContent variant="sidebar" className="min-w-0 overflow-x-clip">
-                <AppSidebarHeader breadcrumbs={breadcrumbs} />
-                <div className="min-w-0 px-6 py-6 md:px-4">{children}</div>
+            <AppContent className="min-w-0 overflow-x-clip">
+                <AppMobileHeader />
+                <div className="min-w-0 px-6 py-6 md:px-4">
+                    <Breadcrumbs breadcrumbs={breadcrumbs} />
+                    {children}
+                </div>
             </AppContent>
         </AppShell>
     );

@@ -1,7 +1,6 @@
-import { Link } from '@inertiajs/react';
-import { BookOpen, FileImage, FolderGit2, Network, Users } from 'lucide-react';
+import { Link, usePage } from '@inertiajs/react';
+import { Network, ScrollText, Users } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
-import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
 import {
@@ -12,54 +11,47 @@ import {
     SidebarMenu,
     SidebarMenuButton,
     SidebarMenuItem,
+    SidebarTrigger,
 } from '@/components/ui/sidebar';
 import { index as personsIndex } from '@/routes/persons';
 import { index as sourcesIndex } from '@/routes/sources';
 import { index as treeIndex } from '@/routes/tree';
 import type { NavItem } from '@/types';
 
-const mainNavItems: NavItem[] = [
-    {
-        title: 'Drzewo',
-        href: treeIndex(),
-        icon: Network,
-    },
-    {
-        title: 'Osoby',
-        href: personsIndex(),
-        icon: Users,
-    },
-    {
-        title: 'Źródła',
-        href: sourcesIndex(),
-        icon: FileImage,
-    },
-];
-
-const footerNavItems: NavItem[] = [
-    {
-        title: 'Repository',
-        href: 'https://github.com/laravel/react-starter-kit',
-        icon: FolderGit2,
-    },
-    {
-        title: 'Documentation',
-        href: 'https://laravel.com/docs/starter-kits#react',
-        icon: BookOpen,
-    },
-];
-
 export function AppSidebar() {
+    const { navCounts } = usePage().props;
+
+    const mainNavItems: NavItem[] = [
+        {
+            title: 'Drzewo',
+            href: treeIndex(),
+            icon: Network,
+        },
+        {
+            title: 'Osoby',
+            href: personsIndex(),
+            icon: Users,
+            count: navCounts?.people,
+        },
+        {
+            title: 'Źródła',
+            href: sourcesIndex(),
+            icon: ScrollText,
+            count: navCounts?.sources,
+        },
+    ];
+
     return (
         <Sidebar collapsible="icon" variant="inset">
             <SidebarHeader>
                 <SidebarMenu>
-                    <SidebarMenuItem>
+                    <SidebarMenuItem className="flex items-center gap-1">
                         <SidebarMenuButton size="lg" asChild>
-                            <Link href={personsIndex()} prefetch>
+                            <Link href={treeIndex()} prefetch>
                                 <AppLogo />
                             </Link>
                         </SidebarMenuButton>
+                        <SidebarTrigger className="shrink-0" />
                     </SidebarMenuItem>
                 </SidebarMenu>
             </SidebarHeader>
@@ -69,7 +61,6 @@ export function AppSidebar() {
             </SidebarContent>
 
             <SidebarFooter>
-                <NavFooter items={footerNavItems} className="mt-auto" />
                 <NavUser />
             </SidebarFooter>
         </Sidebar>

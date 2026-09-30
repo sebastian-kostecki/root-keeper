@@ -1,8 +1,8 @@
 import { Link } from '@inertiajs/react';
 import {
     SidebarGroup,
-    SidebarGroupLabel,
     SidebarMenu,
+    SidebarMenuBadge,
     SidebarMenuButton,
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
@@ -14,23 +14,29 @@ export function NavMain({ items }: { items: NavItem[] }) {
 
     return (
         <SidebarGroup className="px-2 py-0">
-            <SidebarGroupLabel>Drzewo</SidebarGroupLabel>
-            <SidebarMenu>
-                {items.map((item) => (
-                    <SidebarMenuItem key={item.title}>
-                        <SidebarMenuButton
-                            asChild
-                            isActive={isCurrentOrParentUrl(item.href)}
-                            tooltip={{ children: item.title }}
-                        >
-                            <Link href={item.href} prefetch>
-                                {item.icon && <item.icon />}
-                                <span>{item.title}</span>
-                            </Link>
-                        </SidebarMenuButton>
-                    </SidebarMenuItem>
-                ))}
-            </SidebarMenu>
+            <nav aria-label="Nawigacja główna">
+                <SidebarMenu>
+                    {items.map((item) => (
+                        <SidebarMenuItem key={item.title}>
+                            <SidebarMenuButton
+                                asChild
+                                isActive={isCurrentOrParentUrl(item.href)}
+                                tooltip={{ children: item.title }}
+                            >
+                                <Link href={item.href} prefetch>
+                                    {item.icon && <item.icon />}
+                                    <span>{item.title}</span>
+                                </Link>
+                            </SidebarMenuButton>
+                            {item.count !== undefined && item.count > 0 && (
+                                <SidebarMenuBadge className="font-normal">
+                                    {item.count}
+                                </SidebarMenuBadge>
+                            )}
+                        </SidebarMenuItem>
+                    ))}
+                </SidebarMenu>
+            </nav>
         </SidebarGroup>
     );
 }

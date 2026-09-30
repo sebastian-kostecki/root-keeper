@@ -502,36 +502,36 @@ No data migration. After deploy the human sets `APP_NAME="Root Keeper"` on the s
 
 #### Automated
 
-- [x] 2.1 New tests pass: `vendor/bin/sail artisan test --compact tests/Feature/AppShellTest.php`
-- [x] 2.2 Auth redirects are untouched: `vendor/bin/sail artisan test --compact tests/Feature/Auth`
-- [x] 2.3 PHP style is applied: `vendor/bin/sail bin pint --dirty --format agent`
-- [x] 2.4 Static analysis passes: `vendor/bin/sail bin phpstan analyse`
-- [x] 2.5 Types pass: `vendor/bin/sail npm run types:check`
+- [x] 2.1 New tests pass: `vendor/bin/sail artisan test --compact tests/Feature/AppShellTest.php` — 2fdccec
+- [x] 2.2 Auth redirects are untouched: `vendor/bin/sail artisan test --compact tests/Feature/Auth` — 2fdccec
+- [x] 2.3 PHP style is applied: `vendor/bin/sail bin pint --dirty --format agent` — 2fdccec
+- [x] 2.4 Static analysis passes: `vendor/bin/sail bin phpstan analyse` — 2fdccec
+- [x] 2.5 Types pass: `vendor/bin/sail npm run types:check` — 2fdccec
 
 #### Manual
 
-- [x] 2.6 Local `.env` has `APP_NAME="Root Keeper"` and the old sidebar prints „Root Keeper”
-- [x] 2.7 The production `APP_NAME` is noted as a deployment step for the human
+- [x] 2.6 Local `.env` has `APP_NAME="Root Keeper"` and the old sidebar prints „Root Keeper” — 2fdccec
+- [x] 2.7 The production `APP_NAME` is noted as a deployment step for the human — 2fdccec
 
 ### Phase 3: The shell — sidebar, page header, account menu
 
 #### Automated
 
-- [ ] 3.1 Format and lint pass: `vendor/bin/sail npm run check`
-- [ ] 3.2 Types pass: `vendor/bin/sail npm run types:check`
-- [ ] 3.3 Production build passes: `vendor/bin/sail npm run build`
-- [ ] 3.4 JS tests still pass: `vendor/bin/sail npm run test:js`
-- [ ] 3.5 Deleted pieces are unreferenced: `grep -rnE "app-header|app-sidebar-header|nav-footer|AppVariant" resources/js` prints nothing
-- [ ] 3.6 No literal colour and no starter link in the shell: `grep -rnE "neutral-|text-(white|black)|laravel\.com|react-starter-kit" resources/js/components/app-*.tsx resources/js/components/nav-*.tsx resources/js/components/user-*.tsx` prints nothing
-- [ ] 3.7 PHP suite is unaffected: `vendor/bin/sail artisan test --compact tests/Feature/AppShellTest.php tests/Feature/Auth`
+- [x] 3.1 Format and lint pass: `vendor/bin/sail npm run check`
+- [x] 3.2 Types pass: `vendor/bin/sail npm run types:check`
+- [x] 3.3 Production build passes: `vendor/bin/sail npm run build`
+- [x] 3.4 JS tests still pass: `vendor/bin/sail npm run test:js`
+- [x] 3.5 Deleted pieces are unreferenced: `grep -rnE "app-header|app-sidebar-header|nav-footer|AppVariant" resources/js` prints nothing
+- [x] 3.6 No literal colour and no starter link in the shell: `grep -rnE "neutral-|text-(white|black)|laravel\.com|react-starter-kit" resources/js/components/app-*.tsx resources/js/components/nav-*.tsx resources/js/components/user-*.tsx` prints nothing
+- [x] 3.7 PHP suite is unaffected: `vendor/bin/sail artisan test --compact tests/Feature/AppShellTest.php tests/Feature/Auth`
 
 #### Manual
 
-- [ ] 3.8 1280 px, light: `/persons` matches board „A — bez górnej belki” — brand „RK Root Keeper”, collapse button, Drzewo / Osoby 41 / Źródła 18, account row with e-mail, no top bar, no footer links
-- [ ] 3.9 `/tree` shows the link „Drzewo” above „Jan Kowalski”; a source page shows „Źródła” above the source name; `/persons`, `/sources` and `/settings/profile` show no trail
-- [ ] 3.10 The brand link opens `/tree`; the account menu reads „Ustawienia” and „Wyloguj” and both work
-- [ ] 3.11 390 px: the bar with the menu button and brand is visible, the button opens the sheet, the page has no sideways scroll
-- [ ] 3.12 Adding a person raises the „Osoby” counter without a manual refresh
+- [x] 3.8 1280 px, light: `/persons` matches board „A — bez górnej belki” — brand „RK Root Keeper”, collapse button, Drzewo / Osoby 41 / Źródła 18, account row with e-mail, no top bar, no footer links
+- [x] 3.9 `/tree` shows the link „Drzewo” above „Jan Kowalski”; a source page shows „Źródła” above the source name; `/persons`, `/sources` and `/settings/profile` show no trail
+- [x] 3.10 The brand link opens `/tree`; the account menu reads „Ustawienia” and „Wyloguj” and both work
+- [x] 3.11 390 px: the bar with the menu button and brand is visible, the button opens the sheet, the page has no sideways scroll
+- [x] 3.12 Adding a person raises the „Osoby” counter without a manual refresh
 
 ### Phase 4: States
 
