@@ -576,40 +576,40 @@ None. No schema change. `events_count` is additive and appears only on the index
 
 #### Automated
 
-- [x] 2.1 JS unit tests pass: `vendor/bin/sail npm run test:js`
-- [x] 2.2 Types pass: `vendor/bin/sail npm run types:check`
-- [x] 2.3 Format + lint pass: `vendor/bin/sail npm run check`
-- [x] 2.4 Build passes: `vendor/bin/sail npm run build`
-- [x] 2.5 Persons and sources feature tests still pass: `vendor/bin/sail artisan test --compact tests/Feature/PersonsTest.php tests/Feature/SourcesTest.php`
-- [x] 2.6 The script writes every `/persons` control shot to `screenshots/after/` and its compare step prints a result for each against `screenshots/before/`
+- [x] 2.1 JS unit tests pass: `vendor/bin/sail npm run test:js` — 934c1fb
+- [x] 2.2 Types pass: `vendor/bin/sail npm run types:check` — 934c1fb
+- [x] 2.3 Format + lint pass: `vendor/bin/sail npm run check` — 934c1fb
+- [x] 2.4 Build passes: `vendor/bin/sail npm run build` — 934c1fb
+- [x] 2.5 Persons and sources feature tests still pass: `vendor/bin/sail artisan test --compact tests/Feature/PersonsTest.php tests/Feature/SourcesTest.php` — 934c1fb
+- [x] 2.6 The script writes every `/persons` control shot to `screenshots/after/` and its compare step prints a result for each against `screenshots/before/` — 934c1fb
 
 #### Manual
 
-- [x] 2.7 `/persons` looks and behaves as before in light and dark: search spinner, Lista | Tabela switcher, sort headers, both empty states; every control shot is identical or its difference is explained
-- [x] 2.8 „Edytuj” on a source page still opens the dialog and saves
-- [x] 2.9 Thumbnails in the source picker and in the person modal's „Źródła” tab look unchanged
+- [x] 2.7 `/persons` looks and behaves as before in light and dark: search spinner, Lista | Tabela switcher, sort headers, both empty states; every control shot is identical or its difference is explained — 934c1fb
+- [x] 2.8 „Edytuj” on a source page still opens the dialog and saves — 934c1fb
+- [x] 2.9 Thumbnails in the source picker and in the person modal's „Źródła” tab look unchanged — 934c1fb
 
 ### Phase 3: The view — toolbar, Galeria, Tabela, states
 
 #### Automated
 
-- [ ] 3.1 Format + lint pass: `vendor/bin/sail npm run check`
-- [ ] 3.2 Types pass: `vendor/bin/sail npm run types:check`
-- [ ] 3.3 JS unit tests pass: `vendor/bin/sail npm run test:js`
-- [ ] 3.4 Build passes: `vendor/bin/sail npm run build`
-- [ ] 3.5 Sources feature tests still pass: `vendor/bin/sail artisan test --compact tests/Feature/SourcesTest.php`
+- [x] 3.1 Format + lint pass: `vendor/bin/sail npm run check`
+- [x] 3.2 Types pass: `vendor/bin/sail npm run types:check`
+- [x] 3.3 JS unit tests pass: `vendor/bin/sail npm run test:js`
+- [x] 3.4 Build passes: `vendor/bin/sail npm run build`
+- [x] 3.5 Sources feature tests still pass: `vendor/bin/sail artisan test --compact tests/Feature/SourcesTest.php`
 
 #### Manual
 
-- [ ] 3.6 Typing filters the list at once, the URL gets `q` after a pause, and Back does not step through keystrokes
-- [ ] 3.7 Kind filter: counters follow the search, a kind with counter 0 is disabled, and the chosen kind survives a view switch and a refresh
-- [ ] 3.8 Switching Galeria ↔ Tabela keeps `q` and `kind`, the Galeria URL has no `sort`, and refresh restores the chosen view
-- [ ] 3.9 Table sort: Rok keeps sources without a year last in both directions, `Dodano ↓` equals the gallery order, and Potwierdza ↑ starts with „bez powiązań”
-- [ ] 3.10 Empty states: „Wyczyść wyszukiwanie” keeps the kind, „Pokaż wszystkie rodzaje” keeps the search text, and the empty tree offers „Dodaj źródło”
-- [ ] 3.11 ⋯ → „Edytuj” saves, and the list keeps its view, search, kind and sort and shows the new values; ⋯ → „Otwórz” lands on the source page
-- [ ] 3.12 Keyboard: Tab reaches the search, the kind filter, the switcher, cards or rows, sort headers and ⋯ menus, each with a visible focus ring
-- [ ] 3.13 At 390 px the gallery has two columns with no sideways page scroll, and the table scrolls sideways with the Źródło column sticky
-- [ ] 3.14 The page has one `<h1>` „Źródła” and „Dodaj źródło” is level with it
+- [x] 3.6 Typing filters the list at once, the URL gets `q` after a pause, and Back does not step through keystrokes
+- [x] 3.7 Kind filter: counters follow the search, a kind with counter 0 is disabled, and the chosen kind survives a view switch and a refresh
+- [x] 3.8 Switching Galeria ↔ Tabela keeps `q` and `kind`, the Galeria URL has no `sort`, and refresh restores the chosen view
+- [x] 3.9 Table sort: Rok keeps sources without a year last in both directions, `Dodano ↓` equals the gallery order, and Potwierdza ↑ starts with „bez powiązań”
+- [x] 3.10 Empty states: „Wyczyść wyszukiwanie” keeps the kind, „Pokaż wszystkie rodzaje” keeps the search text, and the empty tree offers „Dodaj źródło”
+- [x] 3.11 ⋯ → „Edytuj” saves, and the list keeps its view, search, kind and sort and shows the new values; ⋯ → „Otwórz” lands on the source page
+- [x] 3.12 Keyboard: Tab reaches the search, the kind filter, the switcher, cards or rows, sort headers and ⋯ menus, each with a visible focus ring
+- [x] 3.13 At 390 px the gallery has two columns with no sideways page scroll, and the table scrolls sideways with the Źródło column sticky
+- [x] 3.14 The page has one `<h1>` „Źródła” and „Dodaj źródło” is level with it
 
 ### Phase 4: Screenshot gate
 

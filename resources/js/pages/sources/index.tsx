@@ -1,24 +1,40 @@
-import { Head, Link } from '@inertiajs/react';
+import { Head, router } from '@inertiajs/react';
+import { LayoutGridIcon, TableIcon } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
 import SourceController from '@/actions/App/Http/Controllers/SourceController';
 import Heading from '@/components/heading';
+import { SearchField } from '@/components/search-field';
+import { SegmentedToggle } from '@/components/segmented-toggle';
 import { SourceCreateDialog } from '@/components/sources/source-create-dialog';
-import { SourceThumbnail } from '@/components/sources/source-thumbnail';
-import { Badge } from '@/components/ui/badge';
+import {
+    SourcesEmptyKind,
+    SourcesEmptyTree,
+    SourcesNoResults,
+} from '@/components/sources/sources-empty-state';
+import { SourcesGallery } from '@/components/sources/sources-gallery';
+import { SourcesTable } from '@/components/sources/sources-table';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
+import { pluralPhrase } from '@/lib/plural';
+import { buildSourcesQuery, filterSources } from '@/lib/sources-index';
+import type {
+    SourcesFilters,
+    SourcesKindFilter,
+    SourcesSort,
+    SourcesView,
+} from '@/lib/sources-index';
 import { index as sourcesIndex } from '@/routes/sources';
-import { formatSourceMeta, showsUploadDate } from '@/lib/source-description';
 import type {
     BreadcrumbItem,
-    Source,
+    IndexSource,
     SourceKind,
     SourceRecordType,
 } from '@/types';
 
 type Props = {
-    sources: Source[];
+    sources: IndexSource[];
     kinds: { value: SourceKind; label: string }[];
     recordTypes: { value: SourceRecordType; label: string }[];
+    filters: SourcesFilters;
 };
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -28,14 +44,85 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
-export default function Index({ sources, kinds, recordTypes }: Props) {
+export default function Index({ sources, kinds, recordTypes, filters }: Props) {
+    const [search, setSearch] = useState(filters.q);
+    const lastVisitedQuery = useRef(filters.q);
+    const trimmedSearch = search.trim();
+
+    /** Every /sources visit goes through `buildSourcesQuery`, so no control drops another's parameter. */
+    const visit = (next: Partial<SourcesFilters>, replace = false) => {
+        const merged = { ...filters, q: trimmedSearch, ...next };
+
+        lastVisitedQuery.current = merged.q;
+
+        router.get(
+            SourceController.index({ query: buildSourcesQuery(merged) }),
+            {},
+            {
+                preserveState: true,
+                preserveScroll: true,
+                replace,
+                only: ['filters'],
+            },
+        );
+    };
+
+    // History navigation changes `q` without a visit of ours: show it in the input.
+    useEffect(() => {
+        if (filters.q !== lastVisitedQuery.current) {
+            lastVisitedQuery.current = filters.q;
+            setSearch(filters.q);
+        }
+    }, [filters.q]);
+
+    useEffect(() => {
+        const trimmed = search.trim();
+
+        if (trimmed === filters.q || trimmed === lastVisitedQuery.current) {
+            return;
+        }
+
+        const timeoutId = setTimeout(
+            () =>
+                visit(
+                    { q: trimmed, kind: filters.kind, view: filters.view },
+                    true,
+                ),
+            300,
+        );
+
+        return () => clearTimeout(timeoutId);
+        // visit closes over `filters`; only its display fields matter here.
+    }, [search, filters.q, filters.kind, filters.view, filters.sort]);
+
+    const { visible, counts } = filterSources(
+        sources,
+        trimmedSearch,
+        filters.kind,
+    );
+
+    const clearSearch = () => {
+        setSearch('');
+        visit({ q: '' });
+    };
+
+    const statusText =
+        trimmedSearch === '' && filters.kind === 'wszystkie'
+            ? ''
+            : visible.length === 0
+              ? 'Brak wyników'
+              : `Znaleziono: ${visible.length} ${pluralPhrase(visible.length, 'źródło', 'źródła', 'źródeł')}`;
+
+    const createTrigger = <Button>Dodaj źródło</Button>;
+
     return (
         <>
             <Head title="Źródła" />
 
             <div className="space-y-6">
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between gap-4">
                     <Heading
+                        variant="page"
                         title="Źródła"
                         description="Akty, zdjęcia nagrobków i inne dokumenty Twojego drzewa"
                     />
@@ -43,80 +130,118 @@ export default function Index({ sources, kinds, recordTypes }: Props) {
                     <SourceCreateDialog
                         kinds={kinds}
                         recordTypes={recordTypes}
-                        trigger={<Button>Dodaj źródło</Button>}
+                        trigger={createTrigger}
                     />
                 </div>
 
+                {sources.length > 0 && (
+                    <div className="flex flex-wrap items-center gap-3">
+                        <SearchField
+                            value={search}
+                            onChange={setSearch}
+                            placeholder="Szukaj po nazwie"
+                            ariaLabel="Szukaj źródła"
+                            maxLength={100}
+                            className="order-1 min-w-0 basis-0"
+                        />
+
+                        <SegmentedToggle<SourcesKindFilter>
+                            value={filters.kind}
+                            onValueChange={(kind) => visit({ kind })}
+                            ariaLabel="Rodzaj źródła"
+                            className="order-3 w-full sm:order-2 sm:w-auto"
+                            items={[
+                                {
+                                    value: 'wszystkie',
+                                    label: 'Wszystkie',
+                                    count: counts.wszystkie,
+                                },
+                                {
+                                    value: 'akty',
+                                    label: 'Akty',
+                                    count: counts.akty,
+                                    disabled:
+                                        counts.akty === 0 &&
+                                        filters.kind !== 'akty',
+                                },
+                                {
+                                    value: 'nagrobki',
+                                    label: 'Nagrobki',
+                                    count: counts.nagrobki,
+                                    disabled:
+                                        counts.nagrobki === 0 &&
+                                        filters.kind !== 'nagrobki',
+                                },
+                                {
+                                    value: 'inne',
+                                    label: 'Inne',
+                                    count: counts.inne,
+                                    disabled:
+                                        counts.inne === 0 &&
+                                        filters.kind !== 'inne',
+                                },
+                            ]}
+                        />
+
+                        <SegmentedToggle<SourcesView>
+                            value={filters.view}
+                            onValueChange={(view) => visit({ view })}
+                            ariaLabel="Widok listy źródeł"
+                            iconOnlyBelowSm
+                            className="order-2 sm:order-3"
+                            items={[
+                                {
+                                    value: 'galeria',
+                                    label: 'Galeria',
+                                    icon: <LayoutGridIcon />,
+                                },
+                                {
+                                    value: 'tabela',
+                                    label: 'Tabela',
+                                    icon: <TableIcon />,
+                                },
+                            ]}
+                        />
+                    </div>
+                )}
+
+                <p className="sr-only" role="status" aria-live="polite">
+                    {statusText}
+                </p>
+
                 {sources.length === 0 ? (
-                    <Card>
-                        <CardContent className="text-muted-foreground text-sm">
-                            Nie masz jeszcze żadnych źródeł.{' '}
+                    <SourcesEmptyTree
+                        action={
                             <SourceCreateDialog
                                 kinds={kinds}
                                 recordTypes={recordTypes}
-                                trigger={
-                                    <button
-                                        type="button"
-                                        className="text-primary underline-offset-4 hover:underline"
-                                    >
-                                        Dodaj pierwsze źródło
-                                    </button>
-                                }
+                                trigger={createTrigger}
                             />
-                            .
-                        </CardContent>
-                    </Card>
+                        }
+                    />
+                ) : visible.length === 0 ? (
+                    counts.wszystkie > 0 && filters.kind !== 'wszystkie' ? (
+                        <SourcesEmptyKind
+                            kind={filters.kind}
+                            query={trimmedSearch}
+                            onShowAll={() => visit({ kind: 'wszystkie' })}
+                        />
+                    ) : (
+                        <SourcesNoResults
+                            query={trimmedSearch}
+                            onClear={clearSearch}
+                        />
+                    )
+                ) : filters.view === 'tabela' ? (
+                    <SourcesTable
+                        sources={visible}
+                        sort={filters.sort}
+                        onSortChange={(sort: SourcesSort) => visit({ sort })}
+                        kinds={kinds}
+                        recordTypes={recordTypes}
+                    />
                 ) : (
-                    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                        {sources.map((source) => {
-                            const meta = formatSourceMeta(source);
-
-                            return (
-                                <Link
-                                    key={source.id}
-                                    className="block"
-                                    href={SourceController.show(source.id)}
-                                >
-                                    <Card className="hover:bg-accent/50 h-full gap-3 overflow-hidden py-0 transition-colors">
-                                        <SourceThumbnail source={source} />
-                                        <CardContent className="space-y-0.5 pb-4">
-                                            <p
-                                                className="truncate text-sm font-medium"
-                                                title={source.display_name}
-                                            >
-                                                {source.display_name}
-                                            </p>
-                                            <Badge variant="secondary">
-                                                {source.kind_label}
-                                            </Badge>
-                                            {meta !== null && (
-                                                <p className="text-muted-foreground text-xs">
-                                                    {meta}
-                                                </p>
-                                            )}
-                                            {source.provenance && (
-                                                <p
-                                                    className="text-muted-foreground truncate text-xs"
-                                                    title={source.provenance}
-                                                >
-                                                    {source.provenance}
-                                                </p>
-                                            )}
-                                            {showsUploadDate(source) && (
-                                                <p className="text-muted-foreground text-xs">
-                                                    {new Date(
-                                                        source.uploaded_at,
-                                                    ).toLocaleDateString(
-                                                        'pl-PL',
-                                                    )}
-                                                </p>
-                                            )}
-                                        </CardContent>
-                                    </Card>
-                                </Link>
-                            );
-                        })}
-                    </div>
+                    <SourcesGallery sources={visible} />
                 )}
             </div>
         </>
