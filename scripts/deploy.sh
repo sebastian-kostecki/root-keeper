@@ -37,7 +37,7 @@ echo "==> Fixing storage permissions..."
 $COMPOSE exec -T -u root app chown -R sail:sail storage bootstrap/cache
 
 echo "==> Running migrations..."
-$COMPOSE exec -T app php artisan migrate --force
+$COMPOSE exec -T -u sail app php artisan migrate --force
 
 echo "==> Discovering packages and caching..."
 $COMPOSE exec -T app php artisan package:discover --ansi

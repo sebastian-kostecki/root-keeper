@@ -40,7 +40,7 @@ Wprowadzanie prawdziwego drzewa i codzienne poprawki pokazały trzy luki:
 
 Dlaczego teraz: ból pojawia się we wszystkich trzech chwilach — przy wpisywaniu prawdziwego drzewa z widoku drzewa, przy każdej drobnej poprawce oraz po powrocie z cmentarza ze zdjęciami nagrobków. Obecne obejście: osobne strony i powrót do podglądu osoby; zdjęć nagrobków nie ma gdzie podłączyć.
 
-Zmiana wchłania S-10 z prd-v2: opis (nazwa, typ, rok, pochodzenie, numer i notatka wpisu) projektujemy od razu dla źródła, nie dla skanu; S-10/S-11 do przeplanowania. Spis miejscowości (S-12 – S-15) bez zmian.
+Zmiana wchłania S-10 z prd-v2: opis (nazwa, typ, rok, pochodzenie, numer i notatka wpisu) projektujemy od razu dla źródła, nie dla skanu; S-10/S-11 do przeplanowania. Spis miejscowości (S-12 – S-15) bez zmian. (Poprawka 2026-09-30: spis miejscowości odłożony poza tę wersję.)
 
 ## User & Persona
 
@@ -132,7 +132,7 @@ Wcześniej: aplikacja przyjmowała tylko „skany” aktów; zdjęcia nagrobka n
 - **Dane istniejące:** wszystkie istniejące skany stają się źródłami rodzaju „akt metrykalny”; pliki, miniatury i powiązania z wydarzeniami przechodzą 1:1; stan „potwierdzone/niepotwierdzone” każdego faktu jest taki sam przed i po zmianie. Opis źródła startuje pusty poza nazwą oryginału pliku.
 - **Plan wycofania:** backupy danych i plików (F-01) wykonane tuż przed wdrożeniem.
 - **Zachowane:** potwierdzenia faktów 1:1; pliki, miniatury i powiększenie; usuwanie źródła z listą faktów tracących potwierdzenie; ograniczenia relacji; prywatność drzewa (cudzy rekord = 404).
-- **prd-v2:** spis miejscowości (S-12 – S-15) bez zmian, ale przy braku czasu przesuwa się za termin 2026-11-04 — ta zmiana ma pierwszeństwo.
+- **prd-v2:** spis miejscowości (S-12 – S-15) jest odłożony poza tę wersję — ta zmiana ma pierwszeństwo. (Poprawka 2026-09-30, decyzja użytkownika; było: bez zmian, ale przy braku czasu przesuwa się za termin 2026-11-04.)
 - **Wymagania niefunkcjonalne:** brak nowych — istniejące (prywatność danych drzewa, czytelność powiększenia skanu) obejmują źródła każdego rodzaju.
 
 ## Business Logic Changes

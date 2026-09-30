@@ -212,7 +212,7 @@ function MarriageRow({
             {details && (
                 <span className="text-muted-foreground text-xs">{details}</span>
             )}
-            <EventSourceStatus isConfirmed={marriage.is_confirmed} />
+            <EventSourceStatus kinds={marriage.confirmed_kinds} />
         </span>
     );
 

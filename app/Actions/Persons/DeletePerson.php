@@ -11,8 +11,8 @@ class DeletePerson
      * Delete a person, removing every marriage they were part of and every
      * other event whose only participant is this person, before deleting
      * the person itself. Events shared with other participants keep their
-     * remaining participant rows. Scans are never touched; only the
-     * event_scan rows of removed events cascade away. Parent-child
+     * remaining participant rows. Sources are never touched; only the
+     * event_source rows of removed events cascade away. Parent-child
      * relations where this person is a parent or a child are removed
      * automatically by the foreign key cascade on people.
      */

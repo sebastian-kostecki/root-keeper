@@ -64,14 +64,14 @@ class Event extends Model
     }
 
     /**
-     * @return BelongsToMany<Scan, $this>
+     * @return BelongsToMany<Source, $this>
      */
-    public function scans(): BelongsToMany
+    public function sources(): BelongsToMany
     {
-        return $this->belongsToMany(Scan::class, 'event_scan')
+        return $this->belongsToMany(Source::class, 'event_source')
             ->withTimestamps()
-            ->orderBy('event_scan.created_at')
-            ->orderBy('event_scan.id');
+            ->orderBy('event_source.created_at')
+            ->orderBy('event_source.id');
     }
 
     /**

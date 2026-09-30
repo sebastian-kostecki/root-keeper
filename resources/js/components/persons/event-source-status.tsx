@@ -2,15 +2,19 @@ import { CheckIcon, TriangleAlertIcon } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
 type Props = {
-    isConfirmed: boolean;
+    /** Short labels of the kinds confirming the fact, in the order to show. */
+    kinds: string[];
 };
 
-export function EventSourceStatus({ isConfirmed }: Props) {
-    if (isConfirmed) {
+export function EventSourceStatus({ kinds }: Props) {
+    if (kinds.length > 0) {
         return (
-            <Badge variant="default">
+            <Badge
+                variant="default"
+                className="h-auto max-w-full shrink whitespace-normal"
+            >
                 <CheckIcon />
-                Potwierdzone aktem
+                Potwierdzone: {kinds.join(', ')}
             </Badge>
         );
     }

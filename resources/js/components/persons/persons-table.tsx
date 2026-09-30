@@ -1,16 +1,12 @@
 import { Link } from '@inertiajs/react';
-import {
-    ArrowDownIcon,
-    ArrowUpIcon,
-    ChevronsUpDownIcon,
-    EllipsisIcon,
-} from 'lucide-react';
+import { EllipsisIcon } from 'lucide-react';
 import {
     ConfirmedMark,
     ProbandBadge,
 } from '@/components/persons/person-list-parts';
 import { PersonAvatar } from '@/components/persons/person-avatar';
 import { PersonPreviewLink } from '@/components/persons/person-preview-link';
+import { EmptyCell, SortableHead } from '@/components/table-parts';
 import { Button } from '@/components/ui/button';
 import {
     DropdownMenu,
@@ -29,6 +25,8 @@ import {
 } from '@/components/ui/table';
 import { sortPersons } from '@/lib/persons-index';
 import type { PersonsSort } from '@/lib/persons-index';
+import { columnOf } from '@/lib/table-sort';
+import { stickyCell, stickyHeadCell } from '@/lib/table-styles';
 import { cn } from '@/lib/utils';
 import { show as treeShow } from '@/routes/tree';
 import type { IndexPersonEvent, Person } from '@/types';
@@ -48,71 +46,6 @@ const columnLabels: Record<Column, string> = {
     zgon: 'Zgon',
 };
 
-const stickyCell =
-    'max-md:sticky max-md:left-0 max-md:z-10 max-md:w-56 max-md:max-w-56 max-md:bg-background max-md:group-hover:bg-muted max-md:shadow-[1px_0_0_var(--color-border)]';
-
-function columnOf(sort: PersonsSort): Column {
-    return (sort.startsWith('-') ? sort.slice(1) : sort) as Column;
-}
-
-/** Clicking the active column flips the direction; a new column starts ascending. */
-function nextSort(current: PersonsSort, column: Column): PersonsSort {
-    if (columnOf(current) === column) {
-        return current.startsWith('-') ? column : (`-${column}` as PersonsSort);
-    }
-
-    return column;
-}
-
-function SortableHead({
-    column,
-    sort,
-    onSortChange,
-    className,
-}: {
-    column: Column;
-    sort: PersonsSort;
-    onSortChange: (sort: PersonsSort) => void;
-    className?: string;
-}) {
-    const isActive = columnOf(sort) === column;
-    const isDescending = sort.startsWith('-');
-    const Icon = !isActive
-        ? ChevronsUpDownIcon
-        : isDescending
-          ? ArrowDownIcon
-          : ArrowUpIcon;
-
-    return (
-        <TableHead
-            aria-sort={
-                isActive ? (isDescending ? 'descending' : 'ascending') : 'none'
-            }
-            className={className}
-        >
-            <button
-                type="button"
-                onClick={() => onSortChange(nextSort(sort, column))}
-                className="hover:bg-accent focus-visible:ring-ring/50 -mx-2 inline-flex h-8 items-center gap-1.5 rounded-md px-2 transition-colors outline-none focus-visible:ring-[3px]"
-            >
-                {columnLabels[column]}
-                <Icon
-                    aria-hidden="true"
-                    className={cn(
-                        'size-3.5',
-                        !isActive && 'text-muted-foreground',
-                    )}
-                />
-                <span className="sr-only">
-                    {isActive
-                        ? `, posortowano ${isDescending ? 'malejąco' : 'rosnąco'}`
-                        : ', sortuj'}
-                </span>
-            </button>
-        </TableHead>
-    );
-}
-
 function EventCell({
     event,
     isDeath = false,
@@ -123,7 +56,7 @@ function EventCell({
     const date = event?.date || (isDeath && event ? 'data nieznana' : null);
 
     if (!event || (date === null && !event.place)) {
-        return <span className="text-muted-foreground">—</span>;
+        return <EmptyCell />;
     }
 
     return (
@@ -152,10 +85,6 @@ function EventCell({
     );
 }
 
-function Dash() {
-    return <span className="text-muted-foreground">—</span>;
-}
-
 /** View B: sortable table; sorting is done in the browser over the loaded list. */
 export function PersonsTable({
     persons,
@@ -164,7 +93,7 @@ export function PersonsTable({
     onSortChange,
 }: Props) {
     const rows = sortPersons(persons, sort);
-    const column = columnOf(sort);
+    const column = columnOf<Column>(sort);
     const direction = sort.startsWith('-') ? 'malejąco' : 'rosnąco';
 
     return (
@@ -177,21 +106,22 @@ export function PersonsTable({
                 </TableCaption>
                 <TableHeader>
                     <TableRow className="hover:bg-transparent">
-                        <SortableHead
+                        <SortableHead<Column>
                             column="nazwisko"
+                            label={columnLabels.nazwisko}
                             sort={sort}
                             onSortChange={onSortChange}
-                            className={cn(
-                                'max-md:bg-background px-4 max-md:sticky max-md:left-0 max-md:z-10 max-md:shadow-[1px_0_0_var(--color-border)]',
-                            )}
+                            className={cn(stickyHeadCell, 'px-4')}
                         />
-                        <SortableHead
+                        <SortableHead<Column>
                             column="urodzenie"
+                            label={columnLabels.urodzenie}
                             sort={sort}
                             onSortChange={onSortChange}
                         />
-                        <SortableHead
+                        <SortableHead<Column>
                             column="zgon"
+                            label={columnLabels.zgon}
                             sort={sort}
                             onSortChange={onSortChange}
                         />
@@ -231,13 +161,17 @@ export function PersonsTable({
                                 <EventCell event={person.death} isDeath />
                             </TableCell>
                             <TableCell>
-                                {person.residence ? person.residence : <Dash />}
+                                {person.residence ? (
+                                    person.residence
+                                ) : (
+                                    <EmptyCell />
+                                )}
                             </TableCell>
                             <TableCell>
                                 {person.religion ? (
                                     person.religion.label
                                 ) : (
-                                    <Dash />
+                                    <EmptyCell />
                                 )}
                             </TableCell>
                             <TableCell className="text-right">

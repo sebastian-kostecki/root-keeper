@@ -31,7 +31,8 @@ class MarriageResource extends JsonResource
      *     date: string|null,
      *     place: string|null,
      *     is_confirmed?: bool,
-     *     scans?: list<array{id: int, original_name: string, has_thumbnail: bool, uploaded_at: string|null}>,
+     *     confirmed_kinds?: list<string>,
+     *     sources?: list<array{id: int, kind: string, kind_short_label: string, original_name: string, display_name: string, has_thumbnail: bool, uploaded_at: string|null}>,
      *     date_parts: array{year: int|null, month: int|null, day: int|null, is_approximate: bool},
      *     spouse: array{id: int, display_name: string, gender: 'male'|'female'|null, birth_date: string|null, death_date: string|null}|null,
      * }

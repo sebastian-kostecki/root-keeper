@@ -3,7 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Actions\Persons\BuildPersonPreview;
-use App\Http\Resources\ScanResource;
+use App\Http\Resources\SourceResource;
 use App\Models\Person;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -52,8 +52,8 @@ class HandleInertiaRequests extends Middleware
 
                 return $person === null ? null : app(BuildPersonPreview::class)->handle($person, $request->user());
             },
-            'availableScans' => Inertia::optional(fn (): array => $request->user() === null ? [] : ScanResource::collection(
-                $request->user()->tree->scans()->latest()->orderByDesc('id')->get()
+            'availableSources' => Inertia::optional(fn (): array => $request->user() === null ? [] : SourceResource::collection(
+                $request->user()->tree->sources()->latest()->orderByDesc('id')->get()
             )->resolve()),
         ];
     }

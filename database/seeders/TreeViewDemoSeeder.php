@@ -4,26 +4,57 @@ namespace Database\Seeders;
 
 use App\Actions\Relations\CreateMarriage;
 use App\Actions\Relations\CreateParentChildRelation;
+use App\Actions\Sources\GenerateSourceThumbnail;
 use App\Actions\Trees\SetTreeRootPerson;
 use App\Enums\EventType;
 use App\Enums\ParticipantRole;
 use App\Enums\Religion;
+use App\Enums\SourceRecordType;
 use App\Models\Event;
 use App\Models\Person;
-use App\Models\Scan;
+use App\Models\Source;
 use App\Models\Tree;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
+use RuntimeException;
 
 /**
  * Kitchen-sink tree for the family-sheet and person-modal visual gates. Run explicitly:
  * `sail artisan db:seed --class=TreeViewDemoSeeder`. Not part of DatabaseSeeder.
  *
  * Person-modal states (appended after the tree-sheet persons, so their creation order and id offsets
- * stay intact): the proband Jan carries a birth scan and a marriage scan (Anna, 2001); Leon Kowalski
- * has an approximate death and no scan; Nina Rzadka is sparse (name and gender only, one relative:
- * Leon); Wiktor Skanowski has a death scan (unchecking "Osoba nie żyje" must fail).
+ * stay intact): the proband Jan carries a birth source and a marriage source (Anna, 2001); Leon Kowalski
+ * has an approximate death and no source; Nina Rzadka is sparse (name and gender only, one relative:
+ * Leon); Wiktor Skanowski has a death source (unchecking "Osoba nie żyje" must fail).
+ *
+ * Source states (appended last): one unlinked gravestone and one unlinked other source (short delete
+ * dialog, kind badges), and one akt linked to two events, Jan's birth (also confirmed by another akt)
+ * and Kacper's birth (only this akt), so the linked delete dialog shows both impact suffixes.
+ * Then the description states: a fully described akt (opisany-akt-lipnica-1878.jpg), a gravestone with
+ * only name and rok (nagrobek-opisany.jpg) and an akt whose name and pochodzenie truncate on a card
+ * (akt-z-dlugim-opisem.jpg). The undescribed sources above are the empty state.
+ *
+ * Confirmation states (appended after the source states): Genowefa's death is confirmed by a gravestone
+ * only (nagrobek-genowefy.jpg); Wiktor's death by his akt plus a gravestone (nagrobek-wiktora.jpg); Jan and
+ * Anna's marriage by its akt, then an other source (zaproszenie-slubne.jpg), then a gravestone
+ * (nagrobek-jana-i-anny.jpg), linked out of kind order; Helena Kowalska's death by an other source only
+ * (nekrolog-heleny.jpg). Leon's death stays without a source.
+ *
+ * Matching states (appended last, after the confirmation states): three akty metrykalne for the source picker
+ * sections. An akt zgonu 1932 uploaded one year back (akt-zgonu-lipnica-1932.jpg), the only match for Leon's
+ * death: last in the newest-first list, first once matching akts lead. An odpis aktu urodzenia without a rok
+ * (odpis-aktu-urodzenia-jana.jpg), linked to Jan's birth as its third source: a match that is already linked.
+ * An akt typed "inny", 1890 (ksiega-ludnosci-lipnica.jpg): typed, but it matches no event. No akt is typed
+ * marriage, so the marriage picker is the state where nothing matches.
+ *
+ * Image states (sources list gallery): eight sources carry a drawn image (paper tone with ruled lines, stone
+ * tone for gravestones) and a real thumbnail from GenerateSourceThumbnail: portrait akt-urodzenia-jan.jpg,
+ * opisany-akt-lipnica-1878.jpg and akt-zgonu-lipnica-1932.jpg; landscape akt-slubu-jan-anna.jpg,
+ * akt-z-dlugim-opisem.jpg and zaproszenie-slubne.jpg; portrait stone nagrobek-opisany.jpg; very tall stone
+ * nagrobek-genowefy.jpg. Every other source keeps the fallback (no file, no thumbnail), so each kind has both.
  */
 class TreeViewDemoSeeder extends Seeder
 {
@@ -35,6 +66,8 @@ class TreeViewDemoSeeder extends Seeder
 
     public function run(): void
     {
+        $this->deleteDemoSourceFiles();
+
         DB::transaction(function (): void {
             User::query()->whereIn('email', [self::DEMO_EMAIL, self::EMPTY_EMAIL])->delete();
 
@@ -51,6 +84,20 @@ class TreeViewDemoSeeder extends Seeder
             $this->tree = $user->tree;
             $this->seedTree();
         });
+    }
+
+    /**
+     * Remove the stored files of both demo trees; deleting the users with a plain query leaves them on disk.
+     */
+    private function deleteDemoSourceFiles(): void
+    {
+        $treeIds = Tree::query()
+            ->whereIn('user_id', User::query()->whereIn('email', [self::DEMO_EMAIL, self::EMPTY_EMAIL])->select('id'))
+            ->pluck('id');
+
+        foreach ($treeIds as $treeId) {
+            Storage::disk('local')->deleteDirectory("sources/{$treeId}");
+        }
     }
 
     private function seedTree(): void
@@ -141,10 +188,10 @@ class TreeViewDemoSeeder extends Seeder
             );
         }
 
-        // Person-modal states, appended last: scans on the proband's birth and marriage, an approximate
-        // death without a scan, a sparse person, and a death with a scan.
-        $this->attachScan($this->eventOf($jan, EventType::Birth), 'akt-urodzenia-jan.jpg');
-        $this->attachScan($janAnnaMarriage, 'akt-slubu-jan-anna.jpg');
+        // Person-modal states, appended last: sources on the proband's birth and marriage, an approximate
+        // death without a source, a sparse person, and a death with a source.
+        $this->attachSource($this->eventOf($jan, EventType::Birth), 'akt-urodzenia-jan.jpg');
+        $this->attachSource($janAnnaMarriage, 'akt-slubu-jan-anna.jpg');
 
         $leon = $this->person('Leon', 'Kowalski', 'male', 1940, deceased: 2015);
         $this->eventOf($leon, EventType::Death)->update(['date_is_approximate' => true]);
@@ -153,16 +200,20 @@ class TreeViewDemoSeeder extends Seeder
         $this->parents($nina, [$leon]);
 
         $wiktor = $this->person('Wiktor', 'Skanowski', 'male', 1935, deceased: 2001);
-        $this->attachScan($this->eventOf($wiktor, EventType::Death), 'akt-zgonu-wiktor.jpg');
+        $this->attachSource($this->eventOf($wiktor, EventType::Death), 'akt-zgonu-wiktor.jpg');
 
         $this->fullDataPerson();
         $this->nameOnlyPerson();
+        $this->sourceStates($jan, $kacper);
+        $this->confirmationStates($wiktor, $helena, $janAnnaMarriage);
+        $this->matchingStates($jan);
+        $this->imageStates();
 
         (new SetTreeRootPerson)->handle($this->tree, $jan);
     }
 
     /**
-     * Persons-list state: day-precise birth with place and a linked scan, death with place, residence, religion.
+     * Persons-list state: day-precise birth with place and a linked source, death with place, residence, religion.
      */
     private function fullDataPerson(): void
     {
@@ -182,7 +233,7 @@ class TreeViewDemoSeeder extends Seeder
             'place' => 'Nowy Targ',
         ]);
         $birth->participants()->attach($person, ['role' => ParticipantRole::Subject]);
-        $this->attachScan($birth, 'akt-urodzenia-genowefa.jpg');
+        $this->attachSource($birth, 'akt-urodzenia-genowefa.jpg');
 
         $death = Event::factory()->for($this->tree)->death()->create([
             'date_year' => 2011,
@@ -229,10 +280,183 @@ class TreeViewDemoSeeder extends Seeder
             ->firstOrFail();
     }
 
-    private function attachScan(Event $event, string $originalName): void
+    /**
+     * Source-library states: unlinked gravestone and other sources, and one akt confirming two events.
+     */
+    private function sourceStates(Person $jan, Person $kacper): void
     {
-        $scan = Scan::factory()->for($this->tree)->create(['original_name' => $originalName]);
-        $event->scans()->attach($scan);
+        Source::factory()->for($this->tree)->gravestone()->create(['original_name' => 'nagrobek-kowalskich.jpg']);
+        Source::factory()->for($this->tree)->other()->create(['original_name' => 'list-rodzinny.jpg']);
+
+        $shared = Source::factory()->for($this->tree)->create(['original_name' => 'akt-wspolny-jan-kacper.jpg']);
+        $this->eventOf($jan, EventType::Birth)->sources()->attach($shared);
+        $this->eventOf($kacper, EventType::Birth)->sources()->attach($shared);
+
+        Source::factory()->for($this->tree)->described()->create([
+            'original_name' => 'opisany-akt-lipnica-1878.jpg',
+            'provenance' => 'Archiwum Akt Dawnych w Warszawie',
+            'note' => "Wpis po prawej stronie rozkładówki, zapisany po łacinie.\n\nNazwisko matki odczytane z trudem, do sprawdzenia w księdze zgonów.",
+            'url' => 'https://www.szukajwarchiwach.gov.pl/',
+        ]);
+
+        Source::factory()->for($this->tree)->gravestone()->create([
+            'original_name' => 'nagrobek-opisany.jpg',
+            'name' => 'Nagrobek rodziny Kowalskich, cmentarz w Lipnicy',
+            'year' => 1932,
+        ]);
+
+        Source::factory()->for($this->tree)->create([
+            'original_name' => 'akt-z-dlugim-opisem.jpg',
+            'name' => 'Akt urodzenia z parafii Świętego Jana Chrzciciela w Lipnicy Murowanej, księga urodzeń z lat 1875-1885',
+            'provenance' => 'Archiwum Diecezjalne w Tarnowie, zespół akt parafialnych, sygnatura 1234/56/78',
+        ]);
+    }
+
+    /**
+     * Facts confirmed by a non-akt source, and by several kinds linked out of kind order.
+     */
+    private function confirmationStates(Person $wiktor, Person $helena, Event $janAnnaMarriage): void
+    {
+        $genowefa = Person::query()->where('tree_id', $this->tree->id)->where('first_name', 'Genowefa')->firstOrFail();
+
+        $genowefaGravestone = Source::factory()->for($this->tree)->gravestone()->create([
+            'original_name' => 'nagrobek-genowefy.jpg',
+            'name' => 'Nagrobek Genowefy Pełnodanowskiej, Zakopane',
+        ]);
+        $this->eventOf($genowefa, EventType::Death)->sources()->attach($genowefaGravestone);
+
+        $wiktorGravestone = Source::factory()->for($this->tree)->gravestone()->create(['original_name' => 'nagrobek-wiktora.jpg']);
+        $this->eventOf($wiktor, EventType::Death)->sources()->attach($wiktorGravestone);
+
+        $invitation = Source::factory()->for($this->tree)->other()->create(['original_name' => 'zaproszenie-slubne.jpg']);
+        $couplesGravestone = Source::factory()->for($this->tree)->gravestone()->create(['original_name' => 'nagrobek-jana-i-anny.jpg']);
+        $janAnnaMarriage->sources()->attach($invitation);
+        $janAnnaMarriage->sources()->attach($couplesGravestone);
+
+        $obituary = Source::factory()->for($this->tree)->other()->create(['original_name' => 'nekrolog-heleny.jpg']);
+        $this->eventOf($helena, EventType::Death)->sources()->attach($obituary);
+    }
+
+    /**
+     * Source-picker states: a matching akt far down the list, a matching akt already linked, a typed akt that matches nothing.
+     */
+    private function matchingStates(Person $jan): void
+    {
+        $oneYearAgo = now()->subYear();
+
+        Source::factory()->for($this->tree)->create([
+            'original_name' => 'akt-zgonu-lipnica-1932.jpg',
+            'name' => 'Zgony Lipnica 1932 nr 14',
+            'record_type' => SourceRecordType::Death,
+            'year' => 1932,
+            'created_at' => $oneYearAgo,
+            'updated_at' => $oneYearAgo,
+        ]);
+
+        $birthCopy = Source::factory()->for($this->tree)->create([
+            'original_name' => 'odpis-aktu-urodzenia-jana.jpg',
+            'name' => 'Odpis aktu urodzenia Jana Kowalskiego',
+            'record_type' => SourceRecordType::Birth,
+        ]);
+        $this->eventOf($jan, EventType::Birth)->sources()->attach($birthCopy);
+
+        Source::factory()->for($this->tree)->create([
+            'original_name' => 'ksiega-ludnosci-lipnica.jpg',
+            'name' => 'Księga ludności Lipnicy',
+            'record_type' => SourceRecordType::Other,
+            'year' => 1890,
+        ]);
+    }
+
+    /**
+     * Gallery states: draw an image and a real thumbnail for eight existing sources, found by original name.
+     */
+    private function imageStates(): void
+    {
+        $images = [
+            'akt-urodzenia-jan.jpg' => [600, 850, false],
+            'opisany-akt-lipnica-1878.jpg' => [640, 900, false],
+            'akt-zgonu-lipnica-1932.jpg' => [620, 880, false],
+            'akt-slubu-jan-anna.jpg' => [900, 620, false],
+            'akt-z-dlugim-opisem.jpg' => [880, 600, false],
+            'zaproszenie-slubne.jpg' => [920, 640, false],
+            'nagrobek-opisany.jpg' => [640, 880, true],
+            'nagrobek-genowefy.jpg' => [420, 1400, true],
+        ];
+
+        $disk = Storage::disk('local');
+        $generateThumbnail = new GenerateSourceThumbnail;
+
+        foreach ($images as $originalName => [$width, $height, $isStone]) {
+            $source = Source::query()
+                ->where('tree_id', $this->tree->id)
+                ->where('original_name', $originalName)
+                ->firstOrFail();
+
+            $uuid = (string) Str::uuid();
+            $path = "sources/{$this->tree->id}/{$uuid}.jpg";
+            $thumbnailPath = "sources/{$this->tree->id}/thumbnails/{$uuid}.jpg";
+            $content = $this->drawImage($width, $height, $isStone);
+
+            $disk->put($path, $content);
+            $thumbnailContent = $generateThumbnail->handle($disk->path($path), 'image/jpeg');
+
+            if ($thumbnailContent !== null) {
+                $disk->put($thumbnailPath, $thumbnailContent);
+            }
+
+            $source->update([
+                'path' => $path,
+                'thumbnail_path' => $thumbnailContent !== null ? $thumbnailPath : null,
+                'width' => $width,
+                'height' => $height,
+                'size' => strlen($content),
+            ]);
+        }
+    }
+
+    /**
+     * Draw a paper (or stone) toned JPEG with ruled lines.
+     */
+    private function drawImage(int $width, int $height, bool $isStone): string
+    {
+        $width = max(1, $width);
+        $height = max(1, $height);
+        $image = imagecreatetruecolor($width, $height);
+
+        if ($image === false) {
+            throw new RuntimeException('GD could not create the demo image.');
+        }
+
+        [$background, $line] = $isStone
+            ? [[142, 145, 148], [104, 107, 110]]
+            : [[238, 228, 204], [176, 160, 128]];
+
+        $backgroundColor = imagecolorallocate($image, ...$background);
+        $lineColor = imagecolorallocate($image, ...$line);
+
+        if ($backgroundColor === false || $lineColor === false) {
+            throw new RuntimeException('GD could not allocate the demo image colours.');
+        }
+
+        imagefilledrectangle($image, 0, 0, $width, $height, $backgroundColor);
+
+        for ($y = (int) ($height * 0.08); $y < $height * 0.94; $y += max(18, (int) ($height / 30))) {
+            imageline($image, (int) ($width * 0.08), $y, (int) ($width * 0.92), $y, $lineColor);
+        }
+
+        imagerectangle($image, 6, 6, $width - 7, $height - 7, $lineColor);
+
+        ob_start();
+        imagejpeg($image, null, 85);
+
+        return (string) ob_get_clean();
+    }
+
+    private function attachSource(Event $event, string $originalName): void
+    {
+        $source = Source::factory()->for($this->tree)->create(['original_name' => $originalName]);
+        $event->sources()->attach($source);
     }
 
     /**

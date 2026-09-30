@@ -30,7 +30,7 @@ export function PersonPreviewDialog() {
 }
 
 function PersonPreviewDialogContent() {
-    const { personPreview, availableScans } = usePage().props;
+    const { personPreview, availableSources } = usePage().props;
     const { stack, back, close } = usePersonPreview();
     const { isDirty, requestExit } = useSectionEditor();
 
@@ -77,7 +77,7 @@ function PersonPreviewDialogContent() {
 
                 <PersonModal
                     preview={personPreview}
-                    availableScans={availableScans}
+                    availableSources={availableSources}
                 />
 
                 <UnsavedChangesBar />

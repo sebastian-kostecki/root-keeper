@@ -44,7 +44,7 @@ export function RemoveMarriageDialog({
     };
     const [processing, setProcessing] = useState(false);
 
-    const scanCount = marriage.scans.length;
+    const sourceCount = marriage.sources.length;
 
     const handleConfirm = () => {
         setProcessing(true);
@@ -64,16 +64,16 @@ export function RemoveMarriageDialog({
                 <DialogDescription>
                     Czy na pewno chcesz usunąć małżeństwo „{personName}” i „
                     {spouseName}”? Zniknie ono u obojga małżonków
-                    {scanCount > 0 && (
+                    {sourceCount > 0 && (
                         <>
-                            ; {scanCount}{' '}
+                            ; {sourceCount}{' '}
                             {pluralPhrase(
-                                scanCount,
-                                'powiązanie ze skanami zostanie odpięte',
-                                'powiązania ze skanami zostaną odpięte',
-                                'powiązań ze skanami zostanie odpiętych',
+                                sourceCount,
+                                'powiązanie ze źródłami zostanie odpięte',
+                                'powiązania ze źródłami zostaną odpięte',
+                                'powiązań ze źródłami zostanie odpiętych',
                             )}{' '}
-                            — skany pozostaną
+                            — źródła pozostaną
                         </>
                     )}
                     . Tej operacji nie można cofnąć.

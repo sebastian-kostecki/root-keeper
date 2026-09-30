@@ -128,7 +128,7 @@ Zakres: sloty rodziców każdej widocznej osoby (także dziadków), dziecko poka
 - **Etapowanie:** etap 1 (podgląd w modalu, dodawanie relacji tymczasowo w modalu) przed etapem 2 (dodawanie relacji na drzewie, podgląd bez dodawania) — dodawanie i usuwanie relacji mają każde dokładnie jedno miejsce (drzewo, podgląd) i w żadnym momencie nie może zabraknąć miejsca do dodania lub usunięcia którejś relacji.
 - **Kolejność względem źródeł (prd-v3):** modal podglądu (etap 1) idzie przed S-17/S-18, żeby rodzaj źródła przy fakcie i modale źródeł powstały od razu w modalu podglądu.
 - **S-21 – S-23 (prd-v3):** wchłonięte i rozszerzone (istniejąca albo nowa osoba, połączenie rodziców) — do przeplanowania.
-- **Termin:** wspólny z prd-v3 — 2026-11-04, praca po godzinach; ta zmiana 2 tygodnie. Przy braku czasu spis miejscowości (S-12 – S-15) przesuwa się jako pierwszy.
+- **Termin:** wspólny z prd-v3 — 2026-11-04, praca po godzinach; ta zmiana 2 tygodnie. Spis miejscowości (S-12 – S-15) jest odłożony poza tę wersję. (Poprawka 2026-09-30, decyzja użytkownika; było: przy braku czasu przesuwa się jako pierwszy.)
 - **Zachowane:** fakty z potwierdzeniami i otwieranie podglądu skanu; reguły relacji; wyśrodkowanie drzewa i probant; usuwanie osoby z listą skutków i jawnym potwierdzeniem; prywatność drzewa (cudzy rekord = 404).
 - **Wymagania niefunkcjonalne:** brak nowych — istniejące (prywatność danych drzewa, czytelność powiększenia skanu) obejmują podgląd osoby i akcje relacji na drzewie.
 

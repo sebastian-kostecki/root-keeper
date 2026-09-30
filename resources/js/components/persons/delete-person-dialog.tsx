@@ -42,14 +42,14 @@ export function DeletePersonDialog({
     };
     const [processing, setProcessing] = useState(false);
 
-    const marriageScanCount = person.marriages.reduce(
-        (total, marriage) => total + marriage.scans.length,
+    const marriageSourceCount = person.marriages.reduce(
+        (total, marriage) => total + marriage.sources.length,
         0,
     );
     const linkCount =
-        (person.birth?.scans.length ?? 0) +
-        (person.death?.scans.length ?? 0) +
-        marriageScanCount;
+        (person.birth?.sources.length ?? 0) +
+        (person.death?.sources.length ?? 0) +
+        marriageSourceCount;
     const relationCount = person.parents.length + person.children.length;
     const marriageCount = person.marriages.length;
 
@@ -57,7 +57,7 @@ export function DeletePersonDialog({
 
     if (linkCount > 0) {
         extras.push(
-            `${linkCount} ${pluralPhrase(linkCount, 'powiązanie', 'powiązania', 'powiązań')} ze skanami aktów`,
+            `${linkCount} ${pluralPhrase(linkCount, 'powiązanie', 'powiązania', 'powiązań')} ze źródłami`,
         );
     }
 
@@ -92,7 +92,7 @@ export function DeletePersonDialog({
                     ”? Usunięte zostaną jej dane i urodzenie
                     {person.death && <> oraz zgon</>}
                     {extras.length > 0 && <>, a także {extras.join(' i ')}</>}.
-                    Skany pozostaną w bibliotece skanów.
+                    Źródła pozostaną w bibliotece źródeł.
                     {relationCount > 0 && (
                         <> Powiązane osoby pozostaną w drzewie.</>
                     )}{' '}

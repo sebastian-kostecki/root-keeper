@@ -1,7 +1,8 @@
-import { router } from '@inertiajs/react';
+import { Link, router } from '@inertiajs/react';
 import { useState } from 'react';
 import MarriageController from '@/actions/App/Http/Controllers/MarriageController';
 import PersonController from '@/actions/App/Http/Controllers/PersonController';
+import SourceController from '@/actions/App/Http/Controllers/SourceController';
 import { EventSourceStatus } from '@/components/persons/event-source-status';
 import {
     BirthFields,
@@ -10,26 +11,29 @@ import {
     PersonalFields,
 } from '@/components/persons/person-section-fields';
 import { SectionCard } from '@/components/persons/section-card';
-import { useSectionEditor } from '@/components/persons/section-editor';
+import {
+    useGuardedClick,
+    useSectionEditor,
+} from '@/components/persons/section-editor';
 import type { SectionId } from '@/components/persons/section-editor';
-import { ScanPickerDialog } from '@/components/scans/scan-picker-dialog';
+import { SourcePickerDialog } from '@/components/sources/source-picker-dialog';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { mergeSectionIntoPayload } from '@/lib/person-payload';
 import type { PersonSection, SectionValues } from '@/lib/person-payload';
 import { eventPayloadFromValues } from '@/lib/person-payload';
 import { formatPartialDate } from '@/lib/partial-date';
-import { pluralPhrase } from '@/lib/plural';
 import type {
     Marriage,
     PersonFormEvent,
     PersonPreviewPayload,
-    Scan,
+    Source,
     SourcedPersonEvent,
 } from '@/types';
 
 type Props = {
     preview: PersonPreviewPayload;
-    availableScans?: Scan[];
+    availableSources?: Source[];
 };
 
 type Errors = Record<string, string>;
@@ -83,12 +87,12 @@ function Field({ label, value }: { label: string; value: string | null }) {
 type FactViewProps = {
     event: SourcedPersonEvent;
     parts: PersonFormEvent | Marriage['date_parts'] | null;
-    availableScans: Scan[] | undefined;
+    availableSources: Source[] | undefined;
 };
 
-function FactView({ event, parts, availableScans }: FactViewProps) {
+function FactView({ event, parts, availableSources }: FactViewProps) {
     const date = parts ? formatPartialDate(parts, 'long') : '';
-    const scanCount = event.scans.length;
+    const guardClick = useGuardedClick();
 
     return (
         <>
@@ -98,20 +102,45 @@ function FactView({ event, parts, availableScans }: FactViewProps) {
             </div>
 
             <div className="border-t pt-3 text-sm">
-                {scanCount > 0 ? (
-                    <p className="text-muted-foreground">
-                        {scanCount}{' '}
-                        {pluralPhrase(scanCount, 'skan', 'skany', 'skanów')} ·{' '}
-                        {event.scans[0].original_name}
-                    </p>
+                {event.sources.length > 0 ? (
+                    <ul className="space-y-1.5">
+                        {event.sources.map((source) => (
+                            <li
+                                key={source.id}
+                                className="flex items-center gap-2"
+                            >
+                                <Link
+                                    href={SourceController.show(source.id)}
+                                    onClick={(clickEvent) =>
+                                        guardClick(clickEvent, () =>
+                                            router.visit(
+                                                SourceController.show(
+                                                    source.id,
+                                                ),
+                                            ),
+                                        )
+                                    }
+                                    aria-label={`Otwórz źródło ${source.display_name}`}
+                                    title={source.display_name}
+                                    className="text-primary focus-visible:ring-ring/50 min-w-0 truncate rounded-sm underline-offset-4 outline-none hover:underline focus-visible:ring-[3px]"
+                                >
+                                    {source.display_name}
+                                </Link>
+                                <Badge variant="secondary" className="shrink-0">
+                                    {source.kind_short_label}
+                                </Badge>
+                            </li>
+                        ))}
+                    </ul>
                 ) : (
-                    <ScanPickerDialog
+                    <SourcePickerDialog
                         eventId={event.id}
-                        linkedScanIds={[]}
-                        availableScans={availableScans}
+                        eventType={event.type}
+                        linkedSourceIds={[]}
+                        availableSources={availableSources}
                         trigger={
                             <Button type="button" variant="outline" size="sm">
-                                Powiąż skan
+                                Powiąż źródło
                             </Button>
                         }
                     />
@@ -140,7 +169,7 @@ function EmptyFact({
     );
 }
 
-export function OverviewTab({ preview, availableScans }: Props) {
+export function OverviewTab({ preview, availableSources }: Props) {
     const { person, personForm } = preview;
     const editor = useSectionEditor();
     const [savingId, setSavingId] = useState<SectionId | null>(null);
@@ -257,7 +286,7 @@ export function OverviewTab({ preview, availableScans }: Props) {
                         badge={
                             person.birth && (
                                 <EventSourceStatus
-                                    isConfirmed={person.birth.is_confirmed}
+                                    kinds={person.birth.confirmed_kinds}
                                 />
                             )
                         }
@@ -266,7 +295,7 @@ export function OverviewTab({ preview, availableScans }: Props) {
                                 <FactView
                                     event={person.birth}
                                     parts={personForm.birth}
-                                    availableScans={availableScans}
+                                    availableSources={availableSources}
                                 />
                             )
                         }
@@ -299,14 +328,14 @@ export function OverviewTab({ preview, availableScans }: Props) {
                                 title={`Małżeństwo z ${marriage.spouse?.display_name ?? 'nieznanym małżonkiem'}`}
                                 badge={
                                     <EventSourceStatus
-                                        isConfirmed={marriage.is_confirmed}
+                                        kinds={marriage.confirmed_kinds}
                                     />
                                 }
                                 view={
                                     <FactView
                                         event={marriage}
                                         parts={marriage.date_parts}
-                                        availableScans={availableScans}
+                                        availableSources={availableSources}
                                     />
                                 }
                                 edit={
@@ -333,7 +362,7 @@ export function OverviewTab({ preview, availableScans }: Props) {
                         badge={
                             person.death && (
                                 <EventSourceStatus
-                                    isConfirmed={person.death.is_confirmed}
+                                    kinds={person.death.confirmed_kinds}
                                 />
                             )
                         }
@@ -342,7 +371,7 @@ export function OverviewTab({ preview, availableScans }: Props) {
                                 <FactView
                                     event={person.death}
                                     parts={personForm.death}
-                                    availableScans={availableScans}
+                                    availableSources={availableSources}
                                 />
                             )
                         }

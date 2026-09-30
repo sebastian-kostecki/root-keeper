@@ -24,7 +24,7 @@ class BuildPersonPreview
      */
     public function handle(Person $person, User $user): array
     {
-        $person->load(['events.scans', 'parents.events', 'children.events', 'marriages.scans', 'marriages.participants.events']);
+        $person->load(['events.sources', 'parents.events', 'children.events', 'marriages.sources', 'marriages.participants.events']);
 
         return [
             'person' => PersonResource::make($person)->resolve(),

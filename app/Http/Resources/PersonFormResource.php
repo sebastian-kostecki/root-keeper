@@ -9,7 +9,7 @@ use Illuminate\Http\Resources\Json\JsonResource;
 
 /**
  * Raw values for prefilling the person edit modal on the preview, including whether each
- * event is confirmed by a linked scan.
+ * event is confirmed by a linked source.
  *
  * @property-read Person $resource
  *
@@ -64,7 +64,7 @@ class PersonFormResource extends JsonResource
             'day' => $event->date_day,
             'is_approximate' => $event->date_is_approximate,
             'place' => $event->place,
-            'is_confirmed' => $event->scans->isNotEmpty(),
+            'is_confirmed' => $event->sources->isNotEmpty(),
         ];
     }
 }

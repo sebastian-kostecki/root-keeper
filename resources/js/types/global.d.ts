@@ -1,6 +1,6 @@
 import type { Auth } from '@/types/auth';
 import type { PersonPreviewPayload } from '@/types/person';
-import type { Scan } from '@/types/scan';
+import type { Source } from '@/types/source';
 
 declare module 'react' {
     interface InputHTMLAttributes<T> {
@@ -15,7 +15,7 @@ declare module '@inertiajs/core' {
             auth: Auth;
             sidebarOpen: boolean;
             personPreview: PersonPreviewPayload | null;
-            availableScans?: Scan[];
+            availableSources?: Source[];
             [key: string]: unknown;
         };
     }

@@ -206,7 +206,7 @@ export function useSectionEditor(): SectionEditorContextValue {
     return context;
 }
 
-/** Same as `useSectionEditor`, but null outside the modal (tree, scans, lists). */
+/** Same as `useSectionEditor`, but null outside the modal (tree, sources, lists). */
 export function useOptionalSectionEditor(): SectionEditorContextValue | null {
     return useContext(SectionEditorContext);
 }

@@ -1,7 +1,7 @@
 import { CheckIcon } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
-/** ✓ after a date backed by a scan; the meaning is read out for screen readers. */
+/** ✓ after a date backed by a source; the meaning is read out for screen readers. */
 export function ConfirmedMark() {
     return (
         <>
@@ -9,7 +9,7 @@ export function ConfirmedMark() {
                 aria-hidden="true"
                 className="text-primary inline size-3.5 shrink-0 align-[-2px]"
             />
-            <span className="sr-only">potwierdzone aktem</span>
+            <span className="sr-only">potwierdzone źródłem</span>
         </>
     );
 }

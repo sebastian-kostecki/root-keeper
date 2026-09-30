@@ -27,6 +27,7 @@ class AppServiceProvider extends ServiceProvider
         $this->configureDefaults();
 
         Route::pattern('person', '[0-9]+');
+        Route::pattern('source', '[0-9]+');
     }
 
     /**

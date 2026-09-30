@@ -11,7 +11,7 @@ class UpdateMarriage
 
     /**
      * Update a marriage event's date and place in place, leaving its
-     * participants and linked scans untouched.
+     * participants and linked sources untouched.
      *
      * @param  array{year?: int|string|null, month?: int|string|null, day?: int|string|null, is_approximate?: bool|int|string|null, place?: string|null}  $date
      */

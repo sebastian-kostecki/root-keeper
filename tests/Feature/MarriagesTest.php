@@ -4,7 +4,7 @@ use App\Enums\EventType;
 use App\Enums\ParticipantRole;
 use App\Models\Event;
 use App\Models\Person;
-use App\Models\Scan;
+use App\Models\Source;
 use App\Models\User;
 
 test('guests are redirected to the login page from marriage routes', function () {
@@ -161,14 +161,14 @@ test('a person with several marriages sees them ordered by date with unknown dat
         ->where('personPreview.person.marriages.3.spouse.id', $noDate->id));
 });
 
-test('a scan linked to a marriage confirms it on both previews and lists both spouses on the scan', function () {
+test('a source linked to a marriage confirms it on both previews and lists both spouses on the source', function () {
     $user = User::factory()->create();
     $person = Person::factory()->for($user->tree)->create();
     $spouse = Person::factory()->for($user->tree)->create();
     $marriage = attachMarriage($person, $spouse);
-    $scan = Scan::factory()->for($user->tree)->create();
+    $source = Source::factory()->for($user->tree)->create();
 
-    $this->actingAs($user)->post(route('events.scans.store', $marriage), ['scan_id' => $scan->id]);
+    $this->actingAs($user)->post(route('events.sources.store', $marriage), ['source_id' => $source->id]);
 
     $this->actingAs($user)->get(personPreviewUrl($person))
         ->assertInertia(fn ($page) => $page->where('personPreview.person.marriages.0.is_confirmed', true));
@@ -176,7 +176,7 @@ test('a scan linked to a marriage confirms it on both previews and lists both sp
     $this->actingAs($user)->get(personPreviewUrl($spouse))
         ->assertInertia(fn ($page) => $page->where('personPreview.person.marriages.0.is_confirmed', true));
 
-    $response = $this->actingAs($user)->get(route('scans.show', $scan));
+    $response = $this->actingAs($user)->get(route('sources.show', $source));
 
     $response->assertOk();
     $confirms = null;
@@ -193,13 +193,13 @@ test('a scan linked to a marriage confirms it on both previews and lists both sp
     expect($confirmedPersonIds)->toBe(collect([$person->id, $spouse->id])->sort()->values()->all());
 });
 
-test('update changes the date and place and keeps linked scans', function () {
+test('update changes the date and place and keeps linked sources', function () {
     $user = User::factory()->create();
     $person = Person::factory()->for($user->tree)->create();
     $spouse = Person::factory()->for($user->tree)->create();
     $marriage = attachMarriage($person, $spouse, year: 1850, month: 6, day: 1, place: 'Warszawa');
-    $scan = Scan::factory()->for($user->tree)->create();
-    $marriage->scans()->attach($scan);
+    $source = Source::factory()->for($user->tree)->create();
+    $marriage->sources()->attach($source);
 
     $response = $this->from(personPreviewUrl($person))
         ->actingAs($user)
@@ -216,7 +216,7 @@ test('update changes the date and place and keeps linked scans', function () {
     expect($marriage->date_day)->toBe(2);
     expect($marriage->place)->toBe('Kraków');
 
-    $this->assertDatabaseHas('event_scan', ['event_id' => $marriage->id, 'scan_id' => $scan->id]);
+    $this->assertDatabaseHas('event_source', ['event_id' => $marriage->id, 'source_id' => $source->id]);
     expect($marriage->participants()->count())->toBe(2);
 });
 
@@ -263,13 +263,13 @@ test('destroying another trees marriage returns not found', function () {
     $this->assertDatabaseHas('events', ['id' => $marriage->id]);
 });
 
-test('destroy removes the event, its participants and its scan links, but keeps the scan, and both previews stop showing it', function () {
+test('destroy removes the event, its participants and its source links, but keeps the source, and both previews stop showing it', function () {
     $user = User::factory()->create();
     $person = Person::factory()->for($user->tree)->create();
     $spouse = Person::factory()->for($user->tree)->create();
     $marriage = attachMarriage($person, $spouse);
-    $scan = Scan::factory()->for($user->tree)->create();
-    $marriage->scans()->attach($scan);
+    $source = Source::factory()->for($user->tree)->create();
+    $marriage->sources()->attach($source);
 
     $response = $this->from(personPreviewUrl($person))
         ->actingAs($user)
@@ -280,8 +280,8 @@ test('destroy removes the event, its participants and its scan links, but keeps 
 
     $this->assertDatabaseMissing('events', ['id' => $marriage->id]);
     $this->assertDatabaseMissing('event_participants', ['event_id' => $marriage->id]);
-    $this->assertDatabaseMissing('event_scan', ['event_id' => $marriage->id]);
-    $this->assertDatabaseHas('scans', ['id' => $scan->id]);
+    $this->assertDatabaseMissing('event_source', ['event_id' => $marriage->id]);
+    $this->assertDatabaseHas('sources', ['id' => $source->id]);
 
     $this->actingAs($user)->get(personPreviewUrl($person))
         ->assertInertia(fn ($page) => $page->has('personPreview.person.marriages', 0));
@@ -290,20 +290,20 @@ test('destroy removes the event, its participants and its scan links, but keeps 
         ->assertInertia(fn ($page) => $page->has('personPreview.person.marriages', 0));
 });
 
-test('deleting one spouse removes the marriage but keeps the other spouse and the scan', function () {
+test('deleting one spouse removes the marriage but keeps the other spouse and the source', function () {
     $user = User::factory()->create();
     $person = Person::factory()->for($user->tree)->create();
     $spouse = Person::factory()->for($user->tree)->create();
     $marriage = attachMarriage($person, $spouse);
-    $scan = Scan::factory()->for($user->tree)->create();
-    $marriage->scans()->attach($scan);
+    $source = Source::factory()->for($user->tree)->create();
+    $marriage->sources()->attach($source);
 
     $this->actingAs($user)->delete(route('persons.destroy', $person))->assertRedirect();
 
     $this->assertDatabaseMissing('people', ['id' => $person->id]);
     $this->assertDatabaseMissing('events', ['id' => $marriage->id]);
     $this->assertDatabaseHas('people', ['id' => $spouse->id]);
-    $this->assertDatabaseHas('scans', ['id' => $scan->id]);
+    $this->assertDatabaseHas('sources', ['id' => $source->id]);
 
     $this->actingAs($user)->get(personPreviewUrl($spouse))
         ->assertInertia(fn ($page) => $page->has('personPreview.person.marriages', 0));
