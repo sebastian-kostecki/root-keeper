@@ -1,7 +1,7 @@
 ---
 change_id: source-description-in-modal
 title: Source description in modal
-status: implemented
+status: impl_reviewed
 created: 2026-09-30
 updated: 2026-09-30
 archived_at: null

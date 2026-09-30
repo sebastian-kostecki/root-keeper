@@ -74,9 +74,10 @@ export default function Index({ sources, kinds, recordTypes }: Props) {
                             return (
                                 <Link
                                     key={source.id}
+                                    className="block"
                                     href={SourceController.show(source.id)}
                                 >
-                                    <Card className="hover:bg-accent/50 gap-3 overflow-hidden py-0 transition-colors">
+                                    <Card className="hover:bg-accent/50 h-full gap-3 overflow-hidden py-0 transition-colors">
                                         <SourceThumbnail source={source} />
                                         <CardContent className="space-y-0.5 pb-4">
                                             <p

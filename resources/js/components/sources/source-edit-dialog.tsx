@@ -75,6 +75,10 @@ export function SourceEditDialog({
         setKind(source.kind);
         setErased([]);
         setConfirmOpen(false);
+
+        if (discardRef.current) {
+            discardRef.current.value = '0';
+        }
     };
 
     const computeErased = (selectedKind: SourceKind | '') =>

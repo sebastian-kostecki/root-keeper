@@ -36,7 +36,7 @@ class SourceUpdateRequest extends FormRequest
                 'required',
                 Rule::enum(SourceKind::class),
                 function (string $attribute, mixed $value, Closure $fail): void {
-                    if ($this->wouldEraseRecordFields($value) && ! $this->boolean('discard_record_fields')) {
+                    if (SourceKind::tryFrom((string) $value) !== null && $this->wouldEraseRecordFields($value) && ! $this->boolean('discard_record_fields')) {
                         $fail(__('Zmiana rodzaju usunie typ aktu i numer wpisu. Potwierdź zmianę.'));
                     }
                 },
