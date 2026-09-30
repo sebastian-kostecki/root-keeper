@@ -1,7 +1,7 @@
 ---
 change_id: fact-confirmed-by-any-source
 title: Fact confirmed by any source
-status: implementing
+status: implemented
 created: 2026-09-30
 updated: 2026-09-30
 archived_at: null

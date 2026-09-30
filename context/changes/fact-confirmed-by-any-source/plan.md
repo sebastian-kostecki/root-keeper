@@ -429,12 +429,12 @@ The picker list now holds every source of the tree instead of only akts. It is t
 
 #### Automated
 
-- [x] 3.1 Demo seeder runs
-- [x] 3.2 Screenshots produced
-- [x] 3.3 Full suite green
-- [x] 3.4 Types, lint, format and build
+- [x] 3.1 Demo seeder runs — bcdcc57
+- [x] 3.2 Screenshots produced — bcdcc57
+- [x] 3.3 Full suite green — bcdcc57
+- [x] 3.4 Types, lint, format and build — bcdcc57
 
 #### Manual
 
-- [x] 3.5 `verdict.md` reviewed: every state has Expected and Seen filled, the views are compared with `before/`, and every charge is marked closed
-- [x] 3.6 One real gravestone photo uploaded, linked to a death and opened from the link on „Przegląd"
+- [x] 3.5 `verdict.md` reviewed: every state has Expected and Seen filled, the views are compared with `before/`, and every charge is marked closed — bcdcc57
+- [x] 3.6 One real gravestone photo uploaded, linked to a death and opened from the link on „Przegląd" — bcdcc57
