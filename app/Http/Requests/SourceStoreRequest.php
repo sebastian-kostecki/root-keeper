@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Concerns\SourceDescriptionValidationRules;
 use App\Enums\SourceKind;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
@@ -10,6 +11,8 @@ use Illuminate\Validation\Rules\File;
 
 class SourceStoreRequest extends FormRequest
 {
+    use SourceDescriptionValidationRules;
+
     /**
      * Get the validation rules that apply to the request.
      *
@@ -20,6 +23,7 @@ class SourceStoreRequest extends FormRequest
         return [
             'kind' => ['required', Rule::enum(SourceKind::class)],
             'file' => ['required', File::image()->types(['jpg', 'jpeg', 'png', 'webp'])->max(20 * 1024)],
+            ...$this->sourceDescriptionRules(),
         ];
     }
 
@@ -33,6 +37,7 @@ class SourceStoreRequest extends FormRequest
         return [
             'file' => 'plik',
             'kind' => 'rodzaj',
+            ...$this->sourceDescriptionAttributes(),
         ];
     }
 }

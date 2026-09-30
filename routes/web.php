@@ -21,7 +21,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('tree/{person}', [TreeController::class, 'show'])->name('tree.show');
     Route::put('tree/root-person/{person}', [TreeRootPersonController::class, 'update'])->name('tree.root-person.update');
 
-    Route::resource('sources', SourceController::class)->only(['index', 'create', 'store', 'show', 'destroy']);
+    Route::resource('sources', SourceController::class)->only(['index', 'create', 'store', 'show', 'update', 'destroy']);
     Route::get('sources/{source}/file', [SourceController::class, 'file'])->name('sources.file');
     Route::get('sources/{source}/thumbnail', [SourceController::class, 'thumbnail'])->name('sources.thumbnail');
 

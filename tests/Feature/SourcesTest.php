@@ -2,6 +2,7 @@
 
 use App\Enums\ParticipantRole;
 use App\Enums\SourceKind;
+use App\Enums\SourceRecordType;
 use App\Models\Event;
 use App\Models\Person;
 use App\Models\Source;
@@ -22,6 +23,7 @@ test('guests are redirected to the login page from sources routes', function () 
     $this->get(route('sources.file', $source))->assertRedirect(route('login'));
     $this->get(route('sources.thumbnail', $source))->assertRedirect(route('login'));
     $this->delete(route('sources.destroy', $source))->assertRedirect(route('login'));
+    $this->put(route('sources.update', $source), [])->assertRedirect(route('login'));
 });
 
 test('the private disk does not expose a signed-url storage route', function () {
@@ -43,7 +45,7 @@ test('sources index shows only the authenticated user own sources, newest first'
         ->component('sources/index')
         ->has('sources', 2)
         ->has('sources.0', fn ($source) => $source->hasAll([
-            'id', 'kind', 'kind_label', 'original_name', 'mime_type', 'size', 'width', 'height', 'has_thumbnail', 'uploaded_at',
+            'id', 'kind', 'kind_label', 'name', 'display_name', 'record_type', 'record_type_label', 'entry_number', 'year', 'provenance', 'url', 'note', 'original_name', 'mime_type', 'size', 'width', 'height', 'has_thumbnail', 'uploaded_at',
         ]))
         ->where('sources.0.id', $newer->id)
         ->where('sources.1.id', $older->id));
@@ -530,4 +532,252 @@ test('destroy still removes the source and reports the failure when a file canno
 
     expect(Source::find($source->id))->toBeNull();
     Exceptions::assertReported(fn (RuntimeException $e): bool => str_contains($e->getMessage(), $source->path));
+});
+
+test('storing with only a file and a kind leaves the description empty', function () {
+    Storage::fake('local');
+
+    $this->actingAs(User::factory()->create())->post(route('sources.store'), [
+        'kind' => 'metrical_record',
+        'file' => UploadedFile::fake()->image('akt.jpg'),
+    ])->assertSessionHasNoErrors();
+
+    $source = Source::firstOrFail();
+
+    expect($source->only(['name', 'record_type', 'entry_number', 'year', 'provenance', 'url', 'note']))
+        ->each->toBeNull();
+});
+
+test('storing with a full description persists every field', function () {
+    Storage::fake('local');
+
+    $this->actingAs(User::factory()->create())->post(route('sources.store'), [
+        'kind' => 'metrical_record',
+        'file' => UploadedFile::fake()->image('akt.jpg'),
+        'name' => 'Urodzenia Lipnica 1878',
+        'record_type' => 'birth',
+        'entry_number' => '47a',
+        'year' => '1878',
+        'provenance' => 'Archiwum w Krakowie',
+        'url' => 'https://example.com/akt',
+        'note' => "Pierwszy akapit.\n\nDrugi akapit.",
+    ])->assertSessionHasNoErrors();
+
+    $source = Source::firstOrFail();
+
+    expect($source->name)->toBe('Urodzenia Lipnica 1878');
+    expect($source->record_type)->toBe(SourceRecordType::Birth);
+    expect($source->entry_number)->toBe('47a');
+    expect($source->year)->toBe(1878);
+    expect($source->provenance)->toBe('Archiwum w Krakowie');
+    expect($source->url)->toBe('https://example.com/akt');
+    expect($source->note)->toBe("Pierwszy akapit.\n\nDrugi akapit.");
+});
+
+test('storing a gravestone ignores a submitted record type and entry number', function () {
+    Storage::fake('local');
+
+    $this->actingAs(User::factory()->create())->post(route('sources.store'), [
+        'kind' => 'gravestone',
+        'file' => UploadedFile::fake()->image('nagrobek.jpg'),
+        'name' => 'Nagrobek',
+        'record_type' => 'birth',
+        'entry_number' => '47',
+    ])->assertSessionHasNoErrors();
+
+    $source = Source::firstOrFail();
+
+    expect($source->name)->toBe('Nagrobek');
+    expect($source->record_type)->toBeNull();
+    expect($source->entry_number)->toBeNull();
+});
+
+test('store rejects an invalid description with polish messages', function (array $input, string $field, string $expected) {
+    Storage::fake('local');
+
+    $response = $this->actingAs(User::factory()->create())->post(route('sources.store'), [
+        'kind' => 'metrical_record',
+        'file' => UploadedFile::fake()->image('akt.jpg'),
+        ...$input,
+    ]);
+
+    $response->assertInvalid($field);
+    expect($response->getSession()->get('errors')->getBag('default')->first($field))->toContain($expected);
+    expect(Source::count())->toBe(0);
+})->with([
+    'year too early' => [['year' => '999'], 'year', 'rok'],
+    'year in the future' => [['year' => '9999'], 'year', 'rok'],
+    'javascript link' => [['url' => 'javascript:alert(1)'], 'url', 'link'],
+    'ftp link' => [['url' => 'ftp://example.com/akt'], 'url', 'link'],
+    'unknown record type' => [['record_type' => 'baptism'], 'record_type', 'typ aktu'],
+    'long name' => [['name' => str_repeat('a', 256)], 'name', 'nazwa'],
+    'long provenance' => [['provenance' => str_repeat('a', 256)], 'provenance', 'pochodzenie'],
+    'long entry number' => [['entry_number' => str_repeat('1', 51)], 'entry_number', 'numer wpisu'],
+    'long note' => [['note' => str_repeat('a', 5001)], 'note', 'notatka'],
+]);
+
+test('updating changes the kind and the description and redirects back with the toast', function () {
+    $user = User::factory()->create();
+    $source = Source::factory()->for($user->tree)->create();
+
+    $this->actingAs($user)->from(route('sources.show', $source))->put(route('sources.update', $source), [
+        'kind' => 'metrical_record',
+        'name' => 'Nowa nazwa',
+        'record_type' => 'death',
+        'entry_number' => '12/1878',
+        'year' => '1878',
+        'provenance' => 'Archiwum',
+        'url' => 'https://example.com',
+        'note' => 'Notatka',
+    ])
+        ->assertRedirect(route('sources.show', $source))
+        ->assertInertiaFlash('toast', ['type' => 'success', 'message' => 'Zapisano źródło']);
+
+    $source->refresh();
+
+    expect($source->name)->toBe('Nowa nazwa');
+    expect($source->record_type)->toBe(SourceRecordType::Death);
+    expect($source->entry_number)->toBe('12/1878');
+    expect($source->year)->toBe(1878);
+    expect($source->note)->toBe('Notatka');
+});
+
+test('updating a source from another users tree returns not found and changes nothing', function () {
+    $source = Source::factory()->for(User::factory()->create()->tree)->create(['name' => 'Cudze']);
+
+    $this->actingAs(User::factory()->create())->put(route('sources.update', $source), [
+        'kind' => 'other',
+        'name' => 'Przejęte',
+    ])->assertNotFound();
+
+    $source->refresh();
+
+    expect($source->name)->toBe('Cudze');
+    expect($source->kind)->toBe(SourceKind::MetricalRecord);
+});
+
+test('changing an akt with a stored record type or entry number to another kind without confirmation is rejected', function (array $stored) {
+    $user = User::factory()->create();
+    $source = Source::factory()->for($user->tree)->create($stored);
+
+    $response = $this->actingAs($user)->put(route('sources.update', $source), ['kind' => 'gravestone']);
+
+    $response->assertInvalid('kind');
+    expect($response->getSession()->get('errors')->getBag('default')->first('kind'))->toBe('Zmiana rodzaju usunie typ aktu i numer wpisu. Potwierdź zmianę.');
+
+    $source->refresh();
+
+    expect($source->kind)->toBe(SourceKind::MetricalRecord);
+    expect($source->record_type ?? $source->entry_number)->not->toBeNull();
+})->with([
+    'record type only' => [['record_type' => SourceRecordType::Birth]],
+    'entry number only' => [['entry_number' => '47']],
+]);
+
+test('changing an akt to another kind with confirmation saves the kind and erases both fields', function () {
+    $user = User::factory()->create();
+    $source = Source::factory()->for($user->tree)->described()->create();
+
+    $this->actingAs($user)->put(route('sources.update', $source), [
+        'kind' => 'gravestone',
+        'discard_record_fields' => '1',
+        'name' => 'Nagrobek',
+        'record_type' => 'birth',
+        'entry_number' => '47',
+    ])->assertSessionHasNoErrors();
+
+    $source->refresh();
+
+    expect($source->kind)->toBe(SourceKind::Gravestone);
+    expect($source->record_type)->toBeNull();
+    expect($source->entry_number)->toBeNull();
+    expect($source->name)->toBe('Nagrobek');
+});
+
+test('changing an akt with an empty record type and entry number to another kind needs no confirmation', function () {
+    $user = User::factory()->create();
+    $source = Source::factory()->for($user->tree)->create();
+
+    $this->actingAs($user)->put(route('sources.update', $source), ['kind' => 'other'])
+        ->assertSessionHasNoErrors();
+
+    expect($source->refresh()->kind)->toBe(SourceKind::Other);
+});
+
+test('changing the kind of a linked akt keeps its event links and the events stay confirmed', function () {
+    $user = User::factory()->create();
+    $person = Person::factory()->for($user->tree)->create();
+    $event = Event::factory()->for($user->tree)->birth()->create();
+    $event->participants()->attach($person, ['role' => ParticipantRole::Subject]);
+    $source = Source::factory()->for($user->tree)->described()->create();
+    $event->sources()->attach($source);
+
+    $this->actingAs($user)->put(route('sources.update', $source), [
+        'kind' => 'other',
+        'discard_record_fields' => '1',
+    ])->assertSessionHasNoErrors();
+
+    expect($event->sources()->pluck('sources.id')->all())->toBe([$source->id]);
+    $this->actingAs($user)->get(personPreviewUrl($person))->assertInertia(fn ($page) => $page
+        ->where('personPreview.person.birth.is_confirmed', true));
+});
+
+test('updating never changes the original name or the stored file paths', function () {
+    $user = User::factory()->create();
+    $source = Source::factory()->for($user->tree)->withThumbnail()->create(['original_name' => 'akt.jpg']);
+    $before = $source->only(['original_name', 'path', 'thumbnail_path']);
+
+    $this->actingAs($user)->put(route('sources.update', $source), [
+        'kind' => 'other',
+        'name' => 'Inna nazwa',
+        'original_name' => 'podmienione.jpg',
+        'path' => 'sources/1/podmienione.jpg',
+        'thumbnail_path' => 'sources/1/thumbnails/podmienione.jpg',
+    ])->assertSessionHasNoErrors();
+
+    expect($source->refresh()->only(['original_name', 'path', 'thumbnail_path']))->toBe($before);
+});
+
+test('the source resource falls back to the file name when the name is empty', function () {
+    $user = User::factory()->create();
+    Source::factory()->for($user->tree)->create(['original_name' => 'IMG_2034.jpg']);
+
+    $this->actingAs($user)->get(route('sources.index'))->assertInertia(fn ($page) => $page
+        ->where('sources.0.name', null)
+        ->where('sources.0.display_name', 'IMG_2034.jpg'));
+
+    Source::query()->update(['name' => 'Akt chrztu']);
+
+    $this->actingAs($user)->get(route('sources.index'))->assertInertia(fn ($page) => $page
+        ->where('sources.0.display_name', 'Akt chrztu')
+        ->where('sources.0.original_name', 'IMG_2034.jpg'));
+});
+
+test('the index and show pages expose the kind and record type options', function () {
+    $user = User::factory()->create();
+    $source = Source::factory()->for($user->tree)->create();
+
+    $this->actingAs($user)->get(route('sources.index'))->assertInertia(fn ($page) => $page
+        ->where('kinds', SourceKind::options())
+        ->where('recordTypes', SourceRecordType::options()));
+
+    $this->actingAs($user)->get(route('sources.show', $source))->assertInertia(fn ($page) => $page
+        ->where('kinds', SourceKind::options())
+        ->where('recordTypes', SourceRecordType::options()));
+});
+
+test('the file download name ignores the source name', function () {
+    Storage::fake('local');
+
+    $user = User::factory()->create();
+    $source = Source::factory()->for($user->tree)->create([
+        'original_name' => 'oryginal.jpg',
+        'name' => 'Akt chrztu',
+        'path' => "sources/{$user->tree->id}/original.jpg",
+    ]);
+    Storage::disk('local')->put($source->path, 'original-bytes');
+
+    $response = $this->actingAs($user)->get(route('sources.file', $source));
+
+    expect($response->headers->get('Content-Disposition'))->toContain('oryginal.jpg')->not->toContain('Akt');
 });

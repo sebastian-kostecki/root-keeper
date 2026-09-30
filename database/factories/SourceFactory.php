@@ -3,6 +3,7 @@
 namespace Database\Factories;
 
 use App\Enums\SourceKind;
+use App\Enums\SourceRecordType;
 use App\Models\Source;
 use App\Models\Tree;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -57,5 +58,22 @@ class SourceFactory extends Factory
     public function other(): static
     {
         return $this->state(['kind' => SourceKind::Other]);
+    }
+
+    /**
+     * Indicate that the source has every description field filled in (an akt).
+     */
+    public function described(): static
+    {
+        return $this->state([
+            'kind' => SourceKind::MetricalRecord,
+            'name' => 'Urodzenia Lipnica 1878 s. 12',
+            'record_type' => SourceRecordType::Birth,
+            'entry_number' => '47',
+            'year' => 1878,
+            'provenance' => 'Archiwum Państwowe w Krakowie',
+            'url' => 'https://example.com/akt',
+            'note' => 'Wpis po prawej stronie rozkładówki.',
+        ]);
     }
 }

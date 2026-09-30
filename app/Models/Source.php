@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\SourceKind;
+use App\Enums\SourceRecordType;
 use Database\Factories\SourceFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -15,6 +16,13 @@ use Illuminate\Support\Carbon;
  * @property int $id
  * @property int $tree_id
  * @property SourceKind $kind
+ * @property string|null $name
+ * @property SourceRecordType|null $record_type
+ * @property string|null $entry_number
+ * @property int|null $year
+ * @property string|null $provenance
+ * @property string|null $url
+ * @property string|null $note
  * @property string $original_name
  * @property string $path
  * @property string|null $thumbnail_path
@@ -25,7 +33,7 @@ use Illuminate\Support\Carbon;
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
-#[Fillable(['tree_id', 'kind', 'original_name', 'path', 'thumbnail_path', 'mime_type', 'size', 'width', 'height'])]
+#[Fillable(['tree_id', 'kind', 'original_name', 'path', 'thumbnail_path', 'mime_type', 'size', 'width', 'height', 'name', 'record_type', 'entry_number', 'year', 'provenance', 'url', 'note'])]
 class Source extends Model
 {
     /** @use HasFactory<SourceFactory> */
@@ -40,10 +48,20 @@ class Source extends Model
     {
         return [
             'kind' => SourceKind::class,
+            'record_type' => SourceRecordType::class,
+            'year' => 'integer',
             'size' => 'integer',
             'width' => 'integer',
             'height' => 'integer',
         ];
+    }
+
+    /**
+     * The name shown wherever the source appears: its name, or the file name when the name is empty.
+     */
+    public function displayName(): string
+    {
+        return $this->name ?? $this->original_name;
     }
 
     /**

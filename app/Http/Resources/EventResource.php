@@ -27,7 +27,7 @@ class EventResource extends JsonResource
      *     place: string|null,
      *     date_parts: array{year: int|null, month: int|null, day: int|null, is_approximate: bool},
      *     is_confirmed?: bool,
-     *     sources?: list<array{id: int, kind: string, original_name: string, has_thumbnail: bool, uploaded_at: string|null}>,
+     *     sources?: list<array{id: int, kind: string, original_name: string, display_name: string, has_thumbnail: bool, uploaded_at: string|null}>,
      * }
      */
     public function toArray(Request $request): array
@@ -53,6 +53,7 @@ class EventResource extends JsonResource
                 'id' => $source->id,
                 'kind' => $source->kind->value,
                 'original_name' => $source->original_name,
+                'display_name' => $source->displayName(),
                 'has_thumbnail' => $source->thumbnail_path !== null,
                 'uploaded_at' => $source->created_at?->toIso8601String(),
             ])->all()),

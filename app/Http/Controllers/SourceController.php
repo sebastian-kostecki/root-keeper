@@ -4,8 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Actions\Sources\DeleteSource;
 use App\Actions\Sources\StoreSource;
+use App\Actions\Sources\UpdateSource;
 use App\Enums\SourceKind;
+use App\Enums\SourceRecordType;
 use App\Http\Requests\SourceStoreRequest;
+use App\Http\Requests\SourceUpdateRequest;
 use App\Http\Resources\SourceResource;
 use App\Models\Event;
 use App\Models\Person;
@@ -31,6 +34,8 @@ class SourceController extends Controller
 
         return Inertia::render('sources/index', [
             'sources' => SourceResource::collection($sources)->resolve(),
+            'kinds' => SourceKind::options(),
+            'recordTypes' => SourceRecordType::options(),
         ]);
     }
 
@@ -49,7 +54,12 @@ class SourceController extends Controller
      */
     public function store(SourceStoreRequest $request, StoreSource $storeSource): RedirectResponse
     {
-        $source = $storeSource->handle($request->user()->tree, $request->file('file'), SourceKind::from($request->validated('kind')));
+        $source = $storeSource->handle(
+            $request->user()->tree,
+            $request->file('file'),
+            SourceKind::from($request->validated('kind')),
+            $request->safe()->except(['kind', 'file']),
+        );
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Dodano źródło')]);
 
@@ -67,6 +77,8 @@ class SourceController extends Controller
 
         return Inertia::render('sources/show', [
             'source' => SourceResource::make($source)->resolve(),
+            'kinds' => SourceKind::options(),
+            'recordTypes' => SourceRecordType::options(),
             'confirms' => $source->events->flatMap(
                 fn (Event $event): Collection => $event->participants->map(fn (Person $person): array => [
                     'event_id' => $event->id,
@@ -80,6 +92,22 @@ class SourceController extends Controller
                 ])
             )->values()->all(),
         ]);
+    }
+
+    /**
+     * Update the kind and description of the given source.
+     */
+    public function update(SourceUpdateRequest $request, Source $source, UpdateSource $updateSource): RedirectResponse
+    {
+        $updateSource->handle(
+            $source,
+            SourceKind::from($request->validated('kind')),
+            $request->safe()->except(['kind', 'discard_record_fields']),
+        );
+
+        Inertia::flash('toast', ['type' => 'success', 'message' => __('Zapisano źródło')]);
+
+        return back();
     }
 
     /**

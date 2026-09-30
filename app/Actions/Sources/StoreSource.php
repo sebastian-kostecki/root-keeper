@@ -22,8 +22,10 @@ class StoreSource
      * Store the uploaded source (and, when possible, a thumbnail) on the private
      * disk and create its row. Leaves no orphan files if anything fails once the
      * original is written.
+     *
+     * @param  array{name?: string|null, record_type?: string|null, entry_number?: string|null, year?: int|null, provenance?: string|null, url?: string|null, note?: string|null}  $description
      */
-    public function handle(Tree $tree, UploadedFile $file, SourceKind $kind): Source
+    public function handle(Tree $tree, UploadedFile $file, SourceKind $kind, array $description = []): Source
     {
         $uuid = (string) Str::uuid();
         $extension = $file->extension();
@@ -50,6 +52,7 @@ class StoreSource
             }
 
             return $tree->sources()->create([
+                ...$description,
                 'kind' => $kind,
                 'original_name' => $this->sanitizeOriginalName($file->getClientOriginalName(), $extension),
                 'path' => $path,

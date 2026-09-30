@@ -28,6 +28,9 @@ use Illuminate\Support\Facades\DB;
  * Source states (appended last): one unlinked gravestone and one unlinked other source (short delete
  * dialog, kind badges), and one akt linked to two events, Jan's birth (also confirmed by another akt)
  * and Kacper's birth (only this akt), so the linked delete dialog shows both impact suffixes.
+ * Then the description states: a fully described akt (opisany-akt-lipnica-1878.jpg), a gravestone with
+ * only name and rok (nagrobek-opisany.jpg) and an akt whose name and pochodzenie truncate on a card
+ * (akt-z-dlugim-opisem.jpg). The undescribed sources above are the empty state.
  */
 class TreeViewDemoSeeder extends Seeder
 {
@@ -245,6 +248,25 @@ class TreeViewDemoSeeder extends Seeder
         $shared = Source::factory()->for($this->tree)->create(['original_name' => 'akt-wspolny-jan-kacper.jpg']);
         $this->eventOf($jan, EventType::Birth)->sources()->attach($shared);
         $this->eventOf($kacper, EventType::Birth)->sources()->attach($shared);
+
+        Source::factory()->for($this->tree)->described()->create([
+            'original_name' => 'opisany-akt-lipnica-1878.jpg',
+            'provenance' => 'Archiwum Akt Dawnych w Warszawie',
+            'note' => "Wpis po prawej stronie rozkładówki, zapisany po łacinie.\n\nNazwisko matki odczytane z trudem, do sprawdzenia w księdze zgonów.",
+            'url' => 'https://www.szukajwarchiwach.gov.pl/',
+        ]);
+
+        Source::factory()->for($this->tree)->gravestone()->create([
+            'original_name' => 'nagrobek-opisany.jpg',
+            'name' => 'Nagrobek rodziny Kowalskich, cmentarz w Lipnicy',
+            'year' => 1932,
+        ]);
+
+        Source::factory()->for($this->tree)->create([
+            'original_name' => 'akt-z-dlugim-opisem.jpg',
+            'name' => 'Akt urodzenia z parafii Świętego Jana Chrzciciela w Lipnicy Murowanej, księga urodzeń z lat 1875-1885',
+            'provenance' => 'Archiwum Diecezjalne w Tarnowie, zespół akt parafialnych, sygnatura 1234/56/78',
+        ]);
     }
 
     private function attachSource(Event $event, string $originalName): void

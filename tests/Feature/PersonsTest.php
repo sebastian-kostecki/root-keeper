@@ -1018,3 +1018,16 @@ test('destroy from the table view keeps the search, view and sort and drops the 
         ->delete(route('persons.destroy', $person))
         ->assertRedirect(route('persons.index', $parameters));
 });
+
+test('the person preview exposes the display name of an event source', function () {
+    $user = User::factory()->create();
+    $person = Person::factory()->for($user->tree)->create();
+    $event = Event::factory()->for($user->tree)->birth()->create();
+    $event->participants()->attach($person, ['role' => ParticipantRole::Subject]);
+    $event->sources()->attach(Source::factory()->for($user->tree)->create(['original_name' => 'IMG_1.jpg', 'name' => 'Akt chrztu']));
+    $event->sources()->attach(Source::factory()->for($user->tree)->create(['original_name' => 'IMG_2.jpg']));
+
+    $this->actingAs($user)->get(personPreviewUrl($person))->assertInertia(fn ($page) => $page
+        ->where('personPreview.person.birth.sources.0.display_name', 'Akt chrztu')
+        ->where('personPreview.person.birth.sources.1.display_name', 'IMG_2.jpg'));
+});

@@ -59,6 +59,13 @@ function legacySource(string $path, ?string $thumbnailPath): Source
     return Source::factory()->create(['path' => $path, 'thumbnail_path' => $thumbnailPath]);
 }
 
+function addDescriptionMigration(): Migration
+{
+    static $migration = null;
+
+    return $migration ??= require database_path('migrations/2026_09_30_072040_add_description_to_sources_table.php');
+}
+
 beforeEach(function () {
     Storage::fake('local');
 });
@@ -212,4 +219,20 @@ test('events keep their confirmed state through the preview props', function () 
     $this->actingAs($user)->get(personPreviewUrl($person))->assertInertia(fn ($page) => $page
         ->where('personPreview.person.birth.is_confirmed', true)
         ->where('personPreview.person.death.is_confirmed', false));
+});
+
+test('the description migration keeps existing rows with an empty description and rolls back cleanly', function () {
+    $columns = ['name', 'record_type', 'entry_number', 'year', 'provenance', 'url', 'note'];
+    $source = Source::factory()->create(['original_name' => 'akt.jpg']);
+
+    addDescriptionMigration()->down();
+
+    foreach ($columns as $column) {
+        expect(Schema::hasColumn('sources', $column))->toBeFalse();
+    }
+    expect(DB::table('sources')->where('id', $source->id)->value('original_name'))->toBe('akt.jpg');
+
+    addDescriptionMigration()->up();
+
+    expect(Source::findOrFail($source->id)->only($columns))->each->toBeNull();
 });
