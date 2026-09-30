@@ -1,10 +1,10 @@
 ---
 change_id: app-shell-sidebar
 title: Shell aplikacji po zalogowaniu — sidebar, nagłówek, menu użytkownika
-status: impl_reviewed
+status: archived
 created: 2026-09-30
 updated: 2026-09-30
-archived_at: null
+archived_at: 2026-09-30T18:57:47Z
 ---
 
 ## Notes
