@@ -3,7 +3,7 @@ project: root-keeper
 version: 4
 status: draft
 created: 2026-09-21
-updated: 2026-09-29
+updated: 2026-09-30
 prd_version: 4
 main_goal: speed
 top_blocker: time
@@ -76,7 +76,7 @@ Po przeniesieniu formularza osoby do modala zostały dwie luki (prd-v4): ogląda
 | S-15 | place-delete-with-impact        | usunąć miejscowość po zobaczeniu osób i faktów, które stracą miejsce                   | S-13, S-14    | v2:FR-009                              | proposed |
 | S-20 | person-form-in-modal            | dodawać i poprawiać osobę w modalu zamiast na osobnych stronach                        | S-01, S-05    | v3:FR-004                              | done |
 | S-24 | person-preview-in-modal         | otworzyć podgląd osoby w modalu z drzewa, listy i podglądu skanu, przechodzić w nim do krewnych i wracać „Wstecz”, a po zamknięciu być w tym samym miejscu | S-20, S-09 | v4:FR-001, v4:FR-002, v4:FR-003, v4:FR-010, v4:FR-012, v4:FR-013, v4:US-01 | done |
-| S-16 | scans-become-sources            | widzieć dotychczasowe skany jako źródła rodzaju „akt metrykalny”, wgrywać źródło z rodzajem (akt / nagrobek / inne) i usuwać je jak dziś | S-02, S-03, S-08 | v3:FR-005, v3:FR-009, v3:FR-010, v3:FR-011 | in-progress |
+| S-16 | scans-become-sources            | widzieć dotychczasowe skany jako źródła rodzaju „akt metrykalny”, wgrywać źródło z rodzajem (akt / nagrobek / inne) i usuwać je jak dziś | S-02, S-03, S-08 | v3:FR-005, v3:FR-009, v3:FR-010, v3:FR-011 | done |
 | S-17 | source-description-in-modal     | dodać źródło w modalu (plik i rodzaj) z opcjonalnym opisem, poprawić rodzaj i opis i widzieć numer wpisu i notatkę przy źródle | S-16, S-24 | v3:FR-006, v3:FR-007, v3:US-02, v2:FR-001, v2:FR-002, v2:FR-003, v2:FR-004, v2:FR-005, v2:FR-014, v2:US-01 | proposed |
 | S-18 | fact-confirmed-by-any-source    | potwierdzić urodzenie, małżeństwo i zgon źródłem każdego rodzaju i widzieć rodzaj źródła przy fakcie | S-16, S-24 | v3:FR-008, v3:US-02 | proposed |
 | S-19 | matching-sources-first          | przy wiązaniu źródła z wydarzeniem widzieć najpierw akty o pasującym typie, potem resztę | S-17, S-18 | v3:FR-009, v2:FR-015, v2:FR-012 | proposed |
@@ -329,7 +329,7 @@ Foundations below assume these are present and do NOT re-scaffold them. The prd-
 - **Unknowns:**
   - Czy wgrywanie do czasu S-17 zostaje na obecnej osobnej stronie (z nowym wyborem rodzaju), czy modal wgrywania wchodzi już tutaj? Owner: `/10x-plan`. Block: no.
 - **Risk:** Pierwszy w strumieniu źródeł, bo każda dalsza zmiana stoi na nowym pojęciu „źródło”; to jedyna zmiana istniejących danych w prd-v3 — każdy fakt musi mieć ten sam stan „potwierdzone/niepotwierdzone” przed i po, więc przed wdrożeniem backup (procedura z F-01). Stare adresy `/scans` mogą przestać działać (prd-v3).
-- **Status:** in-progress
+- **Status:** done
 
 ### S-17: Źródło dodawane i opisywane w modalu
 
@@ -513,3 +513,4 @@ Rozstrzygnięte:
 - **S-26: użytkownik dodaje z drzewa dziecko pary aktualnie pokazanej (parę wybiera przełącznik związku; bez małżonka — dziecko tylko tej osoby): wybiera istniejącą osobę albo tworzy nową w modalu, który pokazuje obojga rodziców; dziecko od razu pojawia się na drzewie, a podłączenie dające dziecku trzeciego rodzica się nie udaje.** — Archived 2026-09-28 → `context/archive/2026-09-28-tree-child-existing-or-new/`. Lesson: —.
 - **S-27: użytkownik widzi pusty slot małżonka przy osobie w centrum drzewa, gdy nie ma ona małżonka, i podłącza z niego istniejącą osobę albo tworzy nowego małżonka w modalu; gdy pokazani na arkuszu ojciec i matka nie mają małżeństwa, łączy ich akcją „Połącz jako małżeństwo”; nowe małżeństwo od razu widać na drzewie, a datę, miejsce i potwierdzenie uzupełnia w podglądzie osoby.** — Archived 2026-09-28 → `context/archive/2026-09-28-tree-spouse-existing-or-new/`. Lesson: —.
 - **S-29: użytkownik widzi w modalu podglądu rodziców, dzieci i małżonków bez akcji dodawania (dodaje się je na drzewie); usuwanie relacji i małżeństwa oraz datę, miejsce i potwierdzenie małżeństwa nadal obsługuje w podglądzie; przycisk „Pokaż na drzewie” wyśrodkowuje drzewo na tej osobie.** — Archived 2026-09-29 → `context/archive/2026-09-29-preview-relations-read-only/`. Lesson: —.
+- **S-16: użytkownik widzi dotychczasowe skany w sekcji „Źródła” jako źródła rodzaju „akt metrykalny”, przy wgrywaniu nowego źródła wybiera rodzaj (akt metrykalny, zdjęcie nagrobka, inne), a pliki, miniatury, powiększenie i istniejące potwierdzenia faktów działają jak dziś; źródło bez powiązań usuwa po prostym potwierdzeniu, a źródło z powiązaniami — po liście faktów, które stracą potwierdzenie.** — Archived 2026-09-30 → `context/archive/2026-09-29-scans-become-sources/`. Lesson: —.

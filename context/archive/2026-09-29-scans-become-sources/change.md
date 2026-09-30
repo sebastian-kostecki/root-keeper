@@ -1,10 +1,10 @@
 ---
 change_id: scans-become-sources
 title: Scans become sources
-status: impl_reviewed
+status: archived
 created: 2026-09-29
 updated: 2026-09-30
-archived_at: null
+archived_at: 2026-09-30T06:33:24Z
 ---
 
 ## Notes
