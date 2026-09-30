@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vite-plus/test';
-import { formatSourceMeta, showsUploadDate } from './source-description';
+import {
+    erasedRecordFields,
+    formatSourceMeta,
+    isUndescribed,
+    showsUploadDate,
+} from './source-description';
 
 const empty = { record_type_label: null, year: null, provenance: null };
 
@@ -40,6 +45,109 @@ describe('showsUploadDate', () => {
             false,
         );
         expect(showsUploadDate({ ...empty, provenance: 'Archiwum' })).toBe(
+            false,
+        );
+    });
+});
+
+const akt = {
+    kind: 'metrical_record' as const,
+    record_type: null,
+    record_type_label: null,
+    entry_number: null,
+};
+
+describe('erasedRecordFields', () => {
+    it('lists nothing when typ and numer wpisu are both empty', () => {
+        expect(
+            erasedRecordFields(akt, 'gravestone', {
+                record_type: '',
+                entry_number: '',
+            }),
+        ).toEqual([]);
+    });
+
+    it('lists a stored typ', () => {
+        expect(
+            erasedRecordFields(
+                {
+                    ...akt,
+                    record_type: 'birth',
+                    record_type_label: 'urodzenia',
+                },
+                'gravestone',
+                { record_type: 'birth', entry_number: '' },
+            ),
+        ).toEqual([
+            { field: 'record_type', label: 'Typ aktu', value: 'urodzenia' },
+        ]);
+    });
+
+    it('lists a typed numer wpisu', () => {
+        expect(
+            erasedRecordFields(akt, 'other', {
+                record_type: '',
+                entry_number: '12/1878',
+            }),
+        ).toEqual([
+            { field: 'entry_number', label: 'Numer wpisu', value: '12/1878' },
+        ]);
+    });
+
+    it('still lists a stored value cleared in the form', () => {
+        expect(
+            erasedRecordFields({ ...akt, entry_number: '5' }, 'other', {
+                record_type: '',
+                entry_number: '',
+            }),
+        ).toEqual([
+            { field: 'entry_number', label: 'Numer wpisu', value: '5' },
+        ]);
+    });
+
+    it('lists nothing when the kind is unchanged', () => {
+        expect(
+            erasedRecordFields(
+                { ...akt, entry_number: '5' },
+                'metrical_record',
+                {
+                    entry_number: '5',
+                },
+            ),
+        ).toEqual([]);
+    });
+
+    it('lists nothing for a source that was never an akt', () => {
+        expect(
+            erasedRecordFields({ ...akt, kind: 'gravestone' }, 'other', {
+                record_type: 'birth',
+                entry_number: '5',
+            }),
+        ).toEqual([]);
+    });
+});
+
+describe('isUndescribed', () => {
+    const none = {
+        name: null,
+        record_type: null,
+        entry_number: null,
+        year: null,
+        provenance: null,
+        url: null,
+        note: null,
+    };
+
+    it('is true when all seven columns are null', () => {
+        expect(isUndescribed(none)).toBe(true);
+    });
+
+    it('is false with only a name', () => {
+        expect(isUndescribed({ ...none, name: 'Akt chrztu' })).toBe(false);
+    });
+
+    it('is false with only a note', () => {
+        expect(isUndescribed({ ...none, note: 'Znalazłem w archiwum' })).toBe(
             false,
         );
     });

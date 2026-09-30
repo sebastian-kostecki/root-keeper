@@ -3,19 +3,27 @@ import SourceController from '@/actions/App/Http/Controllers/SourceController';
 import Heading from '@/components/heading';
 import { PersonPreviewLink } from '@/components/persons/person-preview-link';
 import { DeleteSourceDialog } from '@/components/sources/delete-source-dialog';
+import { SourceDetails } from '@/components/sources/source-details';
+import { SourceEditDialog } from '@/components/sources/source-edit-dialog';
 import { SourceViewer } from '@/components/sources/source-viewer';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { index as sourcesIndex } from '@/routes/sources';
-import type { Source, SourceConfirmation } from '@/types';
+import type {
+    Source,
+    SourceConfirmation,
+    SourceKind,
+    SourceRecordType,
+} from '@/types';
 
 type Props = {
     source: Source;
+    kinds: { value: SourceKind; label: string }[];
+    recordTypes: { value: SourceRecordType; label: string }[];
     confirms: SourceConfirmation[];
 };
 
-export default function Show({ source, confirms }: Props) {
+export default function Show({ source, kinds, recordTypes, confirms }: Props) {
     setLayoutProps({
         breadcrumbs: [
             { title: 'Źródła', href: sourcesIndex() },
@@ -26,45 +34,75 @@ export default function Show({ source, confirms }: Props) {
         ],
     });
 
-    const sizeInMb = (source.size / (1024 * 1024)).toFixed(1);
-    const dimensions =
-        source.width !== null && source.height !== null
-            ? `${source.width}×${source.height}`
-            : 'brak danych';
+    const headerLine = [
+        source.kind_label,
+        source.record_type_label,
+        source.year,
+        source.entry_number ? `nr ${source.entry_number}` : null,
+    ]
+        .filter((part) => part !== null && part !== '')
+        .join(' · ');
 
     return (
         <>
             <Head title={source.display_name} />
 
             <div className="space-y-6">
-                <div className="flex items-center justify-between gap-4">
-                    <div className="flex flex-wrap items-center gap-3">
-                        <Heading
-                            title={source.display_name}
-                            description={`${new Date(source.uploaded_at).toLocaleDateString('pl-PL')} · ${sizeInMb} MB · ${dimensions}`}
-                        />
-                        <Badge variant="secondary">{source.kind_label}</Badge>
-                    </div>
+                <div className="flex items-start justify-between gap-4">
+                    <Heading
+                        title={source.display_name}
+                        description={headerLine}
+                    />
 
-                    <DeleteSourceDialog
+                    <div className="flex shrink-0 items-center gap-2">
+                        <SourceEditDialog
+                            source={source}
+                            kinds={kinds}
+                            recordTypes={recordTypes}
+                            trigger={
+                                <Button variant="outline" size="sm">
+                                    Edytuj
+                                </Button>
+                            }
+                        />
+                        <DeleteSourceDialog
+                            source={source}
+                            confirms={confirms}
+                            trigger={
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="text-destructive hover:text-destructive"
+                                >
+                                    Usuń
+                                </Button>
+                            }
+                        />
+                    </div>
+                </div>
+
+                <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
+                    <SourceViewer
+                        src={SourceController.file.url(source.id)}
+                        alt={source.display_name}
+                    />
+
+                    <SourceDetails
                         source={source}
-                        confirms={confirms}
-                        trigger={
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                className="text-destructive hover:text-destructive"
-                            >
-                                Usuń
-                            </Button>
+                        emptyAction={
+                            <SourceEditDialog
+                                source={source}
+                                kinds={kinds}
+                                recordTypes={recordTypes}
+                                trigger={
+                                    <Button variant="outline" size="sm">
+                                        Dodaj opis
+                                    </Button>
+                                }
+                            />
                         }
                     />
                 </div>
-
-                <SourceViewer
-                    src={SourceController.file.url(source.id)}
-                    alt={source.display_name}
-                />
 
                 <Card>
                     <CardContent className="space-y-2">

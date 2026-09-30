@@ -567,41 +567,41 @@ None beyond today. The list still loads all sources of the tree in one query; th
 
 #### Automated
 
-- [x] 2.1 Source, event-source and person tests pass, including the 404 for the old upload page
-- [x] 2.2 Wayfinder regenerated without the create route
-- [x] 2.3 JS unit tests pass
-- [x] 2.4 Types, lint and format
-- [x] 2.5 Production build
-- [x] 2.6 No source label read from the file name
-- [x] 2.7 PHP style and static analysis
+- [x] 2.1 Source, event-source and person tests pass, including the 404 for the old upload page — 23f6370
+- [x] 2.2 Wayfinder regenerated without the create route — 23f6370
+- [x] 2.3 JS unit tests pass — 23f6370
+- [x] 2.4 Types, lint and format — 23f6370
+- [x] 2.5 Production build — 23f6370
+- [x] 2.6 No source label read from the file name — 23f6370
+- [x] 2.7 PHP style and static analysis — 23f6370
 
 #### Manual
 
-- [x] 2.8 „Dodaj źródło" with only a file and a kind saves, shows „Dodano źródło" and opens the new source's preview
-- [x] 2.9 „Typ aktu" and „Numer wpisu" appear only for akt metrykalny; typing them, switching to zdjęcie nagrobka and saving stores neither
-- [x] 2.10 A validation error keeps the modal open with the typed description, the error is scrolled into view, and the progress bar shows while a large file uploads
-- [x] 2.11 List cards show name, badge, „typ · rok" and pochodzenie when set, the file name and upload date when not, and truncate long values at 390 px
-- [x] 2.12 The person modal shows source names; the empty „Powiąż akt" link leads to „Źródła"; `/sources/create` answers 404
-- [x] 2.13 At 390 px the modal is full-screen with a scrolling body and a pinned footer; focus is visible; light and dark both read correctly
+- [x] 2.8 „Dodaj źródło" with only a file and a kind saves, shows „Dodano źródło" and opens the new source's preview — 23f6370
+- [x] 2.9 „Typ aktu" and „Numer wpisu" appear only for akt metrykalny; typing them, switching to zdjęcie nagrobka and saving stores neither — 23f6370
+- [x] 2.10 A validation error keeps the modal open with the typed description, the error is scrolled into view, and the progress bar shows while a large file uploads — 23f6370
+- [x] 2.11 List cards show name, badge, „typ · rok" and pochodzenie when set, the file name and upload date when not, and truncate long values at 390 px — 23f6370
+- [x] 2.12 The person modal shows source names; the empty „Powiąż akt" link leads to „Źródła"; `/sources/create` answers 404 — 23f6370
+- [x] 2.13 At 390 px the modal is full-screen with a scrolling body and a pinned footer; focus is visible; light and dark both read correctly — 23f6370
 
 ### Phase 3: Edit modal and the preview
 
 #### Automated
 
-- [ ] 3.1 Source tests pass
-- [ ] 3.2 JS unit tests pass, including the erase rule
-- [ ] 3.3 Types, lint and format
-- [ ] 3.4 Production build
+- [x] 3.1 Source tests pass
+- [x] 3.2 JS unit tests pass, including the erase rule
+- [x] 3.3 Types, lint and format
+- [x] 3.4 Production build
 
 #### Manual
 
-- [ ] 3.5 „Edytuj" opens prefilled; saving shows „Zapisano źródło" and the preview updates in place
-- [ ] 3.6 An akt with typ and numer wpisu switched to zdjęcie nagrobka lists both fields, asks for confirmation, cancels cleanly and erases both on confirm
-- [ ] 3.7 An akt with empty typ and numer wpisu switched to another kind saves with no confirmation
-- [ ] 3.8 A linked akt changed to zdjęcie nagrobka keeps its facts „Potwierdzone aktem" and its „Potwierdza" list
-- [ ] 3.9 Wide screen: the panel is next to the image with numer wpisu and notatka; the link opens in a new tab; an undescribed source shows the empty state with „Dodaj opis"
-- [ ] 3.10 390 px: the header line carries numer wpisu, the panel follows the image, „Edytuj" and „Usuń" fit beside the title
-- [ ] 3.11 Esc, X and „Anuluj" discard edits; the buttons are disabled while saving
+- [x] 3.5 „Edytuj" opens prefilled; saving shows „Zapisano źródło" and the preview updates in place
+- [x] 3.6 An akt with typ and numer wpisu switched to zdjęcie nagrobka lists both fields, asks for confirmation, cancels cleanly and erases both on confirm
+- [x] 3.7 An akt with empty typ and numer wpisu switched to another kind saves with no confirmation
+- [x] 3.8 A linked akt changed to zdjęcie nagrobka keeps its facts „Potwierdzone aktem" and its „Potwierdza" list
+- [x] 3.9 Wide screen: the panel is next to the image with numer wpisu and notatka; the link opens in a new tab; an undescribed source shows the empty state with „Dodaj opis"
+- [x] 3.10 390 px: the header line carries numer wpisu, the panel follows the image, „Edytuj" and „Usuń" fit beside the title
+- [x] 3.11 Esc, X and „Anuluj" discard edits; the buttons are disabled while saving
 
 ### Phase 4: Screenshot gate
 

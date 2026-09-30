@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import type { ReactNode } from 'react';
 import InputError from '@/components/input-error';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -20,6 +21,8 @@ type Props = {
     defaults?: Source;
     /** File name shown as the „Nazwa” placeholder. */
     fileName?: string;
+    /** Shown in place of the akt-only fields; those stay mounted (hidden) and still submit. */
+    notice?: ReactNode;
 };
 
 /** Radix Select does not allow an empty item value. */
@@ -32,6 +35,7 @@ export function SourceDescriptionFields({
     errors,
     defaults,
     fileName,
+    notice,
 }: Props) {
     const [recordType, setRecordType] = useState<string>(
         defaults?.record_type ?? '',
@@ -50,6 +54,8 @@ export function SourceDescriptionFields({
                 />
                 <InputError message={errors.name} />
             </div>
+
+            {!isRecord && notice}
 
             <div className={cn('grid gap-2', !isRecord && 'hidden')}>
                 <Label htmlFor="record_type">Typ aktu</Label>
