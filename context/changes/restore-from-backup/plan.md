@@ -283,29 +283,29 @@ The `--no-owner --no-acl` option applies only to new archives. Existing producti
 
 #### Automated
 
-- [x] 1.1 Guard tests pass: `vendor/bin/sail artisan test --compact tests/Backup/RestoreCommandTest.php`
-- [x] 1.2 Existing backup suite still passes: `vendor/bin/sail artisan test --compact tests/Backup`
-- [x] 1.3 Static analysis passes: `vendor/bin/sail composer types:check`
-- [x] 1.4 Formatting is clean: `vendor/bin/sail bin pint --dirty --format agent`
+- [x] 1.1 Guard tests pass: `vendor/bin/sail artisan test --compact tests/Backup/RestoreCommandTest.php` — 75b410e
+- [x] 1.2 Existing backup suite still passes: `vendor/bin/sail artisan test --compact tests/Backup` — 75b410e
+- [x] 1.3 Static analysis passes: `vendor/bin/sail composer types:check` — 75b410e
+- [x] 1.4 Formatting is clean: `vendor/bin/sail bin pint --dirty --format agent` — 75b410e
 
 #### Manual
 
-- [x] 1.5 `vendor/bin/sail artisan backup:restore --help` shows the archive argument and `--force`, and the refusal messages read clearly in Polish
+- [x] 1.5 `vendor/bin/sail artisan backup:restore --help` shows the archive argument and `--force`, and the refusal messages read clearly in Polish — 75b410e
 
 ### Phase 2: Full backup → restore round-trip test
 
 #### Automated
 
-- [ ] 2.1 Round-trip tests pass: `vendor/bin/sail artisan test --compact tests/Backup/BackupRestoreTest.php`
-- [ ] 2.2 Whole backup suite passes: `vendor/bin/sail artisan test --compact tests/Backup`
-- [ ] 2.3 Feature suite is unaffected by leftover rows: `vendor/bin/sail artisan test --compact tests/Feature`
-- [ ] 2.4 Static analysis and formatting pass: `vendor/bin/sail composer types:check` and `vendor/bin/sail bin pint --dirty --format agent`
+- [x] 2.1 Round-trip tests pass: `vendor/bin/sail artisan test --compact tests/Backup/BackupRestoreTest.php`
+- [x] 2.2 Whole backup suite passes: `vendor/bin/sail artisan test --compact tests/Backup`
+- [x] 2.3 Feature suite is unaffected by leftover rows: `vendor/bin/sail artisan test --compact tests/Feature`
+- [x] 2.4 Static analysis and formatting pass: `vendor/bin/sail composer types:check` and `vendor/bin/sail bin pint --dirty --format agent`
 - [ ] 2.5 CI `tests` job is green on the PR (round-trip test reported as passed, not skipped)
 
 #### Manual
 
-- [ ] 2.6 Mutation check: with the command's file-extraction step disabled, or with the command deleting the `passkeys` rows right after loading the dump, the round-trip test turns red (revert afterwards)
-- [ ] 2.7 After the suite runs, the developer's own `storage/app/private/sources` and the `testing` database hold no leftovers
+- [x] 2.6 Mutation check: with the command's file-extraction step disabled, or with the command deleting the `passkeys` rows right after loading the dump, the round-trip test turns red (revert afterwards)
+- [x] 2.7 After the suite runs, the developer's own `storage/app/private/sources` and the `testing` database hold no leftovers
 
 ### Phase 3: Cookbook §6.3
 
