@@ -42,6 +42,8 @@ class RestoreBackup extends Command
 
     private string $stagingPath = '';
 
+    private string $safetyArchive = '';
+
     public function handle(): int
     {
         $archivePath = $this->resolveArchivePath((string) $this->argument('archive'));
@@ -139,7 +141,8 @@ class RestoreBackup extends Command
         }
 
         $this->stagingPath = storage_path('app/backup-temp/restore-'.Str::random(16));
-        File::ensureDirectoryExists($this->stagingPath);
+        File::ensureDirectoryExists($this->stagingPath, 0700);
+        chmod($this->stagingPath, 0700);
 
         if (! $zip->extractTo($this->stagingPath)) {
             $this->error('Nie udało się rozpakować archiwum.');
@@ -172,6 +175,7 @@ class RestoreBackup extends Command
         if (! $psql->isSuccessful()) {
             $this->error('Ładowanie zrzutu bazy nie powiodło się, baza pozostała pusta:');
             $this->line(trim($psql->getErrorOutput()));
+            $this->reportSafetyArchive();
 
             return self::FAILURE;
         }
@@ -190,12 +194,21 @@ class RestoreBackup extends Command
                 $this->line('  '.$path);
             }
 
+            $this->reportSafetyArchive();
+
             return self::FAILURE;
         }
 
         $this->components->info('Przywrócono dane z archiwum.');
 
         return self::SUCCESS;
+    }
+
+    private function reportSafetyArchive(): void
+    {
+        if ($this->safetyArchive !== '') {
+            $this->line('Kopia bezpieczeństwa sprzed przywracania: '.$this->safetyArchive);
+        }
     }
 
     private function resolveArchivePath(string $archive): ?string
@@ -290,6 +303,10 @@ class RestoreBackup extends Command
 
         $this->components->info('Kopia bezpieczeństwa przed nadpisaniem danych...');
 
+        if (basename($archivePath) === now()->format('Y-m-d-H-i-s').'.zip') {
+            sleep(1);
+        }
+
         if ($this->call('backup:run', ['--disable-notifications' => true]) !== self::SUCCESS) {
             $this->error('Kopia bezpieczeństwa nie powiodła się, nic nie zmieniono.');
 
@@ -304,7 +321,8 @@ class RestoreBackup extends Command
             return false;
         }
 
-        $this->line('Kopia bezpieczeństwa: '.$disk->path($created[0]));
+        $this->safetyArchive = $disk->path($created[0]);
+        $this->line('Kopia bezpieczeństwa: '.$this->safetyArchive);
 
         return true;
     }
