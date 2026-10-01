@@ -5,7 +5,9 @@ use App\Enums\ParticipantRole;
 use App\Models\Event;
 use App\Models\ParentChildRelation;
 use App\Models\Person;
+use Illuminate\Foundation\Testing\DatabaseTruncation;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\BackupTestCase;
 use Tests\TestCase;
 
 /*
@@ -22,6 +24,10 @@ use Tests\TestCase;
 pest()->extend(TestCase::class)
     ->use(RefreshDatabase::class)
     ->in('Feature');
+
+pest()->extend(BackupTestCase::class)
+    ->use(DatabaseTruncation::class)
+    ->in('Backup');
 
 /**
  * Attach a birth event with the given partial date to a person.
