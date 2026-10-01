@@ -13,12 +13,10 @@ import {
 } from '@/components/ui/sidebar';
 import { UserInfo } from '@/components/user-info';
 import { UserMenuContent } from '@/components/user-menu-content';
-import { useIsMobile } from '@/hooks/use-mobile';
 
 export function NavUser() {
     const { auth } = usePage().props;
-    const { state } = useSidebar();
-    const isMobile = useIsMobile();
+    const { state, isMobile, setOpenMobile } = useSidebar();
 
     if (!auth.user) {
         return null;
@@ -31,21 +29,26 @@ export function NavUser() {
                     <DropdownMenuTrigger asChild>
                         <SidebarMenuButton
                             size="lg"
-                            className="group text-sidebar-accent-foreground data-[state=open]:bg-sidebar-accent"
+                            className="group data-[state=open]:bg-sidebar-accent [[data-mobile=true]_&]:h-14"
                             data-test="sidebar-menu-button"
                         >
-                            <UserInfo user={auth.user} />
+                            <UserInfo user={auth.user} showEmail onSidebar />
                             <ChevronsUpDown className="ml-auto size-4" />
                         </SidebarMenuButton>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent
                         className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg"
                         align="end"
+                        onClick={(event) => {
+                            if ((event.target as HTMLElement).closest('a')) {
+                                setOpenMobile(false);
+                            }
+                        }}
                         side={
                             isMobile
                                 ? 'bottom'
                                 : state === 'collapsed'
-                                  ? 'left'
+                                  ? 'right'
                                   : 'bottom'
                         }
                     >

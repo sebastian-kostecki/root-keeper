@@ -52,21 +52,21 @@ export default function PasskeyVerify({
                 >
                     {isLoading ? <Spinner /> : <KeyRound className="h-4 w-4" />}
                     {isLoading
-                        ? (loadingLabel ?? 'Authenticating...')
-                        : (label ?? 'Sign in with a passkey')}
+                        ? (loadingLabel ?? 'Uwierzytelnianie…')
+                        : (label ?? 'Zaloguj się kluczem dostępu')}
                 </Button>
                 {error && (
                     <InputError message={error} className="text-center" />
                 )}
             </div>
 
-            <div className="relative my-6">
+            <div className="relative">
                 <div className="absolute inset-0 flex items-center">
                     <Separator className="w-full" />
                 </div>
-                <div className="relative flex justify-center text-xs uppercase">
+                <div className="relative flex justify-center text-xs">
                     <span className="bg-background text-muted-foreground px-2">
-                        {separator ?? 'Or continue with email'}
+                        {separator ?? 'lub e-mailem'}
                     </span>
                 </div>
             </div>

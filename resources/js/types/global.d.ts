@@ -14,6 +14,7 @@ declare module '@inertiajs/core' {
             name: string;
             auth: Auth;
             sidebarOpen: boolean;
+            navCounts: { people: number; sources: number } | null;
             personPreview: PersonPreviewPayload | null;
             availableSources?: Source[];
             [key: string]: unknown;

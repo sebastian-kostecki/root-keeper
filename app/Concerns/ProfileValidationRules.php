@@ -32,6 +32,18 @@ trait ProfileValidationRules
     }
 
     /**
+     * Get the attribute names used in profile validation messages.
+     *
+     * @return array<string, string>
+     */
+    protected function profileAttributes(): array
+    {
+        return [
+            'name' => 'imię i nazwisko',
+        ];
+    }
+
+    /**
      * Get the validation rules used to validate user emails.
      *
      * @return array<int, ValidationRule|array<mixed>|string>

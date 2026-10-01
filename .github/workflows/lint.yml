@@ -48,4 +48,7 @@ jobs:
         run: npm run check
 
       - name: Run frontend unit tests (Vitest)
+        # laravel-vite-plugin refuses to start the Vite server when CI is set.
+        env:
+          LARAVEL_BYPASS_ENV_CHECK: 1
         run: npm run test:js

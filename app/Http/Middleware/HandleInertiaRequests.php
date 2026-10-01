@@ -47,6 +47,10 @@ class HandleInertiaRequests extends Middleware
                 'user' => $request->user(),
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
+            'navCounts' => fn (): ?array => $request->user() === null ? null : [
+                'people' => $request->user()->tree->people()->count(),
+                'sources' => $request->user()->tree->sources()->count(),
+            ],
             'personPreview' => function () use ($request): ?array {
                 $person = $this->previewPerson($request);
 
