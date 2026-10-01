@@ -91,6 +91,14 @@ abstract class BackupTestCase extends TestCase
     }
 
     /**
+     * Name of the database dump inside the archive, derived from the connection the backup dumps.
+     */
+    protected function dumpEntryName(): string
+    {
+        return 'db-dumps/postgresql-'.config('database.connections.pgsql.database').'.sql';
+    }
+
+    /**
      * Read one entry of the archive in full, or null when it is missing or unreadable.
      */
     protected function readArchiveEntry(string $archivePath, string $entry, ?string $password = null): ?string

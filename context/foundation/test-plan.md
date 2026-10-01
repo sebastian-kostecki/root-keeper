@@ -6,7 +6,7 @@
 >
 > Refresh: re-run `/10x-test-plan --refresh` when stale (see §8).
 >
-> Last updated: 2026-09-30
+> Last updated: 2026-10-01
 
 Treść planu jest po polsku; wartości statusu w §3 zostają po angielsku, bo czyta je parser orkiestratora.
 
@@ -60,7 +60,7 @@ Każdy wiersz to osobna faza wdrożenia, która otwiera własny folder zmiany pr
 | backend integration + unit | Pest (PHPUnit) + pest-plugin-laravel | 5.2 / 13.3 | ~23 pliki, ~330 przypadków, głównie `tests/Feature`; w CI na PostgreSQL 18 |
 | frontend unit | Vitest przez `vp test` (vite-plus) | 0.3 | 7 plików, ~95 przypadków, wyłącznie czysta logika w `resources/js/lib` i `resources/js/hooks` |
 | e2e | none yet — see Phase 4 | — | kandydat: `pestphp/pest-plugin-browser` + Playwright (checked: 2026-09-30); nie jest zależnością projektu |
-| backup / restore | spatie backup + drill odtworzenia z F-01 | — | dziś bez automatycznej weryfikacji zawartości — see Phase 1 |
+| backup / restore | spatie backup + `tests/Backup` + drill odtworzenia (§6.3) | — | zawartość kopii i odtworzenie zrzutu sprawdza `tests/Backup`; drill na serwerze według §6.3 |
 | (optional) AI-native | eksploracyjny przebieg agenta po drzewie w przeglądarce (checked: 2026-09-30) | n/a | When NOT to use: jako bramka regresji ani do oceny wyglądu (§7); tylko rekonesans przed napisaniem testu fazy 4 |
 
 Profil bazy testów: `meaningful` — konfiguracja Pest i Vitest, ~30 plików testów rozproszonych po domenach; brak jakiejkolwiek warstwy klikającej po prawdziwym UI (przebudowy UI sprawdzane jednorazowymi skryptami zrzutów w folderach zmian).
@@ -76,11 +76,11 @@ Profil bazy testów: `meaningful` — konfiguracja Pest i Vitest, ~30 plików te
 | Gate | Where | Required? | Catches |
 |---|---|---|---|
 | lint + format (Pint, Oxlint/Oxfmt przez `vp check`) | local + CI (`lint`) | required | styl i ostrzeżenia lint (denyWarnings) |
-| typecheck (Larastan level 7, `tsc`) | local + CI (`static-analysis`) | required — stan zielony do potwierdzenia w badaniu fazy 1 | dryf typów |
+| typecheck (Larastan level 7, `tsc`) | local + CI (`static-analysis`) | required (zielony potwierdzony 2026-10-01) | dryf typów |
 | backend unit + integration (Pest) | local + CI (`tests`, PostgreSQL 18) | required | regresje logiki, autoryzacji i danych |
 | frontend unit (Vitest) | local + CI (`lint`, `npm run test:js`) | required | regresje czystej logiki UI |
-| weryfikacja zawartości kopii | CI (`tests`) | required after §3 Phase 1 | kopia bez plików źródeł lub bez danych |
-| drill odtworzenia na czystej instancji | ręcznie, na serwerze | required after §3 Phase 1 (rytm ustala faza) | kopia, której nie da się odtworzyć |
+| weryfikacja zawartości kopii | CI (`tests`, `tests/Backup`) | required | kopia bez plików źródeł lub bez danych |
+| drill odtworzenia na czystej instancji | ręcznie, na serwerze | required — kwartalnie i po zmianach (§6.3) | kopia, której nie da się odtworzyć |
 | e2e na krytycznych przepływach drzewa i modala | CI on PR | required after §3 Phase 4 | UI wysyła akcję do niewłaściwej osoby |
 
 ## 6. Cookbook Patterns
@@ -102,7 +102,30 @@ Jak dodać nowy test w tym projekcie. Każda podsekcja wypełnia się po zakońc
 
 ### 6.3 Test kopii zapasowej i drill odtworzenia
 
-- TBD — see §3 Phase 1 (wzorzec: kopia zawiera bazę i każdy plik źródła; odtworzenie zachowuje liczności i czytelność plików).
+- **Location**: `tests/Backup/`, klasa bazowa `tests/BackupTestCase.php` (izolowany `storage_path`, `DatabaseTruncation`, sprzątanie w `tearDown`).
+- **Reference test**: `tests/Backup/BackupContentsTest.php`.
+- **Run locally**: `vendor/bin/sail artisan test --compact tests/Backup`.
+- **Wyrocznia**: rekordy `sources` (`path`, `thumbnail_path`) — nie manifest spatie. Każdy plik z bazy musi być w archiwum jako `private/<path>` i zgadzać się bajt w bajt (sha256).
+- **Pułapki**: bez `Storage::fake` (zapisuje poza ścieżką kopii); `storage_path` przestawiany przed bootem aplikacji (nigdy nie dotykamy prawdziwego `storage/app`); wiersze muszą być zatwierdzone (`DatabaseTruncation`, nie `RefreshDatabase`), bo `pg_dump` nie widzi transakcji; po teście sprzątamy tabele i bazę `testing_restore`; konfiguracja spatie jest `scoped` — hasło ustawiać przed jej pierwszym użyciem.
+- **CI**: job `tests` instaluje klienta PostgreSQL 18 (`pg_dump`/`psql`); test AES przeszedł w CI (nie został pominięty).
+- **Luka**: kopia przed wdrożeniem (`scripts/lib/production-deploy.sh`) to `--only-db`. Przed każdą migracją, która przenosi pliki, uruchom ręcznie pełny `backup:run`.
+
+**Restore drill checklist** (komendy: `../kostecki-dev-infra/docs/root-keeper.md`, sekcja Restore):
+
+1. Zapisz liczności 8 tabel domenowych (`users`, `trees`, `people`, `events`, `event_participants`, `sources`, `event_source`, `parent_child_relations`) i `migrations` na produkcji.
+2. Uruchom `select count(*) from sources where path like 'scans/%' or thumbnail_path like 'scans/%'`; gdy > 0, zanotuj wiersze i otwórz zadanie naprawcze.
+3. Odszyfruj najnowsze nocne archiwum poza VPS-em (`7z`).
+4. Załaduj zrzut do jednorazowego `postgres:18-alpine` i porównaj te same liczności.
+5. Porównaj sha256 jednego prawdziwego oryginału źródła i jego miniatury z produkcją.
+6. Posprzątaj kontener i katalog tymczasowy.
+7. Dopisz datowaną linię do „Drill log” poniżej.
+
+**Rytm**: kwartalnie oraz po zmianie konfiguracji kopii, układu plików, głównej wersji PostgreSQL lub serwera.
+
+**Drill log**:
+
+- 2026-09-22 — F-01: `users` i `migrations`, jeden plik ręcznie (przed zmianą skany → źródła).
+- 2026-10-01 — po zmianie na źródła: świeża pełna kopia po wgraniu jednego źródła przez UI, odtworzenie do `postgres:18-alpine`; liczności 8 tabel domenowych i `migrations` oraz sha256 oryginału i miniatury potwierdzone przez autora jako zgodne z produkcją. Wynik zapytania o `scans/%`: 0.
 
 ### 6.4 Test akcji usuwającej (skutki = lista w potwierdzeniu)
 

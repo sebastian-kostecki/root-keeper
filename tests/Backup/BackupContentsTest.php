@@ -52,7 +52,7 @@ test('the backup archive contains the database dump and every source original an
 
     $archive = $this->runBackup();
 
-    $dump = $this->readArchiveEntry($archive, 'db-dumps/postgresql-testing.sql');
+    $dump = $this->readArchiveEntry($archive, $this->dumpEntryName());
 
     expect($dump)->not->toBeNull()
         ->and($dump)->toContain($parent->last_name);
@@ -84,7 +84,7 @@ test('the database dump restores into an empty database with the same row counts
     $archive = $this->runBackup();
 
     $dumpFile = $this->storageRoot.'/restore.sql';
-    file_put_contents($dumpFile, $this->readArchiveEntry($archive, 'db-dumps/postgresql-testing.sql'));
+    file_put_contents($dumpFile, $this->readArchiveEntry($archive, $this->dumpEntryName()));
 
     $create = $this->psql('CREATE DATABASE '.BackupTestCase::RESTORE_DATABASE, database: 'postgres');
     expect($create->isSuccessful())->toBeTrue($create->getErrorOutput());
@@ -123,7 +123,7 @@ test('an encrypted backup archive opens only with the backup password', function
 
     $archive = $this->runBackup();
 
-    $entry = 'db-dumps/postgresql-testing.sql';
+    $entry = $this->dumpEntryName();
 
     expect($this->readArchiveEntry($archive, $entry))->toBeNull();
 
