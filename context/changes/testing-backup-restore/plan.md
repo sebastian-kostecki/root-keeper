@@ -314,12 +314,12 @@ No schema or data migration. The drill reads production and restores only into a
 
 #### Automated
 
-- [x] 2.1 Vitest passes under CI conditions locally
-- [ ] 2.2 On the pushed branch's PR, the tests and lint checks pass
+- [x] 2.1 Vitest passes under CI conditions locally — a16de37
+- [x] 2.2 On the pushed branch's PR, the tests and lint checks pass — a16de37
 
 #### Manual
 
-- [ ] 2.3 CI tests log shows PostgreSQL 18 and the Backup suite ran; AES outcome noted
+- [x] 2.3 CI tests log shows PostgreSQL 18 and the Backup suite ran; AES outcome noted — a16de37
 
 ### Phase 3: Restore drill and cookbook
 
