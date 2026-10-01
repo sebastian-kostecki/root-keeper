@@ -325,12 +325,12 @@ No schema or data migration. The drill reads production and restores only into a
 
 #### Automated
 
-- [ ] 3.1 §6.3 no longer has its placeholder
-- [ ] 3.2 The infra runbook change is committed
+- [x] 3.1 §6.3 no longer has its placeholder
+- [x] 3.2 The infra runbook change is committed
 
 #### Manual
 
-- [ ] 3.3 Restore drill run on production: every domain-table count matches
-- [ ] 3.4 A real source original and its thumbnail match production by sha256
+- [x] 3.3 Restore drill run on production: every domain-table count matches
+- [x] 3.4 A real source original and its thumbnail match production by sha256
 - [ ] 3.5 The scans/% query result is recorded in the §6.3 drill log
-- [ ] 3.6 §6.3 read cold is enough to add a backup assertion or run the drill
+- [x] 3.6 §6.3 read cold is enough to add a backup assertion or run the drill
