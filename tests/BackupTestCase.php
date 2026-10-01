@@ -2,8 +2,14 @@
 
 namespace Tests;
 
+use App\Enums\EventType;
+use App\Models\Event;
+use App\Models\Person;
+use App\Models\Source;
+use App\Models\User;
 use Illuminate\Contracts\Console\Kernel;
 use Illuminate\Foundation\Application;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
@@ -72,6 +78,43 @@ abstract class BackupTestCase extends TestCase
         }
 
         parent::tearDown();
+    }
+
+    /**
+     * Create a tree with people, events, relations and two uploaded sources, one linked to an event.
+     */
+    protected function arrangeBackupData(): Person
+    {
+        $user = User::factory()->create();
+        $tree = $user->tree;
+
+        $parent = Person::factory()->for($tree)->create(['first_name' => 'Zygmunt', 'last_name' => 'Backupowski']);
+        $child = Person::factory()->for($tree)->create();
+
+        attachBirth($child, 1950, 3, 14);
+        attachMarriage($parent, Person::factory()->for($tree)->create(), 1945);
+        linkParent($parent, $child);
+
+        $fixture = base_path('tests/Fixtures/rotated-exif.jpg');
+
+        foreach (['akt-1.jpg', 'akt-2.jpg'] as $name) {
+            $this->actingAs($user)
+                ->post(route('sources.store'), [
+                    'kind' => 'metrical_record',
+                    'file' => new UploadedFile($fixture, $name, 'image/jpeg', null, true),
+                ])
+                ->assertSessionHasNoErrors();
+        }
+
+        $birth = Event::query()->where('tree_id', $tree->id)->where('type', EventType::Birth)->firstOrFail();
+
+        $this->post(route('events.sources.store', $birth), ['source_id' => Source::query()->firstOrFail()->id])
+            ->assertSessionHasNoErrors();
+
+        expect(Source::query()->count())->toBe(2)
+            ->and(DB::table('event_source')->count())->toBe(1);
+
+        return $parent;
     }
 
     /**

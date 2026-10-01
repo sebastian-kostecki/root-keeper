@@ -1,54 +1,12 @@
 <?php
 
-use App\Enums\EventType;
-use App\Models\Event;
-use App\Models\Person;
 use App\Models\Source;
-use App\Models\User;
-use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Tests\BackupTestCase;
 
-/**
- * Create a tree with people, events, relations and two uploaded sources, one linked to an event.
- */
-function arrangeBackupData(BackupTestCase $test): Person
-{
-    $user = User::factory()->create();
-    $tree = $user->tree;
-
-    $parent = Person::factory()->for($tree)->create(['first_name' => 'Zygmunt', 'last_name' => 'Backupowski']);
-    $child = Person::factory()->for($tree)->create();
-
-    attachBirth($child, 1950, 3, 14);
-    attachMarriage($parent, Person::factory()->for($tree)->create(), 1945);
-    linkParent($parent, $child);
-
-    $fixture = base_path('tests/Fixtures/rotated-exif.jpg');
-
-    foreach (['akt-1.jpg', 'akt-2.jpg'] as $name) {
-        $test->actingAs($user)
-            ->post(route('sources.store'), [
-                'kind' => 'metrical_record',
-                'file' => new UploadedFile($fixture, $name, 'image/jpeg', null, true),
-            ])
-            ->assertSessionHasNoErrors();
-    }
-
-    $birth = Event::query()->where('tree_id', $tree->id)->where('type', EventType::Birth)->firstOrFail();
-
-    $test->post(route('events.sources.store', $birth), ['source_id' => Source::query()->firstOrFail()->id])
-        ->assertSessionHasNoErrors();
-
-    expect(Source::query()->count())->toBe(2)
-        ->and(DB::table('event_source')->count())->toBe(1);
-
-    return $parent;
-}
-
 test('the backup archive contains the database dump and every source original and thumbnail byte for byte', function () {
-    $parent = arrangeBackupData($this);
+    $parent = $this->arrangeBackupData();
 
     $archive = $this->runBackup();
 
@@ -79,7 +37,7 @@ test('the backup archive contains the database dump and every source original an
 });
 
 test('the database dump restores into an empty database with the same row counts', function () {
-    arrangeBackupData($this);
+    $this->arrangeBackupData();
 
     $archive = $this->runBackup();
 
@@ -119,7 +77,7 @@ test('an encrypted backup archive opens only with the backup password', function
     ]);
     $this->app->forgetScopedInstances();
 
-    $parent = arrangeBackupData($this);
+    $parent = $this->arrangeBackupData();
 
     $archive = $this->runBackup();
 
