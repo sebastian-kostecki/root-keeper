@@ -1,10 +1,10 @@
 ---
 change_id: restore-from-backup
 title: Restore from backup
-status: impl_reviewed
+status: archived
 created: 2026-10-01
 updated: 2026-10-01
-archived_at: null
+archived_at: 2026-10-01T08:29:51Z
 ---
 
 ## Notes
