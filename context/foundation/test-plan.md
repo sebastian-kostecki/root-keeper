@@ -103,21 +103,43 @@ Jak dodać nowy test w tym projekcie. Każda podsekcja wypełnia się po zakońc
 ### 6.3 Test kopii zapasowej i drill odtworzenia
 
 - **Location**: `tests/Backup/`, klasa bazowa `tests/BackupTestCase.php` (izolowany `storage_path`, `DatabaseTruncation`, sprzątanie w `tearDown`).
-- **Reference test**: `tests/Backup/BackupContentsTest.php`.
+- **Reference test**: `tests/Backup/BackupRestoreTest.php` (pełny obieg kopia → odtworzenie komendą `backup:restore`, instancja czysta i zajęta z `--force`); zawartość archiwum: `tests/Backup/BackupContentsTest.php`; odmowy komendy (zajęta instancja bez `--force`, odrzucone potwierdzenie, złe hasło, wpis `../`, zrzut bez `OWNER TO`): `tests/Backup/RestoreCommandTest.php`.
 - **Run locally**: `vendor/bin/sail artisan test --compact tests/Backup`.
-- **Wyrocznia**: rekordy `sources` (`path`, `thumbnail_path`) — nie manifest spatie. Każdy plik z bazy musi być w archiwum jako `private/<path>` i zgadzać się bajt w bajt (sha256).
-- **Pułapki**: bez `Storage::fake` (zapisuje poza ścieżką kopii); `storage_path` przestawiany przed bootem aplikacji (nigdy nie dotykamy prawdziwego `storage/app`); wiersze muszą być zatwierdzone (`DatabaseTruncation`, nie `RefreshDatabase`), bo `pg_dump` nie widzi transakcji; po teście sprzątamy tabele i bazę `testing_restore`; konfiguracja spatie jest `scoped` — hasło ustawiać przed jej pierwszym użyciem.
-- **CI**: job `tests` instaluje klienta PostgreSQL 18 (`pg_dump`/`psql`); test AES przeszedł w CI (nie został pominięty).
+- **Wyrocznia**: (1) rekordy `sources` (`path`, `thumbnail_path`) — nie manifest spatie; każdy plik z bazy musi być w archiwum jako `private/<path>` i zgadzać się bajt w bajt (sha256). (2) Po odtworzeniu: skrót zawartości każdej tabeli trwałej (`tableDigests()`: liczba wierszy + `md5` z `string_agg` wierszy, niezależnie od kluczy głównych) porównany ze zrzutem zrobionym na instancji źródłowej zaraz po kopii; tabele trwałe są wyprowadzane ze schematu (`durableTables()`: wszystkie tabele `public` bez `EPHEMERAL_TABLES`), więc `passkeys` i każda przyszła tabela wchodzą automatycznie, a każda musi mieć wiersze. (3) Pliki: sha256 ciała odpowiedzi `sources.file` / `sources.thumbnail` dla przywróconego użytkownika równy sha256 wgranego pliku (dwa źródła o różnych bajtach, więc zamienione ścieżki wywalają test); do tego odszyfrowanie kodów odzyskiwania 2FA tym samym `APP_KEY` i wgranie nowego źródła po odtworzeniu (sekwencje).
+- **Pułapki**: bez `Storage::fake` (zapisuje poza ścieżką kopii); `storage_path` przestawiany przed bootem aplikacji (nigdy nie dotykamy prawdziwego `storage/app`); wiersze muszą być zatwierdzone (`DatabaseTruncation`, nie `RefreshDatabase`), bo `pg_dump` nie widzi transakcji; konfiguracja spatie jest `scoped` — hasło ustawiać przed jej pierwszym użyciem (`useEncryptedBackups()`), bez pomijania testu, gdy AES jest niedostępny (produkcja też by nie odtworzyła); dane przygotowuje `arrangeBackupData()` z klasy bazowej (nie wolna funkcja w pliku testu — Pest ładuje tylko podane pliki).
+- **Przełączenie instancji i `tearDown`**: `switchToCleanInstance()` przepina domyślne połączenie na pustą bazę `testing_restore` (`DB::purge`) i storage na drugi katalog tymczasowy (`useStoragePath` oraz roty dysków `local`, `public`, `backups` + `Storage::forgetDisk`). `tearDown` musi najpierw przywrócić oryginalne połączenie, `storage_path` i dyski, dopiero potem czyścić tabele trwałe `testing` i usuwać `testing_restore` i oba katalogi; w odwrotnej kolejności czyści się bazę restore, a zatwierdzone wiersze zostają w `testing` i psują `Feature`. Po przełączeniu uruchom `migrate --force` (jak na serwerze po wdrożeniu); sekunda w nazwie archiwum spatie wymaga `travel(1)->seconds()` przed `--force`, bo kopia bezpieczeństwa nie może nadpisać archiwum wejściowego.
+- **Nowa tabela cache/kolejki**: dopisz ją do `EPHEMERAL_TABLES` w `tests/BackupTestCase.php` i w `app/Console/Commands/RestoreBackup.php` (dwie listy, ta sama zawartość); inaczej jej treść trafia do porównania i do tabeli „zostaną zastąpione”. Każda inna nowa tabela jest trwała i trafia do porównania sama.
+- **CI**: job `tests` instaluje klienta PostgreSQL 18 (`pg_dump`/`psql`); testy z AES (w tym obieg odtworzenia) muszą przejść w CI, nie zostać pominięte.
 - **Luka**: kopia przed wdrożeniem (`scripts/lib/production-deploy.sh`) to `--only-db`. Przed każdą migracją, która przenosi pliki, uruchom ręcznie pełny `backup:run`.
 
-**Restore drill checklist** (komendy: `../kostecki-dev-infra/docs/root-keeper.md`, sekcja Restore):
+**Odtworzenie (komenda)** — `backup:restore <archiwum>` (ścieżka bezwzględna albo względna do dysku `backups`; hasło z `BACKUP_ARCHIVE_PASSWORD`, bez opcji `--password`):
 
-1. Zapisz liczności 8 tabel domenowych (`users`, `trees`, `people`, `events`, `event_participants`, `sources`, `event_source`, `parent_child_relations`) i `migrations` na produkcji.
+1. `scripts/artisan.sh down` — bez tego żądania trafiają w pusty schemat między `db:wipe` a końcem `psql`.
+2. `scripts/artisan.sh backup:restore <archiwum>`.
+3. `TRUNCATE sessions, cache, cache_locks` — zrzut przywraca sesje i cache z chwili kopii.
+4. `scripts/artisan.sh up`.
+
+Krok 1 działa, bo sterownik trybu serwisowego to `file` (`APP_MAINTENANCE_DRIVER=file`, flaga w `storage/framework`, której odtworzenie nie rusza); przy sterowniku `cache` lub bazodanowym `db:wipe` skasowałoby flagę.
+
+- **Czysta instancja** (pusta tabela `users` i brak plików w `private/sources`): `db:wipe`, załadowanie zrzutu w jednej transakcji, rozpakowanie plików, sprawdzenie, że każdy wiersz `sources` ma plik i miniaturę. Na `production` komenda pyta o potwierdzenie.
+- **Zajęta instancja**: bez `--force` odmawia i niczego nie zmienia. Z `--force` pokazuje, co zostanie zastąpione (wiersze tabel trwałych, liczba plików źródeł), pyta o potwierdzenie (domyślnie nie; `--no-interaction` przerywa), robi pełną kopię bezpieczeństwa (`backup:run`) i dopiero potem czyści `private/sources` i odtwarza. Nieudana kopia bezpieczeństwa lub ta sama nazwa co archiwum wejściowe przerywa przed jakąkolwiek zmianą.
+- **Archiwa sprzed zmiany**: opcja `--no-owner --no-acl` (`dump.add_extra_option` w `config/database.php`) dotyczy tylko nowych archiwów. Istniejące archiwa produkcyjne zawierają `OWNER TO <użytkownik produkcyjny>`; odtworzenie działa, gdy użytkownik bazy docelowej ma tę samą nazwę, a w przeciwnym razie kończy się czytelnym błędem.
+
+**Potrzebne do odtworzenia poza archiwum** (wszystko to trzymaj poza VPS-em, bo bez tego archiwum jest bezużyteczne lub niepełne):
+
+- `BACKUP_ARCHIVE_PASSWORD` — bez niego archiwum AES się nie otworzy.
+- `APP_KEY` — sekrety 2FA są nim szyfrowane; z innym kluczem 2FA przestaje działać.
+- ta sama domena w `APP_URL` — klucze dostępu (passkeys) są związane z hostem.
+- dane dostępowe do bazy w `.env.prod`.
+
+**Restore drill checklist** (komendy: sekcja „Odtworzenie (komenda)” powyżej; środowisko serwera: `../kostecki-dev-infra/docs/root-keeper.md`):
+
+1. Zapisz na produkcji liczności wszystkich tabel trwałych wyprowadzone ze schematu (wszystkie tabele `public` poza `migrations`, `sessions`, `cache`, `cache_locks`, `jobs`, `job_batches`, `failed_jobs`, `password_reset_tokens`; w tym `passkeys`) oraz `migrations`; liczby zapisz w „Drill log”.
 2. Uruchom `select count(*) from sources where path like 'scans/%' or thumbnail_path like 'scans/%'`; gdy > 0, zanotuj wiersze i otwórz zadanie naprawcze.
-3. Odszyfruj najnowsze nocne archiwum poza VPS-em (`7z`).
-4. Załaduj zrzut do jednorazowego `postgres:18-alpine` i porównaj te same liczności.
+3. Pobierz najnowsze nocne archiwum poza VPS-em i przygotuj osobną jednorazową instancję z własną bazą i własnym storage (np. lokalny checkout Sail z wdrożonym commitem, z produkcyjnym `APP_KEY` i `BACKUP_ARCHIVE_PASSWORD`). Nigdy w kontenerze produkcyjnym.
+4. Uruchom na niej `backup:restore <archiwum>` (zamiast ręcznego `7z` + `psql`) i porównaj liczności z krokiem 1.
 5. Porównaj sha256 jednego prawdziwego oryginału źródła i jego miniatury z produkcją.
-6. Posprzątaj kontener i katalog tymczasowy.
+6. Posprzątaj instancję jednorazową i katalog tymczasowy.
 7. Dopisz datowaną linię do „Drill log” poniżej.
 
 **Rytm**: kwartalnie oraz po zmianie konfiguracji kopii, układu plików, głównej wersji PostgreSQL lub serwera.
