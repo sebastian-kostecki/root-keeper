@@ -125,7 +125,7 @@ Jak dodać nowy test w tym projekcie. Każda podsekcja wypełnia się po zakońc
 **Drill log**:
 
 - 2026-09-22 — F-01: `users` i `migrations`, jeden plik ręcznie (przed zmianą skany → źródła).
-- 2026-10-01 — po zmianie na źródła: świeża pełna kopia po wgraniu jednego źródła przez UI, odtworzenie do `postgres:18-alpine`; liczności 8 tabel domenowych i `migrations` oraz sha256 oryginału i miniatury potwierdzone przez autora jako zgodne z produkcją. Wynik zapytania o `scans/%`: _(do uzupełnienia)_
+- 2026-10-01 — po zmianie na źródła: świeża pełna kopia po wgraniu jednego źródła przez UI, odtworzenie do `postgres:18-alpine`; liczności 8 tabel domenowych i `migrations` oraz sha256 oryginału i miniatury potwierdzone przez autora jako zgodne z produkcją. Wynik zapytania o `scans/%`: 0.
 
 ### 6.4 Test akcji usuwającej (skutki = lista w potwierdzeniu)
 
