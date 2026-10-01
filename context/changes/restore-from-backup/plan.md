@@ -300,7 +300,7 @@ The `--no-owner --no-acl` option applies only to new archives. Existing producti
 - [x] 2.2 Whole backup suite passes: `vendor/bin/sail artisan test --compact tests/Backup` — 87f9358
 - [x] 2.3 Feature suite is unaffected by leftover rows: `vendor/bin/sail artisan test --compact tests/Feature` — 87f9358
 - [x] 2.4 Static analysis and formatting pass: `vendor/bin/sail composer types:check` and `vendor/bin/sail bin pint --dirty --format agent` — 87f9358
-- [ ] 2.5 CI `tests` job is green on the PR (round-trip test reported as passed, not skipped)
+- [x] 2.5 CI `tests` job is green on the PR (round-trip test reported as passed, not skipped) — 87f9358
 
 #### Manual
 
@@ -311,8 +311,8 @@ The `--no-owner --no-acl` option applies only to new archives. Existing producti
 
 #### Automated
 
-- [x] 3.1 §6.3 names the new test file and command, and no longer lists the fixed 8 tables: `grep -n "BackupRestoreTest\|backup:restore" context/foundation/test-plan.md` returns hits and `grep -c "users\`, \`trees\`, \`people\`" context/foundation/test-plan.md` returns 0
+- [x] 3.1 §6.3 names the new test file and command, and no longer lists the fixed 8 tables: `grep -n "BackupRestoreTest\|backup:restore" context/foundation/test-plan.md` returns hits and `grep -c "users\`, \`trees\`, \`people\`" context/foundation/test-plan.md` returns 0 — 357da9b
 
 #### Manual
 
-- [x] 3.2 §6.3 reads as a complete answer for someone restoring onto a new server who never saw this change
+- [x] 3.2 §6.3 reads as a complete answer for someone restoring onto a new server who never saw this change — 357da9b
