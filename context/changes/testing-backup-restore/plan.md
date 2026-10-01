@@ -300,21 +300,21 @@ No schema or data migration. The drill reads production and restores only into a
 
 #### Automated
 
-- [x] 1.1 Backup suite passes in Sail with 3 passed and 0 skipped
-- [x] 1.2 Full suite passes with the Backup suite included
-- [x] 1.3 PHP style is clean
-- [x] 1.4 The developer's real storage is untouched by the suite
+- [x] 1.1 Backup suite passes in Sail with 3 passed and 0 skipped — dbb7a5e
+- [x] 1.2 Full suite passes with the Backup suite included — dbb7a5e
+- [x] 1.3 PHP style is clean — dbb7a5e
+- [x] 1.4 The developer's real storage is untouched by the suite — dbb7a5e
 
 #### Manual
 
-- [x] 1.5 Mutation check: excluding the sources directory fails the contents test
-- [x] 1.6 Mutation check: a partial dump fails the restore test
+- [x] 1.5 Mutation check: excluding the sources directory fails the contents test — dbb7a5e
+- [x] 1.6 Mutation check: a partial dump fails the restore test — dbb7a5e
 
 ### Phase 2: CI gates (PostgreSQL 18 client, Vitest)
 
 #### Automated
 
-- [ ] 2.1 Vitest passes under CI conditions locally
+- [x] 2.1 Vitest passes under CI conditions locally
 - [ ] 2.2 On the pushed branch's PR, the tests and lint checks pass
 
 #### Manual
