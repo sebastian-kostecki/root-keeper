@@ -296,23 +296,23 @@ The `--no-owner --no-acl` option applies only to new archives. Existing producti
 
 #### Automated
 
-- [x] 2.1 Round-trip tests pass: `vendor/bin/sail artisan test --compact tests/Backup/BackupRestoreTest.php`
-- [x] 2.2 Whole backup suite passes: `vendor/bin/sail artisan test --compact tests/Backup`
-- [x] 2.3 Feature suite is unaffected by leftover rows: `vendor/bin/sail artisan test --compact tests/Feature`
-- [x] 2.4 Static analysis and formatting pass: `vendor/bin/sail composer types:check` and `vendor/bin/sail bin pint --dirty --format agent`
+- [x] 2.1 Round-trip tests pass: `vendor/bin/sail artisan test --compact tests/Backup/BackupRestoreTest.php` — 87f9358
+- [x] 2.2 Whole backup suite passes: `vendor/bin/sail artisan test --compact tests/Backup` — 87f9358
+- [x] 2.3 Feature suite is unaffected by leftover rows: `vendor/bin/sail artisan test --compact tests/Feature` — 87f9358
+- [x] 2.4 Static analysis and formatting pass: `vendor/bin/sail composer types:check` and `vendor/bin/sail bin pint --dirty --format agent` — 87f9358
 - [ ] 2.5 CI `tests` job is green on the PR (round-trip test reported as passed, not skipped)
 
 #### Manual
 
-- [x] 2.6 Mutation check: with the command's file-extraction step disabled, or with the command deleting the `passkeys` rows right after loading the dump, the round-trip test turns red (revert afterwards)
-- [x] 2.7 After the suite runs, the developer's own `storage/app/private/sources` and the `testing` database hold no leftovers
+- [x] 2.6 Mutation check: with the command's file-extraction step disabled, or with the command deleting the `passkeys` rows right after loading the dump, the round-trip test turns red (revert afterwards) — 87f9358
+- [x] 2.7 After the suite runs, the developer's own `storage/app/private/sources` and the `testing` database hold no leftovers — 87f9358
 
 ### Phase 3: Cookbook §6.3
 
 #### Automated
 
-- [ ] 3.1 §6.3 names the new test file and command, and no longer lists the fixed 8 tables: `grep -n "BackupRestoreTest\|backup:restore" context/foundation/test-plan.md` returns hits and `grep -c "users\`, \`trees\`, \`people\`" context/foundation/test-plan.md` returns 0
+- [x] 3.1 §6.3 names the new test file and command, and no longer lists the fixed 8 tables: `grep -n "BackupRestoreTest\|backup:restore" context/foundation/test-plan.md` returns hits and `grep -c "users\`, \`trees\`, \`people\`" context/foundation/test-plan.md` returns 0
 
 #### Manual
 
-- [ ] 3.2 §6.3 reads as a complete answer for someone restoring onto a new server who never saw this change
+- [x] 3.2 §6.3 reads as a complete answer for someone restoring onto a new server who never saw this change
