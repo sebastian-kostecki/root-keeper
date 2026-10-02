@@ -1,10 +1,10 @@
 ---
 change_id: testing-relation-rules
 title: Testing relation rules
-status: impl_reviewed
+status: archived
 created: 2026-10-02
 updated: 2026-10-02
-archived_at: null
+archived_at: 2026-10-02T11:34:20Z
 ---
 
 ## Notes
