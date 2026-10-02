@@ -50,7 +50,7 @@ Każdy wiersz to osobna faza wdrożenia, która otwiera własny folder zmiany pr
 |---|---|---|---|---|---|---|
 | 1 | Kopia i odtworzenie | Udowodnić, że kopia obejmuje bazę i wszystkie pliki źródeł, a odtworzenie na czystej instancji przywraca kompletne dane (kolejność: decyzja autora, wywiad P1/P4) | #2 | integration + manual smoke (drill odtworzenia) | change opened | `context/changes/testing-backup-restore/` |
 | 2 | Zapis i usuwanie trafiają we właściwe dane | Udowodnić, że akcje z drzewa i modala zmieniają dokładnie wskazaną osobę lub parę, a usunięcia kasują dokładnie to, co pokazało potwierdzenie | #1, #3 | integration + unit | not started | — |
-| 3 | Granice własności i reguły relacji | Udowodnić, że cudze id (w adresie i w treści) daje 404 bez zapisu, a reguły relacji egzekwuje serwer na każdej ścieżce | #4, #5 | integration | not started | — |
+| 3 | Granice własności i reguły relacji | Udowodnić, że cudze id (w adresie i w treści) daje 404 bez zapisu, a reguły relacji egzekwuje serwer na każdej ścieżce | #4, #5 | integration | change opened | `context/changes/testing-ownership-boundaries/` |
 | 4 | Przepływy drzewa i modala w przeglądarce | 1–2 krytyczne przepływy (np. v4 US-01: istniejący ojciec z pustego slotu) z asercją na danych, nie na wyglądzie — tylko jeśli badanie fazy 2 pokaże, że tańsze warstwy nie łapią pomyłki osoby w UI | #1 (połowa UI) | e2e | not started | — |
 
 ## 4. Stack
@@ -155,7 +155,18 @@ Krok 1 działa, bo sterownik trybu serwisowego to `file` (`APP_MAINTENANCE_DRIVE
 
 ### 6.5 Test własności i reguł relacji
 
-- TBD — see §3 Phase 3 (wzorzec: dataset tras z cudzym id w adresie i treści → 404 bez zapisu; reguły relacji na każdej ścieżce zapisu).
+**Własność (ryzyko #4)**
+
+- **Location**: `tests/Feature/OwnershipBoundariesTest.php`; helpery `ownershipSnapshot()` i `personPreviewUrl()` w `tests/Pest.php`.
+- **Reference test**: dataset `answers 404 and writes nothing when the address holds another tree's id` (funkcja `ownershipRouteCases()` — jeden wpis na przypadek: nazwa trasy, metoda, parametry adresu, treść; dla tras z treścią dwa warianty, „poprawna treść” i „pusta treść”). Strażnik `has a case for every controller route that carries an id in the address` czyta tę samą listę. Dalej: `?person=` na stronach hosta, `tree_id` w treści `persons.store` / `sources.store`; passkey w `tests/Feature/Settings/SecurityTest.php` (`another user's passkey cannot be deleted`).
+- **Run locally**: `vendor/bin/sail artisan test --compact tests/Feature/OwnershipBoundariesTest.php`.
+- **Wyrocznia**: (1) cudze id w adresie albo w `?person=` → 404 niezależnie od treści, a `ownershipSnapshot()` (liczba wierszy i skrót zawartości każdej tabeli poza `migrations` plus lista plików dysku `local`) przed i po żądaniu jest identyczny. (2) Cudze id w treści → błąd walidacji bez zapisu, ten sam komunikat co dla nieistniejącego id (decyzja archiwum, nie 404); 9 pól w 6 endpointach pokrywają testy tras. (3) `tree_id` w treści jest ignorowany: rekord i plik źródła trafiają do drzewa atakującego. (4) Cudzy passkey (`passkey.destroy`) → 403 (kod vendor, dane konta; wyjątek od „404, nie 403”), wiersz nadal istnieje.
+- **Pułapki**: autoryzacja trasy z Form Requestem stoi w `authorize(): Response` (`Gate::inspect(...)`), nie w kontrolerze — walidacja biegnie przed ciałem kontrolera, więc `Gate::authorize` w kontrolerze daje 302 z błędem walidacji zamiast 404 i zdradza istnienie id (stąd przypadek „pusta treść”); `Storage::fake('local')` wołaj przed `ownershipSnapshot()` (snapshot czyta dysk `local`); „poprawna treść” to id z drzewa atakującego (`ownPerson`, `ownSource`), inaczej test dowodzi tylko, że walidacja odrzuciła treść; trasy z dwoma parametrami (`events.sources.destroy`) wymagają przypadku na każdy parametr z osobna; rekordy skrzyżowane (`ownershipRecords()`) dają pivotowi wiersz do błędnego usunięcia; passkey nie ma fabryki — wiersz przez model `Passkey` z `user_id` ustawionym poza `fillable`, żądanie z `auth.password_confirmed_at` w sesji.
+- **Nowy endpoint z id w adresie**: dopisz wpis do `ownershipRouteCases()` (z wariantami treści, jeśli trasa ma treść); strażnik kompletności wymusza to, wskazując brakującą nazwę trasy. Nowe pole z id w treści: reguła `Rule::exists(...)->where('tree_id', ...)` oraz test błędu walidacji bez zapisu.
+
+**Reguły relacji (ryzyko #5)**
+
+- TBD — see §3 Phase 3 (wzorzec: reguły relacji na każdej ścieżce zapisu; osobne badanie, poza `testing-ownership-boundaries`).
 
 ### 6.6 Test przepływu w przeglądarce
 

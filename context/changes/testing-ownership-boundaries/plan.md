@@ -341,16 +341,16 @@ Brak zmian schematu i danych.
 
 #### Automated
 
-- [x] 3.1 Nowe przypadki zielone (OwnershipBoundariesTest, SecurityTest)
-- [x] 3.2 Pint bez zmian po formatowaniu
+- [x] 3.1 Nowe przypadki zielone (OwnershipBoundariesTest, SecurityTest) — 488cacf
+- [x] 3.2 Pint bez zmian po formatowaniu — 488cacf
 
 ### Phase 4: Cookbook §6.5 i stan §3
 
 #### Automated
 
-- [ ] 4.1 §6.5 nie zawiera już „TBD” dla części własności
-- [ ] 4.2 Cały Feature zielony
+- [x] 4.1 §6.5 nie zawiera już „TBD” dla części własności
+- [x] 4.2 Cały Feature zielony
 
 #### Manual
 
-- [ ] 4.3 Autor potwierdza, że §6.5 wystarcza do napisania testu własności nowego endpointu
+- [x] 4.3 Autor potwierdza, że §6.5 wystarcza do napisania testu własności nowego endpointu
