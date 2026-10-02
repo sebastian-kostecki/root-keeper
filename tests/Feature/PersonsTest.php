@@ -1103,3 +1103,62 @@ test('the person preview exposes the display name of an event source', function 
         ->where('personPreview.person.birth.sources.0.display_name', 'Akt chrztu')
         ->where('personPreview.person.birth.sources.1.display_name', 'IMG_2.jpg'));
 });
+
+test('changing the sex of a parent is rejected when their child already has a parent of that sex', function (?string $from, string $to, string $partnerSex, bool $withSecondChild, string $message) {
+    Storage::fake('local');
+    $user = User::factory()->create();
+    $person = Person::factory()->for($user->tree)->create(['first_name' => 'Jan', 'gender' => $from]);
+    $partner = Person::factory()->for($user->tree)->create(['gender' => $partnerSex]);
+    $child = Person::factory()->for($user->tree)->create();
+    linkParent($partner, $child);
+    linkParent($person, $child);
+
+    if ($withSecondChild) {
+        linkParent($person, Person::factory()->for($user->tree)->create());
+    }
+
+    $before = ownershipSnapshot();
+
+    $this->actingAs($user)->put(route('persons.update', $person), ['first_name' => 'Jan', 'gender' => $to])
+        ->assertSessionHasErrors(['gender' => $message]);
+
+    expect(ownershipSnapshot())->toBe($before);
+})->with([
+    'unknown to male, child has a father' => [null, 'male', 'male', false, 'Ta osoba jest rodzicem dziecka, które ma już ojca.'],
+    'female to male, child has a father' => ['female', 'male', 'male', false, 'Ta osoba jest rodzicem dziecka, które ma już ojca.'],
+    'male to female, child has a mother' => ['male', 'female', 'female', false, 'Ta osoba jest rodzicem dziecka, które ma już matkę.'],
+    'conflict at only one of two children' => [null, 'male', 'male', true, 'Ta osoba jest rodzicem dziecka, które ma już ojca.'],
+]);
+
+test('changing the sex of a parent is allowed when no child gets two parents of the same sex', function (string $from, string $to, ?string $partnerSex, string $expected) {
+    $user = User::factory()->create();
+    $person = Person::factory()->for($user->tree)->create(['first_name' => 'Jan', 'gender' => $from]);
+    $child = Person::factory()->for($user->tree)->create();
+    linkParent($person, $child);
+
+    if ($partnerSex !== 'none') {
+        linkParent(Person::factory()->for($user->tree)->create(['gender' => $partnerSex]), $child);
+    }
+
+    $this->actingAs($user)->put(route('persons.update', $person), ['first_name' => 'Jan', 'gender' => $to])
+        ->assertSessionHasNoErrors();
+
+    expect($person->fresh()->gender?->value)->toBe($expected === '' ? null : $expected);
+})->with([
+    'lone male parent to female' => ['male', 'female', 'none', 'female'],
+    'male to unknown next to a mother' => ['male', '', 'female', ''],
+    'co-parent of unknown sex' => ['female', 'male', null, 'male'],
+]);
+
+test('editing a parent without changing their sex is allowed even when their child already has two parents of that sex', function () {
+    $user = User::factory()->create();
+    $person = Person::factory()->for($user->tree)->male()->create(['first_name' => 'Jan']);
+    $child = Person::factory()->for($user->tree)->create();
+    linkParent(Person::factory()->for($user->tree)->male()->create(), $child);
+    linkParent($person, $child);
+
+    $this->actingAs($user)->put(route('persons.update', $person), ['first_name' => 'Janusz', 'gender' => 'male'])
+        ->assertSessionHasNoErrors();
+
+    expect($person->fresh()->first_name)->toBe('Janusz');
+});

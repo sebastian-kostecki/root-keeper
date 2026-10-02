@@ -273,27 +273,27 @@ Brak migracji. Istniejące pary tej samej płci zostają; strażnik nie blokuje 
 
 #### Automated
 
-- [x] 1.1 Nowy test braku `role` był czerwony przed zmianą reguły i jest zielony po niej
-- [x] 1.2 `vendor/bin/sail artisan test --compact tests/Feature/ParentChildRelationsTest.php` zielone
-- [x] 1.3 `vendor/bin/sail bin pint --dirty --format agent` bez zmian po uruchomieniu
+- [x] 1.1 Nowy test braku `role` był czerwony przed zmianą reguły i jest zielony po niej — 13e4eab
+- [x] 1.2 `vendor/bin/sail artisan test --compact tests/Feature/ParentChildRelationsTest.php` zielone — 13e4eab
+- [x] 1.3 `vendor/bin/sail bin pint --dirty --format agent` bez zmian po uruchomieniu — 13e4eab
 
 #### Manual
 
-- [x] 1.4 Wybór istniejącej osoby w slocie ojca/matki/rodzica na drzewie nadal tworzy relację (UI wysyła `role`)
+- [x] 1.4 Wybór istniejącej osoby w slocie ojca/matki/rodzica na drzewie nadal tworzy relację (UI wysyła `role`) — 13e4eab
 
 ### Phase 2: Strażnik zmiany płci rodzica
 
 #### Automated
 
-- [ ] 2.1 Pierwszy test odrzucenia był czerwony przed zmianą akcji i jest zielony po niej
-- [ ] 2.2 `vendor/bin/sail artisan test --compact tests/Feature/PersonsTest.php` zielone
-- [ ] 2.3 `vendor/bin/sail composer types:check` (Larastan) bez nowych błędów
-- [ ] 2.4 `vendor/bin/sail bin pint --dirty --format agent` bez zmian po uruchomieniu
+- [x] 2.1 Pierwszy test odrzucenia był czerwony przed zmianą akcji i jest zielony po niej
+- [x] 2.2 `vendor/bin/sail artisan test --compact tests/Feature/PersonsTest.php` zielone
+- [x] 2.3 `vendor/bin/sail composer types:check` (Larastan) bez nowych błędów
+- [x] 2.4 `vendor/bin/sail bin pint --dirty --format agent` bez zmian po uruchomieniu
 
 #### Manual
 
-- [ ] 2.5 W modalu osoby zmiana płci ojca na „Mężczyzna” u drugiego rodzica dziecka pokazuje komunikat pod polem „Płeć”, a płeć się nie zmienia
-- [ ] 2.6 Ręczna kontrola mutacji: zakomentowanie warunku strażnika czerwieni test odrzucenia
+- [x] 2.5 W modalu osoby zmiana płci ojca na „Mężczyzna” u drugiego rodzica dziecka pokazuje komunikat pod polem „Płeć”, a płeć się nie zmienia
+- [x] 2.6 Ręczna kontrola mutacji: zakomentowanie warunku strażnika czerwieni test odrzucenia
 
 ### Phase 3: Luki macierzy i zaostrzone asercje
 
