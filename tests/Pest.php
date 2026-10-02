@@ -7,6 +7,8 @@ use App\Models\ParentChildRelation;
 use App\Models\Person;
 use Illuminate\Foundation\Testing\DatabaseTruncation;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Tests\BackupTestCase;
 use Tests\TestCase;
 
@@ -102,4 +104,36 @@ function personPreviewUrl(Person $person, string $route = 'persons.index', array
     $url = route($route, $parameters);
 
     return $url.(str_contains($url, '?') ? '&' : '?').http_build_query(['person' => $person->id]);
+}
+
+/**
+ * Snapshot of every durable table (row count and content hash) and of the `local` disk,
+ * so a test can prove a refused request wrote nothing anywhere. Call `Storage::fake('local')` first.
+ *
+ * @return array{tables: array<string, array{rows: int, digest: string}>, files: list<string>}
+ */
+function ownershipSnapshot(): array
+{
+    $tables = DB::table('information_schema.tables')
+        ->where('table_schema', 'public')
+        ->where('table_type', 'BASE TABLE')
+        ->where('table_name', '!=', 'migrations')
+        ->orderBy('table_name')
+        ->pluck('table_name')
+        ->all();
+
+    $digests = [];
+
+    foreach ($tables as $table) {
+        $row = DB::selectOne(
+            "select count(*) as rows, md5(coalesce(string_agg(t::text, '|' order by t::text), '')) as digest from \"{$table}\" t"
+        );
+
+        $digests[$table] = ['rows' => (int) $row->rows, 'digest' => (string) $row->digest];
+    }
+
+    $files = Storage::disk('local')->allFiles();
+    sort($files);
+
+    return ['tables' => $digests, 'files' => $files];
 }

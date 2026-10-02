@@ -6,7 +6,6 @@ use App\Actions\Relations\CreateParentForPerson;
 use App\Http\Requests\PersonParentStoreRequest;
 use App\Models\Person;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 
 class PersonParentController extends Controller
@@ -16,8 +15,6 @@ class PersonParentController extends Controller
      */
     public function store(PersonParentStoreRequest $request, Person $person, CreateParentForPerson $createParentForPerson): RedirectResponse
     {
-        Gate::authorize('view', $person);
-
         $createParentForPerson->handle(
             $request->user()->tree,
             $person,

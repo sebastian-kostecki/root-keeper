@@ -8,7 +8,6 @@ use App\Http\Requests\PersonChildAttachRequest;
 use App\Http\Requests\PersonChildStoreRequest;
 use App\Models\Person;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 
 class PersonChildController extends Controller
@@ -19,8 +18,6 @@ class PersonChildController extends Controller
      */
     public function attach(PersonChildAttachRequest $request, Person $person, AttachChildToParents $attachChildToParents): RedirectResponse
     {
-        Gate::authorize('view', $person);
-
         $tree = $request->user()->tree;
         $child = $tree->people()->findOrFail($request->integer('child_id'));
         $otherParent = $request->filled('other_parent_id')
@@ -40,8 +37,6 @@ class PersonChildController extends Controller
      */
     public function store(PersonChildStoreRequest $request, Person $person, CreateChildForParents $createChildForParents): RedirectResponse
     {
-        Gate::authorize('view', $person);
-
         $tree = $request->user()->tree;
         $otherParent = $request->filled('other_parent_id')
             ? $tree->people()->findOrFail($request->integer('other_parent_id'))

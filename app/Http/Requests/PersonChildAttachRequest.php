@@ -3,12 +3,22 @@
 namespace App\Http\Requests;
 
 use App\Models\Person;
+use Illuminate\Auth\Access\Response;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
 
 class PersonChildAttachRequest extends FormRequest
 {
+    /**
+     * Determine if the user is authorized to make this request.
+     */
+    public function authorize(): Response
+    {
+        return Gate::inspect('view', $this->route('person'));
+    }
+
     /**
      * Get the validation rules that apply to the request.
      *
