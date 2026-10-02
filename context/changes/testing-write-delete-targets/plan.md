@@ -245,6 +245,18 @@ We wszystkich przypadkach żadna inna tabela nie ma różnicy, `removed` i `chan
 
 **Ocena przetrwałych mutacji** (wypełnia implementujący): `plik:linia` — mutator — „szkodzi / nie szkodzi” — decyzja.
 
+Przebiegi 2026-10-02, serialnie (`--parallel` psuje wspólną bazę `testing`, więc go nie używać). Z dopisanym `OwnershipBoundariesTest.php` w pliku testów:
+- Klasy akcji i kontrolerów (bez `BuildFamilySheet`): 129 mutacji, 89,92%, 13 przetrwałych.
+  - `CreateMarriage.php:27–30`, `AttachChildToParents.php:26–35` (kolejność i `lockForUpdate`, `array_unique`, `array_values`) — nie szkodzi: blokady wierszy chronią przed wyścigiem współbieżnym, poza zakresem planu (research, Open Questions #3); ignorowane.
+  - `UpdatePerson.php:47` `RemoveMethodCall` (`$person->load('events')`) — nie szkodzi: eager load, relacja ładuje się leniwie; mutacja równoważna.
+- `BuildFamilySheet` (z `WriteTargetsTest.php` i `TreeTest.php`): 275 mutacji, 86,18%, 38 przetrwałych. Wszystkie nie szkodzą, ignorowane:
+  - `Unwrap*` `array_values` / `array_unique` / `array_filter` / `array_map` / `array_diff` (linie 81–82, 155–161, 195, 246–252, 263–272, 282, 304, 339, 466) — opakowania listy i deduplikacja; nie zmieniają id w żądaniu ani zapisanych wierszy, a zbiory kandydatów weryfikuje serwer.
+  - `122`, `205`, `209`, `284` (`marriage_year`, rzutowanie `(int)`, `display_name`) — etykiety i typ danych.
+  - `129`, `138` (`?? 0`) i `149` (`<` → `<=` w `focus_side`) — gałąź nieosiągalna (partner `person` zawsze ma `partner_id`) albo wyłącznie układ prezentacji.
+  - `67` `ContinueToBreak` — nieosiągalne: małżeństwo zawsze ma dwóch uczestników, a duplikat pary odrzuca `CreateMarriage` atomowo.
+  - `308` `ContinueToBreak` w `addsSecondParentOfSameSex` — dotyczy tylko listy kandydatów w UI; regułę drugiego rodzica tej samej płci i tak egzekwuje serwer przy zapisie (faza testing-relation-rules).
+  - `466`, `478–480` (`excluded_ids`, `rank` w `match`) — filtr kandydatów w UI i kolejność prezentacji.
+
 ### Success Criteria:
 
 #### Automated Verification:
@@ -372,28 +384,28 @@ Zapisuje wzorzec testu w cookbooku, aby kolejne endpointy i akcje usuwające dos
 #### Automated
 
 - [x] 2.1 `vendor/bin/sail artisan test --compact tests/Feature/DeleteImpactTest.php` zielone
-- [x] 2.2 `vendor/bin/sail bin pint --dirty --format agent` bez zmian po uruchomieniu
+- [x] 2.2 `vendor/bin/sail bin pint --dirty --format agent` bez zmian po uruchomieniu — 51a6e6e
 - [x] 2.3 Bramka mutacyjna fazy 2 (polecenie z Contract) kończy się, a mutacja `RemoveMethodCall` w `DeletePerson.php:22` jest zabita
 
 #### Manual
 
-- [x] 2.4 Każda przetrwała mutacja z bramki fazy 2 zabita asercją albo wpisana do „Ocena przetrwałych mutacji” z uzasadnieniem
+- [x] 2.4 Każda przetrwała mutacja z bramki fazy 2 zabita asercją albo wpisana do „Ocena przetrwałych mutacji” z uzasadnieniem — 51a6e6e
 - [x] 2.5 Kontrola mutacji spoza katalogu mutatorów Pest: usunięcie kroku małżeństw w `DeletePerson::handle` → test osoby czerwony; usuwanie tylko `path` (bez miniatury) w `DeleteSource::handle` → test źródła czerwony; `confirms` tylko dla pierwszego uczestnika zdarzenia w `SourceController::show` → test źródła czerwony; każda mutacja cofnięta
-- [x] 2.6 Oczekiwane zbiory w testach zbudowane z rekordów sceny, nie z zapytań do bazy ani wywołań kodu produkcyjnego (przegląd kodu)
+- [x] 2.6 Oczekiwane zbiory w testach zbudowane z rekordów sceny, nie z zapytań do bazy ani wywołań kodu produkcyjnego (przegląd kodu) — 51a6e6e
 
 ### Phase 3: Zapisy trafiają we wskazaną osobę lub parę (ryzyko #1)
 
 #### Automated
 
-- [ ] 3.1 `vendor/bin/sail artisan test --compact tests/Feature/WriteTargetsTest.php` zielone (dataset wyboru pary, 9 zapisów z drzewa, 4 zapisy z modala)
-- [ ] 3.2 `vendor/bin/sail bin pint --dirty --format agent` bez zmian po uruchomieniu
-- [ ] 3.3 Bramka mutacyjna fazy 3 (polecenie z Contract) kończy się
+- [x] 3.1 `vendor/bin/sail artisan test --compact tests/Feature/WriteTargetsTest.php` zielone (dataset wyboru pary, 9 zapisów z drzewa, 4 zapisy z modala)
+- [x] 3.2 `vendor/bin/sail bin pint --dirty --format agent` bez zmian po uruchomieniu
+- [x] 3.3 Bramka mutacyjna fazy 3 (polecenie z Contract) kończy się
 
 #### Manual
 
-- [ ] 3.4 Każda przetrwała mutacja z bramki fazy 3 zabita asercją albo wpisana do „Ocena przetrwałych mutacji” z uzasadnieniem
-- [ ] 3.5 Kontrola mutacji spoza katalogu mutatorów Pest: `BuildFamilySheet` zawsze wybierający pierwszy związek → przypadki wyboru pary i 1/3/6/7 czerwone; `UpdatePerson` usuwający i tworzący urodzenie od nowa zamiast aktualizacji w miejscu → przypadek 10 czerwony; `detach` bez źródła (wszystkie powiązania zdarzenia) w `EventSourceController::destroy` → przypadek 13 czerwony; każda mutacja cofnięta
-- [ ] 3.6 Żądania w datasetach budowane z wartości propsa `sheet` / `personPreview`, nie z rekordów sceny wprost (przegląd kodu)
+- [x] 3.4 Każda przetrwała mutacja z bramki fazy 3 zabita asercją albo wpisana do „Ocena przetrwałych mutacji” z uzasadnieniem
+- [x] 3.5 Kontrola mutacji spoza katalogu mutatorów Pest: `BuildFamilySheet` zawsze wybierający pierwszy związek → przypadki wyboru pary i 1/3/6/7 czerwone; `UpdatePerson` usuwający i tworzący urodzenie od nowa zamiast aktualizacji w miejscu → przypadek 10 czerwony; `detach` bez źródła (wszystkie powiązania zdarzenia) w `EventSourceController::destroy` → przypadek 13 czerwony; każda mutacja cofnięta
+- [x] 3.6 Żądania w datasetach budowane z wartości propsa `sheet` / `personPreview`, nie z rekordów sceny wprost (przegląd kodu)
 
 ### Phase 4: Cookbook i werdykt dla fazy 4
 
