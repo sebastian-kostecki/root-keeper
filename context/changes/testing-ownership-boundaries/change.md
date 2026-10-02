@@ -1,7 +1,7 @@
 ---
 change_id: testing-ownership-boundaries
 title: Testing ownership boundaries
-status: implemented
+status: impl_reviewed
 created: 2026-10-02
 updated: 2026-10-02
 ---
