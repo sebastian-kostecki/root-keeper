@@ -299,21 +299,21 @@ Brak migracji. Istniejące pary tej samej płci zostają; strażnik nie blokuje 
 
 #### Automated
 
-- [x] 3.1 `vendor/bin/sail artisan test --compact tests/Feature/ParentChildRelationsTest.php` zielone
-- [x] 3.2 `grep -c "assertSessionHasErrors('relation')" tests/Feature/ParentChildRelationsTest.php` zwraca 0
-- [x] 3.3 `vendor/bin/sail bin pint --dirty --format agent` bez zmian po uruchomieniu
+- [x] 3.1 `vendor/bin/sail artisan test --compact tests/Feature/ParentChildRelationsTest.php` zielone — f91771b
+- [x] 3.2 `grep -c "assertSessionHasErrors('relation')" tests/Feature/ParentChildRelationsTest.php` zwraca 0 — f91771b
+- [x] 3.3 `vendor/bin/sail bin pint --dirty --format agent` bez zmian po uruchomieniu — f91771b
 
 #### Manual
 
-- [x] 3.4 Ręczna kontrola mutacji: usunięcie warunku cyklu (:38) w `CreateParentChildRelation` czerwieni testy cyklu na `parent-child-relations.store` i `persons.children.attach` (oba warianty)
+- [x] 3.4 Ręczna kontrola mutacji: usunięcie warunku cyklu (:38) w `CreateParentChildRelation` czerwieni testy cyklu na `parent-child-relations.store` i `persons.children.attach` (oba warianty) — f91771b
 
 ### Phase 4: Cookbook §6.5 i stan §3
 
 #### Automated
 
-- [ ] 4.1 §6.5 nie zawiera już „TBD” dla reguł relacji: `grep -n "Reguły relacji" -A6 context/foundation/test-plan.md`
-- [ ] 4.2 `vendor/bin/sail artisan test --compact tests/Feature` zielone
+- [x] 4.1 §6.5 nie zawiera już „TBD” dla reguł relacji: `grep -n "Reguły relacji" -A6 context/foundation/test-plan.md`
+- [x] 4.2 `vendor/bin/sail artisan test --compact tests/Feature` zielone
 
 #### Manual
 
-- [ ] 4.3 Autor czyta §6.5 i potwierdza, że wystarcza do napisania testów reguł dla nowej ścieżki tworzącej relację bez czytania tego planu
+- [x] 4.3 Autor czyta §6.5 i potwierdza, że wystarcza do napisania testów reguł dla nowej ścieżki tworzącej relację bez czytania tego planu

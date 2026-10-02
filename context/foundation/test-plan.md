@@ -50,7 +50,7 @@ Każdy wiersz to osobna faza wdrożenia, która otwiera własny folder zmiany pr
 |---|---|---|---|---|---|---|
 | 1 | Kopia i odtworzenie | Udowodnić, że kopia obejmuje bazę i wszystkie pliki źródeł, a odtworzenie na czystej instancji przywraca kompletne dane (kolejność: decyzja autora, wywiad P1/P4) | #2 | integration + manual smoke (drill odtworzenia) | change opened | `context/changes/testing-backup-restore/` |
 | 2 | Zapis i usuwanie trafiają we właściwe dane | Udowodnić, że akcje z drzewa i modala zmieniają dokładnie wskazaną osobę lub parę, a usunięcia kasują dokładnie to, co pokazało potwierdzenie | #1, #3 | integration + unit | not started | — |
-| 3 | Granice własności i reguły relacji | Udowodnić, że cudze id (w adresie i w treści) daje 404 bez zapisu, a reguły relacji egzekwuje serwer na każdej ścieżce | #4, #5 | integration | change opened | `context/changes/testing-ownership-boundaries/` |
+| 3 | Granice własności i reguły relacji | Udowodnić, że cudze id (w adresie i w treści) daje 404 bez zapisu, a reguły relacji egzekwuje serwer na każdej ścieżce | #4, #5 | integration | change opened | `context/changes/testing-ownership-boundaries/` (zarchiwizowana), `context/changes/testing-relation-rules/` |
 | 4 | Przepływy drzewa i modala w przeglądarce | 1–2 krytyczne przepływy (np. v4 US-01: istniejący ojciec z pustego slotu) z asercją na danych, nie na wyglądzie — tylko jeśli badanie fazy 2 pokaże, że tańsze warstwy nie łapią pomyłki osoby w UI | #1 (połowa UI) | e2e | not started | — |
 
 ## 4. Stack
@@ -166,7 +166,22 @@ Krok 1 działa, bo sterownik trybu serwisowego to `file` (`APP_MAINTENANCE_DRIVE
 
 **Reguły relacji (ryzyko #5)**
 
-- TBD — see §3 Phase 3 (wzorzec: reguły relacji na każdej ścieżce zapisu; osobne badanie, poza `testing-ownership-boundaries`).
+- **Location**: `tests/Feature/ParentChildRelationsTest.php` (reguły na 4 trasach tworzących relację); zmiana płci rodzica w `tests/Feature/PersonsTest.php` (`changing the sex of a parent is rejected…`). Helpery `linkParent()` i `ownershipSnapshot()` w `tests/Pest.php`.
+- **Reference test**: `a lone parent cannot attach a child who already has two parents` (wzorzec: arrange → `Storage::fake('local')` → `$before = ownershipSnapshot()` → żądanie → `assertSessionHasErrors(['relation' => dokładny komunikat])` → `expect(ownershipSnapshot())->toBe($before)`). Dla pierwszego linku wycofywanego w transakcji: `attaching a child who is an ancestor of the other parent is rejected as a cycle…`.
+- **Run locally**: `vendor/bin/sail artisan test --compact tests/Feature/ParentChildRelationsTest.php tests/Feature/PersonsTest.php`.
+- **Wyrocznia**: komunikaty z archiwum `2026-09-25-parent-child-relations/plan.md:92-94` („Ta relacja już istnieje.”, „Ta osoba ma już dwoje rodziców.”, „Ta relacja utworzyłaby cykl w drzewie.”) oraz „Ta osoba ma już ojca/matkę.”. Wszystkie reguły egzekwuje `CreateParentChildRelation`; `role` jest wymagane w `parent-child-relations.store` (bez niego pomijana byłaby kontrola slotu). Zmiana płci osoby na znaną płeć, którą ma już inny rodzic jej dziecka, kończy się błędem na `gender` („Ta osoba jest rodzicem dziecka, które ma już ojca/matkę.”); zmiana na „nieznana” i edycja bez zmiany płci przechodzą (starsze pary tej samej płci nie blokują edycji).
+- **Macierz reguła × trasa** (n/d = nowa osoba nie ma jeszcze rodziców ani potomków, więc reguła nie może zadziałać):
+
+| Reguła | `parent-child-relations.store` | `persons.parents.store` | `persons.children.attach` | `persons.children.store` |
+|---|---|---|---|---|
+| trzeci rodzic | ✓ | ✓ | ✓ (para i samotny rodzic) | n/d |
+| cykl | ✓ | n/d | ✓ (z adresu i przez `other_parent_id`) | n/d |
+| ta sama płeć | ✓ | ✓ | ✓ | ✓ |
+| płeć × slot | ✓ (`role`) | ✓ | n/d | n/d |
+| duplikat | ✓ | n/d | ✓ | n/d |
+
+- **Pułapki**: snapshot rób po arrange (także po żądaniach przygotowujących), tuż przed odrzucanym żądaniem; `Storage::fake('local')` przed snapshotem; przy `children.attach` z parą pierwszy link przechodzi, drugi pada — snapshot dowodzi, że transakcja wycofała pierwszy; każde nowe wywołanie `parent-child-relations.store` w testach wymaga `'role' => 'parent'` (inaczej test trafia w walidację, nie w regułę akcji); relację rodzic–dziecko w arrange zakładaj przez `linkParent()`, nie przez trasę.
+- **Nowa ścieżka tworząca relację**: musi przejść przez `CreateParentChildRelation`; dopisz jej kolumnę w macierzy i test (wzorzec wyżej) na każdą stosowalną regułę, z dokładnym komunikatem i snapshotem.
 
 ### 6.6 Test przepływu w przeglądarce
 
