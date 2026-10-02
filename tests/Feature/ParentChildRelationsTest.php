@@ -295,10 +295,12 @@ test('an unknown-sex parent never conflicts with a known-sex parent', function (
 });
 
 test('a slot role must match the sex of the chosen parent', function (string $role, ?string $gender, bool $accepted) {
+    Storage::fake('local');
     $user = User::factory()->create();
     $factory = Person::factory()->for($user->tree);
     $parent = ($gender === null ? $factory : $factory->{$gender}())->create();
     $child = Person::factory()->for($user->tree)->create();
+    $before = ownershipSnapshot();
 
     $response = $this->actingAs($user)->post(route('parent-child-relations.store'), [
         'parent_id' => $parent->id,
@@ -311,7 +313,7 @@ test('a slot role must match the sex of the chosen parent', function (string $ro
         $this->assertDatabaseCount('parent_child_relations', 1);
     } else {
         $response->assertSessionHasErrors(['relation' => 'Wybrana osoba nie pasuje do tego miejsca na drzewie.']);
-        $this->assertDatabaseCount('parent_child_relations', 0);
+        expect(ownershipSnapshot())->toBe($before);
     }
 })->with([
     'father slot, woman' => ['father', 'female', false],
