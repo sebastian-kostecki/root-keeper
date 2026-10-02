@@ -8,6 +8,7 @@ use App\Models\Person;
 use App\Models\Source;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 test('guests are redirected to the login page from persons routes', function () {
     $person = Person::factory()->create();
@@ -751,16 +752,6 @@ test('person show exposes personForm with raw date parts, religion value, is_dec
         ->where('personPreview.personForm.birth.is_confirmed', true));
 });
 
-test('persons update returns not found for a person from another users tree', function () {
-    $user = User::factory()->create();
-    $otherUser = User::factory()->create();
-    $person = Person::factory()->for($otherUser->tree)->create(['first_name' => 'Obcy']);
-
-    $this->actingAs($user)->put(route('persons.update', $person), ['first_name' => 'Hacked'])->assertNotFound();
-
-    expect($person->fresh()->first_name)->toBe('Obcy');
-});
-
 test('update changes names, residence, religion, birth date parts and place, and redirects with a toast', function () {
     $user = User::factory()->create();
     $person = Person::factory()->for($user->tree)->create(['first_name' => 'Jan', 'last_name' => 'Kowalski']);
@@ -918,17 +909,6 @@ test('destroy of a person sharing an event with another person keeps the event a
     expect($sharedEvent->fresh()->participants()->pluck('people.id')->all())->toBe([$spouse->id]);
 });
 
-test('destroy of a person from another users tree returns not found and deletes nothing', function () {
-    $user = User::factory()->create();
-    $otherUser = User::factory()->create();
-    $person = Person::factory()->for($otherUser->tree)->create();
-
-    $response = $this->actingAs($user)->delete(route('persons.destroy', $person));
-
-    $response->assertNotFound();
-    expect(Person::find($person->id))->not->toBeNull();
-});
-
 test('persons index carries the preview props of the person named by the person query parameter', function () {
     $user = User::factory()->create();
     $person = Person::factory()->for($user->tree)->male()->create(['first_name' => 'Jan', 'last_name' => 'Kowalski']);
@@ -982,11 +962,16 @@ test('personPreview is null without the person parameter and with a non-numeric 
 ]);
 
 test('the preview of another users person or a missing person is not found', function () {
+    Storage::fake('local');
+
     $user = User::factory()->create();
     $otherPerson = Person::factory()->for(User::factory()->create()->tree)->create();
+    $before = ownershipSnapshot();
 
     $this->actingAs($user)->get(personPreviewUrl($otherPerson))->assertNotFound();
     $this->actingAs($user)->get(route('persons.index').'?person=999999')->assertNotFound();
+
+    expect(ownershipSnapshot())->toBe($before);
 });
 
 test('available sources load through a partial reload of a host page with a person parameter', function () {

@@ -79,18 +79,6 @@ test('linking another trees gravestone fails validation and creates nothing', fu
     $this->assertDatabaseCount('event_source', 0);
 });
 
-test('linking to another trees event returns not found', function () {
-    $user = User::factory()->create();
-    $otherUser = User::factory()->create();
-    $event = Event::factory()->for($otherUser->tree)->create();
-    $source = Source::factory()->for($user->tree)->create();
-
-    $this->actingAs($user)->post(route('events.sources.store', $event), ['source_id' => $source->id])
-        ->assertNotFound();
-
-    $this->assertDatabaseCount('event_source', 0);
-});
-
 test('linking to another trees event with a foreign source id also returns not found', function () {
     $user = User::factory()->create();
     $otherUser = User::factory()->create();
@@ -99,6 +87,8 @@ test('linking to another trees event with a foreign source id also returns not f
 
     $this->actingAs($user)->post(route('events.sources.store', $event), ['source_id' => $foreignSource->id])
         ->assertNotFound();
+
+    $this->assertDatabaseCount('event_source', 0);
 });
 
 test('linking to another trees event with a missing source id also returns not found', function () {
@@ -108,6 +98,8 @@ test('linking to another trees event with a missing source id also returns not f
 
     $this->actingAs($user)->post(route('events.sources.store', $event), [])
         ->assertNotFound();
+
+    $this->assertDatabaseCount('event_source', 0);
 });
 
 test('unlinking removes the link', function () {
@@ -135,19 +127,6 @@ test('unlinking a source that is not linked returns not found', function () {
         ->assertNotFound();
 });
 
-test('unlinking a source from another trees event returns not found', function () {
-    $user = User::factory()->create();
-    $otherUser = User::factory()->create();
-    $event = Event::factory()->for($otherUser->tree)->create();
-    $source = Source::factory()->for($otherUser->tree)->create();
-    $event->sources()->attach($source);
-
-    $this->actingAs($user)->delete(route('events.sources.destroy', [$event, $source]))
-        ->assertNotFound();
-
-    $this->assertDatabaseCount('event_source', 1);
-});
-
 test('one source linked to two events confirms both', function () {
     $user = User::factory()->create();
     $personA = Person::factory()->for($user->tree)->create();
@@ -168,19 +147,6 @@ test('one source linked to two events confirms both', function () {
 
     $this->actingAs($user)->get(personPreviewUrl($personB))
         ->assertInertia(fn ($page) => $page->where('personPreview.person.death.is_confirmed', true));
-});
-
-test('unlinking another trees source from an own event returns not found', function () {
-    $user = User::factory()->create();
-    $otherUser = User::factory()->create();
-    $event = Event::factory()->for($user->tree)->create();
-    $foreignSource = Source::factory()->for($otherUser->tree)->create();
-    $event->sources()->attach($foreignSource);
-
-    $this->actingAs($user)->delete(route('events.sources.destroy', [$event, $foreignSource]))
-        ->assertNotFound();
-
-    $this->assertDatabaseCount('event_source', 1);
 });
 
 test('deleting a source cascades the pivot rows', function () {

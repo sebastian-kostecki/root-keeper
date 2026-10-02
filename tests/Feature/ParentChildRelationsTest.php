@@ -150,17 +150,6 @@ test('removing a relation deletes only that row, keeps both people and flashes t
     $this->assertDatabaseHas('people', ['id' => $child->id]);
 });
 
-test('removing another trees relation returns not found and the row remains', function () {
-    $user = User::factory()->create();
-    $otherUser = User::factory()->create();
-    $relation = ParentChildRelation::factory()->create(['tree_id' => $otherUser->tree->id]);
-
-    $this->actingAs($user)->delete(route('parent-child-relations.destroy', $relation))
-        ->assertNotFound();
-
-    $this->assertDatabaseHas('parent_child_relations', ['id' => $relation->id]);
-});
-
 test('deleting a person removes the relations where they are parent and where they are child, and keeps the related people', function () {
     $user = User::factory()->create();
     $grandparent = Person::factory()->for($user->tree)->create();
@@ -419,19 +408,6 @@ test('a child with two parents cannot get a third and the person is not created'
     $this->assertDatabaseCount('parent_child_relations', 2);
 });
 
-test('creating a parent for another trees child returns not found and creates nothing', function () {
-    $user = User::factory()->create();
-    $foreignChild = Person::factory()->for(User::factory()->create()->tree)->create();
-    $peopleBefore = Person::count();
-
-    $this->actingAs($user)
-        ->post(route('persons.parents.store', $foreignChild), ['role' => 'parent', 'first_name' => 'Anna'])
-        ->assertNotFound();
-
-    expect(Person::count())->toBe($peopleBefore);
-    $this->assertDatabaseCount('parent_child_relations', 0);
-});
-
 test('guests are redirected to the login page from the attach-child route', function () {
     $person = Person::factory()->create();
 
@@ -570,18 +546,6 @@ test('a child_id or other_parent_id from another tree fails validation and creat
     $this->assertDatabaseCount('parent_child_relations', 0);
 })->with(['child' => ['child_id'], 'other parent' => ['other_parent_id']]);
 
-test('attaching a child to another users person returns not found and creates nothing', function () {
-    $user = User::factory()->create();
-    $foreignFocus = Person::factory()->for(User::factory()->create()->tree)->create();
-    $child = Person::factory()->for($user->tree)->create();
-
-    $this->actingAs($user)
-        ->post(route('persons.children.attach', $foreignFocus), ['child_id' => $child->id])
-        ->assertNotFound();
-
-    $this->assertDatabaseCount('parent_child_relations', 0);
-});
-
 test('guests are redirected to the login page from the create-child route', function () {
     $person = Person::factory()->create();
 
@@ -717,18 +681,5 @@ test('attaching a child to a pair of the same known sex is rejected and nothing 
         ->post(route('persons.children.attach', $focus), ['child_id' => $child->id, 'other_parent_id' => $otherMan->id])
         ->assertSessionHasErrors(['relation' => 'Ta osoba ma już ojca.']);
 
-    $this->assertDatabaseCount('parent_child_relations', 0);
-});
-
-test('creating a child for another users person returns not found and creates nothing', function () {
-    $user = User::factory()->create();
-    $foreignFocus = Person::factory()->for(User::factory()->create()->tree)->create();
-    $peopleBefore = Person::count();
-
-    $this->actingAs($user)
-        ->post(route('persons.children.store', $foreignFocus), ['first_name' => 'Marta'])
-        ->assertNotFound();
-
-    expect(Person::count())->toBe($peopleBefore);
     $this->assertDatabaseCount('parent_child_relations', 0);
 });

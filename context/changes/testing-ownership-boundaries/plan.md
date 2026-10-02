@@ -313,29 +313,29 @@ Brak zmian schematu i danych.
 
 #### Automated
 
-- [x] 1.1 Przed poprawką dataset ma dokładnie 5 czerwonych przypadków (wariant „pusta treść”), 5 zielonych
-- [x] 1.2 Po poprawce dataset 5 tras jest zielony (10 przypadków)
-- [x] 1.3 Istniejące testy tras zagnieżdżonych przechodzą (happy path i błędy walidacji własnej osoby)
-- [x] 1.4 Pint bez zmian po formatowaniu
-- [x] 1.5 Larastan bez błędów
+- [x] 1.1 Przed poprawką dataset ma dokładnie 5 czerwonych przypadków (wariant „pusta treść”), 5 zielonych — 8d16922
+- [x] 1.2 Po poprawce dataset 5 tras jest zielony (10 przypadków) — 8d16922
+- [x] 1.3 Istniejące testy tras zagnieżdżonych przechodzą (happy path i błędy walidacji własnej osoby) — 8d16922
+- [x] 1.4 Pint bez zmian po formatowaniu — 8d16922
+- [x] 1.5 Larastan bez błędów — 8d16922
 
 #### Manual
 
-- [x] 1.6 Dodanie rodzica, dziecka i małżonka własnej osobie z UI działa, błąd walidacji pokazuje się przy polu
+- [x] 1.6 Dodanie rodzica, dziecka i małżonka własnej osobie z UI działa, błąd walidacji pokazuje się przy polu — 8d16922
 
 ### Phase 2: Dataset wszystkich 19 tras i strażnik kompletności
 
 #### Automated
 
-- [ ] 2.1 Dataset 19 tras zielony (ok. 29 przypadków), strażnik zielony
-- [ ] 2.2 Cały katalog Feature zielony po usunięciu duplikatów
-- [ ] 2.3 Pint bez zmian po formatowaniu
+- [x] 2.1 Dataset 19 tras zielony (ok. 29 przypadków), strażnik zielony
+- [x] 2.2 Cały katalog Feature zielony po usunięciu duplikatów
+- [x] 2.3 Pint bez zmian po formatowaniu
 
 #### Manual
 
-- [ ] 2.4 Kontrola mutacji: usunięcie authorize() / bramki daje czerwony dataset
-- [ ] 2.5 Kontrola strażnika: dopisana trasa z parametrem wywala strażnika
-- [ ] 2.6 Lista usuniętych testów i powód zostawienia pozostałych w opisie commita
+- [x] 2.4 Kontrola mutacji: usunięcie authorize() / bramki daje czerwony dataset
+- [x] 2.5 Kontrola strażnika: dopisana trasa z parametrem wywala strażnika
+- [x] 2.6 Lista usuniętych testów i powód zostawienia pozostałych w opisie commita
 
 ### Phase 3: Granice spoza adresu — ?person=, tree_id w treści, passkey
 

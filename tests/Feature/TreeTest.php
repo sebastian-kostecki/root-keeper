@@ -19,17 +19,6 @@ test('setting the proband stores root_person_id and flashes a toast', function (
     expect($user->tree->fresh()->root_person_id)->toBe($person->id);
 });
 
-test('setting the proband for a person from another users tree returns not found and changes nothing', function () {
-    $user = User::factory()->create();
-    $otherUser = User::factory()->create();
-    $person = Person::factory()->for($otherUser->tree)->create();
-
-    $this->actingAs($user)->put(route('tree.root-person.update', $person))->assertNotFound();
-
-    expect($user->tree->fresh()->root_person_id)->toBeNull();
-    expect($otherUser->tree->fresh()->root_person_id)->toBeNull();
-});
-
 test('the proband action refuses a person from another tree', function () {
     $user = User::factory()->create();
     $foreign = Person::factory()->create();
@@ -139,13 +128,6 @@ test('the tree index centres the sheet on the proband', function () {
             ->component('tree/show')
             ->where('rootPersonId', $proband->id)
             ->where('sheet.focus.id', $proband->id));
-});
-
-test('the tree show page returns not found for a person from another users tree', function () {
-    $user = User::factory()->create();
-    $person = Person::factory()->for(User::factory()->create()->tree)->create();
-
-    $this->actingAs($user)->get(route('tree.show', $person))->assertNotFound();
 });
 
 test('unions are ordered marriage by date, then co-parent, then unknown, each with its children', function () {

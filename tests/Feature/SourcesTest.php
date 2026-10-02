@@ -57,14 +57,6 @@ test('the old upload page returns not found', function () {
     $this->actingAs($user)->get('/sources/create')->assertNotFound();
 });
 
-test('sources show returns not found for a source from another users tree', function () {
-    $user = User::factory()->create();
-    $otherUser = User::factory()->create();
-    $source = Source::factory()->for($otherUser->tree)->create();
-
-    $this->actingAs($user)->get(route('sources.show', $source))->assertNotFound();
-});
-
 test('sources show renders the source', function () {
     $user = User::factory()->create();
     $source = Source::factory()->for($user->tree)->withThumbnail()->create();
@@ -117,28 +109,6 @@ test('source show confirms lists the linked events with the person names and whe
         ->where('confirms.0.person.display_name', 'Jan Kowalski')
         ->where('confirms.1.event_id', $death->id)
         ->where('confirms.1.is_last_source', false));
-});
-
-test('source file returns not found for a source from another users tree', function () {
-    Storage::fake('local');
-
-    $user = User::factory()->create();
-    $otherUser = User::factory()->create();
-    $source = Source::factory()->for($otherUser->tree)->create();
-    Storage::disk('local')->put($source->path, 'content');
-
-    $this->actingAs($user)->get(route('sources.file', $source))->assertNotFound();
-});
-
-test('source thumbnail returns not found for a source from another users tree', function () {
-    Storage::fake('local');
-
-    $user = User::factory()->create();
-    $otherUser = User::factory()->create();
-    $source = Source::factory()->for($otherUser->tree)->withThumbnail()->create();
-    Storage::disk('local')->put($source->thumbnail_path, 'content');
-
-    $this->actingAs($user)->get(route('sources.thumbnail', $source))->assertNotFound();
 });
 
 test('storing a jpg creates the source, the file and its thumbnail', function () {
@@ -429,26 +399,6 @@ test('deleting an account without a tree leaves other trees sources intact', fun
     Storage::disk('local')->assertExists("sources/{$otherUser->tree->id}/keepsake.jpg");
 });
 
-test('destroy of a source from another users tree returns not found and deletes nothing', function () {
-    Storage::fake('local');
-
-    $user = User::factory()->create();
-    $otherUser = User::factory()->create();
-    $source = Source::factory()->for($otherUser->tree)->withThumbnail()->create();
-    Storage::disk('local')->put($source->path, 'original-bytes');
-    Storage::disk('local')->put($source->thumbnail_path, 'thumbnail-bytes');
-    $event = Event::factory()->for($otherUser->tree)->create();
-    $event->sources()->attach($source);
-
-    $response = $this->actingAs($user)->delete(route('sources.destroy', $source));
-
-    $response->assertNotFound();
-    expect(Source::find($source->id))->not->toBeNull();
-    expect(DB::table('event_source')->where('source_id', $source->id)->exists())->toBeTrue();
-    Storage::disk('local')->assertExists($source->path);
-    Storage::disk('local')->assertExists($source->thumbnail_path);
-});
-
 test('destroy deletes the source row, its event_source rows and both files, keeps events and persons, and redirects with a toast', function () {
     Storage::fake('local');
 
@@ -635,20 +585,6 @@ test('updating changes the kind and the description and redirects back with the 
     expect($source->entry_number)->toBe('12/1878');
     expect($source->year)->toBe(1878);
     expect($source->note)->toBe('Notatka');
-});
-
-test('updating a source from another users tree returns not found and changes nothing', function () {
-    $source = Source::factory()->for(User::factory()->create()->tree)->create(['name' => 'Cudze']);
-
-    $this->actingAs(User::factory()->create())->put(route('sources.update', $source), [
-        'kind' => 'other',
-        'name' => 'Przejęte',
-    ])->assertNotFound();
-
-    $source->refresh();
-
-    expect($source->name)->toBe('Cudze');
-    expect($source->kind)->toBe(SourceKind::MetricalRecord);
 });
 
 test('changing an akt with a stored record type or entry number to another kind without confirmation is rejected', function (array $stored) {

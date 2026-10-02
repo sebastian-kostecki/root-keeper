@@ -239,30 +239,6 @@ test('destroying a birth event through the marriage routes returns not found', f
         ->assertNotFound();
 });
 
-test('updating another trees marriage returns not found', function () {
-    $user = User::factory()->create();
-    $otherUser = User::factory()->create();
-    $personA = Person::factory()->for($otherUser->tree)->create();
-    $personB = Person::factory()->for($otherUser->tree)->create();
-    $marriage = attachMarriage($personA, $personB);
-
-    $this->actingAs($user)->put(route('marriages.update', $marriage), ['marriage' => ['year' => 1900]])
-        ->assertNotFound();
-});
-
-test('destroying another trees marriage returns not found', function () {
-    $user = User::factory()->create();
-    $otherUser = User::factory()->create();
-    $personA = Person::factory()->for($otherUser->tree)->create();
-    $personB = Person::factory()->for($otherUser->tree)->create();
-    $marriage = attachMarriage($personA, $personB);
-
-    $this->actingAs($user)->delete(route('marriages.destroy', $marriage))
-        ->assertNotFound();
-
-    $this->assertDatabaseHas('events', ['id' => $marriage->id]);
-});
-
 test('destroy removes the event, its participants and its source links, but keeps the source, and both previews stop showing it', function () {
     $user = User::factory()->create();
     $person = Person::factory()->for($user->tree)->create();
@@ -390,18 +366,6 @@ test('attach rejects a spouse from another users tree', function () {
     $this->assertDatabaseCount('events', 0);
 });
 
-test('attach returns not found for a centre person from another users tree', function () {
-    $user = User::factory()->create();
-    $foreignFocus = Person::factory()->for(User::factory()->create()->tree)->create();
-    $spouse = Person::factory()->for($user->tree)->create();
-
-    $this->actingAs($user)
-        ->post(route('persons.spouses.attach', $foreignFocus), ['spouse_id' => $spouse->id])
-        ->assertNotFound();
-
-    $this->assertDatabaseCount('events', 0);
-});
-
 test('guests are redirected to the login page from the spouse store route', function () {
     $person = Person::factory()->create();
 
@@ -435,18 +399,6 @@ test('store without a first name creates no person and no marriage', function ()
     $this->actingAs($user)
         ->post(route('persons.spouses.store', $focus), ['first_name' => ''])
         ->assertSessionHasErrors('first_name');
-
-    $this->assertDatabaseCount('people', 1);
-    expect(Event::where('type', EventType::Marriage)->count())->toBe(0);
-});
-
-test('store returns not found for a centre person from another users tree', function () {
-    $user = User::factory()->create();
-    $foreignFocus = Person::factory()->for(User::factory()->create()->tree)->create();
-
-    $this->actingAs($user)
-        ->post(route('persons.spouses.store', $foreignFocus), ['first_name' => 'Anna'])
-        ->assertNotFound();
 
     $this->assertDatabaseCount('people', 1);
     expect(Event::where('type', EventType::Marriage)->count())->toBe(0);
