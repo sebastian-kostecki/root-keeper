@@ -48,9 +48,9 @@ Każdy wiersz to osobna faza wdrożenia, która otwiera własny folder zmiany pr
 
 | # | Phase name | Goal (one line) | Risks covered | Test types | Status | Change folder |
 |---|---|---|---|---|---|---|
-| 1 | Kopia i odtworzenie | Udowodnić, że kopia obejmuje bazę i wszystkie pliki źródeł, a odtworzenie na czystej instancji przywraca kompletne dane (kolejność: decyzja autora, wywiad P1/P4) | #2 | integration + manual smoke (drill odtworzenia) | change opened | `context/changes/testing-backup-restore/` |
-| 2 | Zapis i usuwanie trafiają we właściwe dane | Udowodnić, że akcje z drzewa i modala zmieniają dokładnie wskazaną osobę lub parę, a usunięcia kasują dokładnie to, co pokazało potwierdzenie | #1, #3 | integration + unit | not started | — |
-| 3 | Granice własności i reguły relacji | Udowodnić, że cudze id (w adresie i w treści) daje 404 bez zapisu, a reguły relacji egzekwuje serwer na każdej ścieżce | #4, #5 | integration | change opened | `context/changes/testing-ownership-boundaries/` (zarchiwizowana), `context/changes/testing-relation-rules/` |
+| 1 | Kopia i odtworzenie | Udowodnić, że kopia obejmuje bazę i wszystkie pliki źródeł, a odtworzenie na czystej instancji przywraca kompletne dane (kolejność: decyzja autora, wywiad P1/P4) | #2 | integration + manual smoke (drill odtworzenia) | complete | `context/archive/2026-10-01-testing-backup-restore/` (zarchiwizowana) |
+| 2 | Zapis i usuwanie trafiają we właściwe dane | Udowodnić, że akcje z drzewa i modala zmieniają dokładnie wskazaną osobę lub parę, a usunięcia kasują dokładnie to, co pokazało potwierdzenie | #1, #3 | integration + unit | change opened | `context/changes/testing-write-delete-targets/` |
+| 3 | Granice własności i reguły relacji | Udowodnić, że cudze id (w adresie i w treści) daje 404 bez zapisu, a reguły relacji egzekwuje serwer na każdej ścieżce | #4, #5 | integration | complete | `context/archive/2026-10-02-testing-ownership-boundaries/`, `context/archive/2026-10-02-testing-relation-rules/` (zarchiwizowane) |
 | 4 | Przepływy drzewa i modala w przeglądarce | 1–2 krytyczne przepływy (np. v4 US-01: istniejący ojciec z pustego slotu) z asercją na danych, nie na wyglądzie — tylko jeśli badanie fazy 2 pokaże, że tańsze warstwy nie łapią pomyłki osoby w UI | #1 (połowa UI) | e2e | not started | — |
 
 ## 4. Stack
@@ -60,6 +60,7 @@ Każdy wiersz to osobna faza wdrożenia, która otwiera własny folder zmiany pr
 | backend integration + unit | Pest (PHPUnit) + pest-plugin-laravel | 5.2 / 13.3 | ~23 pliki, ~330 przypadków, głównie `tests/Feature`; w CI na PostgreSQL 18 |
 | frontend unit | Vitest przez `vp test` (vite-plus) | 0.3 | 7 plików, ~95 przypadków, wyłącznie czysta logika w `resources/js/lib` i `resources/js/hooks` |
 | e2e | none yet — see Phase 4 | — | kandydat: `pestphp/pest-plugin-browser` + Playwright (checked: 2026-09-30); nie jest zależnością projektu |
+| mutation testing (backend) | `pestphp/pest-plugin-mutate` (`pest --mutate`) | v5.0.2 (`composer.lock`) | ad hoc, zawężone `--class`; pokrycie `pcov`; Stryker tylko dla JS/TS — nieużywany, bo brak testów Vitest w fazach ryzyka |
 | backup / restore | spatie backup + `tests/Backup` + drill odtworzenia (§6.3) | — | zawartość kopii i odtworzenie zrzutu sprawdza `tests/Backup`; drill na serwerze według §6.3 |
 | (optional) AI-native | eksploracyjny przebieg agenta po drzewie w przeglądarce (checked: 2026-09-30) | n/a | When NOT to use: jako bramka regresji ani do oceny wyglądu (§7); tylko rekonesans przed napisaniem testu fazy 4 |
 
@@ -81,18 +82,22 @@ Profil bazy testów: `meaningful` — konfiguracja Pest i Vitest, ~30 plików te
 | frontend unit (Vitest) | local + CI (`lint`, `npm run test:js`) | required | regresje czystej logiki UI |
 | weryfikacja zawartości kopii | CI (`tests`, `tests/Backup`) | required | kopia bez plików źródeł lub bez danych |
 | drill odtworzenia na czystej instancji | ręcznie, na serwerze | required — kwartalnie i po zmianach (§6.3) | kopia, której nie da się odtworzyć |
+| testowanie mutacyjne (`pest --mutate`) | lokalnie, po fazie ryzyka | ad hoc (nie wymagane w CI) | testy, które przechodzą mimo zepsutej linii |
 | e2e na krytycznych przepływach drzewa i modala | CI on PR | required after §3 Phase 4 | UI wysyła akcję do niewłaściwej osoby |
 
 ## 6. Cookbook Patterns
 
-Jak dodać nowy test w tym projekcie. Każda podsekcja wypełnia się po zakończeniu odpowiedniej fazy wdrożenia.
+Jak dodać nowy test w tym projekcie. Każda podsekcja wypełnia się po zakończeniu odpowiedniej fazy wdrożenia (§6.6 czeka na fazę 4); §6.7 opisuje selektywną bramkę mutacyjną używaną po fazach ryzyka.
 
 ### 6.1 Test nowego endpointu (backend)
 
-- **Location**: `tests/Feature/<Domain>Test.php` (konwencja z `CLAUDE.md`: happy path + cudzy rekord = 404).
-- **Reference test**: `tests/Feature/PersonsTest.php`.
-- **Run locally**: `vendor/bin/sail artisan test --compact tests/Feature/<Domain>Test.php`.
-- Wzorzec asercji na stanie danych (właściwa osoba / para) — TBD — see §3 Phase 2.
+- **Location**: `tests/Feature/<Domain>Test.php` (konwencja z `CLAUDE.md`: happy path + cudzy rekord = 404). Testy „zapis trafia we właściwe dane” na scenie rodzinnej: `tests/Feature/WriteTargetsTest.php`; helpery `databaseRows()`, `rowDiff()`, `familyScene()` i `personPreviewUrl()` w `tests/Pest.php`.
+- **Reference test**: `tests/Feature/PersonsTest.php` (happy path + 404); wzorzec różnicy wierszy: `a tree write built from the sheet props adds exactly the expected rows and changes nothing else` (dataset 9 zapisów z drzewa) oraz `editing a person in the preview changes only that person and the birth fact in place` w `tests/Feature/WriteTargetsTest.php`; ten sam kształt dla usunięć: `tests/Feature/DeleteImpactTest.php` (§6.4).
+- **Run locally**: `vendor/bin/sail artisan test --compact tests/Feature/<Domain>Test.php`; dla wzorca różnicy: `vendor/bin/sail artisan test --compact tests/Feature/WriteTargetsTest.php tests/Feature/DeleteImpactTest.php`.
+- **Wyrocznia**: (1) zapis zmienia dokładnie wskazaną osobę lub parę, a inne osoby i potwierdzenia pozostałych faktów (`event_source`) zostają; wartości oczekiwane pochodzą z fikstury (rekordy `familyScene()`) i z planów archiwum (nowa osoba z drzewa atomowo z urodzeniem i relacją, nowy małżonek dodatkowo ze zdarzeniem małżeństwa; edycja aktualizuje zdarzenia w miejscu, nie kasuje ich — `archive/2026-09-30-fact-confirmed-by-any-source/plan.md`), nigdy z odczytu kodu zapisu. (2) Frontend nie wymyśla id: każde id w żądaniu pochodzi z propsa Inertia w chwili kliknięcia (`sheet` w drzewie, `personPreview` w modalu), a parę wybiera serwer z `?spouse=`; test buduje żądanie z propsa tak jak dialog, więc dowodzi kontraktu „prop → żądanie → baza”.
+- **Pułapki**: GET z propsem (`readInertiaProp()`) przed `$before = databaseRows()` i przed żądaniem zapisu; `Storage::fake('local')` przed `familyScene()` (scena zapisuje pliki, a `databaseRows()` czyta dysk `local`); id żądania bierz z propsa, nie z rekordów sceny wprost (inaczej test nie sprawdza łańcucha UI → serwer); klucze dodanych wierszy formułuj po treści (pary `parent_id`/`child_id`, `event_id`/`person_id`, typ zdarzenia), bo ich `id` nie są znane z góry — „usunięte” i „zmienione” po `id` rekordów sceny; porównuj całą różnicę, nie pojedyncze rekordy: lista tabel z różnicą sama dowodzi „nic poza tym” (zapisy z drzewa tylko dodają, więc `removed` i `changed` muszą być puste, a pliki bez zmian).
+- **Nowy endpoint zapisu**: (1) happy path i cudzy rekord = 404 w `<Domain>Test.php` oraz wpis w `ownershipRouteCases()` (§6.5); (2) na scenie `familyScene($user)`: GET strony z propsem, z którego UI bierze id → `$before = databaseRows()` → żądanie z `assertSessionHasNoErrors()` → `rowDiff($before, databaseRows())` porównane w całości z oczekiwaną różnicą (lista tabel + klucze wierszy + pliki); (3) przypadek brzegowy z ryzyka (np. `other_parent_id` ustawiony vs `null`, związek z nieznanym partnerem, współrodzic bez małżeństwa). Czerwony test od razu oznacza rozbieżność z wyrocznią — zatrzymaj się i zapytaj, nie przepisuj oczekiwania z kodu.
+- **Odłożone**: unit (Vitest) dla logiki dialogów (payload dziecka, filtry płci, kwalifikowalność „ożeń parę”, liczniki skutków) — odłożony, decyzja autora 2026-10-02; kontrakt pokrywa Pest na propsach.
 
 ### 6.2 Test czystej logiki frontendu
 
@@ -151,7 +156,12 @@ Krok 1 działa, bo sterownik trybu serwisowego to `file` (`APP_MAINTENANCE_DRIVE
 
 ### 6.4 Test akcji usuwającej (skutki = lista w potwierdzeniu)
 
-- TBD — see §3 Phase 2 (wzorzec: usunięty zbiór równy pokazanej liście skutków, dane innych osób nietknięte).
+- **Location**: `tests/Feature/DeleteImpactTest.php`; helpery `databaseRows()`, `rowDiff()`, `familyScene()` i `personPreviewUrl()` w `tests/Pest.php`.
+- **Reference test**: `deleting a person removes exactly what the preview lists and nothing of bystanders, spouses or sources` (osoba, lista z propsa `personPreview`) i `deleting a source detaches exactly the facts the confirmation listed and removes only its own files` (źródło, lista z propsa `confirms`); prostsze: `deleting a marriage removes only that marriage event with its participants and source links`, `deleting a parent-child relation removes only that relation and keeps both people and the other parent link`.
+- **Run locally**: `vendor/bin/sail artisan test --compact tests/Feature/DeleteImpactTest.php`.
+- **Wyrocznia**: trzy zbiory muszą być równe: (a) **fikstura** — zbiór wyprowadzony z rekordów `familyScene()` i z tego, co autor uznaje za skutek usunięcia (PRD, plany archiwum usunięć); (b) **lista w propsie potwierdzenia** — osoba: zbiory id z `personPreview` (`marriages[].id`, `parents[].relation_id` ∪ `children[].relation_id`, pary zdarzenie–źródło z `birth.sources`, `death.sources`, `marriages[].sources`), źródło: `confirms` jako zbiór (`event_id`, `person.id`, `is_last_source`), dla małżeństwa dwa wiersze (po jednym na małżonka — decyzja autora); (c) **różnica w bazie i na dysku** — `rowDiff()`: tabele z różnicą, usunięte klucze (np. `event_id:person_id`, `parent_id:child_id`) i `files.removed`. Usunięcie osoby dodatkowo zeruje `trees.root_person_id` (zmieniony wiersz, `nullOnDelete`); usunięcie źródła kasuje tylko jego własny oryginał i miniaturę, a każde zdarzenie z `is_last_source = true` zostaje bez źródeł, z `false` ma ≥ 1.
+- **Pułapki**: nie licz oczekiwanej listy tym samym zapytaniem, które ją generuje, ani nie przepisuj liczników z TSX (`delete-person-dialog.tsx`) — to tautologia: lista i usuwanie mogą się pomylić razem, a test przejdzie; oczekiwany zbiór buduj z rekordów sceny. Lista tabel z różnicą (`array_keys($diff['tables'])`) musi być dokładna, żeby zbyt szerokie usunięcie (dane współmałżonka, postronnych, cudze źródła i pliki) zaświeciło na czerwono; `Storage::fake('local')` przed sceną; GET z propsem przed `$before = databaseRows()`.
+- **Nowa akcja usuwająca**: (1) dopisz do `familyScene()` rekord, którego usunięcie ma coś skasować, i postronny rekord, który ma zostać; (2) napisz test: scena → GET potwierdzenia i odczyt listy skutków z propsa → `$before = databaseRows()` → usunięcie z `assertSessionHasNoErrors()` → `rowDiff()`; (3) zbuduj zbiór oczekiwany z fikstury i sprawdź równość z listą z propsa oraz z różnicą w bazie i na dysku; (4) uruchom bramkę mutacyjną z §6.7 na klasie akcji — usunięcie kroku kasowania ma zabić test.
 
 ### 6.5 Test własności i reguł relacji
 
@@ -186,6 +196,20 @@ Krok 1 działa, bo sterownik trybu serwisowego to `file` (`APP_MAINTENANCE_DRIVE
 ### 6.6 Test przepływu w przeglądarce
 
 - TBD — see §3 Phase 4 (wzorzec: przepływ drzewa lub modala z asercją na danych, nie na wyglądzie).
+
+**Werdykt fazy 2 (2026-10-02)**: id w żądaniach zapisu pochodzą z propsów Inertia (`sheet`, `personPreview`), a parę wybiera serwer z `?spouse=`; kontrakt „prop → żądanie → baza” pokrywa Pest (`tests/Feature/WriteTargetsTest.php`), więc tańsza warstwa łapie pomyłkę osoby. e2e uruchomić dopiero, gdy pojawi się stan id po stronie klienta albo gdy okno po `choose()` (stary `sheet` do końca wizyty) da potwierdzony błąd. Status fazy 4 w §3 bez zmian.
+
+### 6.7 Testowanie mutacyjne (bramka selektywna)
+
+Pokrycie mówi „linia została wykonana”; wynik mutacji mówi „czy test by nie przeszedł, gdybym zepsuł tę linię”. Bramka jest ad hoc, po fazie ryzyka, nie w CI (§5).
+
+- **Location**: `pest --mutate` przez Sail: `vendor/bin/sail bin pest <pliki testów> --mutate --covered-only --class='<Klasa1>,<Klasa2>' --no-cache` (wtyczka `pestphp/pest-plugin-mutate`, pokrycie przez `pcov` załadowany w Sail; opcje: `vendor/bin/sail bin pest --help`, sekcja MUTATION TESTING OPTIONS).
+- **Reference run**:
+  - usunięcia (faza 2): `vendor/bin/sail bin pest tests/Feature/DeleteImpactTest.php tests/Feature/PersonsTest.php tests/Feature/SourcesTest.php tests/Feature/MarriagesTest.php tests/Feature/ParentChildRelationsTest.php tests/Feature/EventSourcesTest.php --mutate --covered-only --class='App\Actions\Persons\DeletePerson,App\Actions\Sources\DeleteSource,App\Http\Controllers\SourceController,App\Http\Controllers\MarriageController,App\Http\Controllers\ParentChildRelationController'`
+  - zapisy (faza 3): `vendor/bin/sail bin pest tests/Feature/WriteTargetsTest.php tests/Feature/TreeTest.php tests/Feature/PersonsTest.php tests/Feature/MarriagesTest.php tests/Feature/ParentChildRelationsTest.php tests/Feature/EventSourcesTest.php --mutate --covered-only --class='App\Actions\Trees\BuildFamilySheet,App\Actions\Persons\UpdatePerson,App\Actions\Relations\UpdateMarriage,App\Actions\Relations\AttachChildToParents,App\Actions\Relations\CreateChildForParents,App\Actions\Relations\CreateSpouseForPerson,App\Actions\Relations\CreateParentForPerson,App\Actions\Relations\CreateMarriage,App\Http\Controllers\PersonChildController,App\Http\Controllers\PersonSpouseController,App\Http\Controllers\EventSourceController'`
+  - wyniki i ocena przetrwałych mutacji: sekcje „Ocena przetrwałych mutacji” w `context/changes/testing-write-delete-targets/plan.md` (fazy 2 i 3).
+- **Przebieg**: (1) testy fazy zielone; (2) `--mutate --covered-only --class=…` z nowym plikiem testów i istniejącymi plikami tej domeny (żeby nie zgłaszać mutacji, które zabija inny plik); (3) dla każdej przetrwałej mutacji pytanie „czy ta zmiana zaszkodziłaby użytkownikowi?”: tak → asercja na stanie danych z wyroczni (nie z kodu), która ją zabija; nie (mutacja równoważna lub kosmetyczna) → świadomie zignoruj i zapisz jedno zdanie uzasadnienia w planie zmiany.
+- **Pułapki**: bez `--covered-only` klasy niepokryte testami zawyżają liczbę nieprzetestowanych mutacji; komunikaty wyjątków (konkatenacje w `report()`), etykiety, toasty, kolejność prezentacji i opakowania listy (`array_values`) to mutacje kosmetyczne; nie dodawaj progu `--min` ani asercji przypinających szczegóły implementacji tylko po to, by zabić kosmetyczną mutację (taki test sam jest testem vibe); `--no-cache` po zmianie testów, inaczej wynik może pochodzić z pamięci podręcznej; `--parallel` psuje wspólną bazę `testing` — uruchamiaj serialnie; gdy przebieg jest zbyt długi (np. `BuildFamilySheet`, setki mutacji), uruchom go per klasa (jedna klasa w `--class`); Stryker mutuje tylko JS/TS, więc dla kodu PHP nie daje sygnału.
 
 ## 7. What We Deliberately Don't Test
 

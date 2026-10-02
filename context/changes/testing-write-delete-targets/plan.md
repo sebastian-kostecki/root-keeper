@@ -383,39 +383,39 @@ Zapisuje wzorzec testu w cookbooku, aby kolejne endpointy i akcje usuwające dos
 
 #### Automated
 
-- [x] 2.1 `vendor/bin/sail artisan test --compact tests/Feature/DeleteImpactTest.php` zielone
+- [x] 2.1 `vendor/bin/sail artisan test --compact tests/Feature/DeleteImpactTest.php` zielone — 51a6e6e
 - [x] 2.2 `vendor/bin/sail bin pint --dirty --format agent` bez zmian po uruchomieniu — 51a6e6e
-- [x] 2.3 Bramka mutacyjna fazy 2 (polecenie z Contract) kończy się, a mutacja `RemoveMethodCall` w `DeletePerson.php:22` jest zabita
+- [x] 2.3 Bramka mutacyjna fazy 2 (polecenie z Contract) kończy się, a mutacja `RemoveMethodCall` w `DeletePerson.php:22` jest zabita — 51a6e6e
 
 #### Manual
 
 - [x] 2.4 Każda przetrwała mutacja z bramki fazy 2 zabita asercją albo wpisana do „Ocena przetrwałych mutacji” z uzasadnieniem — 51a6e6e
-- [x] 2.5 Kontrola mutacji spoza katalogu mutatorów Pest: usunięcie kroku małżeństw w `DeletePerson::handle` → test osoby czerwony; usuwanie tylko `path` (bez miniatury) w `DeleteSource::handle` → test źródła czerwony; `confirms` tylko dla pierwszego uczestnika zdarzenia w `SourceController::show` → test źródła czerwony; każda mutacja cofnięta
+- [x] 2.5 Kontrola mutacji spoza katalogu mutatorów Pest: usunięcie kroku małżeństw w `DeletePerson::handle` → test osoby czerwony; usuwanie tylko `path` (bez miniatury) w `DeleteSource::handle` → test źródła czerwony; `confirms` tylko dla pierwszego uczestnika zdarzenia w `SourceController::show` → test źródła czerwony; każda mutacja cofnięta — 51a6e6e
 - [x] 2.6 Oczekiwane zbiory w testach zbudowane z rekordów sceny, nie z zapytań do bazy ani wywołań kodu produkcyjnego (przegląd kodu) — 51a6e6e
 
 ### Phase 3: Zapisy trafiają we wskazaną osobę lub parę (ryzyko #1)
 
 #### Automated
 
-- [x] 3.1 `vendor/bin/sail artisan test --compact tests/Feature/WriteTargetsTest.php` zielone (dataset wyboru pary, 9 zapisów z drzewa, 4 zapisy z modala)
-- [x] 3.2 `vendor/bin/sail bin pint --dirty --format agent` bez zmian po uruchomieniu
-- [x] 3.3 Bramka mutacyjna fazy 3 (polecenie z Contract) kończy się
+- [x] 3.1 `vendor/bin/sail artisan test --compact tests/Feature/WriteTargetsTest.php` zielone (dataset wyboru pary, 9 zapisów z drzewa, 4 zapisy z modala) — 2c91bb7
+- [x] 3.2 `vendor/bin/sail bin pint --dirty --format agent` bez zmian po uruchomieniu — 2c91bb7
+- [x] 3.3 Bramka mutacyjna fazy 3 (polecenie z Contract) kończy się — 2c91bb7
 
 #### Manual
 
-- [x] 3.4 Każda przetrwała mutacja z bramki fazy 3 zabita asercją albo wpisana do „Ocena przetrwałych mutacji” z uzasadnieniem
-- [x] 3.5 Kontrola mutacji spoza katalogu mutatorów Pest: `BuildFamilySheet` zawsze wybierający pierwszy związek → przypadki wyboru pary i 1/3/6/7 czerwone; `UpdatePerson` usuwający i tworzący urodzenie od nowa zamiast aktualizacji w miejscu → przypadek 10 czerwony; `detach` bez źródła (wszystkie powiązania zdarzenia) w `EventSourceController::destroy` → przypadek 13 czerwony; każda mutacja cofnięta
-- [x] 3.6 Żądania w datasetach budowane z wartości propsa `sheet` / `personPreview`, nie z rekordów sceny wprost (przegląd kodu)
+- [x] 3.4 Każda przetrwała mutacja z bramki fazy 3 zabita asercją albo wpisana do „Ocena przetrwałych mutacji” z uzasadnieniem — 2c91bb7
+- [x] 3.5 Kontrola mutacji spoza katalogu mutatorów Pest: `BuildFamilySheet` zawsze wybierający pierwszy związek → przypadki wyboru pary i 1/3/6/7 czerwone; `UpdatePerson` usuwający i tworzący urodzenie od nowa zamiast aktualizacji w miejscu → przypadek 10 czerwony; `detach` bez źródła (wszystkie powiązania zdarzenia) w `EventSourceController::destroy` → przypadek 13 czerwony; każda mutacja cofnięta — 2c91bb7
+- [x] 3.6 Żądania w datasetach budowane z wartości propsa `sheet` / `personPreview`, nie z rekordów sceny wprost (przegląd kodu) — 2c91bb7
 
 ### Phase 4: Cookbook i werdykt dla fazy 4
 
 #### Automated
 
-- [ ] 4.1 `grep -n "TBD — see §3 Phase 2" context/foundation/test-plan.md` nic nie zwraca
-- [ ] 4.2 `grep -n "pest --mutate" context/foundation/test-plan.md` zwraca wpisy w §4, §5 i §6.7
-- [ ] 4.3 `vendor/bin/sail artisan test --compact tests/Feature/DeleteImpactTest.php tests/Feature/WriteTargetsTest.php` zielone
+- [x] 4.1 `grep -n "TBD — see §3 Phase 2" context/foundation/test-plan.md` nic nie zwraca
+- [x] 4.2 `grep -n "pest --mutate" context/foundation/test-plan.md` zwraca wpisy w §4, §5 i §6.7
+- [x] 4.3 `vendor/bin/sail artisan test --compact tests/Feature/DeleteImpactTest.php tests/Feature/WriteTargetsTest.php` zielone
 
 #### Manual
 
-- [ ] 4.4 Wzorce §6.1 i §6.4 pozwalają napisać test nowej akcji bez czytania tego planu (przegląd przez autora)
-- [ ] 4.5 Werdykt w §6.6 zgadza się z research i nie zmienia statusu fazy 4 w §3
+- [x] 4.4 Wzorce §6.1 i §6.4 pozwalają napisać test nowej akcji bez czytania tego planu (przegląd przez autora)
+- [x] 4.5 Werdykt w §6.6 zgadza się z research i nie zmienia statusu fazy 4 w §3
