@@ -49,7 +49,7 @@ Każdy wiersz to osobna faza wdrożenia, która otwiera własny folder zmiany pr
 | # | Phase name | Goal (one line) | Risks covered | Test types | Status | Change folder |
 |---|---|---|---|---|---|---|
 | 1 | Kopia i odtworzenie | Udowodnić, że kopia obejmuje bazę i wszystkie pliki źródeł, a odtworzenie na czystej instancji przywraca kompletne dane (kolejność: decyzja autora, wywiad P1/P4) | #2 | integration + manual smoke (drill odtworzenia) | complete | `context/archive/2026-10-01-testing-backup-restore/` (zarchiwizowana) |
-| 2 | Zapis i usuwanie trafiają we właściwe dane | Udowodnić, że akcje z drzewa i modala zmieniają dokładnie wskazaną osobę lub parę, a usunięcia kasują dokładnie to, co pokazało potwierdzenie | #1, #3 | integration + unit | change opened | `context/changes/testing-write-delete-targets/` |
+| 2 | Zapis i usuwanie trafiają we właściwe dane | Udowodnić, że akcje z drzewa i modala zmieniają dokładnie wskazaną osobę lub parę, a usunięcia kasują dokładnie to, co pokazało potwierdzenie | #1, #3 | integration + unit | complete | `context/archive/2026-10-02-testing-write-delete-targets/` (zarchiwizowana) |
 | 3 | Granice własności i reguły relacji | Udowodnić, że cudze id (w adresie i w treści) daje 404 bez zapisu, a reguły relacji egzekwuje serwer na każdej ścieżce | #4, #5 | integration | complete | `context/archive/2026-10-02-testing-ownership-boundaries/`, `context/archive/2026-10-02-testing-relation-rules/` (zarchiwizowane) |
 | 4 | Przepływy drzewa i modala w przeglądarce | 1–2 krytyczne przepływy (np. v4 US-01: istniejący ojciec z pustego slotu) z asercją na danych, nie na wyglądzie — tylko jeśli badanie fazy 2 pokaże, że tańsze warstwy nie łapią pomyłki osoby w UI | #1 (połowa UI) | e2e | not started | — |
 
