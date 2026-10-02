@@ -1,10 +1,10 @@
 ---
 change_id: testing-write-delete-targets
 title: Testing write delete targets
-status: implemented
+status: archived
 created: 2026-10-02
 updated: 2026-10-02
-archived_at: null
+archived_at: 2026-10-02T14:02:57Z
 ---
 
 ## Notes
