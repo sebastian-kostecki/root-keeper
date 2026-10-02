@@ -5,6 +5,8 @@ use App\Enums\ParticipantRole;
 use App\Models\Event;
 use App\Models\ParentChildRelation;
 use App\Models\Person;
+use App\Models\Source;
+use App\Models\User;
 use Illuminate\Foundation\Testing\DatabaseTruncation;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -136,4 +138,186 @@ function ownershipSnapshot(): array
     sort($files);
 
     return ['tables' => $digests, 'files' => $files];
+}
+
+/**
+ * Dump of every row of every `public` table (except `migrations`) and of the `local` disk, to feed `rowDiff()`.
+ * Rows are keyed by `id`; tables without an `id` column are keyed by the canonical content of the row.
+ * Call `Storage::fake('local')` first.
+ *
+ * @return array{tables: array<string, array<int|string, array<string, mixed>>>, files: list<string>}
+ */
+function databaseRows(): array
+{
+    $tables = DB::table('information_schema.tables')
+        ->where('table_schema', 'public')
+        ->where('table_type', 'BASE TABLE')
+        ->where('table_name', '!=', 'migrations')
+        ->orderBy('table_name')
+        ->pluck('table_name')
+        ->all();
+
+    $dump = [];
+
+    foreach ($tables as $table) {
+        $dump[$table] = [];
+
+        foreach (DB::select("select to_jsonb(t) as row from \"{$table}\" t") as $record) {
+            /** @var array<string, mixed> $row */
+            $row = json_decode($record->row, true, flags: JSON_THROW_ON_ERROR);
+
+            if (array_key_exists('id', $row)) {
+                $key = $row['id'];
+            } else {
+                ksort($row);
+                $key = json_encode($row, JSON_THROW_ON_ERROR);
+            }
+
+            $dump[$table][$key] = $row;
+        }
+
+        ksort($dump[$table]);
+    }
+
+    $files = Storage::disk('local')->allFiles();
+    sort($files);
+
+    return ['tables' => $dump, 'files' => $files];
+}
+
+/**
+ * What changed between two `databaseRows()` dumps. Tables with no difference are omitted, so the
+ * key list of `tables` alone proves "nothing else changed". Rows are ordered by `id` (or content key).
+ *
+ * @param  array{tables: array<string, array<int|string, array<string, mixed>>>, files: list<string>}  $before
+ * @param  array{tables: array<string, array<int|string, array<string, mixed>>>, files: list<string>}  $after
+ * @return array{tables: array<string, array{removed: list<array<string, mixed>>, added: list<array<string, mixed>>, changed: list<array{before: array<string, mixed>, after: array<string, mixed>}>}>, files: array{removed: list<string>, added: list<string>}}
+ */
+function rowDiff(array $before, array $after): array
+{
+    $tableNames = array_unique([...array_keys($before['tables']), ...array_keys($after['tables'])]);
+    sort($tableNames);
+
+    $tables = [];
+
+    foreach ($tableNames as $table) {
+        $rowsBefore = $before['tables'][$table] ?? [];
+        $rowsAfter = $after['tables'][$table] ?? [];
+
+        $keys = array_unique([...array_keys($rowsBefore), ...array_keys($rowsAfter)]);
+        sort($keys);
+
+        $removed = [];
+        $added = [];
+        $changed = [];
+
+        foreach ($keys as $key) {
+            if (! array_key_exists($key, $rowsAfter)) {
+                $removed[] = $rowsBefore[$key];
+            } elseif (! array_key_exists($key, $rowsBefore)) {
+                $added[] = $rowsAfter[$key];
+            } elseif ($rowsBefore[$key] != $rowsAfter[$key]) {
+                $changed[] = ['before' => $rowsBefore[$key], 'after' => $rowsAfter[$key]];
+            }
+        }
+
+        if ($removed !== [] || $added !== [] || $changed !== []) {
+            $tables[$table] = ['removed' => $removed, 'added' => $added, 'changed' => $changed];
+        }
+    }
+
+    return [
+        'tables' => $tables,
+        'files' => [
+            'removed' => array_values(array_diff($before['files'], $after['files'])),
+            'added' => array_values(array_diff($after['files'], $before['files'])),
+        ],
+    ];
+}
+
+/**
+ * Build one family in the user's tree, with several marriages, a co-parent, shared sources and bystanders,
+ * and put the files of every source (original and thumbnail) on the `local` disk. Call `Storage::fake('local')` first.
+ *
+ * Returned records:
+ * - people: `focus` (male, tree proband), `focusFather`, `focusMother` (his parents, not married), `wifeA`, `wifeB`
+ *   (no parents), `coParent` (no marriage), `childA` (focus+wifeA), `childB` (focus+wifeB), `childC` (focus+coParent),
+ *   `childUnknown` (only focus), `bystander`, `bystanderSpouse` (married, with `bystanderChild`), `loneMan`, `loneWoman`
+ *   (no relations).
+ * - events: `focusBirth`, `focusDeath`, `marriageA` (1880), `marriageB` (1900), `wifeABirth`, `bystanderBirth`,
+ *   `bystanderMarriage`.
+ * - sources: `sourceShared` (focusBirth, marriageA, bystanderBirth), `sourceOther` (marriageA, wifeABirth),
+ *   `sourceBystander` (bystanderMarriage only).
+ *
+ * @return array<string, Person|Event|Source>
+ */
+function familyScene(User $user): array
+{
+    $tree = $user->tree;
+
+    $person = fn (string $gender): Person => Person::factory()->for($tree)->{$gender}()->create();
+
+    $focus = $person('male');
+    $tree->update(['root_person_id' => $focus->id]);
+
+    $focusFather = $person('male');
+    $focusMother = $person('female');
+    $wifeA = $person('female');
+    $wifeB = $person('female');
+    $coParent = $person('female');
+    $childA = $person('male');
+    $childB = $person('female');
+    $childC = $person('male');
+    $childUnknown = $person('female');
+    $bystander = $person('male');
+    $bystanderSpouse = $person('female');
+    $bystanderChild = $person('male');
+    $loneMan = $person('male');
+    $loneWoman = $person('female');
+
+    attachBirth($focus, 1850, 3, 14);
+    attachDeath($focus, 1920);
+    attachBirth($wifeA, 1855, 6, 2);
+    attachBirth($bystander, 1860, 1, 9);
+
+    $marriageA = attachMarriage($focus, $wifeA, 1880);
+    $marriageB = attachMarriage($focus, $wifeB, 1900);
+    $bystanderMarriage = attachMarriage($bystander, $bystanderSpouse, 1885);
+
+    foreach ([[$focusFather, $focus], [$focusMother, $focus],
+        [$focus, $childA], [$wifeA, $childA],
+        [$focus, $childB], [$wifeB, $childB],
+        [$focus, $childC], [$coParent, $childC],
+        [$focus, $childUnknown],
+        [$bystander, $bystanderChild], [$bystanderSpouse, $bystanderChild]] as [$parent, $child]) {
+        linkParent($parent, $child);
+    }
+
+    $birthOf = fn (Person $subject): Event => $subject->events()->where('type', EventType::Birth)->firstOrFail();
+
+    $focusBirth = $birthOf($focus);
+    $focusDeath = $focus->events()->where('type', EventType::Death)->firstOrFail();
+    $wifeABirth = $birthOf($wifeA);
+    $bystanderBirth = $birthOf($bystander);
+
+    $sourceShared = Source::factory()->for($tree)->withThumbnail()->create();
+    $sourceOther = Source::factory()->for($tree)->withThumbnail()->create();
+    $sourceBystander = Source::factory()->for($tree)->withThumbnail()->create();
+
+    foreach ([$sourceShared, $sourceOther, $sourceBystander] as $source) {
+        Storage::disk('local')->put($source->path, 'original-bytes');
+        Storage::disk('local')->put($source->thumbnail_path, 'thumbnail-bytes');
+    }
+
+    $sourceShared->events()->attach([$focusBirth->id, $marriageA->id, $bystanderBirth->id]);
+    $sourceOther->events()->attach([$marriageA->id, $wifeABirth->id]);
+    $sourceBystander->events()->attach([$bystanderMarriage->id]);
+
+    return compact(
+        'focus', 'focusFather', 'focusMother', 'wifeA', 'wifeB', 'coParent',
+        'childA', 'childB', 'childC', 'childUnknown',
+        'bystander', 'bystanderSpouse', 'bystanderChild', 'loneMan', 'loneWoman',
+        'focusBirth', 'focusDeath', 'marriageA', 'marriageB', 'wifeABirth', 'bystanderBirth', 'bystanderMarriage',
+        'sourceShared', 'sourceOther', 'sourceBystander',
+    );
 }
