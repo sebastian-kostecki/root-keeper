@@ -20,7 +20,7 @@ class ParentChildRelationStoreRequest extends FormRequest
         return [
             'parent_id' => ['required', 'integer', Rule::exists('people', 'id')->where('tree_id', $this->user()->tree->id)],
             'child_id' => ['required', 'integer', 'different:parent_id', Rule::exists('people', 'id')->where('tree_id', $this->user()->tree->id)],
-            'role' => ['nullable', Rule::in(['father', 'mother', 'parent'])],
+            'role' => ['required', Rule::in(['father', 'mother', 'parent'])],
         ];
     }
 

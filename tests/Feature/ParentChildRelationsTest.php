@@ -3,6 +3,7 @@
 use App\Models\ParentChildRelation;
 use App\Models\Person;
 use App\Models\User;
+use Illuminate\Support\Facades\Storage;
 
 test('guests are redirected to the login page from parent-child-relations routes', function () {
     $relation = ParentChildRelation::factory()->create();
@@ -18,7 +19,7 @@ test('adding a relation creates the row with the tree id, redirects back and fla
 
     $response = $this->from(route('persons.index'))
         ->actingAs($user)
-        ->post(route('parent-child-relations.store'), ['parent_id' => $parent->id, 'child_id' => $child->id]);
+        ->post(route('parent-child-relations.store'), ['parent_id' => $parent->id, 'child_id' => $child->id, 'role' => 'parent']);
 
     $response->assertRedirect(route('persons.index'));
     $response->assertSessionHas('inertia.flash_data.toast', ['type' => 'success', 'message' => 'Dodano relację']);
@@ -30,6 +31,20 @@ test('adding a relation creates the row with the tree id, redirects back and fla
     ]);
 });
 
+test('a relation without a role is rejected on role and writes nothing', function () {
+    Storage::fake('local');
+    $user = User::factory()->create();
+    $parent = Person::factory()->for($user->tree)->create();
+    $child = Person::factory()->for($user->tree)->create();
+    $before = ownershipSnapshot();
+
+    $response = $this->actingAs($user)
+        ->post(route('parent-child-relations.store'), ['parent_id' => $parent->id, 'child_id' => $child->id]);
+
+    $response->assertSessionHasErrors(['role' => 'Pole rola jest wymagane.']);
+    expect(ownershipSnapshot())->toBe($before);
+});
+
 test('a child may have two parents but a third is rejected and nothing is created', function () {
     $user = User::factory()->create();
     $parentOne = Person::factory()->for($user->tree)->create();
@@ -37,10 +52,10 @@ test('a child may have two parents but a third is rejected and nothing is create
     $parentThree = Person::factory()->for($user->tree)->create();
     $child = Person::factory()->for($user->tree)->create();
 
-    $this->actingAs($user)->post(route('parent-child-relations.store'), ['parent_id' => $parentOne->id, 'child_id' => $child->id]);
-    $this->actingAs($user)->post(route('parent-child-relations.store'), ['parent_id' => $parentTwo->id, 'child_id' => $child->id]);
+    $this->actingAs($user)->post(route('parent-child-relations.store'), ['parent_id' => $parentOne->id, 'child_id' => $child->id, 'role' => 'parent']);
+    $this->actingAs($user)->post(route('parent-child-relations.store'), ['parent_id' => $parentTwo->id, 'child_id' => $child->id, 'role' => 'parent']);
 
-    $response = $this->actingAs($user)->post(route('parent-child-relations.store'), ['parent_id' => $parentThree->id, 'child_id' => $child->id]);
+    $response = $this->actingAs($user)->post(route('parent-child-relations.store'), ['parent_id' => $parentThree->id, 'child_id' => $child->id, 'role' => 'parent']);
 
     $response->assertSessionHasErrors('relation');
     $this->assertDatabaseCount('parent_child_relations', 2);
@@ -50,7 +65,7 @@ test('linking a person to themselves is rejected on child_id', function () {
     $user = User::factory()->create();
     $person = Person::factory()->for($user->tree)->create();
 
-    $response = $this->actingAs($user)->post(route('parent-child-relations.store'), ['parent_id' => $person->id, 'child_id' => $person->id]);
+    $response = $this->actingAs($user)->post(route('parent-child-relations.store'), ['parent_id' => $person->id, 'child_id' => $person->id, 'role' => 'parent']);
 
     $response->assertSessionHasErrors('child_id');
     $this->assertDatabaseCount('parent_child_relations', 0);
@@ -61,8 +76,8 @@ test('linking the same pair twice is rejected and one row remains', function () 
     $parent = Person::factory()->for($user->tree)->create();
     $child = Person::factory()->for($user->tree)->create();
 
-    $this->actingAs($user)->post(route('parent-child-relations.store'), ['parent_id' => $parent->id, 'child_id' => $child->id]);
-    $response = $this->actingAs($user)->post(route('parent-child-relations.store'), ['parent_id' => $parent->id, 'child_id' => $child->id]);
+    $this->actingAs($user)->post(route('parent-child-relations.store'), ['parent_id' => $parent->id, 'child_id' => $child->id, 'role' => 'parent']);
+    $response = $this->actingAs($user)->post(route('parent-child-relations.store'), ['parent_id' => $parent->id, 'child_id' => $child->id, 'role' => 'parent']);
 
     $response->assertSessionHasErrors('relation');
     $this->assertDatabaseCount('parent_child_relations', 1);
@@ -73,9 +88,9 @@ test('a direct cycle is rejected', function () {
     $a = Person::factory()->for($user->tree)->create();
     $b = Person::factory()->for($user->tree)->create();
 
-    $this->actingAs($user)->post(route('parent-child-relations.store'), ['parent_id' => $a->id, 'child_id' => $b->id]);
+    $this->actingAs($user)->post(route('parent-child-relations.store'), ['parent_id' => $a->id, 'child_id' => $b->id, 'role' => 'parent']);
 
-    $response = $this->actingAs($user)->post(route('parent-child-relations.store'), ['parent_id' => $b->id, 'child_id' => $a->id]);
+    $response = $this->actingAs($user)->post(route('parent-child-relations.store'), ['parent_id' => $b->id, 'child_id' => $a->id, 'role' => 'parent']);
 
     $response->assertSessionHasErrors('relation');
     $this->assertDatabaseCount('parent_child_relations', 1);
@@ -87,10 +102,10 @@ test('a deep cycle is rejected', function () {
     $b = Person::factory()->for($user->tree)->create();
     $c = Person::factory()->for($user->tree)->create();
 
-    $this->actingAs($user)->post(route('parent-child-relations.store'), ['parent_id' => $a->id, 'child_id' => $b->id]);
-    $this->actingAs($user)->post(route('parent-child-relations.store'), ['parent_id' => $b->id, 'child_id' => $c->id]);
+    $this->actingAs($user)->post(route('parent-child-relations.store'), ['parent_id' => $a->id, 'child_id' => $b->id, 'role' => 'parent']);
+    $this->actingAs($user)->post(route('parent-child-relations.store'), ['parent_id' => $b->id, 'child_id' => $c->id, 'role' => 'parent']);
 
-    $response = $this->actingAs($user)->post(route('parent-child-relations.store'), ['parent_id' => $c->id, 'child_id' => $a->id]);
+    $response = $this->actingAs($user)->post(route('parent-child-relations.store'), ['parent_id' => $c->id, 'child_id' => $a->id, 'role' => 'parent']);
 
     $response->assertSessionHasErrors('relation');
     $this->assertDatabaseCount('parent_child_relations', 2);
@@ -102,10 +117,10 @@ test('adding a non-cyclic relation across generations is accepted', function () 
     $b = Person::factory()->for($user->tree)->create();
     $c = Person::factory()->for($user->tree)->create();
 
-    $this->actingAs($user)->post(route('parent-child-relations.store'), ['parent_id' => $a->id, 'child_id' => $b->id]);
-    $this->actingAs($user)->post(route('parent-child-relations.store'), ['parent_id' => $b->id, 'child_id' => $c->id]);
+    $this->actingAs($user)->post(route('parent-child-relations.store'), ['parent_id' => $a->id, 'child_id' => $b->id, 'role' => 'parent']);
+    $this->actingAs($user)->post(route('parent-child-relations.store'), ['parent_id' => $b->id, 'child_id' => $c->id, 'role' => 'parent']);
 
-    $response = $this->actingAs($user)->post(route('parent-child-relations.store'), ['parent_id' => $a->id, 'child_id' => $c->id]);
+    $response = $this->actingAs($user)->post(route('parent-child-relations.store'), ['parent_id' => $a->id, 'child_id' => $c->id, 'role' => 'parent']);
 
     $response->assertSessionDoesntHaveErrors('relation');
     $this->assertDatabaseCount('parent_child_relations', 3);
@@ -118,12 +133,12 @@ test('a parent_id or child_id from another tree fails validation and creates not
     $ownPerson = Person::factory()->for($user->tree)->create();
     $foreignPerson = Person::factory()->for($otherUser->tree)->create();
 
-    $response = $this->actingAs($user)->post(route('parent-child-relations.store'), ['parent_id' => $foreignPerson->id, 'child_id' => $ownPerson->id]);
+    $response = $this->actingAs($user)->post(route('parent-child-relations.store'), ['parent_id' => $foreignPerson->id, 'child_id' => $ownPerson->id, 'role' => 'parent']);
 
     $response->assertSessionHasErrors('parent_id');
     $this->assertDatabaseCount('parent_child_relations', 0);
 
-    $response = $this->actingAs($user)->post(route('parent-child-relations.store'), ['parent_id' => $ownPerson->id, 'child_id' => $foreignPerson->id]);
+    $response = $this->actingAs($user)->post(route('parent-child-relations.store'), ['parent_id' => $ownPerson->id, 'child_id' => $foreignPerson->id, 'role' => 'parent']);
 
     $response->assertSessionHasErrors('child_id');
     $this->assertDatabaseCount('parent_child_relations', 0);
@@ -231,7 +246,7 @@ test('a child cannot get a second father or a second mother', function (string $
     $child = Person::factory()->for($user->tree)->create();
     linkParent($first, $child);
 
-    $response = $this->actingAs($user)->post(route('parent-child-relations.store'), ['parent_id' => $second->id, 'child_id' => $child->id]);
+    $response = $this->actingAs($user)->post(route('parent-child-relations.store'), ['parent_id' => $second->id, 'child_id' => $child->id, 'role' => 'parent']);
 
     $response->assertSessionHasErrors(['relation' => $message]);
     $this->assertDatabaseCount('parent_child_relations', 1);
@@ -249,11 +264,11 @@ test('an unknown-sex parent never conflicts with a known-sex parent', function (
     $childTwo = Person::factory()->for($user->tree)->create();
 
     linkParent($unknown, $childOne);
-    $this->actingAs($user)->post(route('parent-child-relations.store'), ['parent_id' => $man->id, 'child_id' => $childOne->id])
+    $this->actingAs($user)->post(route('parent-child-relations.store'), ['parent_id' => $man->id, 'child_id' => $childOne->id, 'role' => 'parent'])
         ->assertSessionHasNoErrors();
 
     linkParent($otherMan, $childTwo);
-    $this->actingAs($user)->post(route('parent-child-relations.store'), ['parent_id' => $unknown->id, 'child_id' => $childTwo->id])
+    $this->actingAs($user)->post(route('parent-child-relations.store'), ['parent_id' => $unknown->id, 'child_id' => $childTwo->id, 'role' => 'parent'])
         ->assertSessionHasNoErrors();
 
     $this->assertDatabaseCount('parent_child_relations', 4);
