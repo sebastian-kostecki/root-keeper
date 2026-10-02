@@ -285,27 +285,27 @@ Brak migracji. Istniejące pary tej samej płci zostają; strażnik nie blokuje 
 
 #### Automated
 
-- [x] 2.1 Pierwszy test odrzucenia był czerwony przed zmianą akcji i jest zielony po niej
-- [x] 2.2 `vendor/bin/sail artisan test --compact tests/Feature/PersonsTest.php` zielone
-- [x] 2.3 `vendor/bin/sail composer types:check` (Larastan) bez nowych błędów
-- [x] 2.4 `vendor/bin/sail bin pint --dirty --format agent` bez zmian po uruchomieniu
+- [x] 2.1 Pierwszy test odrzucenia był czerwony przed zmianą akcji i jest zielony po niej — b4ff45f
+- [x] 2.2 `vendor/bin/sail artisan test --compact tests/Feature/PersonsTest.php` zielone — b4ff45f
+- [x] 2.3 `vendor/bin/sail composer types:check` (Larastan) bez nowych błędów — b4ff45f
+- [x] 2.4 `vendor/bin/sail bin pint --dirty --format agent` bez zmian po uruchomieniu — b4ff45f
 
 #### Manual
 
-- [x] 2.5 W modalu osoby zmiana płci ojca na „Mężczyzna” u drugiego rodzica dziecka pokazuje komunikat pod polem „Płeć”, a płeć się nie zmienia
-- [x] 2.6 Ręczna kontrola mutacji: zakomentowanie warunku strażnika czerwieni test odrzucenia
+- [x] 2.5 W modalu osoby zmiana płci ojca na „Mężczyzna” u drugiego rodzica dziecka pokazuje komunikat pod polem „Płeć”, a płeć się nie zmienia — b4ff45f
+- [x] 2.6 Ręczna kontrola mutacji: zakomentowanie warunku strażnika czerwieni test odrzucenia — b4ff45f
 
 ### Phase 3: Luki macierzy i zaostrzone asercje
 
 #### Automated
 
-- [ ] 3.1 `vendor/bin/sail artisan test --compact tests/Feature/ParentChildRelationsTest.php` zielone
-- [ ] 3.2 `grep -c "assertSessionHasErrors('relation')" tests/Feature/ParentChildRelationsTest.php` zwraca 0
-- [ ] 3.3 `vendor/bin/sail bin pint --dirty --format agent` bez zmian po uruchomieniu
+- [x] 3.1 `vendor/bin/sail artisan test --compact tests/Feature/ParentChildRelationsTest.php` zielone
+- [x] 3.2 `grep -c "assertSessionHasErrors('relation')" tests/Feature/ParentChildRelationsTest.php` zwraca 0
+- [x] 3.3 `vendor/bin/sail bin pint --dirty --format agent` bez zmian po uruchomieniu
 
 #### Manual
 
-- [ ] 3.4 Ręczna kontrola mutacji: usunięcie warunku cyklu (:38) w `CreateParentChildRelation` czerwieni testy cyklu na `parent-child-relations.store` i `persons.children.attach` (oba warianty)
+- [x] 3.4 Ręczna kontrola mutacji: usunięcie warunku cyklu (:38) w `CreateParentChildRelation` czerwieni testy cyklu na `parent-child-relations.store` i `persons.children.attach` (oba warianty)
 
 ### Phase 4: Cookbook §6.5 i stan §3
 

@@ -46,6 +46,7 @@ test('a relation without a role is rejected on role and writes nothing', functio
 });
 
 test('a child may have two parents but a third is rejected and nothing is created', function () {
+    Storage::fake('local');
     $user = User::factory()->create();
     $parentOne = Person::factory()->for($user->tree)->create();
     $parentTwo = Person::factory()->for($user->tree)->create();
@@ -55,10 +56,13 @@ test('a child may have two parents but a third is rejected and nothing is create
     $this->actingAs($user)->post(route('parent-child-relations.store'), ['parent_id' => $parentOne->id, 'child_id' => $child->id, 'role' => 'parent']);
     $this->actingAs($user)->post(route('parent-child-relations.store'), ['parent_id' => $parentTwo->id, 'child_id' => $child->id, 'role' => 'parent']);
 
+    $before = ownershipSnapshot();
+
     $response = $this->actingAs($user)->post(route('parent-child-relations.store'), ['parent_id' => $parentThree->id, 'child_id' => $child->id, 'role' => 'parent']);
 
-    $response->assertSessionHasErrors('relation');
-    $this->assertDatabaseCount('parent_child_relations', 2);
+    $response->assertSessionHasErrors(['relation' => 'Ta osoba ma już dwoje rodziców.']);
+
+    expect(ownershipSnapshot())->toBe($before);
 });
 
 test('linking a person to themselves is rejected on child_id', function () {
@@ -72,31 +76,40 @@ test('linking a person to themselves is rejected on child_id', function () {
 });
 
 test('linking the same pair twice is rejected and one row remains', function () {
+    Storage::fake('local');
     $user = User::factory()->create();
     $parent = Person::factory()->for($user->tree)->create();
     $child = Person::factory()->for($user->tree)->create();
 
     $this->actingAs($user)->post(route('parent-child-relations.store'), ['parent_id' => $parent->id, 'child_id' => $child->id, 'role' => 'parent']);
+    $before = ownershipSnapshot();
+
     $response = $this->actingAs($user)->post(route('parent-child-relations.store'), ['parent_id' => $parent->id, 'child_id' => $child->id, 'role' => 'parent']);
 
-    $response->assertSessionHasErrors('relation');
-    $this->assertDatabaseCount('parent_child_relations', 1);
+    $response->assertSessionHasErrors(['relation' => 'Ta relacja już istnieje.']);
+
+    expect(ownershipSnapshot())->toBe($before);
 });
 
 test('a direct cycle is rejected', function () {
+    Storage::fake('local');
     $user = User::factory()->create();
     $a = Person::factory()->for($user->tree)->create();
     $b = Person::factory()->for($user->tree)->create();
 
     $this->actingAs($user)->post(route('parent-child-relations.store'), ['parent_id' => $a->id, 'child_id' => $b->id, 'role' => 'parent']);
 
+    $before = ownershipSnapshot();
+
     $response = $this->actingAs($user)->post(route('parent-child-relations.store'), ['parent_id' => $b->id, 'child_id' => $a->id, 'role' => 'parent']);
 
-    $response->assertSessionHasErrors('relation');
-    $this->assertDatabaseCount('parent_child_relations', 1);
+    $response->assertSessionHasErrors(['relation' => 'Ta relacja utworzyłaby cykl w drzewie.']);
+
+    expect(ownershipSnapshot())->toBe($before);
 });
 
 test('a deep cycle is rejected', function () {
+    Storage::fake('local');
     $user = User::factory()->create();
     $a = Person::factory()->for($user->tree)->create();
     $b = Person::factory()->for($user->tree)->create();
@@ -105,10 +118,13 @@ test('a deep cycle is rejected', function () {
     $this->actingAs($user)->post(route('parent-child-relations.store'), ['parent_id' => $a->id, 'child_id' => $b->id, 'role' => 'parent']);
     $this->actingAs($user)->post(route('parent-child-relations.store'), ['parent_id' => $b->id, 'child_id' => $c->id, 'role' => 'parent']);
 
+    $before = ownershipSnapshot();
+
     $response = $this->actingAs($user)->post(route('parent-child-relations.store'), ['parent_id' => $c->id, 'child_id' => $a->id, 'role' => 'parent']);
 
-    $response->assertSessionHasErrors('relation');
-    $this->assertDatabaseCount('parent_child_relations', 2);
+    $response->assertSessionHasErrors(['relation' => 'Ta relacja utworzyłaby cykl w drzewie.']);
+
+    expect(ownershipSnapshot())->toBe($before);
 });
 
 test('adding a non-cyclic relation across generations is accepted', function () {
@@ -240,16 +256,20 @@ test('two children born on the same date are ordered by name', function () {
 });
 
 test('a child cannot get a second father or a second mother', function (string $gender, string $message) {
+    Storage::fake('local');
     $user = User::factory()->create();
     $first = Person::factory()->for($user->tree)->{$gender}()->create();
     $second = Person::factory()->for($user->tree)->{$gender}()->create();
     $child = Person::factory()->for($user->tree)->create();
     linkParent($first, $child);
 
+    $before = ownershipSnapshot();
+
     $response = $this->actingAs($user)->post(route('parent-child-relations.store'), ['parent_id' => $second->id, 'child_id' => $child->id, 'role' => 'parent']);
 
     $response->assertSessionHasErrors(['relation' => $message]);
-    $this->assertDatabaseCount('parent_child_relations', 1);
+
+    expect(ownershipSnapshot())->toBe($before);
 })->with([
     'father' => ['male', 'Ta osoba ma już ojca.'],
     'mother' => ['female', 'Ta osoba ma już matkę.'],
@@ -378,16 +398,18 @@ test('a generic parent slot accepts a person without a sex', function () {
 });
 
 test('the sex of a new parent must match the slot role and nothing is created otherwise', function (string $role, ?string $gender) {
+    Storage::fake('local');
     $user = User::factory()->create();
     $child = Person::factory()->for($user->tree)->create();
-    $peopleBefore = Person::count();
+
+    $before = ownershipSnapshot();
 
     $response = $this->actingAs($user)
         ->post(route('persons.parents.store', $child), ['role' => $role, 'first_name' => 'Anna', 'gender' => $gender]);
 
     $response->assertSessionHasErrors(['gender' => 'Płeć musi pasować do miejsca na drzewie.']);
-    expect(Person::count())->toBe($peopleBefore);
-    $this->assertDatabaseCount('parent_child_relations', 0);
+
+    expect(ownershipSnapshot())->toBe($before);
 })->with([
     'father slot, woman' => ['father', 'female'],
     'father slot, unknown sex' => ['father', null],
@@ -395,32 +417,35 @@ test('the sex of a new parent must match the slot role and nothing is created ot
 ]);
 
 test('a same-sex rule failure on the relation rolls the new person back', function () {
+    Storage::fake('local');
     $user = User::factory()->create();
     $child = Person::factory()->for($user->tree)->create();
     linkParent(Person::factory()->for($user->tree)->male()->create(), $child);
-    $peopleBefore = Person::count();
+
+    $before = ownershipSnapshot();
 
     $response = $this->actingAs($user)
         ->post(route('persons.parents.store', $child), ['role' => 'parent', 'first_name' => 'Józef', 'gender' => 'male']);
 
     $response->assertSessionHasErrors(['relation' => 'Ta osoba ma już ojca.']);
-    expect(Person::count())->toBe($peopleBefore);
-    $this->assertDatabaseCount('parent_child_relations', 1);
+
+    expect(ownershipSnapshot())->toBe($before);
 });
 
 test('a child with two parents cannot get a third and the person is not created', function () {
+    Storage::fake('local');
     $user = User::factory()->create();
     $child = Person::factory()->for($user->tree)->create();
     linkParent(Person::factory()->for($user->tree)->create(), $child);
     linkParent(Person::factory()->for($user->tree)->create(), $child);
-    $peopleBefore = Person::count();
+
+    $before = ownershipSnapshot();
 
     $this->actingAs($user)
         ->post(route('persons.parents.store', $child), ['role' => 'parent', 'first_name' => 'Anna'])
-        ->assertSessionHasErrors('relation');
+        ->assertSessionHasErrors(['relation' => 'Ta osoba ma już dwoje rodziców.']);
 
-    expect(Person::count())->toBe($peopleBefore);
-    $this->assertDatabaseCount('parent_child_relations', 2);
+    expect(ownershipSnapshot())->toBe($before);
 });
 
 test('guests are redirected to the login page from the attach-child route', function () {
@@ -463,6 +488,7 @@ test('attaching a child that already has the focus as parent adds only the partn
 });
 
 test('attaching a child of both parents is rejected as an existing relation', function () {
+    Storage::fake('local');
     $user = User::factory()->create();
     $focus = Person::factory()->for($user->tree)->male()->create();
     $partner = Person::factory()->for($user->tree)->female()->create();
@@ -470,26 +496,30 @@ test('attaching a child of both parents is rejected as an existing relation', fu
     linkParent($focus, $child);
     linkParent($partner, $child);
 
+    $before = ownershipSnapshot();
+
     $this->actingAs($user)
         ->post(route('persons.children.attach', $focus), ['child_id' => $child->id, 'other_parent_id' => $partner->id])
         ->assertSessionHasErrors(['relation' => 'Ta relacja już istnieje.']);
 
-    $this->assertDatabaseCount('parent_child_relations', 2);
+    expect(ownershipSnapshot())->toBe($before);
 });
 
 test('a child with an outside parent is rejected for a pair and the first link is rolled back', function () {
+    Storage::fake('local');
     $user = User::factory()->create();
     $focus = Person::factory()->for($user->tree)->male()->create();
     $partner = Person::factory()->for($user->tree)->female()->create();
     $child = Person::factory()->for($user->tree)->create();
     linkParent(Person::factory()->for($user->tree)->create(), $child);
 
+    $before = ownershipSnapshot();
+
     $this->actingAs($user)
         ->post(route('persons.children.attach', $focus), ['child_id' => $child->id, 'other_parent_id' => $partner->id])
         ->assertSessionHasErrors(['relation' => 'Ta osoba ma już dwoje rodziców.']);
 
-    $this->assertDatabaseCount('parent_child_relations', 1);
-    $this->assertDatabaseMissing('parent_child_relations', ['parent_id' => $focus->id]);
+    expect(ownershipSnapshot())->toBe($before);
 });
 
 test('a lone parent keeps the other parent of an attached child', function () {
@@ -509,29 +539,69 @@ test('a lone parent keeps the other parent of an attached child', function () {
 });
 
 test('a lone father cannot attach a child who already has a father', function () {
+    Storage::fake('local');
     $user = User::factory()->create();
     $focus = Person::factory()->for($user->tree)->male()->create();
     $child = Person::factory()->for($user->tree)->create();
     linkParent(Person::factory()->for($user->tree)->male()->create(), $child);
 
+    $before = ownershipSnapshot();
+
     $this->actingAs($user)
         ->post(route('persons.children.attach', $focus), ['child_id' => $child->id])
         ->assertSessionHasErrors(['relation' => 'Ta osoba ma już ojca.']);
 
-    $this->assertDatabaseCount('parent_child_relations', 1);
+    expect(ownershipSnapshot())->toBe($before);
 });
 
 test('attaching the parent of the focus as its child is rejected as a cycle', function () {
+    Storage::fake('local');
     $user = User::factory()->create();
     $focus = Person::factory()->for($user->tree)->create();
     $parent = Person::factory()->for($user->tree)->create();
     linkParent($parent, $focus);
 
+    $before = ownershipSnapshot();
+
     $this->actingAs($user)
         ->post(route('persons.children.attach', $focus), ['child_id' => $parent->id])
-        ->assertSessionHasErrors('relation');
+        ->assertSessionHasErrors(['relation' => 'Ta relacja utworzyłaby cykl w drzewie.']);
 
-    $this->assertDatabaseCount('parent_child_relations', 1);
+    expect(ownershipSnapshot())->toBe($before);
+});
+
+test('attaching a child who is an ancestor of the other parent is rejected as a cycle and the first link is rolled back', function () {
+    Storage::fake('local');
+    $user = User::factory()->create();
+    $focus = Person::factory()->for($user->tree)->create();
+    $partner = Person::factory()->for($user->tree)->create();
+    $partnersParent = Person::factory()->for($user->tree)->create();
+    linkParent($partnersParent, $partner);
+
+    $before = ownershipSnapshot();
+
+    $this->actingAs($user)
+        ->post(route('persons.children.attach', $focus), ['child_id' => $partnersParent->id, 'other_parent_id' => $partner->id])
+        ->assertSessionHasErrors(['relation' => 'Ta relacja utworzyłaby cykl w drzewie.']);
+
+    expect(ownershipSnapshot())->toBe($before);
+});
+
+test('a lone parent cannot attach a child who already has two parents', function () {
+    Storage::fake('local');
+    $user = User::factory()->create();
+    $focus = Person::factory()->for($user->tree)->create();
+    $child = Person::factory()->for($user->tree)->create();
+    linkParent(Person::factory()->for($user->tree)->create(), $child);
+    linkParent(Person::factory()->for($user->tree)->create(), $child);
+
+    $before = ownershipSnapshot();
+
+    $this->actingAs($user)
+        ->post(route('persons.children.attach', $focus), ['child_id' => $child->id])
+        ->assertSessionHasErrors(['relation' => 'Ta osoba ma już dwoje rodziców.']);
+
+    expect(ownershipSnapshot())->toBe($before);
 });
 
 test('attaching the focus person as its own child is rejected on child_id', function () {
@@ -636,17 +706,18 @@ test('an other_parent_id from another tree fails validation and creates nothing'
 });
 
 test('a pair of the same known sex is rejected and the new person and the first link are rolled back', function () {
+    Storage::fake('local');
     $user = User::factory()->create();
     $focus = Person::factory()->for($user->tree)->male()->create();
     $otherMan = Person::factory()->for($user->tree)->male()->create();
-    $peopleBefore = Person::count();
+
+    $before = ownershipSnapshot();
 
     $this->actingAs($user)
         ->post(route('persons.children.store', $focus), ['first_name' => 'Marta', 'other_parent_id' => $otherMan->id])
         ->assertSessionHasErrors(['relation' => 'Ta osoba ma już ojca.']);
 
-    expect(Person::count())->toBe($peopleBefore);
-    $this->assertDatabaseCount('parent_child_relations', 0);
+    expect(ownershipSnapshot())->toBe($before);
 });
 
 test('the route person cannot be their own other parent when creating a child', function () {
@@ -687,14 +758,17 @@ test('the attached child cannot also be the other parent', function () {
 });
 
 test('attaching a child to a pair of the same known sex is rejected and nothing is linked', function () {
+    Storage::fake('local');
     $user = User::factory()->create();
     $focus = Person::factory()->for($user->tree)->male()->create();
     $otherMan = Person::factory()->for($user->tree)->male()->create();
     $child = Person::factory()->for($user->tree)->create();
 
+    $before = ownershipSnapshot();
+
     $this->actingAs($user)
         ->post(route('persons.children.attach', $focus), ['child_id' => $child->id, 'other_parent_id' => $otherMan->id])
         ->assertSessionHasErrors(['relation' => 'Ta osoba ma już ojca.']);
 
-    $this->assertDatabaseCount('parent_child_relations', 0);
+    expect(ownershipSnapshot())->toBe($before);
 });
