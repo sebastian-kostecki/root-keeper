@@ -6,6 +6,7 @@ use App\Models\ParentChildRelation;
 use App\Models\Person;
 use App\Models\Source;
 use App\Models\User;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Routing\Route as LaravelRoute;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
@@ -148,4 +149,61 @@ it('has a case for every controller route that carries an id in the address', fu
     $surplus = array_values(array_diff($covered, $routed));
 
     expect([$missing, $surplus])->toBe([[], []], 'missing: '.implode(', ', $missing).'; surplus: '.implode(', ', $surplus));
+});
+
+it('answers 404 and writes nothing when ?person= names another tree\'s person on a host page', function (string $route, Closure $parameters) {
+    Storage::fake('local');
+
+    $attacker = User::factory()->create();
+    $victim = User::factory()->create();
+    $records = ownershipRecords($attacker, $victim);
+
+    $before = ownershipSnapshot();
+
+    $this->actingAs($attacker)
+        ->get(personPreviewUrl($records['victimPerson'], $route, $parameters($records)))
+        ->assertNotFound();
+
+    expect(ownershipSnapshot())->toBe($before);
+})->with([
+    'tree.index' => ['tree.index', fn (array $r): array => []],
+    'tree.show (własna osoba w adresie)' => ['tree.show', fn (array $r): array => ['person' => $r['ownPerson']->id]],
+    'sources.index' => ['sources.index', fn (array $r): array => []],
+    'sources.show (własne źródło w adresie)' => ['sources.show', fn (array $r): array => ['source' => $r['ownSource']->id]],
+]);
+
+it('ignores a tree_id sent in the body and creates the person in the attacker\'s tree', function () {
+    $attacker = User::factory()->create();
+    $victim = User::factory()->create();
+    $victimPeopleBefore = $victim->tree->people()->count();
+
+    $this->actingAs($attacker)
+        ->post(route('persons.store'), ['first_name' => 'Wstrzyknięta', 'tree_id' => $victim->tree->id]);
+
+    $person = Person::where('first_name', 'Wstrzyknięta')->firstOrFail();
+
+    expect($person->tree_id)->toBe($attacker->tree->id);
+    expect($victim->tree->people()->count())->toBe($victimPeopleBefore);
+});
+
+it('ignores a tree_id sent in the body and stores the source and its file under the attacker\'s tree', function () {
+    Storage::fake('local');
+
+    $attacker = User::factory()->create();
+    $victim = User::factory()->create();
+    $victimSourcesBefore = $victim->tree->sources()->count();
+
+    $this->actingAs($attacker)
+        ->post(route('sources.store'), [
+            'kind' => 'metrical_record',
+            'file' => UploadedFile::fake()->image('akt.jpg'),
+            'tree_id' => $victim->tree->id,
+        ]);
+
+    $source = Source::firstOrFail();
+
+    expect($source->tree_id)->toBe($attacker->tree->id);
+    expect($victim->tree->sources()->count())->toBe($victimSourcesBefore);
+    expect($source->path)->toStartWith("sources/{$attacker->tree->id}/");
+    Storage::disk('local')->assertExists($source->path);
 });

@@ -327,22 +327,22 @@ Brak zmian schematu i danych.
 
 #### Automated
 
-- [x] 2.1 Dataset 19 tras zielony (ok. 29 przypadków), strażnik zielony
-- [x] 2.2 Cały katalog Feature zielony po usunięciu duplikatów
-- [x] 2.3 Pint bez zmian po formatowaniu
+- [x] 2.1 Dataset 19 tras zielony (ok. 29 przypadków), strażnik zielony — 59dbeb0
+- [x] 2.2 Cały katalog Feature zielony po usunięciu duplikatów — 59dbeb0
+- [x] 2.3 Pint bez zmian po formatowaniu — 59dbeb0
 
 #### Manual
 
-- [x] 2.4 Kontrola mutacji: usunięcie authorize() / bramki daje czerwony dataset
-- [x] 2.5 Kontrola strażnika: dopisana trasa z parametrem wywala strażnika
-- [x] 2.6 Lista usuniętych testów i powód zostawienia pozostałych w opisie commita
+- [x] 2.4 Kontrola mutacji: usunięcie authorize() / bramki daje czerwony dataset — 59dbeb0
+- [x] 2.5 Kontrola strażnika: dopisana trasa z parametrem wywala strażnika — 59dbeb0
+- [x] 2.6 Lista usuniętych testów i powód zostawienia pozostałych w opisie commita — 59dbeb0
 
 ### Phase 3: Granice spoza adresu — ?person=, tree_id w treści, passkey
 
 #### Automated
 
-- [ ] 3.1 Nowe przypadki zielone (OwnershipBoundariesTest, SecurityTest)
-- [ ] 3.2 Pint bez zmian po formatowaniu
+- [x] 3.1 Nowe przypadki zielone (OwnershipBoundariesTest, SecurityTest)
+- [x] 3.2 Pint bez zmian po formatowaniu
 
 ### Phase 4: Cookbook §6.5 i stan §3
 

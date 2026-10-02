@@ -1,9 +1,11 @@
 <?php
 
 use App\Models\User;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Inertia\Testing\AssertableInertia as Assert;
 use Laravel\Fortify\Features;
+use Laravel\Passkeys\Passkey;
 
 test('security page is displayed', function () {
     $this->skipUnlessFortifyHas(Features::twoFactorAuthentication());
@@ -101,4 +103,26 @@ test('correct password must be provided to update password', function () {
     $response
         ->assertSessionHasErrors('current_password')
         ->assertRedirect(route('security.edit'));
+});
+
+test('another user\'s passkey cannot be deleted', function () {
+    $this->skipUnlessFortifyHas(Features::passkeys());
+
+    $owner = User::factory()->create();
+    $attacker = User::factory()->create();
+
+    $passkey = new Passkey([
+        'name' => 'Klucz właściciela',
+        'credential_id' => 'owner-credential-id',
+        'credential' => ['id' => 'owner-credential-id'],
+    ]);
+    $passkey->user_id = $owner->id;
+    $passkey->save();
+
+    $this->actingAs($attacker)
+        ->withSession(['auth.password_confirmed_at' => time()])
+        ->delete(route('passkey.destroy', $passkey))
+        ->assertForbidden();
+
+    expect(DB::table('passkeys')->where('id', $passkey->id)->exists())->toBeTrue();
 });
