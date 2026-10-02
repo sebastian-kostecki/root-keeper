@@ -348,9 +348,9 @@ Brak zmian schematu i danych.
 
 #### Automated
 
-- [x] 4.1 §6.5 nie zawiera już „TBD” dla części własności
-- [x] 4.2 Cały Feature zielony
+- [x] 4.1 §6.5 nie zawiera już „TBD” dla części własności — bed0f50
+- [x] 4.2 Cały Feature zielony — bed0f50
 
 #### Manual
 
-- [x] 4.3 Autor potwierdza, że §6.5 wystarcza do napisania testu własności nowego endpointu
+- [x] 4.3 Autor potwierdza, że §6.5 wystarcza do napisania testu własności nowego endpointu — bed0f50
