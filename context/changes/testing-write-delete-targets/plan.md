@@ -159,6 +159,11 @@ Każdy test: `Storage::fake('local')` → `familyScene()` → (dla 1–2) GET i 
 
 **Ocena przetrwałych mutacji** (wypełnia implementujący): `plik:linia` — mutator — „szkodzi / nie szkodzi” — decyzja.
 
+Przebieg 2026-10-02 (polecenie z Contract, `--no-cache`): 140 mutacji, 117 zabitych, 83,57%. Wszystkie 6 mutacji `DeletePerson.php` zabite, w tym `RemoveMethodCall` w linii 22. Pozostałe 23 przetrwałe:
+- `DeleteSource.php:24` `ConcatRemoveLeft/Right`, `ConcatSwitchSides` — nie szkodzi: treść komunikatu wyjątku do `report()`; ignorowane.
+- `SourceController.php:112`, `:156`, `:170`, `:187`, `:189` i `MarriageController.php:51`, `ParentChildRelationController.php:36` (`Gate::authorize` / `RemoveNot`) — nie dotyczy tej fazy: zabijane przez `OwnershipBoundariesTest.php` (poza listą plików polecenia); kontrolny przebieg z tym plikiem je zabił.
+- `SourceController.php:58, 84, 99–102, 143, 202–203` (`rtrim`/`trim` filtra, lista sortowań, `except` w `store`/`update`, toast, nagłówki pliku) — nie szkodzi usunięciom: lista, tworzenie, edycja i nagłówki; poza ryzykiem #3; ignorowane.
+
 ### Success Criteria:
 
 #### Automated Verification:
@@ -355,26 +360,26 @@ Zapisuje wzorzec testu w cookbooku, aby kolejne endpointy i akcje usuwające dos
 
 #### Automated
 
-- [x] 1.1 `vendor/bin/sail artisan test --compact tests/Feature` zielone (helpery nie psują istniejących testów)
-- [x] 1.2 `vendor/bin/sail bin pint --dirty --format agent` bez zmian po uruchomieniu
+- [x] 1.1 `vendor/bin/sail artisan test --compact tests/Feature` zielone (helpery nie psują istniejących testów) — b4d2bd8
+- [x] 1.2 `vendor/bin/sail bin pint --dirty --format agent` bez zmian po uruchomieniu — b4d2bd8
 
 #### Manual
 
-- [x] 1.3 Scena w `tests/Pest.php` zawiera każdy rekord z listy w Contract (przegląd kodu)
+- [x] 1.3 Scena w `tests/Pest.php` zawiera każdy rekord z listy w Contract (przegląd kodu) — b4d2bd8
 
 ### Phase 2: Usunięcia = lista skutków (ryzyko #3)
 
 #### Automated
 
-- [ ] 2.1 `vendor/bin/sail artisan test --compact tests/Feature/DeleteImpactTest.php` zielone
-- [ ] 2.2 `vendor/bin/sail bin pint --dirty --format agent` bez zmian po uruchomieniu
-- [ ] 2.3 Bramka mutacyjna fazy 2 (polecenie z Contract) kończy się, a mutacja `RemoveMethodCall` w `DeletePerson.php:22` jest zabita
+- [x] 2.1 `vendor/bin/sail artisan test --compact tests/Feature/DeleteImpactTest.php` zielone
+- [x] 2.2 `vendor/bin/sail bin pint --dirty --format agent` bez zmian po uruchomieniu
+- [x] 2.3 Bramka mutacyjna fazy 2 (polecenie z Contract) kończy się, a mutacja `RemoveMethodCall` w `DeletePerson.php:22` jest zabita
 
 #### Manual
 
-- [ ] 2.4 Każda przetrwała mutacja z bramki fazy 2 zabita asercją albo wpisana do „Ocena przetrwałych mutacji” z uzasadnieniem
-- [ ] 2.5 Kontrola mutacji spoza katalogu mutatorów Pest: usunięcie kroku małżeństw w `DeletePerson::handle` → test osoby czerwony; usuwanie tylko `path` (bez miniatury) w `DeleteSource::handle` → test źródła czerwony; `confirms` tylko dla pierwszego uczestnika zdarzenia w `SourceController::show` → test źródła czerwony; każda mutacja cofnięta
-- [ ] 2.6 Oczekiwane zbiory w testach zbudowane z rekordów sceny, nie z zapytań do bazy ani wywołań kodu produkcyjnego (przegląd kodu)
+- [x] 2.4 Każda przetrwała mutacja z bramki fazy 2 zabita asercją albo wpisana do „Ocena przetrwałych mutacji” z uzasadnieniem
+- [x] 2.5 Kontrola mutacji spoza katalogu mutatorów Pest: usunięcie kroku małżeństw w `DeletePerson::handle` → test osoby czerwony; usuwanie tylko `path` (bez miniatury) w `DeleteSource::handle` → test źródła czerwony; `confirms` tylko dla pierwszego uczestnika zdarzenia w `SourceController::show` → test źródła czerwony; każda mutacja cofnięta
+- [x] 2.6 Oczekiwane zbiory w testach zbudowane z rekordów sceny, nie z zapytań do bazy ani wywołań kodu produkcyjnego (przegląd kodu)
 
 ### Phase 3: Zapisy trafiają we wskazaną osobę lub parę (ryzyko #1)
 
