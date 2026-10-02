@@ -311,9 +311,9 @@ Brak migracji. Istniejące pary tej samej płci zostają; strażnik nie blokuje 
 
 #### Automated
 
-- [x] 4.1 §6.5 nie zawiera już „TBD” dla reguł relacji: `grep -n "Reguły relacji" -A6 context/foundation/test-plan.md`
-- [x] 4.2 `vendor/bin/sail artisan test --compact tests/Feature` zielone
+- [x] 4.1 §6.5 nie zawiera już „TBD” dla reguł relacji: `grep -n "Reguły relacji" -A6 context/foundation/test-plan.md` — d32723b
+- [x] 4.2 `vendor/bin/sail artisan test --compact tests/Feature` zielone — d32723b
 
 #### Manual
 
-- [x] 4.3 Autor czyta §6.5 i potwierdza, że wystarcza do napisania testów reguł dla nowej ścieżki tworzącej relację bez czytania tego planu
+- [x] 4.3 Autor czyta §6.5 i potwierdza, że wystarcza do napisania testów reguł dla nowej ścieżki tworzącej relację bez czytania tego planu — d32723b

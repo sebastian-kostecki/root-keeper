@@ -1,7 +1,7 @@
 ---
 change_id: testing-relation-rules
 title: Testing relation rules
-status: implementing
+status: implemented
 created: 2026-10-02
 updated: 2026-10-02
 archived_at: null
