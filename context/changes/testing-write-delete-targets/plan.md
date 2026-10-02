@@ -411,11 +411,11 @@ Zapisuje wzorzec testu w cookbooku, aby kolejne endpointy i akcje usuwające dos
 
 #### Automated
 
-- [x] 4.1 `grep -n "TBD — see §3 Phase 2" context/foundation/test-plan.md` nic nie zwraca
-- [x] 4.2 `grep -n "pest --mutate" context/foundation/test-plan.md` zwraca wpisy w §4, §5 i §6.7
-- [x] 4.3 `vendor/bin/sail artisan test --compact tests/Feature/DeleteImpactTest.php tests/Feature/WriteTargetsTest.php` zielone
+- [x] 4.1 `grep -n "TBD — see §3 Phase 2" context/foundation/test-plan.md` nic nie zwraca — 3033e66
+- [x] 4.2 `grep -n "pest --mutate" context/foundation/test-plan.md` zwraca wpisy w §4, §5 i §6.7 — 3033e66
+- [x] 4.3 `vendor/bin/sail artisan test --compact tests/Feature/DeleteImpactTest.php tests/Feature/WriteTargetsTest.php` zielone — 3033e66
 
 #### Manual
 
-- [x] 4.4 Wzorce §6.1 i §6.4 pozwalają napisać test nowej akcji bez czytania tego planu (przegląd przez autora)
-- [x] 4.5 Werdykt w §6.6 zgadza się z research i nie zmienia statusu fazy 4 w §3
+- [x] 4.4 Wzorce §6.1 i §6.4 pozwalają napisać test nowej akcji bez czytania tego planu (przegląd przez autora) — 3033e66
+- [x] 4.5 Werdykt w §6.6 zgadza się z research i nie zmienia statusu fazy 4 w §3 — 3033e66
