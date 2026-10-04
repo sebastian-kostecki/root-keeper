@@ -43,7 +43,7 @@ root-keeper to prywatne, samodzielnie hostowane drzewo genealogiczne, w którym 
 | ID   | Change ID                            | Outcome (user can …)                                                                                     | Prerequisites          | PRD refs                                 | Status   |
 | ---- | ------------------------------------ | -------------------------------------------------------------------------------------------------------- | ---------------------- | ---------------------------------------- | -------- |
 | F-01 | critical-flows-e2e-guard             | (foundation) testy E2E chronią powiązanie fakt–źródło i dodawanie relacji ze slotów drzewa                | —                      | Guardrails, Constraints & Compatibility  | ready    |
-| F-02 | side-panel-shell                     | (foundation) jest jedna wspólna powłoka panelu bocznego z prawej, obok której treść strony się zwęża      | —                      | FR-006, FR-019, FR-028, NFR (1366–2560 px) | ready    |
+| F-02 | side-panel-shell                     | (foundation) jest jedna wspólna powłoka panelu bocznego z prawej, obok której treść strony się zwęża      | —                      | FR-006, FR-019, FR-028, NFR (1366–2560 px) | done |
 | S-01 | places-gazetteer                     | prowadzić spis miejscowości z opisem, który startuje z istniejących tekstowych miejsc                     | F-02                   | FR-007, FR-029                           | proposed |
 | S-02 | source-side-panel                    | dodawać, oglądać i edytować źródło w szerokim panelu bocznym ze skanem obok opisu                         | F-02                   | FR-006, FR-027                           | proposed |
 | S-03 | act-described-by-parish-and-archive  | opisać akt parafią ze spisu (dopisaną w locie), rokiem, typem aktu i archiwum z podpowiedziami            | S-01, S-02             | FR-001, FR-008, FR-009, US-01            | proposed |
@@ -114,7 +114,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Unknowns:**
   - Gdzie trzymać stan otwartego panelu (adres strony czy stan klienta), żeby zamknięcie wracało na to samo miejsce, a przejście do krewnego podmieniało zawartość? Owner: `/10x-plan`. Block: no.
 - **Risk:** Tylko powłoka, bez treści żadnego rekordu — każdy z czterech paneli i tak integruje ją przez własny wycinek; bez niej `S-01` i `S-02` (równoległe) zbudowałyby dwie różne powłoki wbrew zasadzie jednej wspólnej.
-- **Status:** ready
+- **Status:** done
 
 ## Slices
 
@@ -378,4 +378,4 @@ Rozstrzygnięte:
 
 ## Done
 
-(Empty — `/10x-archive` appends an entry here and flips the item's `Status` to `done` when a change whose `Change ID` matches is archived.)
+- **F-02: (foundation) istnieje jedna powłoka panelu wysuwanego z prawej, bez nakładki: otwarty panel zwęża obszar treści obok siebie, ma wariant szerszy (dla źródła), zamyka się z powrotem do tego samego miejsca, a otwarcie innego rekordu podmienia jego zawartość.** — Archived 2026-10-04 → `context/archive/2026-10-04-side-panel-shell/`. Lesson: —.
