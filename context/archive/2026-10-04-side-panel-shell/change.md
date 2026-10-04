@@ -1,10 +1,10 @@
 ---
 change_id: side-panel-shell
 title: Side panel shell
-status: impl_reviewed
+status: archived
 created: 2026-10-04
 updated: 2026-10-04
-archived_at: null
+archived_at: 2026-10-04T21:22:47Z
 ---
 
 ## Notes
