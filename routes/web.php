@@ -7,6 +7,7 @@ use App\Http\Controllers\PersonChildController;
 use App\Http\Controllers\PersonController;
 use App\Http\Controllers\PersonParentController;
 use App\Http\Controllers\PersonSpouseController;
+use App\Http\Controllers\SidePanelDemoController;
 use App\Http\Controllers\SourceController;
 use App\Http\Controllers\TreeController;
 use App\Http\Controllers\TreeRootPersonController;
@@ -37,6 +38,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('parent-child-relations', ParentChildRelationController::class)->only(['store', 'destroy']);
 
     Route::resource('marriages', MarriageController::class)->only(['store', 'update', 'destroy']);
+
+    Route::get('dev/side-panel', SidePanelDemoController::class)->name('dev.side-panel');
 });
 
 require __DIR__.'/settings.php';
