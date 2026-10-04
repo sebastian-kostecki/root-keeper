@@ -57,9 +57,9 @@ Każdy wiersz to osobna faza wdrożenia, która otwiera własny folder zmiany pr
 
 | Layer | Tool | Version | Notes |
 |---|---|---|---|
-| backend integration + unit | Pest (PHPUnit) + pest-plugin-laravel | 5.2 / 13.3 | ~23 pliki, ~330 przypadków, głównie `tests/Feature`; w CI na PostgreSQL 18 |
-| frontend unit | Vitest przez `vp test` (vite-plus) | 0.3 | 7 plików, ~95 przypadków, wyłącznie czysta logika w `resources/js/lib` i `resources/js/hooks` |
-| e2e | none yet — see Phase 4 | — | kandydat: `pestphp/pest-plugin-browser` + Playwright (checked: 2026-09-30); nie jest zależnością projektu |
+| backend integration + unit | Pest (PHPUnit) + pest-plugin-laravel | 5.3 / 13.3 | ~23 pliki, ~330 przypadków, głównie `tests/Feature`; w CI na PostgreSQL 18 |
+| frontend unit | Vitest przez `vp test` (vite-plus) | Vitest 5.0 / vite-plus 1.0 | 7 plików, ~95 przypadków, wyłącznie czysta logika w `resources/js/lib` i `resources/js/hooks` |
+| e2e | Playwright Test (`@playwright/test`) | 1.63 | skonfigurowany 2026-10-02 (`playwright.config.ts`, szczegóły w `test-stack.md`); na razie tylko test seed bramki logowania, poza CI; testy przepływów — Phase 4 |
 | mutation testing (backend) | `pestphp/pest-plugin-mutate` (`pest --mutate`) | v5.0.2 (`composer.lock`) | ad hoc, zawężone `--class`; pokrycie `pcov`; Stryker tylko dla JS/TS — nieużywany, bo brak testów Vitest w fazach ryzyka |
 | backup / restore | spatie backup + `tests/Backup` + drill odtworzenia (§6.3) | — | zawartość kopii i odtworzenie zrzutu sprawdza `tests/Backup`; drill na serwerze według §6.3 |
 | (optional) AI-native | eksploracyjny przebieg agenta po drzewie w przeglądarce (checked: 2026-09-30) | n/a | When NOT to use: jako bramka regresji ani do oceny wyglądu (§7); tylko rekonesans przed napisaniem testu fazy 4 |
@@ -222,7 +222,7 @@ Wykluczenia uzgodnione w wywiadzie (P5). Obowiązują, dopóki nie zmieni się z
 ## 8. Freshness Ledger
 
 - Strategy (§1–§5) last reviewed: 2026-09-30
-- Stack versions last verified: 2026-09-30
+- Stack versions last verified: 2026-10-04
 - AI-native tool references last verified: 2026-09-30
 
 Refresh (`/10x-test-plan --refresh`) when:

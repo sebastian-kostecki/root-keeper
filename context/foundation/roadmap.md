@@ -14,7 +14,7 @@ milestone_status: open
 
 # Roadmap: root-keeper
 
-> Derived from PRD v1 (MVP — dawna treść `context/foundation/prd.md`, dziś w historii git, commit `e74243f`) + `context/foundation/prd-v2.md` (v2, brownfield) + `context/foundation/prd-v3.md` (v3, brownfield) + `context/foundation/prd.md` (v4, brownfield) + auto-researched codebase baseline.
+> Derived from PRD v1 (MVP, `context/foundation/archive/prd-v1.md`) + `context/foundation/archive/prd-v2.md` (v2, brownfield) + `context/foundation/archive/prd-v3.md` (v3, brownfield) + `context/foundation/archive/prd-v4.md` (v4, brownfield) + auto-researched codebase baseline.
 > Previous versions: v1 only — `context/foundation/archive/2026-09-28-roadmap-sourced-family-tree.md`; v1 + v2 — `context/foundation/archive/2026-09-28-roadmap-sourced-family-tree-2.md`; v1 + v2 + v3 — `context/foundation/archive/2026-09-28-roadmap-sourced-family-tree-3.md`.
 > Edit-in-place; archive when superseded.
 > Slices below are listed in dependency order. The "At a glance" table is the index.
@@ -31,7 +31,7 @@ milestone_status: open
 - **Zastąpione przez prd-v4:** S-21 `parent-from-tree-slot` → S-25 `tree-parent-slot-existing-or-new`; S-22 `child-from-tree` → S-26 `tree-child-existing-or-new`; S-23 `spouse-from-tree-slot` → S-27 `tree-spouse-existing-or-new`. Żaden z nich nie był rozpoczęty ani nie miał issue.
 - **Porzucone (2026-09-29, decyzja użytkownika):** S-28 `tree-relation-removal` — usuwanie relacji zostaje w podglądzie osoby.
 - **Odłożone poza tę wersję (2026-09-30, decyzja użytkownika):** strumień E — spis miejscowości z prd-v2: S-12 `places-gazetteer`, S-13 `fact-places-from-gazetteer`, S-14 `residence-history`, S-15 `place-delete-with-impact` (issues #20 – #23). Żaden z nich nie był rozpoczęty; zamieszkanie i miejsca faktów zostają wolnym tekstem — patrz `## Parked`.
-- **Source materials:** PRD v1 (MVP) — historia git, `git show e74243f:context/foundation/prd.md` (plik `prd.md` nadpisany przez prd-v4); `context/foundation/prd-v2.md` (v2, zmiana brownfield); `context/foundation/prd-v3.md` (v3, zmiana brownfield); `context/foundation/prd.md` (v4, zmiana brownfield).
+- **Source materials:** `context/foundation/archive/prd-v1.md` (v1, MVP); `context/foundation/archive/prd-v2.md` (v2, zmiana brownfield); `context/foundation/archive/prd-v3.md` (v3, zmiana brownfield); `context/foundation/archive/prd-v4.md` (v4, zmiana brownfield). Kolejna zmiana (opis źródeł, spis miejscowości, wygląd drzewa, widok przodków): `context/foundation/prd.md`.
 - **Done when:** every F-NN and S-NN below is `done`, plus prawdziwe drzewo zostało wprowadzone na produkcję po zakończeniu F-01.
 - **Scope anchors:** v1: FR-001 – FR-016 (wszystkie konieczne), US-01. FR-018 (nice-to-have) odłożone — patrz `## Parked`. v2 (identyfikatory z prefiksem `v2:`, bo prd-v2 numeruje FR od nowa): v2:FR-001 – v2:FR-005, v2:FR-012 – v2:FR-015 (wszystkie konieczne, w tym zachowane v2:FR-012 – v2:FR-014; v2:FR-013 — miejsce faktu na podglądzie — pozostaje spełnione wolnym tekstem i nie ma własnego wycinka), v2:US-01. v2:FR-006 (nice-to-have) odłożone. Spis miejscowości — v2:FR-007 – v2:FR-011, v2:US-02 — odłożony poza tę wersję (2026-09-30), patrz `## Parked`. v3 (prefiks `v3:`): v3:FR-001 – v3:FR-012 (wszystkie konieczne, w tym zachowane v3:FR-009 – v3:FR-012), v3:US-01, v3:US-02; v3:FR-006 zmienia v2:FR-001 (nazwa nie jest już wymagana — tylko plik i rodzaj). v4 (prefiks `v4:`): v4:FR-001 – v4:FR-013 (wszystkie konieczne, w tym zachowane v4:FR-010 – v4:FR-013), v4:US-01; v4:FR-004 – v4:FR-006 rozszerzają v3:FR-001 – v3:FR-003 (istniejąca albo nowa osoba), a v4:US-01 wchłania v3:US-01. Identyfikatory bez prefiksu (`FR-001`) odnoszą się do PRD v1 z historii git.
 
@@ -392,7 +392,7 @@ GitHub milestone: [M-1](https://github.com/sebastian-kostecki/root-keeper/milest
 
 ## Open Roadmap Questions
 
-1. **PRD v1 poza drzewem plików** — `context/foundation/prd.md` nadpisano treścią prd-v4, więc odwołania bez prefiksu (`FR-001` – `FR-016`, `US-01`) w wycinkach S-01 – S-09 oraz odwołania w `prd-v2.md` i `prd-v3.md` do „MVP `context/foundation/prd.md`” prowadzą dziś do historii git (commit `e74243f`). Przywrócić jako `prd-v1.md`? Owner: user. Block: no.
+1. ~~**PRD v1 poza drzewem plików**~~ — rozwiązane 2026-10-04: MVP przywrócony z historii git jako `context/foundation/archive/prd-v1.md`; wszystkie wcześniejsze PRD leżą w `context/foundation/archive/` (prd-v1 – prd-v4), a `context/foundation/prd.md` zawiera PRD kolejnej zmiany. Odwołania bez prefiksu (`FR-001` – `FR-016`, `US-01`) w wycinkach S-01 – S-09 dotyczą `archive/prd-v1.md`.
 
 Pytania w wycinkach S-16 – S-29 nie blokują planowania.
 
