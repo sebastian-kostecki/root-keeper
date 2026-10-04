@@ -31,6 +31,14 @@ test('an unknown demo id is a 404', function () {
     $this->actingAs(User::factory()->create())->get(route('dev.side-panel', ['demo' => 999]))->assertNotFound();
 });
 
+test('a malformed demo id leaves the panel closed', function (string $query) {
+    app()->detectEnvironment(fn () => 'local');
+
+    $this->actingAs(User::factory()->create())->get(route('dev.side-panel').$query)
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page->where('demoPanel', null));
+})->with(['non-numeric' => '?demo=abc', 'array' => '?demo[]=1']);
+
 test('guests are redirected to the login page', function () {
     $this->get(route('dev.side-panel'))->assertRedirect(route('login'));
 });

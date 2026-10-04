@@ -106,10 +106,19 @@ function SidePanelView({
             }
         }
 
+        const root = rootRef.current;
+
         return () => {
             const previous = previousFocusRef.current;
+            const active = document.activeElement;
+            const focusIsFree =
+                active === null ||
+                active === document.body ||
+                root?.contains(active);
 
-            if (previous?.isConnected) {
+            previousFocusRef.current = null;
+
+            if (previous?.isConnected && focusIsFree) {
                 previous.focus({ preventScroll: true });
             }
         };
@@ -148,7 +157,7 @@ function SidePanelView({
             aria-labelledby={titleId}
             aria-describedby={description ? descriptionId : undefined}
             className={cn(
-                'bg-background animate-in slide-in-from-right fixed inset-0 z-40 flex w-full flex-col duration-200',
+                'bg-background animate-in slide-in-from-right fixed inset-0 z-40 flex w-full flex-col duration-200 motion-reduce:animate-none',
                 'md:sticky md:inset-auto md:top-2 md:z-auto md:m-2 md:ml-0 md:h-[calc(100svh-(--spacing(4)))] md:shrink-0 md:self-start md:rounded-xl md:border md:shadow-sm',
                 variant === 'wide'
                     ? 'md:w-[clamp(40rem,55vw,72rem)]'
