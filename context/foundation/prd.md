@@ -103,7 +103,7 @@ Wszystkie FR są `must-have` (zakres: całość do 2026-11-04). Jeśli zabraknie
   > Resolution: kept; pole „Numer wpisu” znika ze źródła, a dotychczasowe wartości zostają widoczne do ręcznego przeniesienia.
 - [modified] FR-004: Autor can przy wyborze źródła do faktu szukać po miejscu (miejscowość parafii lub cmentarza) i roku i widzi przy każdym źródle rok i parafię lub cmentarz. Priority: must-have. (Było: najpierw akty o pasującym typie, bez roku i parafii przy źródle.)
   > Socrates: Counter-argument considered: "nagrobki nie mają parafii — szukanie po parafii ich nie obejmie."
-  > Resolution: kept; szukanie po miejscu obejmuje miejscowość parafii i cmentarza (rozstrzygnięcie przyjęte przez facylitatora — do potwierdzenia w PRD; zob. Open Questions).
+  > Resolution: kept; szukanie po miejscu obejmuje miejscowość parafii i cmentarza (zaproponowane przez facylitatora, potwierdzone przez autora 2026-10-04).
 - [modified] FR-005: Autor can przeglądać listę źródeł jako siatkę mniejszych kart z rodzajem, typem, parafią lub cmentarzem, rokiem i archiwum oraz filtrować ją po rodzaju, parafii/miejscu, roku i archiwum. Priority: must-have. (Było: lista większych kart.)
   > Socrates: Counter-argument considered: "przy setkach źródeł sama siatka nie wystarczy."
   > Resolution: kept and extended; lista dostaje filtry po rodzaju, parafii/miejscu, roku i archiwum.
@@ -211,6 +211,7 @@ Wszystkie FR są `must-have` (zakres: całość do 2026-11-04). Jeśli zabraknie
 - **Wymagania niefunkcjonalne:**
   - Drzewo, widok przodków i panele są użyteczne na ekranach od 1366 px do 2560 px szerokości; na dużym ekranie drzewo wypełnia dostępną przestrzeń.
   - Nowe dane (spisy miejscowości i parafii, zdjęcia osób, notatki, zamieszkania) są objęte kopią zapasową z utratą najwyżej 24 h danych (RPO 24 h), jak dotychczasowe dane.
+  - [removed] Wymaganie z poprzednich PRD „dane drzewa i skany nie trafiają do podmiotów trzecich” przestaje obowiązywać (decyzja autora 2026-10-04) — dotyczy wszystkich danych, także zdjęć osób.
 - **Termin:** 4 tygodnie, twardy termin 2026-11-04, praca po godzinach; wszystkie cztery części (opis źródła, wygląd drzewa i panel boczny, widok przodków, spis miejscowości). Koszt stałego wysiłku zaakceptowany 2026-10-04. Jeśli zabraknie czasu, pierwsze odpadają zdjęcia osób na kartach (FR-015). Rdzeń bólu: opis źródła (FR-001 – FR-006) i spis miejscowości (FR-007 – FR-012).
 
 ## Business Logic Changes
@@ -242,5 +243,5 @@ No access control changes — current model preserved: jedno drzewo na konto, ot
 
 ## Open Questions
 
-1. **Czy NFR „dane nie trafiają do podmiotów trzecich” (z poprzednich PRD) nadal obowiązuje?** — Nie zostało ponownie potwierdzone w tej sesji; dotyczy zwłaszcza zdjęć osób (FR-015). Owner: autor.
-2. **FR-004: czy szukanie źródła po miejscu obejmuje miejscowość parafii i cmentarza?** — Rozstrzygnięcie przyjął facylitator; do potwierdzenia przez autora. Owner: autor.
+1. ~~**Czy NFR „dane nie trafiają do podmiotów trzecich” (z poprzednich PRD) nadal obowiązuje?**~~ — Rozstrzygnięte 2026-10-04 (autor): nie obowiązuje, dla żadnych danych, także zdjęć osób (FR-015). Zob. Constraints & Compatibility.
+2. ~~**FR-004: czy szukanie źródła po miejscu obejmuje miejscowość parafii i cmentarza?**~~ — Rozstrzygnięte 2026-10-04 (autor): tak — akt pasuje przez miejscowość siedziby parafii, nagrobek przez miejscowość cmentarza.
