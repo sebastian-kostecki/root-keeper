@@ -292,21 +292,21 @@ Nie dotyczy — brak zmian w bazie danych i danych.
 
 #### Automated
 
-- [x] 3.1 Test Pest przechodzi: `vendor/bin/sail artisan test --compact tests/Feature/SidePanelDemoTest.php`
-- [x] 3.2 Formatowanie PHP: `vendor/bin/sail bin pint --dirty --format agent`
-- [x] 3.3 Larastan przechodzi: `vendor/bin/sail composer types:check`
-- [x] 3.4 Testy Vitest przechodzą: `vendor/bin/sail npm run test:js`
-- [x] 3.5 Sprawdzenie typów przechodzi: `vendor/bin/sail npm run types:check`
-- [x] 3.6 Format i lint przechodzą: `vendor/bin/sail npm run check`
-- [x] 3.7 Build przechodzi: `vendor/bin/sail npm run build`
+- [x] 3.1 Test Pest przechodzi: `vendor/bin/sail artisan test --compact tests/Feature/SidePanelDemoTest.php` — 7d7d84d
+- [x] 3.2 Formatowanie PHP: `vendor/bin/sail bin pint --dirty --format agent` — 7d7d84d
+- [x] 3.3 Larastan przechodzi: `vendor/bin/sail composer types:check` — 7d7d84d
+- [x] 3.4 Testy Vitest przechodzą: `vendor/bin/sail npm run test:js` — 7d7d84d
+- [x] 3.5 Sprawdzenie typów przechodzi: `vendor/bin/sail npm run types:check` — 7d7d84d
+- [x] 3.6 Format i lint przechodzą: `vendor/bin/sail npm run check` — 7d7d84d
+- [x] 3.7 Build przechodzi: `vendor/bin/sail npm run build` — 7d7d84d
 
 #### Manual
 
-- [x] 3.8 Przy 1366 px i rozwiniętym lewym menu panel standardowy ma ok. 410 px, szeroki ok. 750 px; treść zwęża się obok panelu, panel nie zasłania treści, strona nie przewija się w poziomie
-- [x] 3.9 Przy 2560 px panel standardowy ma ok. 576 px, szeroki ok. 1150 px
-- [x] 3.10 Po przewinięciu strony w dół, otwarciu i zamknięciu panelu pozycja przewinięcia jest ta sama; panel pozostaje przyklejony na wysokość okna, a jego treść przewija się osobno
-- [x] 3.11 „Następny rekord” podmienia treść panelu, w adresie jest jeden parametr `?demo=`, fokus przechodzi na nagłówek; „Wstecz” przeglądarki nie przechodzi przez kolejne rekordy
-- [x] 3.12 Escape w panelu zamyka panel i przywraca fokus na link, który go otworzył; Escape w zagnieżdżonym modalu zamyka tylko modal
-- [x] 3.13 Przy zaznaczonym „Mam niezapisane zmiany” X i Escape pokazują „Porzucić zmiany?”, a anulowanie zostawia panel otwarty
-- [x] 3.14 Poniżej 768 px panel zajmuje cały ekran, zagnieżdżony modal jest nad nim, zamknięcie wraca do strony
-- [x] 3.15 Poza `local` (np. `APP_ENV=production` lokalnie) `/dev/side-panel` zwraca 404
+- [x] 3.8 Przy 1366 px i rozwiniętym lewym menu panel standardowy ma ok. 410 px, szeroki ok. 750 px; treść zwęża się obok panelu, panel nie zasłania treści, strona nie przewija się w poziomie — 7d7d84d
+- [x] 3.9 Przy 2560 px panel standardowy ma ok. 576 px, szeroki ok. 1150 px — 7d7d84d
+- [x] 3.10 Po przewinięciu strony w dół, otwarciu i zamknięciu panelu pozycja przewinięcia jest ta sama; panel pozostaje przyklejony na wysokość okna, a jego treść przewija się osobno — 7d7d84d
+- [x] 3.11 „Następny rekord” podmienia treść panelu, w adresie jest jeden parametr `?demo=`, fokus przechodzi na nagłówek; „Wstecz” przeglądarki nie przechodzi przez kolejne rekordy — 7d7d84d
+- [x] 3.12 Escape w panelu zamyka panel i przywraca fokus na link, który go otworzył; Escape w zagnieżdżonym modalu zamyka tylko modal — 7d7d84d
+- [x] 3.13 Przy zaznaczonym „Mam niezapisane zmiany” X i Escape pokazują „Porzucić zmiany?”, a anulowanie zostawia panel otwarty — 7d7d84d
+- [x] 3.14 Poniżej 768 px panel zajmuje cały ekran, zagnieżdżony modal jest nad nim, zamknięcie wraca do strony — 7d7d84d
+- [x] 3.15 Poza `local` (np. `APP_ENV=production` lokalnie) `/dev/side-panel` zwraca 404 — 7d7d84d
