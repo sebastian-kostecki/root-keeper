@@ -1,5 +1,6 @@
 import { PersonPreviewDialog } from '@/components/persons/person-preview-dialog';
 import { PersonPreviewProvider } from '@/components/persons/person-preview-provider';
+import { SidePanelSlotProvider } from '@/components/side-panel';
 import AppLayoutTemplate from '@/layouts/app/app-sidebar-layout';
 import type { BreadcrumbItem } from '@/types';
 
@@ -12,10 +13,12 @@ export default function AppLayout({
 }) {
     return (
         <PersonPreviewProvider>
-            <AppLayoutTemplate breadcrumbs={breadcrumbs}>
-                {children}
-            </AppLayoutTemplate>
-            <PersonPreviewDialog />
+            <SidePanelSlotProvider>
+                <AppLayoutTemplate breadcrumbs={breadcrumbs}>
+                    {children}
+                </AppLayoutTemplate>
+                <PersonPreviewDialog />
+            </SidePanelSlotProvider>
         </PersonPreviewProvider>
     );
 }

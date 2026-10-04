@@ -270,23 +270,23 @@ Nie dotyczy — brak zmian w bazie danych i danych.
 
 #### Automated
 
-- [x] 1.1 Testy Vitest przechodzą, w tym nowy `side-panel-url.test.ts`: `vendor/bin/sail npm run test:js`
-- [x] 1.2 Sprawdzenie typów przechodzi: `vendor/bin/sail npm run types:check`
-- [x] 1.3 Format i lint przechodzą: `vendor/bin/sail npm run check`
+- [x] 1.1 Testy Vitest przechodzą, w tym nowy `side-panel-url.test.ts`: `vendor/bin/sail npm run test:js` — bdc57e8
+- [x] 1.2 Sprawdzenie typów przechodzi: `vendor/bin/sail npm run types:check` — bdc57e8
+- [x] 1.3 Format i lint przechodzą: `vendor/bin/sail npm run check` — bdc57e8
 
 ### Phase 2: Powłoka i slot w layoucie
 
 #### Automated
 
-- [ ] 2.1 Sprawdzenie typów przechodzi: `vendor/bin/sail npm run types:check`
-- [ ] 2.2 Format i lint przechodzą: `vendor/bin/sail npm run check`
-- [ ] 2.3 Build przechodzi: `vendor/bin/sail npm run build`
-- [ ] 2.4 Test seed E2E nadal przechodzi: `npx playwright test tests/e2e/seed.spec.ts`
+- [x] 2.1 Sprawdzenie typów przechodzi: `vendor/bin/sail npm run types:check`
+- [x] 2.2 Format i lint przechodzą: `vendor/bin/sail npm run check`
+- [x] 2.3 Build przechodzi: `vendor/bin/sail npm run build`
+- [x] 2.4 Test seed E2E nadal przechodzi: `npx playwright test tests/e2e/seed.spec.ts`
 
 #### Manual
 
-- [ ] 2.5 Bez otwartego panelu drzewo, lista osób, lista źródeł i ustawienia wyglądają jak przed zmianą (brak dodatkowego marginesu po prawej)
-- [ ] 2.6 Podgląd osoby (`?person=`) nadal otwiera się jako modal na drzewie i zamyka do tego samego miejsca
+- [x] 2.5 Bez otwartego panelu drzewo, lista osób, lista źródeł i ustawienia wyglądają jak przed zmianą (brak dodatkowego marginesu po prawej)
+- [x] 2.6 Podgląd osoby (`?person=`) nadal otwiera się jako modal na drzewie i zamyka do tego samego miejsca
 
 ### Phase 3: Strona demo i weryfikacja
 

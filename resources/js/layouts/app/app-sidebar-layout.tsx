@@ -3,6 +3,7 @@ import { AppMobileHeader } from '@/components/app-mobile-header';
 import { AppShell } from '@/components/app-shell';
 import { AppSidebar } from '@/components/app-sidebar';
 import { Breadcrumbs } from '@/components/breadcrumbs';
+import { SidePanelSlot } from '@/components/side-panel';
 import type { AppLayoutProps } from '@/types';
 
 export default function AppSidebarLayout({
@@ -19,6 +20,7 @@ export default function AppSidebarLayout({
                     {children}
                 </div>
             </AppContent>
+            <SidePanelSlot />
         </AppShell>
     );
 }
