@@ -354,32 +354,32 @@ Brak migracji. Nowy wolumin Dockera zaczyna pusty. Źródła utworzone w bazie `
 
 #### Automated
 
-- [x] 2.1 Test fakt → źródło → skan przechodzi
-- [x] 2.2 Celowe uszkodzenie (file serwuje miniaturę) daje czerwony wynik na asercji sha256, cofnięte
-- [x] 2.3 Test stabilny przy --repeat-each=3
-- [x] 2.4 Brak osób i źródeł z prefiksem testowym w bazie e2e po przebiegu
-- [x] 2.5 Format i lint przechodzą
+- [x] 2.1 Test fakt → źródło → skan przechodzi — dbcee8f
+- [x] 2.2 Celowe uszkodzenie (file serwuje miniaturę) daje czerwony wynik na asercji sha256, cofnięte — dbcee8f
+- [x] 2.3 Test stabilny przy --repeat-each=3 — dbcee8f
+- [x] 2.4 Brak osób i źródeł z prefiksem testowym w bazie e2e po przebiegu — dbcee8f
+- [x] 2.5 Format i lint przechodzą — dbcee8f
 
 #### Manual
 
-- [x] 2.6 Przegląd specyfikacji i modułu pomocniczego pod kątem pięciu antywzorców
+- [x] 2.6 Przegląd specyfikacji i modułu pomocniczego pod kątem pięciu antywzorców — dbcee8f
 
 ### Phase 3: Relacje z pustych slotów drzewa i sonda okna choose()
 
 #### Automated
 
-- [ ] 3.1 Test rodzica przechodzi
-- [ ] 3.2 Test dziecka przechodzi
-- [ ] 3.3 Test małżonka przechodzi
-- [ ] 3.4 Celowe uszkodzenia rodzica, dziecka i małżonka (z przebudową serwera przed czerwonym przebiegiem i po cofnięciu) dają czerwony wynik na asercji relacji, cofnięte
-- [ ] 3.5 Cały suite stabilny przy --repeat-each=2
-- [ ] 3.6 Brak osób i źródeł z prefiksem testowym w bazie e2e po przebiegu
-- [ ] 3.7 Format i lint przechodzą
+- [x] 3.1 Test rodzica przechodzi
+- [x] 3.2 Test dziecka przechodzi
+- [x] 3.3 Test małżonka przechodzi
+- [x] 3.4 Celowe uszkodzenia rodzica, dziecka i małżonka (z przebudową serwera przed czerwonym przebiegiem i po cofnięciu) dają czerwony wynik na asercji relacji, cofnięte
+- [x] 3.5 Cały suite stabilny przy --repeat-each=2
+- [x] 3.6 Brak osób i źródeł z prefiksem testowym w bazie e2e po przebiegu
+- [x] 3.7 Format i lint przechodzą
 
 #### Manual
 
-- [ ] 3.8 Sonda okna choose() przeprowadzona, wynik zanotowany do fazy 4
-- [ ] 3.9 Przegląd trzech specyfikacji pod kątem antywzorców i lokatorów zmienianych przez S-05/S-06
+- [x] 3.8 Sonda okna choose() przeprowadzona, wynik zanotowany do fazy 4
+- [x] 3.9 Przegląd trzech specyfikacji pod kątem antywzorców i lokatorów zmienianych przez S-05/S-06
 
 ### Phase 4: Domknięcie w test-plan.md
 

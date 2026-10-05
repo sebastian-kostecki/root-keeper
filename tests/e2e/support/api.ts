@@ -200,6 +200,24 @@ export async function personPreview(
     return preview;
 }
 
+export type FoundPerson = { id: number; display_name: string };
+
+/**
+ * People whose name carries the text (`/persons?q=` matches first and last
+ * name); how a spec finds a person it created through the UI.
+ */
+export async function findPersons(
+    page: Page,
+    text: string,
+): Promise<FoundPerson[]> {
+    const props = await pageProps(
+        page,
+        `/persons?q=${encodeURIComponent(text)}`,
+    );
+
+    return (props.persons as FoundPerson[] | undefined) ?? [];
+}
+
 /**
  * A DELETE as a browser form sends it: `POST` with `_method=DELETE`. The app
  * answers with a 302, which a bare DELETE would follow as another DELETE (405);
@@ -237,10 +255,7 @@ export async function cleanupBySuffix(
         ).toBeOK();
     }
 
-    const persons =
-        ((await pageProps(page, `/persons?q=${encodeURIComponent(suffix)}`))
-            .persons as { id: number }[] | undefined) ?? [];
-    for (const person of persons) {
+    for (const person of await findPersons(page, suffix)) {
         await expect(
             await deleteRecord(page, headers, `/persons/${person.id}`),
         ).toBeOK();

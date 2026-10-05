@@ -33,7 +33,9 @@ export async function familySection(
 
     // The section has no accessible name (a bare <section> is not a region), so it is
     // found through its heading. This is the one structural locator; keep it here.
-    return dialog
-        .locator('section')
-        .filter({ has: dialog.getByRole('heading', { name, level: 3 }) });
+    // The `has` locator is resolved inside each section, so it is built from the
+    // page, not from the dialog.
+    return dialog.locator('section').filter({
+        has: dialog.page().getByRole('heading', { name, level: 3 }),
+    });
 }
