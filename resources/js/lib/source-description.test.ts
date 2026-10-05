@@ -70,17 +70,16 @@ const akt = {
     kind: 'metrical_record' as const,
     record_type: null,
     record_type_label: null,
-    entry_number: null,
     parish_id: null,
     parish_label: null,
 };
 
 describe('erasedRecordFields', () => {
-    it('lists nothing when typ and numer wpisu are both empty', () => {
+    it('lists nothing when typ and parafia are both empty', () => {
         expect(
             erasedRecordFields(akt, 'gravestone', {
                 record_type: '',
-                entry_number: '',
+                parish_id: '',
             }),
         ).toEqual([]);
     });
@@ -94,32 +93,10 @@ describe('erasedRecordFields', () => {
                     record_type_label: 'urodzenia',
                 },
                 'gravestone',
-                { record_type: 'birth', entry_number: '' },
+                { record_type: 'birth', parish_id: '' },
             ),
         ).toEqual([
             { field: 'record_type', label: 'Typ aktu', value: 'urodzenia' },
-        ]);
-    });
-
-    it('lists a typed numer wpisu', () => {
-        expect(
-            erasedRecordFields(akt, 'other', {
-                record_type: '',
-                entry_number: '12/1878',
-            }),
-        ).toEqual([
-            { field: 'entry_number', label: 'Numer wpisu', value: '12/1878' },
-        ]);
-    });
-
-    it('still lists a stored value cleared in the form', () => {
-        expect(
-            erasedRecordFields({ ...akt, entry_number: '5' }, 'other', {
-                record_type: '',
-                entry_number: '',
-            }),
-        ).toEqual([
-            { field: 'entry_number', label: 'Numer wpisu', value: '5' },
         ]);
     });
 
@@ -164,11 +141,9 @@ describe('erasedRecordFields', () => {
     it('lists nothing when the kind is unchanged', () => {
         expect(
             erasedRecordFields(
-                { ...akt, entry_number: '5' },
+                { ...akt, parish_id: 7, parish_label: 'Św. Jana' },
                 'metrical_record',
-                {
-                    entry_number: '5',
-                },
+                { parish_id: '7' },
             ),
         ).toEqual([]);
     });
@@ -177,7 +152,7 @@ describe('erasedRecordFields', () => {
         expect(
             erasedRecordFields({ ...akt, kind: 'gravestone' }, 'other', {
                 record_type: 'birth',
-                entry_number: '5',
+                parish_id: '7',
             }),
         ).toEqual([]);
     });
@@ -187,7 +162,6 @@ describe('isUndescribed', () => {
     const none = {
         name: null,
         record_type: null,
-        entry_number: null,
         year: null,
         archive: null,
         parish_id: null,
@@ -224,7 +198,6 @@ const summarySource = {
     kind: 'other' as const,
     kind_short_label: 'inne',
     record_type_label: null,
-    entry_number: null,
     year: null,
     archive: null,
     parish_label: null,
@@ -265,14 +238,14 @@ describe('sourceKindText', () => {
 });
 
 describe('formatSourceSummary', () => {
-    it('joins kind, year and entry number', () => {
+    it('joins kind, year and parish', () => {
         expect(
             formatSourceSummary({
                 ...birthAkt,
                 year: 1878,
-                entry_number: '47',
+                parish_label: 'Św. Jana',
             }),
-        ).toBe('akt urodzenia · 1878 · nr 47');
+        ).toBe('akt urodzenia · 1878 · Św. Jana');
     });
 
     it('omits what is not set', () => {

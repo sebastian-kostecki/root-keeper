@@ -101,6 +101,7 @@ function ownershipRouteCases(): array
         ['tree.root-person.update', 'put', fn (array $r): array => ['person' => $r['victimPerson']->id]],
         ['persons.destroy', 'delete', fn (array $r): array => ['person' => $r['victimPerson']->id]],
         ['sources.destroy', 'delete', fn (array $r): array => ['source' => $r['victimSource']->id]],
+        ['sources.legacy-entry-number.destroy', 'delete', fn (array $r): array => ['source' => $r['victimSource']->id]],
         ['parent-child-relations.destroy', 'delete', fn (array $r): array => ['parent_child_relation' => $r['victimRelation']->id]],
         ['marriages.destroy', 'delete', fn (array $r): array => ['marriage' => $r['victimMarriage']->id]],
     ];

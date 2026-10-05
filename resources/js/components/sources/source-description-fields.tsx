@@ -141,16 +141,6 @@ export function SourceDescriptionFields({
                 <InputError message={errors.parish_id} />
             </div>
 
-            <div className={cn('grid gap-2', !isRecord && 'hidden')}>
-                <Label htmlFor="entry_number">Numer wpisu</Label>
-                <Input
-                    id="entry_number"
-                    name="entry_number"
-                    defaultValue={defaults?.entry_number ?? ''}
-                />
-                <InputError message={errors.entry_number} />
-            </div>
-
             <div className="grid gap-2">
                 <Label htmlFor="year">Rok</Label>
                 <Input

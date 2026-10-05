@@ -95,7 +95,6 @@ export function SourcesTable({
                             sort={sort}
                             onSortChange={onSortChange}
                         />
-                        <TableHead>Nr wpisu</TableHead>
                         <TableHead>Parafia</TableHead>
                         <TableHead>Archiwum</TableHead>
                         <SortableHead<SourcesSortColumn>
@@ -165,13 +164,6 @@ export function SourcesTable({
                                 <TableCell>{sourceKindText(source)}</TableCell>
                                 <TableCell className="tabular-nums">
                                     {source.year ?? <EmptyCell />}
-                                </TableCell>
-                                <TableCell>
-                                    {source.entry_number ? (
-                                        source.entry_number
-                                    ) : (
-                                        <EmptyCell />
-                                    )}
                                 </TableCell>
                                 <TableCell className="max-w-48">
                                     {source.parish_label ? (

@@ -4,7 +4,7 @@ import { cn } from '@/lib/utils';
 import type { LinkedSource } from '@/types';
 
 type Props = {
-    source: LinkedSource;
+    source: Pick<LinkedSource, 'id' | 'display_name' | 'has_thumbnail'>;
     className?: string;
     iconClassName?: string;
     /** The name is printed next to the image: the image gets an empty alt. */

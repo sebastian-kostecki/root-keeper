@@ -25,26 +25,21 @@ export function showsUploadDate(source: CardFields): boolean {
 }
 
 export type ErasedField = {
-    field: 'record_type' | 'entry_number' | 'parish_id';
+    field: 'record_type' | 'parish_id';
     label: string;
     value: string;
 };
 
 type StoredRecord = Pick<
     Source,
-    | 'kind'
-    | 'record_type'
-    | 'record_type_label'
-    | 'entry_number'
-    | 'parish_id'
-    | 'parish_label'
+    'kind' | 'record_type' | 'record_type_label' | 'parish_id' | 'parish_label'
 >;
 
 const present = (value: unknown): value is string =>
     typeof value === 'string' && value !== '';
 
 /**
- * The akt-only fields that switching the kind would erase: typ, parafia and numer wpisu,
+ * The akt-only fields that switching the kind would erase: typ and parafia,
  * stored or typed. A stored value counts even when it was cleared in the open
  * form. Empty unless an akt metrykalny is changed to another kind.
  */
@@ -53,7 +48,6 @@ export function erasedRecordFields(
     selectedKind: SourceKind | '',
     formValues: {
         record_type?: unknown;
-        entry_number?: unknown;
         parish_id?: unknown;
     },
     recordTypes: { value: string; label: string }[] = [],
@@ -98,31 +92,12 @@ export function erasedRecordFields(
         erased.push({ field: 'parish_id', label: 'Parafia', value: label });
     }
 
-    const typedNumber = formValues.entry_number;
-
-    if (present(typedNumber) || present(source.entry_number)) {
-        erased.push({
-            field: 'entry_number',
-            label: 'Numer wpisu',
-            value: present(typedNumber)
-                ? typedNumber
-                : (source.entry_number ?? ''),
-        });
-    }
-
     return erased;
 }
 
 type DescriptionFields = Pick<
     Source,
-    | 'name'
-    | 'record_type'
-    | 'entry_number'
-    | 'year'
-    | 'archive'
-    | 'parish_id'
-    | 'url'
-    | 'note'
+    'name' | 'record_type' | 'year' | 'archive' | 'parish_id' | 'url' | 'note'
 >;
 
 /** A source is undescribed only when all description columns are null; the kind does not count. */
@@ -130,7 +105,6 @@ export function isUndescribed(source: DescriptionFields): boolean {
     return (
         source.name === null &&
         source.record_type === null &&
-        source.entry_number === null &&
         source.year === null &&
         source.archive === null &&
         source.parish_id === null &&
@@ -140,7 +114,7 @@ export function isUndescribed(source: DescriptionFields): boolean {
 }
 
 type SummaryFields = CardFields &
-    Pick<Source, 'kind' | 'kind_short_label' | 'entry_number' | 'uploaded_at'>;
+    Pick<Source, 'kind' | 'kind_short_label' | 'uploaded_at'>;
 
 /** „akt urodzenia”, „akt metrykalny” (akt without a type), „nagrobek”, „inne”. */
 export function sourceKindText(
@@ -167,16 +141,12 @@ function formatUploadDate(uploadedAt: string): string | null {
           });
 }
 
-/** „akt urodzenia · 1878 · nr 47 · parafia”; ends with „dodano {date}” when the upload date is shown. */
+/** „akt urodzenia · 1878 · parafia”; ends with „dodano {date}” when the upload date is shown. */
 export function formatSourceSummary(source: SummaryFields): string {
     const parts = [sourceKindText(source)];
 
     if (source.year !== null) {
         parts.push(String(source.year));
-    }
-
-    if (present(source.entry_number)) {
-        parts.push(`nr ${source.entry_number}`);
     }
 
     if (present(source.parish_label)) {

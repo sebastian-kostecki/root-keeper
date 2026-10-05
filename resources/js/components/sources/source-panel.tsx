@@ -6,6 +6,7 @@ import { DirtyReporter } from '@/components/dirty-reporter';
 import InputError from '@/components/input-error';
 import { PersonPreviewLink } from '@/components/persons/person-preview-link';
 import { DeleteSourceDialog } from '@/components/sources/delete-source-dialog';
+import { LegacyEntryNumber } from '@/components/sources/legacy-entry-number';
 import { SourceDescriptionFields } from '@/components/sources/source-description-fields';
 import { SourceKindField } from '@/components/sources/source-kind-field';
 import { SourceViewer } from '@/components/sources/source-viewer';
@@ -57,7 +58,6 @@ type SourceFormData = {
     kind: SourceKind;
     name: string;
     record_type: string;
-    entry_number: string;
     year: string;
     parish_id: string;
     archive: string;
@@ -494,6 +494,8 @@ function EditSourceForm({
                                     ) : null
                                 }
                             />
+
+                            <LegacyEntryNumber source={source} />
 
                             <Card>
                                 <CardContent className="space-y-2">

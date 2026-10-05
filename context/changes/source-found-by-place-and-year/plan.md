@@ -430,32 +430,32 @@ Migracja czysto addytywna: nullable kolumna na `event_source`, żaden wiersz nie
 
 #### Automated
 
-- [x] 3.1 Testy filtra i Vitest przechodzą
-- [x] 3.2 Testy payloadu źródła przechodzą
-- [x] 3.3 Typy, lint i format przechodzą
-- [x] 3.4 Larastan przechodzi
+- [x] 3.1 Testy filtra i Vitest przechodzą — 57af585
+- [x] 3.2 Testy payloadu źródła przechodzą — 57af585
+- [x] 3.3 Typy, lint i format przechodzą — 57af585
+- [x] 3.4 Larastan przechodzi — 57af585
 
 #### Manual
 
-- [x] 3.5 Przy fakcie z rokiem picker otwiera się z tym rokiem; „Wyczyść filtry” pokazuje wszystkie źródła; licznik ukrytych zgadza się z liczbą źródeł bez roku
-- [x] 3.6 „Luboml” znajduje akt po miejscowości siedziby i po nazwie parafii; pasujący typ aktu jest pierwszy
-- [x] 3.7 Zaznaczenie → numer → Enter podpina i zamyka picker; numer widać przy fakcie
-- [x] 3.8 Przy fakcie bez roku pole „Rok” jest puste i lista pełna
+- [x] 3.5 Przy fakcie z rokiem picker otwiera się z tym rokiem; „Wyczyść filtry” pokazuje wszystkie źródła; licznik ukrytych zgadza się z liczbą źródeł bez roku — 57af585
+- [x] 3.6 „Luboml” znajduje akt po miejscowości siedziby i po nazwie parafii; pasujący typ aktu jest pierwszy — 57af585
+- [x] 3.7 Zaznaczenie → numer → Enter podpina i zamyka picker; numer widać przy fakcie — 57af585
+- [x] 3.8 Przy fakcie bez roku pole „Rok” jest puste i lista pełna — 57af585
 
 ### Phase 4: Stary „Numer wpisu” tylko do odczytu
 
 #### Automated
 
-- [ ] 4.1 Testy źródeł, własności i zapisu przechodzą
-- [ ] 4.2 Vitest przechodzi
-- [ ] 4.3 Typy, lint i format przechodzą
-- [ ] 4.4 Larastan i Pint czyste
-- [ ] 4.5 Brak `entry_number` w formularzu źródła i tabeli
+- [x] 4.1 Testy źródeł, własności i zapisu przechodzą
+- [x] 4.2 Vitest przechodzi
+- [x] 4.3 Typy, lint i format przechodzą
+- [x] 4.4 Larastan i Pint czyste
+- [x] 4.5 Brak `entry_number` w formularzu źródła i tabeli
 
 #### Manual
 
-- [ ] 4.6 Źródło demo z numerem „47” (`TreeViewDemoSeeder`) pokazuje „Numer wpisu (stary): 47”; zapis formularza i zmiana rodzaju go nie kasują; „Usuń” po potwierdzeniu go kasuje
-- [ ] 4.7 Tabela i galeria źródeł nie pokazują numeru
+- [x] 4.6 Źródło demo z numerem „47” (`TreeViewDemoSeeder`) pokazuje „Numer wpisu (stary): 47”; zapis formularza i zmiana rodzaju go nie kasują; „Usuń” po potwierdzeniu go kasuje
+- [x] 4.7 Tabela i galeria źródeł nie pokazują numeru
 
 ### Phase 5: E2E US-01
 

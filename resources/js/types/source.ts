@@ -14,7 +14,7 @@ export type Source = {
     display_name: string;
     record_type: SourceRecordType | null;
     record_type_label: string | null;
-    entry_number: string | null;
+    legacy_entry_number: string | null;
     year: number | null;
     archive: string | null;
     parish_id: number | null;
