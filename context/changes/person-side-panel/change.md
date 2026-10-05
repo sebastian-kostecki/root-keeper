@@ -1,7 +1,7 @@
 ---
 change_id: person-side-panel
 title: Person side panel
-status: implementing
+status: implemented
 created: 2026-10-05
 updated: 2026-10-05
 archived_at: null

@@ -332,13 +332,13 @@ Bez zmian danych i schematu. Zakładki przeglądarki z `?person=` działają dal
 
 #### Automated
 
-- [x] 3.1 Nowy spec przechodzi: `npx playwright test tests/e2e/person-side-panel.spec.ts`
-- [x] 3.2 Cały pakiet E2E przechodzi: `npx playwright test`
-- [x] 3.3 Pełny Pest przechodzi: `vendor/bin/sail artisan test --compact`
+- [x] 3.1 Nowy spec przechodzi: `npx playwright test tests/e2e/person-side-panel.spec.ts` — fb8f055
+- [x] 3.2 Cały pakiet E2E przechodzi: `npx playwright test` — fb8f055
+- [x] 3.3 Pełny Pest przechodzi: `vendor/bin/sail artisan test --compact` — fb8f055
 
 #### Manual
 
-- [x] 3.4 Celowo zepsuty link karty (np. `personId` rodzica zamieniony na id centrum) daje czerwony spec; po cofnięciu zielony
-- [x] 3.5 1366×768: panel `standard` (~410 px) mieści zakładki i edycję sekcji Urodzenie/Małżeństwo bez poziomego przewijania; nieruszone drzewo dopasowuje się po otwarciu i po zamknięciu panelu
-- [x] 3.6 1366×768: przesunięty ręcznie widok → otwarcie i zamknięcie panelu → karta centrum pozostaje widoczna (bez przywracania transformacji)
-- [x] 3.7 Lista osób (widok Lista i Tabela) i strona miejscowości: panel zwęża treść obok siebie
+- [x] 3.4 Celowo zepsuty link karty (np. `personId` rodzica zamieniony na id centrum) daje czerwony spec; po cofnięciu zielony — fb8f055
+- [x] 3.5 1366×768: panel `standard` (~410 px) mieści zakładki i edycję sekcji Urodzenie/Małżeństwo bez poziomego przewijania; nieruszone drzewo dopasowuje się po otwarciu i po zamknięciu panelu — fb8f055
+- [x] 3.6 1366×768: przesunięty ręcznie widok → otwarcie i zamknięcie panelu → karta centrum pozostaje widoczna (bez przywracania transformacji) — fb8f055
+- [x] 3.7 Lista osób (widok Lista i Tabela) i strona miejscowości: panel zwęża treść obok siebie — fb8f055
