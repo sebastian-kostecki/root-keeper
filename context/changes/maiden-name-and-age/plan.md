@@ -215,6 +215,8 @@ Klasa `App\Support\Age` liczy wiek z dat częściowych według reguły z „Impl
 
 **Contract**: klucz `age: array{unit: 'years'|'months'|'days'|'under_year', value: int|null}|null` = `$this->age()?->toArray()` w obu zasobach i ich docblockach.
 
+**Uwaga (impl-review F4):** `PersonResource` obsługuje też listę osób (`persons/index`), więc `age` trafia także do jej wierszy, choć lista go nie wyświetla. To przyjęte świadomie: `events` są tam już eager-loaded, więc nie ma dodatkowych zapytań, a typ `Person` pozostaje wspólny dla listy i podglądu.
+
 #### 4. Formatowanie w TS
 
 **File**: `resources/js/lib/age.ts`, `resources/js/lib/age.test.ts`, `resources/js/types/person.ts`, `resources/js/types/tree.ts`
@@ -230,6 +232,8 @@ Klasa `App\Support\Age` liczy wiek z dat częściowych według reguły z „Impl
 **Intent**: Dopisać wiek w nawiasie po żywocie.
 
 **Contract**: nagłówek: `DialogDescription` = `` `${lifespan} (${formatAge(person.age)})` ``, gdy `age` jest, inaczej sam `lifespan` (gdy `age` istnieje, żywot zawsze jest, bo wymaga roku urodzenia). Karta: ta sama reguła w spanie żywotu (`sheet-person-card.tsx:34-38`).
+
+**Odchylenie w implementacji (impl-review F3):** na karcie drzewa wiek jest w osobnej linii pod żywotem (`whitespace-nowrap`), a nie w tym samym spanie. Na wąskiej karcie „1850 – 1922 (72 lata)” w jednej linii się łamało. Nagłówek podglądu ma wiek w tej samej linii, zgodnie z planem.
 
 #### 6. Testy Pest
 

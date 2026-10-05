@@ -52,6 +52,11 @@ test('an infant with full dates under a month is counted in days', function () {
     expect(ageOf(ageDate(1890, 3, 2), ageDate(1890, 3, 19)))->toBe(['unit' => 'days', 'value' => 17]);
 });
 
+test('an infant born at the end of a month counts days until the same day number recurs', function () {
+    expect(ageOf(ageDate(1890, 1, 31), ageDate(1890, 3, 1)))->toBe(['unit' => 'days', 'value' => 29]);
+    expect(ageOf(ageDate(1890, 1, 31), ageDate(1890, 3, 31)))->toBe(['unit' => 'months', 'value' => 2]);
+});
+
 test('birth and death on the same day is zero days', function () {
     expect(ageOf(ageDate(1890, 3, 2), ageDate(1890, 3, 2)))->toBe(['unit' => 'days', 'value' => 0]);
 });

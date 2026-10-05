@@ -1241,7 +1241,7 @@ test('persons index finds a person by maiden name, also combined with another co
     ]);
     Person::factory()->for($user->tree)->create(['first_name' => 'Jan', 'last_name' => 'Wiśniewski']);
 
-    foreach (['Nowak', 'Anna Nowak'] as $query) {
+    foreach (['Nowak', 'Anna Nowak', 'Anna Kowalska z d. Nowak'] as $query) {
         $this->actingAs($user)->get(route('persons.index', ['q' => $query]))->assertInertia(fn ($page) => $page
             ->has('persons', 1)
             ->where('persons.0.id', $anna->id));

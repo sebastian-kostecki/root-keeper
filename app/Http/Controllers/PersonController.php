@@ -38,7 +38,8 @@ class PersonController extends Controller
                         ->whereIn('type', [EventType::Birth, EventType::Death])
                         ->withExists('sources')])
                     ->when($query !== '', function ($builder) use ($query): void {
-                        $words = preg_split('/\s+/u', $query, -1, PREG_SPLIT_NO_EMPTY) ?: [];
+                        $nameWithoutMaidenMarker = preg_replace('/(?<!\S)z\s+d\.?(?!\S)/iu', ' ', $query) ?? $query;
+                        $words = preg_split('/\s+/u', $nameWithoutMaidenMarker, -1, PREG_SPLIT_NO_EMPTY) ?: [];
 
                         foreach ($words as $word) {
                             $pattern = '%'.str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $word).'%';
