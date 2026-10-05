@@ -173,7 +173,7 @@ it('answers 404 and writes nothing when ?person= names another tree\'s person on
     'tree.show (własna osoba w adresie)' => ['tree.show', fn (array $r): array => ['person' => $r['ownPerson']->id]],
     'sources.index' => ['sources.index', fn (array $r): array => []],
     'localities.index' => ['localities.index', fn (array $r): array => []],
-    'sources.show (własne źródło w adresie)' => ['sources.show', fn (array $r): array => ['source' => $r['ownSource']->id]],
+    'sources.index (otwarty panel własnego źródła)' => ['sources.index', fn (array $r): array => ['source' => $r['ownSource']->id]],
 ]);
 
 it('answers 404 and writes nothing when ?locality= names another tree\'s locality', function () {
@@ -187,6 +187,22 @@ it('answers 404 and writes nothing when ?locality= names another tree\'s localit
 
     $this->actingAs($attacker)
         ->get(route('localities.index', ['locality' => $records['victimLocality']->id]))
+        ->assertNotFound();
+
+    expect(ownershipSnapshot())->toBe($before);
+});
+
+it('answers 404 and writes nothing when ?source= names another tree\'s source', function () {
+    Storage::fake('local');
+
+    $attacker = User::factory()->create();
+    $victim = User::factory()->create();
+    $records = ownershipRecords($attacker, $victim);
+
+    $before = ownershipSnapshot();
+
+    $this->actingAs($attacker)
+        ->get(route('sources.index', ['source' => $records['victimSource']->id]))
         ->assertNotFound();
 
     expect(ownershipSnapshot())->toBe($before);

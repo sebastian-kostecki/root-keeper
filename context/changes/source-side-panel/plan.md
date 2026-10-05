@@ -421,26 +421,26 @@ Brak migracji danych. Stare zakładki `/sources/{id}` działają dzięki przekie
 
 #### Automated
 
-- [x] 1.1 Testy miejscowości przechodzą bez zmian: `vendor/bin/sail artisan test --compact tests/Feature/LocalitiesTest.php`
-- [x] 1.2 Format i lint: `vendor/bin/sail npm run check`
-- [x] 1.3 Typy: `vendor/bin/sail npm run types:check`
-- [x] 1.4 Vitest: `vendor/bin/sail npm run test:js`
+- [x] 1.1 Testy miejscowości przechodzą bez zmian: `vendor/bin/sail artisan test --compact tests/Feature/LocalitiesTest.php` — cf25b21
+- [x] 1.2 Format i lint: `vendor/bin/sail npm run check` — cf25b21
+- [x] 1.3 Typy: `vendor/bin/sail npm run types:check` — cf25b21
+- [x] 1.4 Vitest: `vendor/bin/sail npm run test:js` — cf25b21
 
 #### Manual
 
-- [x] 1.5 Strażnik w `/localities` działa jak przed refaktorem (przełączenie, X, Escape, klik w otwarty wiersz)
-- [x] 1.6 Poniżej 768 px Tab nie wychodzi z panelu, fokus wraca po zamknięciu; od 768 px lista obok panelu dostępna
+- [x] 1.5 Strażnik w `/localities` działa jak przed refaktorem (przełączenie, X, Escape, klik w otwarty wiersz) — cf25b21
+- [x] 1.6 Poniżej 768 px Tab nie wychodzi z panelu, fokus wraca po zamknięciu; od 768 px lista obok panelu dostępna — cf25b21
 
 ### Phase 2: Backend panelu źródła
 
 #### Automated
 
-- [ ] 2.1 Testy źródeł i przepięte testy przechodzą: `vendor/bin/sail artisan test --compact tests/Feature/SourcesTest.php tests/Feature/DeleteImpactTest.php tests/Feature/MarriagesTest.php tests/Feature/PersonsTest.php tests/Feature/EventSourcesTest.php`
-- [ ] 2.2 Testy własności przechodzą (z nowym `?source=` i zmienionym hostem): `vendor/bin/sail artisan test --compact tests/Feature/OwnershipBoundariesTest.php`
-- [ ] 2.3 Przywracanie kopii nadal serwuje pliki: `vendor/bin/sail artisan test --compact tests/Backup/BackupRestoreTest.php`
-- [ ] 2.4 Larastan bez błędów: `vendor/bin/sail composer types:check`
-- [ ] 2.5 Pint czysty: `vendor/bin/sail bin pint --dirty --format agent`
-- [ ] 2.6 Wayfinder i typy: `vendor/bin/sail artisan wayfinder:generate && vendor/bin/sail npm run types:check`
+- [x] 2.1 Testy źródeł i przepięte testy przechodzą: `vendor/bin/sail artisan test --compact tests/Feature/SourcesTest.php tests/Feature/DeleteImpactTest.php tests/Feature/MarriagesTest.php tests/Feature/PersonsTest.php tests/Feature/EventSourcesTest.php`
+- [x] 2.2 Testy własności przechodzą (z nowym `?source=` i zmienionym hostem): `vendor/bin/sail artisan test --compact tests/Feature/OwnershipBoundariesTest.php`
+- [x] 2.3 Przywracanie kopii nadal serwuje pliki: `vendor/bin/sail artisan test --compact tests/Backup/BackupRestoreTest.php`
+- [x] 2.4 Larastan bez błędów: `vendor/bin/sail composer types:check`
+- [x] 2.5 Pint czysty: `vendor/bin/sail bin pint --dirty --format agent`
+- [x] 2.6 Wayfinder i typy: `vendor/bin/sail artisan wayfinder:generate && vendor/bin/sail npm run types:check`
 
 ### Phase 3: Panel źródła na liście
 

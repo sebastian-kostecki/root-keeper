@@ -108,11 +108,11 @@ test('unlinking removes the link', function () {
     $source = Source::factory()->for($user->tree)->create();
     $event->sources()->attach($source);
 
-    $response = $this->from(route('sources.show', $source))
+    $response = $this->from(route('sources.index', ['source' => $source->id]))
         ->actingAs($user)
         ->delete(route('events.sources.destroy', [$event, $source]));
 
-    $response->assertRedirect(route('sources.show', $source));
+    $response->assertRedirect(route('sources.index', ['source' => $source->id]));
     $response->assertSessionHas('inertia.flash_data.toast', ['type' => 'success', 'message' => 'Odpięto źródło']);
 
     $this->assertDatabaseCount('event_source', 0);

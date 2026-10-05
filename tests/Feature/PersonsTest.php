@@ -962,11 +962,12 @@ test('the tree and source pages carry the preview props and flag the proband', f
             ->where('personPreview.isRootPerson', true)
             ->has('personPreview.personForm'));
 
-    $this->actingAs($user)->get(personPreviewUrl($person, 'sources.show', [$source]))
+    $this->actingAs($user)->get(personPreviewUrl($person, 'sources.index', ['source' => $source->id]))
         ->assertOk()
         ->assertInertia(fn ($page) => $page
-            ->component('sources/show')
+            ->component('sources/index')
             ->where('personPreview.person.id', $person->id)
+            ->where('sourcePanel.source.id', $source->id)
             ->has('personPreview.personForm'));
 });
 

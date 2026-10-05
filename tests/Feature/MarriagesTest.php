@@ -176,17 +176,17 @@ test('a source linked to a marriage confirms it on both previews and lists both 
     $this->actingAs($user)->get(personPreviewUrl($spouse))
         ->assertInertia(fn ($page) => $page->where('personPreview.person.marriages.0.is_confirmed', true));
 
-    $response = $this->actingAs($user)->get(route('sources.show', $source));
+    $response = $this->actingAs($user)->get(route('sources.index', ['source' => $source->id]));
 
     $response->assertOk();
     $confirms = null;
     $response->assertInertia(function ($page) use (&$confirms) {
-        $confirms = $page->toArray()['props']['confirms'];
+        $confirms = $page->toArray()['props']['sourcePanel']['confirms'];
 
         return $page
-            ->has('confirms', 2)
-            ->where('confirms.0.event_type', 'marriage')
-            ->where('confirms.1.event_type', 'marriage');
+            ->has('sourcePanel.confirms', 2)
+            ->where('sourcePanel.confirms.0.event_type', 'marriage')
+            ->where('sourcePanel.confirms.1.event_type', 'marriage');
     });
 
     $confirmedPersonIds = collect($confirms)->pluck('person.id')->sort()->values()->all();

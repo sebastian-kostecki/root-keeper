@@ -178,8 +178,8 @@ export async function createSource(
         },
         maxRedirects: 0,
     });
-    await expectRedirect(response, /^\/sources\/\d+$/);
-    const id = idFromLocation(response);
+    await expectRedirect(response, /^\/sources$/);
+    const id = idFromLocation(response, 'source');
     createdSourceIds.add(id);
 
     return id;

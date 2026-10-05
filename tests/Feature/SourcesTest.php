@@ -57,32 +57,68 @@ test('the old upload page returns not found', function () {
     $this->actingAs($user)->get('/sources/create')->assertNotFound();
 });
 
-test('sources show renders the source', function () {
+test('the sources index renders the source panel for ?source=id', function () {
     $user = User::factory()->create();
     $source = Source::factory()->for($user->tree)->withThumbnail()->create();
 
-    $response = $this->actingAs($user)->get(route('sources.show', $source));
+    $response = $this->actingAs($user)->get(route('sources.index', ['source' => $source->id]));
 
     $response->assertOk();
     $response->assertInertia(fn ($page) => $page
-        ->component('sources/show')
-        ->where('source.id', $source->id)
-        ->where('source.has_thumbnail', true));
+        ->component('sources/index')
+        ->where('sourcePanel.source.id', $source->id)
+        ->where('sourcePanel.source.has_thumbnail', true));
 });
 
-test('source show confirms is empty for an unlinked source', function () {
+test('the source panel is null without a source key or with a non-numeric one', function (array $query) {
+    $user = User::factory()->create();
+
+    $this->actingAs($user)->get(route('sources.index', $query))->assertInertia(fn ($page) => $page
+        ->component('sources/index')
+        ->where('sourcePanel', null));
+})->with([
+    'no key' => [[]],
+    'letters' => [['source' => 'abc']],
+    'negative' => [['source' => '-1']],
+    'array' => [['source' => ['5']]],
+]);
+
+test('?source=new opens an empty panel for a new source', function () {
+    $user = User::factory()->create();
+
+    $this->actingAs($user)->get(route('sources.index', ['source' => 'new']))->assertInertia(fn ($page) => $page
+        ->component('sources/index')
+        ->where('sourcePanel.source', null)
+        ->where('sourcePanel.confirms', []));
+});
+
+test('?source= of a missing source is a 404', function () {
+    $user = User::factory()->create();
+
+    $this->actingAs($user)->get(route('sources.index', ['source' => 999999]))->assertNotFound();
+});
+
+test('sources show redirects to the panel on the list', function () {
     $user = User::factory()->create();
     $source = Source::factory()->for($user->tree)->create();
 
-    $response = $this->actingAs($user)->get(route('sources.show', $source));
+    $this->actingAs($user)->get(route('sources.show', $source))
+        ->assertRedirect(route('sources.index', ['source' => $source->id]));
+});
+
+test('source panel confirms is empty for an unlinked source', function () {
+    $user = User::factory()->create();
+    $source = Source::factory()->for($user->tree)->create();
+
+    $response = $this->actingAs($user)->get(route('sources.index', ['source' => $source->id]));
 
     $response->assertOk();
     $response->assertInertia(fn ($page) => $page
-        ->component('sources/show')
-        ->where('confirms', []));
+        ->component('sources/index')
+        ->where('sourcePanel.confirms', []));
 });
 
-test('source show confirms lists the linked events with the person names and whether this is the last source', function () {
+test('source panel confirms lists the linked events with the person names and whether this is the last source', function () {
     $user = User::factory()->create();
     $source = Source::factory()->for($user->tree)->create();
     $otherSource = Source::factory()->for($user->tree)->create();
@@ -95,20 +131,20 @@ test('source show confirms lists the linked events with the person names and whe
     $death->participants()->attach($person, ['role' => ParticipantRole::Subject]);
     $death->sources()->attach([$source->id, $otherSource->id]);
 
-    $response = $this->actingAs($user)->get(route('sources.show', $source));
+    $response = $this->actingAs($user)->get(route('sources.index', ['source' => $source->id]));
 
     $response->assertOk();
     $response->assertInertia(fn ($page) => $page
-        ->component('sources/show')
-        ->has('confirms', 2)
-        ->where('confirms.0.event_id', $birth->id)
-        ->where('confirms.0.event_type', 'birth')
-        ->where('confirms.0.event_label', 'Urodzenie')
-        ->where('confirms.0.is_last_source', true)
-        ->where('confirms.0.person.id', $person->id)
-        ->where('confirms.0.person.display_name', 'Jan Kowalski')
-        ->where('confirms.1.event_id', $death->id)
-        ->where('confirms.1.is_last_source', false));
+        ->component('sources/index')
+        ->has('sourcePanel.confirms', 2)
+        ->where('sourcePanel.confirms.0.event_id', $birth->id)
+        ->where('sourcePanel.confirms.0.event_type', 'birth')
+        ->where('sourcePanel.confirms.0.event_label', 'Urodzenie')
+        ->where('sourcePanel.confirms.0.is_last_source', true)
+        ->where('sourcePanel.confirms.0.person.id', $person->id)
+        ->where('sourcePanel.confirms.0.person.display_name', 'Jan Kowalski')
+        ->where('sourcePanel.confirms.1.event_id', $death->id)
+        ->where('sourcePanel.confirms.1.is_last_source', false));
 });
 
 test('storing a jpg creates the source, the file and its thumbnail', function () {
@@ -124,7 +160,7 @@ test('storing a jpg creates the source, the file and its thumbnail', function ()
 
     $source = Source::firstOrFail();
 
-    $response->assertRedirect(route('sources.show', $source));
+    $response->assertRedirect(route('sources.index', ['source' => $source->id]));
 
     expect($source->tree_id)->toBe($user->tree->id);
     expect($source->original_name)->toBe('rodzinne-zdjecie.jpg');
@@ -177,13 +213,13 @@ test('storing a gravestone persists its kind', function () {
     expect(Source::firstOrFail()->kind)->toBe(SourceKind::Gravestone);
 });
 
-test('the kind is exposed on the show page', function () {
+test('the kind is exposed on the source panel', function () {
     $user = User::factory()->create();
     $source = Source::factory()->gravestone()->for($user->tree)->create();
 
-    $this->actingAs($user)->get(route('sources.show', $source))->assertInertia(fn ($page) => $page
-        ->where('source.kind', 'gravestone')
-        ->where('source.kind_label', 'zdjęcie nagrobka'));
+    $this->actingAs($user)->get(route('sources.index', ['source' => $source->id]))->assertInertia(fn ($page) => $page
+        ->where('sourcePanel.source.kind', 'gravestone')
+        ->where('sourcePanel.source.kind_label', 'zdjęcie nagrobka'));
 });
 
 test('the old scans routes no longer exist', function () {
@@ -203,7 +239,7 @@ test('storing a png is accepted', function () {
 
     $source = Source::sole();
 
-    $response->assertSessionHasNoErrors()->assertRedirect(route('sources.show', $source));
+    $response->assertSessionHasNoErrors()->assertRedirect(route('sources.index', ['source' => $source->id]));
     expect($source->mime_type)->toBe('image/png');
     expect($source->path)->toStartWith("sources/{$user->tree->id}/")->toEndWith('.png');
     Storage::disk('local')->assertExists($source->path);
@@ -223,7 +259,7 @@ test('storing a webp is accepted', function () {
 
     $source = Source::sole();
 
-    $response->assertSessionHasNoErrors()->assertRedirect(route('sources.show', $source));
+    $response->assertSessionHasNoErrors()->assertRedirect(route('sources.index', ['source' => $source->id]));
     expect($source->mime_type)->toBe('image/webp');
     expect($source->path)->toStartWith("sources/{$user->tree->id}/")->toEndWith('.webp');
     Storage::disk('local')->assertExists($source->path);
@@ -565,7 +601,7 @@ test('updating changes the kind and the description and redirects back with the 
     $user = User::factory()->create();
     $source = Source::factory()->for($user->tree)->create();
 
-    $this->actingAs($user)->from(route('sources.show', $source))->put(route('sources.update', $source), [
+    $this->actingAs($user)->from(route('sources.index', ['source' => $source->id]))->put(route('sources.update', $source), [
         'kind' => 'metrical_record',
         'name' => 'Nowa nazwa',
         'record_type' => 'death',
@@ -575,7 +611,7 @@ test('updating changes the kind and the description and redirects back with the 
         'url' => 'https://example.com',
         'note' => 'Notatka',
     ])
-        ->assertRedirect(route('sources.show', $source))
+        ->assertRedirect(route('sources.index', ['source' => $source->id]))
         ->assertInertiaFlash('toast', ['type' => 'success', 'message' => 'Zapisano źródło']);
 
     $source->refresh();
@@ -684,7 +720,7 @@ test('the source resource falls back to the file name when the name is empty', f
         ->where('sources.0.original_name', 'IMG_2034.jpg'));
 });
 
-test('the index and show pages expose the kind and record type options', function () {
+test('the index page and the source panel expose the kind and record type options', function () {
     $user = User::factory()->create();
     $source = Source::factory()->for($user->tree)->create();
 
@@ -692,7 +728,7 @@ test('the index and show pages expose the kind and record type options', functio
         ->where('kinds', SourceKind::options())
         ->where('recordTypes', SourceRecordType::options()));
 
-    $this->actingAs($user)->get(route('sources.show', $source))->assertInertia(fn ($page) => $page
+    $this->actingAs($user)->get(route('sources.index', ['source' => $source->id]))->assertInertia(fn ($page) => $page
         ->where('kinds', SourceKind::options())
         ->where('recordTypes', SourceRecordType::options()));
 });
@@ -741,14 +777,14 @@ test('a marriage event with two participants counts once', function () {
         ->where('sources.0.events_count', 1));
 });
 
-test('the show page and the picker payload carry no events count', function () {
+test('the source panel and the picker payload carry no events count', function () {
     $user = User::factory()->create();
     $source = Source::factory()->for($user->tree)->create();
     $source->events()->attach(Event::factory()->for($user->tree)->birth()->create());
 
-    $this->actingAs($user)->get(route('sources.show', $source))->assertInertia(fn ($page) => $page
-        ->has('source')
-        ->missing('source.events_count'));
+    $this->actingAs($user)->get(route('sources.index', ['source' => $source->id]))->assertInertia(fn ($page) => $page
+        ->has('sourcePanel.source')
+        ->missing('sourcePanel.source.events_count'));
 
     $version = $this->actingAs($user)->get(route('sources.index'), ['X-Inertia' => 'true'])->headers->get('X-Inertia-Version');
 
@@ -839,4 +875,94 @@ test('a partial reload of the filters runs no sources query', function () {
     expect($response->json('props.filters.kind'))->toBe('akty');
     expect($response->json('props'))->not->toHaveKey('sources');
     expect($sourceQueries)->toBeEmpty();
+});
+
+test('a partial reload of the filters with a panel key computes neither the list nor the panel', function () {
+    $user = User::factory()->create();
+    $source = Source::factory()->for($user->tree)->create();
+
+    $version = $this->actingAs($user)->get(route('sources.index'), ['X-Inertia' => 'true'])->headers->get('X-Inertia-Version');
+
+    DB::enableQueryLog();
+
+    $response = $this->actingAs($user)->get(route('sources.index', ['source' => $source->id, 'kind' => 'akty']), [
+        'X-Inertia' => 'true',
+        'X-Inertia-Version' => $version,
+        'X-Inertia-Partial-Data' => 'filters',
+        'X-Inertia-Partial-Component' => 'sources/index',
+    ]);
+
+    $sourceQueries = collect(DB::getQueryLog())->filter(fn (array $log): bool => str_contains($log['query'], '"sources"'));
+
+    $response->assertOk();
+    expect($response->json('props.filters.kind'))->toBe('akty');
+    expect($response->json('props'))->not->toHaveKey('sources')->not->toHaveKey('sourcePanel');
+    expect($sourceQueries)->toBeEmpty();
+});
+
+test('storing keeps the list filters of the previous sources page and opens the new source', function () {
+    Storage::fake('local');
+
+    $user = User::factory()->create();
+
+    $response = $this->actingAs($user)
+        ->from('/sources?view=tabela&kind=akty&q=Kraków&sort=nazwa&source=new')
+        ->post(route('sources.store'), [
+            'kind' => 'metrical_record',
+            'file' => UploadedFile::fake()->image('akt.jpg', 400, 300),
+        ]);
+
+    $source = Source::sole();
+
+    $response->assertRedirect(route('sources.index', [
+        'q' => 'Kraków',
+        'kind' => 'akty',
+        'view' => 'tabela',
+        'sort' => 'nazwa',
+        'source' => $source->id,
+    ]));
+});
+
+test('storing from a page other than the sources list carries no filters', function () {
+    Storage::fake('local');
+
+    $user = User::factory()->create();
+
+    $response = $this->actingAs($user)
+        ->from('/persons?q=Kraków&kind=akty')
+        ->post(route('sources.store'), [
+            'kind' => 'metrical_record',
+            'file' => UploadedFile::fake()->image('akt.jpg', 400, 300),
+        ]);
+
+    $response->assertRedirect(route('sources.index', ['source' => Source::sole()->id]));
+});
+
+test('storing drops invalid, default and foreign list parameters', function () {
+    Storage::fake('local');
+
+    $user = User::factory()->create();
+
+    $response = $this->actingAs($user)
+        ->from('/sources?kind=zle&view=galeria&sort=nazwa&person=5&source=new')
+        ->post(route('sources.store'), [
+            'kind' => 'metrical_record',
+            'file' => UploadedFile::fake()->image('akt.jpg', 400, 300),
+        ]);
+
+    $response->assertRedirect(route('sources.index', ['source' => Source::sole()->id]));
+});
+
+test('destroying closes the panel and keeps the list filters of the previous page', function () {
+    Storage::fake('local');
+
+    $user = User::factory()->create();
+    $source = Source::factory()->for($user->tree)->create();
+
+    $this->actingAs($user)
+        ->from("/sources?view=tabela&source={$source->id}")
+        ->delete(route('sources.destroy', $source))
+        ->assertRedirect(route('sources.index', ['view' => 'tabela']));
+
+    expect(Source::find($source->id))->toBeNull();
 });

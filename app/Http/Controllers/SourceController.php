@@ -43,7 +43,89 @@ class SourceController extends Controller
             'filters' => ['q' => $query, 'kind' => $kind, 'view' => $view, 'sort' => $sort],
             'kinds' => SourceKind::options(),
             'recordTypes' => SourceRecordType::options(),
+            'sourcePanel' => function () use ($request): ?array {
+                $key = $request->query('source');
+
+                if ($key === 'new') {
+                    return ['source' => null, 'confirms' => []];
+                }
+
+                if (! is_string($key) || ! ctype_digit($key)) {
+                    return null;
+                }
+
+                $source = $request->user()->tree->sources()->findOrFail((int) $key);
+
+                Gate::authorize('view', $source);
+
+                $source->load(['events' => fn ($query) => $query->withCount('sources')->with('participants')]);
+
+                return [
+                    'source' => SourceResource::make($source)->resolve(),
+                    'confirms' => $this->confirms($source),
+                ];
+            },
         ]);
+    }
+
+    /**
+     * The list filters carried by the previous page, when it was the sources list; defaults and blanks are omitted.
+     *
+     * @return array<string, string>
+     */
+    private function listQuery(): array
+    {
+        $previous = parse_url(url()->previous());
+
+        if (! is_array($previous) || ($previous['path'] ?? null) !== '/sources') {
+            return [];
+        }
+
+        parse_str($previous['query'] ?? '', $params);
+
+        $query = [];
+        $q = $this->normalizeSearchQuery($params['q'] ?? null);
+        $kind = $this->normalizeKind($params['kind'] ?? null);
+
+        if ($q !== '') {
+            $query['q'] = $q;
+        }
+
+        if ($kind !== 'wszystkie') {
+            $query['kind'] = $kind;
+        }
+
+        if ($this->normalizeView($params['view'] ?? null) === 'tabela') {
+            $query['view'] = 'tabela';
+            $sort = $this->normalizeSort($params['sort'] ?? null);
+
+            if ($sort !== '-dodano') {
+                $query['sort'] = $sort;
+            }
+        }
+
+        return $query;
+    }
+
+    /**
+     * The events the source confirms, one row per participant.
+     *
+     * @return array<int, array{event_id: int, event_type: string, event_label: string, is_last_source: bool, person: array{id: int, display_name: string}}>
+     */
+    private function confirms(Source $source): array
+    {
+        return $source->events->flatMap(
+            fn (Event $event): Collection => $event->participants->map(fn (Person $person): array => [
+                'event_id' => $event->id,
+                'event_type' => $event->type->value,
+                'event_label' => $event->type->label(),
+                'is_last_source' => $event->sources_count === 1,
+                'person' => [
+                    'id' => $person->id,
+                    'display_name' => $person->displayName(),
+                ],
+            ])
+        )->values()->all();
     }
 
     /**
@@ -101,35 +183,17 @@ class SourceController extends Controller
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Dodano źródło')]);
 
-        return to_route('sources.show', $source);
+        return to_route('sources.index', [...$this->listQuery(), 'source' => $source->id]);
     }
 
     /**
-     * Display the given source.
+     * Redirect to the source's panel on the list.
      */
-    public function show(Source $source): Response
+    public function show(Source $source): RedirectResponse
     {
         Gate::authorize('view', $source);
 
-        $source->load(['events' => fn ($query) => $query->withCount('sources')->with('participants')]);
-
-        return Inertia::render('sources/show', [
-            'source' => SourceResource::make($source)->resolve(),
-            'kinds' => SourceKind::options(),
-            'recordTypes' => SourceRecordType::options(),
-            'confirms' => $source->events->flatMap(
-                fn (Event $event): Collection => $event->participants->map(fn (Person $person): array => [
-                    'event_id' => $event->id,
-                    'event_type' => $event->type->value,
-                    'event_label' => $event->type->label(),
-                    'is_last_source' => $event->sources_count === 1,
-                    'person' => [
-                        'id' => $person->id,
-                        'display_name' => $person->displayName(),
-                    ],
-                ])
-            )->values()->all(),
-        ]);
+        return to_route('sources.index', ['source' => $source->id]);
     }
 
     /**
@@ -159,7 +223,7 @@ class SourceController extends Controller
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Usunięto źródło')]);
 
-        return to_route('sources.index');
+        return to_route('sources.index', $this->listQuery());
     }
 
     /**

@@ -124,8 +124,8 @@ test('deleting a source detaches exactly the facts the confirmation listed and r
     extract($scene);
 
     $confirms = null;
-    $this->actingAs($user)->get(route('sources.show', $sourceShared))->assertInertia(function ($page) use (&$confirms) {
-        $confirms = $page->toArray()['props']['confirms'];
+    $this->actingAs($user)->get(route('sources.index', ['source' => $sourceShared->id]))->assertInertia(function ($page) use (&$confirms) {
+        $confirms = $page->toArray()['props']['sourcePanel']['confirms'];
 
         return $page;
     });
