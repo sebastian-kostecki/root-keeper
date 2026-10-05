@@ -482,12 +482,12 @@ Brak migracji danych. Stare zakładki `/sources/{id}` działają dzięki przekie
 
 #### Automated
 
-- [x] 5.1 Nowy spec przechodzi stabilnie: `npx playwright test tests/e2e/source-panel-edit.spec.ts --repeat-each=2`
-- [x] 5.2 Fakt → źródło → skan przechodzi: `npx playwright test tests/e2e/fact-source-scan.spec.ts --repeat-each=2`
-- [x] 5.3 Cały zestaw E2E zielony: `npx playwright test`
-- [x] 5.4 Format i lint: `vendor/bin/sail npm run check`
+- [x] 5.1 Nowy spec przechodzi stabilnie: `npx playwright test tests/e2e/source-panel-edit.spec.ts --repeat-each=2` — 9396f5a
+- [x] 5.2 Fakt → źródło → skan przechodzi: `npx playwright test tests/e2e/fact-source-scan.spec.ts --repeat-each=2` — 9396f5a
+- [x] 5.3 Cały zestaw E2E zielony: `npx playwright test` — 9396f5a
+- [x] 5.4 Format i lint: `vendor/bin/sail npm run check` — 9396f5a
 
 #### Manual
 
-- [x] 5.5 Celowe uszkodzenie `UpdateSource` daje czerwony spec, po cofnięciu zielony
-- [x] 5.6 Po przebiegu baza `e2e` bez źródeł z prefiksem `e2etest`
+- [x] 5.5 Celowe uszkodzenie `UpdateSource` daje czerwony spec, po cofnięciu zielony — 9396f5a
+- [x] 5.6 Po przebiegu baza `e2e` bez źródeł z prefiksem `e2etest` — 9396f5a
