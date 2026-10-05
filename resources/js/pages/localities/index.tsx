@@ -1,7 +1,6 @@
 import { Head, Link, router } from '@inertiajs/react';
 import { useEffect, useRef, useState } from 'react';
 import type { MouseEvent } from 'react';
-import LocalityController from '@/actions/App/Http/Controllers/LocalityController';
 import Heading from '@/components/heading';
 import {
     LocalitiesEmptyTree,
@@ -20,9 +19,9 @@ import {
 } from '@/components/ui/dialog';
 import { useSidePanelNavigation } from '@/hooks/use-side-panel-navigation';
 import {
-    buildLocalitiesQuery,
     filterLocalities,
     sortLocalities,
+    withLocalitiesSearch,
 } from '@/lib/localities-index';
 import { panelVisitOptions } from '@/lib/side-panel-url';
 import { pluralPhrase } from '@/lib/plural';
@@ -53,12 +52,18 @@ export default function Index({ localities, filters, localityPanel }: Props) {
     );
 
     const openId = localityPanel?.locality?.id ?? null;
+    /** Panel key of the record shown now: its id, 'new', or null when the panel is closed. */
+    const openKey =
+        localityPanel === null ? null : (localityPanel.locality?.id ?? 'new');
 
     const visit = (q: string, replace = false) => {
         lastVisitedQuery.current = q;
 
+        // From the live address, not a render-time copy: the debounced visit may fire after a panel opened.
+        const { pathname, search, hash } = window.location;
+
         router.get(
-            LocalityController.index({ query: buildLocalitiesQuery({ q }) }),
+            withLocalitiesSearch(`${pathname}${search}${hash}`, q),
             {},
             {
                 preserveState: true,
@@ -103,13 +108,18 @@ export default function Index({ localities, filters, localityPanel }: Props) {
 
     const guardLink = (event: MouseEvent<Element>, id: number | string) => {
         // Let the browser handle modified clicks (new tab) as usual.
-        if (
-            event.metaKey ||
-            event.ctrlKey ||
-            event.shiftKey ||
-            event.altKey ||
-            !isDirty
-        ) {
+        if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {
+            return;
+        }
+
+        // The record is already open: nothing to switch to, and the form keeps its changes.
+        if (id === openKey) {
+            event.preventDefault();
+
+            return;
+        }
+
+        if (!isDirty) {
             return;
         }
 

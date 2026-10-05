@@ -44,7 +44,7 @@ root-keeper to prywatne, samodzielnie hostowane drzewo genealogiczne, w którym 
 | ---- | ------------------------------------ | -------------------------------------------------------------------------------------------------------- | ---------------------- | ---------------------------------------- | -------- |
 | F-01 | critical-flows-e2e-guard             | (foundation) testy E2E chronią powiązanie fakt–źródło i dodawanie relacji ze slotów drzewa                | —                      | Guardrails, Constraints & Compatibility  | done |
 | F-02 | side-panel-shell                     | (foundation) jest jedna wspólna powłoka panelu bocznego z prawej, obok której treść strony się zwęża      | —                      | FR-006, FR-019, FR-028, NFR (1366–2560 px) | done |
-| S-01 | places-gazetteer                     | prowadzić spis miejscowości z opisem, który startuje z istniejących tekstowych miejsc                     | F-02                   | FR-007, FR-029                           | proposed |
+| S-01 | places-gazetteer                     | prowadzić spis miejscowości z opisem, który startuje z istniejących tekstowych miejsc                     | F-02                   | FR-007, FR-029                           | in-progress |
 | S-02 | source-side-panel                    | dodawać, oglądać i edytować źródło w szerokim panelu bocznym ze skanem obok opisu                         | F-02                   | FR-006, FR-027                           | proposed |
 | S-03 | act-described-by-parish-and-archive  | opisać akt parafią ze spisu (dopisaną w locie), rokiem, typem aktu i archiwum z podpowiedziami            | S-01, S-02             | FR-001, FR-008, FR-009, US-01            | proposed |
 | S-04 | source-found-by-place-and-year       | przy podpinaniu źródła do faktu szukać po miejscu i roku i podać numer wpisu widoczny przy fakcie i źródle | S-03, F-01             | FR-003, FR-004, FR-025, US-01            | proposed |
@@ -130,7 +130,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
   - Jakie pola ma miejscowość poza nazwą i opisem (prd-v2 miała współrzędne wpisywane ręcznie; nazwy historyczne trafiają do opisu)? Owner: user. Block: no.
   - Przeniesienie z tekstu do spisu kopiuje, a nie usuwa: tekstowe miejsca zostają do czasu przepięcia faktów (`S-07`) i zamieszkań (`S-08`). Owner: `/10x-plan`. Block: no.
 - **Risk:** Pierwsze z trzech przeniesień prawdziwych danych; idzie najwcześniej, bo od spisu zależą parafie (`S-03`), miejsca faktów (`S-07`), zamieszkania (`S-08`) i cmentarze (`S-09`). Błąd zgrupowania tekstów jest naprawialny ręcznie (PRD dopuszcza), utrata tekstu — nie.
-- **Status:** proposed
+- **Status:** in-progress
 
 ### S-02: Źródło w szerokim panelu bocznym
 

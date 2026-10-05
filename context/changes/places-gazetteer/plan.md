@@ -80,6 +80,8 @@ Tabela `localities`, model z fabryką, relacja drzewa oraz migracja zasiewu z te
 
 **Contract**: `Locality` — `@property int $id, int $tree_id, string $name, ?string $description`; `#[Fillable(['tree_id', 'name', 'description'])]`; `tree(): BelongsTo`. `Tree::localities(): HasMany<Locality, $this>` obok `sources()`. `LocalityFactory::definition()` → `tree_id` przez `Tree::factory()`, `name` unikalna w obrębie przebiegu (np. `fake()->unique()->city()`), `description` null.
 
+> **Addendum (impl review 2026-10-05, F7):** fabryka używa listy polskich nazw z `unique()->numerify('###')` zamiast `fake()->unique()->city()` — spełnia cel polskich nazw.
+
 #### 3. Migracja zasiewu
 
 **File**: `database/migrations/2026_10_05_XXXXXX_seed_localities_from_place_texts.php` (timestamp po migracji tabeli)
@@ -190,6 +192,8 @@ Endpointy listy, dodawania i edycji, Policy, resolver panelu `?locality=` z gał
 **Intent**: Zapis według konwencji kontroler → Form Request → Action.
 
 **Contract**: `StoreLocality::handle(Tree $tree, array $attributes): Locality` tworzy przez `$tree->localities()->create(...)`, więc `tree_id` z ciała żądania jest ignorowany. `UpdateLocality::handle(Locality $locality, array $attributes): Locality` aktualizuje `name` i `description` (brak opisu → NULL). Typy `@param array{name: string, description?: string|null}`.
+
+> **Addendum (impl review 2026-10-05, F7):** zaimplementowane jako `handle(Tree $tree, string $name, ?string $description)` i `handle(Locality $locality, string $name, ?string $description)` — przy dwóch polach czytelniejsze niż tablica; kontrakt (drzewo z użytkownika, brak opisu → NULL) zachowany. Po F3 obie akcje łapią `UniqueConstraintViolationException` w `DB::transaction` i zwracają błąd walidacji `name`.
 
 #### 5. Resource
 

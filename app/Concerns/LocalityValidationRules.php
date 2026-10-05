@@ -17,6 +17,7 @@ trait LocalityValidationRules
     {
         return [
             'name' => [
+                'bail',
                 'required',
                 'string',
                 'max:255',
