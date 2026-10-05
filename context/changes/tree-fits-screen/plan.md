@@ -312,38 +312,38 @@ Brak zmian danych i schematu. Seeder demo dostaje tylko nowe rekordy na końcu.
 
 #### Automated
 
-- [x] 1.1 Testy logiki dopasowania przechodzą: `vendor/bin/sail npm run test:js`
-- [x] 1.2 Format i lint przechodzą: `vendor/bin/sail npm run check`
-- [x] 1.3 Typy przechodzą: `vendor/bin/sail npm run types:check`
-- [x] 1.4 Build przechodzi: `vendor/bin/sail npm run build`
-- [x] 1.5 Pest drzewa bez zmian i zielony: `vendor/bin/sail artisan test --compact tests/Feature/TreeTest.php tests/Feature/WriteTargetsTest.php`
-- [x] 1.6 Pełny zestaw E2E zielony przy 1366×768: `npx playwright test`
+- [x] 1.1 Testy logiki dopasowania przechodzą: `vendor/bin/sail npm run test:js` — 480a062
+- [x] 1.2 Format i lint przechodzą: `vendor/bin/sail npm run check` — 480a062
+- [x] 1.3 Typy przechodzą: `vendor/bin/sail npm run types:check` — 480a062
+- [x] 1.4 Build przechodzi: `vendor/bin/sail npm run build` — 480a062
+- [x] 1.5 Pest drzewa bez zmian i zielony: `vendor/bin/sail artisan test --compact tests/Feature/TreeTest.php tests/Feature/WriteTargetsTest.php` — 480a062
+- [x] 1.6 Pełny zestaw E2E zielony przy 1366×768: `npx playwright test` — 480a062
 
 #### Manual
 
-- [x] 1.7 Na 1366×768 drzewo probanta zajmuje całą wysokość pod nagłówkiem strony, strona nie przewija się w pionie, a drzewo jest widoczne w całości albo (poniżej progu) wyśrodkowane na parze
-- [x] 1.8 Kółko przybliża wokół kursora, przeciągnięcie przesuwa, a przeciągnięcie zakończone nad kartą nie nawiguje
-- [x] 1.9 „Dopasuj” pokazuje całe drzewo. Po zmianie szerokości okna nieruszane drzewo dopasowuje się ponownie, a po ręcznym przybliżeniu widok zostaje
-- [x] 1.10 Przejście do innej osoby i zmiana związku dopasowują drzewo od nowa
-- [x] 1.11 Tab przez karty i sloty pokazuje fokusowany element w kadrze bez rozjechania widoku
-- [x] 1.12 Sloty „Dodaj ojca/matkę/dziecko/małżonka” i menu związku działają kliknięciem jak dziś
+- [x] 1.7 Na 1366×768 drzewo probanta zajmuje całą wysokość pod nagłówkiem strony, strona nie przewija się w pionie, a drzewo jest widoczne w całości albo (poniżej progu) wyśrodkowane na parze — 480a062
+- [x] 1.8 Kółko przybliża wokół kursora, przeciągnięcie przesuwa, a przeciągnięcie zakończone nad kartą nie nawiguje — 480a062
+- [x] 1.9 „Dopasuj” pokazuje całe drzewo. Po zmianie szerokości okna nieruszane drzewo dopasowuje się ponownie, a po ręcznym przybliżeniu widok zostaje — 480a062
+- [x] 1.10 Przejście do innej osoby i zmiana związku dopasowują drzewo od nowa — 480a062
+- [x] 1.11 Tab przez karty i sloty pokazuje fokusowany element w kadrze bez rozjechania widoku — 480a062
+- [x] 1.12 Sloty „Dodaj ojca/matkę/dziecko/małżonka” i menu związku działają kliknięciem jak dziś — 480a062
 
 ### Phase 2: Większe karty i jeden rząd dzieci
 
 #### Automated
 
-- [ ] 2.1 Format i lint przechodzą: `vendor/bin/sail npm run check`
-- [ ] 2.2 Typy przechodzą: `vendor/bin/sail npm run types:check`
-- [ ] 2.3 Build przechodzi: `vendor/bin/sail npm run build`
-- [ ] 2.4 Pest drzewa bez zmian i zielony: `vendor/bin/sail artisan test --compact tests/Feature/TreeTest.php tests/Feature/WriteTargetsTest.php`
-- [ ] 2.5 E2E slotów zielone przy 1366×768: `npx playwright test tests/e2e/tree-slot-parent.spec.ts tests/e2e/tree-slot-child.spec.ts tests/e2e/tree-slot-spouse.spec.ts`
+- [x] 2.1 Format i lint przechodzą: `vendor/bin/sail npm run check`
+- [x] 2.2 Typy przechodzą: `vendor/bin/sail npm run types:check`
+- [x] 2.3 Build przechodzi: `vendor/bin/sail npm run build`
+- [x] 2.4 Pest drzewa bez zmian i zielony: `vendor/bin/sail artisan test --compact tests/Feature/TreeTest.php tests/Feature/WriteTargetsTest.php`
+- [x] 2.5 E2E slotów zielone przy 1366×768: `npx playwright test tests/e2e/tree-slot-parent.spec.ts tests/e2e/tree-slot-child.spec.ts tests/e2e/tree-slot-spouse.spec.ts`
 
 #### Manual
 
-- [ ] 2.6 Karty są wyraźnie większe niż przed zmianą, a w skali 75% nazwy i daty pozostają czytelne
-- [ ] 2.7 Przy 1, 3, 5 i 8 dzieciach każde dziecko ma zejście z jednej belki połączonej pniem z parą. Przy 5+ karty dzieci są wąskie, a rząd mieści się w szerokości dziadków
-- [ ] 2.8 Slot „Dodaj dziecko” stoi obok rzędu, nie na belce, a rząd dzieci pozostaje wyśrodkowany pod parą
-- [ ] 2.9 Długie nazwiska zawijają się w kartach dziadków i wąskich dzieci, nie wychodzą poza kartę i nie wchodzą pod ikonę „Podgląd”
+- [x] 2.6 Karty są wyraźnie większe niż przed zmianą, a w skali 75% nazwy i daty pozostają czytelne
+- [x] 2.7 Przy 1, 3, 5 i 8 dzieciach każde dziecko ma zejście z jednej belki połączonej pniem z parą. Przy 5+ karty dzieci są wąskie, a rząd mieści się w szerokości dziadków
+- [x] 2.8 Slot „Dodaj dziecko” stoi obok rzędu, nie na belce, a rząd dzieci pozostaje wyśrodkowany pod parą
+- [x] 2.9 Długie nazwiska zawijają się w kartach dziadków i wąskich dzieci, nie wychodzą poza kartę i nie wchodzą pod ikonę „Podgląd”
 
 ### Phase 3: Ocena wyglądu na granicach NFR
 

@@ -3,7 +3,7 @@
  * centred column content, side padding that leaves room for the eye button.
  */
 export const cardSurface =
-    'flex h-full min-h-16 flex-col items-center justify-center rounded-xl border px-7 py-2.5 text-center';
+    'flex h-full min-h-24 flex-col items-center justify-center rounded-xl border px-7 py-3.5 text-center';
 
 /**
  * Keyboard focus for a card that acts as a link or button.

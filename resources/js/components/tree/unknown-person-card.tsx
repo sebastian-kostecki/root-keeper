@@ -22,7 +22,7 @@ type Props = Omit<React.ComponentProps<'button'>, 'children'> & {
 export function UnknownPersonCard({ label, addLabel, ...props }: Props) {
     if (addLabel === undefined) {
         return (
-            <div className={cn(cardSurface, placeholderStatic, 'text-sm')}>
+            <div className={cn(cardSurface, placeholderStatic, 'text-base')}>
                 {label}
             </div>
         );
@@ -36,7 +36,7 @@ export function UnknownPersonCard({ label, addLabel, ...props }: Props) {
             className={cn(
                 cardSurface,
                 placeholderAction,
-                'w-full cursor-pointer flex-row gap-1 text-sm',
+                'w-full cursor-pointer flex-row gap-1 text-base',
             )}
         >
             <Plus className="size-4 shrink-0" aria-hidden="true" />

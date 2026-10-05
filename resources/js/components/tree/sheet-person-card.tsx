@@ -23,7 +23,7 @@ type Props = {
 function CardBody({ person }: { person: SheetPerson }) {
     return (
         <>
-            <span className="text-card-foreground text-sm leading-tight font-semibold [overflow-wrap:anywhere] break-words">
+            <span className="text-card-foreground text-base leading-tight font-semibold [overflow-wrap:anywhere] break-words">
                 {person.gender === 'male' && (
                     <span className="sr-only">mężczyzna</span>
                 )}
@@ -33,12 +33,12 @@ function CardBody({ person }: { person: SheetPerson }) {
                 {person.display_name}
             </span>
             {person.lifespan && (
-                <span className="text-tree-meta mt-1 block text-xs">
+                <span className="text-tree-meta mt-1 block text-sm">
                     {person.lifespan}
                 </span>
             )}
             {person.lifespan && person.age && (
-                <span className="text-tree-meta block text-xs whitespace-nowrap">
+                <span className="text-tree-meta block text-sm whitespace-nowrap">
                     {`(${formatAge(person.age)})`}
                 </span>
             )}
