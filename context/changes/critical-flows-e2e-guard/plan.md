@@ -342,27 +342,27 @@ Brak migracji. Nowy wolumin Dockera zaczyna pusty. Źródła utworzone w bazie `
 
 #### Automated
 
-- [x] 1.1 Seed i logowanie przechodzą na świeżo uruchomionym serwerze
-- [x] 1.2 Format i lint przechodzą
+- [x] 1.1 Seed i logowanie przechodzą na świeżo uruchomionym serwerze — 1bd142c
+- [x] 1.2 Format i lint przechodzą — 1bd142c
 
 #### Manual
 
-- [x] 1.3 Źródło wgrane w aplikacji E2E nie tworzy pliku w deweloperskim storage/app/private/sources/
-- [x] 1.4 Skan przetrwał restart serwera E2E i został usunięty z UI
+- [x] 1.3 Źródło wgrane w aplikacji E2E nie tworzy pliku w deweloperskim storage/app/private/sources/ — 1bd142c
+- [x] 1.4 Skan przetrwał restart serwera E2E i został usunięty z UI — 1bd142c
 
 ### Phase 2: Moduł pomocniczy i test „fakt → źródło → skan”
 
 #### Automated
 
-- [ ] 2.1 Test fakt → źródło → skan przechodzi
-- [ ] 2.2 Celowe uszkodzenie (file serwuje miniaturę) daje czerwony wynik na asercji sha256, cofnięte
-- [ ] 2.3 Test stabilny przy --repeat-each=3
-- [ ] 2.4 Brak osób i źródeł z prefiksem testowym w bazie e2e po przebiegu
-- [ ] 2.5 Format i lint przechodzą
+- [x] 2.1 Test fakt → źródło → skan przechodzi
+- [x] 2.2 Celowe uszkodzenie (file serwuje miniaturę) daje czerwony wynik na asercji sha256, cofnięte
+- [x] 2.3 Test stabilny przy --repeat-each=3
+- [x] 2.4 Brak osób i źródeł z prefiksem testowym w bazie e2e po przebiegu
+- [x] 2.5 Format i lint przechodzą
 
 #### Manual
 
-- [ ] 2.6 Przegląd specyfikacji i modułu pomocniczego pod kątem pięciu antywzorców
+- [x] 2.6 Przegląd specyfikacji i modułu pomocniczego pod kątem pięciu antywzorców
 
 ### Phase 3: Relacje z pustych slotów drzewa i sonda okna choose()
 
