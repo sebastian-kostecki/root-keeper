@@ -158,6 +158,34 @@ export async function createSpouse(
 }
 
 /**
+ * `persons.parents.store`: a new parent of `childId`. The route redirects back
+ * and carries no id, so the parent is found again by its unique name.
+ */
+export async function createParent(
+    page: Page,
+    childId: number,
+    fields: PersonFields & { first_name: string; last_name: string },
+    role: 'father' | 'mother' | 'parent' = 'parent',
+): Promise<number> {
+    const response = await page.request.post(`/persons/${childId}/parents`, {
+        headers: await writeHeaders(page),
+        form: { ...personForm(fields), role },
+        maxRedirects: 0,
+    });
+    await expectRedirect(response);
+
+    const name = `${fields.first_name} ${fields.last_name}`;
+    const parent = (await findPersons(page, fields.last_name)).find(
+        (person) => person.display_name === name,
+    );
+    if (!parent) {
+        throw new Error(`The new parent ${name} was not created`);
+    }
+
+    return parent.id;
+}
+
+/**
  * Sources this worker created through the API since the last cleanup. They are
  * deleted by id, so cleanup does not depend on how the app names a source.
  */

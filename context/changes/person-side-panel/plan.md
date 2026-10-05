@@ -315,30 +315,30 @@ Bez zmian danych i schematu. Zakładki przeglądarki z `?person=` działają dal
 
 #### Automated
 
-- [x] 2.1 Format i lint przechodzą: `vendor/bin/sail npm run check`
-- [x] 2.2 Typy przechodzą: `vendor/bin/sail npm run types:check`
-- [x] 2.3 Vitest `centreHints` przechodzi (pary dziadków, rodzice, partner, `unknown`, osoba bez pary, pierwsze wystąpienie): `vendor/bin/sail npm run test:js`
-- [x] 2.4 Pest małżeństw przechodzi, w tym nowe przypadki przekierowania z `person`: `vendor/bin/sail artisan test --compact tests/Feature/MarriagesTest.php`
-- [x] 2.5 Istniejące E2E slotów przechodzą: `npx playwright test tests/e2e/tree-slot-parent.spec.ts tests/e2e/tree-slot-child.spec.ts tests/e2e/tree-slot-spouse.spec.ts`
+- [x] 2.1 Format i lint przechodzą: `vendor/bin/sail npm run check` — 9a8b595
+- [x] 2.2 Typy przechodzą: `vendor/bin/sail npm run types:check` — 9a8b595
+- [x] 2.3 Vitest `centreHints` przechodzi (pary dziadków, rodzice, partner, `unknown`, osoba bez pary, pierwsze wystąpienie): `vendor/bin/sail npm run test:js` — 9a8b595
+- [x] 2.4 Pest małżeństw przechodzi, w tym nowe przypadki przekierowania z `person`: `vendor/bin/sail artisan test --compact tests/Feature/MarriagesTest.php` — 9a8b595
+- [x] 2.5 Istniejące E2E slotów przechodzą: `npx playwright test tests/e2e/tree-slot-parent.spec.ts tests/e2e/tree-slot-child.spec.ts tests/e2e/tree-slot-spouse.spec.ts` — 9a8b595
 
 #### Manual
 
-- [x] 2.6 Kliknięcie karty dziadka otwiera jego panel; „Pokaż na drzewie” centruje na dziadku ze związkiem z babcią i panel zostaje otwarty
-- [x] 2.7 Kliknięcie karty centrum otwiera panel bez akcji „Pokaż na drzewie”; nagłówek drzewa nie ma „Podgląd”
-- [x] 2.8 Przy otwartym panelu: przełączenie związku i dodanie małżonka ze slotu zostawiają panel otwarty
-- [x] 2.9 Przy otwartym panelu dodanie rodzica i dziecka ze slotów działa jak dziś (modal slotu nad drzewem, panel zostaje)
+- [x] 2.6 Kliknięcie karty dziadka otwiera jego panel; „Pokaż na drzewie” centruje na dziadku ze związkiem z babcią i panel zostaje otwarty — 9a8b595
+- [x] 2.7 Kliknięcie karty centrum otwiera panel bez akcji „Pokaż na drzewie”; nagłówek drzewa nie ma „Podgląd” — 9a8b595
+- [x] 2.8 Przy otwartym panelu: przełączenie związku i dodanie małżonka ze slotu zostawiają panel otwarty — 9a8b595
+- [x] 2.9 Przy otwartym panelu dodanie rodzica i dziecka ze slotów działa jak dziś (modal slotu nad drzewem, panel zostaje) — 9a8b595
 
 ### Phase 3: E2E przepływu panelu i ocena przy 1366 px
 
 #### Automated
 
-- [ ] 3.1 Nowy spec przechodzi: `npx playwright test tests/e2e/person-side-panel.spec.ts`
-- [ ] 3.2 Cały pakiet E2E przechodzi: `npx playwright test`
-- [ ] 3.3 Pełny Pest przechodzi: `vendor/bin/sail artisan test --compact`
+- [x] 3.1 Nowy spec przechodzi: `npx playwright test tests/e2e/person-side-panel.spec.ts`
+- [x] 3.2 Cały pakiet E2E przechodzi: `npx playwright test`
+- [x] 3.3 Pełny Pest przechodzi: `vendor/bin/sail artisan test --compact`
 
 #### Manual
 
-- [ ] 3.4 Celowo zepsuty link karty (np. `personId` rodzica zamieniony na id centrum) daje czerwony spec; po cofnięciu zielony
-- [ ] 3.5 1366×768: panel `standard` (~410 px) mieści zakładki i edycję sekcji Urodzenie/Małżeństwo bez poziomego przewijania; nieruszone drzewo dopasowuje się po otwarciu i po zamknięciu panelu
-- [ ] 3.6 1366×768: przesunięty ręcznie widok → otwarcie i zamknięcie panelu → karta centrum pozostaje widoczna (bez przywracania transformacji)
-- [ ] 3.7 Lista osób (widok Lista i Tabela) i strona miejscowości: panel zwęża treść obok siebie
+- [x] 3.4 Celowo zepsuty link karty (np. `personId` rodzica zamieniony na id centrum) daje czerwony spec; po cofnięciu zielony
+- [x] 3.5 1366×768: panel `standard` (~410 px) mieści zakładki i edycję sekcji Urodzenie/Małżeństwo bez poziomego przewijania; nieruszone drzewo dopasowuje się po otwarciu i po zamknięciu panelu
+- [x] 3.6 1366×768: przesunięty ręcznie widok → otwarcie i zamknięcie panelu → karta centrum pozostaje widoczna (bez przywracania transformacji)
+- [x] 3.7 Lista osób (widok Lista i Tabela) i strona miejscowości: panel zwęża treść obok siebie
