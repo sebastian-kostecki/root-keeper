@@ -128,3 +128,15 @@ export async function openSourceFromList(
 
     return panel;
 }
+
+/** One fact's group on the person dialog's `Źródła` tab (`Urodzenie`, `Małżeństwo z …`); found through its heading, like the family sections. */
+export async function sourcesGroup(
+    dialog: Locator,
+    heading: string,
+): Promise<Locator> {
+    await dialog.getByRole('tab', { name: /^Źródła/ }).click();
+
+    return dialog.locator('section').filter({
+        has: dialog.page().getByRole('heading', { name: heading, level: 3 }),
+    });
+}

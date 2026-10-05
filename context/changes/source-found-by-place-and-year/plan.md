@@ -446,24 +446,24 @@ Migracja czysto addytywna: nullable kolumna na `event_source`, żaden wiersz nie
 
 #### Automated
 
-- [x] 4.1 Testy źródeł, własności i zapisu przechodzą
-- [x] 4.2 Vitest przechodzi
-- [x] 4.3 Typy, lint i format przechodzą
-- [x] 4.4 Larastan i Pint czyste
-- [x] 4.5 Brak `entry_number` w formularzu źródła i tabeli
+- [x] 4.1 Testy źródeł, własności i zapisu przechodzą — 0754514
+- [x] 4.2 Vitest przechodzi — 0754514
+- [x] 4.3 Typy, lint i format przechodzą — 0754514
+- [x] 4.4 Larastan i Pint czyste — 0754514
+- [x] 4.5 Brak `entry_number` w formularzu źródła i tabeli — 0754514
 
 #### Manual
 
-- [x] 4.6 Źródło demo z numerem „47” (`TreeViewDemoSeeder`) pokazuje „Numer wpisu (stary): 47”; zapis formularza i zmiana rodzaju go nie kasują; „Usuń” po potwierdzeniu go kasuje
-- [x] 4.7 Tabela i galeria źródeł nie pokazują numeru
+- [x] 4.6 Źródło demo z numerem „47” (`TreeViewDemoSeeder`) pokazuje „Numer wpisu (stary): 47”; zapis formularza i zmiana rodzaju go nie kasują; „Usuń” po potwierdzeniu go kasuje — 0754514
+- [x] 4.7 Tabela i galeria źródeł nie pokazują numeru — 0754514
 
 ### Phase 5: E2E US-01
 
 #### Automated
 
-- [ ] 5.1 Nowy spec przechodzi dwukrotnie
-- [ ] 5.2 Cała suita E2E przechodzi
+- [x] 5.1 Nowy spec przechodzi dwukrotnie
+- [x] 5.2 Cała suita E2E przechodzi
 
 #### Manual
 
-- [ ] 5.3 Celowe zepsucie filtra roku (lub zapisu numeru) czerwieni nowy spec; po przywróceniu jest zielony
+- [x] 5.3 Celowe zepsucie filtra roku (lub zapisu numeru) czerwieni nowy spec; po przywróceniu jest zielony

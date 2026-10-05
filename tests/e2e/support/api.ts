@@ -26,7 +26,10 @@ export type PersonPreview = {
     person: {
         id: number;
         display_name: string;
-        birth: { id: number } | null;
+        birth: {
+            id: number;
+            sources?: { id: number; entry_number: string | null }[];
+        } | null;
     };
 };
 
@@ -160,16 +163,68 @@ export async function createSpouse(
  */
 const createdSourceIds = new Set<number>();
 
+/** `localities.inline.store`; a locality has no delete route until S-11, so it outlives the test. */
+export async function createLocality(
+    page: Page,
+    name: string,
+): Promise<number> {
+    const response = await page.request.post('/localities/inline', {
+        headers: await writeHeaders(page),
+        form: { name },
+    });
+    expect(
+        response.status(),
+        `${response.url()} answered ${response.status()}: ${await response.text()}`,
+    ).toBe(201);
+
+    return ((await response.json()) as { id: number }).id;
+}
+
+/** `parishes.inline.store` with a seat locality; no delete route until S-11 either. */
+export async function createParish(
+    page: Page,
+    parish: { name: string; localityId: number },
+): Promise<number> {
+    const response = await page.request.post('/parishes/inline', {
+        headers: await writeHeaders(page),
+        form: {
+            name: parish.name,
+            religion: 'roman_catholic',
+            locality_id: parish.localityId,
+        },
+    });
+    expect(
+        response.status(),
+        `${response.url()} answered ${response.status()}: ${await response.text()}`,
+    ).toBe(201);
+
+    return ((await response.json()) as { data: { id: number } }).data.id;
+}
+
 /** `sources.store` with the fixture file as the original scan. */
 export async function createSource(
     page: Page,
-    source: { kind: SourceKindValue; name: string; fixture: string },
+    source: {
+        kind: SourceKindValue;
+        name: string;
+        fixture: string;
+        year?: number;
+        parish_id?: number;
+        record_type?: 'birth' | 'marriage' | 'death';
+    },
 ): Promise<number> {
     const response = await page.request.post('/sources', {
         headers: await writeHeaders(page),
         multipart: {
             kind: source.kind,
             name: source.name,
+            ...(source.year !== undefined && { year: String(source.year) }),
+            ...(source.parish_id !== undefined && {
+                parish_id: String(source.parish_id),
+            }),
+            ...(source.record_type !== undefined && {
+                record_type: source.record_type,
+            }),
             file: {
                 name: basename(source.fixture),
                 mimeType: 'image/jpeg',
