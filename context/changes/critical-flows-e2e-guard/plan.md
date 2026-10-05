@@ -368,26 +368,26 @@ Brak migracji. Nowy wolumin Dockera zaczyna pusty. Źródła utworzone w bazie `
 
 #### Automated
 
-- [x] 3.1 Test rodzica przechodzi
-- [x] 3.2 Test dziecka przechodzi
-- [x] 3.3 Test małżonka przechodzi
-- [x] 3.4 Celowe uszkodzenia rodzica, dziecka i małżonka (z przebudową serwera przed czerwonym przebiegiem i po cofnięciu) dają czerwony wynik na asercji relacji, cofnięte
-- [x] 3.5 Cały suite stabilny przy --repeat-each=2
-- [x] 3.6 Brak osób i źródeł z prefiksem testowym w bazie e2e po przebiegu
-- [x] 3.7 Format i lint przechodzą
+- [x] 3.1 Test rodzica przechodzi — bb7ec74
+- [x] 3.2 Test dziecka przechodzi — bb7ec74
+- [x] 3.3 Test małżonka przechodzi — bb7ec74
+- [x] 3.4 Celowe uszkodzenia rodzica, dziecka i małżonka (z przebudową serwera przed czerwonym przebiegiem i po cofnięciu) dają czerwony wynik na asercji relacji, cofnięte — bb7ec74
+- [x] 3.5 Cały suite stabilny przy --repeat-each=2 — bb7ec74
+- [x] 3.6 Brak osób i źródeł z prefiksem testowym w bazie e2e po przebiegu — bb7ec74
+- [x] 3.7 Format i lint przechodzą — bb7ec74
 
 #### Manual
 
-- [x] 3.8 Sonda okna choose() przeprowadzona, wynik zanotowany do fazy 4
-- [x] 3.9 Przegląd trzech specyfikacji pod kątem antywzorców i lokatorów zmienianych przez S-05/S-06
+- [x] 3.8 Sonda okna choose() przeprowadzona, wynik zanotowany do fazy 4 — bb7ec74
+- [x] 3.9 Przegląd trzech specyfikacji pod kątem antywzorców i lokatorów zmienianych przez S-05/S-06 — bb7ec74
 
 ### Phase 4: Domknięcie w test-plan.md
 
 #### Automated
 
-- [ ] 4.1 Cały suite E2E przechodzi
-- [ ] 4.2 test-plan.md bez TBD w §6.6 i bez not started w fazie 4
+- [x] 4.1 Cały suite E2E przechodzi
+- [x] 4.2 test-plan.md bez TBD w §6.6 i bez not started w fazie 4
 
 #### Manual
 
-- [ ] 4.3 Przegląd test-plan.md: §3, §4, §5, §6.6 i werdykt sondy spójne z testami i decyzjami
+- [x] 4.3 Przegląd test-plan.md: §3, §4, §5, §6.6 i werdykt sondy spójne z testami i decyzjami
