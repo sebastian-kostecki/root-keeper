@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { MouseEvent } from 'react';
 import { DiscardChangesDialog } from '@/components/discard-changes-dialog';
 import Heading from '@/components/heading';
+import { isPlainClick } from '@/components/persons/section-editor';
 import { SearchField } from '@/components/search-field';
 import { SegmentedToggle } from '@/components/segmented-toggle';
 import { SourcePanel } from '@/components/sources/source-panel';
@@ -18,7 +19,7 @@ import { Button } from '@/components/ui/button';
 import { useSidePanelNavigation } from '@/hooks/use-side-panel-navigation';
 import { useUnsavedChangesGuard } from '@/hooks/use-unsaved-changes-guard';
 import { pluralPhrase } from '@/lib/plural';
-import { panelVisitOptions } from '@/lib/side-panel-url';
+import { panelVisitOptions, withPanel } from '@/lib/side-panel-url';
 import { filterSources, withSourcesQuery } from '@/lib/sources-index';
 import type {
     SourcesFilters,
@@ -148,6 +149,27 @@ export default function Index({
                 only: [...panelVisitOptions.only, 'filters'],
             },
         );
+    };
+
+    /** „Potwierdza” swaps this panel for the person's; unsaved form changes ask first. */
+    const openPersonFromPanel = (event: MouseEvent, personId: number) => {
+        if (event.defaultPrevented || !isPlainClick(event)) {
+            return;
+        }
+
+        event.preventDefault();
+        guard(() => {
+            const { pathname, search: liveSearch, hash } = window.location;
+
+            router.visit(
+                withPanel(
+                    `${pathname}${liveSearch}${hash}`,
+                    'person',
+                    personId,
+                ),
+                panelVisitOptions,
+            );
+        });
     };
 
     const { visible, counts } = filterSources(
@@ -322,6 +344,7 @@ export default function Index({
                     localities={sourcePanel.localities}
                     religions={sourcePanel.religions}
                     onRequestClose={() => guard(close)}
+                    onPersonLinkClick={openPersonFromPanel}
                     onDirtyChange={setIsDirty}
                 />
             )}

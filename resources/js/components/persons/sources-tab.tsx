@@ -1,4 +1,5 @@
 import { Link, router } from '@inertiajs/react';
+import { useId } from 'react';
 import SourceController from '@/actions/App/Http/Controllers/SourceController';
 import { EventSourceStatus } from '@/components/persons/event-source-status';
 import { useGuardedClick } from '@/components/persons/section-editor';
@@ -41,12 +42,18 @@ function SourceGroup({ label, event, availableSources }: GroupProps) {
     const summary = [event.date, event.place].filter(Boolean).join(', ');
     const hasSources = event.sources.length > 0;
     const guardClick = useGuardedClick();
+    const headingId = useId();
 
     return (
-        <section className="bg-card space-y-3 rounded-lg border p-4">
+        <section
+            aria-labelledby={headingId}
+            className="bg-card space-y-3 rounded-lg border p-4"
+        >
             <div className="flex flex-wrap items-center justify-between gap-2">
                 <div className="min-w-0">
-                    <h3 className="font-medium">{label}</h3>
+                    <h3 id={headingId} className="font-medium">
+                        {label}
+                    </h3>
                     {summary && (
                         <p className="text-muted-foreground text-sm">
                             {summary}
@@ -64,13 +71,13 @@ function SourceGroup({ label, event, availableSources }: GroupProps) {
                         return (
                             <li
                                 key={source.id}
-                                className="flex items-center gap-3"
+                                className="flex flex-wrap items-center gap-x-3 gap-y-2"
                             >
                                 <SourceThumbnail
                                     source={source}
                                     className="size-14 shrink-0 rounded-md"
                                 />
-                                <div className="min-w-0 flex-1">
+                                <div className="min-w-40 flex-1">
                                     <p
                                         className="truncate text-sm font-medium"
                                         title={source.display_name}

@@ -1,14 +1,11 @@
-import { Link, router } from '@inertiajs/react';
-import { useRef } from 'react';
+import { Link } from '@inertiajs/react';
 import type * as React from 'react';
-import {
-    previewVisitOptions,
-    usePersonPreview,
-} from '@/components/persons/person-preview-provider';
+import { usePersonPreview } from '@/components/persons/person-preview-provider';
 import {
     isPlainClick,
     useOptionalSectionEditor,
 } from '@/components/persons/section-editor';
+import { panelVisitOptions } from '@/lib/side-panel-url';
 
 type Props = Omit<
     React.ComponentProps<typeof Link>,
@@ -18,8 +15,9 @@ type Props = Omit<
 };
 
 /**
- * Link that opens the preview modal of a person over the current page. Keeps a
- * real `href` so middle-click and "open in new tab" still work.
+ * Link that opens the panel of a person beside the current page. Keeps a real
+ * `href` so middle-click and "open in new tab" still work. While a section of
+ * the open person is dirty, a plain click is handed to the guard bar.
  */
 export function PersonPreviewLink({
     personId,
@@ -27,48 +25,29 @@ export function PersonPreviewLink({
     children,
     ...props
 }: Props) {
-    const { currentId, hrefFor, push } = usePersonPreview();
-    const fromId = useRef<number | null>(null);
-
+    const { hrefFor, open } = usePersonPreview();
     const editor = useOptionalSectionEditor();
-    const href = hrefFor(personId);
 
     const handleClick = (event: React.MouseEvent) => {
         onClick?.(event);
 
-        const isIntercepted = isPlainClick(event) && !event.defaultPrevented;
-        const from = isIntercepted && currentId !== personId ? currentId : null;
-
-        fromId.current = from;
-
-        if (isIntercepted && editor !== null && editor.isDirty) {
+        if (
+            editor !== null &&
+            editor.isDirty &&
+            isPlainClick(event) &&
+            !event.defaultPrevented
+        ) {
             event.preventDefault();
-            fromId.current = null;
-            editor.requestExit(() =>
-                router.visit(href, {
-                    ...previewVisitOptions,
-                    onSuccess: () => {
-                        if (from !== null) {
-                            push(from);
-                        }
-                    },
-                }),
-            );
+            editor.requestExit(() => open(personId));
         }
     };
 
     return (
         <Link
             {...props}
-            {...previewVisitOptions}
-            href={href}
+            {...panelVisitOptions}
+            href={hrefFor(personId)}
             onClick={handleClick}
-            onSuccess={() => {
-                if (fromId.current !== null) {
-                    push(fromId.current);
-                    fromId.current = null;
-                }
-            }}
         >
             {children}
         </Link>

@@ -23,7 +23,7 @@ function TabCount({ count }: { count: number }) {
     );
 }
 
-/** Tabbed body of the person modal (view mode): Przegląd, Rodzina, Źródła. */
+/** Tabbed body of the person panel (view mode): Przegląd, Rodzina, Źródła. */
 export function PersonModal({ preview, availableSources }: Props) {
     const { person } = preview;
     const { requestExit } = useSectionEditor();
@@ -52,9 +52,9 @@ export function PersonModal({ preview, availableSources }: Props) {
         <Tabs
             value={tab}
             onValueChange={(value) => requestExit(() => setTab(value))}
-            className="min-h-0 flex-1 gap-0"
+            className="gap-0"
         >
-            <div className="border-b px-6 pb-3">
+            <div className="border-b pb-3">
                 <TabsList className="w-full sm:w-fit">
                     <TabsTrigger value="przeglad">Przegląd</TabsTrigger>
                     <TabsTrigger value="rodzina">
@@ -68,25 +68,16 @@ export function PersonModal({ preview, availableSources }: Props) {
                 </TabsList>
             </div>
 
-            <TabsContent
-                value="przeglad"
-                className="min-h-0 flex-1 overflow-y-auto px-6 py-4"
-            >
+            <TabsContent value="przeglad" className="py-4">
                 <OverviewTab
                     preview={preview}
                     availableSources={availableSources}
                 />
             </TabsContent>
-            <TabsContent
-                value="rodzina"
-                className="min-h-0 flex-1 overflow-y-auto px-6 py-4"
-            >
+            <TabsContent value="rodzina" className="py-4">
                 <FamilyTab person={person} />
             </TabsContent>
-            <TabsContent
-                value="zrodla"
-                className="min-h-0 flex-1 overflow-y-auto px-6 py-4"
-            >
+            <TabsContent value="zrodla" className="py-4">
                 <SourcesTab
                     person={person}
                     availableSources={availableSources}

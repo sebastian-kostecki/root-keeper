@@ -1,5 +1,5 @@
 import { EllipsisIcon } from 'lucide-react';
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { EventSourceStatus } from '@/components/persons/event-source-status';
 import { PersonPreviewLink } from '@/components/persons/person-preview-link';
 import { RemoveMarriageDialog } from '@/components/persons/remove-marriage-dialog';
@@ -144,9 +144,14 @@ function Section({
     isEmpty: boolean;
     children: React.ReactNode;
 }) {
+    const headingId = useId();
+
     return (
-        <section className="space-y-3">
-            <h3 className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
+        <section aria-labelledby={headingId} className="space-y-3">
+            <h3
+                id={headingId}
+                className="text-muted-foreground text-xs font-semibold tracking-wide uppercase"
+            >
                 {title}
             </h3>
             {isEmpty ? (

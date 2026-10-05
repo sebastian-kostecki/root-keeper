@@ -97,7 +97,7 @@ function attachDeath(Person $person, ?int $year, bool $approximate = false): voi
 }
 
 /**
- * Build a host-page URL that opens the preview modal of the given person.
+ * Build a host-page URL that opens the panel of the given person.
  *
  * @param  array<int|string, mixed>  $parameters  Route parameters and query values of the host page.
  */

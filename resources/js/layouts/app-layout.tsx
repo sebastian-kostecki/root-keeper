@@ -1,5 +1,7 @@
-import { PersonPreviewDialog } from '@/components/persons/person-preview-dialog';
+import { usePage } from '@inertiajs/react';
+import { PersonPanel } from '@/components/persons/person-panel';
 import { PersonPreviewProvider } from '@/components/persons/person-preview-provider';
+import { SectionEditorProvider } from '@/components/persons/section-editor';
 import { SidePanelSlotProvider } from '@/components/side-panel';
 import AppLayoutTemplate from '@/layouts/app/app-sidebar-layout';
 import type { BreadcrumbItem } from '@/types';
@@ -13,16 +15,22 @@ export default function AppLayout({
     fillHeight?: boolean;
     children: React.ReactNode;
 }) {
+    const { personPreview } = usePage().props;
+
     return (
         <PersonPreviewProvider>
             <SidePanelSlotProvider>
-                <AppLayoutTemplate
-                    breadcrumbs={breadcrumbs}
-                    fillHeight={fillHeight}
+                <SectionEditorProvider
+                    personId={personPreview?.person.id ?? null}
                 >
-                    {children}
-                </AppLayoutTemplate>
-                <PersonPreviewDialog />
+                    <AppLayoutTemplate
+                        breadcrumbs={breadcrumbs}
+                        fillHeight={fillHeight}
+                    >
+                        {children}
+                    </AppLayoutTemplate>
+                    <PersonPanel />
+                </SectionEditorProvider>
             </SidePanelSlotProvider>
         </PersonPreviewProvider>
     );

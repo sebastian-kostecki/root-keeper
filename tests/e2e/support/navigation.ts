@@ -1,7 +1,7 @@
 // Everything about getting to a person, the tree's slots and union node, and
-// from a fact to its source lives here. The side-panel, grid and source-panel
-// rebuilds (S-06, S-05, S-02) change this file, not the specs. Deliberately not
-// used: `Podgląd`, `Wstecz`, clicking a card, the close button.
+// from a fact to its source lives here. Panel and grid rebuilds change this
+// file, not the specs. Deliberately not used: the `Podgląd` icon, clicking a
+// tree card, the panel close button.
 import { expect, type Locator, type Page } from '@playwright/test';
 
 export type FamilySectionName = 'Rodzice' | 'Małżeństwa' | 'Dzieci';
@@ -97,13 +97,7 @@ export async function familySection(
 ): Promise<Locator> {
     await dialog.getByRole('tab', { name: /^Rodzina/ }).click();
 
-    // The section has no accessible name (a bare <section> is not a region), so it is
-    // found through its heading. This is the one structural locator; keep it here.
-    // The `has` locator is resolved inside each section, so it is built from the
-    // page, not from the dialog.
-    return dialog.locator('section').filter({
-        has: dialog.page().getByRole('heading', { name, level: 3 }),
-    });
+    return dialog.getByRole('region', { name });
 }
 
 /** The wide side panel of a source on `/sources`; scoped to its dialog, the list headings stay visible beside it. */
@@ -129,14 +123,12 @@ export async function openSourceFromList(
     return panel;
 }
 
-/** One fact's group on the person dialog's `Źródła` tab (`Urodzenie`, `Małżeństwo z …`); found through its heading, like the family sections. */
+/** One fact's group on the person dialog's `Źródła` tab (`Urodzenie`, `Małżeństwo z …`); a region named by its heading, like the family sections. */
 export async function sourcesGroup(
     dialog: Locator,
     heading: string,
 ): Promise<Locator> {
     await dialog.getByRole('tab', { name: /^Źródła/ }).click();
 
-    return dialog.locator('section').filter({
-        has: dialog.page().getByRole('heading', { name: heading, level: 3 }),
-    });
+    return dialog.getByRole('region', { name: heading });
 }

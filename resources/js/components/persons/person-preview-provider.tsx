@@ -1,107 +1,35 @@
-import { router, usePage } from '@inertiajs/react';
-import { createContext, useContext, useState } from 'react';
+import { usePage } from '@inertiajs/react';
+import { createContext, useContext } from 'react';
 import type { ReactNode } from 'react';
+import { useSidePanelNavigation } from '@/hooks/use-side-panel-navigation';
 
 type PersonPreviewContextValue = {
-    /** Ids of the people viewed before the one currently shown, oldest first. */
-    stack: number[];
-    /** Id of the person currently shown, or null when the modal is closed. */
+    /** Id of the person currently shown, or null when the panel is closed. */
     currentId: number | null;
-    /** URL of the current page with the preview of the given person open. */
+    /** URL of the current page with the panel of the given person open. */
     hrefFor: (personId: number) => string;
-    /** Swap the modal content to the given person. */
+    /** Open the panel, or swap its content to the given person. */
     open: (personId: number) => void;
-    /** Remember a person that was left, so "Wstecz" can return to it. */
-    push: (personId: number) => void;
-    /** Return to the previously viewed person. */
-    back: () => void;
-    /** Close the modal without a server request. */
+    /** Close the panel without a server request. */
     close: () => void;
-};
-
-/** Options shared by every visit that only swaps the preview shown over the page. */
-export const previewVisitOptions: {
-    replace: boolean;
-    preserveState: boolean;
-    preserveScroll: boolean;
-    only: string[];
-} = {
-    replace: true,
-    preserveState: true,
-    preserveScroll: true,
-    only: ['personPreview'],
 };
 
 const PersonPreviewContext = createContext<PersonPreviewContextValue | null>(
     null,
 );
 
-function withPerson(url: string, personId: number | null): string {
-    const parsed = new URL(url, window.location.origin);
-
-    if (personId === null) {
-        parsed.searchParams.delete('person');
-    } else {
-        parsed.searchParams.set('person', String(personId));
-    }
-
-    return `${parsed.pathname}${parsed.search}${parsed.hash}`;
-}
-
 /**
- * Owns the person preview modal state that must outlive page visits: the
- * "Wstecz" stack. The preview itself is driven by the `person` query parameter.
+ * Exposes the person panel navigation to every entry point. The panel itself
+ * is driven by the `person` query parameter.
  */
 export function PersonPreviewProvider({ children }: { children: ReactNode }) {
-    const { url, props } = usePage();
+    const { props } = usePage();
     const currentId = props.personPreview?.person.id ?? null;
-    const [stack, setStack] = useState<number[]>([]);
-
-    if (currentId === null && stack.length > 0) {
-        setStack([]);
-    }
-
-    const hrefFor = (personId: number) => withPerson(url, personId);
-
-    const open = (personId: number) => {
-        router.visit(hrefFor(personId), previewVisitOptions);
-    };
-
-    const push = (personId: number) => {
-        setStack((previous) => [...previous, personId]);
-    };
-
-    const back = () => {
-        const previousId = stack[stack.length - 1];
-
-        if (previousId === undefined) {
-            return;
-        }
-
-        setStack(stack.slice(0, -1));
-        open(previousId);
-    };
-
-    const close = () => {
-        router.replace({
-            url: withPerson(url, null),
-            props: (current) => ({ ...current, personPreview: null }),
-            preserveScroll: true,
-            preserveState: true,
-        });
-    };
+    const { hrefFor, open, close } = useSidePanelNavigation('person');
 
     return (
         <PersonPreviewContext.Provider
-            value={{
-                stack,
-                currentId,
-                hrefFor,
-                open,
-                push,
-                back,
-                close,
-            }}
+            value={{ currentId, hrefFor, open, close }}
         >
             {children}
         </PersonPreviewContext.Provider>

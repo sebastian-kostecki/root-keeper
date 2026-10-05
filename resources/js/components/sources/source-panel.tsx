@@ -1,6 +1,7 @@
 import type { FormComponentRef } from '@inertiajs/core';
 import { Form } from '@inertiajs/react';
 import { useEffect, useRef, useState } from 'react';
+import type { MouseEvent } from 'react';
 import SourceController from '@/actions/App/Http/Controllers/SourceController';
 import { DirtyReporter } from '@/components/dirty-reporter';
 import InputError from '@/components/input-error';
@@ -50,6 +51,8 @@ type Props = {
     localities: LocalityOption[];
     religions: ReligionOption[];
     onRequestClose: () => void;
+    /** A click on a „Potwierdza” person link; the page decides whether it may leave the form. */
+    onPersonLinkClick: (event: MouseEvent, personId: number) => void;
     /** Reports whether the form holds unsaved changes. */
     onDirtyChange: (isDirty: boolean) => void;
 };
@@ -117,6 +120,7 @@ export function SourcePanel({
     localities,
     religions,
     onRequestClose,
+    onPersonLinkClick,
     onDirtyChange,
 }: Props) {
     const [processing, setProcessing] = useState(false);
@@ -171,6 +175,7 @@ export function SourcePanel({
                         key={key}
                         source={source}
                         confirms={confirms}
+                        onPersonLinkClick={onPersonLinkClick}
                         kinds={kinds}
                         recordTypes={recordTypes}
                         parishes={parishes}
@@ -374,9 +379,14 @@ function EditSourceForm({
     archives,
     localities,
     religions,
+    onPersonLinkClick,
     onDirtyChange,
     onProcessingChange,
-}: FormProps & { source: Source; confirms: SourceConfirmation[] }) {
+}: FormProps & {
+    source: Source;
+    confirms: SourceConfirmation[];
+    onPersonLinkClick: Props['onPersonLinkClick'];
+}) {
     const [kind, setKind] = useState<SourceKind>(source.kind);
     const [erased, setErased] = useState<ErasedField[]>([]);
     const [confirmOpen, setConfirmOpen] = useState(false);
@@ -520,6 +530,13 @@ function EditSourceForm({
                                                                 .id
                                                         }
                                                         className="text-primary underline-offset-4 hover:underline"
+                                                        onClick={(event) =>
+                                                            onPersonLinkClick(
+                                                                event,
+                                                                confirmation
+                                                                    .person.id,
+                                                            )
+                                                        }
                                                     >
                                                         {
                                                             confirmation.event_label

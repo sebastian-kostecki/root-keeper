@@ -64,13 +64,15 @@ type PendingExit = { action: () => void };
 
 /**
  * Owns "which section is editing, is it dirty, what exit is waiting for the
- * user's decision" for the person modal. Resets when another person is shown.
+ * user's decision" for the person panel. Hosted by the layout, so it also wraps
+ * the page beside the panel; `personId` is null while no panel is open. Resets
+ * whenever the shown person changes, including to and from null.
  */
 export function SectionEditorProvider({
     personId,
     children,
 }: {
-    personId: number;
+    personId: number | null;
     children: ReactNode;
 }) {
     const [shownPersonId, setShownPersonId] = useState(personId);
@@ -206,7 +208,7 @@ export function useSectionEditor(): SectionEditorContextValue {
     return context;
 }
 
-/** Same as `useSectionEditor`, but null outside the modal (tree, sources, lists). */
+/** Same as `useSectionEditor`, but null outside `AppLayout`. */
 export function useOptionalSectionEditor(): SectionEditorContextValue | null {
     return useContext(SectionEditorContext);
 }
@@ -249,7 +251,7 @@ export function useGuardedClick(): (
     };
 }
 
-/** Bar shown over the modal when an exit is waiting on unsaved changes. */
+/** Bar shown over the panel when an exit is waiting on unsaved changes. */
 export function UnsavedChangesBar() {
     const {
         hasPendingExit,
