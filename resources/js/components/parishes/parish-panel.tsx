@@ -166,6 +166,7 @@ function ParishForm({
                         <SuggestField
                             mode="record"
                             id="parish-locality"
+                            label="Miejscowość siedziby"
                             name="locality_id"
                             options={localityOptions}
                             labelOf={(option) => option.name}

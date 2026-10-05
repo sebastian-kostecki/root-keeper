@@ -115,7 +115,7 @@ export function NewParishDialog({
     const busy = parishHttp.processing || localityHttp.processing;
 
     return (
-        <Dialog open onOpenChange={(open) => !open && onClose()}>
+        <Dialog open onOpenChange={(open) => !open && !busy && onClose()}>
             <DialogContent
                 onEscapeKeyDown={(event) => {
                     // Escape in an open suggestion list closes only the list.
@@ -180,6 +180,7 @@ export function NewParishDialog({
                     <SuggestField
                         mode="record"
                         id="new-parish-locality"
+                        label="Miejscowość siedziby"
                         name="locality_id"
                         options={localities}
                         labelOf={(option) => option.name}
@@ -207,7 +208,11 @@ export function NewParishDialog({
 
                 <DialogFooter className="gap-2">
                     <DialogClose asChild>
-                        <Button type="button" variant="secondary">
+                        <Button
+                            type="button"
+                            variant="secondary"
+                            disabled={busy}
+                        >
                             Anuluj
                         </Button>
                     </DialogClose>

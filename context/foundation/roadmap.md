@@ -46,7 +46,7 @@ root-keeper to prywatne, samodzielnie hostowane drzewo genealogiczne, w którym 
 | F-02 | side-panel-shell                     | (foundation) jest jedna wspólna powłoka panelu bocznego z prawej, obok której treść strony się zwęża      | —                      | FR-006, FR-019, FR-028, NFR (1366–2560 px) | done |
 | S-01 | places-gazetteer                     | prowadzić spis miejscowości z opisem, który startuje z istniejących tekstowych miejsc                     | F-02                   | FR-007, FR-029                           | done |
 | S-02 | source-side-panel                    | dodawać, oglądać i edytować źródło w szerokim panelu bocznym ze skanem obok opisu                         | F-02                   | FR-006, FR-027                           | done        |
-| S-03 | act-described-by-parish-and-archive  | opisać akt parafią ze spisu (dopisaną w locie), rokiem, typem aktu i archiwum z podpowiedziami            | S-01, S-02             | FR-001, FR-008, FR-009, US-01            | proposed |
+| S-03 | act-described-by-parish-and-archive  | opisać akt parafią ze spisu (dopisaną w locie), rokiem, typem aktu i archiwum z podpowiedziami            | S-01, S-02             | FR-001, FR-008, FR-009, US-01            | in-progress |
 | S-04 | source-found-by-place-and-year       | przy podpinaniu źródła do faktu szukać po miejscu i roku i podać numer wpisu widoczny przy fakcie i źródle | S-03, F-01             | FR-003, FR-004, FR-025, US-01            | proposed |
 | S-05 | tree-fits-screen                     | oglądać drzewo z większymi kartami dopasowane do ekranu, z przybliżaniem i liniami dzieci od właściwej pary | F-01                   | FR-013, FR-014, FR-026                   | proposed |
 | S-06 | person-side-panel                    | kliknąć kartę i oglądać oraz edytować osobę w panelu obok zwężonego drzewa, przechodzić w nim do krewnych | F-01, F-02, S-05       | FR-016, FR-019, FR-028, FR-026, FR-029   | proposed |
@@ -157,7 +157,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
   - Jakie pola opisu zostają dla źródła rodzaju „inne” (PRD opisuje tylko akt i nagrobek)? Domyślnie: nazwa, link, notatka. Owner: user. Block: no.
   - „Pochodzenie” → archiwum to przeniesienie danych: kopiowane, a stare pole usuwane dopiero w późniejszej migracji. Owner: `/10x-plan`. Block: no.
 - **Risk:** Gwiazda przewodnia — przy celu `speed` zaraz po `S-01` i `S-02`; jeśli dopisywanie parafii w locie (z miejscowością siedziby, też dopisywaną w locie) rwie wprowadzanie, wraca kontrargument z FR-001, więc to jest pierwsza rzecz do sprawdzenia na prawdziwym akcie.
-- **Status:** proposed
+- **Status:** in-progress
 
 ### S-04: Akt odnaleziony po miejscu i roku, numer wpisu przy powiązaniu
 
@@ -258,6 +258,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Parallel with:** S-05, S-06, S-10, S-12, S-13, S-14, S-15, S-16
 - **Blockers:** —
 - **Unknowns:** —
+- **Uwaga (E2E):** dopisać sprzątanie parafii i miejscowości w `source-panel-parish.spec.ts` (dziś zostają w bazie `e2e`, bo nie ma tras usuwania).
 - **Risk:** Na końcu strumienia miejsc, bo musi objąć każdy rodzaj odwołania naraz; do tego czasu literówki po automatycznym przeniesieniu poprawia się edycją nazwy w spisie.
 - **Status:** proposed
 

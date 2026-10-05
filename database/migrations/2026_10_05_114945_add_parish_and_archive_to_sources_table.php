@@ -25,7 +25,8 @@ return new class extends Migration
     }
 
     /**
-     * Reverse the migrations. Lossless: `provenance` is never touched, so only the new columns are dropped.
+     * Reverse the migrations. `provenance` is never touched, so the pre-deploy value is restored as the live one,
+     * but any `archive` text entered after the migration is lost with the dropped column.
      */
     public function down(): void
     {

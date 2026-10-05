@@ -11,6 +11,8 @@ type CommonProps<T> = {
     id: string;
     /** Name of the field in the form. */
     name: string;
+    /** Accessible name of the suggestion list, normally the field's visible label. */
+    label: string;
     options: T[];
     labelOf: (option: T) => string;
     placeholder?: string;
@@ -55,7 +57,7 @@ function setNativeValue(input: HTMLInputElement, value: string) {
 
 /** Text input with a suggestion list beneath it, in record mode (pick an id) or text mode (fill in free text). */
 export function SuggestField<T>(props: SuggestFieldProps<T>) {
-    const { id, name, options, labelOf, placeholder, disabled } = props;
+    const { id, name, label, options, labelOf, placeholder, disabled } = props;
     const isRecord = props.mode === 'record';
     const value = props.mode === 'record' ? props.value : null;
 
@@ -130,9 +132,19 @@ export function SuggestField<T>(props: SuggestFieldProps<T>) {
     };
 
     const open = () => {
-        if (!isOpen) {
+        if (!isOpen && !disabled) {
             setIsOpen(true);
-            setActiveIndex(isRecord ? 0 : -1);
+            // Opening without typing must not make Enter swap the current choice for the first option.
+            setActiveIndex(
+                selected === undefined
+                    ? -1
+                    : filterSuggestions(
+                          options,
+                          '',
+                          labelOf,
+                          MAX_SUGGESTIONS,
+                      ).indexOf(selected),
+            );
         }
     };
 
@@ -241,6 +253,7 @@ export function SuggestField<T>(props: SuggestFieldProps<T>) {
                 type="text"
                 role="combobox"
                 autoComplete="off"
+                aria-haspopup="listbox"
                 aria-expanded={showList}
                 aria-controls={showList ? listboxId : undefined}
                 aria-autocomplete="list"
@@ -251,7 +264,9 @@ export function SuggestField<T>(props: SuggestFieldProps<T>) {
                 }
                 aria-invalid={props['aria-invalid']}
                 placeholder={placeholder}
-                disabled={disabled}
+                // readOnly, not disabled: a disabled focused input would drop focus to the body.
+                readOnly={disabled}
+                aria-busy={disabled}
                 onChange={handleChange}
                 onClick={open}
                 onKeyDown={handleKeyDown}
@@ -261,6 +276,7 @@ export function SuggestField<T>(props: SuggestFieldProps<T>) {
                 <ul
                     id={listboxId}
                     role="listbox"
+                    aria-label={label}
                     className="bg-popover text-popover-foreground absolute z-50 mt-1 max-h-64 w-full overflow-auto rounded-md border p-1 shadow-md"
                     // Keeps focus in the input, so picking an item does not blur it first.
                     onMouseDown={(event) => event.preventDefault()}

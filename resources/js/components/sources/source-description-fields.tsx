@@ -126,6 +126,7 @@ export function SourceDescriptionFields({
                 <SuggestField
                     mode="record"
                     id="parish_id"
+                    label="Parafia"
                     name="parish_id"
                     options={parishOptions}
                     labelOf={(option) => option.label}
@@ -166,6 +167,7 @@ export function SourceDescriptionFields({
                 <SuggestField
                     mode="text"
                     id="archive"
+                    label="Archiwum"
                     name="archive"
                     options={archives}
                     labelOf={(option) => option}
