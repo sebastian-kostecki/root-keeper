@@ -42,6 +42,7 @@ export default function Show({
                   ]
                 : []),
         ],
+        ...(sheet ? { fillHeight: true } : {}),
     });
 
     if (sheet === null) {
@@ -77,7 +78,7 @@ export default function Show({
         <>
             <Head title={`Drzewo: ${sheet.focus.display_name}`} />
 
-            <div className="space-y-6">
+            <div className="flex min-h-0 flex-1 flex-col gap-6">
                 <div className="flex flex-wrap items-center justify-between gap-4">
                     <Heading title={sheet.focus.display_name} variant="page" />
 

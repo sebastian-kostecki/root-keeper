@@ -6,7 +6,7 @@ import { ParentSlotDialog } from '@/components/tree/parent-slot-dialog';
 import { SheetPersonCard } from '@/components/tree/sheet-person-card';
 import { UnionNode } from '@/components/tree/union-node';
 import { UnknownPersonCard } from '@/components/tree/unknown-person-card';
-import { useCentreInScroll } from '@/hooks/use-centre-in-scroll';
+import { ZoomCanvas } from '@/components/zoom-canvas';
 import type {
     FamilySheet as FamilySheetData,
     Gender,
@@ -224,22 +224,14 @@ export function FamilySheet({
             />
         ) : null;
 
-    const scrollRef = useRef<HTMLDivElement>(null);
-    const focusRef = useRef<HTMLDivElement>(null);
-    const { canScrollLeft, canScrollRight } = useCentreInScroll(
-        scrollRef,
-        focusRef,
-        `${sheet.focus.id}:${sheet.selected_union ?? ''}`,
-    );
-    const fadeLeft = canScrollLeft ? 'mask-l-from-90%' : '';
-    const fadeRight = canScrollRight ? 'mask-r-from-90%' : '';
+    const coupleRef = useRef<HTMLDivElement>(null);
 
     return (
-        <div
-            ref={scrollRef}
-            className={`overflow-x-auto pb-2 ${fadeLeft} ${fadeRight}`}
+        <ZoomCanvas
+            key={`${sheet.focus.id}:${sheet.selected_union ?? ''}`}
+            anchorRef={coupleRef}
         >
-            <div className="grid min-w-[68rem] grid-cols-8 gap-x-2 gap-y-1">
+            <div className="grid grid-cols-[repeat(8,8rem)] gap-x-2 gap-y-1 p-2">
                 <RowLabel>Dziadkowie</RowLabel>
                 {order.map((block) =>
                     sheet.grandparents[block].map((slot, i) => (
@@ -305,7 +297,10 @@ export function FamilySheet({
                 ))}
 
                 <RowLabel>Związek</RowLabel>
-                <div className="relative col-span-8 grid grid-cols-8 gap-x-2">
+                <div
+                    ref={coupleRef}
+                    className="relative col-span-8 grid grid-cols-8 gap-x-2"
+                >
                     {sheet.partner.kind !== 'empty' && (
                         <div
                             className="bg-tree-line absolute top-1/2 right-[25%] left-[25%] h-px"
@@ -315,7 +310,6 @@ export function FamilySheet({
                     {order.map((block) => (
                         <div
                             key={`${block}-couple`}
-                            ref={block === 'focus' ? focusRef : undefined}
                             className="relative col-span-4 mx-auto w-full max-w-72"
                         >
                             {block === 'focus' ? (
@@ -380,6 +374,6 @@ export function FamilySheet({
                     }
                 />
             </div>
-        </div>
+        </ZoomCanvas>
     );
 }

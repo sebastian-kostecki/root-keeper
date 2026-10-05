@@ -30,6 +30,8 @@ export default defineConfig({
             name: 'chromium',
             use: {
                 ...devices['Desktop Chrome'],
+                // Lower bound of the NFR (1366-2560 px); the tree must work at the smallest screen.
+                viewport: { width: 1366, height: 768 },
                 storageState: 'playwright/.auth/user.json',
             },
             dependencies: ['setup'],

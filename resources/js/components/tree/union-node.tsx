@@ -3,6 +3,7 @@ import { ChevronsUpDown, Plus } from 'lucide-react';
 import { useRef, useState } from 'react';
 import { AddSpouseDialog } from '@/components/tree/add-spouse-dialog';
 import { cardInteractive } from '@/components/tree/card-styles';
+import { ZOOM_NO_PAN_CLASS } from '@/components/zoom-canvas';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -111,6 +112,7 @@ export function UnionNode({
                         className={cn(
                             'bg-background hover:bg-accent data-[state=open]:border-primary inline-flex h-[34px] items-center gap-2 rounded-lg border px-2.5 text-xs whitespace-nowrap shadow-xs',
                             cardInteractive,
+                            ZOOM_NO_PAN_CLASS,
                         )}
                     >
                         {showPosition && (

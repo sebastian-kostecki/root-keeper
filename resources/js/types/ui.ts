@@ -4,6 +4,8 @@ import type { BreadcrumbItem } from '@/types/navigation';
 export type AppLayoutProps = {
     children: ReactNode;
     breadcrumbs?: BreadcrumbItem[];
+    /** The page fills the window height below the breadcrumbs instead of scrolling the document. */
+    fillHeight?: boolean;
 };
 
 export type FlashToast = {
