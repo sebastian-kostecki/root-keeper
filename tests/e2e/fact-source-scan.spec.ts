@@ -1,7 +1,7 @@
 // Risk: FR-025 fact-source-scan — a fact marked `Potwierdzone` leads to the same
 // source and the same scan: the link from the person preview opens the source
 // that was linked, the scan has the bytes of the uploaded file, and the source
-// page shows the fact back. Guarded before the S-02/S-04/S-06 rebuilds
+// panel shows the fact back. Guarded before the S-02/S-04/S-06 rebuilds
 // (prd.md:209, roadmap.md F-01). Data is prepared through the app's routes
 // (tests/e2e/support/api.ts); only the protected path runs in the UI.
 import { createHash } from 'node:crypto';
@@ -13,7 +13,11 @@ import {
     linkSource,
     personPreview,
 } from './support/api';
-import { openLinkedSource, openPerson } from './support/navigation';
+import {
+    openLinkedSource,
+    openPerson,
+    sourcePanel,
+} from './support/navigation';
 
 const FIXTURE = 'tests/Fixtures/portrait-small.jpg';
 
@@ -54,10 +58,11 @@ test('fact-source-scan: a confirmed birth leads to the same source and the same 
     await expect(birth.getByText(/^Potwierdzone/)).toBeVisible();
     await openLinkedSource(birth, sourceName);
 
-    // 2. The source page: the heading is the linked source and the scan
-    // points at that source's file.
-    await expect(page.getByRole('heading', { name: sourceName })).toBeVisible();
-    const scan = page.getByRole('img', { name: sourceName });
+    // 2. The source panel on the list: the title is the linked source and the
+    // scan points at that source's file.
+    const panel = sourcePanel(page, sourceName);
+    await expect(panel).toBeVisible();
+    const scan = panel.getByRole('img', { name: sourceName });
     await expect(scan).toHaveAttribute(
         'src',
         new RegExp(`/sources/${sourceId}/`),
@@ -74,6 +79,6 @@ test('fact-source-scan: a confirmed birth leads to the same source and the same 
 
     // The fact is shown back on the source.
     await expect(
-        page.getByRole('link', { name: `Urodzenie — ${displayName}` }),
+        panel.getByRole('link', { name: `Urodzenie — ${displayName}` }),
     ).toBeVisible();
 });

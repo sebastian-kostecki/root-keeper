@@ -105,3 +105,26 @@ export async function familySection(
         has: dialog.page().getByRole('heading', { name, level: 3 }),
     });
 }
+
+/** The wide side panel of a source on `/sources`; scoped to its dialog, the list headings stay visible beside it. */
+export function sourcePanel(page: Page, sourceName: string): Locator {
+    return page.getByRole('dialog', { name: sourceName });
+}
+
+/** Finds the source by name in the list (search) and opens its card; returns the panel. */
+export async function openSourceFromList(
+    page: Page,
+    sourceName: string,
+): Promise<Locator> {
+    await page.goto('/sources');
+    await page
+        .getByRole('searchbox', { name: 'Szukaj źródła' })
+        .fill(sourceName);
+    // The list is filtered after a debounce; a click before it lands is dropped.
+    await expect(page.getByRole('status')).toHaveText('Znaleziono: 1 źródło');
+    await page.getByRole('link', { name: sourceName }).click();
+    const panel = sourcePanel(page, sourceName);
+    await expect(panel).toBeVisible();
+
+    return panel;
+}

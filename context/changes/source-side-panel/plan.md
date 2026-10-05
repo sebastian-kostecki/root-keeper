@@ -466,28 +466,28 @@ Brak migracji danych. Stare zakładki `/sources/{id}` działają dzięki przekie
 
 #### Automated
 
-- [x] 4.1 Brak odwołań do usuniętych plików i `SourceController.show` w `resources/js` (grep pusty)
-- [x] 4.2 Format i lint: `vendor/bin/sail npm run check`
-- [x] 4.3 Typy: `vendor/bin/sail npm run types:check`
-- [x] 4.4 Build: `vendor/bin/sail npm run build`
-- [x] 4.5 Testy osób i źródeł: `vendor/bin/sail artisan test --compact tests/Feature/PersonsTest.php tests/Feature/SourcesTest.php`
+- [x] 4.1 Brak odwołań do usuniętych plików i `SourceController.show` w `resources/js` (grep pusty) — 148a063
+- [x] 4.2 Format i lint: `vendor/bin/sail npm run check` — 148a063
+- [x] 4.3 Typy: `vendor/bin/sail npm run types:check` — 148a063
+- [x] 4.4 Build: `vendor/bin/sail npm run build` — 148a063
+- [x] 4.5 Testy osób i źródeł: `vendor/bin/sail artisan test --compact tests/Feature/PersonsTest.php tests/Feature/SourcesTest.php` — 148a063
 
 #### Manual
 
-- [ ] 4.6 Z modala osoby fakt i zakładka „Źródła” otwierają panel źródła na `/sources` (strażnik osoby najpierw)
-- [ ] 4.7 Pusty picker: „Dodaj źródło” otwiera panel „Nowe źródło”
-- [ ] 4.8 Stary adres `/sources/{id}` otwiera listę z panelem źródła
+- [x] 4.6 Z modala osoby fakt i zakładka „Źródła” otwierają panel źródła na `/sources` (strażnik osoby najpierw) — 148a063
+- [x] 4.7 Pusty picker: „Dodaj źródło” otwiera panel „Nowe źródło” — 148a063
+- [x] 4.8 Stary adres `/sources/{id}` otwiera listę z panelem źródła — 148a063
 
 ### Phase 5: E2E panelu źródła
 
 #### Automated
 
-- [ ] 5.1 Nowy spec przechodzi stabilnie: `npx playwright test tests/e2e/source-panel-edit.spec.ts --repeat-each=2`
-- [ ] 5.2 Fakt → źródło → skan przechodzi: `npx playwright test tests/e2e/fact-source-scan.spec.ts --repeat-each=2`
-- [ ] 5.3 Cały zestaw E2E zielony: `npx playwright test`
-- [ ] 5.4 Format i lint: `vendor/bin/sail npm run check`
+- [x] 5.1 Nowy spec przechodzi stabilnie: `npx playwright test tests/e2e/source-panel-edit.spec.ts --repeat-each=2`
+- [x] 5.2 Fakt → źródło → skan przechodzi: `npx playwright test tests/e2e/fact-source-scan.spec.ts --repeat-each=2`
+- [x] 5.3 Cały zestaw E2E zielony: `npx playwright test`
+- [x] 5.4 Format i lint: `vendor/bin/sail npm run check`
 
 #### Manual
 
-- [ ] 5.5 Celowe uszkodzenie `UpdateSource` daje czerwony spec, po cofnięciu zielony
-- [ ] 5.6 Po przebiegu baza `e2e` bez źródeł z prefiksem `e2etest`
+- [x] 5.5 Celowe uszkodzenie `UpdateSource` daje czerwony spec, po cofnięciu zielony
+- [x] 5.6 Po przebiegu baza `e2e` bez źródeł z prefiksem `e2etest`
