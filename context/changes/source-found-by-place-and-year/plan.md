@@ -461,9 +461,9 @@ Migracja czysto addytywna: nullable kolumna na `event_source`, żaden wiersz nie
 
 #### Automated
 
-- [x] 5.1 Nowy spec przechodzi dwukrotnie
-- [x] 5.2 Cała suita E2E przechodzi
+- [x] 5.1 Nowy spec przechodzi dwukrotnie — bc9658c
+- [x] 5.2 Cała suita E2E przechodzi — bc9658c
 
 #### Manual
 
-- [x] 5.3 Celowe zepsucie filtra roku (lub zapisu numeru) czerwieni nowy spec; po przywróceniu jest zielony
+- [x] 5.3 Celowe zepsucie filtra roku (lub zapisu numeru) czerwieni nowy spec; po przywróceniu jest zielony — bc9658c

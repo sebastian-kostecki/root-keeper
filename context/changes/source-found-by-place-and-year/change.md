@@ -1,7 +1,7 @@
 ---
 change_id: source-found-by-place-and-year
 title: Source found by place and year
-status: implementing
+status: implemented
 created: 2026-10-05
 updated: 2026-10-05
 archived_at: null
