@@ -385,9 +385,9 @@ Brak migracji. Nowy wolumin Dockera zaczyna pusty. Źródła utworzone w bazie `
 
 #### Automated
 
-- [x] 4.1 Cały suite E2E przechodzi
-- [x] 4.2 test-plan.md bez TBD w §6.6 i bez not started w fazie 4
+- [x] 4.1 Cały suite E2E przechodzi — 9899f01
+- [x] 4.2 test-plan.md bez TBD w §6.6 i bez not started w fazie 4 — 9899f01
 
 #### Manual
 
-- [x] 4.3 Przegląd test-plan.md: §3, §4, §5, §6.6 i werdykt sondy spójne z testami i decyzjami
+- [x] 4.3 Przegląd test-plan.md: §3, §4, §5, §6.6 i werdykt sondy spójne z testami i decyzjami — 9899f01
