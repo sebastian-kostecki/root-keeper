@@ -136,6 +136,27 @@ function childCellRem(count: number): number {
     );
 }
 
+/** The add-child slot is one column wide, whatever the width of the children cards. */
+const SLOT_CELL_REM = COLUMN_REM + COLUMN_GAP_REM;
+
+/** How far the slot may stick out past the grandparent row and still count as beside the row. */
+const SLOT_BESIDE_TOLERANCE_REM = 1;
+
+/**
+ * The slot stands right of the last child while it stays within the width of
+ * the grandparent row. A longer row would widen the whole sheet by a column and
+ * push the start view below the floor scale, so there the slot goes under the
+ * last child.
+ */
+function slotStandsBeside(count: number): boolean {
+    const rowRem = count * childCellRem(count);
+
+    return (
+        rowRem <= GRID_REM &&
+        rowRem / 2 + SLOT_CELL_REM - GRID_REM / 2 <= SLOT_BESIDE_TOLERANCE_REM
+    );
+}
+
 /** Empty-state of the children row: a note and the add-child slot under the couple. */
 function NoChildren({ addChild }: { addChild: React.ReactNode }) {
     return (
@@ -153,49 +174,59 @@ function NoChildren({ addChild }: { addChild: React.ReactNode }) {
  * trunk from the couple reaches. The bar is made of half segments inside the
  * cells, so cells have no gap (the card spacing is cell padding) and the
  * segments touch. The add-child slot stands right of the last child, outside
- * the bar, and does not move the row.
+ * the bar, and does not move the row; in a row too wide for that it stands
+ * under the last child.
  */
 function ChildrenRow({
     children,
     addChild,
 }: Pick<FamilySheetData, 'children'> & { addChild: React.ReactNode }) {
-    const cellRem = childCellRem(children.length);
-    const cellStyle = { width: `${cellRem}rem` };
+    const cellStyle = { width: `${childCellRem(children.length)}rem` };
+    const slotStyle = { width: `${SLOT_CELL_REM}rem` };
+    const beside = slotStandsBeside(children.length);
 
     return (
-        <div className="relative flex w-max">
+        <div className="relative flex w-max flex-col">
             <RowLabel>Dzieci</RowLabel>
-            {children.map((child, i) => (
-                <div
-                    key={child.id}
-                    className="relative px-[0.375rem] pt-3 pb-2"
-                    style={cellStyle}
-                >
+            <div className="flex">
+                {children.map((child, i) => (
                     <div
-                        className="bg-tree-line absolute top-0 left-1/2 h-3 w-px"
-                        aria-hidden="true"
-                    />
-                    {i > 0 && (
+                        key={child.id}
+                        className="relative px-[0.375rem] pt-3 pb-2"
+                        style={cellStyle}
+                    >
                         <div
-                            className="bg-tree-line absolute top-0 left-0 h-px w-1/2"
+                            className="bg-tree-line absolute top-0 left-1/2 h-3 w-px"
                             aria-hidden="true"
                         />
-                    )}
-                    {i < children.length - 1 && (
-                        <div
-                            className="bg-tree-line absolute top-0 right-0 h-px w-1/2"
-                            aria-hidden="true"
-                        />
-                    )}
-                    <SheetPersonCard person={child} />
-                </div>
-            ))}
-            <div
-                className="absolute top-0 left-full px-[0.375rem] pt-3 pb-2"
-                style={cellStyle}
-            >
-                {addChild}
+                        {i > 0 && (
+                            <div
+                                className="bg-tree-line absolute top-0 left-0 h-px w-1/2"
+                                aria-hidden="true"
+                            />
+                        )}
+                        {i < children.length - 1 && (
+                            <div
+                                className="bg-tree-line absolute top-0 right-0 h-px w-1/2"
+                                aria-hidden="true"
+                            />
+                        )}
+                        <SheetPersonCard person={child} />
+                    </div>
+                ))}
             </div>
+            {beside ? (
+                <div
+                    className="absolute top-0 left-full px-[0.375rem] pt-3 pb-2"
+                    style={slotStyle}
+                >
+                    {addChild}
+                </div>
+            ) : (
+                <div className="self-end px-[0.375rem] pb-2" style={slotStyle}>
+                    {addChild}
+                </div>
+            )}
         </div>
     );
 }
@@ -240,10 +271,9 @@ export function FamilySheet({
     const childrenRowRem =
         sheet.children.length * childCellRem(sheet.children.length);
     const sheetRem = Math.max(GRID_REM, childrenRowRem);
-    const slotOverflowRem = Math.max(
-        0,
-        childrenRowRem / 2 + childCellRem(sheet.children.length) - sheetRem / 2,
-    );
+    const slotOverflowRem = slotStandsBeside(sheet.children.length)
+        ? Math.max(0, childrenRowRem / 2 + SLOT_CELL_REM - sheetRem / 2)
+        : 0;
 
     return (
         <ZoomCanvas

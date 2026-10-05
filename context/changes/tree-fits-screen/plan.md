@@ -332,32 +332,32 @@ Brak zmian danych i schematu. Seeder demo dostaje tylko nowe rekordy na końcu.
 
 #### Automated
 
-- [x] 2.1 Format i lint przechodzą: `vendor/bin/sail npm run check`
-- [x] 2.2 Typy przechodzą: `vendor/bin/sail npm run types:check`
-- [x] 2.3 Build przechodzi: `vendor/bin/sail npm run build`
-- [x] 2.4 Pest drzewa bez zmian i zielony: `vendor/bin/sail artisan test --compact tests/Feature/TreeTest.php tests/Feature/WriteTargetsTest.php`
-- [x] 2.5 E2E slotów zielone przy 1366×768: `npx playwright test tests/e2e/tree-slot-parent.spec.ts tests/e2e/tree-slot-child.spec.ts tests/e2e/tree-slot-spouse.spec.ts`
+- [x] 2.1 Format i lint przechodzą: `vendor/bin/sail npm run check` — 7e1b28b
+- [x] 2.2 Typy przechodzą: `vendor/bin/sail npm run types:check` — 7e1b28b
+- [x] 2.3 Build przechodzi: `vendor/bin/sail npm run build` — 7e1b28b
+- [x] 2.4 Pest drzewa bez zmian i zielony: `vendor/bin/sail artisan test --compact tests/Feature/TreeTest.php tests/Feature/WriteTargetsTest.php` — 7e1b28b
+- [x] 2.5 E2E slotów zielone przy 1366×768: `npx playwright test tests/e2e/tree-slot-parent.spec.ts tests/e2e/tree-slot-child.spec.ts tests/e2e/tree-slot-spouse.spec.ts` — 7e1b28b
 
 #### Manual
 
-- [x] 2.6 Karty są wyraźnie większe niż przed zmianą, a w skali 75% nazwy i daty pozostają czytelne
-- [x] 2.7 Przy 1, 3, 5 i 8 dzieciach każde dziecko ma zejście z jednej belki połączonej pniem z parą. Przy 5+ karty dzieci są wąskie, a rząd mieści się w szerokości dziadków
-- [x] 2.8 Slot „Dodaj dziecko” stoi obok rzędu, nie na belce, a rząd dzieci pozostaje wyśrodkowany pod parą
-- [x] 2.9 Długie nazwiska zawijają się w kartach dziadków i wąskich dzieci, nie wychodzą poza kartę i nie wchodzą pod ikonę „Podgląd”
+- [x] 2.6 Karty są wyraźnie większe niż przed zmianą, a w skali 75% nazwy i daty pozostają czytelne — 7e1b28b
+- [x] 2.7 Przy 1, 3, 5 i 8 dzieciach każde dziecko ma zejście z jednej belki połączonej pniem z parą. Przy 5+ karty dzieci są wąskie, a rząd mieści się w szerokości dziadków — 7e1b28b
+- [x] 2.8 Slot „Dodaj dziecko” stoi obok rzędu, nie na belce, a rząd dzieci pozostaje wyśrodkowany pod parą — 7e1b28b
+- [x] 2.9 Długie nazwiska zawijają się w kartach dziadków i wąskich dzieci, nie wychodzą poza kartę i nie wchodzą pod ikonę „Podgląd” — 7e1b28b
 
 ### Phase 3: Ocena wyglądu na granicach NFR
 
 #### Automated
 
-- [ ] 3.1 Seeder demo uruchamia się bez błędów: `vendor/bin/sail artisan db:seed --class=TreeViewDemoSeeder --no-interaction`
-- [ ] 3.2 Skrypt zrzutów generuje komplet plików: `node context/changes/tree-fits-screen/screenshots/shots.mjs context/changes/tree-fits-screen/screenshots/after`
-- [ ] 3.3 Format, lint i typy po poprawkach przechodzą: `vendor/bin/sail npm run check && vendor/bin/sail npm run types:check`
-- [ ] 3.4 Pełny zestaw E2E po poprawkach zielony przy 1366×768: `npx playwright test`
+- [x] 3.1 Seeder demo uruchamia się bez błędów: `vendor/bin/sail artisan db:seed --class=TreeViewDemoSeeder --no-interaction`
+- [x] 3.2 Skrypt zrzutów generuje komplet plików: `node context/changes/tree-fits-screen/screenshots/shots.mjs context/changes/tree-fits-screen/screenshots/after`
+- [x] 3.3 Format, lint i typy po poprawkach przechodzą: `vendor/bin/sail npm run check && vendor/bin/sail npm run types:check`
+- [x] 3.4 Pełny zestaw E2E po poprawkach zielony przy 1366×768: `npx playwright test`
 
 #### Manual
 
-- [ ] 3.5 Na 2560×1440 drzewo wypełnia przestrzeń (powiększone do limitu 150%, chyba że wcześniej wypełni wysokość lub szerokość) bez rozmytego tekstu
-- [ ] 3.6 Na 1366×768 rodzina z ≤ 8 dziećmi mieści się w całości (skala ≥ 75%), a rodzina z 10 dziećmi startuje w 75% wyśrodkowana na parze
-- [ ] 3.7 W zwężeniu jak obok panelu drzewo startuje wyśrodkowane na parze, a „Dopasuj” pokazuje całość
-- [ ] 3.8 Pasek kontrolek nie zasłania kart przy dopasowaniu startowym
-- [ ] 3.9 Werdykt w `screenshots/verdict.md` akceptuje zestaw (autor)
+- [x] 3.5 Na 2560×1440 drzewo wypełnia przestrzeń (powiększone do limitu 150%, chyba że wcześniej wypełni wysokość lub szerokość) bez rozmytego tekstu
+- [x] 3.6 Na 1366×768 rodzina z ≤ 8 dziećmi mieści się w całości (skala ≥ 75%), a rodzina z 10 dziećmi startuje w 75% wyśrodkowana na parze
+- [x] 3.7 W zwężeniu jak obok panelu drzewo startuje wyśrodkowane na parze, a „Dopasuj” pokazuje całość
+- [x] 3.8 Pasek kontrolek nie zasłania kart przy dopasowaniu startowym
+- [x] 3.9 Werdykt w `screenshots/verdict.md` akceptuje zestaw (autor)

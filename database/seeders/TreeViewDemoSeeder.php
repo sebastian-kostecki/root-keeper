@@ -210,8 +210,38 @@ class TreeViewDemoSeeder extends Seeder
         $this->confirmationStates($wiktor, $helena, $janAnnaMarriage);
         $this->matchingStates($jan);
         $this->imageStates();
+        $this->largeFamilies();
 
         (new SetTreeRootPerson)->handle($this->tree, $jan);
+    }
+
+    /**
+     * Tree-fits-screen gate: married couples with 8 children (children row as wide as the grandparent row) and
+     * 10 children (wider row). Appended after every other person so the id offsets from the proband stay intact.
+     */
+    private function largeFamilies(): void
+    {
+        $families = [
+            ['Dariusz', 'Ósmy', 'Beata', 'Ósma', 8],
+            ['Zbigniew', 'Dziesiąty', 'Halina', 'Dziesiąta', 10],
+        ];
+        $childNames = [
+            ['Adam', 'male'], ['Basia', 'female'], ['Cezary', 'male'], ['Dorota', 'female'], ['Emil', 'male'],
+            ['Franciszka', 'female'], ['Grzegorz', 'male'], ['Hanna', 'female'], ['Ignacy', 'male'], ['Judyta', 'female'],
+        ];
+
+        foreach ($families as [$fatherName, $fatherSurname, $motherName, $motherSurname, $count]) {
+            $father = $this->person($fatherName, $fatherSurname, 'male', 1965);
+            $mother = $this->person($motherName, $motherSurname, 'female', 1967);
+            $this->marry($father, $mother, ['year' => 1990]);
+
+            foreach (array_slice($childNames, 0, $count) as $index => [$firstName, $gender]) {
+                $this->parents(
+                    $this->person($firstName, $fatherSurname, $gender, 1991 + $index * 2),
+                    [$father, $mother],
+                );
+            }
+        }
     }
 
     /**
