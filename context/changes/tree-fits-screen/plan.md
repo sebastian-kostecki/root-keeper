@@ -349,15 +349,15 @@ Brak zmian danych i schematu. Seeder demo dostaje tylko nowe rekordy na końcu.
 
 #### Automated
 
-- [x] 3.1 Seeder demo uruchamia się bez błędów: `vendor/bin/sail artisan db:seed --class=TreeViewDemoSeeder --no-interaction`
-- [x] 3.2 Skrypt zrzutów generuje komplet plików: `node context/changes/tree-fits-screen/screenshots/shots.mjs context/changes/tree-fits-screen/screenshots/after`
-- [x] 3.3 Format, lint i typy po poprawkach przechodzą: `vendor/bin/sail npm run check && vendor/bin/sail npm run types:check`
-- [x] 3.4 Pełny zestaw E2E po poprawkach zielony przy 1366×768: `npx playwright test`
+- [x] 3.1 Seeder demo uruchamia się bez błędów: `vendor/bin/sail artisan db:seed --class=TreeViewDemoSeeder --no-interaction` — 3afa239
+- [x] 3.2 Skrypt zrzutów generuje komplet plików: `node context/changes/tree-fits-screen/screenshots/shots.mjs context/changes/tree-fits-screen/screenshots/after` — 3afa239
+- [x] 3.3 Format, lint i typy po poprawkach przechodzą: `vendor/bin/sail npm run check && vendor/bin/sail npm run types:check` — 3afa239
+- [x] 3.4 Pełny zestaw E2E po poprawkach zielony przy 1366×768: `npx playwright test` — 3afa239
 
 #### Manual
 
-- [x] 3.5 Na 2560×1440 drzewo wypełnia przestrzeń (powiększone do limitu 150%, chyba że wcześniej wypełni wysokość lub szerokość) bez rozmytego tekstu
-- [x] 3.6 Na 1366×768 rodzina z ≤ 8 dziećmi mieści się w całości (skala ≥ 75%), a rodzina z 10 dziećmi startuje w 75% wyśrodkowana na parze
-- [x] 3.7 W zwężeniu jak obok panelu drzewo startuje wyśrodkowane na parze, a „Dopasuj” pokazuje całość
-- [x] 3.8 Pasek kontrolek nie zasłania kart przy dopasowaniu startowym
-- [x] 3.9 Werdykt w `screenshots/verdict.md` akceptuje zestaw (autor)
+- [x] 3.5 Na 2560×1440 drzewo wypełnia przestrzeń (powiększone do limitu 150%, chyba że wcześniej wypełni wysokość lub szerokość) bez rozmytego tekstu — 3afa239
+- [x] 3.6 Na 1366×768 rodzina z ≤ 8 dziećmi mieści się w całości (skala ≥ 75%), a rodzina z 10 dziećmi startuje w 75% wyśrodkowana na parze — 3afa239
+- [x] 3.7 W zwężeniu jak obok panelu drzewo startuje wyśrodkowane na parze, a „Dopasuj” pokazuje całość — 3afa239
+- [x] 3.8 Pasek kontrolek nie zasłania kart przy dopasowaniu startowym — 3afa239
+- [x] 3.9 Werdykt w `screenshots/verdict.md` akceptuje zestaw (autor) — 3afa239
