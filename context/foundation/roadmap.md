@@ -46,7 +46,7 @@ root-keeper to prywatne, samodzielnie hostowane drzewo genealogiczne, w którym 
 | F-02 | side-panel-shell                     | (foundation) jest jedna wspólna powłoka panelu bocznego z prawej, obok której treść strony się zwęża      | —                      | FR-006, FR-019, FR-028, NFR (1366–2560 px) | done |
 | S-01 | places-gazetteer                     | prowadzić spis miejscowości z opisem, który startuje z istniejących tekstowych miejsc                     | F-02                   | FR-007, FR-029                           | done |
 | S-02 | source-side-panel                    | dodawać, oglądać i edytować źródło w szerokim panelu bocznym ze skanem obok opisu                         | F-02                   | FR-006, FR-027                           | done        |
-| S-03 | act-described-by-parish-and-archive  | opisać akt parafią ze spisu (dopisaną w locie), rokiem, typem aktu i archiwum z podpowiedziami            | S-01, S-02             | FR-001, FR-008, FR-009, US-01            | in-progress |
+| S-03 | act-described-by-parish-and-archive  | opisać akt parafią ze spisu (dopisaną w locie), rokiem, typem aktu i archiwum z podpowiedziami            | S-01, S-02             | FR-001, FR-008, FR-009, US-01            | done |
 | S-04 | source-found-by-place-and-year       | przy podpinaniu źródła do faktu szukać po miejscu i roku i podać numer wpisu widoczny przy fakcie i źródle | S-03, F-01             | FR-003, FR-004, FR-025, US-01            | proposed |
 | S-05 | tree-fits-screen                     | oglądać drzewo z większymi kartami dopasowane do ekranu, z przybliżaniem i liniami dzieci od właściwej pary | F-01                   | FR-013, FR-014, FR-026                   | proposed |
 | S-06 | person-side-panel                    | kliknąć kartę i oglądać oraz edytować osobę w panelu obok zwężonego drzewa, przechodzić w nim do krewnych | F-01, F-02, S-05       | FR-016, FR-019, FR-028, FR-026, FR-029   | proposed |
@@ -157,7 +157,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
   - Jakie pola opisu zostają dla źródła rodzaju „inne” (PRD opisuje tylko akt i nagrobek)? Domyślnie: nazwa, link, notatka. Owner: user. Block: no.
   - „Pochodzenie” → archiwum to przeniesienie danych: kopiowane, a stare pole usuwane dopiero w późniejszej migracji. Owner: `/10x-plan`. Block: no.
 - **Risk:** Gwiazda przewodnia — przy celu `speed` zaraz po `S-01` i `S-02`; jeśli dopisywanie parafii w locie (z miejscowością siedziby, też dopisywaną w locie) rwie wprowadzanie, wraca kontrargument z FR-001, więc to jest pierwsza rzecz do sprawdzenia na prawdziwym akcie.
-- **Status:** in-progress
+- **Status:** done
 
 ### S-04: Akt odnaleziony po miejscu i roku, numer wpisu przy powiązaniu
 
@@ -384,3 +384,4 @@ Rozstrzygnięte:
 - **S-13: autor zapisuje nazwisko rodowe — osoba wyświetla się „z d. …”, gdy znane są oba nazwiska, i jest wyszukiwana po obu — oraz widzi wiek osoby: ile przeżyła (gdy zna datę zgonu) albo ile ma (tylko gdy wynik jest poniżej ok. 110 lat).** — Archived 2026-10-05 → `context/archive/2026-10-05-maiden-name-and-age/`. Lesson: —.
 - **S-01: autor otwiera spis miejscowości, który powstał automatycznie z istniejących tekstowych miejsc (identyczne teksty → jedna miejscowość), dodaje i poprawia miejscowości z opisem w panelu bocznym; cudza miejscowość to 404.** — Archived 2026-10-05 → `context/archive/2026-10-05-places-gazetteer/`. Lesson: —.
 - **S-02: autor dodaje, ogląda i edytuje źródło w szerokim panelu bocznym, w którym skan (z powiększeniem jak dziś) stoi obok formularza opisu, zamiast w modalu; usuwanie źródła po liście faktów tracących potwierdzenie działa jak dziś.** — Archived 2026-10-05 → `context/archive/2026-10-05-source-side-panel/`. Lesson: —.
+- **S-03: autor opisuje akt metrykalny osobnymi danymi: parafia ze spisu parafii (nazwa, wyznanie, miejscowość siedziby ze spisu; nową parafię dopisuje w locie, bez wychodzenia z panelu źródła), rok, typ aktu i archiwum jako tekst podpowiadający wcześniej wpisane archiwa; dotychczasowe „Pochodzenie” jest widoczne jako archiwum.** — Archived 2026-10-05 → `context/archive/2026-10-05-act-described-by-parish-and-archive/`. Lesson: —.
