@@ -434,17 +434,17 @@ GROUP BY tree_id, lower(btrim(t)) HAVING count(DISTINCT t) > 1;
 
 #### Automated
 
-- [x] 3.1 Testy Vitest przechodzą
-- [x] 3.2 Format i lint przechodzą
-- [x] 3.3 Typy przechodzą
-- [x] 3.4 Build przechodzi
-- [x] 3.5 Testy Pest zmiany przechodzą
+- [x] 3.1 Testy Vitest przechodzą — 3103f6b
+- [x] 3.2 Format i lint przechodzą — 3103f6b
+- [x] 3.3 Typy przechodzą — 3103f6b
+- [x] 3.4 Build przechodzi — 3103f6b
+- [x] 3.5 Testy Pest zmiany przechodzą — 3103f6b
 
 #### Manual
 
-- [x] 3.6 Sidebar, lista alfabetyczna, wyszukiwanie z polskimi znakami i puste stany
-- [x] 3.7 Dodanie miejscowości w panelu obok listy i panel nowego wpisu po zapisie
-- [x] 3.8 Edycja odświeża panel i listę, odświeżenie strony otwiera ten sam wpis
-- [x] 3.9 Komunikat walidacji dla nazwy różniącej się tylko wielkością liter
-- [x] 3.10 Pytanie o porzucenie niezapisanych zmian przy zamknięciu, przełączeniu i dodaniu
-- [x] 3.11 Panel na wąskim ekranie otwiera się i zamyka poprawnie
+- [x] 3.6 Sidebar, lista alfabetyczna, wyszukiwanie z polskimi znakami i puste stany — 3103f6b
+- [x] 3.7 Dodanie miejscowości w panelu obok listy i panel nowego wpisu po zapisie — 3103f6b
+- [x] 3.8 Edycja odświeża panel i listę, odświeżenie strony otwiera ten sam wpis — 3103f6b
+- [x] 3.9 Komunikat walidacji dla nazwy różniącej się tylko wielkością liter — 3103f6b
+- [x] 3.10 Pytanie o porzucenie niezapisanych zmian przy zamknięciu, przełączeniu i dodaniu — 3103f6b
+- [x] 3.11 Panel na wąskim ekranie otwiera się i zamyka poprawnie — 3103f6b
