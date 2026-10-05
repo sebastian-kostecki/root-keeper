@@ -4,6 +4,7 @@ namespace Tests;
 
 use App\Enums\EventType;
 use App\Models\Event;
+use App\Models\Locality;
 use App\Models\Person;
 use App\Models\Source;
 use App\Models\User;
@@ -121,8 +122,8 @@ abstract class BackupTestCase extends TestCase
     }
 
     /**
-     * Create a two-factor user with a tree, people, events, relations, a passkey and two uploaded
-     * sources of different bytes, one linked to an event.
+     * Create a two-factor user with a tree, people, events, relations, a passkey, a locality and two
+     * uploaded sources of different bytes, one linked to an event.
      */
     protected function arrangeBackupData(): Person
     {
@@ -146,6 +147,8 @@ abstract class BackupTestCase extends TestCase
         attachBirth($child, 1950, 3, 14);
         attachMarriage($parent, Person::factory()->for($tree)->create(), 1945);
         linkParent($parent, $child);
+
+        Locality::factory()->for($tree)->create(['name' => 'Lipnica Murowana']);
 
         $this->uploadedSourceHashes = [];
 
