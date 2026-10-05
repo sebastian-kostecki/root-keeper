@@ -1,10 +1,10 @@
 ---
 change_id: critical-flows-e2e-guard
 title: Critical flows e2e guard
-status: impl_reviewed
+status: archived
 created: 2026-10-04
 updated: 2026-10-05
-archived_at: null
+archived_at: 2026-10-05T06:39:42Z
 ---
 
 ## Notes
