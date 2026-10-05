@@ -327,13 +327,13 @@ Kolumna nullable, bez przepisywania danych i z odwracalnym `down()`; produkcja i
 
 #### Automated
 
-- [x] 2.1 Testy Unit i Feature przechodzą: `vendor/bin/sail artisan test --compact tests/Unit/AgeTest.php tests/Feature/TreeTest.php tests/Feature/PersonsTest.php`
-- [x] 2.2 Vitest przechodzi: `vendor/bin/sail npm run test:js`
-- [x] 2.3 Typy, lint i format przechodzą: `vendor/bin/sail npm run types:check` i `vendor/bin/sail npm run check`
-- [x] 2.4 Larastan i Pint przechodzą: `vendor/bin/sail bin phpstan analyse` i `vendor/bin/sail bin pint --dirty --format agent`
+- [x] 2.1 Testy Unit i Feature przechodzą: `vendor/bin/sail artisan test --compact tests/Unit/AgeTest.php tests/Feature/TreeTest.php tests/Feature/PersonsTest.php` — 46b504c
+- [x] 2.2 Vitest przechodzi: `vendor/bin/sail npm run test:js` — 46b504c
+- [x] 2.3 Typy, lint i format przechodzą: `vendor/bin/sail npm run types:check` i `vendor/bin/sail npm run check` — 46b504c
+- [x] 2.4 Larastan i Pint przechodzą: `vendor/bin/sail bin phpstan analyse` i `vendor/bin/sail bin pint --dirty --format agent` — 46b504c
 
 #### Manual
 
-- [x] 2.5 Nagłówek podglądu zmarłej osoby pokazuje „A – B (N lat)”, żyjącej — „ur. A (N lat)”
-- [x] 2.6 Karta drzewa pokazuje wiek w nawiasie po żywocie i nie rozjeżdża się na wąskiej karcie
-- [x] 2.7 Osoba ur. 1916 (sam rok) bez zgonu nie ma wieku, ur. 1917 ma 109 lat; dziecko zmarłe przed rokiem ma miesiące/dni albo „poniżej roku”
+- [x] 2.5 Nagłówek podglądu zmarłej osoby pokazuje „A – B (N lat)”, żyjącej — „ur. A (N lat)” — 46b504c
+- [x] 2.6 Karta drzewa pokazuje wiek w nawiasie po żywocie i nie rozjeżdża się na wąskiej karcie — 46b504c
+- [x] 2.7 Osoba ur. 1916 (sam rok) bez zgonu nie ma wieku, ur. 1917 ma 109 lat; dziecko zmarłe przed rokiem ma miesiące/dni albo „poniżej roku” — 46b504c
