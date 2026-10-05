@@ -18,6 +18,7 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useSetRootPerson } from '@/hooks/use-set-root-person';
+import { formatAge } from '@/lib/age';
 import { formatLifespan } from '@/lib/lifespan';
 import { show as treeShow } from '@/routes/tree';
 import type { PersonPreview } from '@/types';
@@ -37,7 +38,11 @@ export function PersonModalHeader({ person, isRootPerson, leading }: Props) {
     const guardClick = useGuardedClick();
     const treeHref = treeShow(person.id);
 
-    const lifespan = formatLifespan(person.birth?.date, person.death?.date);
+    const baseLifespan = formatLifespan(person.birth?.date, person.death?.date);
+    const lifespan =
+        baseLifespan && person.age
+            ? `${baseLifespan} (${formatAge(person.age)})`
+            : baseLifespan;
 
     return (
         <div className="flex flex-col gap-3 px-6 pt-6 pr-12 pb-4">

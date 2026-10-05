@@ -7,6 +7,7 @@ import {
     cardInteractive,
     cardSurface,
 } from '@/components/tree/card-styles';
+import { formatAge } from '@/lib/age';
 import { genderCard } from '@/lib/gender-styles';
 import { cn } from '@/lib/utils';
 import { show as treeShow } from '@/routes/tree';
@@ -34,6 +35,11 @@ function CardBody({ person }: { person: SheetPerson }) {
             {person.lifespan && (
                 <span className="text-tree-meta mt-1 block text-xs">
                     {person.lifespan}
+                </span>
+            )}
+            {person.lifespan && person.age && (
+                <span className="text-tree-meta block text-xs whitespace-nowrap">
+                    {`(${formatAge(person.age)})`}
                 </span>
             )}
         </>

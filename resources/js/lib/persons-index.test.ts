@@ -40,6 +40,7 @@ function person(
         religion: null,
         birth: null,
         death: null,
+        age: null,
         ...overrides,
     };
 }

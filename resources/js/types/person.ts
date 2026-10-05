@@ -53,6 +53,11 @@ export type Marriage = SourcedPersonEvent & {
     } | null;
 };
 
+export type PersonAge = {
+    unit: 'years' | 'months' | 'days' | 'under_year';
+    value: number | null;
+};
+
 export type Person = {
     id: number;
     first_name: string | null;
@@ -64,6 +69,7 @@ export type Person = {
     religion: Religion | null;
     birth: IndexPersonEvent | null;
     death: IndexPersonEvent | null;
+    age: PersonAge | null;
 };
 
 export type Relative = {

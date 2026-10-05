@@ -924,6 +924,30 @@ test('persons index carries the preview props of the person named by the person 
             ->has('personPreview.religions', 6));
 });
 
+test('the person preview carries the age', function () {
+    $this->travelTo('2026-10-05 12:00:00');
+    $user = User::factory()->create();
+    $person = Person::factory()->for($user->tree)->create();
+    attachBirth($person, 1850);
+    attachDeath($person, 1922);
+
+    $this->actingAs($user)->get(personPreviewUrl($person))
+        ->assertInertia(fn ($page) => $page
+            ->where('personPreview.person.age', ['unit' => 'years', 'value' => 72]));
+});
+
+test('the age counts today in the Europe/Warsaw day', function () {
+    $user = User::factory()->create();
+    $person = Person::factory()->for($user->tree)->create();
+    attachBirth($person, 1980, 3, 15);
+
+    $this->travelTo('2026-03-14 23:30:00 UTC');
+
+    $this->actingAs($user)->get(personPreviewUrl($person))
+        ->assertInertia(fn ($page) => $page
+            ->where('personPreview.person.age', ['unit' => 'years', 'value' => 46]));
+});
+
 test('the tree and source pages carry the preview props and flag the proband', function () {
     $user = User::factory()->create();
     $person = Person::factory()->for($user->tree)->create();

@@ -473,6 +473,28 @@ test('the lifespan label covers approximate, missing and unknown years', functio
     expect(sheetFor($this, $user, $nothing)['focus']['lifespan'])->toBeNull();
 });
 
+test('the sheet card carries the age of a deceased and a living person, leaving the lifespan unchanged', function () {
+    $this->travelTo('2026-10-05 12:00:00');
+    $user = User::factory()->create();
+    $tree = $user->tree;
+
+    $deceased = Person::factory()->for($tree)->create();
+    attachBirth($deceased, 1850);
+    attachDeath($deceased, 1922);
+    $sheet = sheetFor($this, $user, $deceased);
+    expect($sheet['focus']['age'])->toBe(['unit' => 'years', 'value' => 72]);
+    expect($sheet['focus']['lifespan'])->toBe('1850 – 1922');
+
+    $living = Person::factory()->for($tree)->create();
+    attachBirth($living, 1980, 3, 10);
+    $sheet = sheetFor($this, $user, $living);
+    expect($sheet['focus']['age'])->toBe(['unit' => 'years', 'value' => 46]);
+    expect($sheet['focus']['lifespan'])->toBe('1980 –');
+
+    $unknown = Person::factory()->for($tree)->create();
+    expect(sheetFor($this, $user, $unknown)['focus']['age'])->toBeNull();
+});
+
 test('the sheet query count does not grow with the size of the tree', function () {
     $countQueries = function (int $extraPeople) {
         $user = User::factory()->create();

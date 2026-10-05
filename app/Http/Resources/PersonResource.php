@@ -29,6 +29,7 @@ class PersonResource extends JsonResource
      *     religion: array{value: string, label: string}|null,
      *     birth: array<string, mixed>|null,
      *     death: array<string, mixed>|null,
+     *     age: array{unit: 'years'|'months'|'days'|'under_year', value: int|null}|null,
      *     parents?: list<array<string, mixed>>,
      *     children?: list<array<string, mixed>>,
      *     marriages?: list<array<string, mixed>>,
@@ -53,6 +54,7 @@ class PersonResource extends JsonResource
             ],
             'birth' => $this->birth() === null ? null : EventResource::make($this->birth())->resolve(),
             'death' => $this->death() === null ? null : EventResource::make($this->death())->resolve(),
+            'age' => $this->age()?->toArray(),
             'parents' => $this->whenLoaded('parents', fn (): array => RelativeResource::collection(
                 PersonOrdering::relatives($this->parents)
             )->resolve()),

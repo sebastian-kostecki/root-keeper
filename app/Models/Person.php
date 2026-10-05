@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Enums\EventType;
 use App\Enums\Gender;
 use App\Enums\Religion;
+use App\Support\Age;
 use Database\Factories\PersonFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -12,6 +13,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Date;
 
 /**
  * @property int $id
@@ -98,6 +100,19 @@ class Person extends Model
     public function death(): ?Event
     {
         return $this->events->firstWhere('type', EventType::Death);
+    }
+
+    /**
+     * Requires the `events` relation loaded. "Today" is the Polish calendar day.
+     */
+    public function age(): ?Age
+    {
+        return Age::from(
+            $this->birth()?->date,
+            $this->death()?->date,
+            $this->death() !== null,
+            Date::now('Europe/Warsaw')->toImmutable()->startOfDay(),
+        );
     }
 
     public function displayName(): string

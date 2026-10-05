@@ -309,31 +309,31 @@ Kolumna nullable, bez przepisywania danych i z odwracalnym `down()`; produkcja i
 
 #### Automated
 
-- [x] 1.1 Migracja przechodzi w obie strony: `vendor/bin/sail artisan migrate` i `vendor/bin/sail artisan migrate:rollback --step=1` + ponowne `migrate`
-- [x] 1.2 Testy Pest osób przechodzą: `vendor/bin/sail artisan test --compact tests/Feature/PersonsTest.php tests/Feature/WriteTargetsTest.php tests/Feature/TreeTest.php`
-- [x] 1.3 Vitest przechodzi: `vendor/bin/sail npm run test:js`
-- [x] 1.4 Typy, lint i format przechodzą: `vendor/bin/sail npm run types:check` i `vendor/bin/sail npm run check`
-- [x] 1.5 Larastan i Pint przechodzą: `vendor/bin/sail bin phpstan analyse` i `vendor/bin/sail bin pint --dirty --format agent`
-- [x] 1.6 Trzy specy E2E slotów drzewa przechodzą: `npx playwright test tests/e2e/tree-slot-spouse.spec.ts tests/e2e/tree-slot-child.spec.ts tests/e2e/tree-slot-parent.spec.ts`
+- [x] 1.1 Migracja przechodzi w obie strony: `vendor/bin/sail artisan migrate` i `vendor/bin/sail artisan migrate:rollback --step=1` + ponowne `migrate` — a7e1c86
+- [x] 1.2 Testy Pest osób przechodzą: `vendor/bin/sail artisan test --compact tests/Feature/PersonsTest.php tests/Feature/WriteTargetsTest.php tests/Feature/TreeTest.php` — a7e1c86
+- [x] 1.3 Vitest przechodzi: `vendor/bin/sail npm run test:js` — a7e1c86
+- [x] 1.4 Typy, lint i format przechodzą: `vendor/bin/sail npm run types:check` i `vendor/bin/sail npm run check` — a7e1c86
+- [x] 1.5 Larastan i Pint przechodzą: `vendor/bin/sail bin phpstan analyse` i `vendor/bin/sail bin pint --dirty --format agent` — a7e1c86
+- [x] 1.6 Trzy specy E2E slotów drzewa przechodzą: `npx playwright test tests/e2e/tree-slot-spouse.spec.ts tests/e2e/tree-slot-child.spec.ts tests/e2e/tree-slot-parent.spec.ts` — a7e1c86
 
 #### Manual
 
-- [x] 1.7 W edycji „Dane osobowe” wpisanie nazwiska rodowego daje na drzewie i w nagłówku „Imię Nazwisko z d. Rodowe”, a awatar ma inicjały imienia i nazwiska
-- [x] 1.8 Wpisanie samego nazwiska rodowego pokazuje polski błąd pod polem „Nazwisko rodowe”
-- [x] 1.9 Lista osób i picker „wybierz osobę” na drzewie znajdują osobę po nazwisku rodowym
-- [x] 1.10 Zmiana daty urodzenia (inna sekcja) nie czyści nazwiska rodowego
+- [x] 1.7 W edycji „Dane osobowe” wpisanie nazwiska rodowego daje na drzewie i w nagłówku „Imię Nazwisko z d. Rodowe”, a awatar ma inicjały imienia i nazwiska — a7e1c86
+- [x] 1.8 Wpisanie samego nazwiska rodowego pokazuje polski błąd pod polem „Nazwisko rodowe” — a7e1c86
+- [x] 1.9 Lista osób i picker „wybierz osobę” na drzewie znajdują osobę po nazwisku rodowym — a7e1c86
+- [x] 1.10 Zmiana daty urodzenia (inna sekcja) nie czyści nazwiska rodowego — a7e1c86
 
 ### Phase 2: Wiek osoby
 
 #### Automated
 
-- [ ] 2.1 Testy Unit i Feature przechodzą: `vendor/bin/sail artisan test --compact tests/Unit/AgeTest.php tests/Feature/TreeTest.php tests/Feature/PersonsTest.php`
-- [ ] 2.2 Vitest przechodzi: `vendor/bin/sail npm run test:js`
-- [ ] 2.3 Typy, lint i format przechodzą: `vendor/bin/sail npm run types:check` i `vendor/bin/sail npm run check`
-- [ ] 2.4 Larastan i Pint przechodzą: `vendor/bin/sail bin phpstan analyse` i `vendor/bin/sail bin pint --dirty --format agent`
+- [x] 2.1 Testy Unit i Feature przechodzą: `vendor/bin/sail artisan test --compact tests/Unit/AgeTest.php tests/Feature/TreeTest.php tests/Feature/PersonsTest.php`
+- [x] 2.2 Vitest przechodzi: `vendor/bin/sail npm run test:js`
+- [x] 2.3 Typy, lint i format przechodzą: `vendor/bin/sail npm run types:check` i `vendor/bin/sail npm run check`
+- [x] 2.4 Larastan i Pint przechodzą: `vendor/bin/sail bin phpstan analyse` i `vendor/bin/sail bin pint --dirty --format agent`
 
 #### Manual
 
-- [ ] 2.5 Nagłówek podglądu zmarłej osoby pokazuje „A – B (N lat)”, żyjącej — „ur. A (N lat)”
-- [ ] 2.6 Karta drzewa pokazuje wiek w nawiasie po żywocie i nie rozjeżdża się na wąskiej karcie
-- [ ] 2.7 Osoba ur. 1916 (sam rok) bez zgonu nie ma wieku, ur. 1917 ma 109 lat; dziecko zmarłe przed rokiem ma miesiące/dni albo „poniżej roku”
+- [x] 2.5 Nagłówek podglądu zmarłej osoby pokazuje „A – B (N lat)”, żyjącej — „ur. A (N lat)”
+- [x] 2.6 Karta drzewa pokazuje wiek w nawiasie po żywocie i nie rozjeżdża się na wąskiej karcie
+- [x] 2.7 Osoba ur. 1916 (sam rok) bez zgonu nie ma wieku, ur. 1917 ma 109 lat; dziecko zmarłe przed rokiem ma miesiące/dni albo „poniżej roku”

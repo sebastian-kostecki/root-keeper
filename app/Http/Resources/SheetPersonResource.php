@@ -24,6 +24,7 @@ class SheetPersonResource extends JsonResource
      *     gender: 'male'|'female'|null,
      *     lifespan: string|null,
      *     is_deceased: bool,
+     *     age: array{unit: 'years'|'months'|'days'|'under_year', value: int|null}|null,
      * }
      */
     public function toArray(Request $request): array
@@ -43,6 +44,7 @@ class SheetPersonResource extends JsonResource
             'gender' => $this->gender?->value,
             'lifespan' => $lifespan,
             'is_deceased' => $death !== null,
+            'age' => $this->age()?->toArray(),
         ];
     }
 }
