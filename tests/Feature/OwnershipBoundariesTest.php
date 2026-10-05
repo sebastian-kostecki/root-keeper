@@ -198,8 +198,6 @@ it('answers 404 and writes nothing when ?locality= names another tree\'s localit
 it('answers 404 and writes nothing when ?parish= names another tree\'s parish', function () {
     Storage::fake('local');
 
-    config(['inertia.testing.ensure_pages_exist' => false]);
-
     $attacker = User::factory()->create();
     $victim = User::factory()->create();
     $records = ownershipRecords($attacker, $victim);

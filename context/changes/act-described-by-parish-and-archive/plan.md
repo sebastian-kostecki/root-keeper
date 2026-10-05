@@ -440,28 +440,28 @@ Jeden spec Playwright na ryzyko z roadmapy: dopisanie parafii (z nową miejscowo
 
 #### Automated
 
-- [x] 2.1 Migracje przechodzą w obie strony
-- [x] 2.2 Testy migracji i źródeł przechodzą
-- [x] 2.3 Larastan przechodzi
-- [x] 2.4 Pint bez zmian
+- [x] 2.1 Migracje przechodzą w obie strony — 82a611f
+- [x] 2.2 Testy migracji i źródeł przechodzą — 82a611f
+- [x] 2.3 Larastan przechodzi — 82a611f
+- [x] 2.4 Pint bez zmian — 82a611f
 
 ### Phase 3: Komponent podpowiedzi i strona spisu parafii
 
 #### Automated
 
-- [ ] 3.1 Testy Vitest przechodzą
-- [ ] 3.2 Typy przechodzą
-- [ ] 3.3 Format i lint przechodzą
-- [ ] 3.4 Build przechodzi
-- [ ] 3.5 Testy Pest strony parafii nadal przechodzą
+- [x] 3.1 Testy Vitest przechodzą
+- [x] 3.2 Typy przechodzą
+- [x] 3.3 Format i lint przechodzą
+- [x] 3.4 Build przechodzi
+- [x] 3.5 Testy Pest strony parafii nadal przechodzą
 
 #### Manual
 
-- [ ] 3.6 Dodanie parafii z wyznaniem i siedzibą na /parishes aktualizuje tabelę i licznik
-- [ ] 3.7 „Dodaj miejscowość „…”” w polu siedziby tworzy i wybiera miejscowość
-- [ ] 3.8 Klawiatura: strzałki, Enter bez zapisu formularza, Escape zamyka tylko listę
-- [ ] 3.9 Duplikat nazwa+wyznanie pokazuje błąd pod nazwą
-- [ ] 3.10 Lista podpowiedzi mieści się w panelu przy 1366 px i w ciemnym motywie
+- [x] 3.6 Dodanie parafii z wyznaniem i siedzibą na /parishes aktualizuje tabelę i licznik
+- [x] 3.7 „Dodaj miejscowość „…”” w polu siedziby tworzy i wybiera miejscowość
+- [x] 3.8 Klawiatura: strzałki, Enter bez zapisu formularza, Escape zamyka tylko listę
+- [x] 3.9 Duplikat nazwa+wyznanie pokazuje błąd pod nazwą
+- [x] 3.10 Lista podpowiedzi mieści się w panelu przy 1366 px i w ciemnym motywie
 
 ### Phase 4: Formularz i lista źródeł
 

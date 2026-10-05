@@ -5,11 +5,6 @@ use App\Models\Locality;
 use App\Models\Parish;
 use App\Models\User;
 
-beforeEach(function () {
-    // The parishes/index page component arrives with the frontend phase; assert props without it.
-    config(['inertia.testing.ensure_pages_exist' => false]);
-});
-
 test('guests are redirected to the login page from parishes routes', function () {
     $parish = Parish::factory()->create();
 

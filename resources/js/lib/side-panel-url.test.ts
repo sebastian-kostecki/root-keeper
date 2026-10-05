@@ -20,6 +20,15 @@ describe('withPanel', () => {
         );
     });
 
+    it('opens the parish panel and drops the key of another panel', () => {
+        expect(withPanel('/parishes?parish=3&locality=2', 'locality', 5)).toBe(
+            '/parishes?locality=5',
+        );
+        expect(withPanel('/parishes?locality=2', 'parish', 'new')).toBe(
+            '/parishes?parish=new',
+        );
+    });
+
     it('removes only its own key on null', () => {
         expect(withPanel('/tree?person=7&sort=name', 'person', null)).toBe(
             '/tree?sort=name',
