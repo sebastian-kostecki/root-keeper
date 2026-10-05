@@ -467,28 +467,28 @@ Jeden spec Playwright na ryzyko z roadmapy: dopisanie parafii (z nową miejscowo
 
 #### Automated
 
-- [x] 4.1 Testy Vitest przechodzą
-- [x] 4.2 Typy przechodzą
-- [x] 4.3 Format i lint przechodzą
-- [x] 4.4 Build przechodzi
+- [x] 4.1 Testy Vitest przechodzą — 3abadb7
+- [x] 4.2 Typy przechodzą — 3abadb7
+- [x] 4.3 Format i lint przechodzą — 3abadb7
+- [x] 4.4 Build przechodzi — 3abadb7
 - [x] 4.5 Brak odwołań do `provenance` we froncie
-- [x] 4.6 Istniejące E2E przechodzą
+- [x] 4.6 Istniejące E2E przechodzą — 3abadb7
 
 #### Manual
 
-- [x] 4.7 Dopisanie parafii z nową siedzibą przez modal zachowuje wpisane pola aktu
-- [x] 4.8 Archiwum podpowiada wcześniejsze archiwa i zapisuje wpisany tekst
-- [x] 4.9 Zmiana aktu z parafią na nagrobek pokazuje dialog z parafią
-- [x] 4.10 Tabela i galeria pokazują parafię i archiwum przy 1366 px
+- [x] 4.7 Dopisanie parafii z nową siedzibą przez modal zachowuje wpisane pola aktu — 3abadb7
+- [x] 4.8 Archiwum podpowiada wcześniejsze archiwa i zapisuje wpisany tekst — 3abadb7
+- [x] 4.9 Zmiana aktu z parafią na nagrobek pokazuje dialog z parafią — 3abadb7
+- [x] 4.10 Tabela i galeria pokazują parafię i archiwum przy 1366 px — 3abadb7
 - [x] 4.11 Escape w liście parafii nie zamyka panelu źródła
 
 ### Phase 5: E2E — parafia dopisana w locie w panelu aktu
 
 #### Automated
 
-- [ ] 5.1 Nowy spec przechodzi
-- [ ] 5.2 Cały zestaw E2E przechodzi
+- [x] 5.1 Nowy spec przechodzi
+- [x] 5.2 Cały zestaw E2E przechodzi
 
 #### Manual
 
-- [ ] 5.3 Celowo wprowadzony błąd przewraca spec, po cofnięciu spec przechodzi
+- [x] 5.3 Celowo wprowadzony błąd przewraca spec, po cofnięciu spec przechodzi

@@ -15,4 +15,5 @@
 - storageState: playwright/.auth/user.json (gitignored)
 - seed: tests/e2e/seed.spec.ts — protects auth-gate-roundtrip: a signed-out visitor to /persons is redirected to /login, and signing in lands on /persons
 - browser CLI: playwright-cli, command skill at .claude/skills/playwright-cli/SKILL.md
-- updated: 2026-10-02
+- known cleanup exception: tests/e2e/source-panel-parish.spec.ts leaves a parish and a locality (suffix-unique) in the `e2e` database per run — there is no delete route for them until S-11 (places-merge-and-delete); the source it creates is removed by the suffix sweep
+- updated: 2026-10-05
