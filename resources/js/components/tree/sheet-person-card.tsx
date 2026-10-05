@@ -45,6 +45,7 @@ export function SheetPersonCard({ person, isFocus = false }: Props) {
         <div className="h-full">
             <PersonPreviewLink
                 personId={person.id}
+                aria-current={isFocus ? 'true' : undefined}
                 className={cn(
                     cardSurface,
                     'text-card-foreground shadow-xs',

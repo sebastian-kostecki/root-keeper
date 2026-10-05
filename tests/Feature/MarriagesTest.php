@@ -322,6 +322,18 @@ test('attach keeps the panel that was open before adding the spouse', function (
         ->assertRedirect(route('tree.show', ['person' => $focus->id, 'spouse' => $spouse->id]).'&person='.$openPerson->id);
 });
 
+test('attach ignores a person kept only in the session previous url', function () {
+    $user = User::factory()->create();
+    $focus = Person::factory()->for($user->tree)->male()->create();
+    $spouse = Person::factory()->for($user->tree)->female()->create();
+    $openPerson = Person::factory()->for($user->tree)->create();
+
+    $this->withSession(['_previous' => ['url' => route('tree.show', ['person' => $focus]).'?person='.$openPerson->id]])
+        ->actingAs($user)
+        ->post(route('persons.spouses.attach', $focus), ['spouse_id' => $spouse->id])
+        ->assertRedirect(route('tree.show', ['person' => $focus->id, 'spouse' => $spouse->id]));
+});
+
 test('attach ignores a non-numeric person in the previous url', function () {
     $user = User::factory()->create();
     $focus = Person::factory()->for($user->tree)->male()->create();

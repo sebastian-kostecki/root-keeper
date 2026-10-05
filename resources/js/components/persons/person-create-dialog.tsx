@@ -111,7 +111,7 @@ function PersonCreateDialogContent({ religions, trigger }: Props) {
                             Nowa osoba
                         </DialogTitle>
                         <DialogDescription>
-                            Po zapisaniu modal przejdzie w podgląd tej osoby.
+                            Po zapisaniu otworzy się panel tej osoby.
                         </DialogDescription>
                     </div>
                 </div>

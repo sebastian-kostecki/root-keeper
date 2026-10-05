@@ -42,8 +42,8 @@ function readValues(form: HTMLFormElement): SectionValues {
 
 /**
  * Card that flips between a read-only view and an inline form. Only one card
- * of the modal edits at a time; below `sm` the editing card takes over the
- * whole modal body.
+ * of the person panel edits at a time; below `sm` the editing card takes over
+ * the whole panel body.
  */
 export function SectionCard({
     id,

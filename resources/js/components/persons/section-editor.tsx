@@ -104,6 +104,10 @@ export function SectionEditorProvider({
     }, []);
 
     const requestExit = (action: () => void) => {
+        if (isSaving) {
+            return;
+        }
+
         if (!isDirty) {
             setEdit(null);
             action();
@@ -115,7 +119,7 @@ export function SectionEditorProvider({
     };
 
     const start = (id: SectionId, intent?: SectionIntent) => {
-        if (edit?.id === id) {
+        if (edit?.id === id || isSaving) {
             return;
         }
 

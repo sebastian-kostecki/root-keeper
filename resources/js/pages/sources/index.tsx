@@ -19,7 +19,7 @@ import { Button } from '@/components/ui/button';
 import { useSidePanelNavigation } from '@/hooks/use-side-panel-navigation';
 import { useUnsavedChangesGuard } from '@/hooks/use-unsaved-changes-guard';
 import { pluralPhrase } from '@/lib/plural';
-import { panelVisitOptions, withPanel } from '@/lib/side-panel-url';
+import { panelVisitOptions } from '@/lib/side-panel-url';
 import { filterSources, withSourcesQuery } from '@/lib/sources-index';
 import type {
     SourcesFilters,
@@ -64,6 +64,7 @@ export default function Index({
     const pendingSearch = useRef<ReturnType<typeof setTimeout> | null>(null);
     const trimmedSearch = search.trim();
     const { hrefFor, open, close } = useSidePanelNavigation('source');
+    const { open: openPerson } = useSidePanelNavigation('person');
 
     const openId = sourcePanel?.source?.id ?? null;
     /** Panel key of the record shown now: its id, 'new', or null when the panel is closed. */
@@ -158,18 +159,7 @@ export default function Index({
         }
 
         event.preventDefault();
-        guard(() => {
-            const { pathname, search: liveSearch, hash } = window.location;
-
-            router.visit(
-                withPanel(
-                    `${pathname}${liveSearch}${hash}`,
-                    'person',
-                    personId,
-                ),
-                panelVisitOptions,
-            );
-        });
+        guard(() => openPerson(personId));
     };
 
     const { visible, counts } = filterSources(
