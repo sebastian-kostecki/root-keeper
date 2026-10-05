@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Locality;
 use App\Models\Person;
 use App\Models\Source;
 use App\Models\User;
@@ -28,6 +29,16 @@ test('the shell counts do not include another users people and sources', functio
         ->assertInertia(fn ($page) => $page
             ->where('navCounts.people', 1)
             ->where('navCounts.sources', 0));
+});
+
+test('the shell counts localities of the own tree only', function () {
+    $user = User::factory()->create();
+    Locality::factory()->count(2)->for($user->tree)->create();
+    Locality::factory()->count(3)->for(User::factory()->create()->tree)->create();
+
+    $this->actingAs($user)->get('/persons')
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page->where('navCounts.localities', 2));
 });
 
 test('the shell counts are null for a guest', function () {

@@ -409,26 +409,26 @@ GROUP BY tree_id, lower(btrim(t)) HAVING count(DISTINCT t) > 1;
 
 #### Automated
 
-- [x] 1.1 Migracje przechodzą na bazie deweloperskiej
-- [x] 1.2 Test migracji zasiewu przechodzi
-- [x] 1.3 Test kopii zapasowej przechodzi
-- [x] 1.4 Larastan bez błędów
-- [x] 1.5 Pint czysty
+- [x] 1.1 Migracje przechodzą na bazie deweloperskiej — b7d0b50
+- [x] 1.2 Test migracji zasiewu przechodzi — b7d0b50
+- [x] 1.3 Test kopii zapasowej przechodzi — b7d0b50
+- [x] 1.4 Larastan bez błędów — b7d0b50
+- [x] 1.5 Pint czysty — b7d0b50
 
 #### Manual
 
-- [x] 1.6 Liczba miejscowości na drzewo zgodna z zapytaniem liczności na lokalnej bazie
+- [x] 1.6 Liczba miejscowości na drzewo zgodna z zapytaniem liczności na lokalnej bazie — b7d0b50
 
 ### Phase 2: Backend spisu
 
 #### Automated
 
-- [ ] 2.1 Testy endpointów przechodzą
-- [ ] 2.2 Testy własności przechodzą (z nowymi przypadkami i strażnikiem kompletności)
-- [ ] 2.3 Test powłoki przechodzi
-- [ ] 2.4 Larastan bez błędów
-- [ ] 2.5 Pint czysty
-- [ ] 2.6 Wayfinder wygenerowany i typy przechodzą
+- [x] 2.1 Testy endpointów przechodzą
+- [x] 2.2 Testy własności przechodzą (z nowymi przypadkami i strażnikiem kompletności)
+- [x] 2.3 Test powłoki przechodzi
+- [x] 2.4 Larastan bez błędów
+- [x] 2.5 Pint czysty
+- [x] 2.6 Wayfinder wygenerowany i typy przechodzą
 
 ### Phase 3: Strona spisu i panel
 

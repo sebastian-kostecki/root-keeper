@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\EventSourceController;
+use App\Http\Controllers\LocalityController;
 use App\Http\Controllers\MarriageController;
 use App\Http\Controllers\ParentChildRelationController;
 use App\Http\Controllers\PersonChildController;
@@ -25,6 +26,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('sources', SourceController::class)->only(['index', 'store', 'show', 'update', 'destroy']);
     Route::get('sources/{source}/file', [SourceController::class, 'file'])->name('sources.file');
     Route::get('sources/{source}/thumbnail', [SourceController::class, 'thumbnail'])->name('sources.thumbnail');
+
+    Route::resource('localities', LocalityController::class)->only(['index', 'store', 'update']);
 
     Route::post('events/{event}/sources', [EventSourceController::class, 'store'])->name('events.sources.store');
     Route::delete('events/{event}/sources/{source}', [EventSourceController::class, 'destroy'])->name('events.sources.destroy');

@@ -50,6 +50,7 @@ class HandleInertiaRequests extends Middleware
             'navCounts' => fn (): ?array => $request->user() === null ? null : [
                 'people' => $request->user()->tree->people()->count(),
                 'sources' => $request->user()->tree->sources()->count(),
+                'localities' => $request->user()->tree->localities()->count(),
             ],
             'personPreview' => function () use ($request): ?array {
                 $person = $this->previewPerson($request);
