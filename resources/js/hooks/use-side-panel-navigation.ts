@@ -15,18 +15,25 @@ type SidePanelNavigation = {
     close: () => void;
 };
 
+/** The address at the moment of the call: a guarded action may run after other visits changed it. */
+function liveUrl(): string {
+    const { pathname, search, hash } = window.location;
+
+    return `${pathname}${search}${hash}`;
+}
+
 export function useSidePanelNavigation(key: PanelKey): SidePanelNavigation {
     const { url } = usePage();
 
     const hrefFor = (id: number | string) => withPanel(url, key, id);
 
     const open = (id: number | string) => {
-        router.visit(hrefFor(id), panelVisitOptions);
+        router.visit(withPanel(liveUrl(), key, id), panelVisitOptions);
     };
 
     const close = () => {
         router.replace({
-            url: withPanel(url, key, null),
+            url: withPanel(liveUrl(), key, null),
             props: (current) => ({ ...current, [PANEL_PROPS[key]]: null }),
             preserveScroll: true,
             preserveState: true,

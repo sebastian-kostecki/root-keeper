@@ -1,6 +1,7 @@
 import { Head, Link, router } from '@inertiajs/react';
 import { LayoutGridIcon, TableIcon } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+import type { MouseEvent } from 'react';
 import { DiscardChangesDialog } from '@/components/discard-changes-dialog';
 import Heading from '@/components/heading';
 import { SearchField } from '@/components/search-field';
@@ -58,6 +59,8 @@ export default function Index({
 }: Props) {
     const [search, setSearch] = useState(filters.q);
     const lastVisitedQuery = useRef(filters.q);
+    /** The debounced search visit still waiting to fire, if any. */
+    const pendingSearch = useRef<ReturnType<typeof setTimeout> | null>(null);
     const trimmedSearch = search.trim();
     const { hrefFor, open, close } = useSidePanelNavigation('source');
 
@@ -104,18 +107,48 @@ export default function Index({
             return;
         }
 
-        const timeoutId = setTimeout(
-            () =>
-                visit(
-                    { q: trimmed, kind: filters.kind, view: filters.view },
-                    true,
-                ),
-            300,
-        );
+        const timeoutId = setTimeout(() => {
+            pendingSearch.current = null;
+            visit({ q: trimmed, kind: filters.kind, view: filters.view }, true);
+        }, 300);
 
-        return () => clearTimeout(timeoutId);
+        pendingSearch.current = timeoutId;
+
+        return () => {
+            clearTimeout(timeoutId);
+            pendingSearch.current = null;
+        };
         // visit closes over `filters`; only its display fields matter here.
     }, [search, filters.q, filters.kind, filters.view, filters.sort]);
+
+    /** Opens a record from the list; a search still waiting for its debounce goes in the same visit, which it would otherwise cancel. */
+    const openFromList = (event: MouseEvent<Element>, id: number | string) => {
+        guardLink(event, id);
+
+        const isModifiedClick =
+            event.metaKey || event.ctrlKey || event.shiftKey || event.altKey;
+
+        if (
+            event.defaultPrevented ||
+            isModifiedClick ||
+            pendingSearch.current === null
+        ) {
+            return;
+        }
+
+        event.preventDefault();
+        clearTimeout(pendingSearch.current);
+        pendingSearch.current = null;
+        lastVisitedQuery.current = trimmedSearch;
+
+        router.visit(
+            withSourcesQuery(hrefFor(id), { ...filters, q: trimmedSearch }),
+            {
+                ...panelVisitOptions,
+                only: [...panelVisitOptions.only, 'filters'],
+            },
+        );
+    };
 
     const { visible, counts } = filterSources(
         sources,
@@ -144,7 +177,7 @@ export default function Index({
             <Link
                 href={hrefFor('new')}
                 {...panelVisitOptions}
-                onClick={(event) => guardLink(event, 'new')}
+                onClick={(event) => openFromList(event, 'new')}
             >
                 Dodaj źródło
             </Link>
@@ -266,14 +299,14 @@ export default function Index({
                         onSortChange={(sort: SourcesSort) => visit({ sort })}
                         openId={openId}
                         hrefFor={hrefFor}
-                        onOpen={guardLink}
+                        onOpen={openFromList}
                     />
                 ) : (
                     <SourcesGallery
                         sources={visible}
                         openId={openId}
                         hrefFor={hrefFor}
-                        onOpen={guardLink}
+                        onOpen={openFromList}
                     />
                 )}
             </div>

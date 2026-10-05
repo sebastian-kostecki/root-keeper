@@ -92,6 +92,8 @@ Wydzielenie kopii strażnika z miejscowości i strony demo do wspólnego kodu, b
 
 **Contract**: Usunięte lokalne `isDirty/pendingAction/guard/guardLink/discard` i inline'owy `<Dialog>`. Strona demo zachowuje własne scenariusze.
 
+**Addendum (impl-review F4)**: Strona demo `/dev/side-panel` pokazuje teraz wspólny tekst dialogu („Odrzucić niezapisane zmiany?” / „Odrzuć”) zamiast własnego („Porzucić zmiany?” / „Porzuć zmiany”), a jej checkbox brudności to `UnsavedChangesToggle` z `DirtyReporter`. To skutek wspólnego dialogu, zaakceptowany. Zachowanie miejscowości się nie zmieniło.
+
 #### 4. `inert` poniżej `md`
 
 **File**: `resources/js/components/side-panel.tsx`, `resources/js/layouts/app/app-sidebar-layout.tsx`
@@ -137,6 +139,7 @@ Kontrakt serwera: leniwa właściwość `sourcePanel` na liście, przekierowania
 - `show(Source)`: `Gate::authorize('view')` (cudze daje 404, a przypadek `OwnershipBoundariesTest:95` zostaje) i potem `to_route('sources.index', ['source' => $source->id])`.
 - `store`: toast bez zmian, potem `to_route('sources.index', [...listQuery, 'source' => $source->id])`.
 - `destroy`: toast bez zmian, potem `to_route('sources.index', listQuery)`.
+- **Addendum (impl-review F2, F5)**: `listQuery` czyta wyłącznie nagłówek Referer, bez zapasowego adresu z sesji, który daje `url()->previous()`. Ścieżkę porównuje z `route('sources.index')`, a host musi być własny. `store` dodatkowo pomija `kind` i `q`, gdy ukryłyby nowe źródło na liście (ta sama reguła co `filterSources`), a `view` i `sort` zostają.
 - `listQuery` to prywatna metoda. Parsuje `url()->previous()`, a jeśli ścieżka to nie `/sources`, zwraca `[]`. Inaczej normalizuje `q/kind/view/sort` istniejącymi `normalize*` i pomija wartości domyślne oraz puste, jak `buildSourcesQuery` (`resources/js/lib/sources-index.ts`): `sort` tylko przy `view=tabela` i różny od `-dodano`. Klucze paneli i inne parametry nie przechodzą. Uzasadnienie w „Critical Implementation Details”.
 
 #### 2. Testy Pest

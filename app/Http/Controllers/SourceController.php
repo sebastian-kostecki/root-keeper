@@ -71,13 +71,20 @@ class SourceController extends Controller
     /**
      * The list filters carried by the previous page, when it was the sources list; defaults and blanks are omitted.
      *
+     * Reads the Referer only: url()->previous() falls back to an address stored in the session.
+     *
      * @return array<string, string>
      */
-    private function listQuery(): array
+    private function listQuery(Request $request): array
     {
-        $previous = parse_url(url()->previous());
+        $previous = parse_url((string) $request->headers->get('referer'));
+        $listPath = parse_url(route('sources.index'), PHP_URL_PATH);
 
-        if (! is_array($previous) || ($previous['path'] ?? null) !== '/sources') {
+        if (
+            ! is_array($previous)
+            || ($previous['path'] ?? null) !== $listPath
+            || (isset($previous['host']) && $previous['host'] !== $request->getHost())
+        ) {
             return [];
         }
 
@@ -141,6 +148,36 @@ class SourceController extends Controller
     }
 
     /**
+     * The list filters without `kind` and `q` when they would hide the given source, so its open card stays on the list.
+     *
+     * Matches the list's own filter (`filterSources` in resources/js/lib/sources-index.ts): every search word is in the display name.
+     *
+     * @param  array<string, string>  $query
+     * @return array<string, string>
+     */
+    private function filtersShowing(Source $source, array $query): array
+    {
+        $kindFilter = match ($source->kind) {
+            SourceKind::MetricalRecord => 'akty',
+            SourceKind::Gravestone => 'nagrobki',
+            SourceKind::Other => 'inne',
+        };
+
+        if (isset($query['kind']) && $query['kind'] !== $kindFilter) {
+            unset($query['kind']);
+        }
+
+        $name = mb_strtolower($source->displayName());
+        $words = preg_split('/\s+/u', mb_strtolower($query['q'] ?? ''), -1, PREG_SPLIT_NO_EMPTY) ?: [];
+
+        if (! collect($words)->every(fn (string $word): bool => str_contains($name, $word))) {
+            unset($query['q']);
+        }
+
+        return $query;
+    }
+
+    /**
      * Normalize the raw `kind` query parameter: one of the three kind filters or the default `wszystkie`.
      */
     private function normalizeKind(mixed $kind): string
@@ -183,7 +220,7 @@ class SourceController extends Controller
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Dodano źródło')]);
 
-        return to_route('sources.index', [...$this->listQuery(), 'source' => $source->id]);
+        return to_route('sources.index', [...$this->filtersShowing($source, $this->listQuery($request)), 'source' => $source->id]);
     }
 
     /**
@@ -215,7 +252,7 @@ class SourceController extends Controller
     /**
      * Remove the given source.
      */
-    public function destroy(Source $source, DeleteSource $deleteSource): RedirectResponse
+    public function destroy(Request $request, Source $source, DeleteSource $deleteSource): RedirectResponse
     {
         Gate::authorize('delete', $source);
 
@@ -223,7 +260,7 @@ class SourceController extends Controller
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Usunięto źródło')]);
 
-        return to_route('sources.index', $this->listQuery());
+        return to_route('sources.index', $this->listQuery($request));
     }
 
     /**

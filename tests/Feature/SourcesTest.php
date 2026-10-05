@@ -909,6 +909,7 @@ test('storing keeps the list filters of the previous sources page and opens the 
         ->from('/sources?view=tabela&kind=akty&q=Kraków&sort=nazwa&source=new')
         ->post(route('sources.store'), [
             'kind' => 'metrical_record',
+            'name' => 'Akt Kraków 1890',
             'file' => UploadedFile::fake()->image('akt.jpg', 400, 300),
         ]);
 
@@ -923,6 +924,26 @@ test('storing keeps the list filters of the previous sources page and opens the 
     ]));
 });
 
+test('storing drops the kind and search filters that would hide the new source', function () {
+    Storage::fake('local');
+
+    $user = User::factory()->create();
+
+    $response = $this->actingAs($user)
+        ->from('/sources?view=tabela&kind=akty&q=Kraków&sort=nazwa&source=new')
+        ->post(route('sources.store'), [
+            'kind' => 'gravestone',
+            'name' => 'Nagrobek Nowak',
+            'file' => UploadedFile::fake()->image('nagrobek.jpg', 400, 300),
+        ]);
+
+    $response->assertRedirect(route('sources.index', [
+        'view' => 'tabela',
+        'sort' => 'nazwa',
+        'source' => Source::sole()->id,
+    ]));
+});
+
 test('storing from a page other than the sources list carries no filters', function () {
     Storage::fake('local');
 
@@ -930,6 +951,36 @@ test('storing from a page other than the sources list carries no filters', funct
 
     $response = $this->actingAs($user)
         ->from('/persons?q=Kraków&kind=akty')
+        ->post(route('sources.store'), [
+            'kind' => 'metrical_record',
+            'file' => UploadedFile::fake()->image('akt.jpg', 400, 300),
+        ]);
+
+    $response->assertRedirect(route('sources.index', ['source' => Source::sole()->id]));
+});
+
+test('storing without a referer carries no filters, even after a filtered list visit in the session', function () {
+    Storage::fake('local');
+
+    $user = User::factory()->create();
+
+    $this->actingAs($user)->get('/sources?kind=akty&view=tabela')->assertOk();
+
+    $response = $this->post(route('sources.store'), [
+        'kind' => 'metrical_record',
+        'file' => UploadedFile::fake()->image('akt.jpg', 400, 300),
+    ]);
+
+    $response->assertRedirect(route('sources.index', ['source' => Source::sole()->id]));
+});
+
+test('storing from a sources list on another host carries no filters', function () {
+    Storage::fake('local');
+
+    $user = User::factory()->create();
+
+    $response = $this->actingAs($user)
+        ->from('https://example.com/sources?kind=akty')
         ->post(route('sources.store'), [
             'kind' => 'metrical_record',
             'file' => UploadedFile::fake()->image('akt.jpg', 400, 300),
