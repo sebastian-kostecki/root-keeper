@@ -1,5 +1,5 @@
 import { Link, usePage } from '@inertiajs/react';
-import { Network, ScrollText, Users, X } from 'lucide-react';
+import { MapPin, Network, ScrollText, Users, X } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
@@ -15,6 +15,7 @@ import {
     SidebarTrigger,
     useSidebar,
 } from '@/components/ui/sidebar';
+import { index as localitiesIndex } from '@/routes/localities';
 import { index as personsIndex } from '@/routes/persons';
 import { index as sourcesIndex } from '@/routes/sources';
 import { index as treeIndex } from '@/routes/tree';
@@ -41,6 +42,12 @@ export function AppSidebar() {
             href: sourcesIndex(),
             icon: ScrollText,
             count: navCounts?.sources,
+        },
+        {
+            title: 'Miejscowości',
+            href: localitiesIndex(),
+            icon: MapPin,
+            count: navCounts?.localities,
         },
     ];
 

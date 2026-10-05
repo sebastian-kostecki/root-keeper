@@ -1,4 +1,5 @@
 export type * from './auth';
+export type * from './locality';
 export type * from './navigation';
 export type * from './person';
 export type * from './source';

@@ -1,11 +1,12 @@
 /**
  * Registry of side panels: query key -> Inertia prop that carries the panel
- * data. Every panel slice (S-01, S-02, S-12) adds its entry here together with
- * the resolver on the server side.
+ * data. Every panel slice (S-02, S-12) adds its entry here together with the
+ * resolver on the server side.
  */
 export const PANEL_PROPS = {
     person: 'personPreview',
     demo: 'demoPanel',
+    locality: 'localityPanel',
 } as const;
 
 export type PanelKey = keyof typeof PANEL_PROPS;

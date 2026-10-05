@@ -14,6 +14,12 @@ describe('withPanel', () => {
         expect(withPanel('/tree?person=7', 'demo', 'a')).toBe('/tree?demo=a');
     });
 
+    it('opens the locality panel and drops the key of another panel', () => {
+        expect(withPanel('/localities?person=3', 'locality', 'new')).toBe(
+            '/localities?locality=new',
+        );
+    });
+
     it('removes only its own key on null', () => {
         expect(withPanel('/tree?person=7&sort=name', 'person', null)).toBe(
             '/tree?sort=name',
