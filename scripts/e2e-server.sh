@@ -24,12 +24,24 @@ PREPARE+=' if (! $u->tree()->exists()) { $u->tree()->create(); }'"'"
 export WWWUSER="${WWWUSER:-$(id -u)}" WWWGROUP="${WWWGROUP:-$(id -g)}"
 
 NAME="root-keeper-e2e"
+
+# Source files uploaded during E2E go to a named volume, not to the dev
+# storage/app/private/sources/ (an aborted or red run would leave orphans in dev tree 1).
+# The volume lives as long as the `e2e` database: if you drop that database, remove the
+# volume too (`docker volume rm root-keeper-e2e-sources`), otherwise it keeps files with no records.
+SOURCES_VOLUME="root-keeper-e2e-sources"
+SOURCES_PATH="/var/www/html/storage/app/private/sources"
+# A fresh volume is root-owned; chown it (idempotent) as root, bypassing the sail entrypoint.
+docker compose run --rm -T --no-deps --entrypoint sh -v "${SOURCES_VOLUME}:${SOURCES_PATH}" \
+    laravel.test -c "chown ${WWWUSER}:${WWWGROUP} ${SOURCES_PATH}"
+
 docker rm -f "${NAME}" >/dev/null 2>&1 || true
 # docker compose run does not stop its container when killed; Playwright sends SIGTERM.
 trap 'docker stop "${NAME}" >/dev/null 2>&1 || true' EXIT
 trap 'exit 143' TERM INT # bash runs traps only between commands, hence `& wait`
 
 docker compose run --rm -T --name "${NAME}" -p "${PORT}:${PORT}" \
+    -v "${SOURCES_VOLUME}:${SOURCES_PATH}" \
     -e PHP_CLI_SERVER_WORKERS=4 -e "DB_DATABASE=${DB}" -e "APP_URL=http://localhost:${PORT}" \
     laravel.test sh -c "${PREPARE} && cd public && exec php -S 0.0.0.0:${PORT} ../vendor/laravel/framework/src/Illuminate/Foundation/resources/server.php" &
 wait $!
