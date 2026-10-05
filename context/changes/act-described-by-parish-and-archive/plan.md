@@ -486,9 +486,9 @@ Jeden spec Playwright na ryzyko z roadmapy: dopisanie parafii (z nową miejscowo
 
 #### Automated
 
-- [x] 5.1 Nowy spec przechodzi
-- [x] 5.2 Cały zestaw E2E przechodzi
+- [x] 5.1 Nowy spec przechodzi — 4a7706e
+- [x] 5.2 Cały zestaw E2E przechodzi — 4a7706e
 
 #### Manual
 
-- [x] 5.3 Celowo wprowadzony błąd przewraca spec, po cofnięciu spec przechodzi
+- [x] 5.3 Celowo wprowadzony błąd przewraca spec, po cofnięciu spec przechodzi — 4a7706e

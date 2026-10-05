@@ -1,7 +1,7 @@
 ---
 change_id: act-described-by-parish-and-archive
 title: Act described by parish and archive
-status: implementing
+status: implemented
 created: 2026-10-05
 updated: 2026-10-05
 archived_at: null
