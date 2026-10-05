@@ -47,8 +47,8 @@ root-keeper to prywatne, samodzielnie hostowane drzewo genealogiczne, w którym 
 | S-01 | places-gazetteer                     | prowadzić spis miejscowości z opisem, który startuje z istniejących tekstowych miejsc                     | F-02                   | FR-007, FR-029                           | done |
 | S-02 | source-side-panel                    | dodawać, oglądać i edytować źródło w szerokim panelu bocznym ze skanem obok opisu                         | F-02                   | FR-006, FR-027                           | done        |
 | S-03 | act-described-by-parish-and-archive  | opisać akt parafią ze spisu (dopisaną w locie), rokiem, typem aktu i archiwum z podpowiedziami            | S-01, S-02             | FR-001, FR-008, FR-009, US-01            | done |
-| S-04 | source-found-by-place-and-year       | przy podpinaniu źródła do faktu szukać po miejscu i roku i podać numer wpisu widoczny przy fakcie i źródle | S-03, F-01             | FR-003, FR-004, FR-025, US-01            | proposed |
-| S-05 | tree-fits-screen                     | oglądać drzewo z większymi kartami dopasowane do ekranu, z przybliżaniem i liniami dzieci od właściwej pary | F-01                   | FR-013, FR-014, FR-026                   | proposed |
+| S-04 | source-found-by-place-and-year       | przy podpinaniu źródła do faktu szukać po miejscu i roku i podać numer wpisu widoczny przy fakcie i źródle | S-03, F-01             | FR-003, FR-004, FR-025, US-01            | done |
+| S-05 | tree-fits-screen                     | oglądać drzewo z większymi kartami dopasowane do ekranu, z przybliżaniem i liniami dzieci od właściwej pary | F-01                   | FR-013, FR-014, FR-026                   | done |
 | S-06 | person-side-panel                    | kliknąć kartę i oglądać oraz edytować osobę w panelu obok zwężonego drzewa, przechodzić w nim do krewnych | F-01, F-02, S-05       | FR-016, FR-019, FR-028, FR-026, FR-029   | proposed |
 | S-07 | fact-places-from-gazetteer           | wybrać miejsce urodzenia, ślubu, zgonu i pochowania ze spisu miejscowości                                 | S-01                   | FR-010, FR-022                           | proposed |
 | S-08 | residence-history                    | ustawić osobie kilka miejscowości zamieszkania z opcjonalnymi latami od–do                                | S-01                   | FR-011                                   | proposed |
@@ -170,7 +170,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Unknowns:**
   - Gdzie autor widzi stary „Numer wpisu” źródła do ręcznego przeniesienia i jak go usuwa, gdy skończy? Owner: user. Block: no.
 - **Risk:** Domyka US-01 i główne kryterium sukcesu; dotyka guardrailu fakt–źródło (przenosi numer wpisu ze źródła na powiązanie), dlatego czeka na testy E2E z `F-01`. Szukanie po cmentarzu dochodzi w `S-09`.
-- **Status:** proposed
+- **Status:** done
 
 ### S-05: Drzewo wypełnia ekran, linie dzieci od właściwej pary
 
@@ -183,7 +183,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Unknowns:**
   - Jak drzewo mieści się przy 1366 px z wieloma dziećmi i kilkoma małżeństwami — dopasowanie zmniejsza karty czy przechodzi w przybliżanie? Owner: `/10x-plan`. Block: no.
 - **Risk:** Ból nr 2 z PRD; przebudowa siatki drzewa grozi zepsuciem slotów (guardrail), dlatego idzie po `F-01` i przed panelem osoby, który musi zwężać już dopasowujące się drzewo.
-- **Status:** proposed
+- **Status:** done
 
 ### S-06: Panel osoby obok drzewa
 
@@ -385,3 +385,5 @@ Rozstrzygnięte:
 - **S-01: autor otwiera spis miejscowości, który powstał automatycznie z istniejących tekstowych miejsc (identyczne teksty → jedna miejscowość), dodaje i poprawia miejscowości z opisem w panelu bocznym; cudza miejscowość to 404.** — Archived 2026-10-05 → `context/archive/2026-10-05-places-gazetteer/`. Lesson: —.
 - **S-02: autor dodaje, ogląda i edytuje źródło w szerokim panelu bocznym, w którym skan (z powiększeniem jak dziś) stoi obok formularza opisu, zamiast w modalu; usuwanie źródła po liście faktów tracących potwierdzenie działa jak dziś.** — Archived 2026-10-05 → `context/archive/2026-10-05-source-side-panel/`. Lesson: —.
 - **S-03: autor opisuje akt metrykalny osobnymi danymi: parafia ze spisu parafii (nazwa, wyznanie, miejscowość siedziby ze spisu; nową parafię dopisuje w locie, bez wychodzenia z panelu źródła), rok, typ aktu i archiwum jako tekst podpowiadający wcześniej wpisane archiwa; dotychczasowe „Pochodzenie” jest widoczne jako archiwum.** — Archived 2026-10-05 → `context/archive/2026-10-05-act-described-by-parish-and-archive/`. Lesson: —.
+- **S-04: przy podpinaniu źródła do faktu autor zawęża listę po miejscu (miejscowość parafii aktu) i roku, widzi przy każdym źródle rok i parafię, a pasujący typ aktu nadal jest pierwszy; podaje numer wpisu przy powiązaniu i widzi go przy fakcie i przy źródle; stary „Numer wpisu” źródła pozostaje widoczny do ręcznego przeniesienia, a każdy istniejący fakt prowadzi do tego samego źródła i skanu.** — Archived 2026-10-05 → `context/archive/2026-10-05-source-found-by-place-and-year/`. Lesson: —.
+- **S-05: autor ogląda drzewo z większymi kartami, które dopasowuje się do ekranu (na dużym wypełnia dostępną przestrzeń), przybliża je i oddala, a linia do dziecka wychodzi od właściwej pary, więc widać, z którego związku jest dziecko; dodawanie rodzica, dziecka i małżonka ze slotów działa jak dziś.** — Archived 2026-10-05 → `context/archive/2026-10-05-tree-fits-screen/`. Lesson: —.
