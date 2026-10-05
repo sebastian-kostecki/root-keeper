@@ -297,36 +297,36 @@ Bez zmian danych i schematu. Zakładki przeglądarki z `?person=` działają dal
 
 #### Automated
 
-- [x] 1.1 Format i lint przechodzą: `vendor/bin/sail npm run check`
-- [x] 1.2 Typy przechodzą: `vendor/bin/sail npm run types:check`
-- [x] 1.3 Vitest przechodzi: `vendor/bin/sail npm run test:js`
-- [x] 1.4 Pest dla osoby i granic przechodzi: `vendor/bin/sail artisan test --compact tests/Feature/PersonsTest.php tests/Feature/OwnershipBoundariesTest.php tests/Feature/SourcesTest.php`
-- [x] 1.5 Istniejące E2E przechodzą bez zmian w specach: `npx playwright test`
-- [x] 1.6 W kodzie nie ma już `PersonPreviewDialog`, `previewVisitOptions` ani `withPerson`: `grep -rn "PersonPreviewDialog\|previewVisitOptions\|withPerson" resources/js` zwraca pusto
+- [x] 1.1 Format i lint przechodzą: `vendor/bin/sail npm run check` — dd3c67d
+- [x] 1.2 Typy przechodzą: `vendor/bin/sail npm run types:check` — dd3c67d
+- [x] 1.3 Vitest przechodzi: `vendor/bin/sail npm run test:js` — dd3c67d
+- [x] 1.4 Pest dla osoby i granic przechodzi: `vendor/bin/sail artisan test --compact tests/Feature/PersonsTest.php tests/Feature/OwnershipBoundariesTest.php tests/Feature/SourcesTest.php` — dd3c67d
+- [x] 1.5 Istniejące E2E przechodzą bez zmian w specach: `npx playwright test` — dd3c67d
+- [x] 1.6 W kodzie nie ma już `PersonPreviewDialog`, `previewVisitOptions` ani `withPerson`: `grep -rn "PersonPreviewDialog\|previewVisitOptions\|withPerson" resources/js` zwraca pusto — dd3c67d
 
 #### Manual
 
-- [x] 1.7 `/tree/{id}?person={id}` przy 1366 px: panel po prawej, drzewo zwężone obok, zakładki i edycja sekcji Urodzenie działają, jeden pasek przewijania w panelu
-- [x] 1.8 Brudna sekcja + X, Escape, ikona „Podgląd” innej karty: każde pokazuje pasek „Masz niezapisane zmiany” w panelu; „Porzuć” wykonuje akcję, „Zapisz” zapisuje i wykonuje
-- [x] 1.9 `/sources?source={id}` → „Potwierdza”: panel osoby zastępuje panel źródła; przy zmienionym opisie źródła najpierw pyta „Odrzucić niezapisane zmiany?”
-- [x] 1.10 Poniżej `md` panel jest pełnoekranowy, a zamknięcie oddaje fokus elementowi, który go otworzył
+- [x] 1.7 `/tree/{id}?person={id}` przy 1366 px: panel po prawej, drzewo zwężone obok, zakładki i edycja sekcji Urodzenie działają, jeden pasek przewijania w panelu — dd3c67d
+- [x] 1.8 Brudna sekcja + X, Escape, ikona „Podgląd” innej karty: każde pokazuje pasek „Masz niezapisane zmiany” w panelu; „Porzuć” wykonuje akcję, „Zapisz” zapisuje i wykonuje — dd3c67d
+- [x] 1.9 `/sources?source={id}` → „Potwierdza”: panel osoby zastępuje panel źródła; przy zmienionym opisie źródła najpierw pyta „Odrzucić niezapisane zmiany?” — dd3c67d
+- [x] 1.10 Poniżej `md` panel jest pełnoekranowy, a zamknięcie oddaje fokus elementowi, który go otworzył — dd3c67d
 
 ### Phase 2: Kliknięcie karty i przecentrowanie z panelu
 
 #### Automated
 
-- [ ] 2.1 Format i lint przechodzą: `vendor/bin/sail npm run check`
-- [ ] 2.2 Typy przechodzą: `vendor/bin/sail npm run types:check`
-- [ ] 2.3 Vitest `centreHints` przechodzi (pary dziadków, rodzice, partner, `unknown`, osoba bez pary, pierwsze wystąpienie): `vendor/bin/sail npm run test:js`
-- [ ] 2.4 Pest małżeństw przechodzi, w tym nowe przypadki przekierowania z `person`: `vendor/bin/sail artisan test --compact tests/Feature/MarriagesTest.php`
-- [ ] 2.5 Istniejące E2E slotów przechodzą: `npx playwright test tests/e2e/tree-slot-parent.spec.ts tests/e2e/tree-slot-child.spec.ts tests/e2e/tree-slot-spouse.spec.ts`
+- [x] 2.1 Format i lint przechodzą: `vendor/bin/sail npm run check`
+- [x] 2.2 Typy przechodzą: `vendor/bin/sail npm run types:check`
+- [x] 2.3 Vitest `centreHints` przechodzi (pary dziadków, rodzice, partner, `unknown`, osoba bez pary, pierwsze wystąpienie): `vendor/bin/sail npm run test:js`
+- [x] 2.4 Pest małżeństw przechodzi, w tym nowe przypadki przekierowania z `person`: `vendor/bin/sail artisan test --compact tests/Feature/MarriagesTest.php`
+- [x] 2.5 Istniejące E2E slotów przechodzą: `npx playwright test tests/e2e/tree-slot-parent.spec.ts tests/e2e/tree-slot-child.spec.ts tests/e2e/tree-slot-spouse.spec.ts`
 
 #### Manual
 
-- [ ] 2.6 Kliknięcie karty dziadka otwiera jego panel; „Pokaż na drzewie” centruje na dziadku ze związkiem z babcią i panel zostaje otwarty
-- [ ] 2.7 Kliknięcie karty centrum otwiera panel bez akcji „Pokaż na drzewie”; nagłówek drzewa nie ma „Podgląd”
-- [ ] 2.8 Przy otwartym panelu: przełączenie związku i dodanie małżonka ze slotu zostawiają panel otwarty
-- [ ] 2.9 Przy otwartym panelu dodanie rodzica i dziecka ze slotów działa jak dziś (modal slotu nad drzewem, panel zostaje)
+- [x] 2.6 Kliknięcie karty dziadka otwiera jego panel; „Pokaż na drzewie” centruje na dziadku ze związkiem z babcią i panel zostaje otwarty
+- [x] 2.7 Kliknięcie karty centrum otwiera panel bez akcji „Pokaż na drzewie”; nagłówek drzewa nie ma „Podgląd”
+- [x] 2.8 Przy otwartym panelu: przełączenie związku i dodanie małżonka ze slotu zostawiają panel otwarty
+- [x] 2.9 Przy otwartym panelu dodanie rodzica i dziecka ze slotów działa jak dziś (modal slotu nad drzewem, panel zostaje)
 
 ### Phase 3: E2E przepływu panelu i ocena przy 1366 px
 

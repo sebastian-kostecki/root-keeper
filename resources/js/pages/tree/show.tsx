@@ -1,6 +1,5 @@
 import { Head, Link, setLayoutProps } from '@inertiajs/react';
 import Heading from '@/components/heading';
-import { PersonPreviewLink } from '@/components/persons/person-preview-link';
 import { FamilySheet } from '@/components/tree/family-sheet';
 import { SetRootPersonButton } from '@/components/tree/set-root-person-button';
 import { Badge } from '@/components/ui/badge';
@@ -100,12 +99,6 @@ export default function Show({
                                 />
                             </>
                         )}
-
-                        <Button variant="outline" size="sm" asChild>
-                            <PersonPreviewLink personId={sheet.focus.id}>
-                                Podgląd
-                            </PersonPreviewLink>
-                        </Button>
                     </div>
                 </div>
 

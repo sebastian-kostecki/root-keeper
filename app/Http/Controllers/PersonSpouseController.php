@@ -25,7 +25,7 @@ class PersonSpouseController extends Controller
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Dodano małżonka')]);
 
-        return to_route('tree.show', ['person' => $person, 'spouse' => $spouse->id]);
+        return $this->showNewUnion($person, $spouse);
     }
 
     /**
@@ -38,6 +38,25 @@ class PersonSpouseController extends Controller
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Dodano małżonka')]);
 
-        return to_route('tree.show', ['person' => $person, 'spouse' => $spouse->id]);
+        return $this->showNewUnion($person, $spouse);
+    }
+
+    /**
+     * Redirect to the tree on the new union, keeping the panel that was open on
+     * the previous page. The `person` query key cannot go through `route()`
+     * parameters because `person` is already the route parameter.
+     */
+    private function showNewUnion(Person $person, Person $spouse): RedirectResponse
+    {
+        $url = route('tree.show', ['person' => $person, 'spouse' => $spouse->id]);
+
+        parse_str((string) parse_url(url()->previous(), PHP_URL_QUERY), $previousQuery);
+        $openPerson = $previousQuery['person'] ?? null;
+
+        if (is_string($openPerson) && ctype_digit($openPerson)) {
+            $url .= '&person='.$openPerson;
+        }
+
+        return redirect()->to($url);
     }
 }

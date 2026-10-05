@@ -11,12 +11,15 @@ import {
     useSectionEditor,
 } from '@/components/persons/section-editor';
 import { SidePanel } from '@/components/side-panel';
+import { centreHints } from '@/lib/centre-hints';
+import type { FamilySheet } from '@/types';
 
 /**
  * Side panel hosted by the layout; open whenever the page carries a `personPreview`.
  */
 export function PersonPanel() {
-    const { personPreview, availableSources } = usePage().props;
+    const props = usePage().props;
+    const { personPreview, availableSources } = props;
     const { close } = usePersonPreview();
     const { requestExit } = useSectionEditor();
 
@@ -25,6 +28,9 @@ export function PersonPanel() {
     }
 
     const { person, isRootPerson } = personPreview;
+    // Only the tree page passes a sheet; elsewhere there is nothing to re-centre.
+    const sheet = 'sheet' in props ? (props.sheet as FamilySheet | null) : null;
+    const hints = sheet ? centreHints(sheet) : null;
 
     return (
         <SidePanel
@@ -37,6 +43,7 @@ export function PersonPanel() {
                 <PersonPanelActions
                     person={person}
                     isRootPerson={isRootPerson}
+                    hints={hints}
                 />
             }
         >

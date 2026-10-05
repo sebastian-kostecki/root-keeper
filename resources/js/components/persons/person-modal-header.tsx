@@ -18,6 +18,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { useSetRootPerson } from '@/hooks/use-set-root-person';
 import { formatAge } from '@/lib/age';
+import type { centreHints } from '@/lib/centre-hints';
 import { formatLifespan } from '@/lib/lifespan';
 import { show as treeShow } from '@/routes/tree';
 import type { PersonPreview } from '@/types';
@@ -62,31 +63,45 @@ export function PersonModalHeader({ person, isRootPerson }: Props) {
     );
 }
 
-/** Header actions of the person panel: "Pokaż na drzewie" and the "⋯" menu. */
-export function PersonPanelActions({ person, isRootPerson }: Props) {
+/**
+ * Header actions of the person panel: "Pokaż na drzewie" and the "⋯" menu.
+ * Re-centring keeps the panel open and, on the tree, the union of the person's
+ * card; it is hidden when the person is already the centre.
+ */
+export function PersonPanelActions({
+    person,
+    isRootPerson,
+    hints,
+}: Props & { hints: ReturnType<typeof centreHints> | null }) {
     const { setRootPerson, processing } = useSetRootPerson(person.id);
     const [isDeleteOpen, setIsDeleteOpen] = useState(false);
     const { requestExit } = useSectionEditor();
     const guardClick = useGuardedClick();
-    const treeHref = treeShow(person.id, { query: { person: person.id } });
+    const spouse = hints?.spouses[person.id];
+    const treeHref = treeShow(person.id, {
+        query: { person: person.id, ...(spouse ? { spouse } : {}) },
+    });
+    const showOnTree = hints?.focusId !== person.id;
 
     return (
         <div className="flex shrink-0 items-center gap-1.5">
-            <Button
-                variant="outline"
-                size="sm"
-                className="hidden sm:inline-flex"
-                asChild
-            >
-                <Link
-                    href={treeHref}
-                    onClick={(event) =>
-                        guardClick(event, () => router.visit(treeHref))
-                    }
+            {showOnTree && (
+                <Button
+                    variant="outline"
+                    size="sm"
+                    className="hidden sm:inline-flex"
+                    asChild
                 >
-                    Pokaż na drzewie
-                </Link>
-            </Button>
+                    <Link
+                        href={treeHref}
+                        onClick={(event) =>
+                            guardClick(event, () => router.visit(treeHref))
+                        }
+                    >
+                        Pokaż na drzewie
+                    </Link>
+                </Button>
+            )}
 
             <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -100,16 +115,20 @@ export function PersonPanelActions({ person, isRootPerson }: Props) {
                     </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                    <DropdownMenuItem asChild>
-                        <Link
-                            href={treeHref}
-                            onClick={(event) =>
-                                guardClick(event, () => router.visit(treeHref))
-                            }
-                        >
-                            Pokaż na drzewie
-                        </Link>
-                    </DropdownMenuItem>
+                    {showOnTree && (
+                        <DropdownMenuItem asChild>
+                            <Link
+                                href={treeHref}
+                                onClick={(event) =>
+                                    guardClick(event, () =>
+                                        router.visit(treeHref),
+                                    )
+                                }
+                            >
+                                Pokaż na drzewie
+                            </Link>
+                        </DropdownMenuItem>
+                    )}
                     {!isRootPerson && (
                         <DropdownMenuItem
                             disabled={processing}

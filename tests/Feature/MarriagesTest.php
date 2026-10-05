@@ -310,6 +310,29 @@ test('attach marries the centre to an existing person without a date and shows t
     expect($marriage->participants()->get()->every(fn (Person $participant): bool => $participant->pivot->role === ParticipantRole::Spouse))->toBeTrue();
 });
 
+test('attach keeps the panel that was open before adding the spouse', function () {
+    $user = User::factory()->create();
+    $focus = Person::factory()->for($user->tree)->male()->create();
+    $spouse = Person::factory()->for($user->tree)->female()->create();
+    $openPerson = Person::factory()->for($user->tree)->create();
+
+    $this->from(route('tree.show', ['person' => $focus]).'?person='.$openPerson->id)
+        ->actingAs($user)
+        ->post(route('persons.spouses.attach', $focus), ['spouse_id' => $spouse->id])
+        ->assertRedirect(route('tree.show', ['person' => $focus->id, 'spouse' => $spouse->id]).'&person='.$openPerson->id);
+});
+
+test('attach ignores a non-numeric person in the previous url', function () {
+    $user = User::factory()->create();
+    $focus = Person::factory()->for($user->tree)->male()->create();
+    $spouse = Person::factory()->for($user->tree)->female()->create();
+
+    $this->from(route('tree.show', ['person' => $focus]).'?person=abc')
+        ->actingAs($user)
+        ->post(route('persons.spouses.attach', $focus), ['spouse_id' => $spouse->id])
+        ->assertRedirect(route('tree.show', ['person' => $focus->id, 'spouse' => $spouse->id]));
+});
+
 test('attach adds a second marriage and the redirected sheet selects the new union', function () {
     $user = User::factory()->create();
     $focus = Person::factory()->for($user->tree)->male()->create();
@@ -390,6 +413,20 @@ test('store creates a new person married to the centre without a date and shows 
     expect($marriage->place)->toBeNull();
     expect($marriage->participants()->pluck('people.id')->sort()->values()->all())
         ->toBe(collect([$focus->id, $spouse->id])->sort()->values()->all());
+});
+
+test('store keeps the panel that was open before adding the spouse', function () {
+    $user = User::factory()->create();
+    $focus = Person::factory()->for($user->tree)->male()->create();
+    $openPerson = Person::factory()->for($user->tree)->create();
+
+    $response = $this->from(route('tree.show', ['person' => $focus]).'?person='.$openPerson->id)
+        ->actingAs($user)
+        ->post(route('persons.spouses.store', $focus), ['first_name' => 'Anna', 'last_name' => 'Nowak', 'gender' => 'female']);
+
+    $spouse = Person::where('first_name', 'Anna')->sole();
+
+    $response->assertRedirect(route('tree.show', ['person' => $focus->id, 'spouse' => $spouse->id]).'&person='.$openPerson->id);
 });
 
 test('store without a first name creates no person and no marriage', function () {

@@ -86,7 +86,7 @@ export function UnionNode({
 
         router.visit(
             treeShow(focus.id, {
-                query: {
+                mergeQuery: {
                     spouse:
                         union.partner_id === null
                             ? 'unknown'

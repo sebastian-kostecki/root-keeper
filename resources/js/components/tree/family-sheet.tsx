@@ -39,31 +39,19 @@ const CELL_PADDING_STYLE = { paddingInline: `${COLUMN_GAP_REM / 2}rem` };
 /** Children cards are two columns wide up to this many children, one column beyond. */
 const WIDE_CHILDREN_MAX = 4;
 
-function slotSpouse(pair: SheetSlot[], index: number): string | undefined {
-    const other = pair[index === 0 ? 1 : 0];
-
-    if (other?.kind === 'person') {
-        return String(other.person.id);
-    }
-
-    return other?.kind === 'unknown' ? 'unknown' : undefined;
-}
-
 function Slot({
     slot,
-    spouse,
     candidates,
     genders,
     religions,
 }: {
     slot: SheetSlot;
-    spouse?: string;
     candidates: PersonCandidate[] | undefined;
     genders: Gender[];
     religions: Religion[];
 }) {
     if (slot.kind === 'person') {
-        return <SheetPersonCard person={slot.person} spouse={spouse} />;
+        return <SheetPersonCard person={slot.person} />;
     }
 
     if (slot.kind === 'unknown') {
@@ -324,13 +312,6 @@ export function FamilySheet({
                                     candidates={personCandidates}
                                     genders={genders}
                                     religions={religions}
-                                    spouse={slotSpouse(
-                                        sheet.grandparents[block].slice(
-                                            i < 2 ? 0 : 2,
-                                            i < 2 ? 2 : 4,
-                                        ),
-                                        i % 2,
-                                    )}
                                 />
                             </div>
                         )),
@@ -361,7 +342,6 @@ export function FamilySheet({
                                     candidates={personCandidates}
                                     genders={genders}
                                     religions={religions}
-                                    spouse={slotSpouse(sheet.parents[block], i)}
                                 />
                             </div>
                         )),
@@ -414,7 +394,6 @@ export function FamilySheet({
                                         candidates={personCandidates}
                                         genders={genders}
                                         religions={religions}
-                                        spouse={String(sheet.focus.id)}
                                     />
                                 )}
                             </div>
