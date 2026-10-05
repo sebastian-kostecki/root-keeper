@@ -10,6 +10,10 @@ PORT="${E2E_PORT:-8100}"
 DB="${E2E_DB_DATABASE:-e2e}"
 
 vendor/bin/sail up -d pgsql
+# The build is used only while `npm run dev` is off: the repo is bind-mounted, so
+# its public/hot reaches this container too, and the E2E app then loads assets
+# from the Vite dev server (TSX changes show at once, no restart needed). A
+# public/hot left behind by a crashed dev server breaks the E2E pages; delete it.
 vendor/bin/sail npm run build
 
 vendor/bin/sail exec -T pgsql sh -c "until pg_isready -q -U \"\$POSTGRES_USER\"; do sleep 1; done"

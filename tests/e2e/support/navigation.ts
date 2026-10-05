@@ -1,9 +1,75 @@
-// Everything about getting to a person or the tree lives here. The side-panel,
-// grid and source-panel rebuilds (S-06, S-05, S-02) change this file, not the
-// specs. Deliberately not used: `Podgląd`, `Wstecz`, clicking a card, the close button.
+// Everything about getting to a person, the tree's slots and union node, and
+// from a fact to its source lives here. The side-panel, grid and source-panel
+// rebuilds (S-06, S-05, S-02) change this file, not the specs. Deliberately not
+// used: `Podgląd`, `Wstecz`, clicking a card, the close button.
 import { expect, type Locator, type Page } from '@playwright/test';
 
 export type FamilySectionName = 'Rodzice' | 'Małżeństwa' | 'Dzieci';
+
+/** Who an empty slot adds, as its label says it: `Dodaj ojca`, `Dodaj dziecko`… */
+export type SlotRelative = 'ojca' | 'matkę' | 'dziecko' | 'małżonka';
+
+/** An empty slot of the tree; `who` is the person, or the pair `A i B` for a child. */
+export function treeSlot(
+    page: Page,
+    relative: SlotRelative,
+    who: string,
+): Locator {
+    return page.getByRole('button', {
+        name: `Dodaj ${relative}: ${who}`,
+        exact: true,
+    });
+}
+
+/** The dialog a slot or the union menu opens: pick an existing person or create one. */
+export function slotDialog(
+    page: Page,
+    relative: SlotRelative,
+    who: string,
+): Locator {
+    return page.getByRole('dialog', { name: `Dodaj ${relative} — ${who}` });
+}
+
+/** Clicks the empty slot and returns its dialog. */
+export async function openSlot(
+    page: Page,
+    relative: SlotRelative,
+    who: string,
+): Promise<Locator> {
+    await treeSlot(page, relative, who).click();
+
+    return slotDialog(page, relative, who);
+}
+
+/** Switches the union node to the union with the partner. */
+export async function switchUnion(
+    page: Page,
+    partnerName: string,
+): Promise<void> {
+    await page.getByRole('button', { name: /^Związek \d z \d/ }).click();
+    await page
+        .getByRole('menuitemradio', { name: new RegExp(partnerName) })
+        .click();
+}
+
+/** An action from the union node's menu, e.g. `Dodaj małżonka`. */
+export async function chooseUnionMenuItem(
+    page: Page,
+    item: string,
+): Promise<void> {
+    await page.getByRole('button', { name: /^Związek \d z \d/ }).click();
+    await page.getByRole('menuitem', { name: item }).click();
+}
+
+/** From a confirmed fact (its region in the person dialog) to the linked source. */
+export async function openLinkedSource(
+    fact: Locator,
+    sourceName: string,
+): Promise<void> {
+    await fact
+        .getByRole('link', { name: `Otwórz źródło ${sourceName}` })
+        .click();
+}
 
 /** The tree centred on the person; waits for the page heading with the centre person's name. */
 export async function gotoTree(page: Page, personId: number): Promise<void> {

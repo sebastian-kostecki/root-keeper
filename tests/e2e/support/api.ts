@@ -44,8 +44,14 @@ export function uniqueSuffix(testInfo: TestInfo): string {
     ].join('-');
 }
 
-/** Decoded `XSRF-TOKEN` cookie; one `GET /` first when the context has none. */
-async function xsrfHeaders(page: Page): Promise<Record<string, string>> {
+/**
+ * Headers of a write: the decoded `XSRF-TOKEN` cookie (one `GET /` first when
+ * the context has none) and `Accept: application/json`. With JSON the app
+ * answers a failed validation with 422 and a lost session with 401, instead of
+ * a 302 back to a URL taken from the session all parallel tests share; a
+ * successful write is still a 302 with its own `Location`.
+ */
+async function writeHeaders(page: Page): Promise<Record<string, string>> {
     const read = async () =>
         (await page.context().cookies()).find(
             (cookie) => cookie.name === 'XSRF-TOKEN',
@@ -60,7 +66,10 @@ async function xsrfHeaders(page: Page): Promise<Record<string, string>> {
         throw new Error('The app issued no XSRF-TOKEN cookie');
     }
 
-    return { 'X-XSRF-TOKEN': decodeURIComponent(cookie.value) };
+    return {
+        'X-XSRF-TOKEN': decodeURIComponent(cookie.value),
+        Accept: 'application/json',
+    };
 }
 
 /** Last numeric id in a redirect `Location`, e.g. `/sources/12` or `?person=12`. */
@@ -96,8 +105,22 @@ function personForm(fields: PersonFields): Record<string, string | number> {
     return form;
 }
 
-function expectRedirect(response: APIResponse): void {
-    expect([301, 302, 303]).toContain(response.status());
+/** A successful write: a 302, and when given, a `Location` whose path matches. */
+async function expectRedirect(
+    response: APIResponse,
+    path?: RegExp,
+): Promise<void> {
+    expect(
+        response.status(),
+        `${response.url()} answered ${response.status()}: ${await response.text()}`,
+    ).toBe(302);
+    if (path) {
+        const location = new URL(
+            response.headers()['location'] ?? '',
+            response.url(),
+        );
+        expect(location.pathname).toMatch(path);
+    }
 }
 
 /** `persons.store`; the id is read from the redirect to `/tree/{id}`. */
@@ -106,11 +129,11 @@ export async function createPerson(
     fields: PersonFields,
 ): Promise<number> {
     const response = await page.request.post('/persons', {
-        headers: await xsrfHeaders(page),
+        headers: await writeHeaders(page),
         form: personForm(fields),
         maxRedirects: 0,
     });
-    expectRedirect(response);
+    await expectRedirect(response, /^\/tree\/\d+$/);
 
     return idFromLocation(response, 'person');
 }
@@ -122,14 +145,20 @@ export async function createSpouse(
     fields: PersonFields,
 ): Promise<number> {
     const response = await page.request.post(`/persons/${focusId}/spouses`, {
-        headers: await xsrfHeaders(page),
+        headers: await writeHeaders(page),
         form: personForm(fields),
         maxRedirects: 0,
     });
-    expectRedirect(response);
+    await expectRedirect(response, /^\/tree\/\d+$/);
 
     return idFromLocation(response, 'spouse');
 }
+
+/**
+ * Sources this worker created through the API since the last cleanup. They are
+ * deleted by id, so cleanup does not depend on how the app names a source.
+ */
+const createdSourceIds = new Set<number>();
 
 /** `sources.store` with the fixture file as the original scan. */
 export async function createSource(
@@ -137,7 +166,7 @@ export async function createSource(
     source: { kind: SourceKindValue; name: string; fixture: string },
 ): Promise<number> {
     const response = await page.request.post('/sources', {
-        headers: await xsrfHeaders(page),
+        headers: await writeHeaders(page),
         multipart: {
             kind: source.kind,
             name: source.name,
@@ -149,9 +178,11 @@ export async function createSource(
         },
         maxRedirects: 0,
     });
-    expectRedirect(response);
+    await expectRedirect(response, /^\/sources\/\d+$/);
+    const id = idFromLocation(response);
+    createdSourceIds.add(id);
 
-    return idFromLocation(response);
+    return id;
 }
 
 /** `events.sources.store`: link the source to the event as proof of it. */
@@ -161,11 +192,11 @@ export async function linkSource(
     sourceId: number,
 ): Promise<void> {
     const response = await page.request.post(`/events/${eventId}/sources`, {
-        headers: await xsrfHeaders(page),
+        headers: await writeHeaders(page),
         form: { source_id: sourceId },
         maxRedirects: 0,
     });
-    expectRedirect(response);
+    await expectRedirect(response);
 }
 
 /** Inertia page object embedded in the HTML, read without an `X-Inertia` request (no version check, no 409). */
@@ -219,45 +250,61 @@ export async function findPersons(
 }
 
 /**
- * A DELETE as a browser form sends it: `POST` with `_method=DELETE`. The app
- * answers with a 302, which a bare DELETE would follow as another DELETE (405);
- * a POST is followed as a GET, so a successful delete ends in a 200.
+ * A DELETE as a browser form sends it: `POST` with `_method=DELETE`. A
+ * successful delete is a 302; it is not followed, because the person delete
+ * redirects to a page taken from the shared session, maybe another test's.
  */
-function deleteRecord(
+async function deleteRecord(
     page: Page,
     headers: Record<string, string>,
     path: string,
-): Promise<APIResponse> {
-    return page.request.post(path, { headers, form: { _method: 'DELETE' } });
+): Promise<void> {
+    await expectRedirect(
+        await page.request.post(path, {
+            headers,
+            form: { _method: 'DELETE' },
+            maxRedirects: 0,
+        }),
+    );
 }
 
 /**
- * Removes every source, then every person, whose name carries the suffix. Runs
- * in a `finally`, so it must work after a red assertion; each DELETE is checked.
- * Sources go first (`DeleteSource` removes links and files), then people
- * (`DeletePerson` removes marriages, events and parent-child relations).
+ * Removes the sources this worker created through the API, every other source
+ * whose name carries the suffix, then every person whose name carries it. Runs
+ * as the `suffix` fixture's teardown, so it must work after a red assertion;
+ * each DELETE is checked. Sources go first (`DeleteSource` removes links and
+ * files), then people (`DeletePerson` removes marriages, events and
+ * parent-child relations).
  */
 export async function cleanupBySuffix(
     page: Page,
     suffix: string,
 ): Promise<void> {
-    const headers = await xsrfHeaders(page);
+    // An empty or foreign suffix would match the whole E2E tree.
+    if (!suffix.startsWith(`${TEST_PREFIX}-`)) {
+        throw new Error(`Refusing to clean up by suffix "${suffix}"`);
+    }
+    const headers = await writeHeaders(page);
 
     const sources =
         ((await pageProps(page, '/sources')).sources as
             | { id: number; display_name: string }[]
             | undefined) ?? [];
-    for (const source of sources.filter((item) =>
-        item.display_name.includes(suffix),
-    )) {
-        await expect(
-            await deleteRecord(page, headers, `/sources/${source.id}`),
-        ).toBeOK();
+    const sourceIds = new Set(createdSourceIds);
+    for (const source of sources) {
+        if (source.display_name.includes(suffix)) {
+            sourceIds.add(source.id);
+        }
+    }
+    for (const id of sourceIds) {
+        await deleteRecord(page, headers, `/sources/${id}`);
+        createdSourceIds.delete(id);
     }
 
     for (const person of await findPersons(page, suffix)) {
-        await expect(
-            await deleteRecord(page, headers, `/persons/${person.id}`),
-        ).toBeOK();
+        if (!person.display_name.includes(suffix)) {
+            continue;
+        }
+        await deleteRecord(page, headers, `/persons/${person.id}`);
     }
 }

@@ -334,6 +334,21 @@ Brak migracji. Nowy wolumin Dockera zaczyna pusty. Źródła utworzone w bazie `
 - Reguły E2E: `.claude/skills/10x-e2e/references/e2e-anti-patterns.md`, `e2e-quality-rules.md`
 - Powłoka panelu (lokator dialogu): `resources/js/components/side-panel.tsx:153-158`, `context/archive/2026-10-04-side-panel-shell/plan.md:58`
 
+## Odchylenia od planu (po implementacji i impl-review 2026-10-05)
+
+- **Gotowość po zapisie bez toastów.** Testy slotów czekają na zamknięcie dialogu (`toBeHidden`), a test rodzica także na zniknięcie slotu, zamiast na toasty `Dodano …`. Flash data żyje w jednej sesji wspólnej dla równoległych testów, więc toast mógłby pochodzić z innego testu.
+- **`gotoTree` czeka na nagłówek `h1`**, a nie na slot czy kartę. Następny lokator i tak czeka na właściwy element.
+- **Celowe uszkodzenia dziecka i małżonka inne niż w planie.**
+  - Dziecko: `other_parent_id: null`.
+  - Małżonek: `spouse_id: focus.id`.
+  - Planowane uszkodzenie małżonka („attach do wybranej osoby”) jest symetryczne i daje tę samą relację, więc test słusznie zostaje zielony. To była wada planu.
+- **Sprzątanie w fixture `suffix`** (`tests/e2e/support/fixtures.ts`) zamiast w `finally`, czyli Fix A z F1 w impl-review.
+  - Teardown działa także po timeoucie.
+  - Ma guard prefiksu `e2etest-`.
+  - Źródła z API usuwa po id.
+- **Pomocniki zapisu wysyłają `Accept: application/json`** i wymagają 302 z oczekiwaną ścieżką `Location`, a DELETE nie podąża za przekierowaniem (F2).
+- **Lokatory slotów, węzła związku i linku źródła siedzą w `support/navigation.ts`** (F3), więc S-05 zmienia jeden plik.
+
 ## Progress
 
 > Convention: `- [ ]` pending, `- [x]` done. Append ` — <commit sha>` when a step lands. Do not rename step titles. See `references/progress-format.md`.
