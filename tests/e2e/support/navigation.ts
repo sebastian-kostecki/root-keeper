@@ -1,7 +1,7 @@
 // Everything about getting to a person, the tree's slots and union node, and
 // from a fact to its source lives here. Panel and grid rebuilds change this
-// file, not the specs. Deliberately not used: the `Podgląd` icon. Clicking a
-// tree card and the panel close button are used by person-side-panel.spec.ts
+// file, not the specs. Tree cards, the panel close button and the panel's
+// actions are clicked by the person-side-panel and person-panel-* specs
 // directly, not through a helper.
 import { expect, type Locator, type Page } from '@playwright/test';
 
