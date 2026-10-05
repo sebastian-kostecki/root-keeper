@@ -195,3 +195,19 @@ test('a partial reload of the filters with an open panel runs no localities quer
     expect($response->json('props'))->not->toHaveKey('localities')->not->toHaveKey('localityPanel');
     expect($localityQueries)->toBeEmpty();
 });
+
+test('the inline store returns the locality as 201 JSON and a duplicate is a 422', function () {
+    $user = User::factory()->create();
+
+    $this->actingAs($user)->postJson(route('localities.inline.store'), ['name' => 'Kraków', 'description' => 'Pominięty'])
+        ->assertCreated()
+        ->assertExactJson(['id' => $user->tree->localities()->firstOrFail()->id, 'name' => 'Kraków']);
+
+    expect($user->tree->localities()->firstOrFail()->description)->toBeNull();
+
+    $this->actingAs($user)->postJson(route('localities.inline.store'), ['name' => 'KRAKÓW'])
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors('name');
+
+    expect($user->tree->localities()->count())->toBe(1);
+});

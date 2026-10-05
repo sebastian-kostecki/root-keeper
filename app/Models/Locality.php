@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
 
 /**
@@ -29,5 +30,13 @@ class Locality extends Model
     public function tree(): BelongsTo
     {
         return $this->belongsTo(Tree::class);
+    }
+
+    /**
+     * @return HasMany<Parish, $this>
+     */
+    public function parishes(): HasMany
+    {
+        return $this->hasMany(Parish::class);
     }
 }

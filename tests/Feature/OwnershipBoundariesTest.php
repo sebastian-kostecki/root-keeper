@@ -4,6 +4,7 @@ use App\Enums\ParticipantRole;
 use App\Models\Event;
 use App\Models\Locality;
 use App\Models\ParentChildRelation;
+use App\Models\Parish;
 use App\Models\Person;
 use App\Models\Source;
 use App\Models\User;
@@ -48,6 +49,7 @@ function ownershipRecords(User $attacker, User $victim): array
         'victimEvent' => $victimEvent,
         'victimMarriage' => $victimMarriage,
         'victimLocality' => Locality::factory()->for($victim->tree)->create(),
+        'victimParish' => Parish::factory()->for($victim->tree)->create(),
         'victimRelation' => ParentChildRelation::factory()->create([
             'tree_id' => $victim->tree->id,
             'parent_id' => $victimPerson->id,
@@ -81,6 +83,7 @@ function ownershipRouteCases(): array
         ['persons.update', 'put', fn (array $r): array => ['person' => $r['victimPerson']->id], fn (array $r): array => ['first_name' => 'Hacked']],
         ['sources.update', 'put', fn (array $r): array => ['source' => $r['victimSource']->id], fn (array $r): array => ['kind' => 'other', 'name' => 'Przejęte']],
         ['localities.update', 'put', fn (array $r): array => ['locality' => $r['victimLocality']->id], fn (array $r): array => ['name' => 'Przejęta']],
+        ['parishes.update', 'put', fn (array $r): array => ['parish' => $r['victimParish']->id], fn (array $r): array => ['name' => 'Przejęta']],
         ['events.sources.store', 'post', fn (array $r): array => ['event' => $r['victimEvent']->id], fn (array $r): array => ['source_id' => $r['ownSource']->id]],
         ['marriages.update', 'put', fn (array $r): array => ['marriage' => $r['victimMarriage']->id], fn (array $r): array => ['marriage' => ['year' => 1950]]],
     ];
@@ -192,6 +195,24 @@ it('answers 404 and writes nothing when ?locality= names another tree\'s localit
     expect(ownershipSnapshot())->toBe($before);
 });
 
+it('answers 404 and writes nothing when ?parish= names another tree\'s parish', function () {
+    Storage::fake('local');
+
+    config(['inertia.testing.ensure_pages_exist' => false]);
+
+    $attacker = User::factory()->create();
+    $victim = User::factory()->create();
+    $records = ownershipRecords($attacker, $victim);
+
+    $before = ownershipSnapshot();
+
+    $this->actingAs($attacker)
+        ->get(route('parishes.index', ['parish' => $records['victimParish']->id]))
+        ->assertNotFound();
+
+    expect(ownershipSnapshot())->toBe($before);
+});
+
 it('answers 404 and writes nothing when ?source= names another tree\'s source', function () {
     Storage::fake('local');
 
@@ -221,6 +242,20 @@ it('ignores a tree_id sent in the body and creates the locality in the attacker\
     expect($locality->tree_id)->toBe($attacker->tree->id);
     expect($victim->tree->localities()->count())->toBe($victimLocalitiesBefore);
 });
+
+it('ignores a tree_id sent in the body and creates the parish in the attacker\'s tree', function (string $route) {
+    $attacker = User::factory()->create();
+    $victim = User::factory()->create();
+    $victimParishesBefore = $victim->tree->parishes()->count();
+
+    $this->actingAs($attacker)
+        ->postJson(route($route), ['name' => 'Wstrzyknięta', 'tree_id' => $victim->tree->id]);
+
+    $parish = Parish::where('name', 'Wstrzyknięta')->firstOrFail();
+
+    expect($parish->tree_id)->toBe($attacker->tree->id);
+    expect($victim->tree->parishes()->count())->toBe($victimParishesBefore);
+})->with(['parishes.store', 'parishes.inline.store']);
 
 it('ignores a tree_id sent in the body and creates the person in the attacker\'s tree', function () {
     $attacker = User::factory()->create();

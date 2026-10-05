@@ -1,9 +1,12 @@
 <?php
 
 use App\Http\Controllers\EventSourceController;
+use App\Http\Controllers\InlineLocalityController;
+use App\Http\Controllers\InlineParishController;
 use App\Http\Controllers\LocalityController;
 use App\Http\Controllers\MarriageController;
 use App\Http\Controllers\ParentChildRelationController;
+use App\Http\Controllers\ParishController;
 use App\Http\Controllers\PersonChildController;
 use App\Http\Controllers\PersonController;
 use App\Http\Controllers\PersonParentController;
@@ -27,7 +30,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('sources/{source}/file', [SourceController::class, 'file'])->name('sources.file');
     Route::get('sources/{source}/thumbnail', [SourceController::class, 'thumbnail'])->name('sources.thumbnail');
 
+    Route::post('localities/inline', [InlineLocalityController::class, 'store'])->name('localities.inline.store');
     Route::resource('localities', LocalityController::class)->only(['index', 'store', 'update']);
+
+    Route::post('parishes/inline', [InlineParishController::class, 'store'])->name('parishes.inline.store');
+    Route::resource('parishes', ParishController::class)->only(['index', 'store', 'update']);
 
     Route::post('events/{event}/sources', [EventSourceController::class, 'store'])->name('events.sources.store');
     Route::delete('events/{event}/sources/{source}', [EventSourceController::class, 'destroy'])->name('events.sources.destroy');

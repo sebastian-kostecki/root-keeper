@@ -18,6 +18,7 @@ declare module '@inertiajs/core' {
                 people: number;
                 sources: number;
                 localities: number;
+                parishes: number;
             } | null;
             personPreview: PersonPreviewPayload | null;
             availableSources?: Source[];
