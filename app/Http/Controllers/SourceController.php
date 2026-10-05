@@ -5,12 +5,15 @@ namespace App\Http\Controllers;
 use App\Actions\Sources\DeleteSource;
 use App\Actions\Sources\StoreSource;
 use App\Actions\Sources\UpdateSource;
+use App\Enums\Religion;
 use App\Enums\SourceKind;
 use App\Enums\SourceRecordType;
 use App\Http\Requests\SourceStoreRequest;
 use App\Http\Requests\SourceUpdateRequest;
+use App\Http\Resources\ParishResource;
 use App\Http\Resources\SourceResource;
 use App\Models\Event;
+use App\Models\Locality;
 use App\Models\Person;
 use App\Models\Source;
 use Illuminate\Http\RedirectResponse;
@@ -38,7 +41,7 @@ class SourceController extends Controller
 
         return Inertia::render('sources/index', [
             'sources' => fn (): array => SourceResource::collection(
-                $tree->sources()->withCount('events')->latest()->orderByDesc('id')->get()
+                $tree->sources()->with('parish')->withCount('events')->latest()->orderByDesc('id')->get()
             )->resolve(),
             'filters' => ['q' => $query, 'kind' => $kind, 'view' => $view, 'sort' => $sort],
             'kinds' => SourceKind::options(),
@@ -47,7 +50,7 @@ class SourceController extends Controller
                 $key = $request->query('source');
 
                 if ($key === 'new') {
-                    return ['source' => null, 'confirms' => []];
+                    return ['source' => null, 'confirms' => [], ...$this->panelOptions($request)];
                 }
 
                 if (! is_string($key) || ! ctype_digit($key)) {
@@ -58,14 +61,40 @@ class SourceController extends Controller
 
                 Gate::authorize('view', $source);
 
-                $source->load(['events' => fn ($query) => $query->withCount('sources')->with('participants')]);
+                $source->load(['parish', 'events' => fn ($query) => $query->withCount('sources')->with('participants')]);
 
                 return [
                     'source' => SourceResource::make($source)->resolve(),
                     'confirms' => $this->confirms($source),
+                    ...$this->panelOptions($request),
                 ];
             },
         ]);
+    }
+
+    /**
+     * The suggestion lists the source panel needs: the tree's parishes, localities and archives, and the religions.
+     *
+     * @return array{parishes: array<int, array<string, mixed>>, localities: array<int, array{id: int, name: string}>, archives: array<int, string>, religions: array<int, array{value: string, label: string}>}
+     */
+    private function panelOptions(Request $request): array
+    {
+        $tree = $request->user()->tree;
+
+        return [
+            'parishes' => ParishResource::collection($tree->parishes()->with('locality')->orderBy('name')->get())->resolve(),
+            'localities' => $tree->localities()->orderBy('name')->get(['id', 'name'])
+                ->map(fn (Locality $locality): array => ['id' => $locality->id, 'name' => $locality->name])
+                ->all(),
+            'archives' => $tree->sources()
+                ->whereNotNull('archive')
+                ->whereRaw("btrim(archive) <> ''")
+                ->distinct()
+                ->orderBy('archive')
+                ->pluck('archive')
+                ->all(),
+            'religions' => Religion::options(),
+        ];
     }
 
     /**

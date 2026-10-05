@@ -23,7 +23,7 @@ class StoreSource
      * disk and create its row. Leaves no orphan files if anything fails once the
      * original is written.
      *
-     * @param  array{name?: string|null, record_type?: string|null, entry_number?: string|null, year?: int|null, provenance?: string|null, url?: string|null, note?: string|null}  $description
+     * @param  array{name?: string|null, record_type?: string|null, entry_number?: string|null, parish_id?: int|null, year?: int|null, archive?: string|null, url?: string|null, note?: string|null}  $description
      */
     public function handle(Tree $tree, UploadedFile $file, SourceKind $kind, array $description = []): Source
     {

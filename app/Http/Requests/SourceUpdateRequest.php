@@ -37,7 +37,7 @@ class SourceUpdateRequest extends FormRequest
                 Rule::enum(SourceKind::class),
                 function (string $attribute, mixed $value, Closure $fail): void {
                     if (SourceKind::tryFrom((string) $value) !== null && $this->wouldEraseRecordFields($value) && ! $this->boolean('discard_record_fields')) {
-                        $fail(__('Zmiana rodzaju usunie typ aktu i numer wpisu. Potwierdź zmianę.'));
+                        $fail(__('Zmiana rodzaju usunie typ aktu, numer wpisu lub parafię. Potwierdź zmianę.'));
                     }
                 },
             ],
@@ -60,7 +60,7 @@ class SourceUpdateRequest extends FormRequest
     }
 
     /**
-     * Whether saving the submitted kind would erase a stored record type or entry number.
+     * Whether saving the submitted kind would erase a stored record type, entry number or parish.
      */
     private function wouldEraseRecordFields(mixed $submittedKind): bool
     {
@@ -69,6 +69,6 @@ class SourceUpdateRequest extends FormRequest
 
         return $source->kind === SourceKind::MetricalRecord
             && $submittedKind !== SourceKind::MetricalRecord->value
-            && ($source->record_type !== null || $source->entry_number !== null);
+            && ($source->record_type !== null || $source->entry_number !== null || $source->parish_id !== null);
     }
 }

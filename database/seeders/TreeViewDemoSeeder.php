@@ -11,6 +11,8 @@ use App\Enums\ParticipantRole;
 use App\Enums\Religion;
 use App\Enums\SourceRecordType;
 use App\Models\Event;
+use App\Models\Locality;
+use App\Models\Parish;
 use App\Models\Person;
 use App\Models\Source;
 use App\Models\Tree;
@@ -285,6 +287,14 @@ class TreeViewDemoSeeder extends Seeder
      */
     private function sourceStates(Person $jan, Person $kacper): void
     {
+        $parish = Parish::factory()
+            ->for($this->tree)
+            ->withReligion(Religion::RomanCatholic)
+            ->create([
+                'name' => 'Parafia rzymskokatolicka w Tarnowie',
+                'locality_id' => Locality::factory()->for($this->tree)->create(['name' => 'Tarnów'])->id,
+            ]);
+
         Source::factory()->for($this->tree)->gravestone()->create(['original_name' => 'nagrobek-kowalskich.jpg']);
         Source::factory()->for($this->tree)->other()->create(['original_name' => 'list-rodzinny.jpg']);
 
@@ -294,7 +304,8 @@ class TreeViewDemoSeeder extends Seeder
 
         Source::factory()->for($this->tree)->described()->create([
             'original_name' => 'opisany-akt-lipnica-1878.jpg',
-            'provenance' => 'Archiwum Akt Dawnych w Warszawie',
+            'archive' => 'Archiwum Akt Dawnych w Warszawie',
+            'parish_id' => $parish->id,
             'note' => "Wpis po prawej stronie rozkładówki, zapisany po łacinie.\n\nNazwisko matki odczytane z trudem, do sprawdzenia w księdze zgonów.",
             'url' => 'https://www.szukajwarchiwach.gov.pl/',
         ]);
@@ -308,7 +319,8 @@ class TreeViewDemoSeeder extends Seeder
         Source::factory()->for($this->tree)->create([
             'original_name' => 'akt-z-dlugim-opisem.jpg',
             'name' => 'Akt urodzenia z parafii Świętego Jana Chrzciciela w Lipnicy Murowanej, księga urodzeń z lat 1875-1885',
-            'provenance' => 'Archiwum Diecezjalne w Tarnowie, zespół akt parafialnych, sygnatura 1234/56/78',
+            'archive' => 'Archiwum Diecezjalne w Tarnowie, zespół akt parafialnych, sygnatura 1234/56/78',
+            'parish_id' => $parish->id,
         ]);
     }
 

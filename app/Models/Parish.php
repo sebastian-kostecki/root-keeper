@@ -37,6 +37,14 @@ class Parish extends Model
     }
 
     /**
+     * The name with the religion in brackets, or the bare name without a religion.
+     */
+    public function label(): string
+    {
+        return $this->religion === null ? $this->name : "{$this->name} ({$this->religion->label()})";
+    }
+
+    /**
      * @return BelongsTo<Tree, $this>
      */
     public function tree(): BelongsTo

@@ -27,7 +27,7 @@ class ParishResource extends JsonResource
             'religion_label' => $this->religion?->label(),
             'locality_id' => $this->locality_id,
             'locality_name' => $this->locality?->name,
-            'label' => $this->religion === null ? $this->name : "{$this->name} ({$this->religion->label()})",
+            'label' => $this->resource->label(),
             'sources_count' => $this->whenCounted('sources'),
         ];
     }

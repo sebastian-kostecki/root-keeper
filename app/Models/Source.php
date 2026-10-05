@@ -20,7 +20,8 @@ use Illuminate\Support\Carbon;
  * @property SourceRecordType|null $record_type
  * @property string|null $entry_number
  * @property int|null $year
- * @property string|null $provenance
+ * @property int|null $parish_id
+ * @property string|null $archive
  * @property string|null $url
  * @property string|null $note
  * @property string $original_name
@@ -33,7 +34,7 @@ use Illuminate\Support\Carbon;
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
-#[Fillable(['tree_id', 'kind', 'original_name', 'path', 'thumbnail_path', 'mime_type', 'size', 'width', 'height', 'name', 'record_type', 'entry_number', 'year', 'provenance', 'url', 'note'])]
+#[Fillable(['tree_id', 'kind', 'original_name', 'path', 'thumbnail_path', 'mime_type', 'size', 'width', 'height', 'name', 'record_type', 'entry_number', 'year', 'parish_id', 'archive', 'url', 'note'])]
 class Source extends Model
 {
     /** @use HasFactory<SourceFactory> */
@@ -70,6 +71,14 @@ class Source extends Model
     public function tree(): BelongsTo
     {
         return $this->belongsTo(Tree::class);
+    }
+
+    /**
+     * @return BelongsTo<Parish, $this>
+     */
+    public function parish(): BelongsTo
+    {
+        return $this->belongsTo(Parish::class);
     }
 
     /**

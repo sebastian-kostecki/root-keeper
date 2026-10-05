@@ -431,19 +431,19 @@ Jeden spec Playwright na ryzyko z roadmapy: dopisanie parafii (z nową miejscowo
 
 #### Automated
 
-- [x] 1.1 Migracje przechodzą: `vendor/bin/sail artisan migrate`
-- [x] 1.2 Testy parafii, miejscowości, własności, powłoki i kopii przechodzą
-- [x] 1.3 Larastan przechodzi
-- [x] 1.4 Pint bez zmian
+- [x] 1.1 Migracje przechodzą: `vendor/bin/sail artisan migrate` — 223fa94
+- [x] 1.2 Testy parafii, miejscowości, własności, powłoki i kopii przechodzą — 223fa94
+- [x] 1.3 Larastan przechodzi — 223fa94
+- [x] 1.4 Pint bez zmian — 223fa94
 
 ### Phase 2: Parafia i archiwum w źródle — backend i migracja danych
 
 #### Automated
 
-- [ ] 2.1 Migracje przechodzą w obie strony
-- [ ] 2.2 Testy migracji i źródeł przechodzą
-- [ ] 2.3 Larastan przechodzi
-- [ ] 2.4 Pint bez zmian
+- [x] 2.1 Migracje przechodzą w obie strony
+- [x] 2.2 Testy migracji i źródeł przechodzą
+- [x] 2.3 Larastan przechodzi
+- [x] 2.4 Pint bez zmian
 
 ### Phase 3: Komponent podpowiedzi i strona spisu parafii
 

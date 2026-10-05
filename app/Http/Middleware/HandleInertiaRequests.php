@@ -59,7 +59,7 @@ class HandleInertiaRequests extends Middleware
                 return $person === null ? null : app(BuildPersonPreview::class)->handle($person, $request->user());
             },
             'availableSources' => Inertia::optional(fn (): array => $request->user() === null ? [] : SourceResource::collection(
-                $request->user()->tree->sources()->latest()->orderByDesc('id')->get()
+                $request->user()->tree->sources()->with('parish')->latest()->orderByDesc('id')->get()
             )->resolve()),
         ];
     }
