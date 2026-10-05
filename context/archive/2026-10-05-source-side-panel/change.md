@@ -1,10 +1,10 @@
 ---
 change_id: source-side-panel
 title: Source side panel
-status: impl_reviewed
+status: archived
 created: 2026-10-05
 updated: 2026-10-05
-archived_at: null
+archived_at: 2026-10-05T10:36:39Z
 ---
 
 ## Notes
