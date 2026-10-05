@@ -7,6 +7,7 @@ export const PANEL_PROPS = {
     person: 'personPreview',
     demo: 'demoPanel',
     locality: 'localityPanel',
+    source: 'sourcePanel',
 } as const;
 
 export type PanelKey = keyof typeof PANEL_PROPS;

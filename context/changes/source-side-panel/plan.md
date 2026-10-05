@@ -435,32 +435,32 @@ Brak migracji danych. Stare zakładki `/sources/{id}` działają dzięki przekie
 
 #### Automated
 
-- [x] 2.1 Testy źródeł i przepięte testy przechodzą: `vendor/bin/sail artisan test --compact tests/Feature/SourcesTest.php tests/Feature/DeleteImpactTest.php tests/Feature/MarriagesTest.php tests/Feature/PersonsTest.php tests/Feature/EventSourcesTest.php`
-- [x] 2.2 Testy własności przechodzą (z nowym `?source=` i zmienionym hostem): `vendor/bin/sail artisan test --compact tests/Feature/OwnershipBoundariesTest.php`
-- [x] 2.3 Przywracanie kopii nadal serwuje pliki: `vendor/bin/sail artisan test --compact tests/Backup/BackupRestoreTest.php`
-- [x] 2.4 Larastan bez błędów: `vendor/bin/sail composer types:check`
-- [x] 2.5 Pint czysty: `vendor/bin/sail bin pint --dirty --format agent`
-- [x] 2.6 Wayfinder i typy: `vendor/bin/sail artisan wayfinder:generate && vendor/bin/sail npm run types:check`
+- [x] 2.1 Testy źródeł i przepięte testy przechodzą: `vendor/bin/sail artisan test --compact tests/Feature/SourcesTest.php tests/Feature/DeleteImpactTest.php tests/Feature/MarriagesTest.php tests/Feature/PersonsTest.php tests/Feature/EventSourcesTest.php` — 7668ecf
+- [x] 2.2 Testy własności przechodzą (z nowym `?source=` i zmienionym hostem): `vendor/bin/sail artisan test --compact tests/Feature/OwnershipBoundariesTest.php` — 7668ecf
+- [x] 2.3 Przywracanie kopii nadal serwuje pliki: `vendor/bin/sail artisan test --compact tests/Backup/BackupRestoreTest.php` — 7668ecf
+- [x] 2.4 Larastan bez błędów: `vendor/bin/sail composer types:check` — 7668ecf
+- [x] 2.5 Pint czysty: `vendor/bin/sail bin pint --dirty --format agent` — 7668ecf
+- [x] 2.6 Wayfinder i typy: `vendor/bin/sail artisan wayfinder:generate && vendor/bin/sail npm run types:check` — 7668ecf
 
 ### Phase 3: Panel źródła na liście
 
 #### Automated
 
-- [ ] 3.1 Vitest (z `withSourcesQuery` i rejestrem paneli): `vendor/bin/sail npm run test:js`
-- [ ] 3.2 Format i lint: `vendor/bin/sail npm run check`
-- [ ] 3.3 Typy: `vendor/bin/sail npm run types:check`
-- [ ] 3.4 Build: `vendor/bin/sail npm run build`
-- [ ] 3.5 Testy źródeł nadal przechodzą: `vendor/bin/sail artisan test --compact tests/Feature/SourcesTest.php`
+- [x] 3.1 Vitest (z `withSourcesQuery` i rejestrem paneli): `vendor/bin/sail npm run test:js`
+- [x] 3.2 Format i lint: `vendor/bin/sail npm run check`
+- [x] 3.3 Typy: `vendor/bin/sail npm run types:check`
+- [x] 3.4 Build: `vendor/bin/sail npm run build`
+- [x] 3.5 Testy źródeł nadal przechodzą: `vendor/bin/sail artisan test --compact tests/Feature/SourcesTest.php`
 
 #### Manual
 
-- [ ] 3.6 1366 px: skan obok formularza, szerokość skanu zmierzona, powiększanie działa, formularz przewija się niezależnie
-- [ ] 3.7 2560 px: panel ok. 72rem, skan zajmuje resztę obok kolumny 20rem
-- [ ] 3.8 Edycja: zapis odświeża panel i listę; zmiana rodzaju pyta, Escape zamyka tylko modal
-- [ ] 3.9 Dodawanie: pole pliku w kolumnie skanu, lokalny podgląd, „Zmień plik”, zapis otwiera nowe źródło z zachowanymi filtrami
-- [ ] 3.10 Usuwanie: lista wpływu, panel zamknięty, filtry i widok zachowane
-- [ ] 3.11 Strażnik pyta przy przełączeniu/X/Escape; zmiana filtra nie zamyka panelu ani nie gubi zmian
-- [ ] 3.12 „Potwierdza” otwiera modal osoby nad panelem, zamknięcie zostawia panel
+- [x] 3.6 1366 px: skan obok formularza, szerokość skanu zmierzona, powiększanie działa, formularz przewija się niezależnie
+- [x] 3.7 2560 px: panel ok. 72rem, skan zajmuje resztę obok kolumny 20rem
+- [x] 3.8 Edycja: zapis odświeża panel i listę; zmiana rodzaju pyta, Escape zamyka tylko modal
+- [x] 3.9 Dodawanie: pole pliku w kolumnie skanu, lokalny podgląd, „Zmień plik”, zapis otwiera nowe źródło z zachowanymi filtrami
+- [x] 3.10 Usuwanie: lista wpływu, panel zamknięty, filtry i widok zachowane
+- [x] 3.11 Strażnik pyta przy przełączeniu/X/Escape; zmiana filtra nie zamyka panelu ani nie gubi zmian
+- [x] 3.12 „Potwierdza” otwiera modal osoby nad panelem, zamknięcie zostawia panel
 
 ### Phase 4: Wejścia spoza listy i sprzątanie
 

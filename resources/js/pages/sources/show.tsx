@@ -82,10 +82,12 @@ export default function Show({ source, kinds, recordTypes, confirms }: Props) {
                 </div>
 
                 <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
-                    <SourceViewer
-                        src={SourceController.file.url(source.id)}
-                        alt={source.display_name}
-                    />
+                    <div className="h-[calc(100vh-12rem)]">
+                        <SourceViewer
+                            src={SourceController.file.url(source.id)}
+                            alt={source.display_name}
+                        />
+                    </div>
 
                     <SourceDetails
                         source={source}

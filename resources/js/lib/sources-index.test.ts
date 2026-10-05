@@ -5,6 +5,7 @@ import {
     eventsLabel,
     filterSources,
     sortSources,
+    withSourcesQuery,
 } from './sources-index';
 
 function source(id: number, overrides: Partial<IndexSource> = {}): IndexSource {
@@ -71,6 +72,41 @@ describe('buildSourcesQuery', () => {
         expect(buildSourcesQuery({ view: 'galeria', sort: 'nazwa' })).toEqual(
             {},
         );
+    });
+});
+
+describe('withSourcesQuery', () => {
+    it('keeps the panel key, whether an id or new', () => {
+        expect(withSourcesQuery('/sources?source=5', { q: 'lipnica' })).toBe(
+            '/sources?source=5&q=lipnica',
+        );
+        expect(withSourcesQuery('/sources?source=new', { kind: 'akty' })).toBe(
+            '/sources?source=new&kind=akty',
+        );
+    });
+
+    it('removes sort when going back to the gallery', () => {
+        expect(
+            withSourcesQuery('/sources?view=tabela&sort=nazwa&source=5', {
+                view: 'galeria',
+                sort: 'nazwa',
+            }),
+        ).toBe('/sources?source=5');
+    });
+
+    it('removes a blank search', () => {
+        expect(withSourcesQuery('/sources?q=abc&source=5', { q: '  ' })).toBe(
+            '/sources?source=5',
+        );
+    });
+
+    it('leaves other parameters and the hash untouched', () => {
+        expect(
+            withSourcesQuery('/sources?person=7&source=5#top', {
+                q: 'x',
+                kind: 'wszystkie',
+            }),
+        ).toBe('/sources?person=7&source=5&q=x#top');
     });
 });
 

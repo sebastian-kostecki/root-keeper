@@ -1,13 +1,25 @@
 import { Link } from '@inertiajs/react';
 import { LinkIcon } from 'lucide-react';
-import SourceController from '@/actions/App/Http/Controllers/SourceController';
+import type { MouseEvent } from 'react';
 import { SourceThumbnail } from '@/components/sources/source-thumbnail';
 import { formatSourceSummary } from '@/lib/source-description';
 import { eventsLabel } from '@/lib/sources-index';
+import { panelVisitOptions } from '@/lib/side-panel-url';
+import { cn } from '@/lib/utils';
 import type { IndexSource } from '@/types';
 
 /** View A: cards in the server order (newest first); the gallery does not re-sort. */
-export function SourcesGallery({ sources }: { sources: IndexSource[] }) {
+export function SourcesGallery({
+    sources,
+    openId,
+    hrefFor,
+    onOpen,
+}: {
+    sources: IndexSource[];
+    openId: number | null;
+    hrefFor: (id: number) => string;
+    onOpen: (event: MouseEvent<Element>, id: number) => void;
+}) {
     return (
         <ul className="grid grid-cols-2 gap-4 lg:grid-cols-3 xl:grid-cols-4">
             {sources.map((source) => {
@@ -16,8 +28,19 @@ export function SourcesGallery({ sources }: { sources: IndexSource[] }) {
                 return (
                     <li key={source.id} className="min-w-0">
                         <Link
-                            href={SourceController.show(source.id)}
-                            className="bg-card hover:bg-accent/50 focus-visible:ring-ring/50 flex h-full min-w-0 flex-col overflow-hidden rounded-xl border shadow-sm transition-colors outline-none focus-visible:ring-[3px]"
+                            href={hrefFor(source.id)}
+                            {...panelVisitOptions}
+                            aria-current={
+                                source.id === openId ? 'true' : undefined
+                            }
+                            data-state={
+                                source.id === openId ? 'selected' : undefined
+                            }
+                            onClick={(event) => onOpen(event, source.id)}
+                            className={cn(
+                                'bg-card hover:bg-accent/50 focus-visible:ring-ring/50 flex h-full min-w-0 flex-col overflow-hidden rounded-xl border shadow-sm transition-colors outline-none focus-visible:ring-[3px]',
+                                'data-[state=selected]:border-primary data-[state=selected]:bg-accent data-[state=selected]:ring-primary data-[state=selected]:ring-2',
+                            )}
                         >
                             <SourceThumbnail
                                 source={source}

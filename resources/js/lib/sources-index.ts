@@ -24,6 +24,8 @@ export type SourcesFilters = {
 
 export type SourcesCounts = Record<SourcesKindFilter, number>;
 
+const BASE_URL = 'http://localhost';
+
 const DEFAULT_SORT: SourcesSort = '-dodano';
 
 const collator = new Intl.Collator('pl', { numeric: true });
@@ -67,6 +69,27 @@ export function buildSourcesQuery(
     }
 
     return query;
+}
+
+/** The URL with only the filter keys replaced (defaults removed); panel keys, other parameters and hash stay. */
+export function withSourcesQuery(
+    url: string,
+    filters: Partial<SourcesFilters>,
+): string {
+    const parsed = new URL(url, BASE_URL);
+    const query = buildSourcesQuery(filters);
+
+    for (const key of ['q', 'kind', 'view', 'sort']) {
+        const value = query[key];
+
+        if (value === undefined) {
+            parsed.searchParams.delete(key);
+        } else {
+            parsed.searchParams.set(key, value);
+        }
+    }
+
+    return `${parsed.pathname}${parsed.search}${parsed.hash}`;
 }
 
 function matchesSearch(source: IndexSource, words: string[]): boolean {

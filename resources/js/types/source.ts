@@ -40,3 +40,9 @@ export type SourceConfirmation = {
         display_name: string;
     };
 };
+
+/** The `sourcePanel` prop of `/sources`: null when closed, `source: null` for „Nowe źródło”. */
+export type SourcePanelProps = {
+    source: Source | null;
+    confirms: SourceConfirmation[];
+} | null;

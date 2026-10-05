@@ -1,22 +1,26 @@
 import { TransformComponent, TransformWrapper } from 'react-zoom-pan-pinch';
 import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 
 type Props = {
     src: string;
     alt: string;
+    className?: string;
 };
 
-export function SourceViewer({ src, alt }: Props) {
+/** Fills the height of its parent; give the parent a definite height. Zoom starts fitted for every `src`. */
+export function SourceViewer({ src, alt, className }: Props) {
     return (
         <TransformWrapper
+            key={src}
             initialScale={1}
             minScale={0.5}
             maxScale={32}
             centerOnInit
         >
             {({ zoomIn, zoomOut, resetTransform }) => (
-                <div className="space-y-2">
-                    <div className="flex gap-2">
+                <div className={cn('flex h-full flex-col gap-2', className)}>
+                    <div className="flex shrink-0 gap-2">
                         <Button
                             type="button"
                             variant="outline"
@@ -43,7 +47,7 @@ export function SourceViewer({ src, alt }: Props) {
                         </Button>
                     </div>
 
-                    <div className="bg-muted h-[calc(100vh-12rem)] w-full overflow-hidden rounded-md">
+                    <div className="bg-muted min-h-0 w-full flex-1 overflow-hidden rounded-md">
                         <TransformComponent
                             wrapperStyle={{ width: '100%', height: '100%' }}
                             contentStyle={{ width: '100%', height: '100%' }}

@@ -1,11 +1,11 @@
-import { Head, router } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import { LayoutGridIcon, TableIcon } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
-import SourceController from '@/actions/App/Http/Controllers/SourceController';
+import { DiscardChangesDialog } from '@/components/discard-changes-dialog';
 import Heading from '@/components/heading';
 import { SearchField } from '@/components/search-field';
 import { SegmentedToggle } from '@/components/segmented-toggle';
-import { SourceCreateDialog } from '@/components/sources/source-create-dialog';
+import { SourcePanel } from '@/components/sources/source-panel';
 import {
     SourcesEmptyKind,
     SourcesEmptyTree,
@@ -14,8 +14,11 @@ import {
 import { SourcesGallery } from '@/components/sources/sources-gallery';
 import { SourcesTable } from '@/components/sources/sources-table';
 import { Button } from '@/components/ui/button';
+import { useSidePanelNavigation } from '@/hooks/use-side-panel-navigation';
+import { useUnsavedChangesGuard } from '@/hooks/use-unsaved-changes-guard';
 import { pluralPhrase } from '@/lib/plural';
-import { buildSourcesQuery, filterSources } from '@/lib/sources-index';
+import { panelVisitOptions } from '@/lib/side-panel-url';
+import { filterSources, withSourcesQuery } from '@/lib/sources-index';
 import type {
     SourcesFilters,
     SourcesKindFilter,
@@ -27,6 +30,7 @@ import type {
     BreadcrumbItem,
     IndexSource,
     SourceKind,
+    SourcePanelProps,
     SourceRecordType,
 } from '@/types';
 
@@ -35,6 +39,7 @@ type Props = {
     kinds: { value: SourceKind; label: string }[];
     recordTypes: { value: SourceRecordType; label: string }[];
     filters: SourcesFilters;
+    sourcePanel: SourcePanelProps;
 };
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -44,19 +49,36 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
-export default function Index({ sources, kinds, recordTypes, filters }: Props) {
+export default function Index({
+    sources,
+    kinds,
+    recordTypes,
+    filters,
+    sourcePanel,
+}: Props) {
     const [search, setSearch] = useState(filters.q);
     const lastVisitedQuery = useRef(filters.q);
     const trimmedSearch = search.trim();
+    const { hrefFor, open, close } = useSidePanelNavigation('source');
 
-    /** Every /sources visit goes through `buildSourcesQuery`, so no control drops another's parameter. */
+    const openId = sourcePanel?.source?.id ?? null;
+    /** Panel key of the record shown now: its id, 'new', or null when the panel is closed. */
+    const openKey =
+        sourcePanel === null ? null : (sourcePanel.source?.id ?? 'new');
+    const { setIsDirty, guard, guardLink, discardDialog } =
+        useUnsavedChangesGuard({ openKey, open });
+
+    /** Every /sources visit goes through `withSourcesQuery`, so no control drops another's parameter or the panel key. */
     const visit = (next: Partial<SourcesFilters>, replace = false) => {
         const merged = { ...filters, q: trimmedSearch, ...next };
 
         lastVisitedQuery.current = merged.q;
 
+        // From the live address, not a render-time copy: the debounced visit may fire after a panel opened.
+        const { pathname, search: liveSearch, hash } = window.location;
+
         router.get(
-            SourceController.index({ query: buildSourcesQuery(merged) }),
+            withSourcesQuery(`${pathname}${liveSearch}${hash}`, merged),
             {},
             {
                 preserveState: true,
@@ -117,7 +139,17 @@ export default function Index({ sources, kinds, recordTypes, filters }: Props) {
               ? 'Brak wyników'
               : `Znaleziono: ${committedCount} ${pluralPhrase(committedCount, 'źródło', 'źródła', 'źródeł')}`;
 
-    const createTrigger = <Button>Dodaj źródło</Button>;
+    const addButton = (
+        <Button asChild>
+            <Link
+                href={hrefFor('new')}
+                {...panelVisitOptions}
+                onClick={(event) => guardLink(event, 'new')}
+            >
+                Dodaj źródło
+            </Link>
+        </Button>
+    );
 
     return (
         <>
@@ -131,11 +163,7 @@ export default function Index({ sources, kinds, recordTypes, filters }: Props) {
                         description="Akty, zdjęcia nagrobków i inne dokumenty Twojego drzewa"
                     />
 
-                    <SourceCreateDialog
-                        kinds={kinds}
-                        recordTypes={recordTypes}
-                        trigger={createTrigger}
-                    />
+                    {addButton}
                 </div>
 
                 {sources.length > 0 && (
@@ -217,15 +245,7 @@ export default function Index({ sources, kinds, recordTypes, filters }: Props) {
                 </p>
 
                 {sources.length === 0 ? (
-                    <SourcesEmptyTree
-                        action={
-                            <SourceCreateDialog
-                                kinds={kinds}
-                                recordTypes={recordTypes}
-                                trigger={createTrigger}
-                            />
-                        }
-                    />
+                    <SourcesEmptyTree action={addButton} />
                 ) : visible.length === 0 ? (
                     counts.wszystkie > 0 && filters.kind !== 'wszystkie' ? (
                         <SourcesEmptyKind
@@ -244,13 +264,32 @@ export default function Index({ sources, kinds, recordTypes, filters }: Props) {
                         sources={visible}
                         sort={filters.sort}
                         onSortChange={(sort: SourcesSort) => visit({ sort })}
-                        kinds={kinds}
-                        recordTypes={recordTypes}
+                        openId={openId}
+                        hrefFor={hrefFor}
+                        onOpen={guardLink}
                     />
                 ) : (
-                    <SourcesGallery sources={visible} />
+                    <SourcesGallery
+                        sources={visible}
+                        openId={openId}
+                        hrefFor={hrefFor}
+                        onOpen={guardLink}
+                    />
                 )}
             </div>
+
+            {sourcePanel !== null && (
+                <SourcePanel
+                    source={sourcePanel.source}
+                    confirms={sourcePanel.confirms}
+                    kinds={kinds}
+                    recordTypes={recordTypes}
+                    onRequestClose={() => guard(close)}
+                    onDirtyChange={setIsDirty}
+                />
+            )}
+
+            <DiscardChangesDialog {...discardDialog} />
         </>
     );
 }
