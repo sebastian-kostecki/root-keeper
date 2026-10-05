@@ -216,6 +216,7 @@ return [
         'items' => 'elementy',
         'key' => 'klucz',
         'last_name' => 'nazwisko',
+        'maiden_name' => 'nazwisko rodowe',
         'lesson' => 'lekcja',
         'line_address_1' => 'linia adresu 1',
         'line_address_2' => 'linia adresu 2',

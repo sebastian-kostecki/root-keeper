@@ -21,6 +21,7 @@ class UpdatePerson
      * @param  array{
      *     first_name?: string|null,
      *     last_name?: string|null,
+     *     maiden_name?: string|null,
      *     gender?: string|null,
      *     residence?: string|null,
      *     religion?: string|null,
@@ -51,6 +52,7 @@ class UpdatePerson
             $person->update([
                 'first_name' => $data['first_name'] ?? null,
                 'last_name' => $data['last_name'] ?? null,
+                'maiden_name' => $data['maiden_name'] ?? null,
                 'gender' => $data['gender'] ?? null,
                 'residence' => $data['residence'] ?? null,
                 'religion' => $data['religion'] ?? null,

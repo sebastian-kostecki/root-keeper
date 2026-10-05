@@ -78,6 +78,17 @@ export function PersonalFields({
                     />
                     <InputError message={errors.last_name} />
                 </div>
+
+                <div className="grid gap-2">
+                    <Label htmlFor="maiden_name">Nazwisko rodowe</Label>
+                    <Input
+                        id="maiden_name"
+                        name="maiden_name"
+                        maxLength={255}
+                        defaultValue={person?.maiden_name ?? undefined}
+                    />
+                    <InputError message={errors.maiden_name} />
+                </div>
             </div>
 
             <div className="grid gap-2">

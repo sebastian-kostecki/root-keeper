@@ -45,7 +45,8 @@ class PersonController extends Controller
 
                             $builder->where(fn ($builder) => $builder
                                 ->whereLike('first_name', $pattern)
-                                ->orWhereLike('last_name', $pattern));
+                                ->orWhereLike('last_name', $pattern)
+                                ->orWhereLike('maiden_name', $pattern));
                         }
                     })
                     ->orderByRaw('last_name is null')

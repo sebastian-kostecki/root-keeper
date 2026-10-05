@@ -74,7 +74,7 @@ test("tree-slot-child: a child added in the second union has that union's partne
     const addChild = slotDialog(page, 'dziecko', secondPair);
     await addChild.getByRole('button', { name: 'Nowa osoba' }).click();
     await addChild.getByLabel('Imię').fill('Nowe');
-    await addChild.getByLabel('Nazwisko').fill(suffix);
+    await addChild.getByLabel('Nazwisko', { exact: true }).fill(suffix);
     await addChild.getByRole('button', { name: 'Zapisz' }).click();
     await expect(addChild).toBeHidden();
 

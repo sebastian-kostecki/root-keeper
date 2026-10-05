@@ -17,6 +17,7 @@ export type PartialDatePayload = {
 export type PersonPayload = {
     first_name: string | null;
     last_name: string | null;
+    maiden_name: string | null;
     gender: string | null;
     residence: string | null;
     religion: string | null;
@@ -71,6 +72,7 @@ export function personFormToPayload(personForm: PersonFormData): PersonPayload {
     const payload: PersonPayload = {
         first_name: personForm.first_name,
         last_name: personForm.last_name,
+        maiden_name: personForm.maiden_name,
         gender: personForm.gender,
         residence: personForm.residence,
         religion: personForm.religion,
@@ -99,6 +101,7 @@ export function mergeSectionIntoPayload(
     if (section === 'personal') {
         payload.first_name = blankToNull(values.first_name);
         payload.last_name = blankToNull(values.last_name);
+        payload.maiden_name = blankToNull(values.maiden_name);
         payload.gender = blankToNull(values.gender);
         payload.religion = blankToNull(values.religion);
         payload.residence = blankToNull(values.residence);

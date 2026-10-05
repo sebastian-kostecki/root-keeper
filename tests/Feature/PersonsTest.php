@@ -1162,3 +1162,85 @@ test('editing a parent without changing their sex is allowed even when their chi
 
     expect($person->fresh()->first_name)->toBe('Janusz');
 });
+
+test('store saves a maiden name and the display name reads "z d."', function () {
+    $user = User::factory()->create();
+
+    $this->actingAs($user)->post(route('persons.store'), [
+        'first_name' => 'Anna',
+        'last_name' => 'Kowalska',
+        'maiden_name' => 'Nowak',
+    ])->assertSessionHasNoErrors();
+
+    $person = $user->tree->people()->firstOrFail();
+
+    expect($person->maiden_name)->toBe('Nowak');
+
+    $this->actingAs($user)->get(route('persons.index'))->assertInertia(fn ($page) => $page
+        ->where('persons.0.display_name', 'Anna Kowalska z d. Nowak')
+        ->where('persons.0.maiden_name', 'Nowak'));
+});
+
+test('store rejects a maiden name without a last name with a polish message', function () {
+    $user = User::factory()->create();
+
+    $response = $this->actingAs($user)->post(route('persons.store'), [
+        'first_name' => 'Anna',
+        'last_name' => '',
+        'maiden_name' => 'Nowak',
+    ]);
+
+    $response->assertInvalid('maiden_name');
+    expect($response->getSession()->get('errors')->getBag('default')->first('maiden_name'))
+        ->toBe('Gdy znasz tylko jedno nazwisko, wpisz je w pole „Nazwisko”.');
+    expect($user->tree->people()->count())->toBe(0);
+});
+
+test('display name omits "z d." when the maiden name equals the last name ignoring case', function () {
+    $user = User::factory()->create();
+    Person::factory()->for($user->tree)->create([
+        'first_name' => 'Anna',
+        'last_name' => 'Nowak',
+        'maiden_name' => 'NOWAK',
+    ]);
+
+    $this->actingAs($user)->get(route('persons.index'))->assertInertia(fn ($page) => $page
+        ->where('persons.0.display_name', 'Anna Nowak'));
+});
+
+test('persons index finds a person by maiden name, also combined with another column', function () {
+    $user = User::factory()->create();
+    $anna = Person::factory()->for($user->tree)->create([
+        'first_name' => 'Anna',
+        'last_name' => 'Kowalska',
+        'maiden_name' => 'Nowak',
+    ]);
+    Person::factory()->for($user->tree)->create(['first_name' => 'Jan', 'last_name' => 'Wiśniewski']);
+
+    foreach (['Nowak', 'Anna Nowak'] as $query) {
+        $this->actingAs($user)->get(route('persons.index', ['q' => $query]))->assertInertia(fn ($page) => $page
+            ->has('persons', 1)
+            ->where('persons.0.id', $anna->id));
+    }
+});
+
+test('update keeps the maiden name when another section is saved with the form payload', function () {
+    $user = User::factory()->create();
+    $person = Person::factory()->for($user->tree)->create([
+        'first_name' => 'Anna',
+        'last_name' => 'Kowalska',
+        'maiden_name' => 'Nowak',
+    ]);
+    $birth = Event::factory()->for($user->tree)->birth()->withoutDate()->create();
+    $birth->participants()->attach($person, ['role' => ParticipantRole::Subject]);
+
+    $this->actingAs($user)->put(route('persons.update', $person), [
+        'first_name' => 'Anna',
+        'last_name' => 'Kowalska',
+        'maiden_name' => 'Nowak',
+        'birth' => ['year' => 1950],
+    ])->assertSessionHasNoErrors();
+
+    expect($person->refresh()->maiden_name)->toBe('Nowak');
+    expect($birth->refresh()->date_year)->toBe(1950);
+});

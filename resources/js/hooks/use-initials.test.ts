@@ -7,6 +7,10 @@ describe('getInitials', () => {
         expect(getInitials('Anna Maria Nowak')).toBe('AN');
     });
 
+    it('ignores the trailing maiden name suffix', () => {
+        expect(getInitials('Anna Kowalska z d. Nowak')).toBe('AK');
+    });
+
     it('uses one letter for a single word', () => {
         expect(getInitials('jan')).toBe('J');
     });

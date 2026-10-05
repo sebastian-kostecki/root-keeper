@@ -18,13 +18,14 @@ use Illuminate\Support\Carbon;
  * @property int $tree_id
  * @property string|null $first_name
  * @property string|null $last_name
+ * @property string|null $maiden_name
  * @property Gender|null $gender
  * @property string|null $residence
  * @property Religion|null $religion
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
-#[Fillable(['tree_id', 'first_name', 'last_name', 'gender', 'residence', 'religion'])]
+#[Fillable(['tree_id', 'first_name', 'last_name', 'maiden_name', 'gender', 'residence', 'religion'])]
 class Person extends Model
 {
     /** @use HasFactory<PersonFactory> */
@@ -101,6 +102,12 @@ class Person extends Model
 
     public function displayName(): string
     {
-        return trim(($this->first_name ?? 'NN').' '.($this->last_name ?? 'NN'));
+        $name = trim(($this->first_name ?? 'NN').' '.($this->last_name ?? 'NN'));
+
+        $showsMaidenName = filled($this->last_name)
+            && filled($this->maiden_name)
+            && mb_strtolower($this->last_name) !== mb_strtolower($this->maiden_name);
+
+        return $showsMaidenName ? $name.' z d. '.$this->maiden_name : $name;
     }
 }

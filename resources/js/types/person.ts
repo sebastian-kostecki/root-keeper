@@ -57,6 +57,7 @@ export type Person = {
     id: number;
     first_name: string | null;
     last_name: string | null;
+    maiden_name: string | null;
     display_name: string;
     gender: Gender | null;
     residence: string | null;
@@ -104,6 +105,7 @@ export type PersonFormData = {
     display_name: string;
     first_name: string | null;
     last_name: string | null;
+    maiden_name: string | null;
     gender: string | null;
     residence: string | null;
     religion: string | null;

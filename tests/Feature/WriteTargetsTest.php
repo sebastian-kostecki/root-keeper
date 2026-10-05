@@ -271,7 +271,7 @@ test('editing a person in the preview changes only that person and the birth fac
     $before = databaseRows();
 
     $this->actingAs($user)->put(route('persons.update', $focus), [
-        ...array_intersect_key($form, array_flip(['first_name', 'last_name', 'gender', 'residence', 'religion', 'is_deceased'])),
+        ...array_intersect_key($form, array_flip(['first_name', 'last_name', 'maiden_name', 'gender', 'residence', 'religion', 'is_deceased'])),
         'residence' => 'Nowe Miasto',
         'birth' => $event($form['birth'], ['year' => 1851]),
         'death' => $event($form['death']),

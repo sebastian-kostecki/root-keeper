@@ -41,6 +41,7 @@ type Errors = Record<string, string>;
 const PERSONAL_KEYS = [
     'first_name',
     'last_name',
+    'maiden_name',
     'gender',
     'religion',
     'residence',
@@ -261,6 +262,10 @@ export function OverviewTab({ preview, availableSources }: Props) {
                         <div className="grid gap-3 sm:grid-cols-2">
                             <Field label="Imię" value={person.first_name} />
                             <Field label="Nazwisko" value={person.last_name} />
+                            <Field
+                                label="Nazwisko rodowe"
+                                value={person.maiden_name}
+                            />
                             <Field
                                 label="Zamieszkanie"
                                 value={person.residence}
