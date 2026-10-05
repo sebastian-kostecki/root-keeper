@@ -93,15 +93,17 @@ function SourceGroup({ label, event, availableSources }: GroupProps) {
                                 <div className="flex shrink-0 items-center gap-1">
                                     <Button variant="outline" size="sm" asChild>
                                         <Link
-                                            href={SourceController.show(
-                                                source.id,
-                                            )}
+                                            href={SourceController.index({
+                                                query: { source: source.id },
+                                            })}
                                             onClick={(event) =>
                                                 guardClick(event, () =>
                                                     router.visit(
-                                                        SourceController.show(
-                                                            source.id,
-                                                        ),
+                                                        SourceController.index({
+                                                            query: {
+                                                                source: source.id,
+                                                            },
+                                                        }),
                                                     ),
                                                 )
                                             }

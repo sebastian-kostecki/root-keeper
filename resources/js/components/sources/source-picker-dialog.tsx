@@ -1,7 +1,7 @@
 import { Link, router } from '@inertiajs/react';
 import { useId, useState } from 'react';
 import EventSourceController from '@/actions/App/Http/Controllers/EventSourceController';
-import { index as sourcesIndex } from '@/routes/sources';
+import SourceController from '@/actions/App/Http/Controllers/SourceController';
 import InputError from '@/components/input-error';
 import { SourceThumbnail } from '@/components/sources/source-thumbnail';
 import { Badge } from '@/components/ui/badge';
@@ -154,7 +154,9 @@ export function SourcePickerDialog({
                     <p className="text-muted-foreground text-sm">
                         Nie masz jeszcze żadnych źródeł.{' '}
                         <Link
-                            href={sourcesIndex()}
+                            href={SourceController.index({
+                                query: { source: 'new' },
+                            })}
                             className="text-primary underline-offset-4 hover:underline"
                         >
                             Dodaj źródło

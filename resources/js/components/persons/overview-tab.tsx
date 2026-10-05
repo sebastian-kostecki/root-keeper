@@ -111,13 +111,17 @@ function FactView({ event, parts, availableSources }: FactViewProps) {
                                 className="flex items-center gap-2"
                             >
                                 <Link
-                                    href={SourceController.show(source.id)}
+                                    href={SourceController.index({
+                                        query: { source: source.id },
+                                    })}
                                     onClick={(clickEvent) =>
                                         guardClick(clickEvent, () =>
                                             router.visit(
-                                                SourceController.show(
-                                                    source.id,
-                                                ),
+                                                SourceController.index({
+                                                    query: {
+                                                        source: source.id,
+                                                    },
+                                                }),
                                             ),
                                         )
                                     }

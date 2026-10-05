@@ -446,31 +446,31 @@ Brak migracji danych. Stare zakładki `/sources/{id}` działają dzięki przekie
 
 #### Automated
 
-- [x] 3.1 Vitest (z `withSourcesQuery` i rejestrem paneli): `vendor/bin/sail npm run test:js`
-- [x] 3.2 Format i lint: `vendor/bin/sail npm run check`
-- [x] 3.3 Typy: `vendor/bin/sail npm run types:check`
-- [x] 3.4 Build: `vendor/bin/sail npm run build`
-- [x] 3.5 Testy źródeł nadal przechodzą: `vendor/bin/sail artisan test --compact tests/Feature/SourcesTest.php`
+- [x] 3.1 Vitest (z `withSourcesQuery` i rejestrem paneli): `vendor/bin/sail npm run test:js` — 8215c92
+- [x] 3.2 Format i lint: `vendor/bin/sail npm run check` — 8215c92
+- [x] 3.3 Typy: `vendor/bin/sail npm run types:check` — 8215c92
+- [x] 3.4 Build: `vendor/bin/sail npm run build` — 8215c92
+- [x] 3.5 Testy źródeł nadal przechodzą: `vendor/bin/sail artisan test --compact tests/Feature/SourcesTest.php` — 8215c92
 
 #### Manual
 
-- [x] 3.6 1366 px: skan obok formularza, szerokość skanu zmierzona, powiększanie działa, formularz przewija się niezależnie
-- [x] 3.7 2560 px: panel ok. 72rem, skan zajmuje resztę obok kolumny 20rem
-- [x] 3.8 Edycja: zapis odświeża panel i listę; zmiana rodzaju pyta, Escape zamyka tylko modal
-- [x] 3.9 Dodawanie: pole pliku w kolumnie skanu, lokalny podgląd, „Zmień plik”, zapis otwiera nowe źródło z zachowanymi filtrami
-- [x] 3.10 Usuwanie: lista wpływu, panel zamknięty, filtry i widok zachowane
-- [x] 3.11 Strażnik pyta przy przełączeniu/X/Escape; zmiana filtra nie zamyka panelu ani nie gubi zmian
-- [x] 3.12 „Potwierdza” otwiera modal osoby nad panelem, zamknięcie zostawia panel
+- [x] 3.6 1366 px: skan obok formularza, szerokość skanu zmierzona, powiększanie działa, formularz przewija się niezależnie — 8215c92
+- [x] 3.7 2560 px: panel ok. 72rem, skan zajmuje resztę obok kolumny 20rem — 8215c92
+- [x] 3.8 Edycja: zapis odświeża panel i listę; zmiana rodzaju pyta, Escape zamyka tylko modal — 8215c92
+- [x] 3.9 Dodawanie: pole pliku w kolumnie skanu, lokalny podgląd, „Zmień plik”, zapis otwiera nowe źródło z zachowanymi filtrami — 8215c92
+- [x] 3.10 Usuwanie: lista wpływu, panel zamknięty, filtry i widok zachowane — 8215c92
+- [x] 3.11 Strażnik pyta przy przełączeniu/X/Escape; zmiana filtra nie zamyka panelu ani nie gubi zmian — 8215c92
+- [x] 3.12 „Potwierdza” otwiera modal osoby nad panelem, zamknięcie zostawia panel — 8215c92
 
 ### Phase 4: Wejścia spoza listy i sprzątanie
 
 #### Automated
 
-- [ ] 4.1 Brak odwołań do usuniętych plików i `SourceController.show` w `resources/js` (grep pusty)
-- [ ] 4.2 Format i lint: `vendor/bin/sail npm run check`
-- [ ] 4.3 Typy: `vendor/bin/sail npm run types:check`
-- [ ] 4.4 Build: `vendor/bin/sail npm run build`
-- [ ] 4.5 Testy osób i źródeł: `vendor/bin/sail artisan test --compact tests/Feature/PersonsTest.php tests/Feature/SourcesTest.php`
+- [x] 4.1 Brak odwołań do usuniętych plików i `SourceController.show` w `resources/js` (grep pusty)
+- [x] 4.2 Format i lint: `vendor/bin/sail npm run check`
+- [x] 4.3 Typy: `vendor/bin/sail npm run types:check`
+- [x] 4.4 Build: `vendor/bin/sail npm run build`
+- [x] 4.5 Testy osób i źródeł: `vendor/bin/sail artisan test --compact tests/Feature/PersonsTest.php tests/Feature/SourcesTest.php`
 
 #### Manual
 
