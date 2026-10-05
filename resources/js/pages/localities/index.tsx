@@ -1,6 +1,6 @@
 import { Head, Link, router } from '@inertiajs/react';
 import { useEffect, useRef, useState } from 'react';
-import type { MouseEvent } from 'react';
+import { DiscardChangesDialog } from '@/components/discard-changes-dialog';
 import Heading from '@/components/heading';
 import {
     LocalitiesEmptyTree,
@@ -10,14 +10,8 @@ import { LocalitiesTable } from '@/components/localities/localities-table';
 import { LocalityPanel } from '@/components/localities/locality-panel';
 import { SearchField } from '@/components/search-field';
 import { Button } from '@/components/ui/button';
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogTitle,
-} from '@/components/ui/dialog';
 import { useSidePanelNavigation } from '@/hooks/use-side-panel-navigation';
+import { useUnsavedChangesGuard } from '@/hooks/use-unsaved-changes-guard';
 import {
     filterLocalities,
     sortLocalities,
@@ -46,15 +40,13 @@ export default function Index({ localities, filters, localityPanel }: Props) {
     const lastVisitedQuery = useRef(filters.q);
     const trimmedSearch = search.trim();
     const { hrefFor, open, close } = useSidePanelNavigation('locality');
-    const [isDirty, setIsDirty] = useState(false);
-    const [pendingAction, setPendingAction] = useState<(() => void) | null>(
-        null,
-    );
 
     const openId = localityPanel?.locality?.id ?? null;
     /** Panel key of the record shown now: its id, 'new', or null when the panel is closed. */
     const openKey =
         localityPanel === null ? null : (localityPanel.locality?.id ?? 'new');
+    const { setIsDirty, guard, guardLink, discardDialog } =
+        useUnsavedChangesGuard({ openKey, open });
 
     const visit = (q: string, replace = false) => {
         lastVisitedQuery.current = q;
@@ -94,46 +86,6 @@ export default function Index({ localities, filters, localityPanel }: Props) {
         return () => clearTimeout(timeoutId);
         // visit only reads refs and the router; the search drives the effect.
     }, [search]);
-
-    /** Run the action now, or after the user agrees to drop the unsaved changes. */
-    const guard = (action: () => void) => {
-        if (isDirty) {
-            setPendingAction(() => action);
-
-            return;
-        }
-
-        action();
-    };
-
-    const guardLink = (event: MouseEvent<Element>, id: number | string) => {
-        // Let the browser handle modified clicks (new tab) as usual.
-        if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {
-            return;
-        }
-
-        // The record is already open: nothing to switch to, and the form keeps its changes.
-        if (id === openKey) {
-            event.preventDefault();
-
-            return;
-        }
-
-        if (!isDirty) {
-            return;
-        }
-
-        event.preventDefault();
-        guard(() => open(id));
-    };
-
-    const discard = () => {
-        const action = pendingAction;
-
-        setPendingAction(null);
-        setIsDirty(false);
-        action?.();
-    };
 
     const visible = sortLocalities(filterLocalities(localities, trimmedSearch));
     const committedCount = filterLocalities(localities, filters.q).length;
@@ -216,32 +168,7 @@ export default function Index({ localities, filters, localityPanel }: Props) {
                 />
             )}
 
-            <Dialog
-                open={pendingAction !== null}
-                onOpenChange={(next) => {
-                    if (!next) {
-                        setPendingAction(null);
-                    }
-                }}
-            >
-                <DialogContent>
-                    <DialogTitle>Odrzucić niezapisane zmiany?</DialogTitle>
-                    <DialogDescription>
-                        Zmiany wprowadzone w panelu zostaną utracone.
-                    </DialogDescription>
-                    <DialogFooter>
-                        <Button
-                            variant="outline"
-                            onClick={() => setPendingAction(null)}
-                        >
-                            Wróć do edycji
-                        </Button>
-                        <Button variant="destructive" onClick={discard}>
-                            Odrzuć
-                        </Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
+            <DiscardChangesDialog {...discardDialog} />
         </>
     );
 }

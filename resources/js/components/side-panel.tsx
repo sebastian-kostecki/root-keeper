@@ -1,20 +1,27 @@
 import { XIcon } from 'lucide-react';
 import {
     createContext,
+    useCallback,
     useContext,
     useEffect,
     useId,
+    useMemo,
     useRef,
     useState,
 } from 'react';
-import type { ReactNode } from 'react';
+import type { ReactNode, RefObject } from 'react';
 import { createPortal } from 'react-dom';
 import { Button } from '@/components/ui/button';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
 
 type SidePanelSlotContextValue = {
     host: HTMLElement | null;
     setHost: (host: HTMLElement | null) => void;
+    /** Page content behind the panel; it is made `inert` while a full-screen panel is open. */
+    contentRef: RefObject<HTMLElement | null>;
+    /** Marks a panel as mounted. Returns the cleanup, which lifts `inert` synchronously. */
+    registerPanel: () => () => void;
 };
 
 const SidePanelSlotContext = createContext<SidePanelSlotContextValue | null>(
@@ -23,12 +30,50 @@ const SidePanelSlotContext = createContext<SidePanelSlotContextValue | null>(
 
 export function SidePanelSlotProvider({ children }: { children: ReactNode }) {
     const [host, setHost] = useState<HTMLElement | null>(null);
+    const contentRef = useRef<HTMLElement | null>(null);
+    const openPanelsRef = useRef(0);
+    const isMobile = useIsMobile();
+    const isMobileRef = useRef(isMobile);
+
+    // Written to the DOM directly, not through a prop: a panel's cleanup must lift
+    // `inert` before it restores focus, and a state update would land one render too late.
+    const syncInert = useCallback(() => {
+        if (contentRef.current !== null) {
+            contentRef.current.inert =
+                openPanelsRef.current > 0 && isMobileRef.current;
+        }
+    }, []);
+
+    useEffect(() => {
+        isMobileRef.current = isMobile;
+        syncInert();
+    }, [isMobile, syncInert]);
+
+    const registerPanel = useCallback(() => {
+        openPanelsRef.current += 1;
+        syncInert();
+
+        return () => {
+            openPanelsRef.current -= 1;
+            syncInert();
+        };
+    }, [syncInert]);
+
+    const value = useMemo(
+        () => ({ host, setHost, contentRef, registerPanel }),
+        [host, registerPanel],
+    );
 
     return (
-        <SidePanelSlotContext.Provider value={{ host, setHost }}>
+        <SidePanelSlotContext.Provider value={value}>
             {children}
         </SidePanelSlotContext.Provider>
     );
+}
+
+/** Ref for the page content element that sits behind a full-screen panel. */
+export function usePageContentRef(): RefObject<HTMLElement | null> {
+    return useSidePanelSlot().contentRef;
 }
 
 function useSidePanelSlot(): SidePanelSlotContextValue {
@@ -94,8 +139,11 @@ function SidePanelView({
     const rootRef = useRef<HTMLElement>(null);
     const headingRef = useRef<HTMLHeadingElement>(null);
     const previousFocusRef = useRef<HTMLElement | null>(null);
+    const { registerPanel } = useSidePanelSlot();
 
     useEffect(() => {
+        const unregister = registerPanel();
+
         // StrictMode runs effects twice in dev: remember only on the first run,
         // otherwise the second run would remember the panel heading.
         if (previousFocusRef.current === null) {
@@ -109,6 +157,9 @@ function SidePanelView({
         const root = rootRef.current;
 
         return () => {
+            // Before focus() below: an element inside `inert` content cannot take focus.
+            unregister();
+
             const previous = previousFocusRef.current;
             const active = document.activeElement;
             const focusIsFree =
@@ -122,7 +173,7 @@ function SidePanelView({
                 previous.focus({ preventScroll: true });
             }
         };
-    }, []);
+    }, [registerPanel]);
 
     useEffect(() => {
         headingRef.current?.focus({ preventScroll: true });

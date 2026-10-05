@@ -1,6 +1,6 @@
 import { Form } from '@inertiajs/react';
-import { useEffect } from 'react';
 import LocalityController from '@/actions/App/Http/Controllers/LocalityController';
+import { DirtyReporter } from '@/components/dirty-reporter';
 import InputError from '@/components/input-error';
 import { SidePanel } from '@/components/side-panel';
 import { Button } from '@/components/ui/button';
@@ -17,22 +17,6 @@ type Props = {
     /** Reports whether the form holds unsaved changes. */
     onDirtyChange: (isDirty: boolean) => void;
 };
-
-function DirtyReporter({
-    isDirty,
-    onDirtyChange,
-}: {
-    isDirty: boolean;
-    onDirtyChange: (isDirty: boolean) => void;
-}) {
-    useEffect(() => {
-        onDirtyChange(isDirty);
-    }, [isDirty, onDirtyChange]);
-
-    useEffect(() => () => onDirtyChange(false), [onDirtyChange]);
-
-    return null;
-}
 
 /** Name and description form in the side panel; one component for „Nowa miejscowość” and editing. */
 export function LocalityPanel({

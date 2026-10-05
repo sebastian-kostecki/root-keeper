@@ -1,5 +1,7 @@
 import { Head, Link, setLayoutProps } from '@inertiajs/react';
 import { useState } from 'react';
+import { DirtyReporter } from '@/components/dirty-reporter';
+import { DiscardChangesDialog } from '@/components/discard-changes-dialog';
 import Heading from '@/components/heading';
 import { SidePanel } from '@/components/side-panel';
 import { Button } from '@/components/ui/button';
@@ -7,11 +9,11 @@ import {
     Dialog,
     DialogContent,
     DialogDescription,
-    DialogFooter,
     DialogTitle,
     DialogTrigger,
 } from '@/components/ui/dialog';
 import { useSidePanelNavigation } from '@/hooks/use-side-panel-navigation';
+import { useUnsavedChangesGuard } from '@/hooks/use-unsaved-changes-guard';
 import { panelVisitOptions } from '@/lib/side-panel-url';
 import { sidePanel } from '@/routes/dev';
 
@@ -27,30 +29,42 @@ type Props = {
     demoPanel: DemoItem | null;
 };
 
+/** Demo-only checkbox that stands in for a form with unsaved changes. */
+function UnsavedChangesToggle({
+    onDirtyChange,
+}: {
+    onDirtyChange: (isDirty: boolean) => void;
+}) {
+    const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+
+    return (
+        <label className="flex items-center gap-2">
+            <DirtyReporter
+                isDirty={hasUnsavedChanges}
+                onDirtyChange={onDirtyChange}
+            />
+            <input
+                type="checkbox"
+                checked={hasUnsavedChanges}
+                onChange={(event) => setHasUnsavedChanges(event.target.checked)}
+            />
+            Mam niezapisane zmiany
+        </label>
+    );
+}
+
 export default function SidePanelDemo({ items, demoPanel }: Props) {
     setLayoutProps({
         breadcrumbs: [{ title: 'Panel boczny (demo)', href: sidePanel() }],
     });
 
     const { hrefFor, close } = useSidePanelNavigation('demo');
-    const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
-    const [confirmingClose, setConfirmingClose] = useState(false);
+    const { setIsDirty, guard, discardDialog } = useUnsavedChangesGuard({
+        openKey: demoPanel?.id ?? null,
+        open: () => {},
+    });
 
-    const requestClose = () => {
-        if (hasUnsavedChanges) {
-            setConfirmingClose(true);
-
-            return;
-        }
-
-        close();
-    };
-
-    const discardAndClose = () => {
-        setConfirmingClose(false);
-        setHasUnsavedChanges(false);
-        close();
-    };
+    const requestClose = () => guard(close);
 
     const nextItem =
         demoPanel === null
@@ -132,16 +146,7 @@ export default function SidePanelDemo({ items, demoPanel }: Props) {
                             </Button>
                         )}
 
-                        <label className="flex items-center gap-2">
-                            <input
-                                type="checkbox"
-                                checked={hasUnsavedChanges}
-                                onChange={(event) =>
-                                    setHasUnsavedChanges(event.target.checked)
-                                }
-                            />
-                            Mam niezapisane zmiany
-                        </label>
+                        <UnsavedChangesToggle onDirtyChange={setIsDirty} />
 
                         <Dialog>
                             <DialogTrigger asChild>
@@ -158,31 +163,7 @@ export default function SidePanelDemo({ items, demoPanel }: Props) {
                         </Dialog>
                     </div>
 
-                    <Dialog
-                        open={confirmingClose}
-                        onOpenChange={setConfirmingClose}
-                    >
-                        <DialogContent>
-                            <DialogTitle>Porzucić zmiany?</DialogTitle>
-                            <DialogDescription>
-                                Niezapisane zmiany w panelu zostaną utracone.
-                            </DialogDescription>
-                            <DialogFooter>
-                                <Button
-                                    variant="outline"
-                                    onClick={() => setConfirmingClose(false)}
-                                >
-                                    Wróć do edycji
-                                </Button>
-                                <Button
-                                    variant="destructive"
-                                    onClick={discardAndClose}
-                                >
-                                    Porzuć zmiany
-                                </Button>
-                            </DialogFooter>
-                        </DialogContent>
-                    </Dialog>
+                    <DiscardChangesDialog {...discardDialog} />
                 </SidePanel>
             )}
         </>
