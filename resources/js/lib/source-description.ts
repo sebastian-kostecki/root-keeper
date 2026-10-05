@@ -1,12 +1,16 @@
 import type { Source, SourceKind } from '@/types';
 
-type CardFields = Pick<Source, 'record_type_label' | 'year' | 'provenance'>;
+type CardFields = Pick<
+    Source,
+    'record_type_label' | 'year' | 'archive' | 'parish_label'
+>;
 
-/** The „typ · rok” line of a source card, or null when neither is set. */
+/** The „typ · rok · parafia” line of a source card, or null when none is set. */
 export function formatSourceMeta(source: CardFields): string | null {
     const parts = [
         source.record_type_label,
         source.year === null ? null : String(source.year),
+        source.parish_label,
     ].filter((part): part is string => part !== null && part !== '');
 
     return parts.length > 0 ? parts.join(' · ') : null;
@@ -16,34 +20,44 @@ export function formatSourceMeta(source: CardFields): string | null {
 export function showsUploadDate(source: CardFields): boolean {
     return (
         formatSourceMeta(source) === null &&
-        (source.provenance === null || source.provenance === '')
+        (source.archive === null || source.archive === '')
     );
 }
 
 export type ErasedField = {
-    field: 'record_type' | 'entry_number';
+    field: 'record_type' | 'entry_number' | 'parish_id';
     label: string;
     value: string;
 };
 
 type StoredRecord = Pick<
     Source,
-    'kind' | 'record_type' | 'record_type_label' | 'entry_number'
+    | 'kind'
+    | 'record_type'
+    | 'record_type_label'
+    | 'entry_number'
+    | 'parish_id'
+    | 'parish_label'
 >;
 
 const present = (value: unknown): value is string =>
     typeof value === 'string' && value !== '';
 
 /**
- * The akt-only fields that switching the kind would erase: typ and numer wpisu,
+ * The akt-only fields that switching the kind would erase: typ, parafia and numer wpisu,
  * stored or typed. A stored value counts even when it was cleared in the open
  * form. Empty unless an akt metrykalny is changed to another kind.
  */
 export function erasedRecordFields(
     source: StoredRecord,
     selectedKind: SourceKind | '',
-    formValues: { record_type?: unknown; entry_number?: unknown },
+    formValues: {
+        record_type?: unknown;
+        entry_number?: unknown;
+        parish_id?: unknown;
+    },
     recordTypes: { value: string; label: string }[] = [],
+    parishes: { id: number; label: string }[] = [],
 ): ErasedField[] {
     if (
         source.kind !== 'metrical_record' ||
@@ -64,6 +78,24 @@ export function erasedRecordFields(
             value;
 
         erased.push({ field: 'record_type', label: 'Typ aktu', value: label });
+    }
+
+    const typedParish = formValues.parish_id;
+
+    if (present(typedParish) || source.parish_id !== null) {
+        const chosen = present(typedParish)
+            ? parishes.find((parish) => String(parish.id) === typedParish)
+            : undefined;
+        const storedId =
+            source.parish_id === null ? null : String(source.parish_id);
+        const label =
+            chosen?.label ??
+            (!present(typedParish) || typedParish === storedId
+                ? source.parish_label
+                : null) ??
+            (present(typedParish) ? typedParish : '');
+
+        erased.push({ field: 'parish_id', label: 'Parafia', value: label });
     }
 
     const typedNumber = formValues.entry_number;
@@ -87,19 +119,21 @@ type DescriptionFields = Pick<
     | 'record_type'
     | 'entry_number'
     | 'year'
-    | 'provenance'
+    | 'archive'
+    | 'parish_id'
     | 'url'
     | 'note'
 >;
 
-/** A source is undescribed only when all seven description columns are null; the kind does not count. */
+/** A source is undescribed only when all description columns are null; the kind does not count. */
 export function isUndescribed(source: DescriptionFields): boolean {
     return (
         source.name === null &&
         source.record_type === null &&
         source.entry_number === null &&
         source.year === null &&
-        source.provenance === null &&
+        source.archive === null &&
+        source.parish_id === null &&
         source.url === null &&
         source.note === null
     );
@@ -133,7 +167,7 @@ function formatUploadDate(uploadedAt: string): string | null {
           });
 }
 
-/** „akt urodzenia · 1878 · nr 47”; ends with „dodano {date}” when the upload date is shown. */
+/** „akt urodzenia · 1878 · nr 47 · parafia”; ends with „dodano {date}” when the upload date is shown. */
 export function formatSourceSummary(source: SummaryFields): string {
     const parts = [sourceKindText(source)];
 
@@ -143,6 +177,10 @@ export function formatSourceSummary(source: SummaryFields): string {
 
     if (present(source.entry_number)) {
         parts.push(`nr ${source.entry_number}`);
+    }
+
+    if (present(source.parish_label)) {
+        parts.push(source.parish_label);
     }
 
     if (showsUploadDate(source)) {

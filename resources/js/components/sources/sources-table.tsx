@@ -96,7 +96,8 @@ export function SourcesTable({
                             onSortChange={onSortChange}
                         />
                         <TableHead>Nr wpisu</TableHead>
-                        <TableHead>Pochodzenie</TableHead>
+                        <TableHead>Parafia</TableHead>
+                        <TableHead>Archiwum</TableHead>
                         <SortableHead<SourcesSortColumn>
                             column="potwierdza"
                             label={columnLabels.potwierdza}
@@ -173,12 +174,24 @@ export function SourcesTable({
                                     )}
                                 </TableCell>
                                 <TableCell className="max-w-48">
-                                    {source.provenance ? (
+                                    {source.parish_label ? (
                                         <span
                                             className="block truncate"
-                                            title={source.provenance}
+                                            title={source.parish_label}
                                         >
-                                            {source.provenance}
+                                            {source.parish_label}
+                                        </span>
+                                    ) : (
+                                        <EmptyCell />
+                                    )}
+                                </TableCell>
+                                <TableCell className="max-w-48">
+                                    {source.archive ? (
+                                        <span
+                                            className="block truncate"
+                                            title={source.archive}
+                                        >
+                                            {source.archive}
                                         </span>
                                     ) : (
                                         <EmptyCell />

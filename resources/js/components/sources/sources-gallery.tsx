@@ -57,12 +57,12 @@ export function SourcesGallery({
                                 <p className="text-muted-foreground text-xs">
                                     {formatSourceSummary(source)}
                                 </p>
-                                {source.provenance && (
+                                {source.archive && (
                                     <p
                                         className="text-muted-foreground truncate text-xs"
-                                        title={source.provenance}
+                                        title={source.archive}
                                     >
-                                        {source.provenance}
+                                        {source.archive}
                                     </p>
                                 )}
                                 <p className="mt-auto flex items-center gap-1 pt-2 text-xs">

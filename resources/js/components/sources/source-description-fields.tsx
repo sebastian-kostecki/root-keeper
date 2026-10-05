@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import type { ReactNode } from 'react';
 import InputError from '@/components/input-error';
+import { NewParishDialog } from '@/components/parishes/new-parish-dialog';
+import { SuggestField } from '@/components/suggest-field';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -12,11 +14,22 @@ import {
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
-import type { Source, SourceKind, SourceRecordType } from '@/types';
+import type {
+    LocalityOption,
+    Parish,
+    ReligionOption,
+    Source,
+    SourceKind,
+    SourceRecordType,
+} from '@/types';
 
 type Props = {
     kind: SourceKind | '';
     recordTypes: { value: SourceRecordType; label: string }[];
+    parishes: Parish[];
+    archives: string[];
+    localities: LocalityOption[];
+    religions: ReligionOption[];
     errors: Partial<Record<string, string>>;
     defaults?: Source;
     /** File name shown as the „Nazwa” placeholder. */
@@ -32,6 +45,10 @@ const NONE = 'none';
 export function SourceDescriptionFields({
     kind,
     recordTypes,
+    parishes,
+    archives,
+    localities,
+    religions,
     errors,
     defaults,
     fileName,
@@ -40,7 +57,30 @@ export function SourceDescriptionFields({
     const [recordType, setRecordType] = useState<string>(
         defaults?.record_type ?? '',
     );
+    const [parishId, setParishId] = useState<number | null>(
+        defaults?.parish_id ?? null,
+    );
+    const [createdParishes, setCreatedParishes] = useState<Parish[]>([]);
+    const [createdLocalities, setCreatedLocalities] = useState<
+        LocalityOption[]
+    >([]);
+    /** Name typed in the parish field while „Nowa parafia” is open; null when it is closed. */
+    const [newParishName, setNewParishName] = useState<string | null>(null);
     const isRecord = kind === 'metrical_record';
+
+    // Parishes and localities added here live in state until the panel props are reloaded.
+    const parishOptions = [
+        ...parishes,
+        ...createdParishes.filter(
+            (created) => !parishes.some((known) => known.id === created.id),
+        ),
+    ];
+    const localityOptions = [
+        ...localities,
+        ...createdLocalities.filter(
+            (created) => !localities.some((known) => known.id === created.id),
+        ),
+    ];
 
     return (
         <>
@@ -82,6 +122,25 @@ export function SourceDescriptionFields({
             </div>
 
             <div className={cn('grid gap-2', !isRecord && 'hidden')}>
+                <Label htmlFor="parish_id">Parafia</Label>
+                <SuggestField
+                    mode="record"
+                    id="parish_id"
+                    name="parish_id"
+                    options={parishOptions}
+                    labelOf={(option) => option.label}
+                    value={parishId}
+                    onChange={setParishId}
+                    onCreate={setNewParishName}
+                    offerCreate="always"
+                    createLabel={(query) => `Dodaj parafię „${query}”`}
+                    placeholder="Wpisz nazwę parafii"
+                    aria-invalid={errors.parish_id ? true : undefined}
+                />
+                <InputError message={errors.parish_id} />
+            </div>
+
+            <div className={cn('grid gap-2', !isRecord && 'hidden')}>
                 <Label htmlFor="entry_number">Numer wpisu</Label>
                 <Input
                     id="entry_number"
@@ -103,16 +162,20 @@ export function SourceDescriptionFields({
             </div>
 
             <div className="grid gap-2">
-                <Label htmlFor="provenance">Pochodzenie</Label>
-                <Input
-                    id="provenance"
-                    name="provenance"
-                    defaultValue={defaults?.provenance ?? ''}
+                <Label htmlFor="archive">Archiwum</Label>
+                <SuggestField
+                    mode="text"
+                    id="archive"
+                    name="archive"
+                    options={archives}
+                    labelOf={(option) => option}
+                    defaultValue={defaults?.archive ?? ''}
+                    aria-invalid={errors.archive ? true : undefined}
                 />
                 <p className="text-muted-foreground text-sm">
-                    Parafia, archiwum, sygnatura
+                    Np. Archiwum Diecezjalne w Tarnowie, sygnatura
                 </p>
-                <InputError message={errors.provenance} />
+                <InputError message={errors.archive} />
             </div>
 
             <div className="grid gap-2">
@@ -141,6 +204,25 @@ export function SourceDescriptionFields({
                 </p>
                 <InputError message={errors.note} />
             </div>
+
+            {newParishName !== null && (
+                <NewParishDialog
+                    initialName={newParishName}
+                    religions={religions}
+                    localities={localityOptions}
+                    onCreated={(parish) => {
+                        setCreatedParishes((current) => [...current, parish]);
+                        setParishId(parish.id);
+                    }}
+                    onLocalityCreated={(locality) =>
+                        setCreatedLocalities((current) => [
+                            ...current,
+                            locality,
+                        ])
+                    }
+                    onClose={() => setNewParishName(null)}
+                />
+            )}
         </>
     );
 }

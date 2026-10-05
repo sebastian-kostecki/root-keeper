@@ -449,38 +449,38 @@ Jeden spec Playwright na ryzyko z roadmapy: dopisanie parafii (z nową miejscowo
 
 #### Automated
 
-- [x] 3.1 Testy Vitest przechodzą
-- [x] 3.2 Typy przechodzą
-- [x] 3.3 Format i lint przechodzą
-- [x] 3.4 Build przechodzi
-- [x] 3.5 Testy Pest strony parafii nadal przechodzą
+- [x] 3.1 Testy Vitest przechodzą — 8344146
+- [x] 3.2 Typy przechodzą — 8344146
+- [x] 3.3 Format i lint przechodzą — 8344146
+- [x] 3.4 Build przechodzi — 8344146
+- [x] 3.5 Testy Pest strony parafii nadal przechodzą — 8344146
 
 #### Manual
 
-- [x] 3.6 Dodanie parafii z wyznaniem i siedzibą na /parishes aktualizuje tabelę i licznik
-- [x] 3.7 „Dodaj miejscowość „…”” w polu siedziby tworzy i wybiera miejscowość
-- [x] 3.8 Klawiatura: strzałki, Enter bez zapisu formularza, Escape zamyka tylko listę
-- [x] 3.9 Duplikat nazwa+wyznanie pokazuje błąd pod nazwą
+- [x] 3.6 Dodanie parafii z wyznaniem i siedzibą na /parishes aktualizuje tabelę i licznik — 8344146
+- [x] 3.7 „Dodaj miejscowość „…”” w polu siedziby tworzy i wybiera miejscowość — 8344146
+- [x] 3.8 Klawiatura: strzałki, Enter bez zapisu formularza, Escape zamyka tylko listę — 8344146
+- [x] 3.9 Duplikat nazwa+wyznanie pokazuje błąd pod nazwą — 8344146
 - [x] 3.10 Lista podpowiedzi mieści się w panelu przy 1366 px i w ciemnym motywie
 
 ### Phase 4: Formularz i lista źródeł
 
 #### Automated
 
-- [ ] 4.1 Testy Vitest przechodzą
-- [ ] 4.2 Typy przechodzą
-- [ ] 4.3 Format i lint przechodzą
-- [ ] 4.4 Build przechodzi
-- [ ] 4.5 Brak odwołań do `provenance` we froncie
-- [ ] 4.6 Istniejące E2E przechodzą
+- [x] 4.1 Testy Vitest przechodzą
+- [x] 4.2 Typy przechodzą
+- [x] 4.3 Format i lint przechodzą
+- [x] 4.4 Build przechodzi
+- [x] 4.5 Brak odwołań do `provenance` we froncie
+- [x] 4.6 Istniejące E2E przechodzą
 
 #### Manual
 
-- [ ] 4.7 Dopisanie parafii z nową siedzibą przez modal zachowuje wpisane pola aktu
-- [ ] 4.8 Archiwum podpowiada wcześniejsze archiwa i zapisuje wpisany tekst
-- [ ] 4.9 Zmiana aktu z parafią na nagrobek pokazuje dialog z parafią
-- [ ] 4.10 Tabela i galeria pokazują parafię i archiwum przy 1366 px
-- [ ] 4.11 Escape w liście parafii nie zamyka panelu źródła
+- [x] 4.7 Dopisanie parafii z nową siedzibą przez modal zachowuje wpisane pola aktu
+- [x] 4.8 Archiwum podpowiada wcześniejsze archiwa i zapisuje wpisany tekst
+- [x] 4.9 Zmiana aktu z parafią na nagrobek pokazuje dialog z parafią
+- [x] 4.10 Tabela i galeria pokazują parafię i archiwum przy 1366 px
+- [x] 4.11 Escape w liście parafii nie zamyka panelu źródła
 
 ### Phase 5: E2E — parafia dopisana w locie w panelu aktu
 

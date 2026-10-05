@@ -8,7 +8,12 @@ import {
     sourceKindText,
 } from './source-description';
 
-const empty = { record_type_label: null, year: null, provenance: null };
+const empty = {
+    record_type_label: null,
+    year: null,
+    archive: null,
+    parish_label: null,
+};
 
 describe('formatSourceMeta', () => {
     it('joins type and year', () => {
@@ -31,24 +36,33 @@ describe('formatSourceMeta', () => {
         ).toBe('urodzenia');
     });
 
-    it('returns nothing when both are empty', () => {
+    it('appends the parish', () => {
+        expect(
+            formatSourceMeta({
+                ...empty,
+                record_type_label: 'urodzenia',
+                year: 1878,
+                parish_label: 'Św. Jana (rzymskokatolickie)',
+            }),
+        ).toBe('urodzenia · 1878 · Św. Jana (rzymskokatolickie)');
+    });
+
+    it('returns nothing when all are empty', () => {
         expect(formatSourceMeta(empty)).toBeNull();
     });
 });
 
 describe('showsUploadDate', () => {
-    it('shows the date when typ, rok and pochodzenie are all empty', () => {
+    it('shows the date when typ, rok and archiwum are all empty', () => {
         expect(showsUploadDate(empty)).toBe(true);
     });
 
-    it('hides the date when any of the three is set', () => {
+    it('hides the date when any of them is set', () => {
         expect(showsUploadDate({ ...empty, year: 1878 })).toBe(false);
         expect(showsUploadDate({ ...empty, record_type_label: 'zgonu' })).toBe(
             false,
         );
-        expect(showsUploadDate({ ...empty, provenance: 'Archiwum' })).toBe(
-            false,
-        );
+        expect(showsUploadDate({ ...empty, archive: 'Archiwum' })).toBe(false);
     });
 });
 
@@ -57,6 +71,8 @@ const akt = {
     record_type: null,
     record_type_label: null,
     entry_number: null,
+    parish_id: null,
+    parish_label: null,
 };
 
 describe('erasedRecordFields', () => {
@@ -107,6 +123,44 @@ describe('erasedRecordFields', () => {
         ]);
     });
 
+    it('lists a stored parish by its label', () => {
+        expect(
+            erasedRecordFields(
+                { ...akt, parish_id: 7, parish_label: 'Św. Jana' },
+                'gravestone',
+                { parish_id: '7' },
+            ),
+        ).toEqual([
+            { field: 'parish_id', label: 'Parafia', value: 'Św. Jana' },
+        ]);
+    });
+
+    it('lists a stored parish cleared in the form', () => {
+        expect(
+            erasedRecordFields(
+                { ...akt, parish_id: 7, parish_label: 'Św. Jana' },
+                'other',
+                { parish_id: '' },
+            ),
+        ).toEqual([
+            { field: 'parish_id', label: 'Parafia', value: 'Św. Jana' },
+        ]);
+    });
+
+    it('lists a parish chosen in the form by its option label', () => {
+        expect(
+            erasedRecordFields(
+                akt,
+                'other',
+                { parish_id: '9' },
+                [],
+                [{ id: 9, label: 'Św. Anny' }],
+            ),
+        ).toEqual([
+            { field: 'parish_id', label: 'Parafia', value: 'Św. Anny' },
+        ]);
+    });
+
     it('lists nothing when the kind is unchanged', () => {
         expect(
             erasedRecordFields(
@@ -135,17 +189,28 @@ describe('isUndescribed', () => {
         record_type: null,
         entry_number: null,
         year: null,
-        provenance: null,
+        archive: null,
+        parish_id: null,
         url: null,
         note: null,
     };
 
-    it('is true when all seven columns are null', () => {
+    it('is true when all columns are null', () => {
         expect(isUndescribed(none)).toBe(true);
     });
 
     it('is false with only a name', () => {
         expect(isUndescribed({ ...none, name: 'Akt chrztu' })).toBe(false);
+    });
+
+    it('is false with only an archive', () => {
+        expect(isUndescribed({ ...none, archive: 'Archiwum w Tarnowie' })).toBe(
+            false,
+        );
+    });
+
+    it('is false with only a parish', () => {
+        expect(isUndescribed({ ...none, parish_id: 3 })).toBe(false);
     });
 
     it('is false with only a note', () => {
@@ -161,7 +226,8 @@ const summarySource = {
     record_type_label: null,
     entry_number: null,
     year: null,
-    provenance: null,
+    archive: null,
+    parish_label: null,
     uploaded_at: '2026-09-24T12:00:00+00:00',
 };
 
@@ -233,12 +299,22 @@ describe('formatSourceSummary', () => {
         ).toBe('akt metrykalny · dodano 24.09.2026');
     });
 
-    it('has no date when pochodzenie is set', () => {
+    it('has no date when archiwum is set', () => {
         expect(
             formatSourceSummary({
                 ...summarySource,
-                provenance: 'Archiwum w Nowym Sączu',
+                archive: 'Archiwum w Nowym Sączu',
             }),
         ).toBe('inne');
+    });
+
+    it('ends with the parish', () => {
+        expect(
+            formatSourceSummary({
+                ...birthAkt,
+                year: 1878,
+                parish_label: 'Św. Jana',
+            }),
+        ).toBe('akt urodzenia · 1878 · Św. Jana');
     });
 });

@@ -317,6 +317,10 @@ export default function Index({
                     confirms={sourcePanel.confirms}
                     kinds={kinds}
                     recordTypes={recordTypes}
+                    parishes={sourcePanel.parishes}
+                    archives={sourcePanel.archives}
+                    localities={sourcePanel.localities}
+                    religions={sourcePanel.religions}
                     onRequestClose={() => guard(close)}
                     onDirtyChange={setIsDirty}
                 />

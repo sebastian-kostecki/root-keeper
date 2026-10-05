@@ -1,3 +1,4 @@
+import type { LocalityOption, Parish, ReligionOption } from './parish';
 import type { PersonEvent } from './person';
 
 export type SourceKind = 'metrical_record' | 'gravestone' | 'other';
@@ -15,7 +16,9 @@ export type Source = {
     record_type_label: string | null;
     entry_number: string | null;
     year: number | null;
-    provenance: string | null;
+    archive: string | null;
+    parish_id: number | null;
+    parish_label: string | null;
     url: string | null;
     note: string | null;
     original_name: string;
@@ -45,4 +48,8 @@ export type SourceConfirmation = {
 export type SourcePanelProps = {
     source: Source | null;
     confirms: SourceConfirmation[];
+    parishes: Parish[];
+    localities: LocalityOption[];
+    archives: string[];
+    religions: ReligionOption[];
 } | null;

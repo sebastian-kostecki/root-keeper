@@ -27,6 +27,9 @@ import { erasedRecordFields } from '@/lib/source-description';
 import type { ErasedField } from '@/lib/source-description';
 import { cn } from '@/lib/utils';
 import type {
+    LocalityOption,
+    Parish,
+    ReligionOption,
     Source,
     SourceConfirmation,
     SourceKind,
@@ -41,6 +44,10 @@ type Props = {
     confirms: SourceConfirmation[];
     kinds: Option<SourceKind>[];
     recordTypes: Option<SourceRecordType>[];
+    parishes: Parish[];
+    archives: string[];
+    localities: LocalityOption[];
+    religions: ReligionOption[];
     onRequestClose: () => void;
     /** Reports whether the form holds unsaved changes. */
     onDirtyChange: (isDirty: boolean) => void;
@@ -52,7 +59,8 @@ type SourceFormData = {
     record_type: string;
     entry_number: string;
     year: string;
-    provenance: string;
+    parish_id: string;
+    archive: string;
     url: string;
     note: string;
 };
@@ -104,6 +112,10 @@ export function SourcePanel({
     confirms,
     kinds,
     recordTypes,
+    parishes,
+    archives,
+    localities,
+    religions,
     onRequestClose,
     onDirtyChange,
 }: Props) {
@@ -147,6 +159,10 @@ export function SourcePanel({
                         key={key}
                         kinds={kinds}
                         recordTypes={recordTypes}
+                        parishes={parishes}
+                        archives={archives}
+                        localities={localities}
+                        religions={religions}
                         onDirtyChange={onDirtyChange}
                         onProcessingChange={setProcessing}
                     />
@@ -157,6 +173,10 @@ export function SourcePanel({
                         confirms={confirms}
                         kinds={kinds}
                         recordTypes={recordTypes}
+                        parishes={parishes}
+                        archives={archives}
+                        localities={localities}
+                        religions={religions}
                         onDirtyChange={onDirtyChange}
                         onProcessingChange={setProcessing}
                     />
@@ -169,6 +189,10 @@ export function SourcePanel({
 type FormProps = {
     kinds: Option<SourceKind>[];
     recordTypes: Option<SourceRecordType>[];
+    parishes: Parish[];
+    archives: string[];
+    localities: LocalityOption[];
+    religions: ReligionOption[];
     onDirtyChange: (isDirty: boolean) => void;
     onProcessingChange: (processing: boolean) => void;
 };
@@ -186,6 +210,10 @@ function scrollFirstErrorIntoView(root: HTMLElement | null) {
 function NewSourceForm({
     kinds,
     recordTypes,
+    parishes,
+    archives,
+    localities,
+    religions,
     onDirtyChange,
     onProcessingChange,
 }: FormProps) {
@@ -322,6 +350,10 @@ function NewSourceForm({
                             <SourceDescriptionFields
                                 kind={kind}
                                 recordTypes={recordTypes}
+                                parishes={parishes}
+                                archives={archives}
+                                localities={localities}
+                                religions={religions}
                                 errors={errors}
                                 fileName={preview?.name}
                             />
@@ -338,6 +370,10 @@ function EditSourceForm({
     confirms,
     kinds,
     recordTypes,
+    parishes,
+    archives,
+    localities,
+    religions,
     onDirtyChange,
     onProcessingChange,
 }: FormProps & { source: Source; confirms: SourceConfirmation[] }) {
@@ -354,6 +390,7 @@ function EditSourceForm({
             selectedKind,
             formRef.current?.getData() ?? {},
             recordTypes,
+            parishes,
         );
 
     const confirmAndSubmit = () => {
@@ -439,6 +476,10 @@ function EditSourceForm({
                             <SourceDescriptionFields
                                 kind={kind}
                                 recordTypes={recordTypes}
+                                parishes={parishes}
+                                archives={archives}
+                                localities={localities}
+                                religions={religions}
                                 errors={errors}
                                 defaults={source}
                                 notice={
