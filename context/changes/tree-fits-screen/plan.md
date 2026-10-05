@@ -20,7 +20,7 @@ Na stronie `/tree/{id}` drzewo zajmuje całą wysokość okna pod nagłówkiem s
 - skala jest ograniczona z góry do **150%**, więc na 2560 px drzewo jest powiększone, a mała rodzina nie robi się groteskowa;
 - gdy całość wymagałaby skali poniżej **75%** (np. 1366 px z wieloma dziećmi albo obok panelu), drzewo startuje w 75% wyśrodkowane na parze w centrum.
 
-Kółko myszy przybliża wokół kursora, a przeciągnięcie przesuwa. Pływający pasek w prawym dolnym rogu ma „Powiększ”, „Pomniejsz” i „Dopasuj”; ten ostatni pokazuje całe drzewo, także poniżej progu. Po zmianie szerokości obszaru drzewo dopasowuje się ponownie tylko wtedy, gdy autor go nie ruszał od ostatniego dopasowania. Zmiana osoby w centrum lub związku zawsze dopasowuje od nowa.
+Brak ręcznego przybliżania (decyzja 2026-10-05, commit 480a062, patrz Addendum): skala zależy tylko od ekranu, przeciągnięcie przesuwa, a Tab przesuwa widok do fokusowanego elementu. Po zmianie szerokości obszaru drzewo dopasowuje się ponownie tylko wtedy, gdy autor go nie ruszał od ostatniego dopasowania. Zmiana osoby w centrum lub związku zawsze dopasowuje od nowa.
 
 Karty są większe (wyższe, większa czcionka), a proporcje są jak dziś: dziadkowie mają połowę szerokości karty rodzica. Wszystkie dzieci wybranego związku stoją w jednym rzędzie pod jedną belką, a od pary prowadzi jeden pień do belki i zejście do każdego dziecka. Do 4 dzieci karty mają szerokość karty rodzica, od 5 szerokość karty dziadka. Sloty dodawania działają jak dziś, a E2E slotów przechodzą przy 1366×768.
 
@@ -95,9 +95,10 @@ Drzewo (jeszcze w dzisiejszym wyglądzie) trafia do obszaru wypełniającego wys
 
 **Contract**:
 - Props: `children`, `anchorRef: RefObject<HTMLElement | null>` (element do wyśrodkowania przy kotwicy), opcjonalny `className`.
+- _Usunięte decyzją 2026-10-05 (Addendum): kółko, szczypanie i pasek; wrapper ma `wheel`/`pinch` wyłączone._
 - Wrapper `TransformWrapper` z niskim `minScale` (ok. 0.2, żeby „Dopasuj” zmieściło duże drzewo), `maxScale` ok. 3, kółkiem przybliżającym (domyślne zachowanie biblioteki), `doubleClick.disabled`, `panning.excluded` z klasą znacznika dla elementów, od których przesuwanie nie może startować.
 - Stan „ruszany”: ustawiany przez gesty autora (przesunięcie, kółko, szczypanie, „Powiększ”, „Pomniejsz”), zerowany przez dopasowanie startowe i „Dopasuj”. `ResizeObserver` na wrapperze ponownie stosuje ostatni tryb dopasowania (auto z progiem albo całość po „Dopasuj”) tylko, gdy stan nie jest „ruszany”.
-- Pasek: `role="toolbar"` z `aria-label="Widok drzewa"`, absolutnie w prawym dolnym rogu obszaru, poza transformowaną treścią. Przyciski `Button variant="outline" size="sm"` z tekstem „Powiększ”, „Pomniejsz”, „Dopasuj” (jak `source-viewer.tsx:24-47`) i tłem, które nie przepuszcza linii drzewa. „Dopasuj” = całość (`fitToView` z `maxScale: TREE_FIT_MAX`), także poniżej progu.
+- _Usunięte decyzją 2026-10-05 (Addendum):_ Pasek: `role="toolbar"` z `aria-label="Widok drzewa"`, absolutnie w prawym dolnym rogu obszaru, poza transformowaną treścią. Przyciski `Button variant="outline" size="sm"` z tekstem „Powiększ”, „Pomniejsz”, „Dopasuj” (jak `source-viewer.tsx:24-47`) i tłem, które nie przepuszcza linii drzewa. „Dopasuj” = całość (`fitToView` z `maxScale: TREE_FIT_MAX`), także poniżej progu.
 - Tłumienie kliknięcia po przeciągnięciu i obsługa `focusin` (patrz Critical Implementation Details).
 - Komentarz JSDoc w stylu `source-viewer.tsx:11`: komponent wypełnia rodzica, więc rodzic musi mieć określoną wysokość.
 
@@ -238,7 +239,7 @@ Jednorazowy skrypt zrzutów ocenia dopasowanie, próg, limit i linie na 1366, 19
 - proband (rodzina z kilkoma związkami) przy 1366×768 z menu rozwiniętym i zwiniętym, 1920×1080 i 2560×1440;
 - pary z 0, 3, 5, 8 i 10 dziećmi przy 1366×768 i 2560×1440;
 - treść zwężona jak obok panelu `standard` (ok. 670 px treści, symulowane szerokością okna) dla probanta i pary z 8 dziećmi;
-- stan po „Dopasuj” dla pary z 10 dziećmi przy 1366;
+- stan po „Dopasuj” dla pary z 10 dziećmi przy 1366 (_pominięty: brak „Dopasuj”, Addendum_);
 - jeden zrzut w trybie ciemnym.
 
 Id są liczone przesunięciami od probanta. Werdykt opisuje każdy zrzut względem kryteriów fazy 1 i 2 oraz listę poprawek. Poprawki wyglądu (stałe kolumn, wymiary kart, położenie paska) wprowadzane są w tej fazie, z ponownym uruchomieniem skryptu.
@@ -304,6 +305,11 @@ Brak zmian danych i schematu. Seeder demo dostaje tylko nowe rekordy na końcu.
 - Wzorzec skryptu zrzutów: `context/archive/2026-09-29-tree-sheet-variant-c/screenshots/shots.mjs`
 - Wcześniejsze decyzje: `context/archive/2026-09-28-graphical-tree-view/plan.md:84,93`, `context/archive/2026-10-04-side-panel-shell/plan.md:38`, `context/archive/2026-10-04-critical-flows-e2e-guard/plan.md:24`
 
+
+## Addendum: decyzje w trakcie implementacji
+
+- **2026-10-05 — bez ręcznego przybliżania** (commit 480a062, zapisane po przeglądzie `reviews/impl-review.md` F1). `ZoomCanvas` ma wyłączone kółko i szczypanie i nie ma paska „Powiększ”/„Pomniejsz”/„Dopasuj”. Skala zależy tylko od ekranu (całość ≤ 150% albo kotwica 75%), przeciągnięcie przesuwa, Tab przesuwa widok do fokusu. FR-013 w PRD zaktualizowany. Skutek: przy kotwicy 75% (10+ dzieci na 1366 px, zwężenie panelem w S-06) całość drzewa widać tylko przeciąganiem. Pozycje Progress 1.8, 1.9, 3.7 i 3.8 opisują pierwotny zakres i są oznaczone jako zmienione.
+
 ## Progress
 
 > Convention: `- [ ]` pending, `- [x]` done. Append ` — <commit sha>` when a step lands. Do not rename step titles. See `references/progress-format.md`.
@@ -322,8 +328,8 @@ Brak zmian danych i schematu. Seeder demo dostaje tylko nowe rekordy na końcu.
 #### Manual
 
 - [x] 1.7 Na 1366×768 drzewo probanta zajmuje całą wysokość pod nagłówkiem strony, strona nie przewija się w pionie, a drzewo jest widoczne w całości albo (poniżej progu) wyśrodkowane na parze — 480a062
-- [x] 1.8 Kółko przybliża wokół kursora, przeciągnięcie przesuwa, a przeciągnięcie zakończone nad kartą nie nawiguje — 480a062
-- [x] 1.9 „Dopasuj” pokazuje całe drzewo. Po zmianie szerokości okna nieruszane drzewo dopasowuje się ponownie, a po ręcznym przybliżeniu widok zostaje — 480a062
+- [x] 1.8 Kółko przybliża wokół kursora, przeciągnięcie przesuwa, a przeciągnięcie zakończone nad kartą nie nawiguje — 480a062 — zakres zmieniony 2026-10-05: bez ręcznego zoomu (Addendum), zweryfikowano tylko przeciąganie i ponowne dopasowanie
+- [x] 1.9 „Dopasuj” pokazuje całe drzewo. Po zmianie szerokości okna nieruszane drzewo dopasowuje się ponownie, a po ręcznym przybliżeniu widok zostaje — 480a062 — zakres zmieniony 2026-10-05: bez ręcznego zoomu (Addendum), zweryfikowano tylko przeciąganie i ponowne dopasowanie
 - [x] 1.10 Przejście do innej osoby i zmiana związku dopasowują drzewo od nowa — 480a062
 - [x] 1.11 Tab przez karty i sloty pokazuje fokusowany element w kadrze bez rozjechania widoku — 480a062
 - [x] 1.12 Sloty „Dodaj ojca/matkę/dziecko/małżonka” i menu związku działają kliknięciem jak dziś — 480a062
@@ -358,6 +364,6 @@ Brak zmian danych i schematu. Seeder demo dostaje tylko nowe rekordy na końcu.
 
 - [x] 3.5 Na 2560×1440 drzewo wypełnia przestrzeń (powiększone do limitu 150%, chyba że wcześniej wypełni wysokość lub szerokość) bez rozmytego tekstu — 3afa239
 - [x] 3.6 Na 1366×768 rodzina z ≤ 8 dziećmi mieści się w całości (skala ≥ 75%), a rodzina z 10 dziećmi startuje w 75% wyśrodkowana na parze — 3afa239
-- [x] 3.7 W zwężeniu jak obok panelu drzewo startuje wyśrodkowane na parze, a „Dopasuj” pokazuje całość — 3afa239
-- [x] 3.8 Pasek kontrolek nie zasłania kart przy dopasowaniu startowym — 3afa239
+- [x] 3.7 W zwężeniu jak obok panelu drzewo startuje wyśrodkowane na parze, a „Dopasuj” pokazuje całość — 3afa239 — zakres zmieniony 2026-10-05: bez ręcznego zoomu (Addendum), zweryfikowano tylko przeciąganie i ponowne dopasowanie
+- [x] 3.8 Pasek kontrolek nie zasłania kart przy dopasowaniu startowym — 3afa239 — zakres zmieniony 2026-10-05: bez ręcznego zoomu (Addendum), zweryfikowano tylko przeciąganie i ponowne dopasowanie
 - [x] 3.9 Werdykt w `screenshots/verdict.md` akceptuje zestaw (autor) — 3afa239

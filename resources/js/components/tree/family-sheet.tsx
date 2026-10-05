@@ -24,6 +24,18 @@ const COLUMN_GAP_REM = 0.75;
 /** Width of the eight-column grandparent row: the base width of the sheet. */
 const GRID_REM = 8 * COLUMN_REM + 7 * COLUMN_GAP_REM;
 
+/** A couple card is as wide as a parent card: two columns and the gap between them. */
+const COUPLE_CARD_REM = 2 * COLUMN_REM + COLUMN_GAP_REM;
+
+/** The eight fixed columns, shared by the sheet grid and the couple row inside it. */
+const GRID_STYLE = {
+    gridTemplateColumns: `repeat(8, ${COLUMN_REM}rem)`,
+    columnGap: `${COLUMN_GAP_REM}rem`,
+};
+
+/** Children-row cells carry the column gap as padding, so their bar segments touch. */
+const CELL_PADDING_STYLE = { paddingInline: `${COLUMN_GAP_REM / 2}rem` };
+
 /** Children cards are two columns wide up to this many children, one column beyond. */
 const WIDE_CHILDREN_MAX = 4;
 
@@ -139,22 +151,33 @@ function childCellRem(count: number): number {
 /** The add-child slot is one column wide, whatever the width of the children cards. */
 const SLOT_CELL_REM = COLUMN_REM + COLUMN_GAP_REM;
 
-/** How far the slot may stick out past the grandparent row and still count as beside the row. */
-const SLOT_BESIDE_TOLERANCE_REM = 1;
+/** Up to this many children the add-child slot stands right of the row; from one more it stands under the last child. */
+const SLOT_BESIDE_MAX_CHILDREN = 3;
 
 /**
- * The slot stands right of the last child while it stays within the width of
- * the grandparent row. A longer row would widen the whole sheet by a column and
- * push the start view below the floor scale, so there the slot goes under the
- * last child.
+ * One threshold, so the slot keeps its place across similar family sizes. From
+ * four children the row (wide cards up to four, narrow from five) reaches the
+ * width of the grandparent row, and a slot beside it would widen the sheet.
  */
 function slotStandsBeside(count: number): boolean {
-    const rowRem = count * childCellRem(count);
+    return count <= SLOT_BESIDE_MAX_CHILDREN;
+}
 
-    return (
-        rowRem <= GRID_REM &&
-        rowRem / 2 + SLOT_CELL_REM - GRID_REM / 2 <= SLOT_BESIDE_TOLERANCE_REM
-    );
+type ChildrenRowLayout = {
+    cellRem: number;
+    rowRem: number;
+    slotBeside: boolean;
+};
+
+/** Geometry of the children row, computed once for the row and for the sheet padding. */
+function childrenRowLayout(count: number): ChildrenRowLayout {
+    const cellRem = childCellRem(count);
+
+    return {
+        cellRem,
+        rowRem: count * cellRem,
+        slotBeside: slotStandsBeside(count),
+    };
 }
 
 /** Empty-state of the children row: a note and the add-child slot under the couple. */
@@ -179,11 +202,14 @@ function NoChildren({ addChild }: { addChild: React.ReactNode }) {
  */
 function ChildrenRow({
     children,
+    layout,
     addChild,
-}: Pick<FamilySheetData, 'children'> & { addChild: React.ReactNode }) {
-    const cellStyle = { width: `${childCellRem(children.length)}rem` };
-    const slotStyle = { width: `${SLOT_CELL_REM}rem` };
-    const beside = slotStandsBeside(children.length);
+}: Pick<FamilySheetData, 'children'> & {
+    layout: ChildrenRowLayout;
+    addChild: React.ReactNode;
+}) {
+    const cellStyle = { ...CELL_PADDING_STYLE, width: `${layout.cellRem}rem` };
+    const slotStyle = { ...CELL_PADDING_STYLE, width: `${SLOT_CELL_REM}rem` };
 
     return (
         <div className="relative flex w-max flex-col">
@@ -192,7 +218,7 @@ function ChildrenRow({
                 {children.map((child, i) => (
                     <div
                         key={child.id}
-                        className="relative px-[0.375rem] pt-3 pb-2"
+                        className="relative pt-3 pb-2"
                         style={cellStyle}
                     >
                         <div
@@ -215,15 +241,15 @@ function ChildrenRow({
                     </div>
                 ))}
             </div>
-            {beside ? (
+            {layout.slotBeside ? (
                 <div
-                    className="absolute top-0 left-full px-[0.375rem] pt-3 pb-2"
+                    className="absolute top-0 left-full pt-3 pb-2"
                     style={slotStyle}
                 >
                     {addChild}
                 </div>
             ) : (
-                <div className="self-end px-[0.375rem] pb-2" style={slotStyle}>
+                <div className="self-end pb-2" style={slotStyle}>
                     {addChild}
                 </div>
             )}
@@ -268,11 +294,10 @@ export function FamilySheet({
             religions={religions}
         />
     );
-    const childrenRowRem =
-        sheet.children.length * childCellRem(sheet.children.length);
-    const sheetRem = Math.max(GRID_REM, childrenRowRem);
-    const slotOverflowRem = slotStandsBeside(sheet.children.length)
-        ? Math.max(0, childrenRowRem / 2 + SLOT_CELL_REM - sheetRem / 2)
+    const childrenRow = childrenRowLayout(sheet.children.length);
+    const sheetRem = Math.max(GRID_REM, childrenRow.rowRem);
+    const slotOverflowRem = childrenRow.slotBeside
+        ? Math.max(0, childrenRow.rowRem / 2 + SLOT_CELL_REM - sheetRem / 2)
         : 0;
 
     return (
@@ -286,7 +311,7 @@ export function FamilySheet({
                     paddingRight: `calc(0.5rem + ${slotOverflowRem}rem)`,
                 }}
             >
-                <div className="grid grid-cols-[repeat(8,10rem)] gap-x-3 gap-y-1">
+                <div className="grid gap-y-1" style={GRID_STYLE}>
                     <RowLabel>Dziadkowie</RowLabel>
                     {order.map((block) =>
                         sheet.grandparents[block].map((slot, i) => (
@@ -354,7 +379,8 @@ export function FamilySheet({
                     <RowLabel>Związek</RowLabel>
                     <div
                         ref={coupleRef}
-                        className="relative col-span-8 grid grid-cols-8 gap-x-3"
+                        className="relative col-span-8 grid"
+                        style={GRID_STYLE}
                     >
                         {sheet.partner.kind !== 'empty' && (
                             <div
@@ -365,7 +391,8 @@ export function FamilySheet({
                         {order.map((block) => (
                             <div
                                 key={`${block}-couple`}
-                                className="relative col-span-4 mx-auto w-full max-w-72"
+                                className="relative col-span-4 mx-auto w-full"
+                                style={{ maxWidth: `${COUPLE_CARD_REM}rem` }}
                             >
                                 {block === 'focus' ? (
                                     <SheetPersonCard
@@ -429,6 +456,7 @@ export function FamilySheet({
                 {sheet.children.length > 0 && (
                     <ChildrenRow
                         children={sheet.children}
+                        layout={childrenRow}
                         addChild={addChild}
                     />
                 )}

@@ -16,6 +16,10 @@ type Props = {
     children: ReactNode;
     /** Element the start view centres on when the whole content does not fit at the floor scale. */
     anchorRef: RefObject<HTMLElement | null>;
+    /** Lowest start scale before the view anchors instead of showing the whole content. */
+    floor?: number;
+    /** Highest start scale, so a small content does not blow up on a large screen. */
+    max?: number;
     className?: string;
 };
 
@@ -26,7 +30,13 @@ type Props = {
  * author pans the view. Remount it with a
  * `key` to fit from scratch.
  */
-export function ZoomCanvas({ children, anchorRef, className }: Props) {
+export function ZoomCanvas({
+    children,
+    anchorRef,
+    floor = TREE_FIT_FLOOR,
+    max = TREE_FIT_MAX,
+    className,
+}: Props) {
     const controlsRef = useRef<ReactZoomPanPinchContentRef>(null);
     const containerRef = useRef<HTMLDivElement>(null);
     const movedRef = useRef(false);
@@ -58,8 +68,8 @@ export function ZoomCanvas({ children, anchorRef, className }: Props) {
                     width: content.offsetWidth,
                     height: content.offsetHeight,
                 },
-                floor: TREE_FIT_FLOOR,
-                max: TREE_FIT_MAX,
+                floor,
+                max,
             });
 
             if (!instance || !view) {
@@ -107,22 +117,65 @@ export function ZoomCanvas({ children, anchorRef, className }: Props) {
             });
         };
 
+        /** Find-in-page or scroll-into-view scrolls the clipped wrapper natively: turn that into a pan. */
+        const onScroll = () => {
+            const { scrollLeft, scrollTop } = wrapper;
+            const instance = controlsRef.current?.instance;
+
+            if ((scrollLeft === 0 && scrollTop === 0) || !instance) {
+                return;
+            }
+
+            wrapper.scrollLeft = 0;
+            wrapper.scrollTop = 0;
+
+            const { positionX, positionY, scale } = instance.state;
+
+            movedRef.current = true;
+            void controlsRef.current?.setTransform(
+                positionX - scrollLeft,
+                positionY - scrollTop,
+                scale,
+                0,
+            );
+        };
+
         const observer = new ResizeObserver(schedule);
         observer.observe(wrapper);
         observer.observe(content);
+        wrapper.addEventListener('scroll', onScroll);
         schedule();
 
         return () => {
             cancelAnimationFrame(frame);
             observer.disconnect();
+            wrapper.removeEventListener('scroll', onScroll);
         };
-    }, [anchorRef]);
+    }, [anchorRef, floor, max]);
 
     const markMoved = () => {
         movedRef.current = true;
     };
 
+    /** A press that jitters under the drag threshold is a click, not a pan. */
+    const onPanning = () => {
+        if (dragRef.current.dragged) {
+            markMoved();
+        }
+    };
+
+    /** Portalled menus and dialogs bubble through this tree; only the canvas itself pans. */
+    const isInsideCanvas = (target: EventTarget) => {
+        const wrapper = controlsRef.current?.instance.wrapperComponent;
+
+        return target instanceof Node && wrapper?.contains(target) === true;
+    };
+
     const onPointerDownCapture = (event: PointerEvent) => {
+        if (!isInsideCanvas(event.target)) {
+            return;
+        }
+
         dragRef.current = {
             x: event.clientX,
             y: event.clientY,
@@ -132,6 +185,10 @@ export function ZoomCanvas({ children, anchorRef, className }: Props) {
     };
 
     const onPointerMoveCapture = (event: PointerEvent) => {
+        if (!isInsideCanvas(event.target)) {
+            return;
+        }
+
         const drag = dragRef.current;
 
         if (
@@ -149,6 +206,11 @@ export function ZoomCanvas({ children, anchorRef, className }: Props) {
 
     /** A click that ends a pan must not open a card or slot under the pointer. */
     const onClickCapture = (event: React.MouseEvent) => {
+        // Keyboard clicks (detail 0) never end a pan.
+        if (event.detail === 0 || !isInsideCanvas(event.target)) {
+            return;
+        }
+
         if (dragRef.current.dragged) {
             dragRef.current.dragged = false;
             event.preventDefault();
@@ -209,7 +271,10 @@ export function ZoomCanvas({ children, anchorRef, className }: Props) {
     return (
         <div
             ref={containerRef}
-            className={cn('relative min-h-0 flex-1 overflow-hidden', className)}
+            className={cn(
+                'relative min-h-64 flex-1 overflow-hidden',
+                className,
+            )}
             onPointerDownCapture={onPointerDownCapture}
             onPointerMoveCapture={onPointerMoveCapture}
             onPointerUpCapture={onPointerUpCapture}
@@ -220,13 +285,13 @@ export function ZoomCanvas({ children, anchorRef, className }: Props) {
             <TransformWrapper
                 ref={controlsRef}
                 initialScale={1}
-                minScale={0.2}
-                maxScale={3}
+                minScale={floor}
+                maxScale={max}
                 wheel={{ disabled: true }}
                 pinch={{ disabled: true }}
                 doubleClick={{ disabled: true }}
                 panning={{ excluded: [ZOOM_NO_PAN_CLASS] }}
-                onPanning={markMoved}
+                onPanning={onPanning}
             >
                 <TransformComponent
                     wrapperClass={WRAPPER_CLASS}

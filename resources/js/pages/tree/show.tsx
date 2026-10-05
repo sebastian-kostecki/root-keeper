@@ -42,7 +42,7 @@ export default function Show({
                   ]
                 : []),
         ],
-        ...(sheet ? { fillHeight: true } : {}),
+        fillHeight: sheet !== null,
     });
 
     if (sheet === null) {

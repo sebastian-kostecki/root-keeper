@@ -98,15 +98,17 @@ if (!jan) {
 }
 // Offsets from Jan = creation order in TreeViewDemoSeeder (fathers of the couples; mothers are +1).
 const couples = {
-    '0-children': jan + 22, // Sasza Mazur is unrelated here; use Anna's union below instead (see zero)
+    '0-children': jan + 77, // Leszek Zerowy (married, no children)
     '3-children': jan + 31, // Marek Konieczny
     '5-children': jan + 24, // Robert Nowicki
     '8-children': jan + 41, // Dariusz Ósmy
     '10-children': jan + 51, // Zbigniew Dziesiąty
 };
-// Zero children: Jan with Ewa-less union is not empty either, so use Ewa's partner view of Jan? Ewa has Michał.
-// Kacper (jan + 17) has no unions and no children: the sheet shows "Brak dzieci w tym związku."
-couples['0-children'] = jan + 17;
+// Slot threshold (review F3): 4 children = first size with the slot under the row, 6 = narrow cards, slot under.
+const thresholdCouples = {
+    '4-children': jan + 63, // Czesław Czwarty
+    '6-children': jan + 69, // Szymon Szósty
+};
 console.log('ids', { jan, ...couples });
 
 const viewports = {
@@ -138,6 +140,15 @@ for (const [label, vp] of Object.entries(viewports)) {
     const { context, page } = await session(vp);
     for (const [kids, father] of Object.entries(couples)) {
         await shot(page, `/tree/${father}`, `couple-${kids}-${label}`);
+    }
+    await context.close();
+}
+
+// Add-child slot threshold at 1366.
+{
+    const { context, page } = await session(viewports['1366']);
+    for (const [kids, father] of Object.entries(thresholdCouples)) {
+        await shot(page, `/tree/${father}`, `couple-${kids}-1366`);
     }
     await context.close();
 }

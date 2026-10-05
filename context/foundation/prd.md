@@ -132,7 +132,7 @@ Wszystkie FR są `must-have` (zakres: całość do 2026-11-04). Jeśli zabraknie
   > Resolution: changed; zamiast usuwania z listą powiązań — scalanie duplikatów (ważne po automatycznym przeniesieniu) i usuwanie tylko nieużywanych wpisów.
 
 ### Drzewo
-- [modified] FR-013: Autor can oglądać drzewo z większymi kartami, które dopasowuje się do ekranu (wypełnia duży), z przybliżaniem i oddalaniem. Priority: must-have. (Było: małe karty zajmują tylko górę dużego ekranu.)
+- [modified] FR-013: Autor can oglądać drzewo z większymi kartami, które dopasowuje się do ekranu (wypełnia duży) i przesuwa się przeciąganiem; skala zależy od ekranu, bez ręcznego przybliżania (decyzja S-05, 2026-10-05). Priority: must-have. (Było: małe karty zajmują tylko górę dużego ekranu.)
   > Socrates: Counter-argument considered: "większe karty nie zmieszczą się na laptopie."
   > Resolution: kept and extended; drzewo dopasowuje się do ekranu i ma przybliżanie/oddalanie.
 - [modified] FR-014: Autor can czytelnie odróżnić linie łączące; linia do dziecka wychodzi od właściwej pary (małżeństwa), więc widać, z którego związku jest dziecko. Priority: must-have. (Było: linie do dzieci nieczytelne.)

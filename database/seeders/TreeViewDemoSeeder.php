@@ -216,14 +216,19 @@ class TreeViewDemoSeeder extends Seeder
     }
 
     /**
-     * Tree-fits-screen gate: married couples with 8 children (children row as wide as the grandparent row) and
-     * 10 children (wider row). Appended after every other person so the id offsets from the proband stay intact.
+     * Tree-fits-screen gate: married couples with 8 children (children row as wide as the grandparent row),
+     * 10 children (wider row), 4 and 6 children (first sizes with the add-child slot under the row) and 0 children
+     * (married, empty children row). Appended
+     * after every other person, in this order, so the id offsets from the proband stay intact.
      */
     private function largeFamilies(): void
     {
         $families = [
             ['Dariusz', 'Ósmy', 'Beata', 'Ósma', 8],
             ['Zbigniew', 'Dziesiąty', 'Halina', 'Dziesiąta', 10],
+            ['Czesław', 'Czwarty', 'Irena', 'Czwarta', 4],
+            ['Szymon', 'Szósty', 'Teresa', 'Szósta', 6],
+            ['Leszek', 'Zerowy', 'Olga', 'Zerowa', 0],
         ];
         $childNames = [
             ['Adam', 'male'], ['Basia', 'female'], ['Cezary', 'male'], ['Dorota', 'female'], ['Emil', 'male'],
