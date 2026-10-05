@@ -3,7 +3,7 @@ project: root-keeper
 version: 5
 status: draft
 created: 2026-10-04
-updated: 2026-10-04
+updated: 2026-10-05
 prd_version: 1
 main_goal: speed
 top_blocker: time
@@ -42,7 +42,7 @@ root-keeper to prywatne, samodzielnie hostowane drzewo genealogiczne, w którym 
 
 | ID   | Change ID                            | Outcome (user can …)                                                                                     | Prerequisites          | PRD refs                                 | Status   |
 | ---- | ------------------------------------ | -------------------------------------------------------------------------------------------------------- | ---------------------- | ---------------------------------------- | -------- |
-| F-01 | critical-flows-e2e-guard             | (foundation) testy E2E chronią powiązanie fakt–źródło i dodawanie relacji ze slotów drzewa                | —                      | Guardrails, Constraints & Compatibility  | ready    |
+| F-01 | critical-flows-e2e-guard             | (foundation) testy E2E chronią powiązanie fakt–źródło i dodawanie relacji ze slotów drzewa                | —                      | Guardrails, Constraints & Compatibility  | done |
 | F-02 | side-panel-shell                     | (foundation) jest jedna wspólna powłoka panelu bocznego z prawej, obok której treść strony się zwęża      | —                      | FR-006, FR-019, FR-028, NFR (1366–2560 px) | done |
 | S-01 | places-gazetteer                     | prowadzić spis miejscowości z opisem, który startuje z istniejących tekstowych miejsc                     | F-02                   | FR-007, FR-029                           | proposed |
 | S-02 | source-side-panel                    | dodawać, oglądać i edytować źródło w szerokim panelu bocznym ze skanem obok opisu                         | F-02                   | FR-006, FR-027                           | proposed |
@@ -100,7 +100,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
   - Czy testy E2E od razu wchodzą do CI jako wymagana bramka PR (test-plan §4 przewiduje to po fazie 4), czy na razie zostają lokalne? Owner: user. Block: no.
   - Lokatory muszą przetrwać przejście z modala na panel — testy opisują przepływ rolami i etykietami, nie strukturą okna. Owner: `/10x-e2e`. Block: no.
 - **Risk:** Musi być przed `S-04` – `S-06`: przebudowa drzewa i paneli dotyka dokładnie tych ścieżek, które PRD nazywa guardrails („chronione testami E2E przed przebudową paneli i drzewa”), a dziś chroni je tylko Pest na poziomie żądań.
-- **Status:** ready
+- **Status:** done
 
 ### F-02: Wspólna powłoka panelu bocznego
 
@@ -379,3 +379,4 @@ Rozstrzygnięte:
 ## Done
 
 - **F-02: (foundation) istnieje jedna powłoka panelu wysuwanego z prawej, bez nakładki: otwarty panel zwęża obszar treści obok siebie, ma wariant szerszy (dla źródła), zamyka się z powrotem do tego samego miejsca, a otwarcie innego rekordu podmienia jego zawartość.** — Archived 2026-10-04 → `context/archive/2026-10-04-side-panel-shell/`. Lesson: —.
+- **F-01: (foundation) testy E2E w przeglądarce sprawdzają, że fakt potwierdzony źródłem prowadzi do tego samego źródła i skanu oraz że rodzica, dziecko i małżonka (istniejącego lub nowego) dodaje się z pustych slotów drzewa — z asercją na danych, nie na wyglądzie.** — Archived 2026-10-05 → `context/archive/2026-10-04-critical-flows-e2e-guard/`. Lesson: —.
