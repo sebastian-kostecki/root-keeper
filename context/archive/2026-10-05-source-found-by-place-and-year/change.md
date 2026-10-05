@@ -1,10 +1,10 @@
 ---
 change_id: source-found-by-place-and-year
 title: Source found by place and year
-status: implemented
+status: archived
 created: 2026-10-05
 updated: 2026-10-05
-archived_at: null
+archived_at: 2026-10-05T18:35:36Z
 ---
 
 ## Notes
