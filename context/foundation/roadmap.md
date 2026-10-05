@@ -45,7 +45,7 @@ root-keeper to prywatne, samodzielnie hostowane drzewo genealogiczne, w którym 
 | F-01 | critical-flows-e2e-guard             | (foundation) testy E2E chronią powiązanie fakt–źródło i dodawanie relacji ze slotów drzewa                | —                      | Guardrails, Constraints & Compatibility  | done |
 | F-02 | side-panel-shell                     | (foundation) jest jedna wspólna powłoka panelu bocznego z prawej, obok której treść strony się zwęża      | —                      | FR-006, FR-019, FR-028, NFR (1366–2560 px) | done |
 | S-01 | places-gazetteer                     | prowadzić spis miejscowości z opisem, który startuje z istniejących tekstowych miejsc                     | F-02                   | FR-007, FR-029                           | done |
-| S-02 | source-side-panel                    | dodawać, oglądać i edytować źródło w szerokim panelu bocznym ze skanem obok opisu                         | F-02                   | FR-006, FR-027                           | proposed |
+| S-02 | source-side-panel                    | dodawać, oglądać i edytować źródło w szerokim panelu bocznym ze skanem obok opisu                         | F-02                   | FR-006, FR-027                           | done        |
 | S-03 | act-described-by-parish-and-archive  | opisać akt parafią ze spisu (dopisaną w locie), rokiem, typem aktu i archiwum z podpowiedziami            | S-01, S-02             | FR-001, FR-008, FR-009, US-01            | proposed |
 | S-04 | source-found-by-place-and-year       | przy podpinaniu źródła do faktu szukać po miejscu i roku i podać numer wpisu widoczny przy fakcie i źródle | S-03, F-01             | FR-003, FR-004, FR-025, US-01            | proposed |
 | S-05 | tree-fits-screen                     | oglądać drzewo z większymi kartami dopasowane do ekranu, z przybliżaniem i liniami dzieci od właściwej pary | F-01                   | FR-013, FR-014, FR-026                   | proposed |
@@ -143,7 +143,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Unknowns:**
   - Czy skan i formularz obok siebie mieszczą się użytecznie przy 1366 px, czy panel źródła przy tej szerokości przechodzi w układ jeden pod drugim? Owner: `/10x-plan`. Block: no.
 - **Risk:** Przenosi istniejący opis bez zmiany pól, żeby gwiazda przewodnia `S-03` zmieniała tylko treść opisu, a nie jednocześnie jego miejsce.
-- **Status:** proposed
+- **Status:** done
 
 ### S-03: Akt opisany parafią, rokiem, typem i archiwum
 
@@ -382,3 +382,4 @@ Rozstrzygnięte:
 - **F-01: (foundation) testy E2E w przeglądarce sprawdzają, że fakt potwierdzony źródłem prowadzi do tego samego źródła i skanu oraz że rodzica, dziecko i małżonka (istniejącego lub nowego) dodaje się z pustych slotów drzewa — z asercją na danych, nie na wyglądzie.** — Archived 2026-10-05 → `context/archive/2026-10-04-critical-flows-e2e-guard/`. Lesson: —.
 - **S-13: autor zapisuje nazwisko rodowe — osoba wyświetla się „z d. …”, gdy znane są oba nazwiska, i jest wyszukiwana po obu — oraz widzi wiek osoby: ile przeżyła (gdy zna datę zgonu) albo ile ma (tylko gdy wynik jest poniżej ok. 110 lat).** — Archived 2026-10-05 → `context/archive/2026-10-05-maiden-name-and-age/`. Lesson: —.
 - **S-01: autor otwiera spis miejscowości, który powstał automatycznie z istniejących tekstowych miejsc (identyczne teksty → jedna miejscowość), dodaje i poprawia miejscowości z opisem w panelu bocznym; cudza miejscowość to 404.** — Archived 2026-10-05 → `context/archive/2026-10-05-places-gazetteer/`. Lesson: —.
+- **S-02: autor dodaje, ogląda i edytuje źródło w szerokim panelu bocznym, w którym skan (z powiększeniem jak dziś) stoi obok formularza opisu, zamiast w modalu; usuwanie źródła po liście faktów tracących potwierdzenie działa jak dziś.** — Archived 2026-10-05 → `context/archive/2026-10-05-source-side-panel/`. Lesson: —.
