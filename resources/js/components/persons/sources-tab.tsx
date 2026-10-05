@@ -2,6 +2,7 @@ import { Link, router } from '@inertiajs/react';
 import SourceController from '@/actions/App/Http/Controllers/SourceController';
 import { EventSourceStatus } from '@/components/persons/event-source-status';
 import { useGuardedClick } from '@/components/persons/section-editor';
+import { EntryNumberDialog } from '@/components/sources/entry-number-dialog';
 import { SourcePickerDialog } from '@/components/sources/source-picker-dialog';
 import { SourceThumbnail } from '@/components/sources/source-thumbnail';
 import { UnlinkSourceDialog } from '@/components/sources/unlink-source-dialog';
@@ -83,6 +84,11 @@ function SourceGroup({ label, event, availableSources }: GroupProps) {
                                         >
                                             {source.kind_short_label}
                                         </Badge>
+                                        {source.entry_number && (
+                                            <p className="text-muted-foreground max-w-full truncate text-xs">
+                                                nr {source.entry_number}
+                                            </p>
+                                        )}
                                         {uploadedAt && (
                                             <p className="text-muted-foreground text-xs">
                                                 dodano {uploadedAt}
@@ -112,6 +118,21 @@ function SourceGroup({ label, event, availableSources }: GroupProps) {
                                             Otwórz
                                         </Link>
                                     </Button>
+                                    <EntryNumberDialog
+                                        eventId={event.id}
+                                        source={source}
+                                        trigger={
+                                            <Button
+                                                type="button"
+                                                variant="ghost"
+                                                size="sm"
+                                                className="text-muted-foreground"
+                                                aria-label={`Numer wpisu źródła ${source.display_name}`}
+                                            >
+                                                Numer wpisu
+                                            </Button>
+                                        }
+                                    />
                                     <UnlinkSourceDialog
                                         eventId={event.id}
                                         source={source}

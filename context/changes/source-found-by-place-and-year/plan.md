@@ -403,28 +403,28 @@ Migracja czysto addytywna: nullable kolumna na `event_source`, żaden wiersz nie
 
 #### Automated
 
-- [x] 1.1 Migracja przechodzi w obie strony
-- [x] 1.2 Testy migracji, powiązań, własności, zapisu i backupu przechodzą
-- [x] 1.3 Larastan przechodzi
-- [x] 1.4 Pint czysty
-- [x] 1.5 Typy TS przechodzą
+- [x] 1.1 Migracja przechodzi w obie strony — 51f56fa
+- [x] 1.2 Testy migracji, powiązań, własności, zapisu i backupu przechodzą — 51f56fa
+- [x] 1.3 Larastan przechodzi — 51f56fa
+- [x] 1.4 Pint czysty — 51f56fa
+- [x] 1.5 Typy TS przechodzą — 51f56fa
 
 #### Manual
 
-- [x] 1.6 Istniejące powiązanie w lokalnej bazie po migracji nadal otwiera to samo źródło i skan z faktu
+- [x] 1.6 Istniejące powiązanie w lokalnej bazie po migracji nadal otwiera to samo źródło i skan z faktu — 51f56fa
 
 ### Phase 2: Numer przy fakcie i przy źródle + edycja
 
 #### Automated
 
-- [ ] 2.1 Typy, lint i format przechodzą
-- [ ] 2.2 Testy Vitest przechodzą
-- [ ] 2.3 Istniejąca suita E2E przechodzi (strażnik linków)
+- [x] 2.1 Typy, lint i format przechodzą
+- [x] 2.2 Testy Vitest przechodzą
+- [x] 2.3 Istniejąca suita E2E przechodzi (strażnik linków)
 
 #### Manual
 
-- [ ] 2.4 W zakładce Źródła ustawiam, zmieniam i czyszczę numer; „nr …” pojawia się i znika w Przeglądzie, w zakładce Źródła i na karcie „Potwierdza”
-- [ ] 2.5 Długi numer (50 znaków) nie rozbija wiersza w zakładce Źródła ani w Przeglądzie
+- [x] 2.4 W zakładce Źródła ustawiam, zmieniam i czyszczę numer; „nr …” pojawia się i znika w Przeglądzie, w zakładce Źródła i na karcie „Potwierdza”
+- [x] 2.5 Długi numer (50 znaków) nie rozbija wiersza w zakładce Źródła ani w Przeglądzie
 
 ### Phase 3: Picker — filtr miejsca i roku + krok numeru
 

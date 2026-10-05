@@ -134,6 +134,11 @@ function FactView({ event, parts, availableSources }: FactViewProps) {
                                 <Badge variant="secondary" className="shrink-0">
                                     {source.kind_short_label}
                                 </Badge>
+                                {source.entry_number && (
+                                    <span className="text-muted-foreground min-w-0 truncate text-xs">
+                                        nr {source.entry_number}
+                                    </span>
+                                )}
                             </li>
                         ))}
                     </ul>

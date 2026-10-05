@@ -528,6 +528,14 @@ function EditSourceForm({
                                                                 .display_name
                                                         }
                                                     </PersonPreviewLink>
+                                                    {confirmation.entry_number && (
+                                                        <span className="text-muted-foreground">
+                                                            {' · '}nr{' '}
+                                                            {
+                                                                confirmation.entry_number
+                                                            }
+                                                        </span>
+                                                    )}
                                                 </li>
                                             ))}
                                         </ul>
