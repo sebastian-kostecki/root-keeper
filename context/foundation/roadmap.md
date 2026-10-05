@@ -56,7 +56,7 @@ root-keeper to prywatne, samodzielnie hostowane drzewo genealogiczne, w którym 
 | S-10 | sources-grid-with-filters            | przeglądać źródła jako siatkę mniejszych kart i filtrować po rodzaju, parafii/miejscu, roku i archiwum     | S-09                   | FR-005                                   | proposed |
 | S-11 | places-merge-and-delete              | scalić zduplikowaną miejscowość lub parafię z właściwą i usunąć wpis nigdzie nieużywany                   | S-03, S-07, S-08, S-09 | FR-012                                   | proposed |
 | S-12 | marriage-side-panel                  | otworzyć panel małżeństwa z datą, miejscem, źródłem (z edycją) i dziećmi pary                             | S-06                   | FR-017                                   | proposed |
-| S-13 | maiden-name-and-age                  | zapisać nazwisko rodowe („z d. …”, wyszukiwanie po obu nazwiskach) i widzieć wiek osoby                   | —                      | FR-020, FR-024                           | ready    |
+| S-13 | maiden-name-and-age                  | zapisać nazwisko rodowe („z d. …”, wyszukiwanie po obu nazwiskach) i widzieć wiek osoby                   | —                      | FR-020, FR-024                           | done |
 | S-14 | person-events-and-note-tabs          | zobaczyć w panelu osoby zakładkę wydarzeń (własnych i najbliższej rodziny) po roku i zakładkę notatki     | S-06                   | FR-021, FR-023                           | proposed |
 | S-15 | ancestors-view                       | zobaczyć osobę i wszystkich jej przodków w jednym widoku z wyborem liczby pokoleń                         | S-05                   | FR-018, FR-029                           | proposed |
 | S-16 | person-photo-on-card                 | dodać zdjęcie osoby i widzieć je na karcie drzewa (inicjały, gdy zdjęcia brak)                            | S-05, S-06             | FR-015                                   | proposed |
@@ -285,7 +285,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Unknowns:**
   - Jak liczyć wiek przy datach niepełnych lub „około” (sam rok → wiek przybliżony)? Owner: `/10x-plan`. Block: no.
 - **Risk:** Bez zależności — dobry kandydat na równoległe uruchomienie agenta; panel osoby (`S-06`) przejmie wyświetlanie bez przebudowy danych.
-- **Status:** ready
+- **Status:** done
 
 ### S-14: Zakładki wydarzeń i notatki w panelu osoby
 
@@ -380,3 +380,4 @@ Rozstrzygnięte:
 
 - **F-02: (foundation) istnieje jedna powłoka panelu wysuwanego z prawej, bez nakładki: otwarty panel zwęża obszar treści obok siebie, ma wariant szerszy (dla źródła), zamyka się z powrotem do tego samego miejsca, a otwarcie innego rekordu podmienia jego zawartość.** — Archived 2026-10-04 → `context/archive/2026-10-04-side-panel-shell/`. Lesson: —.
 - **F-01: (foundation) testy E2E w przeglądarce sprawdzają, że fakt potwierdzony źródłem prowadzi do tego samego źródła i skanu oraz że rodzica, dziecko i małżonka (istniejącego lub nowego) dodaje się z pustych slotów drzewa — z asercją na danych, nie na wyglądzie.** — Archived 2026-10-05 → `context/archive/2026-10-04-critical-flows-e2e-guard/`. Lesson: —.
+- **S-13: autor zapisuje nazwisko rodowe — osoba wyświetla się „z d. …”, gdy znane są oba nazwiska, i jest wyszukiwana po obu — oraz widzi wiek osoby: ile przeżyła (gdy zna datę zgonu) albo ile ma (tylko gdy wynik jest poniżej ok. 110 lat).** — Archived 2026-10-05 → `context/archive/2026-10-05-maiden-name-and-age/`. Lesson: —.
