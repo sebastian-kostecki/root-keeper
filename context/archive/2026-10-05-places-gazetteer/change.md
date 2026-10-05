@@ -1,10 +1,10 @@
 ---
 change_id: places-gazetteer
 title: Places gazetteer
-status: impl_reviewed
+status: archived
 created: 2026-10-05
 updated: 2026-10-05
-archived_at: null
+archived_at: 2026-10-05T09:01:19Z
 ---
 
 ## Notes

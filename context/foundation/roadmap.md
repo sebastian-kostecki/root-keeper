@@ -44,7 +44,7 @@ root-keeper to prywatne, samodzielnie hostowane drzewo genealogiczne, w którym 
 | ---- | ------------------------------------ | -------------------------------------------------------------------------------------------------------- | ---------------------- | ---------------------------------------- | -------- |
 | F-01 | critical-flows-e2e-guard             | (foundation) testy E2E chronią powiązanie fakt–źródło i dodawanie relacji ze slotów drzewa                | —                      | Guardrails, Constraints & Compatibility  | done |
 | F-02 | side-panel-shell                     | (foundation) jest jedna wspólna powłoka panelu bocznego z prawej, obok której treść strony się zwęża      | —                      | FR-006, FR-019, FR-028, NFR (1366–2560 px) | done |
-| S-01 | places-gazetteer                     | prowadzić spis miejscowości z opisem, który startuje z istniejących tekstowych miejsc                     | F-02                   | FR-007, FR-029                           | in-progress |
+| S-01 | places-gazetteer                     | prowadzić spis miejscowości z opisem, który startuje z istniejących tekstowych miejsc                     | F-02                   | FR-007, FR-029                           | done |
 | S-02 | source-side-panel                    | dodawać, oglądać i edytować źródło w szerokim panelu bocznym ze skanem obok opisu                         | F-02                   | FR-006, FR-027                           | proposed |
 | S-03 | act-described-by-parish-and-archive  | opisać akt parafią ze spisu (dopisaną w locie), rokiem, typem aktu i archiwum z podpowiedziami            | S-01, S-02             | FR-001, FR-008, FR-009, US-01            | proposed |
 | S-04 | source-found-by-place-and-year       | przy podpinaniu źródła do faktu szukać po miejscu i roku i podać numer wpisu widoczny przy fakcie i źródle | S-03, F-01             | FR-003, FR-004, FR-025, US-01            | proposed |
@@ -130,7 +130,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
   - Jakie pola ma miejscowość poza nazwą i opisem (prd-v2 miała współrzędne wpisywane ręcznie; nazwy historyczne trafiają do opisu)? Owner: user. Block: no.
   - Przeniesienie z tekstu do spisu kopiuje, a nie usuwa: tekstowe miejsca zostają do czasu przepięcia faktów (`S-07`) i zamieszkań (`S-08`). Owner: `/10x-plan`. Block: no.
 - **Risk:** Pierwsze z trzech przeniesień prawdziwych danych; idzie najwcześniej, bo od spisu zależą parafie (`S-03`), miejsca faktów (`S-07`), zamieszkania (`S-08`) i cmentarze (`S-09`). Błąd zgrupowania tekstów jest naprawialny ręcznie (PRD dopuszcza), utrata tekstu — nie.
-- **Status:** in-progress
+- **Status:** done
 
 ### S-02: Źródło w szerokim panelu bocznym
 
@@ -381,3 +381,4 @@ Rozstrzygnięte:
 - **F-02: (foundation) istnieje jedna powłoka panelu wysuwanego z prawej, bez nakładki: otwarty panel zwęża obszar treści obok siebie, ma wariant szerszy (dla źródła), zamyka się z powrotem do tego samego miejsca, a otwarcie innego rekordu podmienia jego zawartość.** — Archived 2026-10-04 → `context/archive/2026-10-04-side-panel-shell/`. Lesson: —.
 - **F-01: (foundation) testy E2E w przeglądarce sprawdzają, że fakt potwierdzony źródłem prowadzi do tego samego źródła i skanu oraz że rodzica, dziecko i małżonka (istniejącego lub nowego) dodaje się z pustych slotów drzewa — z asercją na danych, nie na wyglądzie.** — Archived 2026-10-05 → `context/archive/2026-10-04-critical-flows-e2e-guard/`. Lesson: —.
 - **S-13: autor zapisuje nazwisko rodowe — osoba wyświetla się „z d. …”, gdy znane są oba nazwiska, i jest wyszukiwana po obu — oraz widzi wiek osoby: ile przeżyła (gdy zna datę zgonu) albo ile ma (tylko gdy wynik jest poniżej ok. 110 lat).** — Archived 2026-10-05 → `context/archive/2026-10-05-maiden-name-and-age/`. Lesson: —.
+- **S-01: autor otwiera spis miejscowości, który powstał automatycznie z istniejących tekstowych miejsc (identyczne teksty → jedna miejscowość), dodaje i poprawia miejscowości z opisem w panelu bocznym; cudza miejscowość to 404.** — Archived 2026-10-05 → `context/archive/2026-10-05-places-gazetteer/`. Lesson: —.
