@@ -120,6 +120,19 @@ function ownershipRouteCases(): array
         $noBody,
     ];
 
+    $updateBody = fn (array $r): array => ['entry_number' => '1'];
+
+    $cases['events.sources.update / cudze wydarzenie i źródło atakującego'] = [
+        'events.sources.update', 'patch',
+        fn (array $r): array => ['event' => $r['victimEvent']->id, 'source' => $r['ownSource']->id],
+        $updateBody,
+    ];
+    $cases['events.sources.update / wydarzenie atakującego i cudze źródło'] = [
+        'events.sources.update', 'patch',
+        fn (array $r): array => ['event' => $r['ownEvent']->id, 'source' => $r['victimSource']->id],
+        $updateBody,
+    ];
+
     return $cases;
 }
 

@@ -35,6 +35,7 @@ export type LinkedSource = {
     display_name: string;
     has_thumbnail: boolean;
     uploaded_at: string | null;
+    entry_number: string | null;
 };
 
 export type SourcedPersonEvent = PersonEvent & {

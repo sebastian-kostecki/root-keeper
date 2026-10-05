@@ -128,7 +128,7 @@ test('source panel confirms lists the linked events with the person names and wh
     $person = Person::factory()->for($user->tree)->create(['first_name' => 'Jan', 'last_name' => 'Kowalski']);
     $birth = Event::factory()->for($user->tree)->birth()->create();
     $birth->participants()->attach($person, ['role' => ParticipantRole::Subject]);
-    $source->events()->attach($birth);
+    $source->events()->attach($birth, ['entry_number' => '95']);
 
     $death = Event::factory()->for($user->tree)->death()->create();
     $death->participants()->attach($person, ['role' => ParticipantRole::Subject]);
@@ -144,10 +144,12 @@ test('source panel confirms lists the linked events with the person names and wh
         ->where('sourcePanel.confirms.0.event_type', 'birth')
         ->where('sourcePanel.confirms.0.event_label', 'Urodzenie')
         ->where('sourcePanel.confirms.0.is_last_source', true)
+        ->where('sourcePanel.confirms.0.entry_number', '95')
         ->where('sourcePanel.confirms.0.person.id', $person->id)
         ->where('sourcePanel.confirms.0.person.display_name', 'Jan Kowalski')
         ->where('sourcePanel.confirms.1.event_id', $death->id)
-        ->where('sourcePanel.confirms.1.is_last_source', false));
+        ->where('sourcePanel.confirms.1.is_last_source', false)
+        ->where('sourcePanel.confirms.1.entry_number', null));
 });
 
 test('storing a jpg creates the source, the file and its thumbnail', function () {

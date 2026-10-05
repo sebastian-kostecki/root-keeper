@@ -14,6 +14,9 @@ test('guests are redirected to the login page from event source routes', functio
     $this->post(route('events.sources.store', $event), ['source_id' => $source->id])
         ->assertRedirect(route('login'));
 
+    $this->patch(route('events.sources.update', [$event, $source]), ['entry_number' => '1'])
+        ->assertRedirect(route('login'));
+
     $this->delete(route('events.sources.destroy', [$event, $source]))
         ->assertRedirect(route('login'));
 });
@@ -169,4 +172,103 @@ test('deleting an event cascades the pivot rows', function () {
     $event->delete();
 
     $this->assertDatabaseCount('event_source', 0);
+});
+
+test('linking with an entry number stores it on the link', function () {
+    $user = User::factory()->create();
+    $event = Event::factory()->for($user->tree)->create();
+    $source = Source::factory()->for($user->tree)->create();
+
+    $this->actingAs($user)->post(route('events.sources.store', $event), ['source_id' => $source->id, 'entry_number' => '95'])
+        ->assertSessionHasNoErrors();
+
+    $this->assertDatabaseHas('event_source', ['event_id' => $event->id, 'source_id' => $source->id, 'entry_number' => '95']);
+});
+
+test('linking without an entry number leaves it empty', function () {
+    $user = User::factory()->create();
+    $event = Event::factory()->for($user->tree)->create();
+    $source = Source::factory()->for($user->tree)->create();
+
+    $this->actingAs($user)->post(route('events.sources.store', $event), ['source_id' => $source->id, 'entry_number' => ''])
+        ->assertSessionHasNoErrors();
+
+    $this->assertDatabaseHas('event_source', ['event_id' => $event->id, 'source_id' => $source->id, 'entry_number' => null]);
+});
+
+test('linking an already linked source with another entry number keeps the first one', function () {
+    $user = User::factory()->create();
+    $event = Event::factory()->for($user->tree)->create();
+    $source = Source::factory()->for($user->tree)->create();
+
+    $this->actingAs($user)->post(route('events.sources.store', $event), ['source_id' => $source->id, 'entry_number' => '95']);
+    $this->actingAs($user)->post(route('events.sources.store', $event), ['source_id' => $source->id, 'entry_number' => '96'])
+        ->assertSessionHasNoErrors();
+
+    $this->assertDatabaseCount('event_source', 1);
+    $this->assertDatabaseHas('event_source', ['event_id' => $event->id, 'source_id' => $source->id, 'entry_number' => '95']);
+});
+
+test('an entry number longer than 50 characters fails validation and creates nothing', function () {
+    $user = User::factory()->create();
+    $event = Event::factory()->for($user->tree)->create();
+    $source = Source::factory()->for($user->tree)->create();
+
+    $this->actingAs($user)->post(route('events.sources.store', $event), ['source_id' => $source->id, 'entry_number' => str_repeat('9', 51)])
+        ->assertSessionHasErrors('entry_number');
+
+    $this->assertDatabaseCount('event_source', 0);
+});
+
+test('updating sets and clears the entry number of a link', function () {
+    $user = User::factory()->create();
+    $event = Event::factory()->for($user->tree)->create();
+    $source = Source::factory()->for($user->tree)->create();
+    $event->sources()->attach($source);
+
+    $response = $this->from(route('persons.index'))
+        ->actingAs($user)
+        ->patch(route('events.sources.update', [$event, $source]), ['entry_number' => '95']);
+
+    $response->assertRedirect(route('persons.index'));
+    $response->assertSessionHas('inertia.flash_data.toast', ['type' => 'success', 'message' => 'Zapisano numer wpisu']);
+    $this->assertDatabaseHas('event_source', ['event_id' => $event->id, 'source_id' => $source->id, 'entry_number' => '95']);
+
+    $this->actingAs($user)->patch(route('events.sources.update', [$event, $source]), ['entry_number' => ''])
+        ->assertSessionHasNoErrors();
+
+    $this->assertDatabaseHas('event_source', ['event_id' => $event->id, 'source_id' => $source->id, 'entry_number' => null]);
+});
+
+test('updating an entry number longer than 50 characters fails validation', function () {
+    $user = User::factory()->create();
+    $event = Event::factory()->for($user->tree)->create();
+    $source = Source::factory()->for($user->tree)->create();
+    $event->sources()->attach($source, ['entry_number' => '1']);
+
+    $this->actingAs($user)->patch(route('events.sources.update', [$event, $source]), ['entry_number' => str_repeat('9', 51)])
+        ->assertSessionHasErrors('entry_number');
+
+    $this->assertDatabaseHas('event_source', ['event_id' => $event->id, 'source_id' => $source->id, 'entry_number' => '1']);
+});
+
+test('updating the entry number of a pair that is not linked returns not found', function () {
+    $user = User::factory()->create();
+    $event = Event::factory()->for($user->tree)->create();
+    $source = Source::factory()->for($user->tree)->create();
+
+    $this->actingAs($user)->patch(route('events.sources.update', [$event, $source]), ['entry_number' => '95'])
+        ->assertNotFound();
+});
+
+test('the person preview carries the entry number of each linked source', function () {
+    $user = User::factory()->create();
+    $person = Person::factory()->for($user->tree)->create();
+    $birth = Event::factory()->for($user->tree)->birth()->create();
+    $birth->participants()->attach($person, ['role' => ParticipantRole::Subject]);
+    $source = Source::factory()->for($user->tree)->create();
+    $birth->sources()->attach($source, ['entry_number' => '95']);
+
+    $this->actingAs($user)->get(personPreviewUrl($person))
+        ->assertInertia(fn ($page) => $page->where('personPreview.person.birth.sources.0.entry_number', '95'));
 });

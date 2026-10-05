@@ -64,11 +64,13 @@ class Event extends Model
     }
 
     /**
-     * @return BelongsToMany<Source, $this>
+     * @return BelongsToMany<Source, $this, EventSource>
      */
     public function sources(): BelongsToMany
     {
         return $this->belongsToMany(Source::class, 'event_source')
+            ->using(EventSource::class)
+            ->withPivot('entry_number')
             ->withTimestamps()
             ->orderBy('event_source.created_at')
             ->orderBy('event_source.id');

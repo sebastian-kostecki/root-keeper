@@ -13,6 +13,7 @@ use App\Http\Requests\SourceUpdateRequest;
 use App\Http\Resources\ParishResource;
 use App\Http\Resources\SourceResource;
 use App\Models\Event;
+use App\Models\EventSource;
 use App\Models\Locality;
 use App\Models\Person;
 use App\Models\Source;
@@ -144,9 +145,20 @@ class SourceController extends Controller
     }
 
     /**
+     * The event-source link an event carries when it was loaded through `Source::events()`.
+     */
+    private function pivotOf(Event $event): EventSource
+    {
+        /** @var EventSource $pivot */
+        $pivot = $event->getRelation('pivot');
+
+        return $pivot;
+    }
+
+    /**
      * The events the source confirms, one row per participant.
      *
-     * @return array<int, array{event_id: int, event_type: string, event_label: string, is_last_source: bool, person: array{id: int, display_name: string}}>
+     * @return array<int, array{event_id: int, event_type: string, event_label: string, is_last_source: bool, entry_number: string|null, person: array{id: int, display_name: string}}>
      */
     private function confirms(Source $source): array
     {
@@ -156,6 +168,7 @@ class SourceController extends Controller
                 'event_type' => $event->type->value,
                 'event_label' => $event->type->label(),
                 'is_last_source' => $event->sources_count === 1,
+                'entry_number' => $this->pivotOf($event)->entry_number,
                 'person' => [
                     'id' => $person->id,
                     'display_name' => $person->displayName(),

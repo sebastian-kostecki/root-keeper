@@ -165,7 +165,7 @@ abstract class BackupTestCase extends TestCase
 
         $birth = Event::query()->where('tree_id', $tree->id)->where('type', EventType::Birth)->firstOrFail();
 
-        $this->post(route('events.sources.store', $birth), ['source_id' => Source::query()->orderBy('id')->firstOrFail()->id])
+        $this->post(route('events.sources.store', $birth), ['source_id' => Source::query()->orderBy('id')->firstOrFail()->id, 'entry_number' => '95'])
             ->assertSessionHasNoErrors();
 
         expect(Source::query()->count())->toBe(2)

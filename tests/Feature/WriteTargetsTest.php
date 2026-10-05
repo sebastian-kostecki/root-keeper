@@ -378,3 +378,36 @@ test('unlinking a source from a marriage removes only that link and keeps the ot
         ->toBe(["{$marriageA->id}:{$sourceShared->id}"]);
     expect($diff['files'])->toBe(['removed' => [], 'added' => []]);
 });
+
+test('setting an entry number on a link changes only that one event_source row', function () {
+    Storage::fake('local');
+
+    $user = User::factory()->create();
+    $scene = familyScene($user);
+    extract($scene);
+
+    $preview = readInertiaProp($this, $user, personPreviewUrl($focus), 'personPreview');
+    $marriage = collect($preview['person']['marriages'])->firstWhere('spouse.id', $wifeA->id);
+    $source = collect($marriage['sources'])->firstWhere('id', $sourceShared->id);
+
+    $before = databaseRows();
+
+    $this->actingAs($user)->patch(route('events.sources.update', [$marriage['id'], $source['id']]), ['entry_number' => '95'])
+        ->assertSessionHasNoErrors()
+        ->assertRedirect();
+
+    $diff = rowDiff($before, databaseRows());
+
+    expect(array_keys($diff['tables']))->toBe(['event_source']);
+    expect($diff['tables']['event_source']['added'])->toBe([]);
+    expect($diff['tables']['event_source']['removed'])->toBe([]);
+    expect($diff['tables']['event_source']['changed'])->toHaveCount(1);
+
+    $change = $diff['tables']['event_source']['changed'][0];
+
+    expect($change['before']['event_id'])->toBe($marriageA->id);
+    expect($change['before']['source_id'])->toBe($sourceShared->id);
+    expect(array_keys(array_diff_assoc($change['after'], $change['before'])))->toEqualCanonicalizing(['entry_number', 'updated_at']);
+    expect($change['after']['entry_number'])->toBe('95');
+    expect($diff['files'])->toBe(['removed' => [], 'added' => []]);
+});

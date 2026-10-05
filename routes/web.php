@@ -37,6 +37,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('parishes', ParishController::class)->only(['index', 'store', 'update']);
 
     Route::post('events/{event}/sources', [EventSourceController::class, 'store'])->name('events.sources.store');
+    Route::patch('events/{event}/sources/{source}', [EventSourceController::class, 'update'])->name('events.sources.update');
     Route::delete('events/{event}/sources/{source}', [EventSourceController::class, 'destroy'])->name('events.sources.destroy');
 
     Route::post('persons/{person}/parents', [PersonParentController::class, 'store'])->name('persons.parents.store');

@@ -32,6 +32,7 @@ class EventSourceStoreRequest extends FormRequest
                 'integer',
                 Rule::exists('sources', 'id')->where('tree_id', $this->user()->tree->id),
             ],
+            'entry_number' => ['nullable', 'string', 'max:50'],
         ];
     }
 
@@ -44,6 +45,7 @@ class EventSourceStoreRequest extends FormRequest
     {
         return [
             'source_id' => 'źródło',
+            'entry_number' => 'numer wpisu',
         ];
     }
 }
