@@ -13,8 +13,12 @@ import {
     DialogTitle,
     DialogTrigger,
 } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
+import { pluralPhrase } from '@/lib/plural';
 import { formatSourceMeta } from '@/lib/source-description';
+import { filterSourcesByPlaceAndYear } from '@/lib/source-place-year-filter';
 import { splitSourcesForEvent } from '@/lib/source-matching';
 import type { PersonEvent, Source } from '@/types';
 
@@ -24,6 +28,7 @@ const groupLabelClass =
 type Props = {
     eventId: number;
     eventType: PersonEvent['type'];
+    eventYear: number | null;
     linkedSourceIds: number[];
     availableSources: Source[] | undefined;
     trigger: React.ReactNode;
@@ -32,19 +37,28 @@ type Props = {
 export function SourcePickerDialog({
     eventId,
     eventType,
+    eventYear,
     linkedSourceIds,
     availableSources,
     trigger,
 }: Props) {
     const matchingHeadingId = useId();
     const restHeadingId = useId();
+    const placeId = useId();
+    const entryNumberId = useId();
+    const yearId = useId();
     const [open, setOpen] = useState(false);
     const [loading, setLoading] = useState(false);
     const [loaded, setLoaded] = useState(false);
-    const [processingSourceId, setProcessingSourceId] = useState<number | null>(
-        null,
-    );
+    const [processing, setProcessing] = useState(false);
+    const [place, setPlace] = useState('');
+    const [year, setYear] = useState('');
+    const [selectedId, setSelectedId] = useState<number | null>(null);
+    const [entryNumber, setEntryNumber] = useState('');
     const [error, setError] = useState<string | undefined>(undefined);
+    const [entryNumberError, setEntryNumberError] = useState<
+        string | undefined
+    >(undefined);
 
     // The optional prop is dropped by any non-partial visit (e.g. the redirect
     // back after a validation error), so keep the last list that was loaded.
@@ -54,11 +68,23 @@ export function SourcePickerDialog({
         setSources(availableSources);
     }
 
+    const filtered = filterSourcesByPlaceAndYear(sources ?? [], {
+        place,
+        year,
+    });
+    const filtersActive = place.trim() !== '' || /^\d+$/.test(year.trim());
+    const selectedSource = sources?.find((source) => source.id === selectedId);
+
     const handleOpenChange = (nextOpen: boolean) => {
         setOpen(nextOpen);
 
         if (nextOpen) {
             setError(undefined);
+            setEntryNumberError(undefined);
+            setPlace('');
+            setYear(eventYear === null ? '' : String(eventYear));
+            setSelectedId(null);
+            setEntryNumber('');
             setLoaded(false);
             setLoading(true);
             router.reload({
@@ -69,20 +95,38 @@ export function SourcePickerDialog({
         }
     };
 
-    const handleSelect = (sourceId: number) => {
-        setProcessingSourceId(sourceId);
+    const handleLink = () => {
+        if (selectedId === null) {
+            return;
+        }
+
+        setProcessing(true);
         setError(undefined);
+        setEntryNumberError(undefined);
+
+        const trimmedNumber = entryNumber.trim();
 
         router.post(
             EventSourceController.store(eventId).url,
-            { source_id: sourceId },
+            {
+                source_id: selectedId,
+                entry_number: trimmedNumber === '' ? null : trimmedNumber,
+            },
             {
                 preserveScroll: true,
                 onSuccess: () => setOpen(false),
-                onError: (errors) => setError(errors.source_id),
-                onFinish: () => setProcessingSourceId(null),
+                onError: (errors) => {
+                    setError(errors.source_id);
+                    setEntryNumberError(errors.entry_number);
+                },
+                onFinish: () => setProcessing(false),
             },
         );
+    };
+
+    const clearFilters = () => {
+        setPlace('');
+        setYear('');
     };
 
     const renderTile = (source: Source) => {
@@ -93,9 +137,16 @@ export function SourcePickerDialog({
             <button
                 key={source.id}
                 type="button"
-                disabled={isLinked || processingSourceId !== null}
-                onClick={() => handleSelect(source.id)}
-                className="space-y-1 self-start text-left disabled:cursor-not-allowed disabled:opacity-50"
+                disabled={isLinked || processing}
+                aria-pressed={selectedId === source.id}
+                onClick={() =>
+                    setSelectedId(selectedId === source.id ? null : source.id)
+                }
+                className={`space-y-1 self-start rounded-md border-2 p-1 text-left disabled:cursor-not-allowed disabled:opacity-50 ${
+                    selectedId === source.id
+                        ? 'border-primary'
+                        : 'border-transparent'
+                }`}
             >
                 <SourceThumbnail source={source} className="rounded-md" />
                 <p
@@ -130,11 +181,33 @@ export function SourcePickerDialog({
     return (
         <Dialog open={open} onOpenChange={handleOpenChange}>
             <DialogTrigger asChild>{trigger}</DialogTrigger>
-            <DialogContent>
+            <DialogContent className="sm:max-w-2xl">
                 <DialogTitle>Powiąż źródło</DialogTitle>
                 <DialogDescription>
                     Wybierz źródło, które potwierdza to wydarzenie.
                 </DialogDescription>
+
+                <div className="grid grid-cols-2 gap-3">
+                    <div className="grid gap-1">
+                        <Label htmlFor={placeId}>Miejsce</Label>
+                        <Input
+                            id={placeId}
+                            value={place}
+                            onChange={(event) => setPlace(event.target.value)}
+                            autoComplete="off"
+                        />
+                    </div>
+                    <div className="grid gap-1">
+                        <Label htmlFor={yearId}>Rok</Label>
+                        <Input
+                            id={yearId}
+                            value={year}
+                            inputMode="numeric"
+                            onChange={(event) => setYear(event.target.value)}
+                            autoComplete="off"
+                        />
+                    </div>
+                </div>
 
                 {loading ? (
                     <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
@@ -166,10 +239,19 @@ export function SourcePickerDialog({
                 ) : (
                     <div className="max-h-96 space-y-4 overflow-y-auto">
                         {(() => {
+                            const { visible } = filtered;
                             const { matching, rest } = splitSourcesForEvent(
-                                sources,
+                                visible,
                                 eventType,
                             );
+
+                            if (visible.length === 0) {
+                                return (
+                                    <p className="text-muted-foreground text-sm">
+                                        Żadne źródło nie pasuje do filtrów.
+                                    </p>
+                                );
+                            }
 
                             if (matching.length === 0) {
                                 return renderGrid(rest);
@@ -206,6 +288,73 @@ export function SourcePickerDialog({
                                 </>
                             );
                         })()}
+                    </div>
+                )}
+
+                {loaded && sources !== undefined && sources.length > 0 && (
+                    <>
+                        {filtersActive && (
+                            <div className="flex flex-wrap items-center gap-3 text-sm">
+                                {filtered.hiddenUndescribedCount > 0 && (
+                                    <p className="text-muted-foreground">
+                                        Ukryto {filtered.hiddenUndescribedCount}{' '}
+                                        {pluralPhrase(
+                                            filtered.hiddenUndescribedCount,
+                                            'źródło',
+                                            'źródła',
+                                            'źródeł',
+                                        )}{' '}
+                                        bez roku lub miejsca
+                                    </p>
+                                )}
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={clearFilters}
+                                >
+                                    Wyczyść filtry
+                                </Button>
+                            </div>
+                        )}
+                    </>
+                )}
+
+                {selectedSource !== undefined && (
+                    <div className="space-y-2 border-t pt-3">
+                        <p className="text-sm font-medium">
+                            Wybrane: {selectedSource.display_name}
+                        </p>
+                        <div className="flex items-end gap-3">
+                            <div className="grid flex-1 gap-1">
+                                <Label htmlFor={entryNumberId}>
+                                    Numer wpisu
+                                </Label>
+                                <Input
+                                    id={entryNumberId}
+                                    value={entryNumber}
+                                    onChange={(event) =>
+                                        setEntryNumber(event.target.value)
+                                    }
+                                    onKeyDown={(event) => {
+                                        if (event.key === 'Enter') {
+                                            event.preventDefault();
+                                            handleLink();
+                                        }
+                                    }}
+                                    autoComplete="off"
+                                    autoFocus
+                                />
+                            </div>
+                            <Button
+                                type="button"
+                                disabled={processing}
+                                onClick={handleLink}
+                            >
+                                Powiąż
+                            </Button>
+                        </div>
+                        <InputError message={entryNumberError} />
                     </div>
                 )}
 

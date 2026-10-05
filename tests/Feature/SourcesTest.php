@@ -48,7 +48,7 @@ test('sources index shows only the authenticated user own sources, newest first'
         ->component('sources/index')
         ->has('sources', 2)
         ->has('sources.0', fn ($source) => $source->hasAll([
-            'id', 'kind', 'kind_label', 'kind_short_label', 'name', 'display_name', 'record_type', 'record_type_label', 'entry_number', 'year', 'parish_id', 'parish_label', 'archive', 'url', 'note', 'original_name', 'mime_type', 'size', 'width', 'height', 'has_thumbnail', 'uploaded_at', 'events_count',
+            'id', 'kind', 'kind_label', 'kind_short_label', 'name', 'display_name', 'record_type', 'record_type_label', 'entry_number', 'year', 'parish_id', 'parish_label', 'parish_name', 'locality_name', 'archive', 'url', 'note', 'original_name', 'mime_type', 'size', 'width', 'height', 'has_thumbnail', 'uploaded_at', 'events_count',
         ]))
         ->where('sources.0.id', $newer->id)
         ->where('sources.1.id', $older->id));
@@ -1164,4 +1164,25 @@ test('the source panel carries the parishes, localities and distinct archives of
             ->where('sourcePanel.archives', ['Archiwum A', 'Archiwum B'])
             ->where('sourcePanel.religions', Religion::options()));
     }
+});
+
+test('the sources payload carries the parish name and the seat locality name, null without a seat', function () {
+    $user = User::factory()->create();
+    $locality = Locality::factory()->for($user->tree)->create(['name' => 'Luboml']);
+    $seated = Parish::factory()->seatedIn($locality)->create(['name' => 'Parafia św. Jana']);
+    $seatless = Parish::factory()->for($user->tree)->create(['name' => 'Parafia bez siedziby']);
+
+    $withSeat = Source::factory()->for($user->tree)->create(['parish_id' => $seated->id]);
+    $withoutSeat = Source::factory()->for($user->tree)->create(['parish_id' => $seatless->id]);
+    $withoutParish = Source::factory()->for($user->tree)->create(['parish_id' => null]);
+
+    $sources = $this->actingAs($user)->get(route('sources.index'))->inertiaProps('sources');
+
+    expect(collect($sources)->mapWithKeys(fn (array $source): array => [
+        $source['id'] => [$source['parish_name'], $source['locality_name']],
+    ])->all())->toEqual([
+        $withSeat->id => ['Parafia św. Jana', 'Luboml'],
+        $withoutSeat->id => ['Parafia bez siedziby', null],
+        $withoutParish->id => [null, null],
+    ]);
 });

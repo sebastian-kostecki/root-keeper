@@ -146,6 +146,7 @@ function FactView({ event, parts, availableSources }: FactViewProps) {
                     <SourcePickerDialog
                         eventId={event.id}
                         eventType={event.type}
+                        eventYear={event.date_parts.year}
                         linkedSourceIds={[]}
                         availableSources={availableSources}
                         trigger={

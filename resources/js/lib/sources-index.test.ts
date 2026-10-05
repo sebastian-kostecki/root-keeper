@@ -25,6 +25,8 @@ function source(id: number, overrides: Partial<IndexSource> = {}): IndexSource {
         archive: null,
         parish_id: null,
         parish_label: null,
+        parish_name: null,
+        locality_name: null,
         url: null,
         note: null,
         original_name: `plik-${id}.jpg`,

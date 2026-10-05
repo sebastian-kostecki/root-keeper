@@ -19,6 +19,8 @@ export type Source = {
     archive: string | null;
     parish_id: number | null;
     parish_label: string | null;
+    parish_name: string | null;
+    locality_name: string | null;
     url: string | null;
     note: string | null;
     original_name: string;

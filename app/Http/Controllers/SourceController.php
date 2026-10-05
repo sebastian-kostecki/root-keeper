@@ -42,7 +42,7 @@ class SourceController extends Controller
 
         return Inertia::render('sources/index', [
             'sources' => fn (): array => SourceResource::collection(
-                $tree->sources()->with('parish')->withCount('events')->latest()->orderByDesc('id')->get()
+                $tree->sources()->with('parish.locality')->withCount('events')->latest()->orderByDesc('id')->get()
             )->resolve(),
             'filters' => ['q' => $query, 'kind' => $kind, 'view' => $view, 'sort' => $sort],
             'kinds' => SourceKind::options(),
@@ -62,7 +62,7 @@ class SourceController extends Controller
 
                 Gate::authorize('view', $source);
 
-                $source->load(['parish', 'events' => fn ($query) => $query->withCount('sources')->with('participants')]);
+                $source->load(['parish.locality', 'events' => fn ($query) => $query->withCount('sources')->with('participants')]);
 
                 return [
                     'source' => SourceResource::make($source)->resolve(),

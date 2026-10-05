@@ -16,6 +16,9 @@ class SourceResource extends JsonResource
     /**
      * Transform the resource into an array.
      *
+     * `locality_name` is the seat of the source's parish today; S-09 adds the gravestone's cemetery.
+     * Callers eager-load `parish.locality`.
+     *
      * @return array{
      *     id: int,
      *     kind: string,
@@ -29,6 +32,8 @@ class SourceResource extends JsonResource
      *     year: int|null,
      *     parish_id: int|null,
      *     parish_label: string|null,
+     *     parish_name: string|null,
+     *     locality_name: string|null,
      *     archive: string|null,
      *     url: string|null,
      *     note: string|null,
@@ -57,6 +62,8 @@ class SourceResource extends JsonResource
             'year' => $this->year,
             'parish_id' => $this->parish_id,
             'parish_label' => $this->parish?->label(),
+            'parish_name' => $this->parish?->name,
+            'locality_name' => $this->parish?->locality?->name,
             'archive' => $this->archive,
             'url' => $this->url,
             'note' => $this->note,

@@ -417,30 +417,30 @@ Migracja czysto addytywna: nullable kolumna na `event_source`, żaden wiersz nie
 
 #### Automated
 
-- [x] 2.1 Typy, lint i format przechodzą
-- [x] 2.2 Testy Vitest przechodzą
-- [x] 2.3 Istniejąca suita E2E przechodzi (strażnik linków)
+- [x] 2.1 Typy, lint i format przechodzą — 9af785f
+- [x] 2.2 Testy Vitest przechodzą — 9af785f
+- [x] 2.3 Istniejąca suita E2E przechodzi (strażnik linków) — 9af785f
 
 #### Manual
 
-- [x] 2.4 W zakładce Źródła ustawiam, zmieniam i czyszczę numer; „nr …” pojawia się i znika w Przeglądzie, w zakładce Źródła i na karcie „Potwierdza”
-- [x] 2.5 Długi numer (50 znaków) nie rozbija wiersza w zakładce Źródła ani w Przeglądzie
+- [x] 2.4 W zakładce Źródła ustawiam, zmieniam i czyszczę numer; „nr …” pojawia się i znika w Przeglądzie, w zakładce Źródła i na karcie „Potwierdza” — 9af785f
+- [x] 2.5 Długi numer (50 znaków) nie rozbija wiersza w zakładce Źródła ani w Przeglądzie — 9af785f
 
 ### Phase 3: Picker — filtr miejsca i roku + krok numeru
 
 #### Automated
 
-- [ ] 3.1 Testy filtra i Vitest przechodzą
-- [ ] 3.2 Testy payloadu źródła przechodzą
-- [ ] 3.3 Typy, lint i format przechodzą
-- [ ] 3.4 Larastan przechodzi
+- [x] 3.1 Testy filtra i Vitest przechodzą
+- [x] 3.2 Testy payloadu źródła przechodzą
+- [x] 3.3 Typy, lint i format przechodzą
+- [x] 3.4 Larastan przechodzi
 
 #### Manual
 
-- [ ] 3.5 Przy fakcie z rokiem picker otwiera się z tym rokiem; „Wyczyść filtry” pokazuje wszystkie źródła; licznik ukrytych zgadza się z liczbą źródeł bez roku
-- [ ] 3.6 „Luboml” znajduje akt po miejscowości siedziby i po nazwie parafii; pasujący typ aktu jest pierwszy
-- [ ] 3.7 Zaznaczenie → numer → Enter podpina i zamyka picker; numer widać przy fakcie
-- [ ] 3.8 Przy fakcie bez roku pole „Rok” jest puste i lista pełna
+- [x] 3.5 Przy fakcie z rokiem picker otwiera się z tym rokiem; „Wyczyść filtry” pokazuje wszystkie źródła; licznik ukrytych zgadza się z liczbą źródeł bez roku
+- [x] 3.6 „Luboml” znajduje akt po miejscowości siedziby i po nazwie parafii; pasujący typ aktu jest pierwszy
+- [x] 3.7 Zaznaczenie → numer → Enter podpina i zamyka picker; numer widać przy fakcie
+- [x] 3.8 Przy fakcie bez roku pole „Rok” jest puste i lista pełna
 
 ### Phase 4: Stary „Numer wpisu” tylko do odczytu
 
