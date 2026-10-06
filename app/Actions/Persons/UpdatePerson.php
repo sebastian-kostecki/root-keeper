@@ -64,6 +64,7 @@ class UpdatePerson
             if ($this->isChecked($data['is_deceased'] ?? null)) {
                 $this->putEvent($person, EventType::Death, $data['death'] ?? []);
 
+                // Full replace, like birth and death: a payload without `burial` clears the burial place.
                 $burialLocalityId = $data['burial']['locality_id'] ?? null;
 
                 if (filled($burialLocalityId)) {

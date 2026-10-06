@@ -211,3 +211,22 @@ test('the inline store returns the locality as 201 JSON and a duplicate in anoth
 
     expect($user->tree->localities()->count())->toBe(1);
 });
+
+test('the inline store returns the locality created by a concurrent request as 200', function () {
+    $user = User::factory()->create();
+
+    $this->mock(StoreLocality::class)
+        ->shouldReceive('handle')
+        ->once()
+        ->andReturnUsing(function () use ($user): never {
+            Locality::factory()->for($user->tree)->create(['name' => 'Kraków']);
+
+            throw ValidationException::withMessages(['name' => 'Miejscowość o tej nazwie jest już w spisie.']);
+        });
+
+    $this->actingAs($user)->postJson(route('localities.inline.store'), ['name' => 'Kraków'])
+        ->assertOk()
+        ->assertExactJson(['id' => $user->tree->localities()->firstOrFail()->id, 'name' => 'Kraków']);
+
+    expect($user->tree->localities()->count())->toBe(1);
+});

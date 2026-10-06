@@ -35,7 +35,7 @@ class PersonController extends Controller
             'persons' => fn (): array => PersonResource::collection(
                 $tree->people()
                     ->with(['events' => fn ($events) => $events
-                        ->whereIn('type', [EventType::Birth, EventType::Death])
+                        ->whereIn('type', [EventType::Birth, EventType::Death, EventType::Burial])
                         ->withExists('sources')
                         ->with('locality')])
                     ->when($query !== '', function ($builder) use ($query): void {

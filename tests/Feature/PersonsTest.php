@@ -1397,6 +1397,22 @@ test('update creates, changes in place and clears the burial without touching th
         ->and(Event::whereKey($death->id)->exists())->toBeTrue();
 });
 
+test('update is a full replace: a deceased person saved without a burial key loses the burial', function () {
+    $user = User::factory()->create();
+    $person = Person::factory()->for($user->tree)->create();
+    $death = Event::factory()->for($user->tree)->death()->create();
+    $death->participants()->attach($person, ['role' => ParticipantRole::Subject]);
+    $burial = Event::factory()->for($user->tree)->burial()->withLocality()->create();
+    $burial->participants()->attach($person, ['role' => ParticipantRole::Subject]);
+
+    $this->actingAs($user)->put(route('persons.update', $person), [
+        'first_name' => 'Jan',
+        'is_deceased' => '1',
+    ])->assertSessionHasNoErrors();
+
+    expect(Event::where('type', EventType::Burial)->count())->toBe(0);
+});
+
 test('unchecking is_deceased removes the burial together with the death', function () {
     $user = User::factory()->create();
     $person = Person::factory()->for($user->tree)->create();

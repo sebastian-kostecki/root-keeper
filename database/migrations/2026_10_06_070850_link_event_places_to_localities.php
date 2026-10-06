@@ -19,6 +19,7 @@ return new class extends Migration
     {
         Schema::table('events', function (Blueprint $table) {
             $table->foreignId('locality_id')->nullable()->constrained('localities');
+            $table->index('locality_id');
         });
 
         DB::statement(<<<'SQL'
