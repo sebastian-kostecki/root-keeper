@@ -50,7 +50,7 @@ root-keeper to prywatne, samodzielnie hostowane drzewo genealogiczne, w którym 
 | S-04 | source-found-by-place-and-year       | przy podpinaniu źródła do faktu szukać po miejscu i roku i podać numer wpisu widoczny przy fakcie i źródle | S-03, F-01             | FR-003, FR-004, FR-025, US-01            | done |
 | S-05 | tree-fits-screen                     | oglądać drzewo z większymi kartami dopasowane do ekranu, z przybliżaniem i liniami dzieci od właściwej pary | F-01                   | FR-013, FR-014, FR-026                   | done |
 | S-06 | person-side-panel                    | kliknąć kartę i oglądać oraz edytować osobę w panelu obok zwężonego drzewa, przechodzić w nim do krewnych | F-01, F-02, S-05       | FR-016, FR-019, FR-028, FR-026, FR-029   | done |
-| S-07 | fact-places-from-gazetteer           | wybrać miejsce urodzenia, ślubu, zgonu i pochowania ze spisu miejscowości                                 | S-01                   | FR-010, FR-022                           | proposed |
+| S-07 | fact-places-from-gazetteer           | wybrać miejsce urodzenia, ślubu, zgonu i pochowania ze spisu miejscowości                                 | S-01                   | FR-010, FR-022                           | done |
 | S-08 | residence-history                    | ustawić osobie kilka miejscowości zamieszkania z opcjonalnymi latami od–do                                | S-01                   | FR-011                                   | proposed |
 | S-09 | gravestone-cemetery-and-buried       | opisać nagrobek cmentarzem ze spisu i osobami pochowanymi, z podpowiedzią miejsca pochowania              | S-04, S-07             | FR-002, FR-004                           | proposed |
 | S-10 | sources-grid-with-filters            | przeglądać źródła jako siatkę mniejszych kart i filtrować po rodzaju, parafii/miejscu, roku i archiwum     | S-09                   | FR-005                                   | proposed |
@@ -209,7 +209,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Unknowns:**
   - Czy miejsce pochowania to pole osoby, czy wydarzenie bez daty (PRD: bez daty pogrzebu)? Owner: `/10x-plan`. Block: no.
 - **Risk:** Drugie przeniesienie danych (tekst → odwołanie do spisu); tekstowe miejsca zostają do usunięcia w późniejszej migracji. Miejsce pochowania musi istnieć przed nagrobkiem (`S-09`), który je podpowiada.
-- **Status:** proposed
+- **Status:** done
 
 ### S-08: Kilka zamieszkań z latami
 
@@ -388,3 +388,4 @@ Rozstrzygnięte:
 - **S-04: przy podpinaniu źródła do faktu autor zawęża listę po miejscu (miejscowość parafii aktu) i roku, widzi przy każdym źródle rok i parafię, a pasujący typ aktu nadal jest pierwszy; podaje numer wpisu przy powiązaniu i widzi go przy fakcie i przy źródle; stary „Numer wpisu” źródła pozostaje widoczny do ręcznego przeniesienia, a każdy istniejący fakt prowadzi do tego samego źródła i skanu.** — Archived 2026-10-05 → `context/archive/2026-10-05-source-found-by-place-and-year/`. Lesson: —.
 - **S-06: kliknięcie karty otwiera panel osoby z prawej (przycisk „Podgląd” znika), drzewo zwęża się obok panelu, ustawienie osoby w centrum jest akcją w panelu, przejście do krewnego podmienia zawartość panelu, a po zamknięciu autor jest w tym samym miejscu drzewa; panel otwiera się też z listy osób i ze źródła; edycja osoby odbywa się w panelu.** — Archived 2026-10-06 → `context/archive/2026-10-05-person-side-panel/`. Lesson: —.
 - **S-05: autor ogląda drzewo z większymi kartami, które dopasowuje się do ekranu (na dużym wypełnia dostępną przestrzeń), przybliża je i oddala, a linia do dziecka wychodzi od właściwej pary, więc widać, z którego związku jest dziecko; dodawanie rodzica, dziecka i małżonka ze slotów działa jak dziś.** — Archived 2026-10-05 → `context/archive/2026-10-05-tree-fits-screen/`. Lesson: —.
+- **S-07: autor wybiera miejsce urodzenia, ślubu, zgonu i pochowania ze spisu miejscowości (z podpowiedziami i dopisaniem w locie); istniejące tekstowe miejsca faktów wskazują na miejscowości ze spisu; niepewność opisuje w notatce.** — Archived 2026-10-06 → `context/archive/2026-10-06-fact-places-from-gazetteer/`. Lesson: —.
