@@ -48,7 +48,7 @@ test('sources index shows only the authenticated user own sources, newest first'
         ->component('sources/index')
         ->has('sources', 2)
         ->has('sources.0', fn ($source) => $source->hasAll([
-            'id', 'kind', 'kind_label', 'kind_short_label', 'name', 'display_name', 'record_type', 'record_type_label', 'legacy_entry_number', 'year', 'parish_id', 'parish_label', 'parish_name', 'locality_name', 'archive', 'url', 'note', 'original_name', 'mime_type', 'size', 'width', 'height', 'has_thumbnail', 'uploaded_at', 'events_count',
+            'id', 'kind', 'kind_label', 'kind_short_label', 'name', 'display_name', 'record_type', 'record_type_label', 'legacy_entry_number', 'year', 'parish_id', 'parish_label', 'parish_name', 'locality_name', 'cemetery_locality_id', 'cemetery_name', 'archive', 'url', 'note', 'original_name', 'mime_type', 'size', 'width', 'height', 'has_thumbnail', 'uploaded_at', 'events_count',
         ]))
         ->where('sources.0.id', $newer->id)
         ->where('sources.1.id', $older->id));
@@ -1225,4 +1225,29 @@ test('the sources payload carries the parish name and the seat locality name, nu
         $withoutSeat->id => ['Parafia bez siedziby', null],
         $withoutParish->id => [null, null],
     ]);
+});
+
+test('a gravestone carries its cemetery as the locality name and the panel lists the buried people', function () {
+    $user = User::factory()->create();
+    $cemetery = Locality::factory()->for($user->tree)->create(['name' => 'Luboml']);
+    $first = Person::factory()->for($user->tree)->create(['first_name' => 'Jan', 'last_name' => 'Kowalski']);
+    $second = Person::factory()->for($user->tree)->create(['first_name' => 'Maria', 'last_name' => 'Kowalska']);
+    $gravestone = Source::factory()->for($user->tree)->gravestone()->create(['cemetery_locality_id' => $cemetery->id]);
+    $gravestone->buriedPeople()->attach([$second->id, $first->id]);
+
+    $response = $this->actingAs($user)->get(route('sources.index', ['source' => $gravestone->id]));
+
+    $response->assertInertia(fn ($page) => $page
+        ->where('sources.0.locality_name', 'Luboml')
+        ->where('sources.0.cemetery_name', 'Luboml')
+        ->where('sources.0.cemetery_locality_id', $cemetery->id)
+        ->missing('sources.0.buried_people')
+        ->where('sourcePanel.source.cemetery_name', 'Luboml')
+        ->where('sourcePanel.source.buried_people', [
+            ['id' => $second->id, 'display_name' => $second->displayName()],
+            ['id' => $first->id, 'display_name' => $first->displayName()],
+        ]));
+
+    $this->actingAs($user)->get(route('persons.index'))->assertInertia(fn ($page) => $page
+        ->missing('availableSources'));
 });

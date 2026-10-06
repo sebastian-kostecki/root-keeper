@@ -65,7 +65,7 @@ class HandleInertiaRequests extends Middleware
                 ->map(fn (Locality $locality): array => ['id' => $locality->id, 'name' => $locality->name])
                 ->all()),
             'availableSources' => Inertia::optional(fn (): array => $request->user() === null ? [] : SourceResource::collection(
-                $request->user()->tree->sources()->with('parish.locality')->latest()->orderByDesc('id')->get()
+                $request->user()->tree->sources()->with(['parish.locality', 'cemetery'])->latest()->orderByDesc('id')->get()
             )->resolve()),
         ];
     }

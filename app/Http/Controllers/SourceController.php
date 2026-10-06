@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Actions\Sources\DeleteSource;
 use App\Actions\Sources\StoreSource;
 use App\Actions\Sources\UpdateSource;
+use App\Actions\Trees\ListPersonCandidates;
 use App\Enums\Religion;
 use App\Enums\SourceKind;
 use App\Enums\SourceRecordType;
@@ -32,7 +33,7 @@ class SourceController extends Controller
     /**
      * Display a listing of the tree's sources.
      */
-    public function index(Request $request): Response
+    public function index(Request $request, ListPersonCandidates $listPersonCandidates): Response
     {
         $query = $this->normalizeSearchQuery($request->query('q'));
         $kind = $this->normalizeKind($request->query('kind'));
@@ -42,8 +43,9 @@ class SourceController extends Controller
 
         return Inertia::render('sources/index', [
             'sources' => fn (): array => SourceResource::collection(
-                $tree->sources()->with('parish.locality')->withCount('events')->latest()->orderByDesc('id')->get()
+                $tree->sources()->with(['parish.locality', 'cemetery'])->withCount('events')->latest()->orderByDesc('id')->get()
             )->resolve(),
+            'personCandidates' => Inertia::optional(fn (): array => $listPersonCandidates->handle($tree)),
             'filters' => ['q' => $query, 'kind' => $kind, 'view' => $view, 'sort' => $sort],
             'kinds' => SourceKind::options(),
             'recordTypes' => SourceRecordType::options(),
@@ -62,7 +64,7 @@ class SourceController extends Controller
 
                 Gate::authorize('view', $source);
 
-                $source->load(['parish.locality', 'events' => fn ($query) => $query->withCount('sources')->with('participants')]);
+                $source->load(['parish.locality', 'cemetery', 'buriedPeople', 'events' => fn ($query) => $query->withCount('sources')->with('participants')]);
 
                 return [
                     'source' => SourceResource::make($source)->resolve(),

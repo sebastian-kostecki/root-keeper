@@ -2,6 +2,8 @@
 
 namespace App\Http\Resources;
 
+use App\Enums\SourceKind;
+use App\Models\Person;
 use App\Models\Source;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -16,8 +18,8 @@ class SourceResource extends JsonResource
     /**
      * Transform the resource into an array.
      *
-     * `locality_name` is the seat of the source's parish today; S-09 adds the gravestone's cemetery.
-     * Callers eager-load `parish.locality`.
+     * `locality_name` is the place of the source: the gravestone's cemetery, or the seat of an act's parish.
+     * Callers eager-load `parish.locality` and `cemetery`; the panel also `buriedPeople`.
      *
      * @return array{
      *     id: int,
@@ -34,6 +36,9 @@ class SourceResource extends JsonResource
      *     parish_label: string|null,
      *     parish_name: string|null,
      *     locality_name: string|null,
+     *     cemetery_locality_id: int|null,
+     *     cemetery_name: string|null,
+     *     buried_people?: list<array{id: int, display_name: string}>,
      *     archive: string|null,
      *     url: string|null,
      *     note: string|null,
@@ -63,7 +68,13 @@ class SourceResource extends JsonResource
             'parish_id' => $this->parish_id,
             'parish_label' => $this->parish?->label(),
             'parish_name' => $this->parish?->name,
-            'locality_name' => $this->parish?->locality?->name,
+            'locality_name' => $this->kind === SourceKind::Gravestone ? $this->cemetery?->name : $this->parish?->locality?->name,
+            'cemetery_locality_id' => $this->cemetery_locality_id,
+            'cemetery_name' => $this->cemetery?->name,
+            'buried_people' => $this->whenLoaded('buriedPeople', fn (): array => $this->buriedPeople
+                ->map(fn (Person $person): array => ['id' => $person->id, 'display_name' => $person->displayName()])
+                ->values()
+                ->all()),
             'archive' => $this->archive,
             'url' => $this->url,
             'note' => $this->note,

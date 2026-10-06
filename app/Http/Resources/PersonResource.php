@@ -4,6 +4,7 @@ namespace App\Http\Resources;
 
 use App\Models\Event;
 use App\Models\Person;
+use App\Models\Source;
 use App\Support\PersonOrdering;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -34,6 +35,7 @@ class PersonResource extends JsonResource
      *     children?: list<array<string, mixed>>,
      *     marriages?: list<array<string, mixed>>,
      *     residences?: list<array{id: int, locality: array{id: int, name: string}, year_from: int|null, year_to: int|null}>,
+     *     gravestones?: list<array{id: int, display_name: string, cemetery_name: string|null}>,
      * }
      */
     public function toArray(Request $request): array
@@ -68,6 +70,14 @@ class PersonResource extends JsonResource
             'residences' => $this->whenLoaded('residences', fn (): array => array_values(ResidenceResource::collection(
                 PersonOrdering::residences($this->residences)
             )->resolve())),
+            'gravestones' => $this->whenLoaded('gravestones', fn (): array => $this->gravestones
+                ->map(fn (Source $source): array => [
+                    'id' => $source->id,
+                    'display_name' => $source->displayName(),
+                    'cemetery_name' => $source->cemetery?->name,
+                ])
+                ->values()
+                ->all()),
         ];
     }
 }

@@ -24,7 +24,7 @@ class BuildPersonPreview
      */
     public function handle(Person $person, User $user): array
     {
-        $person->load(['events.sources', 'events.locality', 'parents.events', 'children.events', 'marriages.sources', 'marriages.locality', 'marriages.participants.events', 'residences.locality']);
+        $person->load(['events.sources', 'events.locality', 'parents.events', 'children.events', 'marriages.sources', 'marriages.locality', 'marriages.participants.events', 'residences.locality', 'gravestones.cemetery']);
 
         return [
             'person' => PersonResource::make($person)->resolve(),

@@ -264,3 +264,52 @@ test('updating another users gravestone is not found', function () {
 
     $this->actingAs($user)->put(route('sources.update', $source), gravestoneFields())->assertNotFound();
 });
+
+test('the sources page offers the tree people as an optional prop', function () {
+    $user = User::factory()->create();
+    $mine = Person::factory()->for($user->tree)->create();
+    Person::factory()->for(User::factory()->create()->tree)->create();
+
+    $this->actingAs($user)->get(route('sources.index'))
+        ->assertInertia(fn ($page) => $page->component('sources/index')->missing('personCandidates'));
+
+    $version = $this->actingAs($user)->get(route('sources.index'), ['X-Inertia' => 'true'])->headers->get('X-Inertia-Version');
+
+    $response = $this->actingAs($user)->get(route('sources.index'), [
+        'X-Inertia' => 'true',
+        'X-Inertia-Version' => $version,
+        'X-Inertia-Partial-Data' => 'personCandidates',
+        'X-Inertia-Partial-Component' => 'sources/index',
+    ]);
+
+    $response->assertOk();
+    expect(collect($response->json('props.personCandidates'))->pluck('id')->all())->toBe([$mine->id]);
+});
+
+test('the person preview lists the gravestones and suggests the one shared cemetery', function (array $cemeteryNames, ?string $suggested) {
+    $user = User::factory()->create();
+    $person = Person::factory()->for($user->tree)->create();
+
+    foreach ($cemeteryNames as $name) {
+        $cemetery = Locality::query()->firstOrCreate(['tree_id' => $user->tree->id, 'name' => $name]);
+        Source::factory()->for($user->tree)->gravestone()->create(['cemetery_locality_id' => $cemetery->id])
+            ->buriedPeople()->attach($person);
+    }
+
+    $this->actingAs($user)->get(personPreviewUrl($person))->assertInertia(function ($page) use ($cemeteryNames, $suggested) {
+        $page->has('personPreview.person.gravestones', count($cemeteryNames));
+
+        $suggested === null
+            ? $page->where('personPreview.personForm.burial_suggestion', null)
+            : $page->where('personPreview.personForm.burial_suggestion.name', $suggested);
+
+        if ($cemeteryNames !== []) {
+            $page->where('personPreview.person.gravestones.0.cemetery_name', $cemeteryNames[0]);
+        }
+    });
+})->with([
+    'one cemetery' => [['Luboml'], 'Luboml'],
+    'two gravestones, same cemetery' => [['Luboml', 'Luboml'], 'Luboml'],
+    'two different cemeteries' => [['Luboml', 'Chełm'], null],
+    'no gravestones' => [[], null],
+]);

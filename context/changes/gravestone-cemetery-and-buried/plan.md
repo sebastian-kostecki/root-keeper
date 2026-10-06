@@ -363,20 +363,20 @@ Migracja tylko dodaje kolumnę i tabelę — bez przenoszenia danych; `down()` o
 
 #### Automated
 
-- [x] 1.1 Migracja przechodzi w górę i w dół: `vendor/bin/sail artisan migrate` i `vendor/bin/sail artisan migrate:rollback --step=1` + ponowne `migrate`
-- [x] 1.2 Testy nagrobka przechodzą: `vendor/bin/sail artisan test --compact tests/Feature/GravestoneTest.php`
-- [x] 1.3 Testy źródeł, zapisów i kopii przechodzą: `vendor/bin/sail artisan test --compact tests/Feature/SourcesTest.php tests/Feature/WriteTargetsTest.php tests/Backup`
-- [x] 1.4 Larastan przechodzi: `vendor/bin/sail composer types:check`
-- [x] 1.5 Pint czysty: `vendor/bin/sail bin pint --dirty --format agent`
+- [x] 1.1 Migracja przechodzi w górę i w dół: `vendor/bin/sail artisan migrate` i `vendor/bin/sail artisan migrate:rollback --step=1` + ponowne `migrate` — ef7d89d
+- [x] 1.2 Testy nagrobka przechodzą: `vendor/bin/sail artisan test --compact tests/Feature/GravestoneTest.php` — ef7d89d
+- [x] 1.3 Testy źródeł, zapisów i kopii przechodzą: `vendor/bin/sail artisan test --compact tests/Feature/SourcesTest.php tests/Feature/WriteTargetsTest.php tests/Backup` — ef7d89d
+- [x] 1.4 Larastan przechodzi: `vendor/bin/sail composer types:check` — ef7d89d
+- [x] 1.5 Pint czysty: `vendor/bin/sail bin pint --dirty --format agent` — ef7d89d
 
 ### Phase 2: Backend — odczyt
 
 #### Automated
 
-- [ ] 2.1 Testy nagrobka i źródeł przechodzą: `vendor/bin/sail artisan test --compact tests/Feature/GravestoneTest.php tests/Feature/SourcesTest.php`
-- [ ] 2.2 Testy osób przechodzą: `vendor/bin/sail artisan test --compact tests/Feature/PersonsTest.php`
-- [ ] 2.3 Larastan przechodzi: `vendor/bin/sail composer types:check`
-- [ ] 2.4 Pint czysty: `vendor/bin/sail bin pint --dirty --format agent`
+- [x] 2.1 Testy nagrobka i źródeł przechodzą: `vendor/bin/sail artisan test --compact tests/Feature/GravestoneTest.php tests/Feature/SourcesTest.php`
+- [x] 2.2 Testy osób przechodzą: `vendor/bin/sail artisan test --compact tests/Feature/PersonsTest.php`
+- [x] 2.3 Larastan przechodzi: `vendor/bin/sail composer types:check`
+- [x] 2.4 Pint czysty: `vendor/bin/sail bin pint --dirty --format agent`
 
 ### Phase 3: Frontend — panel nagrobka i lista źródeł
 
