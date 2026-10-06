@@ -381,25 +381,25 @@ Panel dokłada jedno zapytanie (`residences.locality`) na podgląd osoby. Lista 
 
 #### Automated
 
-- [x] 1.1 Migracja i jej wycofanie przechodzą
-- [x] 1.2 Test migracji przechodzi
-- [x] 1.3 Testy migracji S-01 i S-07 nadal przechodzą
-- [x] 1.4 Larastan przechodzi
-- [x] 1.5 Pint czysty
+- [x] 1.1 Migracja i jej wycofanie przechodzą — 02e532d
+- [x] 1.2 Test migracji przechodzi — 02e532d
+- [x] 1.3 Testy migracji S-01 i S-07 nadal przechodzą — 02e532d
+- [x] 1.4 Larastan przechodzi — 02e532d
+- [x] 1.5 Pint czysty — 02e532d
 
 #### Manual
 
-- [x] 1.6 Lokalnie każda osoba z niepustym tekstem ma zamieszkanie na miejscowość o tej samej nazwie
+- [x] 1.6 Lokalnie każda osoba z niepustym tekstem ma zamieszkanie na miejscowość o tej samej nazwie — 02e532d
 
 ### Phase 2: Backend zapisu i odczytu zamieszkań
 
 #### Automated
 
-- [ ] 2.1 Testy domen przechodzą
-- [ ] 2.2 Testy kopii przechodzą
-- [ ] 2.3 Test migracji nadal przechodzi
-- [ ] 2.4 Larastan (poziom 7) przechodzi bez nowych błędów
-- [ ] 2.5 Pint czysty
+- [x] 2.1 Testy domen przechodzą
+- [x] 2.2 Testy kopii przechodzą
+- [x] 2.3 Test migracji nadal przechodzi
+- [x] 2.4 Larastan (poziom 7) przechodzi bez nowych błędów
+- [x] 2.5 Pint czysty
 
 ### Phase 3: Frontend — karta „Zamieszkania”
 

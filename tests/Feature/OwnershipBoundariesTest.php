@@ -304,3 +304,26 @@ it('ignores a tree_id sent in the body and stores the source and its file under 
     expect($source->path)->toStartWith("sources/{$attacker->tree->id}/");
     Storage::disk('local')->assertExists($source->path);
 });
+
+it('rejects a residence in another tree\'s or a missing locality with a validation error and writes nothing', function (string $kind) {
+    Storage::fake('local');
+
+    $attacker = User::factory()->create();
+    $victim = User::factory()->create();
+    $records = ownershipRecords($attacker, $victim);
+
+    $localityId = $kind === 'foreign'
+        ? Locality::factory()->for($victim->tree)->create()->id
+        : 999999;
+
+    $before = ownershipSnapshot();
+
+    $this->actingAs($attacker)
+        ->put(route('persons.update', $records['ownPerson']), [
+            'first_name' => 'Jan',
+            'residences' => [['locality_id' => $localityId]],
+        ])
+        ->assertSessionHasErrors('residences.0.locality_id');
+
+    expect(ownershipSnapshot())->toBe($before);
+})->with(['foreign locality' => 'foreign', 'missing locality' => 'missing']);

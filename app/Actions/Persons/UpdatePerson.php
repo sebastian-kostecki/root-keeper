@@ -6,7 +6,9 @@ use App\Enums\EventType;
 use App\Enums\Gender;
 use App\Enums\ParticipantRole;
 use App\Models\Person;
+use App\Models\Residence;
 use App\Support\ParentChildGraph;
+use App\Support\PersonOrdering;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -23,7 +25,6 @@ class UpdatePerson
      *     last_name?: string|null,
      *     maiden_name?: string|null,
      *     gender?: string|null,
-     *     residence?: string|null,
      *     religion?: string|null,
      *     is_deceased?: bool|int|string|null,
      *     birth?: array{
@@ -41,6 +42,7 @@ class UpdatePerson
      *         locality_id?: int|string|null,
      *     },
      *     burial?: array{locality_id?: int|string|null},
+     *     residences?: array<int, array{locality_id: int|string, year_from?: int|string|null, year_to?: int|string|null}>,
      * }  $data
      */
     public function handle(Person $person, array $data): Person
@@ -55,7 +57,6 @@ class UpdatePerson
                 'last_name' => $data['last_name'] ?? null,
                 'maiden_name' => $data['maiden_name'] ?? null,
                 'gender' => $data['gender'] ?? null,
-                'residence' => $data['residence'] ?? null,
                 'religion' => $data['religion'] ?? null,
             ]);
 
@@ -77,8 +78,47 @@ class UpdatePerson
                 $person->burial()?->delete();
             }
 
+            $this->replaceResidences($person, $data['residences'] ?? []);
+
             return $person;
         });
+    }
+
+    /**
+     * Full replace of the residence list, in payload order so ids grow in view
+     * order. An unchanged list is left alone so saving other sections never
+     * rewrites residence rows.
+     *
+     * @param  array<int, array{locality_id: int|string, year_from?: int|string|null, year_to?: int|string|null}>  $rows
+     */
+    private function replaceResidences(Person $person, array $rows): void
+    {
+        $submitted = collect(array_values($rows))
+            ->map(fn (array $row): array => [
+                (int) $row['locality_id'],
+                filled($row['year_from'] ?? null) ? (int) $row['year_from'] : null,
+                filled($row['year_to'] ?? null) ? (int) $row['year_to'] : null,
+            ])
+            ->all();
+
+        $current = PersonOrdering::residences($person->residences()->get())
+            ->map(fn (Residence $residence): array => [$residence->locality_id, $residence->year_from, $residence->year_to])
+            ->all();
+
+        if ($submitted === $current) {
+            return;
+        }
+
+        $person->residences()->delete();
+
+        foreach ($submitted as [$localityId, $yearFrom, $yearTo]) {
+            $person->residences()->create([
+                'tree_id' => $person->tree_id,
+                'locality_id' => $localityId,
+                'year_from' => $yearFrom,
+                'year_to' => $yearTo,
+            ]);
+        }
     }
 
     /**

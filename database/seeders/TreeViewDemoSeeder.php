@@ -14,6 +14,7 @@ use App\Models\Event;
 use App\Models\Locality;
 use App\Models\Parish;
 use App\Models\Person;
+use App\Models\Residence;
 use App\Models\Source;
 use App\Models\Tree;
 use App\Models\User;
@@ -258,8 +259,18 @@ class TreeViewDemoSeeder extends Seeder
             'first_name' => 'Genowefa',
             'last_name' => 'Pełnodanowska',
             'gender' => 'female',
-            'residence' => 'Zakopane',
             'religion' => Religion::RomanCatholic,
+        ]);
+
+        Residence::factory()->for($person)->create([
+            'tree_id' => $this->tree->id,
+            'locality_id' => $this->localityId('Nowy Targ'),
+            'year_from' => 1920,
+            'year_to' => 1935,
+        ]);
+        Residence::factory()->for($person)->create([
+            'tree_id' => $this->tree->id,
+            'locality_id' => $this->localityId('Zakopane'),
         ]);
 
         $birth = Event::factory()->for($this->tree)->birth()->create([
@@ -296,7 +307,6 @@ class TreeViewDemoSeeder extends Seeder
             'first_name' => 'Bezimienna',
             'last_name' => null,
             'gender' => null,
-            'residence' => null,
             'religion' => null,
         ]);
     }
@@ -310,7 +320,6 @@ class TreeViewDemoSeeder extends Seeder
             'first_name' => $firstName,
             'last_name' => $lastName,
             'gender' => $gender,
-            'residence' => null,
         ]);
     }
 
@@ -526,7 +535,6 @@ class TreeViewDemoSeeder extends Seeder
             'first_name' => $firstName,
             'last_name' => $lastName,
             'gender' => $gender,
-            'residence' => null,
         ]);
 
         $birth = Event::factory()->for($this->tree)->birth()->withoutDate()->create([

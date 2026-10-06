@@ -1,5 +1,7 @@
 <?php
 
+use App\Models\Locality;
+use App\Models\Residence;
 use App\Models\User;
 use Illuminate\Support\Facades\Storage;
 
@@ -261,33 +263,34 @@ test('editing a person in the preview changes only that person and the birth fac
     $scene = familyScene($user);
     extract($scene);
 
-    $form = readInertiaProp($this, $user, personPreviewUrl($focus), 'personPreview')['personForm'];
-
     $event = fn (?array $fact, array $overrides = []): array => $fact === null ? [] : [
         ...array_intersect_key($fact, array_flip(['year', 'month', 'day', 'is_approximate'])),
         'locality_id' => $fact['locality']['id'] ?? null,
         ...$overrides,
     ];
 
+    $village = Locality::factory()->for($user->tree)->create();
+    Residence::factory()->for($focus)->create(['tree_id' => $user->tree->id, 'locality_id' => $village->id, 'year_from' => 1900]);
+    Residence::factory()->for($focus)->create(['tree_id' => $user->tree->id, 'locality_id' => $village->id]);
+
+    $form = readInertiaProp($this, $user, personPreviewUrl($focus), 'personPreview')['personForm'];
+
     $before = databaseRows();
 
     $this->actingAs($user)->put(route('persons.update', $focus), [
-        ...array_intersect_key($form, array_flip(['first_name', 'last_name', 'maiden_name', 'gender', 'residence', 'religion', 'is_deceased'])),
-        'residence' => 'Nowe Miasto',
+        ...array_intersect_key($form, array_flip(['first_name', 'last_name', 'maiden_name', 'gender', 'religion', 'is_deceased'])),
         'birth' => $event($form['birth'], ['year' => 1851]),
         'death' => $event($form['death']),
+        'residences' => array_map(fn (array $row): array => [
+            'locality_id' => $row['locality']['id'],
+            'year_from' => $row['year_from'],
+            'year_to' => $row['year_to'],
+        ], $form['residences']),
     ])->assertSessionHasNoErrors()->assertRedirect();
 
     $diff = rowDiff($before, databaseRows());
 
-    expect(array_keys($diff['tables']))->toBe(['events', 'people']);
-
-    expect(array_column(array_column($diff['tables']['people']['changed'], 'after'), 'id'))->toBe([$focus->id]);
-    expect($diff['tables']['people']['changed'][0]['after']['residence'])->toBe('Nowe Miasto');
-    expect(array_values(array_diff(
-        array_keys(array_diff_assoc($diff['tables']['people']['changed'][0]['after'], $diff['tables']['people']['changed'][0]['before'])),
-        ['updated_at'],
-    )))->toBe(['residence']);
+    expect(array_keys($diff['tables']))->toBe(['events']);
 
     expect(array_column(array_column($diff['tables']['events']['changed'], 'after'), 'id'))->toBe([$focusBirth->id]);
     expect($diff['tables']['events']['changed'][0]['before']['date_year'])->toBe(1850);
@@ -299,6 +302,39 @@ test('editing a person in the preview changes only that person and the birth fac
     }
 
     expect($diff['files'])->toBe(['removed' => [], 'added' => []]);
+});
+
+test('replacing a person residence list changes only that person residence rows', function () {
+    Storage::fake('local');
+
+    $user = User::factory()->create();
+    $scene = familyScene($user);
+    extract($scene);
+
+    $village = Locality::factory()->for($user->tree)->create();
+    $town = Locality::factory()->for($user->tree)->create();
+    $focusResidence = Residence::factory()->for($focus)->create(['tree_id' => $user->tree->id, 'locality_id' => $village->id]);
+    $otherResidence = Residence::factory()->for($focusFather)->create(['tree_id' => $user->tree->id, 'locality_id' => $village->id]);
+
+    $form = readInertiaProp($this, $user, personPreviewUrl($focus), 'personPreview')['personForm'];
+
+    $before = databaseRows();
+
+    $this->actingAs($user)->put(route('persons.update', $focus), [
+        ...array_intersect_key($form, array_flip(['first_name', 'last_name', 'maiden_name', 'gender', 'religion', 'is_deceased'])),
+        'birth' => ['year' => $form['birth']['year'], 'month' => $form['birth']['month'], 'day' => $form['birth']['day'], 'locality_id' => null],
+        'death' => ['year' => $form['death']['year'], 'locality_id' => null],
+        'residences' => [['locality_id' => $town->id, 'year_from' => 1900, 'year_to' => null]],
+    ])->assertSessionHasNoErrors()->assertRedirect();
+
+    $diff = rowDiff($before, databaseRows());
+
+    expect(array_keys($diff['tables']))->toBe(['residences']);
+    expect(array_column($diff['tables']['residences']['removed'], 'id'))->toBe([$focusResidence->id]);
+    expect($diff['tables']['residences']['added'])->toHaveCount(1);
+    expect($diff['tables']['residences']['added'][0]['person_id'])->toBe($focus->id);
+    expect($diff['tables']['residences']['changed'])->toBe([]);
+    expect(Residence::query()->whereKey($otherResidence->id)->exists())->toBeTrue();
 });
 
 test('editing a marriage from the preview changes only that marriage event and keeps its source links', function () {

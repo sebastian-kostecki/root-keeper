@@ -6,6 +6,7 @@ use App\Models\Event;
 use App\Models\Locality;
 use App\Models\ParentChildRelation;
 use App\Models\Person;
+use App\Models\Residence;
 use App\Models\Source;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
@@ -753,7 +754,7 @@ test('person show exposes personForm with raw date parts, religion value, is_dec
         ->where('personPreview.personForm.birth.is_confirmed', true));
 });
 
-test('update changes names, residence, religion, birth date parts and locality, and redirects with a toast', function () {
+test('update changes names, religion, birth date parts and locality, and redirects with a toast', function () {
     $user = User::factory()->create();
     $person = Person::factory()->for($user->tree)->create(['first_name' => 'Jan', 'last_name' => 'Kowalski']);
     $birth = Event::factory()->for($user->tree)->birth()->withoutDate()->create();
@@ -763,7 +764,6 @@ test('update changes names, residence, religion, birth date parts and locality, 
     $response = $this->actingAs($user)->put(route('persons.update', $person), [
         'first_name' => 'Janina',
         'last_name' => 'Nowak',
-        'residence' => 'Kraków',
         'religion' => 'orthodox',
         'birth' => ['year' => 1950, 'month' => 3, 'day' => 4, 'locality_id' => $warszawa->id],
     ]);
@@ -774,7 +774,6 @@ test('update changes names, residence, religion, birth date parts and locality, 
     $person->refresh();
     expect($person->first_name)->toBe('Janina');
     expect($person->last_name)->toBe('Nowak');
-    expect($person->residence)->toBe('Kraków');
     expect($person->religion->value)->toBe('orthodox');
 
     $birth->refresh();
@@ -782,6 +781,131 @@ test('update changes names, residence, religion, birth date parts and locality, 
     expect($birth->date_month)->toBe(3);
     expect($birth->date_day)->toBe(4);
     expect($birth->locality_id)->toBe($warszawa->id);
+});
+
+/**
+ * The residence list of a person as the preview hands it to the panel form.
+ *
+ * @return list<array{locality: string, year_from: int|null, year_to: int|null}>
+ */
+function previewResidences(mixed $test, User $user, Person $person): array
+{
+    $list = [];
+
+    $test->actingAs($user)->get(personPreviewUrl($person))->assertInertia(function ($page) use (&$list) {
+        $list = collect($page->toArray()['props']['personPreview']['personForm']['residences'])
+            ->map(fn (array $row): array => ['locality' => $row['locality']['name'], 'year_from' => $row['year_from'], 'year_to' => $row['year_to']])
+            ->all();
+
+        return $page;
+    });
+
+    return $list;
+}
+
+test('update stores the residence list and the preview returns it ordered by year, undated last, ties by order added', function () {
+    $user = User::factory()->create();
+    $person = Person::factory()->for($user->tree)->create();
+    [$a, $b, $c, $d, $e] = collect(['A', 'B', 'C', 'D', 'E'])
+        ->map(fn (string $name): Locality => Locality::factory()->for($user->tree)->create(['name' => $name]))->all();
+
+    $this->actingAs($user)->put(route('persons.update', $person), [
+        'first_name' => 'Jan',
+        'residences' => [
+            ['locality_id' => $a->id],
+            ['locality_id' => $b->id, 'year_from' => 1950, 'year_to' => 1960],
+            ['locality_id' => $c->id, 'year_to' => 1920],
+            ['locality_id' => $d->id, 'year_from' => 1920],
+            ['locality_id' => $e->id],
+        ],
+    ])->assertSessionHasNoErrors()->assertRedirect(route('persons.index'));
+
+    expect($person->residences()->count())->toBe(5);
+    expect(collect(previewResidences($this, $user, $person))->pluck('locality')->all())->toBe(['C', 'D', 'B', 'A', 'E']);
+    expect(previewResidences($this, $user, $person)[2])->toBe(['locality' => 'B', 'year_from' => 1950, 'year_to' => 1960]);
+});
+
+test('the same locality may be a residence more than once', function () {
+    $user = User::factory()->create();
+    $person = Person::factory()->for($user->tree)->create();
+    $locality = Locality::factory()->for($user->tree)->create();
+
+    $this->actingAs($user)->put(route('persons.update', $person), [
+        'first_name' => 'Jan',
+        'residences' => [
+            ['locality_id' => $locality->id, 'year_from' => 1900, 'year_to' => 1910],
+            ['locality_id' => $locality->id, 'year_from' => 1920, 'year_to' => 1930],
+        ],
+    ])->assertSessionHasNoErrors();
+
+    expect($person->residences()->count())->toBe(2);
+});
+
+test('update without a residences key clears the list', function () {
+    $user = User::factory()->create();
+    $person = Person::factory()->for($user->tree)->create();
+    Residence::factory()->for($person)->create(['tree_id' => $user->tree->id, 'locality_id' => Locality::factory()->for($user->tree)]);
+
+    $this->actingAs($user)->put(route('persons.update', $person), ['first_name' => 'Jan'])->assertSessionHasNoErrors();
+
+    expect($person->residences()->count())->toBe(0);
+});
+
+test('a fully empty residence row is skipped and does not shift the error index of later rows', function () {
+    $user = User::factory()->create();
+    $person = Person::factory()->for($user->tree)->create();
+    $locality = Locality::factory()->for($user->tree)->create();
+
+    $this->actingAs($user)->put(route('persons.update', $person), [
+        'first_name' => 'Jan',
+        'residences' => [['locality_id' => '', 'year_from' => '', 'year_to' => null], ['locality_id' => $locality->id]],
+    ])->assertSessionHasNoErrors();
+
+    expect($person->residences()->count())->toBe(1);
+
+    $this->actingAs($user)->put(route('persons.update', $person), [
+        'first_name' => 'Jan',
+        'residences' => [
+            ['locality_id' => $locality->id],
+            ['locality_id' => '', 'year_from' => ''],
+            ['locality_id' => $locality->id],
+            ['year_from' => 1900],
+        ],
+    ])->assertSessionHasErrors(['residences.3.locality_id' => 'Wybierz miejscowość.'])
+        ->assertSessionDoesntHaveErrors(['residences.0.locality_id', 'residences.2.locality_id']);
+
+    expect($person->residences()->count())->toBe(1);
+});
+
+test('residence years must be in range and from may not exceed to', function (array $row, string $errorKey) {
+    $user = User::factory()->create();
+    $person = Person::factory()->for($user->tree)->create();
+    $locality = Locality::factory()->for($user->tree)->create();
+    Residence::factory()->for($person)->create(['tree_id' => $user->tree->id, 'locality_id' => $locality->id]);
+
+    $this->actingAs($user)->put(route('persons.update', $person), [
+        'first_name' => 'Jan',
+        'residences' => [['locality_id' => $locality->id, ...$row]],
+    ])->assertSessionHasErrors($errorKey);
+
+    expect($person->residences()->count())->toBe(1);
+})->with([
+    'from after to' => [['year_from' => 1950, 'year_to' => 1940], 'residences.0.year_to'],
+    'from before 1000' => [['year_from' => 999], 'residences.0.year_from'],
+    'to in the future' => [['year_to' => 9999], 'residences.0.year_to'],
+]);
+
+test('the legacy residence text key is ignored and the stored text stays untouched', function () {
+    $user = User::factory()->create();
+    $person = Person::factory()->for($user->tree)->create(['residence' => 'Stary tekst']);
+
+    $this->actingAs($user)->put(route('persons.update', $person), [
+        'first_name' => 'Jan',
+        'residence' => 'Nowy tekst',
+    ])->assertSessionHasNoErrors();
+
+    expect($person->refresh()->residence)->toBe('Stary tekst');
+    expect($person->residences()->count())->toBe(0);
 });
 
 test('update of a birth with a linked source keeps the same birth event id and the source link', function () {

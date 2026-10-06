@@ -4,6 +4,7 @@ namespace App\Support;
 
 use App\Models\Event;
 use App\Models\Person;
+use App\Models\Residence;
 use Illuminate\Support\Collection;
 
 /**
@@ -40,6 +41,22 @@ final class PersonOrdering
         return $marriages->sort(
             fn (Event $a, Event $b): int => self::marriageSortKey($a) <=> self::marriageSortKey($b)
         )->values();
+    }
+
+    /**
+     * Order residences by year (year_from, else year_to) ascending, entries
+     * without any year last, ties by id (order of adding).
+     *
+     * @param  Collection<int, Residence>  $residences
+     * @return Collection<int, Residence>
+     */
+    public static function residences(Collection $residences): Collection
+    {
+        return $residences->sortBy(function (Residence $residence): array {
+            $year = $residence->year_from ?? $residence->year_to;
+
+            return [$year === null ? 1 : 0, $year ?? 0, $residence->id];
+        })->values();
     }
 
     /**

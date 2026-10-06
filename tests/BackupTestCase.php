@@ -7,6 +7,7 @@ use App\Models\Event;
 use App\Models\Locality;
 use App\Models\Parish;
 use App\Models\Person;
+use App\Models\Residence;
 use App\Models\Source;
 use App\Models\User;
 use Illuminate\Contracts\Console\Kernel;
@@ -151,6 +152,7 @@ abstract class BackupTestCase extends TestCase
 
         $seat = Locality::factory()->for($tree)->create(['name' => 'Lipnica Murowana']);
         Parish::factory()->for($tree)->seatedIn($seat)->create(['name' => 'Św. Leonarda']);
+        Residence::factory()->for($parent)->create(['tree_id' => $tree->id, 'locality_id' => $seat->id]);
 
         $this->uploadedSourceHashes = [];
 

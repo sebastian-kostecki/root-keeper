@@ -1,5 +1,7 @@
 <?php
 
+use App\Models\Locality;
+use App\Models\Residence;
 use App\Models\User;
 use Illuminate\Support\Facades\Storage;
 
@@ -47,6 +49,10 @@ test('deleting a person removes exactly what the preview lists and nothing of by
     $scene = familyScene($user);
     extract($scene);
 
+    $village = Locality::factory()->for($user->tree)->create();
+    $focusResidence = Residence::factory()->for($focus)->create(['tree_id' => $user->tree->id, 'locality_id' => $village->id]);
+    Residence::factory()->for($bystander)->create(['tree_id' => $user->tree->id, 'locality_id' => $village->id]);
+
     $preview = null;
     $this->actingAs($user)->get(personPreviewUrl($focus))->assertInertia(function ($page) use (&$preview) {
         $preview = $page->toArray()['props']['personPreview']['person'];
@@ -79,8 +85,11 @@ test('deleting a person removes exactly what the preview lists and nothing of by
     ]);
 
     expect(array_keys($diff['tables']))->toBe([
-        'event_participants', 'event_source', 'events', 'parent_child_relations', 'people', 'trees',
+        'event_participants', 'event_source', 'events', 'parent_child_relations', 'people', 'residences', 'trees',
     ]);
+    expect(rowIds($diff['tables']['residences']['removed']))->toBe([$focusResidence->id]);
+    expect($diff['tables']['residences']['added'])->toBe([]);
+    expect($diff['tables']['residences']['changed'])->toBe([]);
     expect(rowIds($diff['tables']['people']['removed']))->toBe([$focus->id]);
     expect(rowIds($diff['tables']['events']['removed']))->toBe(rowIds(array_map(fn ($event) => ['id' => $event->id], $deletedEvents)));
     expect(pairKeys($diff['tables']['event_participants']['removed'], 'event_id', 'person_id'))->toBe(sortedKeys([

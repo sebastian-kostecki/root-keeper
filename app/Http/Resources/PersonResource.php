@@ -25,7 +25,6 @@ class PersonResource extends JsonResource
      *     maiden_name: string|null,
      *     display_name: string,
      *     gender: array{value: string, label: string}|null,
-     *     residence: string|null,
      *     religion: array{value: string, label: string}|null,
      *     birth: array<string, mixed>|null,
      *     death: array<string, mixed>|null,
@@ -34,6 +33,7 @@ class PersonResource extends JsonResource
      *     parents?: list<array<string, mixed>>,
      *     children?: list<array<string, mixed>>,
      *     marriages?: list<array<string, mixed>>,
+     *     residences?: list<array{id: int, locality: array{id: int, name: string}, year_from: int|null, year_to: int|null}>,
      * }
      */
     public function toArray(Request $request): array
@@ -48,7 +48,6 @@ class PersonResource extends JsonResource
                 'value' => $this->gender->value,
                 'label' => $this->gender->label(),
             ],
-            'residence' => $this->residence,
             'religion' => $this->religion === null ? null : [
                 'value' => $this->religion->value,
                 'label' => $this->religion->label(),
@@ -66,6 +65,9 @@ class PersonResource extends JsonResource
             'marriages' => $this->whenLoaded('marriages', fn (): array => PersonOrdering::marriages($this->marriages)
                 ->map(fn (Event $marriage): array => MarriageResource::make($marriage, $this->resource)->resolve())
                 ->all()),
+            'residences' => $this->whenLoaded('residences', fn (): array => array_values(ResidenceResource::collection(
+                PersonOrdering::residences($this->residences)
+            )->resolve())),
         ];
     }
 }
