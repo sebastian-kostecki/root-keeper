@@ -1,7 +1,9 @@
 import { useState } from 'react';
-import type { ReactNode } from 'react';
+import type { MouseEvent, ReactNode } from 'react';
 import InputError from '@/components/input-error';
+import { LocalityPicker } from '@/components/localities/locality-picker';
 import { NewParishDialog } from '@/components/parishes/new-parish-dialog';
+import { BuriedPeopleField } from '@/components/sources/buried-people-field';
 import { SuggestField } from '@/components/suggest-field';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -36,6 +38,10 @@ type Props = {
     fileName?: string;
     /** Shown in place of the akt-only fields; those stay mounted (hidden) and still submit. */
     notice?: ReactNode;
+    /** A click on a buried person's link; the page decides whether it may leave the form. */
+    onPersonLinkClick?: (event: MouseEvent, personId: number) => void;
+    /** Called with a locality added in the panel, so the caller can name it later. */
+    onLocalityCreated?: (locality: LocalityOption) => void;
 };
 
 /** Radix Select does not allow an empty item value. */
@@ -53,6 +59,8 @@ export function SourceDescriptionFields({
     defaults,
     fileName,
     notice,
+    onPersonLinkClick,
+    onLocalityCreated,
 }: Props) {
     const [recordType, setRecordType] = useState<string>(
         defaults?.record_type ?? '',
@@ -67,6 +75,18 @@ export function SourceDescriptionFields({
     /** Name typed in the parish field while „Nowa parafia” is open; null when it is closed. */
     const [newParishName, setNewParishName] = useState<string | null>(null);
     const isRecord = kind === 'metrical_record';
+    const isGravestone = kind === 'gravestone';
+
+    const cemeteryId = defaults?.cemetery_locality_id ?? null;
+    const cemetery: LocalityOption | null =
+        cemeteryId === null
+            ? null
+            : { id: cemeteryId, name: defaults?.cemetery_name ?? '' };
+
+    const addCreatedLocality = (locality: LocalityOption) => {
+        setCreatedLocalities((current) => [...current, locality]);
+        onLocalityCreated?.(locality);
+    };
 
     // Parishes and localities added here live in state until the panel props are reloaded.
     const parishOptions = [
@@ -141,6 +161,26 @@ export function SourceDescriptionFields({
                 <InputError message={errors.parish_id} />
             </div>
 
+            <div className={cn(!isGravestone && 'hidden')}>
+                <LocalityPicker
+                    id="cemetery_locality_id"
+                    name="cemetery_locality_id"
+                    label="Cmentarz"
+                    value={cemetery}
+                    options={localityOptions}
+                    errors={errors}
+                    onCreated={addCreatedLocality}
+                />
+            </div>
+
+            <div className={cn(!isGravestone && 'hidden')}>
+                <BuriedPeopleField
+                    defaults={defaults?.buried_people}
+                    errors={errors}
+                    onPersonLinkClick={onPersonLinkClick}
+                />
+            </div>
+
             <div className="grid gap-2">
                 <Label htmlFor="year">Rok</Label>
                 <Input
@@ -206,12 +246,7 @@ export function SourceDescriptionFields({
                         setCreatedParishes((current) => [...current, parish]);
                         setParishId(parish.id);
                     }}
-                    onLocalityCreated={(locality) =>
-                        setCreatedLocalities((current) => [
-                            ...current,
-                            locality,
-                        ])
-                    }
+                    onLocalityCreated={addCreatedLocality}
                     onClose={() => setNewParishName(null)}
                 />
             )}

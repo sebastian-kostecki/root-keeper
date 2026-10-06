@@ -373,26 +373,26 @@ Migracja tylko dodaje kolumnę i tabelę — bez przenoszenia danych; `down()` o
 
 #### Automated
 
-- [x] 2.1 Testy nagrobka i źródeł przechodzą: `vendor/bin/sail artisan test --compact tests/Feature/GravestoneTest.php tests/Feature/SourcesTest.php`
-- [x] 2.2 Testy osób przechodzą: `vendor/bin/sail artisan test --compact tests/Feature/PersonsTest.php`
-- [x] 2.3 Larastan przechodzi: `vendor/bin/sail composer types:check`
-- [x] 2.4 Pint czysty: `vendor/bin/sail bin pint --dirty --format agent`
+- [x] 2.1 Testy nagrobka i źródeł przechodzą: `vendor/bin/sail artisan test --compact tests/Feature/GravestoneTest.php tests/Feature/SourcesTest.php` — 42fbf6e
+- [x] 2.2 Testy osób przechodzą: `vendor/bin/sail artisan test --compact tests/Feature/PersonsTest.php` — 42fbf6e
+- [x] 2.3 Larastan przechodzi: `vendor/bin/sail composer types:check` — 42fbf6e
+- [x] 2.4 Pint czysty: `vendor/bin/sail bin pint --dirty --format agent` — 42fbf6e
 
 ### Phase 3: Frontend — panel nagrobka i lista źródeł
 
 #### Automated
 
-- [ ] 3.1 Vitest przechodzi: `vendor/bin/sail npm run test:js`
-- [ ] 3.2 Format i lint przechodzą: `vendor/bin/sail npm run check`
-- [ ] 3.3 Typy przechodzą: `vendor/bin/sail npm run types:check`
-- [ ] 3.4 Build przechodzi: `vendor/bin/sail npm run build`
+- [x] 3.1 Vitest przechodzi: `vendor/bin/sail npm run test:js`
+- [x] 3.2 Format i lint przechodzą: `vendor/bin/sail npm run check`
+- [x] 3.3 Typy przechodzą: `vendor/bin/sail npm run types:check`
+- [x] 3.4 Build przechodzi: `vendor/bin/sail npm run build`
 
 #### Manual
 
-- [ ] 3.5 Nagrobek z nowym cmentarzem („Dodaj miejscowość”) i dwiema osobami zapisuje się bez utraty wpisanych pól
-- [ ] 3.6 Dodanie lub usunięcie osoby z listy uruchamia strażnika niezapisanych zmian przy zamknięciu panelu
-- [ ] 3.7 Zmiana nagrobka na „inne” pokazuje cmentarz i liczbę pochowanych w dialogu; po potwierdzeniu znikają
-- [ ] 3.8 Kafel pickera, karta galerii i tabela pokazują „cmentarz Luboml”
+- [x] 3.5 Nagrobek z nowym cmentarzem („Dodaj miejscowość”) i dwiema osobami zapisuje się bez utraty wpisanych pól
+- [x] 3.6 Dodanie lub usunięcie osoby z listy uruchamia strażnika niezapisanych zmian przy zamknięciu panelu
+- [x] 3.7 Zmiana nagrobka na „inne” pokazuje cmentarz i liczbę pochowanych w dialogu; po potwierdzeniu znikają
+- [x] 3.8 Kafel pickera, karta galerii i tabela pokazują „cmentarz Luboml”
 
 ### Phase 4: Frontend — panel osoby
 

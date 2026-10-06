@@ -63,6 +63,8 @@ type SourceFormData = {
     record_type: string;
     year: string;
     parish_id: string;
+    cemetery_locality_id: string;
+    buried_person_ids: string[];
     archive: string;
     url: string;
     note: string;
@@ -161,6 +163,7 @@ export function SourcePanel({
                 {source === null ? (
                     <NewSourceForm
                         key={key}
+                        onPersonLinkClick={onPersonLinkClick}
                         kinds={kinds}
                         recordTypes={recordTypes}
                         parishes={parishes}
@@ -213,6 +216,7 @@ function scrollFirstErrorIntoView(root: HTMLElement | null) {
 }
 
 function NewSourceForm({
+    onPersonLinkClick,
     kinds,
     recordTypes,
     parishes,
@@ -221,7 +225,7 @@ function NewSourceForm({
     religions,
     onDirtyChange,
     onProcessingChange,
-}: FormProps) {
+}: FormProps & { onPersonLinkClick: Props['onPersonLinkClick'] }) {
     const [kind, setKind] = useState<SourceKind | ''>('');
     const [preview, setPreview] = useState<{
         url: string;
@@ -361,6 +365,7 @@ function NewSourceForm({
                                 religions={religions}
                                 errors={errors}
                                 fileName={preview?.name}
+                                onPersonLinkClick={onPersonLinkClick}
                             />
                         </div>
                     </>
@@ -390,6 +395,9 @@ function EditSourceForm({
     const [kind, setKind] = useState<SourceKind>(source.kind);
     const [erased, setErased] = useState<ErasedField[]>([]);
     const [confirmOpen, setConfirmOpen] = useState(false);
+    const [createdLocalities, setCreatedLocalities] = useState<
+        LocalityOption[]
+    >([]);
     const formRef = useRef<FormHandle>(null);
     const discardRef = useRef<HTMLInputElement>(null);
     const rootRef = useRef<HTMLDivElement>(null);
@@ -401,6 +409,7 @@ function EditSourceForm({
             formRef.current?.getData() ?? {},
             recordTypes,
             parishes,
+            [...localities, ...createdLocalities],
         );
 
     const confirmAndSubmit = () => {
@@ -492,6 +501,13 @@ function EditSourceForm({
                                 religions={religions}
                                 errors={errors}
                                 defaults={source}
+                                onPersonLinkClick={onPersonLinkClick}
+                                onLocalityCreated={(locality) =>
+                                    setCreatedLocalities((current) => [
+                                        ...current,
+                                        locality,
+                                    ])
+                                }
                                 notice={
                                     erased.length > 0 ? (
                                         <div className="text-destructive space-y-1 text-sm">

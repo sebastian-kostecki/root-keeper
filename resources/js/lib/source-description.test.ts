@@ -9,6 +9,8 @@ import {
 } from './source-description';
 
 const empty = {
+    kind: 'other' as const,
+    cemetery_name: null,
     record_type_label: null,
     year: null,
     archive: null,
@@ -50,6 +52,28 @@ describe('formatSourceMeta', () => {
     it('returns nothing when all are empty', () => {
         expect(formatSourceMeta(empty)).toBeNull();
     });
+
+    it('shows the cemetery of a gravestone in place of the parish', () => {
+        expect(
+            formatSourceMeta({
+                ...empty,
+                kind: 'gravestone',
+                year: 1950,
+                cemetery_name: 'Luboml',
+            }),
+        ).toBe('1950 · cmentarz Luboml');
+    });
+
+    it('shows no place for a gravestone without a cemetery', () => {
+        expect(
+            formatSourceMeta({
+                ...empty,
+                kind: 'gravestone',
+                year: 1950,
+                parish_label: 'Św. Jana',
+            }),
+        ).toBe('1950');
+    });
 });
 
 describe('showsUploadDate', () => {
@@ -72,7 +96,11 @@ const akt = {
     record_type_label: null,
     parish_id: null,
     parish_label: null,
+    cemetery_locality_id: null,
+    cemetery_name: null,
 };
+
+const gravestone = { ...akt, kind: 'gravestone' as const };
 
 describe('erasedRecordFields', () => {
     it('lists nothing when typ and parafia are both empty', () => {
@@ -148,13 +176,118 @@ describe('erasedRecordFields', () => {
         ).toEqual([]);
     });
 
-    it('lists nothing for a source that was never an akt', () => {
+    it('lists nothing for a source that is neither an akt nor a gravestone', () => {
         expect(
-            erasedRecordFields({ ...akt, kind: 'gravestone' }, 'other', {
+            erasedRecordFields({ ...akt, kind: 'other' }, 'gravestone', {
                 record_type: 'birth',
                 parish_id: '7',
             }),
         ).toEqual([]);
+    });
+
+    it('lists nothing for a gravestone without a cemetery and buried people', () => {
+        expect(
+            erasedRecordFields(gravestone, 'other', {
+                cemetery_locality_id: '',
+                buried_person_ids: [],
+            }),
+        ).toEqual([]);
+    });
+
+    it('lists the cemetery and the number of buried people of a gravestone', () => {
+        expect(
+            erasedRecordFields(
+                {
+                    ...gravestone,
+                    cemetery_locality_id: 4,
+                    cemetery_name: 'Luboml',
+                    buried_people: [
+                        { id: 1, display_name: 'Jan Kowalski' },
+                        { id: 2, display_name: 'Maria Kowalska' },
+                    ],
+                },
+                'other',
+                { cemetery_locality_id: '4', buried_person_ids: ['1', '2'] },
+            ),
+        ).toEqual([
+            {
+                field: 'cemetery_locality_id',
+                label: 'Cmentarz',
+                value: 'Luboml',
+            },
+            {
+                field: 'buried_person_ids',
+                label: 'Osoby pochowane',
+                value: '2',
+            },
+        ]);
+    });
+
+    it('lists a stored cemetery and list cleared in the form', () => {
+        expect(
+            erasedRecordFields(
+                {
+                    ...gravestone,
+                    cemetery_locality_id: 4,
+                    cemetery_name: 'Luboml',
+                    buried_people: [{ id: 1, display_name: 'Jan Kowalski' }],
+                },
+                'metrical_record',
+                { cemetery_locality_id: '' },
+            ),
+        ).toEqual([
+            {
+                field: 'cemetery_locality_id',
+                label: 'Cmentarz',
+                value: 'Luboml',
+            },
+            {
+                field: 'buried_person_ids',
+                label: 'Osoby pochowane',
+                value: '1',
+            },
+        ]);
+    });
+
+    it('counts the union of the stored and the added buried people', () => {
+        expect(
+            erasedRecordFields(
+                {
+                    ...gravestone,
+                    buried_people: [
+                        { id: 1, display_name: 'Jan Kowalski' },
+                        { id: 2, display_name: 'Maria Kowalska' },
+                    ],
+                },
+                'other',
+                { buried_person_ids: ['2', '3'] },
+            ),
+        ).toEqual([
+            {
+                field: 'buried_person_ids',
+                label: 'Osoby pochowane',
+                value: '3',
+            },
+        ]);
+    });
+
+    it('names a cemetery chosen in the form by its option name', () => {
+        expect(
+            erasedRecordFields(
+                gravestone,
+                'other',
+                { cemetery_locality_id: '9' },
+                [],
+                [],
+                [{ id: 9, name: 'Chełm' }],
+            ),
+        ).toEqual([
+            {
+                field: 'cemetery_locality_id',
+                label: 'Cmentarz',
+                value: 'Chełm',
+            },
+        ]);
     });
 });
 
@@ -195,6 +328,7 @@ describe('isUndescribed', () => {
 });
 
 const summarySource = {
+    cemetery_name: null,
     kind: 'other' as const,
     kind_short_label: 'inne',
     record_type_label: null,
@@ -279,6 +413,18 @@ describe('formatSourceSummary', () => {
                 archive: 'Archiwum w Nowym Sączu',
             }),
         ).toBe('inne');
+    });
+
+    it('ends with the cemetery of a gravestone', () => {
+        expect(
+            formatSourceSummary({
+                ...summarySource,
+                kind: 'gravestone',
+                kind_short_label: 'nagrobek',
+                year: 1950,
+                cemetery_name: 'Luboml',
+            }),
+        ).toBe('nagrobek · 1950 · cmentarz Luboml');
     });
 
     it('ends with the parish', () => {

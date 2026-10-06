@@ -5,6 +5,8 @@ export type SourceKind = 'metrical_record' | 'gravestone' | 'other';
 
 export type SourceRecordType = 'birth' | 'marriage' | 'death' | 'other';
 
+export type BuriedPerson = { id: number; display_name: string };
+
 export type Source = {
     id: number;
     kind: SourceKind;
@@ -21,6 +23,9 @@ export type Source = {
     parish_label: string | null;
     parish_name: string | null;
     locality_name: string | null;
+    cemetery_locality_id: number | null;
+    cemetery_name: string | null;
+    buried_people?: BuriedPerson[];
     url: string | null;
     note: string | null;
     original_name: string;

@@ -19,7 +19,7 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
-import { sourceKindText } from '@/lib/source-description';
+import { sourceKindText, sourcePlaceLabel } from '@/lib/source-description';
 import { eventsLabel, sortSources } from '@/lib/sources-index';
 import type { SourcesSort, SourcesSortColumn } from '@/lib/sources-index';
 import { panelVisitOptions } from '@/lib/side-panel-url';
@@ -95,7 +95,7 @@ export function SourcesTable({
                             sort={sort}
                             onSortChange={onSortChange}
                         />
-                        <TableHead>Parafia</TableHead>
+                        <TableHead>Parafia / cmentarz</TableHead>
                         <TableHead>Archiwum</TableHead>
                         <SortableHead<SourcesSortColumn>
                             column="potwierdza"
@@ -166,12 +166,15 @@ export function SourcesTable({
                                     {source.year ?? <EmptyCell />}
                                 </TableCell>
                                 <TableCell className="max-w-48">
-                                    {source.parish_label ? (
+                                    {sourcePlaceLabel(source) ? (
                                         <span
                                             className="block truncate"
-                                            title={source.parish_label}
+                                            title={
+                                                sourcePlaceLabel(source) ??
+                                                undefined
+                                            }
                                         >
-                                            {source.parish_label}
+                                            {sourcePlaceLabel(source)}
                                         </span>
                                     ) : (
                                         <EmptyCell />

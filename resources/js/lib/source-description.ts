@@ -1,16 +1,37 @@
-import type { Source, SourceKind } from '@/types';
+import type { LocalityOption, Source, SourceKind } from '@/types';
+
+const present = (value: unknown): value is string =>
+    typeof value === 'string' && value !== '';
 
 type CardFields = Pick<
     Source,
-    'record_type_label' | 'year' | 'archive' | 'parish_label'
+    | 'kind'
+    | 'record_type_label'
+    | 'year'
+    | 'archive'
+    | 'parish_label'
+    | 'cemetery_name'
 >;
 
-/** The „typ · rok · parafia” line of a source card, or null when none is set. */
+/** „cmentarz Luboml” for a gravestone, the parish label for an akt; null when not set. */
+export function sourcePlaceLabel(
+    source: Pick<Source, 'kind' | 'parish_label' | 'cemetery_name'>,
+): string | null {
+    if (source.kind === 'gravestone') {
+        return present(source.cemetery_name)
+            ? `cmentarz ${source.cemetery_name}`
+            : null;
+    }
+
+    return source.parish_label;
+}
+
+/** The „typ · rok · parafia/cmentarz” line of a source card, or null when none is set. */
 export function formatSourceMeta(source: CardFields): string | null {
     const parts = [
         source.record_type_label,
         source.year === null ? null : String(source.year),
-        source.parish_label,
+        sourcePlaceLabel(source),
     ].filter((part): part is string => part !== null && part !== '');
 
     return parts.length > 0 ? parts.join(' · ') : null;
@@ -25,23 +46,32 @@ export function showsUploadDate(source: CardFields): boolean {
 }
 
 export type ErasedField = {
-    field: 'record_type' | 'parish_id';
+    field:
+        | 'record_type'
+        | 'parish_id'
+        | 'cemetery_locality_id'
+        | 'buried_person_ids';
     label: string;
     value: string;
 };
 
 type StoredRecord = Pick<
     Source,
-    'kind' | 'record_type' | 'record_type_label' | 'parish_id' | 'parish_label'
+    | 'kind'
+    | 'record_type'
+    | 'record_type_label'
+    | 'parish_id'
+    | 'parish_label'
+    | 'cemetery_locality_id'
+    | 'cemetery_name'
+    | 'buried_people'
 >;
 
-const present = (value: unknown): value is string =>
-    typeof value === 'string' && value !== '';
-
 /**
- * The akt-only fields that switching the kind would erase: typ and parafia,
- * stored or typed. A stored value counts even when it was cleared in the open
- * form. Empty unless an akt metrykalny is changed to another kind.
+ * The kind-only fields that switching the kind would erase: typ and parafia of
+ * an akt metrykalny, cemetery and buried people of a gravestone, stored or
+ * typed. A stored value counts even when it was cleared in the open form.
+ * Empty unless the kind changes.
  */
 export function erasedRecordFields(
     source: StoredRecord,
@@ -49,15 +79,22 @@ export function erasedRecordFields(
     formValues: {
         record_type?: unknown;
         parish_id?: unknown;
+        cemetery_locality_id?: unknown;
+        buried_person_ids?: unknown;
     },
     recordTypes: { value: string; label: string }[] = [],
     parishes: { id: number; label: string }[] = [],
+    localities: LocalityOption[] = [],
 ): ErasedField[] {
-    if (
-        source.kind !== 'metrical_record' ||
-        selectedKind === 'metrical_record' ||
-        selectedKind === ''
-    ) {
+    if (selectedKind === '' || selectedKind === source.kind) {
+        return [];
+    }
+
+    if (source.kind === 'gravestone') {
+        return erasedGravestoneFields(source, formValues, localities);
+    }
+
+    if (source.kind !== 'metrical_record') {
         return [];
     }
 
@@ -90,6 +127,58 @@ export function erasedRecordFields(
             (present(typedParish) ? typedParish : '');
 
         erased.push({ field: 'parish_id', label: 'Parafia', value: label });
+    }
+
+    return erased;
+}
+
+function erasedGravestoneFields(
+    source: StoredRecord,
+    formValues: {
+        cemetery_locality_id?: unknown;
+        buried_person_ids?: unknown;
+    },
+    localities: LocalityOption[],
+): ErasedField[] {
+    const erased: ErasedField[] = [];
+    const typed = formValues.cemetery_locality_id;
+
+    if (present(typed) || source.cemetery_locality_id !== null) {
+        const chosen = present(typed)
+            ? localities.find((locality) => String(locality.id) === typed)
+            : undefined;
+        const storedId =
+            source.cemetery_locality_id === null
+                ? null
+                : String(source.cemetery_locality_id);
+        const label =
+            chosen?.name ??
+            (!present(typed) || typed === storedId
+                ? source.cemetery_name
+                : null) ??
+            (present(typed) ? typed : '');
+
+        erased.push({
+            field: 'cemetery_locality_id',
+            label: 'Cmentarz',
+            value: label,
+        });
+    }
+
+    const typedIds = Array.isArray(formValues.buried_person_ids)
+        ? formValues.buried_person_ids.map(String)
+        : [];
+    const buried = new Set([
+        ...(source.buried_people ?? []).map((person) => String(person.id)),
+        ...typedIds,
+    ]);
+
+    if (buried.size > 0) {
+        erased.push({
+            field: 'buried_person_ids',
+            label: 'Osoby pochowane',
+            value: String(buried.size),
+        });
     }
 
     return erased;
@@ -141,7 +230,7 @@ function formatUploadDate(uploadedAt: string): string | null {
           });
 }
 
-/** „akt urodzenia · 1878 · parafia”; ends with „dodano {date}” when the upload date is shown. */
+/** „akt urodzenia · 1878 · parafia” or „nagrobek · 1950 · cmentarz Luboml”; ends with „dodano {date}” when the upload date is shown. */
 export function formatSourceSummary(source: SummaryFields): string {
     const parts = [sourceKindText(source)];
 
@@ -149,8 +238,10 @@ export function formatSourceSummary(source: SummaryFields): string {
         parts.push(String(source.year));
     }
 
-    if (present(source.parish_label)) {
-        parts.push(source.parish_label);
+    const place = sourcePlaceLabel(source);
+
+    if (present(place)) {
+        parts.push(place);
     }
 
     if (showsUploadDate(source)) {

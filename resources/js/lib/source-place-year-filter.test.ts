@@ -15,6 +15,8 @@ const noYear = source(4, null, 'Parafia św. Jana', 'Luboml');
 const noPlace = source(5, 1900, null, null);
 const elsewhere = source(6, 1900, 'Parafia X', 'Kraków');
 
+const gravestone = source(7, 1950, null, 'Luboml');
+
 const all = [lubomlSeat, parishNamed, otherYear, noYear, noPlace, elsewhere];
 const none = { place: '', year: '' };
 
@@ -59,6 +61,15 @@ describe('filterSourcesByPlaceAndYear', () => {
         );
 
         expect(visible).toEqual([parishNamed]);
+    });
+
+    it('finds a gravestone by the place of its cemetery and its year', () => {
+        const { visible } = filterSourcesByPlaceAndYear(
+            [gravestone, lubomlSeat, elsewhere],
+            { place: 'lubo', year: '1950' },
+        );
+
+        expect(visible).toEqual([gravestone]);
     });
 
     it('ignores letter case and surrounding spaces', () => {
