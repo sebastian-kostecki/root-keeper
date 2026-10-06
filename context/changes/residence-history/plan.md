@@ -425,9 +425,9 @@ Panel dokłada jedno zapytanie (`residences.locality`) na podgląd osoby. Lista 
 
 #### Automated
 
-- [x] 4.1 Nowy test przechodzi
-- [x] 4.2 Cały zestaw E2E przechodzi
+- [x] 4.1 Nowy test przechodzi — bf70842
+- [x] 4.2 Cały zestaw E2E przechodzi — bf70842
 
 #### Manual
 
-- [x] 4.3 Weryfikacja celowym błędem czerwieni nowy test
+- [x] 4.3 Weryfikacja celowym błędem czerwieni nowy test — bf70842
