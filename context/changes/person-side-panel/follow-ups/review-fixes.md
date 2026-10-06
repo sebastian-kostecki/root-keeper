@@ -30,3 +30,11 @@ Follow-upy z `reviews/impl-review.md` (2026-10-06), które nie mieszczą się w 
   - `tests/e2e/person-panel-unsaved-guard.spec.ts`: klik karty przy brudnej sekcji pyta, a „Zapisz” zapisuje u centrum i potem otwiera kliknięty panel. Celowy błąd: link karty pomija `editor.isDirty`; wynik czerwony na alercie.
   - `tests/e2e/person-panel-show-on-tree.spec.ts`: „Pokaż na drzewie” u ojca z dwoma związkami. Celowy błąd: brak `spouse` w adresie; wynik czerwony na karcie matki, bo drzewo pokazuje związek z Drugą i „Brak dzieci”.
   - Pełne E2E: 12/12.
+
+## F3 — status (2026-10-06)
+
+- **Zrobione** w `resources/js/components/persons/section-editor.tsx`. Gdy sekcja jest brudna, `SectionEditorProvider` nasłuchuje `router.on('before')`. Wizytę, która zdejmuje `?person` tej osoby, anuluje i podpina pod pasek. „Porzuć” albo udane „Zapisz” wykonują ją ponownie z tymi samymi opcjami.
+- **Przepuszcza**: prefetch, żądania inne niż GET (zapisy sekcji, sloty), wizyty z tym samym `person` (np. przełączenie związku przez `mergeQuery`) i wizyty uruchomione po decyzji na pasku.
+- **Poza zasięgiem**: wstecz/dalej przeglądarki i pełne przeładowanie (Inertia nie wysyła wtedy `before`). Formularze źródła, miejscowości i parafii zostają przy własnym `useUnsavedChangesGuard`.
+- **Test**: `tests/e2e/person-panel-page-navigation-guard.spec.ts`. Klik „Źródła” w menu bocznym pyta, adres i wpisana wartość zostają, „Porzuć” prowadzi na `/sources`. Celowy błąd: nasłuch wyłączony; wynik czerwony na alercie.
+- **Weryfikacja**: `check` i `types:check` przechodzą, Vitest 194/194, Playwright 13/13.

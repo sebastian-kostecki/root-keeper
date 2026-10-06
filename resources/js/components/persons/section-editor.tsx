@@ -1,7 +1,9 @@
+import { router } from '@inertiajs/react';
 import {
     createContext,
     useCallback,
     useContext,
+    useEffect,
     useRef,
     useState,
 } from 'react';
@@ -81,6 +83,8 @@ export function SectionEditorProvider({
     const [pending, setPending] = useState<PendingExit | null>(null);
     const [isSaving, setIsSaving] = useState(false);
     const submitRef = useRef<(() => Promise<boolean>) | null>(null);
+    /** True while an exit the user already let through runs; its visits pass the page guard. */
+    const isLeavingRef = useRef(false);
 
     if (shownPersonId !== personId) {
         setShownPersonId(personId);
@@ -88,6 +92,60 @@ export function SectionEditorProvider({
         setIsDirty(false);
         setPending(null);
     }
+
+    /**
+     * A visit started beside the panel (sidebar, breadcrumbs, another record's
+     * panel from a list) drops `?person` and the unsaved section with it, so
+     * while a section is dirty it waits on the guard bar. Saves, prefetches and
+     * visits that keep the shown person open pass.
+     */
+    useEffect(() => {
+        if (!isDirty || personId === null) {
+            return;
+        }
+
+        return router.on('before', (event) => {
+            const { visit } = event.detail;
+            const keepsPerson =
+                visit.url.searchParams.get('person') === String(personId);
+
+            if (
+                isLeavingRef.current ||
+                visit.prefetch ||
+                visit.method !== 'get' ||
+                keepsPerson
+            ) {
+                return;
+            }
+
+            if (!isSaving) {
+                // The state of this visit stays behind; the retry gets its own.
+                const {
+                    url,
+                    id: _id,
+                    cancelled: _cancelled,
+                    completed: _completed,
+                    interrupted: _interrupted,
+                    ...options
+                } = visit;
+
+                setPending({ action: () => router.visit(url, options) });
+            }
+
+            return false;
+        });
+    }, [isDirty, isSaving, personId]);
+
+    /** Runs an exit the user let through, so the page guard lets its visit pass. */
+    const leave = (action: () => void) => {
+        isLeavingRef.current = true;
+
+        try {
+            action();
+        } finally {
+            isLeavingRef.current = false;
+        }
+    };
 
     const cancel = () => {
         setEdit(null);
@@ -149,7 +207,7 @@ export function SectionEditorProvider({
         const { action } = pending;
 
         cancel();
-        action();
+        leave(action);
     };
 
     const saveAndExit = () => {
@@ -172,7 +230,7 @@ export function SectionEditorProvider({
                 setPending(null);
 
                 if (isSaved) {
-                    action();
+                    leave(action);
                 }
             });
     };

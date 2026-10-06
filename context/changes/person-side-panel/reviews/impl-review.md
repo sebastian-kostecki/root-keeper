@@ -59,7 +59,7 @@ Automated checks run on 2026-10-05 (HEAD a74b640): `npm run check` passes, `type
   - Tradeoff: Globalny nasłuch wizyt musi przepuszczać częściowe wizyty samego panelu i zapisy sekcji. To nowa i nietrywialna logika.
   - Confidence: MED. Wzorzec zdarzenia `before` w Inertia v3 wymaga sprawdzenia w dokumentacji.
   - Blind spot: Nie sprawdziłem interakcji z `useUnsavedChangesGuard` źródła.
-- **Decision**: FIXED (follow-up w `follow-ups/review-fixes.md` — globalny strażnik `router.on('before')`, osobna zmiana)
+- **Decision**: FIXED (2026-10-06, w kodzie: nasłuch `router.on('before')` w `SectionEditorProvider` + `tests/e2e/person-panel-page-navigation-guard.spec.ts`; szczegóły w `follow-ups/review-fixes.md`)
 
 ### F4 — Nieaktualne „modal” w tekście UI i komentarzach
 
@@ -112,3 +112,4 @@ Automated checks run on 2026-10-05 (HEAD a74b640): `npm run check` passes, `type
   - Pest (`MarriagesTest`, `PersonsTest`, `SourcesTest`): 244/244
   - Playwright: 10/10
   - nowy test F1 był czerwony na starym kodzie kontrolera
+- F3 domknięte w kodzie później tego samego dnia: Playwright 13/13, nowy spec czerwony bez strażnika
