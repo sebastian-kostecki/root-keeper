@@ -24,7 +24,6 @@ class PersonFactory extends Factory
             'first_name' => fake()->firstName(),
             'last_name' => fake()->lastName(),
             'gender' => null,
-            'residence' => fake()->city(),
             'religion' => null,
         ];
     }

@@ -47,4 +47,12 @@ class Locality extends Model
     {
         return $this->hasMany(Event::class);
     }
+
+    /**
+     * @return HasMany<Residence, $this>
+     */
+    public function residences(): HasMany
+    {
+        return $this->hasMany(Residence::class);
+    }
 }
