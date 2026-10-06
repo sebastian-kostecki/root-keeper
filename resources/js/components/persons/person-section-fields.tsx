@@ -181,14 +181,18 @@ export function DeathFields({
     death,
     burial,
     isDeceased,
+    burialSuggestion,
 }: {
     errors: Errors;
     death: PersonFormEvent | null;
     burial: PersonFormData['burial'];
+    /** Cemetery of the person's gravestone; preselects an empty burial place. */
+    burialSuggestion?: PersonFormData['burial_suggestion'];
     /** Whether the checkbox starts checked. */
     isDeceased: boolean;
 }) {
     const [checked, setChecked] = useState(isDeceased);
+    const suggested = burial?.locality ? null : (burialSuggestion ?? null);
 
     return (
         <div className="space-y-4">
@@ -221,9 +225,14 @@ export function DeathFields({
                         id="burial-locality"
                         name="burial.locality_id"
                         label="Miejsce pochowania"
-                        value={burial?.locality ?? null}
+                        value={burial?.locality ?? suggested}
                         errors={errors}
                     />
+                    {suggested && (
+                        <p className="text-muted-foreground -mt-2 text-sm">
+                            Podpowiedź z nagrobka
+                        </p>
+                    )}
                 </>
             )}
         </div>

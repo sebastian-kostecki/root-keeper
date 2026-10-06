@@ -28,6 +28,7 @@ import { formatYearRange } from '@/lib/year-range';
 import type {
     Marriage,
     PersonFormEvent,
+    PersonGravestone,
     PersonPreviewPayload,
     Source,
     SourcedPersonEvent,
@@ -100,6 +101,8 @@ type FactViewProps = {
     availableSources: Source[] | undefined;
     /** Shown as „Miejsce pochowania” (the death section only). */
     burialPlace?: string | null;
+    /** Gravestones linked from the death card. */
+    gravestones?: PersonGravestone[];
 };
 
 function FactView({
@@ -107,6 +110,7 @@ function FactView({
     parts,
     availableSources,
     burialPlace,
+    gravestones,
 }: FactViewProps) {
     const date = parts ? formatPartialDate(parts, 'long') : '';
     const guardClick = useGuardedClick();
@@ -177,7 +181,50 @@ function FactView({
                     />
                 )}
             </div>
+
+            {gravestones !== undefined && gravestones.length > 0 && (
+                <div className="border-t pt-3">
+                    <GravestoneLinks gravestones={gravestones} />
+                </div>
+            )}
         </>
+    );
+}
+
+function GravestoneLinks({ gravestones }: { gravestones: PersonGravestone[] }) {
+    const guardClick = useGuardedClick();
+
+    if (gravestones.length === 0) {
+        return null;
+    }
+
+    return (
+        <ul className="space-y-1.5 text-sm">
+            {gravestones.map((gravestone) => (
+                <li key={gravestone.id}>
+                    <span className="text-muted-foreground">Nagrobek: </span>
+                    <Link
+                        href={SourceController.index({
+                            query: { source: gravestone.id },
+                        })}
+                        onClick={(clickEvent) =>
+                            guardClick(clickEvent, () =>
+                                router.visit(
+                                    SourceController.index({
+                                        query: { source: gravestone.id },
+                                    }),
+                                ),
+                            )
+                        }
+                        className="text-primary focus-visible:ring-ring/50 rounded-sm underline-offset-4 outline-none hover:underline focus-visible:ring-[3px]"
+                    >
+                        {gravestone.display_name}
+                        {gravestone.cemetery_name &&
+                            ` (cmentarz ${gravestone.cemetery_name})`}
+                    </Link>
+                </li>
+            ))}
+        </ul>
     );
 }
 
@@ -210,6 +257,7 @@ export function OverviewTab({ preview, availableSources }: Props) {
     } | null>(null);
 
     const residences = person.residences ?? [];
+    const gravestones = person.gravestones ?? [];
 
     const hasBirth =
         person.birth !== null &&
@@ -454,6 +502,7 @@ export function OverviewTab({ preview, availableSources }: Props) {
                                     parts={personForm.death}
                                     availableSources={availableSources}
                                     burialPlace={person.burial_place}
+                                    gravestones={gravestones}
                                 />
                             )
                         }
@@ -462,6 +511,7 @@ export function OverviewTab({ preview, availableSources }: Props) {
                                 errors={errorsFor('death')}
                                 death={personForm.death}
                                 burial={personForm.burial}
+                                burialSuggestion={personForm.burial_suggestion}
                                 isDeceased={
                                     personForm.is_deceased ||
                                     editor.intent === 'mark-deceased'
@@ -476,6 +526,7 @@ export function OverviewTab({ preview, availableSources }: Props) {
                         onStart={() => editor.start('death', 'mark-deceased')}
                     />
                 )}
+                {!person.death && <GravestoneLinks gravestones={gravestones} />}
             </div>
         </div>
     );

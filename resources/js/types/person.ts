@@ -68,6 +68,12 @@ export type PersonResidence = {
     year_to: number | null;
 };
 
+export type PersonGravestone = {
+    id: number;
+    display_name: string;
+    cemetery_name: string | null;
+};
+
 export type Person = {
     id: number;
     first_name: string | null;
@@ -76,6 +82,7 @@ export type Person = {
     display_name: string;
     gender: Gender | null;
     residences?: PersonResidence[];
+    gravestones?: PersonGravestone[];
     religion: Religion | null;
     burial_place: string | null;
     birth: IndexPersonEvent | null;
@@ -130,4 +137,5 @@ export type PersonFormData = {
     birth: PersonFormEvent | null;
     death: PersonFormEvent | null;
     burial: { locality: LocalityOption | null } | null;
+    burial_suggestion?: LocalityOption | null;
 };

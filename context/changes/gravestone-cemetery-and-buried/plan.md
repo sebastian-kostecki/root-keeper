@@ -382,31 +382,31 @@ Migracja tylko dodaje kolumnę i tabelę — bez przenoszenia danych; `down()` o
 
 #### Automated
 
-- [x] 3.1 Vitest przechodzi: `vendor/bin/sail npm run test:js`
-- [x] 3.2 Format i lint przechodzą: `vendor/bin/sail npm run check`
-- [x] 3.3 Typy przechodzą: `vendor/bin/sail npm run types:check`
-- [x] 3.4 Build przechodzi: `vendor/bin/sail npm run build`
+- [x] 3.1 Vitest przechodzi: `vendor/bin/sail npm run test:js` — 6379d62
+- [x] 3.2 Format i lint przechodzą: `vendor/bin/sail npm run check` — 6379d62
+- [x] 3.3 Typy przechodzą: `vendor/bin/sail npm run types:check` — 6379d62
+- [x] 3.4 Build przechodzi: `vendor/bin/sail npm run build` — 6379d62
 
 #### Manual
 
-- [x] 3.5 Nagrobek z nowym cmentarzem („Dodaj miejscowość”) i dwiema osobami zapisuje się bez utraty wpisanych pól
-- [x] 3.6 Dodanie lub usunięcie osoby z listy uruchamia strażnika niezapisanych zmian przy zamknięciu panelu
-- [x] 3.7 Zmiana nagrobka na „inne” pokazuje cmentarz i liczbę pochowanych w dialogu; po potwierdzeniu znikają
-- [x] 3.8 Kafel pickera, karta galerii i tabela pokazują „cmentarz Luboml”
+- [x] 3.5 Nagrobek z nowym cmentarzem („Dodaj miejscowość”) i dwiema osobami zapisuje się bez utraty wpisanych pól — 6379d62
+- [x] 3.6 Dodanie lub usunięcie osoby z listy uruchamia strażnika niezapisanych zmian przy zamknięciu panelu — 6379d62
+- [x] 3.7 Zmiana nagrobka na „inne” pokazuje cmentarz i liczbę pochowanych w dialogu; po potwierdzeniu znikają — 6379d62
+- [x] 3.8 Kafel pickera, karta galerii i tabela pokazują „cmentarz Luboml” — 6379d62
 
 ### Phase 4: Frontend — panel osoby
 
 #### Automated
 
-- [ ] 4.1 Vitest przechodzi: `vendor/bin/sail npm run test:js`
-- [ ] 4.2 Format i lint przechodzą: `vendor/bin/sail npm run check`
-- [ ] 4.3 Typy przechodzą: `vendor/bin/sail npm run types:check`
+- [x] 4.1 Vitest przechodzi: `vendor/bin/sail npm run test:js`
+- [x] 4.2 Format i lint przechodzą: `vendor/bin/sail npm run check`
+- [x] 4.3 Typy przechodzą: `vendor/bin/sail npm run types:check`
 
 #### Manual
 
-- [ ] 4.4 Osoba z listy pokazuje link „Nagrobek: …”, który otwiera panel tego źródła
-- [ ] 4.5 „Oznacz jako zmarłą” u żyjącej osoby z nagrobka ustawia wstępnie cmentarz; wyczyszczenie pola i zapis zostawia pochowanie puste; ponowna edycja Zgonu tej osoby pokazuje cmentarz z dopiskiem „Podpowiedź z nagrobka”
-- [ ] 4.6 Osoba z dwoma nagrobkami o różnych cmentarzach nie dostaje podpowiedzi
+- [x] 4.4 Osoba z listy pokazuje link „Nagrobek: …”, który otwiera panel tego źródła
+- [x] 4.5 „Oznacz jako zmarłą” u żyjącej osoby z nagrobka ustawia wstępnie cmentarz; wyczyszczenie pola i zapis zostawia pochowanie puste; ponowna edycja Zgonu tej osoby pokazuje cmentarz z dopiskiem „Podpowiedź z nagrobka”
+- [x] 4.6 Osoba z dwoma nagrobkami o różnych cmentarzach nie dostaje podpowiedzi
 
 ### Phase 5: E2E (`/10x-e2e`)
 

@@ -52,7 +52,7 @@ root-keeper to prywatne, samodzielnie hostowane drzewo genealogiczne, w którym 
 | S-06 | person-side-panel                    | kliknąć kartę i oglądać oraz edytować osobę w panelu obok zwężonego drzewa, przechodzić w nim do krewnych | F-01, F-02, S-05       | FR-016, FR-019, FR-028, FR-026, FR-029   | done |
 | S-07 | fact-places-from-gazetteer           | wybrać miejsce urodzenia, ślubu, zgonu i pochowania ze spisu miejscowości                                 | S-01                   | FR-010, FR-022                           | done |
 | S-08 | residence-history                    | ustawić osobie kilka miejscowości zamieszkania z opcjonalnymi latami od–do                                | S-01                   | FR-011                                   | done |
-| S-09 | gravestone-cemetery-and-buried       | opisać nagrobek cmentarzem ze spisu i osobami pochowanymi, z podpowiedzią miejsca pochowania              | S-04, S-07             | FR-002, FR-004                           | proposed |
+| S-09 | gravestone-cemetery-and-buried       | opisać nagrobek cmentarzem ze spisu i osobami pochowanymi, z podpowiedzią miejsca pochowania              | S-04, S-07             | FR-002, FR-004                           | in-progress |
 | S-10 | sources-grid-with-filters            | przeglądać źródła jako siatkę mniejszych kart i filtrować po rodzaju, parafii/miejscu, roku i archiwum     | S-09                   | FR-005                                   | proposed |
 | S-11 | places-merge-and-delete              | scalić zduplikowaną miejscowość lub parafię z właściwą i usunąć wpis nigdzie nieużywany                   | S-03, S-07, S-08, S-09 | FR-012                                   | proposed |
 | S-12 | marriage-side-panel                  | otworzyć panel małżeństwa z datą, miejscem, źródłem (z edycją) i dziećmi pary                             | S-06                   | FR-017                                   | proposed |
@@ -234,7 +234,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Unknowns:**
   - Czy dodanie osoby do listy pochowanych od razu ustawia jej miejsce pochowania, czy tylko je podpowiada przy edycji osoby? Owner: user. Block: no.
 - **Risk:** Rozszerza wyszukiwanie z `S-04` o cmentarz i korzysta z miejsca pochowania z `S-07`; ustawiony po nich, żeby nie budować tych elementów dwa razy.
-- **Status:** proposed
+- **Status:** in-progress
 
 ### S-10: Siatka źródeł z filtrami
 
