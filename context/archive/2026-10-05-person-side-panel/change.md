@@ -1,10 +1,10 @@
 ---
 change_id: person-side-panel
 title: Person side panel
-status: impl_reviewed
+status: archived
 created: 2026-10-05
-updated: 2026-10-05
-archived_at: null
+updated: 2026-10-06
+archived_at: 2026-10-06T06:12:42Z
 ---
 
 ## Notes
