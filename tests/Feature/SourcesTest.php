@@ -645,7 +645,7 @@ test('changing an akt with a stored record type or parish to another kind withou
     $response = $this->actingAs($user)->put(route('sources.update', $source), ['kind' => 'gravestone']);
 
     $response->assertInvalid('kind');
-    expect($response->getSession()->get('errors')->getBag('default')->first('kind'))->toBe('Zmiana rodzaju usunie typ aktu lub parafię. Potwierdź zmianę.');
+    expect($response->getSession()->get('errors')->getBag('default')->first('kind'))->toBe('Zmiana rodzaju usunie pola opisu tego rodzaju. Potwierdź zmianę.');
 
     $source->refresh();
 

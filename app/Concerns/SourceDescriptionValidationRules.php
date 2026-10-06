@@ -11,7 +11,8 @@ trait SourceDescriptionValidationRules
 {
     /**
      * Get the validation rules for the optional source description. The record
-     * type and parish apply to a metrical record only.
+     * type and parish apply to a metrical record only; the cemetery and the buried
+     * people to a gravestone only.
      *
      * @return array<string, list<mixed>>
      */
@@ -32,6 +33,23 @@ trait SourceDescriptionValidationRules
                 'integer',
                 Rule::exists('parishes', 'id')->where('tree_id', $this->user()->tree->id),
             ],
+            'cemetery_locality_id' => [
+                Rule::excludeIf(fn (): bool => $this->input('kind') !== SourceKind::Gravestone->value),
+                'nullable',
+                'integer',
+                Rule::exists('localities', 'id')->where('tree_id', $this->user()->tree->id),
+            ],
+            'buried_person_ids' => [
+                Rule::excludeIf(fn (): bool => $this->input('kind') !== SourceKind::Gravestone->value),
+                'nullable',
+                'array',
+            ],
+            'buried_person_ids.*' => [
+                Rule::excludeIf(fn (): bool => $this->input('kind') !== SourceKind::Gravestone->value),
+                'integer',
+                'distinct',
+                Rule::exists('people', 'id')->where('tree_id', $this->user()->tree->id),
+            ],
         ];
     }
 
@@ -48,6 +66,9 @@ trait SourceDescriptionValidationRules
             'note' => 'notatka',
             'record_type' => 'typ aktu',
             'parish_id' => 'parafia',
+            'cemetery_locality_id' => 'cmentarz',
+            'buried_person_ids' => 'osoby pochowane',
+            'buried_person_ids.*' => 'osoby pochowane',
         ];
     }
 }

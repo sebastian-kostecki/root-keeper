@@ -37,7 +37,7 @@ class SourceUpdateRequest extends FormRequest
                 Rule::enum(SourceKind::class),
                 function (string $attribute, mixed $value, Closure $fail): void {
                     if (SourceKind::tryFrom((string) $value) !== null && $this->wouldEraseRecordFields($value) && ! $this->boolean('discard_record_fields')) {
-                        $fail(__('Zmiana rodzaju usunie typ aktu lub parafię. Potwierdź zmianę.'));
+                        $fail(__('Zmiana rodzaju usunie pola opisu tego rodzaju. Potwierdź zmianę.'));
                     }
                 },
             ],
@@ -60,15 +60,21 @@ class SourceUpdateRequest extends FormRequest
     }
 
     /**
-     * Whether saving the submitted kind would erase a stored record type or parish.
+     * Whether saving the submitted kind would erase a stored record type or parish of an akt,
+     * or the cemetery or buried people of a gravestone.
      */
     private function wouldEraseRecordFields(mixed $submittedKind): bool
     {
         /** @var Source $source */
         $source = $this->route('source');
 
-        return $source->kind === SourceKind::MetricalRecord
-            && $submittedKind !== SourceKind::MetricalRecord->value
-            && ($source->record_type !== null || $source->parish_id !== null);
+        if ($source->kind === SourceKind::MetricalRecord) {
+            return $submittedKind !== SourceKind::MetricalRecord->value
+                && ($source->record_type !== null || $source->parish_id !== null);
+        }
+
+        return $source->kind === SourceKind::Gravestone
+            && $submittedKind !== SourceKind::Gravestone->value
+            && ($source->cemetery_locality_id !== null || $source->buriedPeople()->exists());
     }
 }

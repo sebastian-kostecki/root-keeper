@@ -21,6 +21,7 @@ use Illuminate\Support\Carbon;
  * @property string|null $entry_number
  * @property int|null $year
  * @property int|null $parish_id
+ * @property int|null $cemetery_locality_id
  * @property string|null $archive
  * @property string|null $url
  * @property string|null $note
@@ -34,7 +35,7 @@ use Illuminate\Support\Carbon;
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
-#[Fillable(['tree_id', 'kind', 'original_name', 'path', 'thumbnail_path', 'mime_type', 'size', 'width', 'height', 'name', 'record_type', 'entry_number', 'year', 'parish_id', 'archive', 'url', 'note'])]
+#[Fillable(['tree_id', 'kind', 'original_name', 'path', 'thumbnail_path', 'mime_type', 'size', 'width', 'height', 'name', 'record_type', 'entry_number', 'year', 'parish_id', 'cemetery_locality_id', 'archive', 'url', 'note'])]
 class Source extends Model
 {
     /** @use HasFactory<SourceFactory> */
@@ -79,6 +80,27 @@ class Source extends Model
     public function parish(): BelongsTo
     {
         return $this->belongsTo(Parish::class);
+    }
+
+    /**
+     * @return BelongsTo<Locality, $this>
+     */
+    public function cemetery(): BelongsTo
+    {
+        return $this->belongsTo(Locality::class, 'cemetery_locality_id');
+    }
+
+    /**
+     * The people listed on a gravestone, in the order they were added.
+     *
+     * @return BelongsToMany<Person, $this>
+     */
+    public function buriedPeople(): BelongsToMany
+    {
+        return $this->belongsToMany(Person::class, 'buried_people')
+            ->withTimestamps()
+            ->orderBy('buried_people.created_at')
+            ->orderBy('buried_people.id');
     }
 
     /**

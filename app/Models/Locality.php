@@ -41,6 +41,14 @@ class Locality extends Model
     }
 
     /**
+     * @return HasMany<Source, $this>
+     */
+    public function cemeterySources(): HasMany
+    {
+        return $this->hasMany(Source::class, 'cemetery_locality_id');
+    }
+
+    /**
      * @return HasMany<Event, $this>
      */
     public function events(): HasMany

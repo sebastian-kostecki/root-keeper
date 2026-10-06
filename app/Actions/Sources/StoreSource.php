@@ -6,6 +6,7 @@ use App\Enums\SourceKind;
 use App\Models\Source;
 use App\Models\Tree;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use RuntimeException;
@@ -16,14 +17,16 @@ class StoreSource
     public function __construct(
         private GenerateSourceThumbnail $generateSourceThumbnail,
         private ReadExifOrientation $readExifOrientation,
+        private FillBurialPlacesFromGravestone $fillBurialPlacesFromGravestone,
     ) {}
 
     /**
      * Store the uploaded source (and, when possible, a thumbnail) on the private
      * disk and create its row. Leaves no orphan files if anything fails once the
-     * original is written.
+     * original is written. A gravestone's buried people are linked and their empty
+     * burial places filled in the same transaction as the row.
      *
-     * @param  array{name?: string|null, record_type?: string|null, parish_id?: int|null, year?: int|null, archive?: string|null, url?: string|null, note?: string|null}  $description
+     * @param  array{name?: string|null, record_type?: string|null, parish_id?: int|null, cemetery_locality_id?: int|null, buried_person_ids?: list<int>|null, year?: int|null, archive?: string|null, url?: string|null, note?: string|null}  $description
      */
     public function handle(Tree $tree, UploadedFile $file, SourceKind $kind, array $description = []): Source
     {
@@ -51,17 +54,30 @@ class StoreSource
                 }
             }
 
-            return $tree->sources()->create([
-                ...$description,
-                'kind' => $kind,
-                'original_name' => $this->sanitizeOriginalName($file->getClientOriginalName(), $extension),
-                'path' => $path,
-                'thumbnail_path' => $thumbnailPath,
-                'mime_type' => $mimeType,
-                'size' => $file->getSize(),
-                'width' => $width,
-                'height' => $height,
-            ]);
+            $buriedPersonIds = $description['buried_person_ids'] ?? [];
+            unset($description['buried_person_ids']);
+
+            return DB::transaction(function () use ($tree, $description, $kind, $file, $extension, $path, $thumbnailPath, $mimeType, $width, $height, $buriedPersonIds): Source {
+                $source = $tree->sources()->create([
+                    ...$description,
+                    'kind' => $kind,
+                    'original_name' => $this->sanitizeOriginalName($file->getClientOriginalName(), $extension),
+                    'path' => $path,
+                    'thumbnail_path' => $thumbnailPath,
+                    'mime_type' => $mimeType,
+                    'size' => $file->getSize(),
+                    'width' => $width,
+                    'height' => $height,
+                ]);
+
+                if ($kind === SourceKind::Gravestone) {
+                    $source->buriedPeople()->sync($buriedPersonIds);
+                }
+
+                $this->fillBurialPlacesFromGravestone->handle($source);
+
+                return $source;
+            });
         } catch (Throwable $e) {
             Storage::disk('local')->delete(array_filter([$path, $thumbnailPath]));
 

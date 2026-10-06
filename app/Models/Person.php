@@ -74,6 +74,19 @@ class Person extends Model
     }
 
     /**
+     * The gravestones this person is listed on, in the order they were added.
+     *
+     * @return BelongsToMany<Source, $this>
+     */
+    public function gravestones(): BelongsToMany
+    {
+        return $this->belongsToMany(Source::class, 'buried_people')
+            ->withTimestamps()
+            ->orderBy('buried_people.created_at')
+            ->orderBy('buried_people.id');
+    }
+
+    /**
      * @return BelongsToMany<Person, $this>
      */
     public function parents(): BelongsToMany

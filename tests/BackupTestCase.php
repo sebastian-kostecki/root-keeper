@@ -125,7 +125,8 @@ abstract class BackupTestCase extends TestCase
 
     /**
      * Create a two-factor user with a tree, people, events, relations, a passkey, a locality, a parish seated in it and two
-     * uploaded sources of different bytes, one linked to an event.
+     * uploaded sources of different bytes, one linked to an event and the other turned into a gravestone with that
+     * locality as cemetery and the parent as buried person.
      */
     protected function arrangeBackupData(): Person
     {
@@ -165,12 +166,21 @@ abstract class BackupTestCase extends TestCase
             ];
         }
 
+        $gravestone = Source::query()->where('original_name', 'akt-2.jpg')->firstOrFail();
+
+        $this->put(route('sources.update', $gravestone), [
+            'kind' => 'gravestone',
+            'cemetery_locality_id' => $seat->id,
+            'buried_person_ids' => [$parent->id],
+        ])->assertSessionHasNoErrors();
+
         $birth = Event::query()->where('tree_id', $tree->id)->where('type', EventType::Birth)->firstOrFail();
 
         $this->post(route('events.sources.store', $birth), ['source_id' => Source::query()->orderBy('id')->firstOrFail()->id, 'entry_number' => '95'])
             ->assertSessionHasNoErrors();
 
         expect(Source::query()->count())->toBe(2)
+            ->and(DB::table('buried_people')->count())->toBe(1)
             ->and(DB::table('event_source')->count())->toBe(1)
             ->and(DB::table('passkeys')->count())->toBe(1);
 

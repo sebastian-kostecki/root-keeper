@@ -482,3 +482,45 @@ test('clearing the legacy entry number of a source changes only that one sources
     expect(array_diff(array_keys(array_diff_assoc($change['after'], $change['before'])), ['entry_number', 'updated_at']))->toBe([]);
     expect($diff['files'])->toBe(['removed' => [], 'added' => []]);
 });
+
+test('saving a gravestone touches only its source row, its buried list and the burial it fills in', function () {
+    Storage::fake('local');
+
+    $user = User::factory()->create();
+    $scene = familyScene($user);
+    extract($scene);
+
+    $cemetery = Locality::factory()->for($user->tree)->create();
+
+    $before = databaseRows();
+
+    $this->actingAs($user)->put(route('sources.update', $sourceOther), [
+        'kind' => 'gravestone',
+        'cemetery_locality_id' => $cemetery->id,
+        'buried_person_ids' => [$focus->id, $loneMan->id],
+    ])->assertSessionHasNoErrors()->assertRedirect();
+
+    $diff = rowDiff($before, databaseRows());
+
+    expect(array_keys($diff['tables']))->toEqualCanonicalizing(['sources', 'buried_people', 'events', 'event_participants']);
+
+    expect(array_column($diff['tables']['sources']['changed'], 'after'))->toHaveCount(1);
+    expect($diff['tables']['sources']['changed'][0]['after']['id'])->toBe($sourceOther->id);
+    expect($diff['tables']['sources']['changed'][0]['after']['cemetery_locality_id'])->toBe($cemetery->id);
+
+    expect(writeSortedKeys(array_map(fn (array $row): string => $row['source_id'].':'.$row['person_id'], $diff['tables']['buried_people']['added'])))
+        ->toBe(writeSortedKeys(["{$sourceOther->id}:{$focus->id}", "{$sourceOther->id}:{$loneMan->id}"]));
+
+    expect(array_column($diff['tables']['events']['added'], 'type'))->toBe(['burial']);
+    expect($diff['tables']['events']['added'][0]['locality_id'])->toBe($cemetery->id);
+    expect(array_column($diff['tables']['event_participants']['added'], 'person_id'))->toBe([$focus->id]);
+
+    foreach ($diff['tables'] as $table) {
+        expect($table['removed'])->toBe([]);
+    }
+
+    expect($diff['tables']['events']['changed'])->toBe([]);
+    expect($diff['tables']['event_participants']['changed'])->toBe([]);
+    expect($diff['tables']['buried_people']['changed'])->toBe([]);
+    expect($diff['files'])->toBe(['removed' => [], 'added' => []]);
+});
