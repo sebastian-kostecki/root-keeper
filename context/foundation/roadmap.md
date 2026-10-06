@@ -51,7 +51,7 @@ root-keeper to prywatne, samodzielnie hostowane drzewo genealogiczne, w którym 
 | S-05 | tree-fits-screen                     | oglądać drzewo z większymi kartami dopasowane do ekranu, z przybliżaniem i liniami dzieci od właściwej pary | F-01                   | FR-013, FR-014, FR-026                   | done |
 | S-06 | person-side-panel                    | kliknąć kartę i oglądać oraz edytować osobę w panelu obok zwężonego drzewa, przechodzić w nim do krewnych | F-01, F-02, S-05       | FR-016, FR-019, FR-028, FR-026, FR-029   | done |
 | S-07 | fact-places-from-gazetteer           | wybrać miejsce urodzenia, ślubu, zgonu i pochowania ze spisu miejscowości                                 | S-01                   | FR-010, FR-022                           | done |
-| S-08 | residence-history                    | ustawić osobie kilka miejscowości zamieszkania z opcjonalnymi latami od–do                                | S-01                   | FR-011                                   | in-progress |
+| S-08 | residence-history                    | ustawić osobie kilka miejscowości zamieszkania z opcjonalnymi latami od–do                                | S-01                   | FR-011                                   | done |
 | S-09 | gravestone-cemetery-and-buried       | opisać nagrobek cmentarzem ze spisu i osobami pochowanymi, z podpowiedzią miejsca pochowania              | S-04, S-07             | FR-002, FR-004                           | proposed |
 | S-10 | sources-grid-with-filters            | przeglądać źródła jako siatkę mniejszych kart i filtrować po rodzaju, parafii/miejscu, roku i archiwum     | S-09                   | FR-005                                   | proposed |
 | S-11 | places-merge-and-delete              | scalić zduplikowaną miejscowość lub parafię z właściwą i usunąć wpis nigdzie nieużywany                   | S-03, S-07, S-08, S-09 | FR-012                                   | proposed |
@@ -221,7 +221,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Blockers:** —
 - **Unknowns:** —
 - **Risk:** Mały i niezależny od źródeł; wznawia odłożoną historię zamieszkania z prd-v2 (dawne S-14). Zamieszkania nie potwierdza się źródłem (Non-Goals).
-- **Status:** in-progress
+- **Status:** done
 
 ### S-09: Nagrobek z cmentarzem i osobami pochowanymi
 
@@ -390,3 +390,4 @@ Rozstrzygnięte:
 - **S-06: kliknięcie karty otwiera panel osoby z prawej (przycisk „Podgląd” znika), drzewo zwęża się obok panelu, ustawienie osoby w centrum jest akcją w panelu, przejście do krewnego podmienia zawartość panelu, a po zamknięciu autor jest w tym samym miejscu drzewa; panel otwiera się też z listy osób i ze źródła; edycja osoby odbywa się w panelu.** — Archived 2026-10-06 → `context/archive/2026-10-05-person-side-panel/`. Lesson: —.
 - **S-05: autor ogląda drzewo z większymi kartami, które dopasowuje się do ekranu (na dużym wypełnia dostępną przestrzeń), przybliża je i oddala, a linia do dziecka wychodzi od właściwej pary, więc widać, z którego związku jest dziecko; dodawanie rodzica, dziecka i małżonka ze slotów działa jak dziś.** — Archived 2026-10-05 → `context/archive/2026-10-05-tree-fits-screen/`. Lesson: —.
 - **S-07: autor wybiera miejsce urodzenia, ślubu, zgonu i pochowania ze spisu miejscowości (z podpowiedziami i dopisaniem w locie); istniejące tekstowe miejsca faktów wskazują na miejscowości ze spisu; niepewność opisuje w notatce.** — Archived 2026-10-06 → `context/archive/2026-10-06-fact-places-from-gazetteer/`. Lesson: —.
+- **S-08: autor ustawia osobie kilka miejscowości zamieszkania ze spisu z opcjonalnymi latami od–do; dotychczasowe pole „Zamieszkanie” jest pierwszą pozycją listy, bez lat.** — Archived 2026-10-06 → `context/archive/2026-10-06-residence-history/`. Lesson: —.
