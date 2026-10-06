@@ -39,4 +39,12 @@ class Locality extends Model
     {
         return $this->hasMany(Parish::class);
     }
+
+    /**
+     * @return HasMany<Event, $this>
+     */
+    public function events(): HasMany
+    {
+        return $this->hasMany(Event::class);
+    }
 }
