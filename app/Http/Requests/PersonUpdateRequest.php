@@ -49,7 +49,7 @@ class PersonUpdateRequest extends PersonStoreRequest
 
         return [
             ...parent::rules(),
-            'residences' => ['nullable', 'array'],
+            'residences' => ['nullable', 'array', 'max:50'],
             'residences.*' => ['array'],
             'residences.*.locality_id' => [
                 'required',

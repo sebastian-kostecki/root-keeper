@@ -51,7 +51,7 @@ root-keeper to prywatne, samodzielnie hostowane drzewo genealogiczne, w którym 
 | S-05 | tree-fits-screen                     | oglądać drzewo z większymi kartami dopasowane do ekranu, z przybliżaniem i liniami dzieci od właściwej pary | F-01                   | FR-013, FR-014, FR-026                   | done |
 | S-06 | person-side-panel                    | kliknąć kartę i oglądać oraz edytować osobę w panelu obok zwężonego drzewa, przechodzić w nim do krewnych | F-01, F-02, S-05       | FR-016, FR-019, FR-028, FR-026, FR-029   | done |
 | S-07 | fact-places-from-gazetteer           | wybrać miejsce urodzenia, ślubu, zgonu i pochowania ze spisu miejscowości                                 | S-01                   | FR-010, FR-022                           | done |
-| S-08 | residence-history                    | ustawić osobie kilka miejscowości zamieszkania z opcjonalnymi latami od–do                                | S-01                   | FR-011                                   | proposed |
+| S-08 | residence-history                    | ustawić osobie kilka miejscowości zamieszkania z opcjonalnymi latami od–do                                | S-01                   | FR-011                                   | in-progress |
 | S-09 | gravestone-cemetery-and-buried       | opisać nagrobek cmentarzem ze spisu i osobami pochowanymi, z podpowiedzią miejsca pochowania              | S-04, S-07             | FR-002, FR-004                           | proposed |
 | S-10 | sources-grid-with-filters            | przeglądać źródła jako siatkę mniejszych kart i filtrować po rodzaju, parafii/miejscu, roku i archiwum     | S-09                   | FR-005                                   | proposed |
 | S-11 | places-merge-and-delete              | scalić zduplikowaną miejscowość lub parafię z właściwą i usunąć wpis nigdzie nieużywany                   | S-03, S-07, S-08, S-09 | FR-012                                   | proposed |
@@ -221,7 +221,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Blockers:** —
 - **Unknowns:** —
 - **Risk:** Mały i niezależny od źródeł; wznawia odłożoną historię zamieszkania z prd-v2 (dawne S-14). Zamieszkania nie potwierdza się źródłem (Non-Goals).
-- **Status:** proposed
+- **Status:** in-progress
 
 ### S-09: Nagrobek z cmentarzem i osobami pochowanymi
 
@@ -258,6 +258,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Parallel with:** S-05, S-06, S-10, S-12, S-13, S-14, S-15, S-16
 - **Blockers:** —
 - **Unknowns:** —
+- **Uwaga (zamieszkania):** usuwanie wpisu musi liczyć też `residences` (`Locality::residences()`), a scalanie je przepinać. Kolumna `people.residence` (zamrożona w S-08) nie ma jeszcze migracji usuwającej — zaplanować osobno.
 - **Uwaga (E2E):** dopisać sprzątanie parafii i miejscowości w `source-panel-parish.spec.ts` (dziś zostają w bazie `e2e`, bo nie ma tras usuwania).
 - **Risk:** Na końcu strumienia miejsc, bo musi objąć każdy rodzaj odwołania naraz; do tego czasu literówki po automatycznym przeniesieniu poprawia się edycją nazwy w spisie.
 - **Status:** proposed

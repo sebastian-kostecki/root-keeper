@@ -841,6 +841,19 @@ test('the same locality may be a residence more than once', function () {
     expect($person->residences()->count())->toBe(2);
 });
 
+test('update rejects more than 50 residences', function () {
+    $user = User::factory()->create();
+    $person = Person::factory()->for($user->tree)->create();
+    $locality = Locality::factory()->for($user->tree)->create();
+
+    $this->actingAs($user)->put(route('persons.update', $person), [
+        'first_name' => 'Jan',
+        'residences' => array_fill(0, 51, ['locality_id' => $locality->id]),
+    ])->assertSessionHasErrors('residences');
+
+    expect($person->residences()->count())->toBe(0);
+});
+
 test('update without a residences key clears the list', function () {
     $user = User::factory()->create();
     $person = Person::factory()->for($user->tree)->create();

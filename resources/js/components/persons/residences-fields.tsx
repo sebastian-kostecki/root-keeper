@@ -94,6 +94,8 @@ export function ResidencesFields({ residences, errors }: Props) {
                 return (
                     <div
                         key={row.key}
+                        role="group"
+                        aria-label={`Zamieszkanie ${index + 1}`}
                         className="grid gap-3 rounded-lg border p-3 sm:grid-cols-[1fr_7rem_7rem_auto] sm:items-start"
                     >
                         <LocalityPicker
