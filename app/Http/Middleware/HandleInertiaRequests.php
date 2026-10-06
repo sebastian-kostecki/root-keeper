@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use App\Actions\Persons\BuildPersonPreview;
 use App\Http\Resources\SourceResource;
+use App\Models\Locality;
 use App\Models\Person;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -58,6 +59,11 @@ class HandleInertiaRequests extends Middleware
 
                 return $person === null ? null : app(BuildPersonPreview::class)->handle($person, $request->user());
             },
+            'localityOptions' => Inertia::optional(fn (): array => $request->user() === null ? [] : $request->user()->tree->localities()
+                ->orderBy('name')
+                ->get(['id', 'name'])
+                ->map(fn (Locality $locality): array => ['id' => $locality->id, 'name' => $locality->name])
+                ->all()),
             'availableSources' => Inertia::optional(fn (): array => $request->user() === null ? [] : SourceResource::collection(
                 $request->user()->tree->sources()->with('parish.locality')->latest()->orderByDesc('id')->get()
             )->resolve()),

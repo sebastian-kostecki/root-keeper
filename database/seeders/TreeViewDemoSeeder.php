@@ -136,7 +136,7 @@ class TreeViewDemoSeeder extends Seeder
         // Co-parent without a marriage; no known parents.
         $marta = $this->person('Marta', 'Lewandowska', 'female', 1982);
 
-        $janAnnaMarriage = $this->marry($jan, $anna, ['year' => 2001, 'month' => 6, 'day' => 15, 'place' => 'Kraków']);
+        $janAnnaMarriage = $this->marry($jan, $anna, ['year' => 2001, 'month' => 6, 'day' => 15, 'locality_id' => $this->localityId('Kraków')]);
         $this->marry($jan, $ewa, []);
 
         // Children: one per union, one with a very long name, one with only the proband as parent.
@@ -267,7 +267,7 @@ class TreeViewDemoSeeder extends Seeder
             'date_month' => 3,
             'date_day' => 14,
             'date_is_approximate' => false,
-            'place' => 'Nowy Targ',
+            'locality_id' => $this->localityId('Nowy Targ'),
         ]);
         $birth->participants()->attach($person, ['role' => ParticipantRole::Subject]);
         $this->attachSource($birth, 'akt-urodzenia-genowefa.jpg');
@@ -277,9 +277,14 @@ class TreeViewDemoSeeder extends Seeder
             'date_month' => 11,
             'date_day' => 2,
             'date_is_approximate' => false,
-            'place' => 'Kraków',
+            'locality_id' => $this->localityId('Kraków'),
         ]);
         $death->participants()->attach($person, ['role' => ParticipantRole::Subject]);
+
+        $burial = Event::factory()->for($this->tree)->burial()->create([
+            'locality_id' => $this->localityId('Nowy Targ'),
+        ]);
+        $burial->participants()->attach($person, ['role' => ParticipantRole::Subject]);
     }
 
     /**
@@ -527,19 +532,22 @@ class TreeViewDemoSeeder extends Seeder
         $birth = Event::factory()->for($this->tree)->birth()->withoutDate()->create([
             'date_year' => $birthYear,
             'date_is_approximate' => $approximate,
-            'place' => null,
         ]);
         $birth->participants()->attach($person, ['role' => ParticipantRole::Subject]);
 
         if ($deceased !== false) {
             $death = Event::factory()->for($this->tree)->death()->withoutDate()->create([
                 'date_year' => is_int($deceased) ? $deceased : null,
-                'place' => null,
             ]);
             $death->participants()->attach($person, ['role' => ParticipantRole::Subject]);
         }
 
         return $person;
+    }
+
+    private function localityId(string $name): int
+    {
+        return Locality::query()->firstOrCreate(['tree_id' => $this->tree->id, 'name' => $name])->id;
     }
 
     /**
@@ -553,7 +561,7 @@ class TreeViewDemoSeeder extends Seeder
     }
 
     /**
-     * @param  array{year?: int, month?: int, day?: int, place?: string}  $date
+     * @param  array{year?: int, month?: int, day?: int, locality_id?: int}  $date
      */
     private function marry(Person $person, Person $spouse, array $date): Event
     {

@@ -4,6 +4,7 @@ namespace Database\Factories;
 
 use App\Enums\EventType;
 use App\Models\Event;
+use App\Models\Locality;
 use App\Models\Tree;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -21,12 +22,11 @@ class EventFactory extends Factory
     {
         return [
             'tree_id' => Tree::factory(),
-            'type' => fake()->randomElement(EventType::cases()),
+            'type' => fake()->randomElement(array_filter(EventType::cases(), fn (EventType $type): bool => $type->acceptsSources())),
             'date_year' => fake()->numberBetween(1700, 2020),
             'date_month' => fake()->numberBetween(1, 12),
             'date_day' => fake()->numberBetween(1, 28),
             'date_is_approximate' => false,
-            'place' => fake()->city(),
         ];
     }
 
@@ -48,6 +48,30 @@ class EventFactory extends Factory
         return $this->state(fn (array $attributes): array => [
             'type' => EventType::Death,
         ]);
+    }
+
+    /**
+     * Indicate that the event is a burial: no date, only a place.
+     */
+    public function burial(): static
+    {
+        return $this->state(fn (array $attributes): array => [
+            'type' => EventType::Burial,
+            'date_year' => null,
+            'date_month' => null,
+            'date_day' => null,
+            'date_is_approximate' => false,
+        ]);
+    }
+
+    /**
+     * Indicate that the event took place in a locality of the event's own tree.
+     */
+    public function withLocality(): static
+    {
+        return $this->afterMaking(function (Event $event): void {
+            $event->locality_id = Locality::factory()->create(['tree_id' => $event->tree_id])->id;
+        });
     }
 
     /**

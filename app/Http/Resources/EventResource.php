@@ -27,6 +27,7 @@ class EventResource extends JsonResource
      *     type: string,
      *     date: string|null,
      *     place: string|null,
+     *     locality_id: int|null,
      *     date_parts: array{year: int|null, month: int|null, day: int|null, is_approximate: bool},
      *     is_confirmed?: bool,
      *     confirmed_kinds?: list<string>,
@@ -39,7 +40,8 @@ class EventResource extends JsonResource
             'id' => $this->id,
             'type' => $this->type->value,
             'date' => $this->date->format(),
-            'place' => $this->place,
+            'place' => $this->locality?->name,
+            'locality_id' => $this->locality_id,
             'date_parts' => [
                 'year' => $this->date_year,
                 'month' => $this->date_month,

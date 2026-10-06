@@ -264,7 +264,8 @@ test('editing a person in the preview changes only that person and the birth fac
     $form = readInertiaProp($this, $user, personPreviewUrl($focus), 'personPreview')['personForm'];
 
     $event = fn (?array $fact, array $overrides = []): array => $fact === null ? [] : [
-        ...array_intersect_key($fact, array_flip(['year', 'month', 'day', 'is_approximate', 'place'])),
+        ...array_intersect_key($fact, array_flip(['year', 'month', 'day', 'is_approximate'])),
+        'locality_id' => $fact['locality']['id'] ?? null,
         ...$overrides,
     ];
 
@@ -313,7 +314,7 @@ test('editing a marriage from the preview changes only that marriage event and k
     $before = databaseRows();
 
     $this->actingAs($user)->put(route('marriages.update', $marriage['id']), [
-        'marriage' => [...$marriage['date_parts'], 'year' => 1881, 'place' => $marriage['place']],
+        'marriage' => [...$marriage['date_parts'], 'year' => 1881, 'locality_id' => $marriage['locality_id']],
     ])->assertSessionHasNoErrors()->assertRedirect();
 
     $diff = rowDiff($before, databaseRows());

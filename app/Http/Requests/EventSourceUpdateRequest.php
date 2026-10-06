@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Models\Event;
 use Illuminate\Auth\Access\Response;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
@@ -14,7 +15,13 @@ class EventSourceUpdateRequest extends FormRequest
      */
     public function authorize(): Response
     {
-        $response = Gate::inspect('update', $this->route('event'));
+        $event = $this->route('event');
+
+        if ($event instanceof Event && ! $event->type->acceptsSources()) {
+            return Response::denyAsNotFound();
+        }
+
+        $response = Gate::inspect('update', $event);
 
         return $response->allowed() ? Gate::inspect('view', $this->route('source')) : $response;
     }

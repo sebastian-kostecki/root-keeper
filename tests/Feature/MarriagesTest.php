@@ -3,6 +3,7 @@
 use App\Enums\EventType;
 use App\Enums\ParticipantRole;
 use App\Models\Event;
+use App\Models\Locality;
 use App\Models\Person;
 use App\Models\Source;
 use App\Models\User;
@@ -20,12 +21,14 @@ test('store creates exactly one marriage event with both people as spouses, redi
     $person = Person::factory()->for($user->tree)->create();
     $spouse = Person::factory()->for($user->tree)->create();
 
+    $krakow = Locality::factory()->for($user->tree)->create(['name' => 'Kraków']);
+
     $response = $this->from(personPreviewUrl($person))
         ->actingAs($user)
         ->post(route('marriages.store'), [
             'person_id' => $person->id,
             'spouse_id' => $spouse->id,
-            'marriage' => ['year' => 1850, 'month' => 6, 'day' => 12, 'is_approximate' => true, 'place' => 'Kraków'],
+            'marriage' => ['year' => 1850, 'month' => 6, 'day' => 12, 'is_approximate' => true, 'locality_id' => $krakow->id],
         ]);
 
     $response->assertRedirect(personPreviewUrl($person));
@@ -39,7 +42,7 @@ test('store creates exactly one marriage event with both people as spouses, redi
     expect($marriage->date_month)->toBe(6);
     expect($marriage->date_day)->toBe(12);
     expect($marriage->date_is_approximate)->toBeTrue();
-    expect($marriage->place)->toBe('Kraków');
+    expect($marriage->locality_id)->toBe($krakow->id);
 
     $participants = $marriage->participants()->get();
     expect($participants)->toHaveCount(2);
@@ -193,18 +196,20 @@ test('a source linked to a marriage confirms it on both previews and lists both 
     expect($confirmedPersonIds)->toBe(collect([$person->id, $spouse->id])->sort()->values()->all());
 });
 
-test('update changes the date and place and keeps linked sources', function () {
+test('update changes the date and locality and keeps linked sources', function () {
     $user = User::factory()->create();
     $person = Person::factory()->for($user->tree)->create();
     $spouse = Person::factory()->for($user->tree)->create();
-    $marriage = attachMarriage($person, $spouse, year: 1850, month: 6, day: 1, place: 'Warszawa');
+    $warszawa = Locality::factory()->for($user->tree)->create(['name' => 'Warszawa']);
+    $krakow = Locality::factory()->for($user->tree)->create(['name' => 'Kraków']);
+    $marriage = attachMarriage($person, $spouse, year: 1850, month: 6, day: 1, locality: $warszawa);
     $source = Source::factory()->for($user->tree)->create();
     $marriage->sources()->attach($source);
 
     $response = $this->from(personPreviewUrl($person))
         ->actingAs($user)
         ->put(route('marriages.update', $marriage), [
-            'marriage' => ['year' => 1851, 'month' => 7, 'day' => 2, 'is_approximate' => false, 'place' => 'Kraków'],
+            'marriage' => ['year' => 1851, 'month' => 7, 'day' => 2, 'is_approximate' => false, 'locality_id' => $krakow->id],
         ]);
 
     $response->assertRedirect(personPreviewUrl($person));
@@ -214,7 +219,8 @@ test('update changes the date and place and keeps linked sources', function () {
     expect($marriage->date_year)->toBe(1851);
     expect($marriage->date_month)->toBe(7);
     expect($marriage->date_day)->toBe(2);
-    expect($marriage->place)->toBe('Kraków');
+    expect($marriage->locality_id)->toBe($krakow->id);
+    expect($marriage->place)->toBeNull();
 
     $this->assertDatabaseHas('event_source', ['event_id' => $marriage->id, 'source_id' => $source->id]);
     expect($marriage->participants()->count())->toBe(2);
@@ -468,4 +474,28 @@ test('store without a date creates one marriage with no date and no place', func
     expect($marriage->date_day)->toBeNull();
     expect($marriage->place)->toBeNull();
     expect($marriage->participants()->count())->toBe(2);
+});
+
+test('a foreign or missing locality in marriage.locality_id fails validation and writes nothing', function () {
+    $user = User::factory()->create();
+    $person = Person::factory()->for($user->tree)->create();
+    $spouse = Person::factory()->for($user->tree)->create();
+    $foreign = Locality::factory()->for(User::factory()->create()->tree)->create();
+    $marriage = attachMarriage($person, $spouse, 1850);
+
+    foreach ([$foreign->id, 999999] as $localityId) {
+        $this->actingAs($user)->post(route('marriages.store'), [
+            'person_id' => $person->id,
+            'spouse_id' => Person::factory()->for($user->tree)->create()->id,
+            'marriage' => ['locality_id' => $localityId],
+        ])->assertSessionHasErrors('marriage.locality_id');
+
+        $this->actingAs($user)->put(route('marriages.update', $marriage), [
+            'marriage' => ['year' => 1851, 'locality_id' => $localityId],
+        ])->assertSessionHasErrors('marriage.locality_id');
+    }
+
+    expect(Event::where('type', EventType::Marriage)->count())->toBe(1)
+        ->and($marriage->refresh()->date_year)->toBe(1850)
+        ->and($marriage->locality_id)->toBeNull();
 });

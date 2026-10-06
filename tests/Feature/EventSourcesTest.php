@@ -272,3 +272,23 @@ test('the person preview carries the entry number of each linked source', functi
     $this->actingAs($user)->get(personPreviewUrl($person))
         ->assertInertia(fn ($page) => $page->where('personPreview.person.birth.sources.0.entry_number', '95'));
 });
+
+test('linking a source to a burial returns not found and creates nothing', function () {
+    $user = User::factory()->create();
+    $burial = Event::factory()->for($user->tree)->burial()->withLocality()->create();
+    $source = Source::factory()->for($user->tree)->create();
+
+    $this->actingAs($user)->post(route('events.sources.store', $burial), ['source_id' => $source->id])
+        ->assertNotFound();
+
+    $this->assertDatabaseCount('event_source', 0);
+});
+
+test('updating an entry number on a burial returns not found', function () {
+    $user = User::factory()->create();
+    $burial = Event::factory()->for($user->tree)->burial()->create();
+    $source = Source::factory()->for($user->tree)->create();
+
+    $this->actingAs($user)->patch(route('events.sources.update', [$burial, $source]), ['entry_number' => '95'])
+        ->assertNotFound();
+});

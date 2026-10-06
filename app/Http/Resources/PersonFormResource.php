@@ -30,8 +30,9 @@ class PersonFormResource extends JsonResource
      *     residence: string|null,
      *     religion: string|null,
      *     is_deceased: bool,
-     *     birth: array{year: int|null, month: int|null, day: int|null, is_approximate: bool, place: string|null, is_confirmed: bool}|null,
-     *     death: array{year: int|null, month: int|null, day: int|null, is_approximate: bool, place: string|null, is_confirmed: bool}|null,
+     *     birth: array{year: int|null, month: int|null, day: int|null, is_approximate: bool, locality: array{id: int, name: string}|null, is_confirmed: bool}|null,
+     *     death: array{year: int|null, month: int|null, day: int|null, is_approximate: bool, locality: array{id: int, name: string}|null, is_confirmed: bool}|null,
+     *     burial: array{locality: array{id: int, name: string}|null}|null,
      * }
      */
     public function toArray(Request $request): array
@@ -48,11 +49,12 @@ class PersonFormResource extends JsonResource
             'is_deceased' => $this->death() !== null,
             'birth' => $this->formEvent($this->birth()),
             'death' => $this->formEvent($this->death()),
+            'burial' => $this->burial() === null ? null : ['locality' => $this->localityOf($this->burial())],
         ];
     }
 
     /**
-     * @return array{year: int|null, month: int|null, day: int|null, is_approximate: bool, place: string|null, is_confirmed: bool}|null
+     * @return array{year: int|null, month: int|null, day: int|null, is_approximate: bool, locality: array{id: int, name: string}|null, is_confirmed: bool}|null
      */
     private function formEvent(?Event $event): ?array
     {
@@ -65,8 +67,18 @@ class PersonFormResource extends JsonResource
             'month' => $event->date_month,
             'day' => $event->date_day,
             'is_approximate' => $event->date_is_approximate,
-            'place' => $event->place,
+            'locality' => $this->localityOf($event),
             'is_confirmed' => $event->sources->isNotEmpty(),
         ];
+    }
+
+    /**
+     * @return array{id: int, name: string}|null
+     */
+    private function localityOf(?Event $event): ?array
+    {
+        $locality = $event?->locality;
+
+        return $locality === null ? null : ['id' => $locality->id, 'name' => $locality->name];
     }
 }

@@ -31,15 +31,16 @@ class UpdatePerson
      *         month?: int|string|null,
      *         day?: int|string|null,
      *         is_approximate?: bool|int|string|null,
-     *         place?: string|null,
+     *         locality_id?: int|string|null,
      *     },
      *     death?: array{
      *         year?: int|string|null,
      *         month?: int|string|null,
      *         day?: int|string|null,
      *         is_approximate?: bool|int|string|null,
-     *         place?: string|null,
+     *         locality_id?: int|string|null,
      *     },
+     *     burial?: array{locality_id?: int|string|null},
      * }  $data
      */
     public function handle(Person $person, array $data): Person
@@ -62,8 +63,17 @@ class UpdatePerson
 
             if ($this->isChecked($data['is_deceased'] ?? null)) {
                 $this->putEvent($person, EventType::Death, $data['death'] ?? []);
+
+                $burialLocalityId = $data['burial']['locality_id'] ?? null;
+
+                if (filled($burialLocalityId)) {
+                    $this->putEvent($person, EventType::Burial, ['locality_id' => $burialLocalityId]);
+                } else {
+                    $person->burial()?->delete();
+                }
             } else {
                 $person->death()?->delete();
+                $person->burial()?->delete();
             }
 
             return $person;
@@ -107,13 +117,18 @@ class UpdatePerson
     }
 
     /**
-     * @param  array{year?: int|string|null, month?: int|string|null, day?: int|string|null, is_approximate?: bool|int|string|null, place?: string|null}  $date
+     * @param  array{year?: int|string|null, month?: int|string|null, day?: int|string|null, is_approximate?: bool|int|string|null, locality_id?: int|string|null}  $date
      */
     private function putEvent(Person $person, EventType $type, array $date): void
     {
         $attributes = $this->eventAttributesFrom($date);
 
-        $event = $type === EventType::Birth ? $person->birth() : $person->death();
+        $event = match ($type) {
+            EventType::Birth => $person->birth(),
+            EventType::Death => $person->death(),
+            EventType::Burial => $person->burial(),
+            EventType::Marriage => null,
+        };
 
         if ($event !== null) {
             $event->update($attributes);

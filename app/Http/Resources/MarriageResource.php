@@ -30,6 +30,7 @@ class MarriageResource extends JsonResource
      *     type: string,
      *     date: string|null,
      *     place: string|null,
+     *     locality_id: int|null,
      *     is_confirmed?: bool,
      *     confirmed_kinds?: list<string>,
      *     sources?: list<array{id: int, kind: string, kind_short_label: string, original_name: string, display_name: string, has_thumbnail: bool, uploaded_at: string|null}>,

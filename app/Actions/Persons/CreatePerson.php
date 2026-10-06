@@ -15,7 +15,7 @@ class CreatePerson
 
     /**
      * Create a person in the given tree, along with its birth event and,
-     * when the person is deceased, its death event.
+     * when the person is deceased, its death event and optional burial place.
      *
      * @param  array{
      *     first_name?: string|null,
@@ -30,15 +30,16 @@ class CreatePerson
      *         month?: int|string|null,
      *         day?: int|string|null,
      *         is_approximate?: bool|int|string|null,
-     *         place?: string|null,
+     *         locality_id?: int|string|null,
      *     },
      *     death?: array{
      *         year?: int|string|null,
      *         month?: int|string|null,
      *         day?: int|string|null,
      *         is_approximate?: bool|int|string|null,
-     *         place?: string|null,
+     *         locality_id?: int|string|null,
      *     },
+     *     burial?: array{locality_id?: int|string|null},
      * }  $data
      */
     public function handle(Tree $tree, array $data): Person
@@ -57,6 +58,12 @@ class CreatePerson
 
             if ($this->isChecked($data['is_deceased'] ?? null)) {
                 $this->createEvent($tree, $person, EventType::Death, $data['death'] ?? []);
+
+                $burialLocalityId = $data['burial']['locality_id'] ?? null;
+
+                if (filled($burialLocalityId)) {
+                    $this->createEvent($tree, $person, EventType::Burial, ['locality_id' => $burialLocalityId]);
+                }
             }
 
             return $person;
@@ -64,7 +71,7 @@ class CreatePerson
     }
 
     /**
-     * @param  array{year?: int|string|null, month?: int|string|null, day?: int|string|null, is_approximate?: bool|int|string|null, place?: string|null}  $date
+     * @param  array{year?: int|string|null, month?: int|string|null, day?: int|string|null, is_approximate?: bool|int|string|null, locality_id?: int|string|null}  $date
      */
     private function createEvent(Tree $tree, Person $person, EventType $type, array $date): void
     {

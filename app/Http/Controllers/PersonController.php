@@ -36,7 +36,8 @@ class PersonController extends Controller
                 $tree->people()
                     ->with(['events' => fn ($events) => $events
                         ->whereIn('type', [EventType::Birth, EventType::Death])
-                        ->withExists('sources')])
+                        ->withExists('sources')
+                        ->with('locality')])
                     ->when($query !== '', function ($builder) use ($query): void {
                         $nameWithoutMaidenMarker = preg_replace('/(?<!\S)z\s+d\.?(?!\S)/iu', ' ', $query) ?? $query;
                         $words = preg_split('/\s+/u', $nameWithoutMaidenMarker, -1, PREG_SPLIT_NO_EMPTY) ?: [];

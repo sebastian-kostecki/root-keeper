@@ -1,4 +1,5 @@
 import type { Auth } from '@/types/auth';
+import type { LocalityOption } from '@/types/parish';
 import type { PersonPreviewPayload } from '@/types/person';
 import type { Source } from '@/types/source';
 
@@ -22,6 +23,7 @@ declare module '@inertiajs/core' {
             } | null;
             personPreview: PersonPreviewPayload | null;
             availableSources?: Source[];
+            localityOptions?: LocalityOption[];
             [key: string]: unknown;
         };
     }

@@ -403,24 +403,24 @@ Lista miejscowości trafia do klienta w całości i jest filtrowana lokalnie (sp
 
 #### Automated
 
-- [x] 1.1 Migracja i jej wycofanie przechodzą
-- [x] 1.2 Test migracji przechodzi
-- [x] 1.3 Larastan przechodzi
-- [x] 1.4 Pint czysty
+- [x] 1.1 Migracja i jej wycofanie przechodzą — 42482a1
+- [x] 1.2 Test migracji przechodzi — 42482a1
+- [x] 1.3 Larastan przechodzi — 42482a1
+- [x] 1.4 Pint czysty — 42482a1
 
 #### Manual
 
-- [x] 1.5 Lokalnie żadne wydarzenie z niepustym tekstem nie ma pustego locality_id
+- [x] 1.5 Lokalnie żadne wydarzenie z niepustym tekstem nie ma pustego locality_id — 42482a1
 
 ### Phase 2: Backend miejsc faktów i pochowania
 
 #### Automated
 
-- [ ] 2.1 Testy domen przechodzą
-- [ ] 2.2 Test migracji nadal przechodzi
-- [ ] 2.3 Larastan (poziom 7) przechodzi bez nowych błędów
-- [ ] 2.4 Pint czysty
-- [ ] 2.5 Wayfinder wygenerowany bez błędów
+- [x] 2.1 Testy domen przechodzą
+- [x] 2.2 Test migracji nadal przechodzi
+- [x] 2.3 Larastan (poziom 7) przechodzi bez nowych błędów
+- [x] 2.4 Pint czysty
+- [x] 2.5 Wayfinder wygenerowany bez błędów
 
 ### Phase 3: Frontend — picker miejscowości, pochowanie, filtr źródła
 

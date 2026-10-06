@@ -3,6 +3,7 @@
 use App\Enums\EventType;
 use App\Enums\ParticipantRole;
 use App\Models\Event;
+use App\Models\Locality;
 use App\Models\ParentChildRelation;
 use App\Models\Person;
 use App\Models\Source;
@@ -50,7 +51,7 @@ function attachBirth(Person $person, ?int $year = null, ?int $month = null, ?int
 /**
  * Attach a marriage event with the given partial date to the two people.
  */
-function attachMarriage(Person $person, Person $spouse, ?int $year = null, ?int $month = null, ?int $day = null, ?string $place = null): Event
+function attachMarriage(Person $person, Person $spouse, ?int $year = null, ?int $month = null, ?int $day = null, ?Locality $locality = null): Event
 {
     $event = Event::factory()->for($person->tree)->create([
         'type' => EventType::Marriage,
@@ -58,7 +59,7 @@ function attachMarriage(Person $person, Person $spouse, ?int $year = null, ?int 
         'date_month' => $month,
         'date_day' => $day,
         'date_is_approximate' => false,
-        'place' => $place,
+        'locality_id' => $locality?->id,
     ]);
 
     $event->participants()->attach([

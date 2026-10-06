@@ -10,8 +10,8 @@ namespace App\Actions\Persons;
 trait MapsEventInput
 {
     /**
-     * @param  array{year?: int|string|null, month?: int|string|null, day?: int|string|null, is_approximate?: bool|int|string|null, place?: string|null}  $date
-     * @return array{date_year: int|string|null, date_month: int|string|null, date_day: int|string|null, date_is_approximate: bool, place: string|null}
+     * @param  array{year?: int|string|null, month?: int|string|null, day?: int|string|null, is_approximate?: bool|int|string|null, locality_id?: int|string|null}  $date
+     * @return array{date_year: int|string|null, date_month: int|string|null, date_day: int|string|null, date_is_approximate: bool, locality_id: int|string|null}
      */
     private function eventAttributesFrom(array $date): array
     {
@@ -20,7 +20,7 @@ trait MapsEventInput
             'date_month' => $date['month'] ?? null,
             'date_day' => $date['day'] ?? null,
             'date_is_approximate' => $this->isChecked($date['is_approximate'] ?? null),
-            'place' => $date['place'] ?? null,
+            'locality_id' => $date['locality_id'] ?? null,
         ];
     }
 

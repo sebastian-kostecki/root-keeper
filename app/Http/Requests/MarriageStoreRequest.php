@@ -51,7 +51,7 @@ class MarriageStoreRequest extends FormRequest
             'marriage.year' => 'rok ślubu',
             'marriage.month' => 'miesiąc ślubu',
             'marriage.day' => 'dzień ślubu',
-            'marriage.place' => 'miejsce ślubu',
+            'marriage.locality_id' => 'miejsce ślubu',
             'marriage.is_approximate' => 'przybliżona data ślubu',
         ];
     }

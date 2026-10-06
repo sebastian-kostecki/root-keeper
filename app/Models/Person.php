@@ -102,6 +102,11 @@ class Person extends Model
         return $this->events->firstWhere('type', EventType::Death);
     }
 
+    public function burial(): ?Event
+    {
+        return $this->events->firstWhere('type', EventType::Burial);
+    }
+
     /**
      * Requires the `events` relation loaded. "Today" is the Polish calendar day.
      */

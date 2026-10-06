@@ -26,6 +26,15 @@ class PersonStoreRequest extends FormRequest
             $this->partialDateRules('death'),
         );
 
+        $burialRules = [
+            'burial.locality_id' => [
+                'nullable',
+                'integer',
+                Rule::exists('localities', 'id')->where('tree_id', $this->user()->tree->id),
+                'prohibited_unless:is_deceased,1,true',
+            ],
+        ];
+
         return [
             'first_name' => ['nullable', 'required_without:last_name', 'string', 'max:255'],
             'last_name' => ['nullable', 'required_without:first_name', 'string', 'max:255'],
@@ -37,6 +46,7 @@ class PersonStoreRequest extends FormRequest
 
             ...$this->partialDateRules('birth'),
             ...$deathRules,
+            ...$burialRules,
         ];
     }
 
@@ -71,12 +81,13 @@ class PersonStoreRequest extends FormRequest
             'birth.month' => 'miesiąc urodzenia',
             'birth.day' => 'dzień urodzenia',
             'birth.is_approximate' => 'przybliżona data urodzenia',
-            'birth.place' => 'miejsce urodzenia',
+            'birth.locality_id' => 'miejsce urodzenia',
             'death.year' => 'rok zgonu',
             'death.month' => 'miesiąc zgonu',
             'death.day' => 'dzień zgonu',
             'death.is_approximate' => 'przybliżona data zgonu',
-            'death.place' => 'miejsce zgonu',
+            'death.locality_id' => 'miejsce zgonu',
+            'burial.locality_id' => 'miejsce pochowania',
         ];
     }
 
