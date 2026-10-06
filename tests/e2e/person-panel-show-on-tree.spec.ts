@@ -42,10 +42,8 @@ test('person-panel-show-on-tree: centring on a parent from the panel keeps the u
 
     await gotoTree(page, childId);
 
-    // 1. The father's card opens his panel.
-    await page
-        .getByRole('link', { name: `mężczyzna ${fatherName}`, exact: true })
-        .click();
+    // 1. The eye button of the father's card opens his panel.
+    await page.getByRole('link', { name: `Podgląd: ${fatherName}` }).click();
     const fatherPanel = page.getByRole('dialog', { name: fatherName });
     await expect(fatherPanel).toBeVisible();
 

@@ -1,13 +1,13 @@
 // Risk: "the UI sends an action to the wrong person" (test-plan.md:86) on the
-// new entry of S-06 — a click on a tree card opens the panel of *that* person
-// beside the tree, a relative from the `Rodzina` tab replaces the panel's
+// new entry of S-06 — the eye button of a tree card opens the panel of *that*
+// person beside the tree, a relative from the `Rodzina` tab replaces the panel's
 // content, and closing the panel leaves the tree centred on the same person.
 // Data is prepared through the app's routes (tests/e2e/support/api.ts).
 import { expect, test } from './support/fixtures';
 import { createParent, createPerson } from './support/api';
 import { familySection, gotoTree } from './support/navigation';
 
-test('person-side-panel: a card opens its person beside the tree, a relative replaces it, close keeps the centre', async ({
+test('person-side-panel: the eye button of a card opens its person beside the tree, a relative replaces it, close keeps the centre', async ({
     page,
     suffix,
 }) => {
@@ -29,8 +29,8 @@ test('person-side-panel: a card opens its person beside the tree, a relative rep
     const heading = page.getByRole('heading', { level: 1 });
     await expect(heading).toHaveText(centreName);
 
-    // 1. A click on the parent's card opens the parent's panel, the tree stays.
-    await page.getByRole('link', { name: new RegExp(parentName) }).click();
+    // 1. The eye button of the parent's card opens the parent's panel, the tree stays.
+    await page.getByRole('link', { name: `Podgląd: ${parentName}` }).click();
     const parentPanel = page.getByRole('dialog', { name: parentName });
     await expect(parentPanel).toBeVisible();
     await expect(heading).toHaveText(centreName);

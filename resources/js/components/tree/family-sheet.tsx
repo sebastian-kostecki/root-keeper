@@ -7,6 +7,7 @@ import { SheetPersonCard } from '@/components/tree/sheet-person-card';
 import { UnionNode } from '@/components/tree/union-node';
 import { UnknownPersonCard } from '@/components/tree/unknown-person-card';
 import { ZoomCanvas } from '@/components/zoom-canvas';
+import { centreHints } from '@/lib/centre-hints';
 import type {
     FamilySheet as FamilySheetData,
     Gender,
@@ -41,17 +42,25 @@ const WIDE_CHILDREN_MAX = 4;
 
 function Slot({
     slot,
+    spouses,
     candidates,
     genders,
     religions,
 }: {
     slot: SheetSlot;
+    /** Union to preselect per person id when re-centring on a card. */
+    spouses: Record<number, string>;
     candidates: PersonCandidate[] | undefined;
     genders: Gender[];
     religions: Religion[];
 }) {
     if (slot.kind === 'person') {
-        return <SheetPersonCard person={slot.person} />;
+        return (
+            <SheetPersonCard
+                person={slot.person}
+                spouse={spouses[slot.person.id]}
+            />
+        );
     }
 
     if (slot.kind === 'unknown') {
@@ -260,6 +269,7 @@ export function FamilySheet({
         sheet.focus_side === 'right'
             ? ['partner', 'focus']
             : ['focus', 'partner'];
+    const { spouses } = centreHints(sheet);
     const selectedUnion = sheet.unions.find(
         (union) => union.key === sheet.selected_union,
     );
@@ -309,6 +319,7 @@ export function FamilySheet({
                             >
                                 <Slot
                                     slot={slot}
+                                    spouses={spouses}
                                     candidates={personCandidates}
                                     genders={genders}
                                     religions={religions}
@@ -339,6 +350,7 @@ export function FamilySheet({
                             >
                                 <Slot
                                     slot={slot}
+                                    spouses={spouses}
                                     candidates={personCandidates}
                                     genders={genders}
                                     religions={religions}
@@ -391,6 +403,7 @@ export function FamilySheet({
                                 ) : (
                                     <Slot
                                         slot={sheet.partner}
+                                        spouses={spouses}
                                         candidates={personCandidates}
                                         genders={genders}
                                         religions={religions}
