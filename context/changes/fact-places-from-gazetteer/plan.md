@@ -426,29 +426,29 @@ Lista miejscowości trafia do klienta w całości i jest filtrowana lokalnie (sp
 
 #### Automated
 
-- [x] 3.1 Format i lint przechodzą
-- [x] 3.2 Typy przechodzą
-- [x] 3.3 Vitest przechodzi
-- [x] 3.4 Build przechodzi
-- [x] 3.5 Testy Pest z fazy 2 nadal przechodzą
+- [x] 3.1 Format i lint przechodzą — 494583c
+- [x] 3.2 Typy przechodzą — 494583c
+- [x] 3.3 Vitest przechodzi — 494583c
+- [x] 3.4 Build przechodzi — 494583c
+- [x] 3.5 Testy Pest z fazy 2 nadal przechodzą — 494583c
 
 #### Manual
 
-- [x] 3.6 Podpowiedzi od jednej litery w panelu 1366 px, wybór i zapis pokazują nazwę
-- [x] 3.7 Dodaj miejscowość w sekcji Ślub dopisuje i wybiera miejscowość
-- [x] 3.8 Pochowanie zostaje po edycji Danych osobowych i znika po odznaczeniu zgonu
-- [x] 3.9 Modal tworzenia i dialog slotu drzewa zapisują miejsce urodzenia ze spisu
-- [x] 3.10 Escape zamyka listę podpowiedzi, nie panel
-- [x] 3.11 Picker źródła otwiera się z wypełnionym miejscem i rokiem
+- [x] 3.6 Podpowiedzi od jednej litery w panelu 1366 px, wybór i zapis pokazują nazwę — 494583c
+- [x] 3.7 Dodaj miejscowość w sekcji Ślub dopisuje i wybiera miejscowość — 494583c
+- [x] 3.8 Pochowanie zostaje po edycji Danych osobowych i znika po odznaczeniu zgonu — 494583c
+- [x] 3.9 Modal tworzenia i dialog slotu drzewa zapisują miejsce urodzenia ze spisu — 494583c
+- [x] 3.10 Escape zamyka listę podpowiedzi, nie panel — 494583c
+- [x] 3.11 Picker źródła otwiera się z wypełnionym miejscem i rokiem — 494583c
 
 ### Phase 4: E2E (przez /10x-e2e)
 
 #### Automated
 
-- [ ] 4.1 Strażnicy F-01 przechodzą
-- [ ] 4.2 Nowy test przechodzi
-- [ ] 4.3 Cały zestaw E2E przechodzi
+- [x] 4.1 Strażnicy F-01 przechodzą
+- [x] 4.2 Nowy test przechodzi
+- [x] 4.3 Cały zestaw E2E przechodzi
 
 #### Manual
 
-- [ ] 4.4 Weryfikacja celowym błędem czerwieni nowy test i strażnika S-04
+- [x] 4.4 Weryfikacja celowym błędem czerwieni nowy test i strażnika S-04

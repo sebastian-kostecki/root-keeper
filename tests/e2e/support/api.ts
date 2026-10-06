@@ -17,7 +17,7 @@ export type PersonFields = {
     first_name?: string;
     last_name?: string;
     gender?: 'male' | 'female' | 'unknown';
-    birth?: { year?: number; place?: string };
+    birth?: { year?: number; locality_id?: number };
 };
 
 export type SourceKindValue = 'metrical_record' | 'gravestone' | 'other';
@@ -102,8 +102,8 @@ function personForm(fields: PersonFields): Record<string, string | number> {
     if (fields.gender) form.gender = fields.gender;
     if (fields.birth?.year !== undefined)
         form['birth[year]'] = fields.birth.year;
-    if (fields.birth?.place !== undefined)
-        form['birth[place]'] = fields.birth.place;
+    if (fields.birth?.locality_id !== undefined)
+        form['birth[locality_id]'] = fields.birth.locality_id;
 
     return form;
 }

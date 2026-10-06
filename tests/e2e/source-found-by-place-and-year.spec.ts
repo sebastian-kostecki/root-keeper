@@ -1,6 +1,6 @@
 // Risk: S-04 source-found-by-place-and-year (US-01) — the author finds the act of
 // a fact by place and year and records its entry number on the link. The picker
-// opens with the fact's year, the place narrows the list, the chosen act is
+// opens with the fact's year and locality, the place narrows the list, the chosen act is
 // linked with number 95, and the number shows at the fact and on the source's
 // "Potwierdza" card. Pest sees the endpoints; only the browser sees the filter,
 // the selection step and both views together. Data through the app's routes
@@ -35,16 +35,18 @@ test('source-found-by-place-and-year: an act found by place and year is linked w
     const otherYear = `Akt inny rok ${suffix}`;
     const otherPlace = `Akt inne miejsce ${suffix}`;
 
-    // Setup: a person born in 1908, a parish seated in "Luboml …", the target act
-    // (1908, that parish), a decoy of another year and a decoy of another place.
+    // Setup: a person born in 1908 in "Luboml …", a parish seated in that same
+    // locality, the target act (1908, that parish), a decoy of another year and a
+    // decoy of another place.
+    const localityId = await createLocality(page, localityName);
     const personId = await createPerson(page, {
         first_name: 'Jan',
         last_name: suffix,
-        birth: { year: BIRTH_YEAR, place: 'Kraków' },
+        birth: { year: BIRTH_YEAR, locality_id: localityId },
     });
     const parishId = await createParish(page, {
         name: `Parafia ${suffix}`,
-        localityId: await createLocality(page, localityName),
+        localityId,
     });
     const otherParishId = await createParish(page, {
         name: `Parafia inna ${suffix}`,
@@ -88,12 +90,11 @@ test('source-found-by-place-and-year: an act found by place and year is linked w
     await expect(picker.getByLabel('Rok')).toHaveValue(String(BIRTH_YEAR));
     const tile = (name: string) =>
         picker.getByRole('button', { name: new RegExp(name) });
-    await expect(tile(target)).toBeVisible();
-    await expect(tile(otherPlace)).toBeVisible();
     await expect(tile(otherYear)).toBeHidden();
 
-    // 3. The place narrows it to the act of that locality.
-    await picker.getByLabel('Miejsce').fill(localityName);
+    // 3. The place starts as the fact's locality and narrows the list at once
+    // to the act of that locality.
+    await expect(picker.getByLabel('Miejsce')).toHaveValue(localityName);
     await expect(tile(otherPlace)).toBeHidden();
     await expect(tile(target)).toBeVisible();
 

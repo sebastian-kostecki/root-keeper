@@ -8,6 +8,7 @@ import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { expect, test } from './support/fixtures';
 import {
+    createLocality,
     createPerson,
     createSource,
     linkSource,
@@ -30,12 +31,15 @@ test('fact-source-scan: a confirmed birth leads to the same source and the same 
 }) => {
     const sourceName = `Akt urodzenia ${suffix}`;
 
-    // Setup through the app's routes: a person with a birth, a scanned
+    // Setup through the app's routes: a person with a birth in a locality, a scanned
     // metrical record, and the birth linked to the record.
     const personId = await createPerson(page, {
         first_name: 'Jan',
         last_name: suffix,
-        birth: { year: 1900, place: 'Kraków' },
+        birth: {
+            year: 1900,
+            locality_id: await createLocality(page, `Kraków ${suffix}`),
+        },
     });
     const sourceId = await createSource(page, {
         kind: 'metrical_record',
