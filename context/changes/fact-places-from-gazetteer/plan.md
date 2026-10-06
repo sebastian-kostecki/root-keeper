@@ -445,10 +445,10 @@ Lista miejscowości trafia do klienta w całości i jest filtrowana lokalnie (sp
 
 #### Automated
 
-- [x] 4.1 Strażnicy F-01 przechodzą
-- [x] 4.2 Nowy test przechodzi
-- [x] 4.3 Cały zestaw E2E przechodzi
+- [x] 4.1 Strażnicy F-01 przechodzą — 5fee7cd
+- [x] 4.2 Nowy test przechodzi — 5fee7cd
+- [x] 4.3 Cały zestaw E2E przechodzi — 5fee7cd
 
 #### Manual
 
-- [x] 4.4 Weryfikacja celowym błędem czerwieni nowy test i strażnika S-04
+- [x] 4.4 Weryfikacja celowym błędem czerwieni nowy test i strażnika S-04 — 5fee7cd
