@@ -412,6 +412,6 @@ Migracja tylko dodaje kolumnę i tabelę — bez przenoszenia danych; `down()` o
 
 #### Automated
 
-- [x] 5.1 Nowy spec przechodzi: `npx playwright test tests/e2e/gravestone-cemetery-and-buried.spec.ts`
-- [x] 5.2 Cała suita E2E przechodzi: `npx playwright test`
-- [x] 5.3 Spec czerwienieje po celowym wyłączeniu uzupełniania pochowania (weryfikacja przez wprowadzenie błędu)
+- [x] 5.1 Nowy spec przechodzi: `npx playwright test tests/e2e/gravestone-cemetery-and-buried.spec.ts` — 88346e2
+- [x] 5.2 Cała suita E2E przechodzi: `npx playwright test` — 88346e2
+- [x] 5.3 Spec czerwienieje po celowym wyłączeniu uzupełniania pochowania (weryfikacja przez wprowadzenie błędu) — 88346e2
