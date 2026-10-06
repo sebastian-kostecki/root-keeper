@@ -10,6 +10,7 @@ import {
     MarriageFields,
     PersonalFields,
 } from '@/components/persons/person-section-fields';
+import { ResidencesFields } from '@/components/persons/residences-fields';
 import { SectionCard } from '@/components/persons/section-card';
 import {
     useGuardedClick,
@@ -23,6 +24,7 @@ import { mergeSectionIntoPayload } from '@/lib/person-payload';
 import type { PersonSection, SectionValues } from '@/lib/person-payload';
 import { eventPayloadFromValues } from '@/lib/person-payload';
 import { formatPartialDate } from '@/lib/partial-date';
+import { formatYearRange } from '@/lib/year-range';
 import type {
     Marriage,
     PersonFormEvent,
@@ -44,13 +46,16 @@ const PERSONAL_KEYS = [
     'maiden_name',
     'gender',
     'religion',
-    'residence',
 ];
 
 /** Whether a server error key is rendered by the fields of the given section. */
 function belongsToSection(id: SectionId, key: string): boolean {
     if (id === 'personal') {
         return PERSONAL_KEYS.includes(key);
+    }
+
+    if (id === 'residences') {
+        return key === 'residences' || key.startsWith('residences.');
     }
 
     if (id === 'birth') {
@@ -204,6 +209,8 @@ export function OverviewTab({ preview, availableSources }: Props) {
         errors: Errors;
     } | null>(null);
 
+    const residences = person.residences ?? [];
+
     const hasBirth =
         person.birth !== null &&
         (person.birth.date !== null || person.birth.place !== null);
@@ -291,10 +298,6 @@ export function OverviewTab({ preview, availableSources }: Props) {
                                 label="Nazwisko rodowe"
                                 value={person.maiden_name}
                             />
-                            <Field
-                                label="Zamieszkanie"
-                                value={person.residence}
-                            />
                         </div>
                     }
                     edit={
@@ -305,6 +308,46 @@ export function OverviewTab({ preview, availableSources }: Props) {
                         />
                     }
                 />
+            </div>
+
+            <div className="space-y-3">
+                <SectionHeading title="Zamieszkania" />
+                {residences.length > 0 || editor.editing === 'residences' ? (
+                    <SectionCard
+                        {...cardProps('residences')}
+                        title="Zamieszkania"
+                        view={
+                            <ul className="space-y-1.5">
+                                {residences.map((residence) => (
+                                    <li
+                                        key={residence.id}
+                                        className="flex flex-wrap items-baseline gap-x-2"
+                                    >
+                                        <span>{residence.locality.name}</span>
+                                        <span className="text-muted-foreground text-sm">
+                                            {formatYearRange(
+                                                residence.year_from,
+                                                residence.year_to,
+                                            )}
+                                        </span>
+                                    </li>
+                                ))}
+                            </ul>
+                        }
+                        edit={
+                            <ResidencesFields
+                                errors={errorsFor('residences')}
+                                residences={personForm.residences}
+                            />
+                        }
+                    />
+                ) : (
+                    <EmptyFact
+                        text="Nie znamy miejsc zamieszkania."
+                        cta="Dodaj zamieszkanie"
+                        onStart={() => editor.start('residences')}
+                    />
+                )}
             </div>
 
             <div className="space-y-3">

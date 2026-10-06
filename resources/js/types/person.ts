@@ -61,6 +61,13 @@ export type PersonAge = {
     value: number | null;
 };
 
+export type PersonResidence = {
+    id: number;
+    locality: LocalityOption;
+    year_from: number | null;
+    year_to: number | null;
+};
+
 export type Person = {
     id: number;
     first_name: string | null;
@@ -68,7 +75,7 @@ export type Person = {
     maiden_name: string | null;
     display_name: string;
     gender: Gender | null;
-    residence: string | null;
+    residences?: PersonResidence[];
     religion: Religion | null;
     burial_place: string | null;
     birth: IndexPersonEvent | null;
@@ -117,7 +124,7 @@ export type PersonFormData = {
     last_name: string | null;
     maiden_name: string | null;
     gender: string | null;
-    residence: string | null;
+    residences: PersonResidence[];
     religion: string | null;
     is_deceased: boolean;
     birth: PersonFormEvent | null;

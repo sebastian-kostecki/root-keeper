@@ -13,7 +13,7 @@ function personForm(): PersonFormData {
         last_name: 'Kowalska',
         maiden_name: 'Nowak',
         gender: 'female',
-        residence: null,
+        residences: [],
         religion: null,
         is_deceased: true,
         birth: null,
@@ -88,5 +88,56 @@ describe('eventPayloadFromValues', () => {
             }).locality_id,
         ).toBe(12);
         expect(eventPayloadFromValues('marriage', {}).locality_id).toBeNull();
+    });
+});
+
+describe('residences', () => {
+    const withResidences = (): PersonFormData => ({
+        ...personForm(),
+        residences: [
+            {
+                id: 4,
+                locality: { id: 9, name: 'Zakopane' },
+                year_from: 1920,
+                year_to: null,
+            },
+        ],
+    });
+
+    it.each(['personal', 'birth', 'death'] as const)(
+        'carries the residences of personForm when the %s section is saved',
+        (section) => {
+            const payload = mergeSectionIntoPayload(withResidences(), section, {
+                is_deceased: '1',
+            });
+
+            expect(payload.residences).toEqual([
+                { locality_id: 9, year_from: 1920, year_to: null },
+            ]);
+        },
+    );
+
+    it('reads rows by numeric index and keeps empty rows in place', () => {
+        const payload = mergeSectionIntoPayload(
+            withResidences(),
+            'residences',
+            {
+                'residences.10.locality_id': '5',
+                'residences.10.year_from': '',
+                'residences.10.year_to': '1950',
+                'residences.2.locality_id': '',
+                'residences.2.year_from': '',
+                'residences.2.year_to': '',
+                'residences.0.locality_id': '3',
+                'residences.0.year_from': '1900',
+                'residences.0.year_to': '',
+            },
+        );
+
+        expect(payload.residences).toEqual([
+            { locality_id: 3, year_from: 1900, year_to: null },
+            { locality_id: null, year_from: null, year_to: null },
+            { locality_id: 5, year_from: null, year_to: 1950 },
+        ]);
     });
 });

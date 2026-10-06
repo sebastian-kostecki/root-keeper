@@ -10,7 +10,12 @@ import {
 import type { MouseEvent, ReactNode } from 'react';
 import { Button } from '@/components/ui/button';
 
-export type SectionId = 'personal' | 'birth' | 'death' | `marriage-${number}`;
+export type SectionId =
+    | 'personal'
+    | 'birth'
+    | 'death'
+    | 'residences'
+    | `marriage-${number}`;
 
 /** Hints how an edit starts, e.g. "Oznacz zgon" opens Zgon with the checkbox on. */
 export type SectionIntent = 'mark-deceased';
@@ -47,6 +52,10 @@ function labelFor(id: SectionId | null): string {
 
     if (id === 'personal') {
         return 'danych osobowych';
+    }
+
+    if (id === 'residences') {
+        return 'zamieszkaniach';
     }
 
     if (id === 'birth') {

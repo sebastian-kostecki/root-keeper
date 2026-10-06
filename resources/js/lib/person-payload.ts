@@ -4,7 +4,7 @@ import type { PersonFormData, PersonFormEvent } from '@/types';
 export type SectionValues = Record<string, string>;
 
 /** Sections that save through `PUT persons/{id}`. */
-export type PersonSection = 'personal' | 'birth' | 'death';
+export type PersonSection = 'personal' | 'birth' | 'death' | 'residences';
 
 export type PartialDatePayload = {
     year: number | null;
@@ -14,12 +14,18 @@ export type PartialDatePayload = {
     locality_id: number | null;
 };
 
+export type ResidencePayload = {
+    locality_id: number | null;
+    year_from: number | null;
+    year_to: number | null;
+};
+
 export type PersonPayload = {
     first_name: string | null;
     last_name: string | null;
     maiden_name: string | null;
     gender: string | null;
-    residence: string | null;
+    residences: ResidencePayload[];
     religion: string | null;
     is_deceased: boolean;
     birth: PartialDatePayload;
@@ -66,6 +72,38 @@ export function eventPayloadFromValues(
 }
 
 /**
+ * Reads `residences.{i}.locality_id|year_from|year_to` out of form values, in row
+ * order. Empty rows are kept: the server skips them and keeps the indexes, so an
+ * error lands under the right row.
+ */
+export function residencesFromValues(
+    values: SectionValues,
+): ResidencePayload[] {
+    const rows = new Map<number, ResidencePayload>();
+
+    for (const key of Object.keys(values)) {
+        const match =
+            /^residences\.(\d+)\.(locality_id|year_from|year_to)$/.exec(key);
+
+        if (match === null) {
+            continue;
+        }
+
+        const index = Number(match[1]);
+        const row = rows.get(index) ?? {
+            locality_id: null,
+            year_from: null,
+            year_to: null,
+        };
+
+        row[match[2] as keyof ResidencePayload] = toNumber(values[key]);
+        rows.set(index, row);
+    }
+
+    return [...rows.entries()].sort(([a], [b]) => a - b).map(([, row]) => row);
+}
+
+/**
  * Maps the person form data to the `PUT persons/{id}` request shape. The
  * update is a full replace on the server, so every key must be present.
  */
@@ -75,7 +113,11 @@ export function personFormToPayload(personForm: PersonFormData): PersonPayload {
         last_name: personForm.last_name,
         maiden_name: personForm.maiden_name,
         gender: personForm.gender,
-        residence: personForm.residence,
+        residences: personForm.residences.map((residence) => ({
+            locality_id: residence.locality.id,
+            year_from: residence.year_from,
+            year_to: residence.year_to,
+        })),
         religion: personForm.religion,
         is_deceased: personForm.is_deceased,
         birth: eventToPayload(personForm.birth),
@@ -108,7 +150,8 @@ export function mergeSectionIntoPayload(
         payload.maiden_name = blankToNull(values.maiden_name);
         payload.gender = blankToNull(values.gender);
         payload.religion = blankToNull(values.religion);
-        payload.residence = blankToNull(values.residence);
+    } else if (section === 'residences') {
+        payload.residences = residencesFromValues(values);
     } else if (section === 'birth') {
         payload.birth = eventPayloadFromValues('birth', values);
     } else {

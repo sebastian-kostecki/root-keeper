@@ -125,7 +125,6 @@ export function PersonsTable({
                             sort={sort}
                             onSortChange={onSortChange}
                         />
-                        <TableHead>Zamieszkanie</TableHead>
                         <TableHead>Wyznanie</TableHead>
                         <TableHead className="w-12">
                             <span className="sr-only">Akcje</span>
@@ -159,13 +158,6 @@ export function PersonsTable({
                             </TableCell>
                             <TableCell>
                                 <EventCell event={person.death} isDeath />
-                            </TableCell>
-                            <TableCell>
-                                {person.residence ? (
-                                    person.residence
-                                ) : (
-                                    <EmptyCell />
-                                )}
                             </TableCell>
                             <TableCell>
                                 {person.religion ? (

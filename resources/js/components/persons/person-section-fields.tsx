@@ -147,17 +147,6 @@ export function PersonalFields({
                 <input type="hidden" name="religion" value={religion} />
                 <InputError message={errors.religion} />
             </div>
-
-            <div className="grid gap-2">
-                <Label htmlFor="residence">Miejsce zamieszkania</Label>
-                <Input
-                    id="residence"
-                    name="residence"
-                    maxLength={255}
-                    defaultValue={person?.residence ?? undefined}
-                />
-                <InputError message={errors.residence} />
-            </div>
         </>
     );
 }

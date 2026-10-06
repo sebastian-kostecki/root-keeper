@@ -395,31 +395,31 @@ Panel dokłada jedno zapytanie (`residences.locality`) na podgląd osoby. Lista 
 
 #### Automated
 
-- [x] 2.1 Testy domen przechodzą
-- [x] 2.2 Testy kopii przechodzą
-- [x] 2.3 Test migracji nadal przechodzi
-- [x] 2.4 Larastan (poziom 7) przechodzi bez nowych błędów
-- [x] 2.5 Pint czysty
+- [x] 2.1 Testy domen przechodzą — de174da
+- [x] 2.2 Testy kopii przechodzą — de174da
+- [x] 2.3 Test migracji nadal przechodzi — de174da
+- [x] 2.4 Larastan (poziom 7) przechodzi bez nowych błędów — de174da
+- [x] 2.5 Pint czysty — de174da
 
 ### Phase 3: Frontend — karta „Zamieszkania”
 
 #### Automated
 
-- [ ] 3.1 Format i lint przechodzą
-- [ ] 3.2 Typy przechodzą
-- [ ] 3.3 Vitest przechodzi
-- [ ] 3.4 Build przechodzi
-- [ ] 3.5 Testy Pest z fazy 2 nadal przechodzą
+- [x] 3.1 Format i lint przechodzą
+- [x] 3.2 Typy przechodzą
+- [x] 3.3 Vitest przechodzi
+- [x] 3.4 Build przechodzi
+- [x] 3.5 Testy Pest z fazy 2 nadal przechodzą
 
 #### Manual
 
-- [ ] 3.6 Karta pokazuje zamieszkanie z migracji, dwa nowe wiersze zapisują się w kolejności po roku
-- [ ] 3.7 Miejscowość dopisana w jednym wierszu jest do wyboru w drugim
-- [ ] 3.8 Usunięcie środkowego wiersza nie przesuwa stanu pickerów
-- [ ] 3.9 Błędy walidacji stoją pod właściwym wierszem, pusty wiersz znika bez błędu
-- [ ] 3.10 Strażnik niezapisanych zmian reaguje na dodanie wiersza
-- [ ] 3.11 Zapis Danych osobowych zostawia listę zamieszkań
-- [ ] 3.12 Stare pole zniknęło z formularzy i kolumna z tabeli osób
+- [x] 3.6 Karta pokazuje zamieszkanie z migracji, dwa nowe wiersze zapisują się w kolejności po roku
+- [x] 3.7 Miejscowość dopisana w jednym wierszu jest do wyboru w drugim
+- [x] 3.8 Usunięcie środkowego wiersza nie przesuwa stanu pickerów
+- [x] 3.9 Błędy walidacji stoją pod właściwym wierszem, pusty wiersz znika bez błędu
+- [x] 3.10 Strażnik niezapisanych zmian reaguje na dodanie wiersza
+- [x] 3.11 Zapis Danych osobowych zostawia listę zamieszkań
+- [x] 3.12 Stare pole zniknęło z formularzy i kolumna z tabeli osób
 
 ### Phase 4: E2E (przez /10x-e2e)
 
