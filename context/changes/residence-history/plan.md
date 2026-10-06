@@ -405,29 +405,29 @@ Panel dokłada jedno zapytanie (`residences.locality`) na podgląd osoby. Lista 
 
 #### Automated
 
-- [x] 3.1 Format i lint przechodzą
-- [x] 3.2 Typy przechodzą
-- [x] 3.3 Vitest przechodzi
-- [x] 3.4 Build przechodzi
-- [x] 3.5 Testy Pest z fazy 2 nadal przechodzą
+- [x] 3.1 Format i lint przechodzą — 4cc7f7f
+- [x] 3.2 Typy przechodzą — 4cc7f7f
+- [x] 3.3 Vitest przechodzi — 4cc7f7f
+- [x] 3.4 Build przechodzi — 4cc7f7f
+- [x] 3.5 Testy Pest z fazy 2 nadal przechodzą — 4cc7f7f
 
 #### Manual
 
-- [x] 3.6 Karta pokazuje zamieszkanie z migracji, dwa nowe wiersze zapisują się w kolejności po roku
-- [x] 3.7 Miejscowość dopisana w jednym wierszu jest do wyboru w drugim
-- [x] 3.8 Usunięcie środkowego wiersza nie przesuwa stanu pickerów
-- [x] 3.9 Błędy walidacji stoją pod właściwym wierszem, pusty wiersz znika bez błędu
-- [x] 3.10 Strażnik niezapisanych zmian reaguje na dodanie wiersza
-- [x] 3.11 Zapis Danych osobowych zostawia listę zamieszkań
-- [x] 3.12 Stare pole zniknęło z formularzy i kolumna z tabeli osób
+- [x] 3.6 Karta pokazuje zamieszkanie z migracji, dwa nowe wiersze zapisują się w kolejności po roku — 4cc7f7f
+- [x] 3.7 Miejscowość dopisana w jednym wierszu jest do wyboru w drugim — 4cc7f7f
+- [x] 3.8 Usunięcie środkowego wiersza nie przesuwa stanu pickerów — 4cc7f7f
+- [x] 3.9 Błędy walidacji stoją pod właściwym wierszem, pusty wiersz znika bez błędu — 4cc7f7f
+- [x] 3.10 Strażnik niezapisanych zmian reaguje na dodanie wiersza — 4cc7f7f
+- [x] 3.11 Zapis Danych osobowych zostawia listę zamieszkań — 4cc7f7f
+- [x] 3.12 Stare pole zniknęło z formularzy i kolumna z tabeli osób — 4cc7f7f
 
 ### Phase 4: E2E (przez /10x-e2e)
 
 #### Automated
 
-- [ ] 4.1 Nowy test przechodzi
-- [ ] 4.2 Cały zestaw E2E przechodzi
+- [x] 4.1 Nowy test przechodzi
+- [x] 4.2 Cały zestaw E2E przechodzi
 
 #### Manual
 
-- [ ] 4.3 Weryfikacja celowym błędem czerwieni nowy test
+- [x] 4.3 Weryfikacja celowym błędem czerwieni nowy test
