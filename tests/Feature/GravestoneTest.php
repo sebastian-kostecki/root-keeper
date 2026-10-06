@@ -237,6 +237,24 @@ test('deleting the source or the person clears the buried list', function () {
     expect(DB::table('buried_people')->where('source_id', $kept->id)->count())->toBe(1);
 });
 
+test('deleting the account removes a gravestone with its cemetery and buried people', function () {
+    Storage::fake('local');
+
+    $user = User::factory()->create();
+    $cemetery = Locality::factory()->for($user->tree)->create();
+    $jan = deceasedPerson($user, 'Jan');
+    $gravestone = Source::factory()->for($user->tree)->gravestone()->create(['cemetery_locality_id' => $cemetery->id]);
+    $gravestone->buriedPeople()->attach($jan->id);
+
+    $this->actingAs($user)->delete(route('profile.destroy'), [
+        'password' => 'password',
+    ])->assertSessionHasNoErrors();
+
+    expect(Source::count())->toBe(0);
+    expect(Locality::count())->toBe(0);
+    expect(DB::table('buried_people')->count())->toBe(0);
+});
+
 test('a failure while filling burial places leaves no source row, no list and no files', function () {
     Storage::fake('local');
 

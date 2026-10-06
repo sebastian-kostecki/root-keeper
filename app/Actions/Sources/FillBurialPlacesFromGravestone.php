@@ -21,7 +21,7 @@ class FillBurialPlacesFromGravestone
             return;
         }
 
-        $gravestone->buriedPeople()->with('events')->get()->each(function (Person $person) use ($gravestone): void {
+        $gravestone->buriedPeople()->lockForUpdate()->with('events')->get()->each(function (Person $person) use ($gravestone): void {
             if ($person->death() === null || $person->burial() !== null) {
                 return;
             }
