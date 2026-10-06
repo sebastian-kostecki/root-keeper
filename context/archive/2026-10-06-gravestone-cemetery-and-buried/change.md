@@ -1,10 +1,10 @@
 ---
 change_id: gravestone-cemetery-and-buried
 title: Gravestone cemetery and buried
-status: impl_reviewed
+status: archived
 created: 2026-10-06
 updated: 2026-10-06
-archived_at: null
+archived_at: 2026-10-06T14:17:52Z
 ---
 
 ## Notes
