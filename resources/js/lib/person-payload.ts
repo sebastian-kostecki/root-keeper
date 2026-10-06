@@ -11,7 +11,7 @@ export type PartialDatePayload = {
     month: number | null;
     day: number | null;
     is_approximate: boolean;
-    place: string | null;
+    locality_id: number | null;
 };
 
 export type PersonPayload = {
@@ -24,6 +24,7 @@ export type PersonPayload = {
     is_deceased: boolean;
     birth: PartialDatePayload;
     death?: PartialDatePayload;
+    burial?: { locality_id: number | null };
 };
 
 function blankToNull(value: string | undefined): string | null {
@@ -46,11 +47,11 @@ function eventToPayload(event: PersonFormEvent | null): PartialDatePayload {
         month: event?.month ?? null,
         day: event?.day ?? null,
         is_approximate: event?.is_approximate ?? false,
-        place: event?.place ?? null,
+        locality_id: event?.locality?.id ?? null,
     };
 }
 
-/** Reads `{prefix}.year|month|day|is_approximate|place` out of form values. */
+/** Reads `{prefix}.year|month|day|is_approximate|locality_id` out of form values. */
 export function eventPayloadFromValues(
     prefix: 'birth' | 'death' | 'marriage',
     values: SectionValues,
@@ -60,7 +61,7 @@ export function eventPayloadFromValues(
         month: toNumber(values[`${prefix}.month`]),
         day: toNumber(values[`${prefix}.day`]),
         is_approximate: values[`${prefix}.is_approximate`] === '1',
-        place: blankToNull(values[`${prefix}.place`]),
+        locality_id: toNumber(values[`${prefix}.locality_id`]),
     };
 }
 
@@ -82,6 +83,9 @@ export function personFormToPayload(personForm: PersonFormData): PersonPayload {
 
     if (personForm.is_deceased) {
         payload.death = eventToPayload(personForm.death);
+        payload.burial = {
+            locality_id: personForm.burial?.locality?.id ?? null,
+        };
     }
 
     return payload;
@@ -112,8 +116,12 @@ export function mergeSectionIntoPayload(
 
         if (payload.is_deceased) {
             payload.death = eventPayloadFromValues('death', values);
+            payload.burial = {
+                locality_id: toNumber(values['burial.locality_id']),
+            };
         } else {
             delete payload.death;
+            delete payload.burial;
         }
     }
 

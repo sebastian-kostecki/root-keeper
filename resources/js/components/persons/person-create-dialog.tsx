@@ -242,6 +242,7 @@ function CreateFormBody({
                     <DeathFields
                         errors={errors}
                         death={null}
+                        burial={null}
                         isDeceased={false}
                     />
                 </Card>

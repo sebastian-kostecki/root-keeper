@@ -174,6 +174,7 @@ function SourceGroup({ label, event, availableSources }: GroupProps) {
                 eventId={event.id}
                 eventType={event.type}
                 eventYear={event.date_parts.year}
+                eventPlace={event.place}
                 linkedSourceIds={event.sources.map((source) => source.id)}
                 availableSources={availableSources}
                 trigger={

@@ -58,7 +58,11 @@ function belongsToSection(id: SectionId, key: string): boolean {
     }
 
     if (id === 'death') {
-        return key === 'is_deceased' || key.startsWith('death.');
+        return (
+            key === 'is_deceased' ||
+            key.startsWith('death.') ||
+            key.startsWith('burial.')
+        );
     }
 
     return key.startsWith('marriage.');
@@ -89,9 +93,16 @@ type FactViewProps = {
     event: SourcedPersonEvent;
     parts: PersonFormEvent | Marriage['date_parts'] | null;
     availableSources: Source[] | undefined;
+    /** Shown as „Miejsce pochowania” (the death section only). */
+    burialPlace?: string | null;
 };
 
-function FactView({ event, parts, availableSources }: FactViewProps) {
+function FactView({
+    event,
+    parts,
+    availableSources,
+    burialPlace,
+}: FactViewProps) {
     const date = parts ? formatPartialDate(parts, 'long') : '';
     const guardClick = useGuardedClick();
 
@@ -100,6 +111,9 @@ function FactView({ event, parts, availableSources }: FactViewProps) {
             <div className="grid gap-3 sm:grid-cols-2">
                 <Field label="Data" value={date === '' ? null : date} />
                 <Field label="Miejsce" value={event.place} />
+                {burialPlace !== undefined && (
+                    <Field label="Miejsce pochowania" value={burialPlace} />
+                )}
             </div>
 
             <div className="border-t pt-3 text-sm">
@@ -147,6 +161,7 @@ function FactView({ event, parts, availableSources }: FactViewProps) {
                         eventId={event.id}
                         eventType={event.type}
                         eventYear={event.date_parts.year}
+                        eventPlace={event.place}
                         linkedSourceIds={[]}
                         availableSources={availableSources}
                         trigger={
@@ -358,7 +373,15 @@ export function OverviewTab({ preview, availableSources }: Props) {
                                         errors={errorsFor(id)}
                                         defaultValue={{
                                             ...marriage.date_parts,
-                                            place: marriage.place,
+                                            locality:
+                                                marriage.locality_id === null
+                                                    ? null
+                                                    : {
+                                                          id: marriage.locality_id,
+                                                          name:
+                                                              marriage.place ??
+                                                              '',
+                                                      },
                                         }}
                                     />
                                 }
@@ -387,6 +410,7 @@ export function OverviewTab({ preview, availableSources }: Props) {
                                     event={person.death}
                                     parts={personForm.death}
                                     availableSources={availableSources}
+                                    burialPlace={person.burial_place}
                                 />
                             )
                         }
@@ -394,6 +418,7 @@ export function OverviewTab({ preview, availableSources }: Props) {
                             <DeathFields
                                 errors={errorsFor('death')}
                                 death={personForm.death}
+                                burial={personForm.burial}
                                 isDeceased={
                                     personForm.is_deceased ||
                                     editor.intent === 'mark-deceased'

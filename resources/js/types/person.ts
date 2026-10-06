@@ -1,3 +1,4 @@
+import type { LocalityOption } from './parish';
 import type { SourceKind } from './source';
 
 export type Religion = {
@@ -15,6 +16,7 @@ export type PersonEvent = {
     type: 'birth' | 'death' | 'marriage';
     date: string | null;
     place: string | null;
+    locality_id: number | null;
     date_parts: {
         year: number | null;
         month: number | null;
@@ -68,6 +70,7 @@ export type Person = {
     gender: Gender | null;
     residence: string | null;
     religion: Religion | null;
+    burial_place: string | null;
     birth: IndexPersonEvent | null;
     death: IndexPersonEvent | null;
     age: PersonAge | null;
@@ -103,7 +106,7 @@ export type PersonFormEvent = {
     month: number | null;
     day: number | null;
     is_approximate: boolean;
-    place: string | null;
+    locality: LocalityOption | null;
     is_confirmed: boolean;
 };
 
@@ -119,4 +122,5 @@ export type PersonFormData = {
     is_deceased: boolean;
     birth: PersonFormEvent | null;
     death: PersonFormEvent | null;
+    burial: { locality: LocalityOption | null } | null;
 };

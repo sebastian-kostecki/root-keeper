@@ -18,6 +18,7 @@ function event(
         type: 'birth',
         date: year === null ? null : String(year),
         place,
+        locality_id: null,
         date_parts: { year, month, day, is_approximate: false },
         is_confirmed: false,
     };
@@ -38,6 +39,7 @@ function person(
         gender: null,
         residence: null,
         religion: null,
+        burial_place: null,
         birth: null,
         death: null,
         age: null,

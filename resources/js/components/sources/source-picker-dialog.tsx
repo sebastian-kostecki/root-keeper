@@ -29,6 +29,8 @@ type Props = {
     eventId: number;
     eventType: PersonEvent['type'];
     eventYear: number | null;
+    /** Prefills the „Miejsce” filter; the user can clear it. */
+    eventPlace: string | null;
     linkedSourceIds: number[];
     availableSources: Source[] | undefined;
     trigger: React.ReactNode;
@@ -38,6 +40,7 @@ export function SourcePickerDialog({
     eventId,
     eventType,
     eventYear,
+    eventPlace,
     linkedSourceIds,
     availableSources,
     trigger,
@@ -81,7 +84,7 @@ export function SourcePickerDialog({
         if (nextOpen) {
             setError(undefined);
             setEntryNumberError(undefined);
-            setPlace('');
+            setPlace(eventPlace ?? '');
             setYear(eventYear === null ? '' : String(eventYear));
             setSelectedId(null);
             setEntryNumber('');

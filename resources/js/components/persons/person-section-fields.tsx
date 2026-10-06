@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import InputError from '@/components/input-error';
+import { LocalityPicker } from '@/components/localities/locality-picker';
 import { PartialDateInput } from '@/components/persons/partial-date-input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
@@ -185,14 +186,16 @@ export function BirthFields({
     );
 }
 
-/** "Osoba nie żyje" switch row; the death date and place appear when checked. */
+/** "Osoba nie żyje" switch row; the death date, place and burial place appear when checked. */
 export function DeathFields({
     errors,
     death,
+    burial,
     isDeceased,
 }: {
     errors: Errors;
     death: PersonFormEvent | null;
+    burial: PersonFormData['burial'];
     /** Whether the checkbox starts checked. */
     isDeceased: boolean;
 }) {
@@ -224,6 +227,13 @@ export function DeathFields({
                         prefix="death"
                         errors={errors}
                         defaultValue={death ?? undefined}
+                    />
+                    <LocalityPicker
+                        id="burial-locality"
+                        name="burial.locality_id"
+                        label="Miejsce pochowania"
+                        value={burial?.locality ?? null}
+                        errors={errors}
                     />
                 </>
             )}

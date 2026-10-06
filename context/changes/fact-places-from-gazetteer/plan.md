@@ -416,30 +416,30 @@ Lista miejscowości trafia do klienta w całości i jest filtrowana lokalnie (sp
 
 #### Automated
 
-- [x] 2.1 Testy domen przechodzą
-- [x] 2.2 Test migracji nadal przechodzi
-- [x] 2.3 Larastan (poziom 7) przechodzi bez nowych błędów
-- [x] 2.4 Pint czysty
-- [x] 2.5 Wayfinder wygenerowany bez błędów
+- [x] 2.1 Testy domen przechodzą — e0642f4
+- [x] 2.2 Test migracji nadal przechodzi — e0642f4
+- [x] 2.3 Larastan (poziom 7) przechodzi bez nowych błędów — e0642f4
+- [x] 2.4 Pint czysty — e0642f4
+- [x] 2.5 Wayfinder wygenerowany bez błędów — e0642f4
 
 ### Phase 3: Frontend — picker miejscowości, pochowanie, filtr źródła
 
 #### Automated
 
-- [ ] 3.1 Format i lint przechodzą
-- [ ] 3.2 Typy przechodzą
-- [ ] 3.3 Vitest przechodzi
-- [ ] 3.4 Build przechodzi
-- [ ] 3.5 Testy Pest z fazy 2 nadal przechodzą
+- [x] 3.1 Format i lint przechodzą
+- [x] 3.2 Typy przechodzą
+- [x] 3.3 Vitest przechodzi
+- [x] 3.4 Build przechodzi
+- [x] 3.5 Testy Pest z fazy 2 nadal przechodzą
 
 #### Manual
 
-- [ ] 3.6 Podpowiedzi od jednej litery w panelu 1366 px, wybór i zapis pokazują nazwę
-- [ ] 3.7 Dodaj miejscowość w sekcji Ślub dopisuje i wybiera miejscowość
-- [ ] 3.8 Pochowanie zostaje po edycji Danych osobowych i znika po odznaczeniu zgonu
-- [ ] 3.9 Modal tworzenia i dialog slotu drzewa zapisują miejsce urodzenia ze spisu
-- [ ] 3.10 Escape zamyka listę podpowiedzi, nie panel
-- [ ] 3.11 Picker źródła otwiera się z wypełnionym miejscem i rokiem
+- [x] 3.6 Podpowiedzi od jednej litery w panelu 1366 px, wybór i zapis pokazują nazwę
+- [x] 3.7 Dodaj miejscowość w sekcji Ślub dopisuje i wybiera miejscowość
+- [x] 3.8 Pochowanie zostaje po edycji Danych osobowych i znika po odznaczeniu zgonu
+- [x] 3.9 Modal tworzenia i dialog slotu drzewa zapisują miejsce urodzenia ze spisu
+- [x] 3.10 Escape zamyka listę podpowiedzi, nie panel
+- [x] 3.11 Picker źródła otwiera się z wypełnionym miejscem i rokiem
 
 ### Phase 4: E2E (przez /10x-e2e)
 

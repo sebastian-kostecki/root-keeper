@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import InputError from '@/components/input-error';
+import { LocalityPicker } from '@/components/localities/locality-picker';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -7,6 +8,7 @@ import {
     formatPartialDate,
     parsePartialDate,
 } from '@/lib/partial-date';
+import type { LocalityOption } from '@/types';
 
 type Props = {
     prefix: 'birth' | 'death' | 'marriage';
@@ -16,7 +18,7 @@ type Props = {
         month: number | null;
         day: number | null;
         is_approximate: boolean;
-        place: string | null;
+        locality: LocalityOption | null;
     };
 };
 
@@ -106,17 +108,13 @@ export function PartialDateInput({ prefix, errors, defaultValue }: Props) {
                 <InputError message={serverError} />
             </div>
 
-            <div className="grid gap-2">
-                <Label htmlFor={`${prefix}-place`}>Miejsce</Label>
-                <Input
-                    id={`${prefix}-place`}
-                    type="text"
-                    name={`${prefix}.place`}
-                    maxLength={255}
-                    defaultValue={defaultValue?.place ?? undefined}
-                />
-                <InputError message={errors[`${prefix}.place`]} />
-            </div>
+            <LocalityPicker
+                id={`${prefix}-locality`}
+                name={`${prefix}.locality_id`}
+                label="Miejsce"
+                value={defaultValue?.locality ?? null}
+                errors={errors}
+            />
         </div>
     );
 }

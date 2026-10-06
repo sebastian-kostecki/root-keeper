@@ -1,7 +1,7 @@
 import { useHttp } from '@inertiajs/react';
 import { useState } from 'react';
 import InputError from '@/components/input-error';
-import { SuggestField } from '@/components/suggest-field';
+import { LocalityPicker } from '@/components/localities/locality-picker';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -21,7 +21,6 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { Spinner } from '@/components/ui/spinner';
-import { store as storeInlineLocality } from '@/routes/localities/inline';
 import { store as storeInlineParish } from '@/routes/parishes/inline';
 import type { LocalityOption, Parish, ReligionOption } from '@/types';
 
@@ -61,34 +60,12 @@ export function NewParishDialog({
     const [name, setName] = useState(initialName);
     const [religion, setReligion] = useState('');
     const [localityId, setLocalityId] = useState<number | null>(null);
-    const [localityError, setLocalityError] = useState<string | undefined>();
     const [saveError, setSaveError] = useState<string | undefined>();
     const parishHttp = useHttp<ParishPayload, { data: Parish }>({
         name: '',
         religion: null,
         locality_id: null,
     });
-    const localityHttp = useHttp<{ name: string }, LocalityOption>({
-        name: '',
-    });
-
-    const createLocality = async (query: string) => {
-        setLocalityError(undefined);
-        localityHttp.transform(() => ({ name: query }));
-
-        try {
-            const created = await localityHttp.post(storeInlineLocality.url());
-
-            if (created === undefined) {
-                return;
-            }
-
-            onLocalityCreated(created);
-            setLocalityId(created.id);
-        } catch {
-            setLocalityError('Nie udało się dodać miejscowości.');
-        }
-    };
 
     const save = async () => {
         setSaveError(undefined);
@@ -112,7 +89,7 @@ export function NewParishDialog({
         }
     };
 
-    const busy = parishHttp.processing || localityHttp.processing;
+    const busy = parishHttp.processing;
 
     return (
         <Dialog open onOpenChange={(open) => !open && !busy && onClose()}>
@@ -173,36 +150,16 @@ export function NewParishDialog({
                     <InputError message={parishHttp.errors.religion} />
                 </div>
 
-                <div className="grid gap-2">
-                    <Label htmlFor="new-parish-locality">
-                        Miejscowość siedziby
-                    </Label>
-                    <SuggestField
-                        mode="record"
-                        id="new-parish-locality"
-                        label="Miejscowość siedziby"
-                        name="locality_id"
-                        options={localities}
-                        labelOf={(option) => option.name}
-                        value={localityId}
-                        onChange={setLocalityId}
-                        onCreate={createLocality}
-                        createLabel={(query) => `Dodaj miejscowość „${query}”`}
-                        placeholder="Wpisz nazwę miejscowości"
-                        disabled={busy}
-                        aria-invalid={
-                            parishHttp.errors.locality_id ||
-                            localityHttp.errors.name ||
-                            localityError
-                                ? true
-                                : undefined
-                        }
-                    />
-                    <InputError message={parishHttp.errors.locality_id} />
-                    <InputError
-                        message={localityHttp.errors.name ?? localityError}
-                    />
-                </div>
+                <LocalityPicker
+                    id="new-parish-locality"
+                    name="locality_id"
+                    label="Miejscowość siedziby"
+                    value={null}
+                    options={localities}
+                    errors={parishHttp.errors}
+                    onChange={(locality) => setLocalityId(locality?.id ?? null)}
+                    onCreated={onLocalityCreated}
+                />
 
                 <InputError message={saveError} />
 

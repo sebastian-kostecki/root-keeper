@@ -1,10 +1,10 @@
-import { Form, useHttp } from '@inertiajs/react';
+import { Form } from '@inertiajs/react';
 import { useState } from 'react';
 import ParishController from '@/actions/App/Http/Controllers/ParishController';
 import { DirtyReporter } from '@/components/dirty-reporter';
 import InputError from '@/components/input-error';
+import { LocalityPicker } from '@/components/localities/locality-picker';
 import { SidePanel } from '@/components/side-panel';
-import { SuggestField } from '@/components/suggest-field';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -16,7 +16,6 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { Spinner } from '@/components/ui/spinner';
-import { store as storeInlineLocality } from '@/routes/localities/inline';
 import type { LocalityOption, Parish, ReligionOption } from '@/types';
 
 type Props = {
@@ -64,40 +63,9 @@ function ParishForm({
     onDirtyChange,
 }: Omit<Props, 'onRequestClose'>) {
     const [religion, setReligion] = useState(parish?.religion ?? '');
-    const [localityId, setLocalityId] = useState<number | null>(
-        parish?.locality_id ?? null,
-    );
-    const [createdLocalities, setCreatedLocalities] = useState<
-        LocalityOption[]
-    >([]);
-    const [createError, setCreateError] = useState<string | undefined>();
-    const http = useHttp<{ name: string }, LocalityOption>({ name: '' });
-
-    const localityOptions = [
-        ...localities,
-        ...createdLocalities.filter(
-            (created) => !localities.some((known) => known.id === created.id),
-        ),
-    ];
-
-    // Plain HTTP, not a form or a visit: a nested form would submit this one, a visit would reload the panel.
-    const createLocality = async (name: string) => {
-        setCreateError(undefined);
-        http.transform(() => ({ name }));
-
-        try {
-            const created = await http.post(storeInlineLocality.url());
-
-            if (created === undefined) {
-                return;
-            }
-
-            setCreatedLocalities((current) => [...current, created]);
-            setLocalityId(created.id);
-        } catch {
-            setCreateError('Nie udało się dodać miejscowości.');
-        }
-    };
+    const seat =
+        localities.find((locality) => locality.id === parish?.locality_id) ??
+        null;
 
     return (
         <Form
@@ -159,36 +127,14 @@ function ParishForm({
                         <InputError message={errors.religion} />
                     </div>
 
-                    <div className="space-y-2">
-                        <Label htmlFor="parish-locality">
-                            Miejscowość siedziby
-                        </Label>
-                        <SuggestField
-                            mode="record"
-                            id="parish-locality"
-                            label="Miejscowość siedziby"
-                            name="locality_id"
-                            options={localityOptions}
-                            labelOf={(option) => option.name}
-                            value={localityId}
-                            onChange={setLocalityId}
-                            onCreate={createLocality}
-                            createLabel={(query) =>
-                                `Dodaj miejscowość „${query}”`
-                            }
-                            placeholder="Wpisz nazwę miejscowości"
-                            disabled={http.processing}
-                            aria-invalid={
-                                errors.locality_id ||
-                                http.errors.name ||
-                                createError
-                                    ? true
-                                    : undefined
-                            }
-                        />
-                        <InputError message={errors.locality_id} />
-                        <InputError message={http.errors.name ?? createError} />
-                    </div>
+                    <LocalityPicker
+                        id="parish-locality"
+                        name="locality_id"
+                        label="Miejscowość siedziby"
+                        value={seat}
+                        options={localities}
+                        errors={errors}
+                    />
 
                     <Button type="submit" disabled={processing}>
                         {processing && <Spinner />}
