@@ -18,6 +18,7 @@ export type PersonFields = {
     last_name?: string;
     gender?: 'male' | 'female' | 'unknown';
     birth?: { year?: number; locality_id?: number };
+    death?: { year?: number };
 };
 
 export type SourceKindValue = 'metrical_record' | 'gravestone' | 'other';
@@ -26,6 +27,8 @@ export type PersonPreview = {
     person: {
         id: number;
         display_name: string;
+        burial_place: string | null;
+        gravestones?: { id: number; cemetery_name: string | null }[];
         birth: {
             id: number;
             sources?: { id: number; entry_number: string | null }[];
@@ -104,6 +107,12 @@ function personForm(fields: PersonFields): Record<string, string | number> {
         form['birth[year]'] = fields.birth.year;
     if (fields.birth?.locality_id !== undefined)
         form['birth[locality_id]'] = fields.birth.locality_id;
+
+    if (fields.death) {
+        form.is_deceased = 1;
+        if (fields.death.year !== undefined)
+            form['death[year]'] = fields.death.year;
+    }
 
     return form;
 }

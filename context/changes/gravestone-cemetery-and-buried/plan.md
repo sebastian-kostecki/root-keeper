@@ -398,20 +398,20 @@ Migracja tylko dodaje kolumnę i tabelę — bez przenoszenia danych; `down()` o
 
 #### Automated
 
-- [x] 4.1 Vitest przechodzi: `vendor/bin/sail npm run test:js`
-- [x] 4.2 Format i lint przechodzą: `vendor/bin/sail npm run check`
-- [x] 4.3 Typy przechodzą: `vendor/bin/sail npm run types:check`
+- [x] 4.1 Vitest przechodzi: `vendor/bin/sail npm run test:js` — 928f5f6
+- [x] 4.2 Format i lint przechodzą: `vendor/bin/sail npm run check` — 928f5f6
+- [x] 4.3 Typy przechodzą: `vendor/bin/sail npm run types:check` — 928f5f6
 
 #### Manual
 
-- [x] 4.4 Osoba z listy pokazuje link „Nagrobek: …”, który otwiera panel tego źródła
-- [x] 4.5 „Oznacz jako zmarłą” u żyjącej osoby z nagrobka ustawia wstępnie cmentarz; wyczyszczenie pola i zapis zostawia pochowanie puste; ponowna edycja Zgonu tej osoby pokazuje cmentarz z dopiskiem „Podpowiedź z nagrobka”
-- [x] 4.6 Osoba z dwoma nagrobkami o różnych cmentarzach nie dostaje podpowiedzi
+- [x] 4.4 Osoba z listy pokazuje link „Nagrobek: …”, który otwiera panel tego źródła — 928f5f6
+- [x] 4.5 „Oznacz jako zmarłą” u żyjącej osoby z nagrobka ustawia wstępnie cmentarz; wyczyszczenie pola i zapis zostawia pochowanie puste; ponowna edycja Zgonu tej osoby pokazuje cmentarz z dopiskiem „Podpowiedź z nagrobka” — 928f5f6
+- [x] 4.6 Osoba z dwoma nagrobkami o różnych cmentarzach nie dostaje podpowiedzi — 928f5f6
 
 ### Phase 5: E2E (`/10x-e2e`)
 
 #### Automated
 
-- [ ] 5.1 Nowy spec przechodzi: `npx playwright test tests/e2e/gravestone-cemetery-and-buried.spec.ts`
-- [ ] 5.2 Cała suita E2E przechodzi: `npx playwright test`
-- [ ] 5.3 Spec czerwienieje po celowym wyłączeniu uzupełniania pochowania (weryfikacja przez wprowadzenie błędu)
+- [x] 5.1 Nowy spec przechodzi: `npx playwright test tests/e2e/gravestone-cemetery-and-buried.spec.ts`
+- [x] 5.2 Cała suita E2E przechodzi: `npx playwright test`
+- [x] 5.3 Spec czerwienieje po celowym wyłączeniu uzupełniania pochowania (weryfikacja przez wprowadzenie błędu)
