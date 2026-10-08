@@ -398,10 +398,10 @@ Bez migracji schematu. Scalanie i usuwanie zmieniają dane produkcyjne tylko na 
 
 #### Automated
 
-- [x] 4.1 Nowa specyfikacja przechodzi: `npx playwright test tests/e2e/places-merge-and-delete.spec.ts`
-- [x] 4.2 Specyfikacja z dotychczasowym wyjątkiem przechodzi i sprząta: `npx playwright test tests/e2e/source-panel-parish.spec.ts`
-- [x] 4.3 Cała suita E2E przechodzi: `npx playwright test`
+- [x] 4.1 Nowa specyfikacja przechodzi: `npx playwright test tests/e2e/places-merge-and-delete.spec.ts` — 90fd8ac
+- [x] 4.2 Specyfikacja z dotychczasowym wyjątkiem przechodzi i sprząta: `npx playwright test tests/e2e/source-panel-parish.spec.ts` — 90fd8ac
+- [x] 4.3 Cała suita E2E przechodzi: `npx playwright test` — 90fd8ac
 
 #### Manual
 
-- [x] 4.4 Po pełnym uruchomieniu E2E w bazie `e2e` nie ma miejscowości ani parafii z prefiksem testowym (wyjątek: 3 miejscowości „Zawichost e2etest-…” z wcześniejszych uruchomień, użyte przez zdarzenia — zaakceptowane)
+- [x] 4.4 Po pełnym uruchomieniu E2E w bazie `e2e` nie ma miejscowości ani parafii z prefiksem testowym (wyjątek: 3 miejscowości „Zawichost e2etest-…” z wcześniejszych uruchomień, użyte przez zdarzenia — zaakceptowane) — 90fd8ac
