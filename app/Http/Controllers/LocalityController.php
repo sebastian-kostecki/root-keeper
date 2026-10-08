@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Actions\Localities\DeleteLocality;
 use App\Actions\Localities\StoreLocality;
 use App\Actions\Localities\UpdateLocality;
 use App\Http\Requests\LocalityStoreRequest;
@@ -25,7 +26,7 @@ class LocalityController extends Controller
 
         return Inertia::render('localities/index', [
             'localities' => fn (): array => LocalityResource::collection(
-                $tree->localities()->orderBy('name')->get()
+                $tree->localities()->withCount(['events', 'parishes', 'residences', 'cemeterySources'])->orderBy('name')->get()
             )->resolve(),
             'filters' => ['q' => $this->normalizeSearchQuery($request->query('q'))],
             'localityPanel' => function () use ($request): ?array {
@@ -39,7 +40,9 @@ class LocalityController extends Controller
                     return null;
                 }
 
-                $locality = $request->user()->tree->localities()->findOrFail((int) $key);
+                $locality = $request->user()->tree->localities()
+                    ->withCount(['events', 'parishes', 'residences', 'cemeterySources'])
+                    ->findOrFail((int) $key);
 
                 Gate::authorize('view', $locality);
 
@@ -90,5 +93,19 @@ class LocalityController extends Controller
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Zapisano miejscowość')]);
 
         return back();
+    }
+
+    /**
+     * Delete the given locality, which must be unused.
+     */
+    public function destroy(Locality $locality, DeleteLocality $deleteLocality): RedirectResponse
+    {
+        Gate::authorize('delete', $locality);
+
+        $deleteLocality->handle($locality);
+
+        Inertia::flash('toast', ['type' => 'success', 'message' => __('Usunięto miejscowość')]);
+
+        return to_route('localities.index');
     }
 }

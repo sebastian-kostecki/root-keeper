@@ -27,4 +27,14 @@ class LocalityPolicy
             ? Response::allow()
             : Response::denyAsNotFound();
     }
+
+    /**
+     * Determine whether the user can delete the model.
+     */
+    public function delete(User $user, Locality $locality): Response
+    {
+        return $locality->tree_id === $user->tree->id
+            ? Response::allow()
+            : Response::denyAsNotFound();
+    }
 }

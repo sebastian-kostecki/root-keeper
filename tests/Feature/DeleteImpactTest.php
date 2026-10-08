@@ -1,7 +1,11 @@
 <?php
 
+use App\Models\Event;
 use App\Models\Locality;
+use App\Models\Parish;
+use App\Models\Person;
 use App\Models\Residence;
+use App\Models\Source;
 use App\Models\User;
 use Illuminate\Support\Facades\Storage;
 
@@ -41,6 +45,66 @@ function rowIds(array $rows): array
 
     return $ids;
 }
+
+test('merging a locality removes exactly the duplicate and its redundant residence and changes only the moved references', function () {
+    Storage::fake('local');
+
+    $user = User::factory()->create();
+    $duplicate = Locality::factory()->for($user->tree)->create(['description' => 'Opis duplikatu']);
+    $target = Locality::factory()->for($user->tree)->create(['description' => null]);
+    $person = Person::factory()->for($user->tree)->create();
+    $movedPerson = Person::factory()->for($user->tree)->create();
+
+    $targetResidence = Residence::factory()->for($person)->create(['tree_id' => $user->tree->id, 'locality_id' => $target->id, 'year_from' => 1900, 'year_to' => 1910]);
+    $redundantResidence = Residence::factory()->for($person)->create(['tree_id' => $user->tree->id, 'locality_id' => $duplicate->id, 'year_from' => 1900, 'year_to' => 1910]);
+    $movedResidence = Residence::factory()->for($movedPerson)->create(['tree_id' => $user->tree->id, 'locality_id' => $duplicate->id]);
+    $parish = Parish::factory()->for($user->tree)->seatedIn($duplicate)->create();
+    $gravestone = Source::factory()->for($user->tree)->gravestone()->create(['cemetery_locality_id' => $duplicate->id]);
+    $event = Event::factory()->for($user->tree)->birth()->create(['locality_id' => $duplicate->id]);
+
+    $before = databaseRows();
+
+    $this->actingAs($user)->post(route('localities.merge', $duplicate), ['target_id' => $target->id])
+        ->assertSessionHasNoErrors();
+
+    $diff = rowDiff($before, databaseRows());
+
+    expect(array_keys($diff['tables']))->toBe(['events', 'localities', 'parishes', 'residences', 'sources']);
+    expect(rowIds($diff['tables']['localities']['removed']))->toBe([$duplicate->id]);
+    expect(collect($diff['tables']['localities']['changed'])->pluck('after.id')->all())->toBe([$target->id]);
+    expect($diff['tables']['localities']['changed'][0]['after']['description'])->toBe('Opis duplikatu');
+    expect(rowIds($diff['tables']['residences']['removed']))->toBe([$redundantResidence->id]);
+    expect(collect($diff['tables']['residences']['changed'])->pluck('after.id')->all())->toBe([$movedResidence->id]);
+    expect(collect($diff['tables']['events']['changed'])->pluck('after.id')->all())->toBe([$event->id]);
+    expect(collect($diff['tables']['parishes']['changed'])->pluck('after.id')->all())->toBe([$parish->id]);
+    expect(collect($diff['tables']['sources']['changed'])->pluck('after.id')->all())->toBe([$gravestone->id]);
+    foreach (['events', 'localities', 'parishes', 'residences', 'sources'] as $table) {
+        expect($diff['tables'][$table]['added'])->toBe([]);
+    }
+    expect($diff['files'])->toBe(['removed' => [], 'added' => []]);
+    expect(Residence::find($targetResidence->id))->not->toBeNull();
+});
+
+test('deleting an unused locality removes only its own row', function () {
+    Storage::fake('local');
+
+    $user = User::factory()->create();
+    $locality = Locality::factory()->for($user->tree)->create();
+    Locality::factory()->for($user->tree)->create();
+
+    $before = databaseRows();
+
+    $this->actingAs($user)->delete(route('localities.destroy', $locality))
+        ->assertSessionHasNoErrors();
+
+    $diff = rowDiff($before, databaseRows());
+
+    expect(array_keys($diff['tables']))->toBe(['localities']);
+    expect(rowIds($diff['tables']['localities']['removed']))->toBe([$locality->id]);
+    expect($diff['tables']['localities']['added'])->toBe([]);
+    expect($diff['tables']['localities']['changed'])->toBe([]);
+    expect($diff['files'])->toBe(['removed' => [], 'added' => []]);
+});
 
 test('deleting a person removes exactly what the preview lists and nothing of bystanders, spouses or sources', function () {
     Storage::fake('local');

@@ -58,6 +58,8 @@ function ownershipRecords(User $attacker, User $victim): array
         'ownPerson' => Person::factory()->for($attacker->tree)->create(),
         'ownSource' => $ownSource,
         'ownEvent' => $ownEvent,
+        'ownLocality' => Locality::factory()->for($attacker->tree)->create(),
+        'ownParish' => Parish::factory()->for($attacker->tree)->create(),
     ];
 }
 
@@ -83,6 +85,7 @@ function ownershipRouteCases(): array
         ['persons.update', 'put', fn (array $r): array => ['person' => $r['victimPerson']->id], fn (array $r): array => ['first_name' => 'Hacked']],
         ['sources.update', 'put', fn (array $r): array => ['source' => $r['victimSource']->id], fn (array $r): array => ['kind' => 'other', 'name' => 'Przejęte']],
         ['localities.update', 'put', fn (array $r): array => ['locality' => $r['victimLocality']->id], fn (array $r): array => ['name' => 'Przejęta']],
+        ['localities.merge', 'post', fn (array $r): array => ['locality' => $r['victimLocality']->id], fn (array $r): array => ['target_id' => $r['ownLocality']->id]],
         ['parishes.update', 'put', fn (array $r): array => ['parish' => $r['victimParish']->id], fn (array $r): array => ['name' => 'Przejęta']],
         ['events.sources.store', 'post', fn (array $r): array => ['event' => $r['victimEvent']->id], fn (array $r): array => ['source_id' => $r['ownSource']->id]],
         ['marriages.update', 'put', fn (array $r): array => ['marriage' => $r['victimMarriage']->id], fn (array $r): array => ['marriage' => ['year' => 1950]]],
@@ -102,6 +105,7 @@ function ownershipRouteCases(): array
         ['persons.destroy', 'delete', fn (array $r): array => ['person' => $r['victimPerson']->id]],
         ['sources.destroy', 'delete', fn (array $r): array => ['source' => $r['victimSource']->id]],
         ['sources.legacy-entry-number.destroy', 'delete', fn (array $r): array => ['source' => $r['victimSource']->id]],
+        ['localities.destroy', 'delete', fn (array $r): array => ['locality' => $r['victimLocality']->id]],
         ['parent-child-relations.destroy', 'delete', fn (array $r): array => ['parent_child_relation' => $r['victimRelation']->id]],
         ['marriages.destroy', 'delete', fn (array $r): array => ['marriage' => $r['victimMarriage']->id]],
     ];

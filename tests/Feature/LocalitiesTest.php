@@ -2,7 +2,12 @@
 
 use App\Actions\Localities\StoreLocality;
 use App\Actions\Localities\UpdateLocality;
+use App\Models\Event;
 use App\Models\Locality;
+use App\Models\Parish;
+use App\Models\Person;
+use App\Models\Residence;
+use App\Models\Source;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -13,6 +18,8 @@ test('guests are redirected to the login page from localities routes', function 
     $this->get(route('localities.index'))->assertRedirect(route('login'));
     $this->post(route('localities.store'), [])->assertRedirect(route('login'));
     $this->put(route('localities.update', $locality), [])->assertRedirect(route('login'));
+    $this->delete(route('localities.destroy', $locality))->assertRedirect(route('login'));
+    $this->post(route('localities.merge', $locality), [])->assertRedirect(route('login'));
 });
 
 test('the index lists only the user own localities alphabetically', function () {
@@ -28,7 +35,7 @@ test('the index lists only the user own localities alphabetically', function () 
             ->has('localities', 2)
             ->where('localities.0.name', 'Kraków')
             ->where('localities.1.name', 'Lwów')
-            ->has('localities.0', fn ($locality) => $locality->hasAll(['id', 'name', 'description']))
+            ->has('localities.0', fn ($locality) => $locality->hasAll(['id', 'name', 'description', 'usage']))
             ->where('filters.q', ''));
 });
 
@@ -130,6 +137,174 @@ test('a duplicate name that slipped past validation is a name error, not a serve
 
     expect($user->tree->localities()->orderBy('name')->pluck('name')->all())->toBe(['Kraków', 'Lwów']);
 });
+
+test('the list and the panel carry the usage counts of every kind of reference', function () {
+    $user = User::factory()->create();
+    $locality = Locality::factory()->for($user->tree)->create();
+    $person = Person::factory()->for($user->tree)->create();
+
+    Event::factory()->for($user->tree)->birth()->create(['locality_id' => $locality->id]);
+    Parish::factory()->for($user->tree)->seatedIn($locality)->create();
+    Residence::factory()->for($person)->create(['tree_id' => $user->tree->id, 'locality_id' => $locality->id]);
+    Source::factory()->for($user->tree)->gravestone()->create(['cemetery_locality_id' => $locality->id]);
+
+    $this->actingAs($user)->get(route('localities.index'))->assertInertia(fn ($page) => $page
+        ->where('localities.0.usage.facts', 1)
+        ->where('localities.0.usage.parishes', 1)
+        ->where('localities.0.usage.residences', 1)
+        ->where('localities.0.usage.gravestones', 1)
+        ->where('localities.0.usage.total', 4));
+
+    $this->actingAs($user)->get(route('localities.index', ['locality' => $locality->id]))->assertInertia(fn ($page) => $page
+        ->where('localityPanel.locality.usage.facts', 1)
+        ->where('localityPanel.locality.usage.parishes', 1)
+        ->where('localityPanel.locality.usage.residences', 1)
+        ->where('localityPanel.locality.usage.gravestones', 1)
+        ->where('localityPanel.locality.usage.total', 4));
+});
+
+test('an unused locality can be deleted and the user goes back to the list with the toast', function () {
+    $user = User::factory()->create();
+    $locality = Locality::factory()->for($user->tree)->create();
+
+    $this->actingAs($user)->delete(route('localities.destroy', $locality))
+        ->assertRedirect(route('localities.index'))
+        ->assertInertiaFlash('toast', ['type' => 'success', 'message' => 'Usunięto miejscowość']);
+
+    expect(Locality::find($locality->id))->toBeNull();
+});
+
+test('a locality still referenced by any kind of record cannot be deleted', function (string $kind) {
+    $user = User::factory()->create();
+    $locality = Locality::factory()->for($user->tree)->create();
+    $person = Person::factory()->for($user->tree)->create();
+
+    match ($kind) {
+        'parish' => Parish::factory()->for($user->tree)->seatedIn($locality)->create(),
+        'fact' => Event::factory()->for($user->tree)->birth()->create(['locality_id' => $locality->id]),
+        'residence' => Residence::factory()->for($person)->create(['tree_id' => $user->tree->id, 'locality_id' => $locality->id]),
+        'gravestone' => Source::factory()->for($user->tree)->gravestone()->create(['cemetery_locality_id' => $locality->id]),
+    };
+
+    $this->actingAs($user)->delete(route('localities.destroy', $locality))->assertInvalid('locality');
+
+    expect(Locality::find($locality->id))->not->toBeNull();
+})->with(['parish', 'fact', 'residence', 'gravestone']);
+
+test('merging moves every kind of reference of the duplicate to the target and deletes the duplicate', function () {
+    $user = User::factory()->create();
+    $duplicate = Locality::factory()->for($user->tree)->create(['name' => 'Krakow']);
+    $target = Locality::factory()->for($user->tree)->create(['name' => 'Kraków']);
+    $other = Locality::factory()->for($user->tree)->create();
+    $foreign = Locality::factory()->for(User::factory()->create()->tree)->create();
+
+    $person = Person::factory()->for($user->tree)->create();
+    $spouse = Person::factory()->for($user->tree)->create();
+
+    $parish = Parish::factory()->for($user->tree)->seatedIn($duplicate)->create();
+    $gravestone = Source::factory()->for($user->tree)->gravestone()->create(['cemetery_locality_id' => $duplicate->id]);
+    $birth = Event::factory()->for($user->tree)->birth()->create(['locality_id' => $duplicate->id]);
+    $marriage = attachMarriage($person, $spouse, 1900, locality: $duplicate);
+    $burial = Event::factory()->for($user->tree)->burial()->create(['locality_id' => $duplicate->id]);
+    $residence = Residence::factory()->for($person)->create(['tree_id' => $user->tree->id, 'locality_id' => $duplicate->id, 'year_from' => 1900, 'year_to' => 1910]);
+
+    $otherParish = Parish::factory()->for($user->tree)->seatedIn($other)->create();
+    $otherGravestone = Source::factory()->for($user->tree)->gravestone()->create(['cemetery_locality_id' => $other->id]);
+    $otherEvent = Event::factory()->for($user->tree)->birth()->create(['locality_id' => $other->id]);
+    $otherResidence = Residence::factory()->for($person)->create(['tree_id' => $user->tree->id, 'locality_id' => $other->id]);
+    $foreignEvent = Event::factory()->for(User::factory()->create()->tree)->birth()->create(['locality_id' => $foreign->id]);
+
+    $this->actingAs($user)->post(route('localities.merge', $duplicate), ['target_id' => $target->id])
+        ->assertRedirect(route('localities.index', ['locality' => $target->id]))
+        ->assertInertiaFlash('toast', ['type' => 'success', 'message' => 'Scalono z miejscowością „Kraków”']);
+
+    expect(Locality::find($duplicate->id))->toBeNull();
+    expect($target->refresh()->name)->toBe('Kraków');
+    expect($parish->refresh()->locality_id)->toBe($target->id);
+    expect($gravestone->refresh()->cemetery_locality_id)->toBe($target->id);
+    expect($birth->refresh()->locality_id)->toBe($target->id);
+    expect($marriage->refresh()->locality_id)->toBe($target->id);
+    expect($burial->refresh()->locality_id)->toBe($target->id);
+    expect($residence->refresh()->locality_id)->toBe($target->id);
+
+    expect($otherParish->refresh()->locality_id)->toBe($other->id);
+    expect($otherGravestone->refresh()->cemetery_locality_id)->toBe($other->id);
+    expect($otherEvent->refresh()->locality_id)->toBe($other->id);
+    expect($otherResidence->refresh()->locality_id)->toBe($other->id);
+    expect($foreignEvent->refresh()->locality_id)->toBe($foreign->id);
+});
+
+test('merging keeps one residence where the same person lived in the same years', function (?int $fromTarget, ?int $toTarget, ?int $fromDuplicate, ?int $toDuplicate, int $expectedRows) {
+    $user = User::factory()->create();
+    $duplicate = Locality::factory()->for($user->tree)->create();
+    $target = Locality::factory()->for($user->tree)->create();
+    $person = Person::factory()->for($user->tree)->create();
+
+    Residence::factory()->for($person)->create(['tree_id' => $user->tree->id, 'locality_id' => $target->id, 'year_from' => $fromTarget, 'year_to' => $toTarget]);
+    Residence::factory()->for($person)->create(['tree_id' => $user->tree->id, 'locality_id' => $duplicate->id, 'year_from' => $fromDuplicate, 'year_to' => $toDuplicate]);
+
+    $this->actingAs($user)->post(route('localities.merge', $duplicate), ['target_id' => $target->id])->assertSessionHasNoErrors();
+
+    expect(Residence::where('locality_id', $target->id)->count())->toBe($expectedRows);
+})->with([
+    'identical years' => [1900, 1910, 1900, 1910, 1],
+    'no years at all' => [null, null, null, null, 1],
+    'one side open' => [1900, null, 1900, null, 1],
+    'different years' => [1900, 1910, 1900, 1920, 2],
+    'only one year known differs' => [1900, null, 1900, 1910, 2],
+]);
+
+test('merging keeps the residences of different people even in the same years', function () {
+    $user = User::factory()->create();
+    $duplicate = Locality::factory()->for($user->tree)->create();
+    $target = Locality::factory()->for($user->tree)->create();
+    $first = Person::factory()->for($user->tree)->create();
+    $second = Person::factory()->for($user->tree)->create();
+
+    Residence::factory()->for($first)->create(['tree_id' => $user->tree->id, 'locality_id' => $target->id, 'year_from' => 1900, 'year_to' => 1910]);
+    Residence::factory()->for($second)->create(['tree_id' => $user->tree->id, 'locality_id' => $duplicate->id, 'year_from' => 1900, 'year_to' => 1910]);
+
+    $this->actingAs($user)->post(route('localities.merge', $duplicate), ['target_id' => $target->id])->assertSessionHasNoErrors();
+
+    expect(Residence::where('locality_id', $target->id)->pluck('person_id')->sort()->values()->all())
+        ->toBe(collect([$first->id, $second->id])->sort()->values()->all());
+});
+
+test('merging combines the descriptions of the two localities', function (?string $targetDescription, ?string $duplicateDescription, ?string $expected) {
+    $user = User::factory()->create();
+    $duplicate = Locality::factory()->for($user->tree)->create(['description' => $duplicateDescription]);
+    $target = Locality::factory()->for($user->tree)->create(['description' => $targetDescription]);
+
+    $this->actingAs($user)->post(route('localities.merge', $duplicate), ['target_id' => $target->id])->assertSessionHasNoErrors();
+
+    expect($target->refresh()->description)->toBe($expected);
+})->with([
+    'target empty takes the duplicate' => [null, 'Opis duplikatu', 'Opis duplikatu'],
+    'both different are joined' => ['Opis właściwego', 'Opis duplikatu', "Opis właściwego\n\nOpis duplikatu"],
+    'equal stays as it was' => ['Ten sam opis', 'Ten sam opis', 'Ten sam opis'],
+    'empty duplicate changes nothing' => ['Opis właściwego', null, 'Opis właściwego'],
+    'blank duplicate changes nothing' => ['Opis właściwego', '   ', 'Opis właściwego'],
+]);
+
+test('merging refuses a target that is foreign, missing or the duplicate itself and changes nothing', function (string $kind) {
+    $user = User::factory()->create();
+    $duplicate = Locality::factory()->for($user->tree)->create();
+    $parish = Parish::factory()->for($user->tree)->seatedIn($duplicate)->create();
+
+    $targetId = match ($kind) {
+        'foreign' => Locality::factory()->for(User::factory()->create()->tree)->create()->id,
+        'missing' => 999999,
+        'duplicate itself' => $duplicate->id,
+        'empty' => null,
+    };
+
+    $this->actingAs($user)->post(route('localities.merge', $duplicate), ['target_id' => $targetId])
+        ->assertInvalid('target_id');
+
+    expect(Locality::find($duplicate->id))->not->toBeNull();
+    expect($parish->refresh()->locality_id)->toBe($duplicate->id);
+    expect($user->tree->localities()->count())->toBe(1);
+})->with(['foreign', 'missing', 'duplicate itself', 'empty']);
 
 test('the panel resolver returns null without a key or with a non-numeric one', function (string $query) {
     $user = User::factory()->create();

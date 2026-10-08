@@ -4,6 +4,7 @@ use App\Http\Controllers\EventSourceController;
 use App\Http\Controllers\InlineLocalityController;
 use App\Http\Controllers\InlineParishController;
 use App\Http\Controllers\LocalityController;
+use App\Http\Controllers\LocalityMergeController;
 use App\Http\Controllers\MarriageController;
 use App\Http\Controllers\ParentChildRelationController;
 use App\Http\Controllers\ParishController;
@@ -33,7 +34,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('sources/{source}/thumbnail', [SourceController::class, 'thumbnail'])->name('sources.thumbnail');
 
     Route::post('localities/inline', [InlineLocalityController::class, 'store'])->name('localities.inline.store');
-    Route::resource('localities', LocalityController::class)->only(['index', 'store', 'update']);
+    Route::resource('localities', LocalityController::class)->only(['index', 'store', 'update', 'destroy']);
+    Route::post('localities/{locality}/merge', LocalityMergeController::class)->name('localities.merge');
 
     Route::post('parishes/inline', [InlineParishController::class, 'store'])->name('parishes.inline.store');
     Route::resource('parishes', ParishController::class)->only(['index', 'store', 'update']);
