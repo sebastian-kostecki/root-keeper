@@ -381,27 +381,27 @@ Bez migracji schematu. Scalanie i usuwanie zmieniają dane produkcyjne tylko na 
 
 #### Automated
 
-- [x] 3.1 Vitest przechodzi: `vendor/bin/sail npm run test:js`
-- [x] 3.2 Format i lint przechodzą: `vendor/bin/sail npm run check`
-- [x] 3.3 Typy przechodzą: `vendor/bin/sail npm run types:check`
-- [x] 3.4 Build przechodzi: `vendor/bin/sail npm run build`
+- [x] 3.1 Vitest przechodzi: `vendor/bin/sail npm run test:js` — c7a077e
+- [x] 3.2 Format i lint przechodzą: `vendor/bin/sail npm run check` — c7a077e
+- [x] 3.3 Typy przechodzą: `vendor/bin/sail npm run types:check` — c7a077e
+- [x] 3.4 Build przechodzi: `vendor/bin/sail npm run build` — c7a077e
 
 #### Manual
 
-- [x] 3.5 Kolumna „Użycia” w `/localities` i `/parishes` zgadza się z liczbą odwołań; nowo dodany wpis ma 0
-- [x] 3.6 Scalenie „Lubomla” → „Luboml” z panelu „Lubomla”: modal pokazuje liczby, po „Scal” otwiera się panel „Luboml” z toastem, „Lubomla” znika ze spisu, fakty, zamieszkania i siedziby parafii pokazują „Luboml”
-- [x] 3.7 „Usuń” przy używanym wpisie pokazuje miejsca użycia i „Scal z…” otwiera modal scalania; przy nieużywanym usuwa i zamyka panel
-- [x] 3.8 Przy niezapisanej zmianie w formularzu panelu „Scal z…” i „Usuń” są nieaktywne
-- [x] 3.9 Układ przy 1366 px: przyciski panelu mieszczą się w jednym wierszu lub zawijają czytelnie
+- [x] 3.5 Kolumna „Użycia” w `/localities` i `/parishes` zgadza się z liczbą odwołań; nowo dodany wpis ma 0 — c7a077e
+- [x] 3.6 Scalenie „Lubomla” → „Luboml” z panelu „Lubomla”: modal pokazuje liczby, po „Scal” otwiera się panel „Luboml” z toastem, „Lubomla” znika ze spisu, fakty, zamieszkania i siedziby parafii pokazują „Luboml” — c7a077e
+- [x] 3.7 „Usuń” przy używanym wpisie pokazuje miejsca użycia i „Scal z…” otwiera modal scalania; przy nieużywanym usuwa i zamyka panel — c7a077e
+- [x] 3.8 Przy niezapisanej zmianie w formularzu panelu „Scal z…” i „Usuń” są nieaktywne — c7a077e
+- [x] 3.9 Układ przy 1366 px: przyciski panelu mieszczą się w jednym wierszu lub zawijają czytelnie — c7a077e
 
 ### Phase 4: E2E (`/10x-e2e`)
 
 #### Automated
 
-- [ ] 4.1 Nowa specyfikacja przechodzi: `npx playwright test tests/e2e/places-merge-and-delete.spec.ts`
-- [ ] 4.2 Specyfikacja z dotychczasowym wyjątkiem przechodzi i sprząta: `npx playwright test tests/e2e/source-panel-parish.spec.ts`
-- [ ] 4.3 Cała suita E2E przechodzi: `npx playwright test`
+- [x] 4.1 Nowa specyfikacja przechodzi: `npx playwright test tests/e2e/places-merge-and-delete.spec.ts`
+- [x] 4.2 Specyfikacja z dotychczasowym wyjątkiem przechodzi i sprząta: `npx playwright test tests/e2e/source-panel-parish.spec.ts`
+- [x] 4.3 Cała suita E2E przechodzi: `npx playwright test`
 
 #### Manual
 
-- [ ] 4.4 Po pełnym uruchomieniu E2E w bazie `e2e` nie ma miejscowości ani parafii z prefiksem testowym
+- [x] 4.4 Po pełnym uruchomieniu E2E w bazie `e2e` nie ma miejscowości ani parafii z prefiksem testowym (wyjątek: 3 miejscowości „Zawichost e2etest-…” z wcześniejszych uruchomień, użyte przez zdarzenia — zaakceptowane)

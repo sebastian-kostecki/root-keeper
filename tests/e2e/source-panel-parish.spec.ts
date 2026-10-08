@@ -4,9 +4,8 @@
 // the new parish is selected, and the saved act shows parish and archive. Pest
 // sees the endpoints; only the browser sees the portal modal, the form state
 // and the selection together. Data through the UI; the source name carries the
-// suffix, so the fixture's cleanup sweep removes it. Parish and locality have
-// no delete route until S-11, so they stay in the `e2e` database (unique per
-// run by the suffix) — see context/foundation/test-stack.md.
+// suffix, so the fixture's cleanup sweep removes it, and the parish and the
+// locality it creates with it (the sweep deletes them once nothing uses them).
 import { expect, test } from './support/fixtures';
 
 const FIXTURE = 'tests/Fixtures/portrait-small.jpg';

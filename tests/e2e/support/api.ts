@@ -200,7 +200,7 @@ export async function createParent(
  */
 const createdSourceIds = new Set<number>();
 
-/** `localities.inline.store`; a locality has no delete route until S-11, so it outlives the test. */
+/** `localities.inline.store`; the sweep removes it through `localities.destroy` once nothing uses it. */
 export async function createLocality(
     page: Page,
     name: string,
@@ -217,7 +217,7 @@ export async function createLocality(
     return ((await response.json()) as { id: number }).id;
 }
 
-/** `parishes.inline.store` with a seat locality; no delete route until S-11 either. */
+/** `parishes.inline.store` with a seat locality; the sweep removes it through `parishes.destroy`. */
 export async function createParish(
     page: Page,
     parish: { name: string; localityId: number },
@@ -362,11 +362,12 @@ async function deleteRecord(
 
 /**
  * Removes the sources this worker created through the API, every other source
- * whose name carries the suffix, then every person whose name carries it. Runs
- * as the `suffix` fixture's teardown, so it must work after a red assertion;
- * each DELETE is checked. Sources go first (`DeleteSource` removes links and
- * files), then people (`DeletePerson` removes marriages, events and
- * parent-child relations).
+ * whose name carries the suffix, then every person whose name carries it, then
+ * parishes and localities whose name carries it. Runs as the `suffix` fixture's
+ * teardown, so it must work after a red assertion; each DELETE is checked.
+ * Sources go first (`DeleteSource` removes links and files), then people
+ * (`DeletePerson` removes marriages, events and parent-child relations), then
+ * parishes (they reference localities), then localities.
  */
 export async function cleanupBySuffix(
     page: Page,
@@ -398,5 +399,25 @@ export async function cleanupBySuffix(
             continue;
         }
         await deleteRecord(page, headers, `/persons/${person.id}`);
+    }
+
+    const parishes =
+        ((await pageProps(page, '/parishes')).parishes as
+            | { id: number; name: string }[]
+            | undefined) ?? [];
+    for (const parish of parishes) {
+        if (parish.name.includes(suffix)) {
+            await deleteRecord(page, headers, `/parishes/${parish.id}`);
+        }
+    }
+
+    const localities =
+        ((await pageProps(page, '/localities')).localities as
+            | { id: number; name: string }[]
+            | undefined) ?? [];
+    for (const locality of localities) {
+        if (locality.name.includes(suffix)) {
+            await deleteRecord(page, headers, `/localities/${locality.id}`);
+        }
     }
 }
