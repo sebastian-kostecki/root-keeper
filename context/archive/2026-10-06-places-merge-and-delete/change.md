@@ -1,10 +1,10 @@
 ---
 change_id: places-merge-and-delete
 title: Places merge and delete
-status: impl_reviewed
+status: archived
 created: 2026-10-06
 updated: 2026-10-08
-archived_at: null
+archived_at: 2026-10-08T11:55:34Z
 ---
 
 ## Notes
