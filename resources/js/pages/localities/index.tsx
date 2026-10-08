@@ -200,6 +200,7 @@ export default function Index({ localities, filters, localityPanel }: Props) {
             {localityPanel !== null && (
                 <LocalityPanel
                     locality={localityPanel.locality}
+                    localities={localities}
                     onRequestClose={() => guard(close)}
                     onDirtyChange={setIsDirty}
                 />

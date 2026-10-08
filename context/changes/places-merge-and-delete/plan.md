@@ -373,26 +373,26 @@ Bez migracji schematu. Scalanie i usuwanie zmieniają dane produkcyjne tylko na 
 
 #### Automated
 
-- [x] 2.1 Testy parafii przechodzą: `vendor/bin/sail artisan test --compact tests/Feature/ParishesTest.php tests/Feature/OwnershipBoundariesTest.php tests/Feature/DeleteImpactTest.php`
-- [x] 2.2 Larastan przechodzi: `vendor/bin/sail composer types:check`
-- [x] 2.3 Pint czysty: `vendor/bin/sail bin pint --dirty --format agent`
+- [x] 2.1 Testy parafii przechodzą: `vendor/bin/sail artisan test --compact tests/Feature/ParishesTest.php tests/Feature/OwnershipBoundariesTest.php tests/Feature/DeleteImpactTest.php` — c879c7d
+- [x] 2.2 Larastan przechodzi: `vendor/bin/sail composer types:check` — c879c7d
+- [x] 2.3 Pint czysty: `vendor/bin/sail bin pint --dirty --format agent` — c879c7d
 
 ### Phase 3: Frontend — kolumna „Użycia”, scalanie i usuwanie w panelach
 
 #### Automated
 
-- [ ] 3.1 Vitest przechodzi: `vendor/bin/sail npm run test:js`
-- [ ] 3.2 Format i lint przechodzą: `vendor/bin/sail npm run check`
-- [ ] 3.3 Typy przechodzą: `vendor/bin/sail npm run types:check`
-- [ ] 3.4 Build przechodzi: `vendor/bin/sail npm run build`
+- [x] 3.1 Vitest przechodzi: `vendor/bin/sail npm run test:js`
+- [x] 3.2 Format i lint przechodzą: `vendor/bin/sail npm run check`
+- [x] 3.3 Typy przechodzą: `vendor/bin/sail npm run types:check`
+- [x] 3.4 Build przechodzi: `vendor/bin/sail npm run build`
 
 #### Manual
 
-- [ ] 3.5 Kolumna „Użycia” w `/localities` i `/parishes` zgadza się z liczbą odwołań; nowo dodany wpis ma 0
-- [ ] 3.6 Scalenie „Lubomla” → „Luboml” z panelu „Lubomla”: modal pokazuje liczby, po „Scal” otwiera się panel „Luboml” z toastem, „Lubomla” znika ze spisu, fakty, zamieszkania i siedziby parafii pokazują „Luboml”
-- [ ] 3.7 „Usuń” przy używanym wpisie pokazuje miejsca użycia i „Scal z…” otwiera modal scalania; przy nieużywanym usuwa i zamyka panel
-- [ ] 3.8 Przy niezapisanej zmianie w formularzu panelu „Scal z…” i „Usuń” są nieaktywne
-- [ ] 3.9 Układ przy 1366 px: przyciski panelu mieszczą się w jednym wierszu lub zawijają czytelnie
+- [x] 3.5 Kolumna „Użycia” w `/localities` i `/parishes` zgadza się z liczbą odwołań; nowo dodany wpis ma 0
+- [x] 3.6 Scalenie „Lubomla” → „Luboml” z panelu „Lubomla”: modal pokazuje liczby, po „Scal” otwiera się panel „Luboml” z toastem, „Lubomla” znika ze spisu, fakty, zamieszkania i siedziby parafii pokazują „Luboml”
+- [x] 3.7 „Usuń” przy używanym wpisie pokazuje miejsca użycia i „Scal z…” otwiera modal scalania; przy nieużywanym usuwa i zamyka panel
+- [x] 3.8 Przy niezapisanej zmianie w formularzu panelu „Scal z…” i „Usuń” są nieaktywne
+- [x] 3.9 Układ przy 1366 px: przyciski panelu mieszczą się w jednym wierszu lub zawijają czytelnie
 
 ### Phase 4: E2E (`/10x-e2e`)
 

@@ -38,6 +38,9 @@ export function LocalitiesTable({
                     <TableRow className="hover:bg-transparent">
                         <TableHead className="px-4">Nazwa</TableHead>
                         <TableHead>Opis</TableHead>
+                        <TableHead className="px-4 text-right">
+                            Użycia
+                        </TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -79,6 +82,9 @@ export function LocalitiesTable({
                                 ) : (
                                     <EmptyCell />
                                 )}
+                            </TableCell>
+                            <TableCell className="px-4 text-right tabular-nums">
+                                {locality.usage?.total ?? 0}
                             </TableCell>
                         </TableRow>
                     ))}

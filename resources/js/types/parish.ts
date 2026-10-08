@@ -6,6 +6,8 @@ export type Parish = {
     locality_id: number | null;
     locality_name: string | null;
     label: string;
+    /** Present on the list and the panel, which count the sources. */
+    sources_count?: number;
 };
 
 export type ReligionOption = {

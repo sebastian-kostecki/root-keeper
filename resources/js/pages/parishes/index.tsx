@@ -213,6 +213,7 @@ export default function Index({
             {parishPanel !== null && (
                 <ParishPanel
                     parish={parishPanel.parish}
+                    parishes={parishes}
                     religions={religions}
                     localities={localities}
                     onRequestClose={() => guard(close)}

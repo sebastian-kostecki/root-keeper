@@ -1,5 +1,8 @@
 import { Form } from '@inertiajs/react';
+import { useState } from 'react';
 import LocalityController from '@/actions/App/Http/Controllers/LocalityController';
+import { DeleteLocalityDialog } from '@/components/localities/delete-locality-dialog';
+import { MergeLocalityDialog } from '@/components/localities/merge-locality-dialog';
 import { DirtyReporter } from '@/components/dirty-reporter';
 import InputError from '@/components/input-error';
 import { SidePanel } from '@/components/side-panel';
@@ -13,6 +16,8 @@ import type { Locality } from '@/types';
 type Props = {
     /** The record to edit, or null for a new one. */
     locality: Locality | null;
+    /** The whole register, offered as the target of a merge. */
+    localities: Locality[];
     onRequestClose: () => void;
     /** Reports whether the form holds unsaved changes. */
     onDirtyChange: (isDirty: boolean) => void;
@@ -21,10 +26,13 @@ type Props = {
 /** Name and description form in the side panel; one component for „Nowa miejscowość” and editing. */
 export function LocalityPanel({
     locality,
+    localities,
     onRequestClose,
     onDirtyChange,
 }: Props) {
     const formId = 'locality-form';
+    const [mergeOpen, setMergeOpen] = useState(false);
+    const [deleteOpen, setDeleteOpen] = useState(false);
 
     return (
         <SidePanel
@@ -77,13 +85,57 @@ export function LocalityPanel({
                             <InputError message={errors.description} />
                         </div>
 
-                        <Button type="submit" disabled={processing}>
-                            {processing && <Spinner />}
-                            Zapisz
-                        </Button>
+                        <div className="flex flex-wrap items-center gap-2">
+                            <Button type="submit" disabled={processing}>
+                                {processing && <Spinner />}
+                                Zapisz
+                            </Button>
+
+                            {locality !== null && (
+                                <>
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        disabled={isDirty}
+                                        onClick={() => setMergeOpen(true)}
+                                    >
+                                        Scal z…
+                                    </Button>
+                                    <Button
+                                        type="button"
+                                        variant="ghost"
+                                        className="text-destructive hover:text-destructive"
+                                        disabled={isDirty}
+                                        onClick={() => setDeleteOpen(true)}
+                                    >
+                                        Usuń
+                                    </Button>
+                                </>
+                            )}
+                        </div>
                     </>
                 )}
             </Form>
+
+            {locality !== null && (
+                <>
+                    <MergeLocalityDialog
+                        locality={locality}
+                        localities={localities}
+                        open={mergeOpen}
+                        onOpenChange={setMergeOpen}
+                    />
+                    <DeleteLocalityDialog
+                        locality={locality}
+                        open={deleteOpen}
+                        onOpenChange={setDeleteOpen}
+                        onMerge={() => {
+                            setDeleteOpen(false);
+                            setMergeOpen(true);
+                        }}
+                    />
+                </>
+            )}
         </SidePanel>
     );
 }

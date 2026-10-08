@@ -39,6 +39,9 @@ export function ParishesTable({
                         <TableHead className="px-4">Nazwa</TableHead>
                         <TableHead>Wyznanie</TableHead>
                         <TableHead>Siedziba</TableHead>
+                        <TableHead className="px-4 text-right">
+                            Użycia
+                        </TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -74,6 +77,9 @@ export function ParishesTable({
                             </TableCell>
                             <TableCell>
                                 {parish.locality_name ?? <EmptyCell />}
+                            </TableCell>
+                            <TableCell className="px-4 text-right tabular-nums">
+                                {parish.sources_count ?? 0}
                             </TableCell>
                         </TableRow>
                     ))}
