@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\Religion;
 use App\Models\Event;
 use App\Models\Locality;
 use App\Models\Parish;
@@ -292,5 +293,37 @@ test('deleting a parent-child relation removes only that relation and keeps both
     expect($diff['tables']['parent_child_relations']['added'])->toBe([]);
     expect($diff['tables']['parent_child_relations']['changed'])->toBe([]);
     expect(pairKeys($diff['tables']['parent_child_relations']['removed'], 'parent_id', 'child_id'))->toBe(["{$focus->id}:{$childC->id}"]);
+    expect($diff['files'])->toBe(['removed' => [], 'added' => []]);
+});
+
+test('merging a parish removes exactly the duplicate and moves only its acts and the filled fields', function () {
+    Storage::fake('local');
+
+    $user = User::factory()->create();
+    $seat = Locality::factory()->for($user->tree)->create();
+    $duplicate = Parish::factory()->for($user->tree)->withReligion(Religion::RomanCatholic)->seatedIn($seat)->create(['name' => 'Lubomla']);
+    $target = Parish::factory()->for($user->tree)->create(['name' => 'Luboml']);
+    $untouched = Parish::factory()->for($user->tree)->create();
+    $movedAct = Source::factory()->for($user->tree)->create(['parish_id' => $duplicate->id]);
+    $otherAct = Source::factory()->for($user->tree)->create(['parish_id' => $untouched->id]);
+
+    $before = databaseRows();
+
+    $this->actingAs($user)->post(route('parishes.merge', $duplicate), ['target_id' => $target->id])
+        ->assertSessionHasNoErrors();
+
+    $diff = rowDiff($before, databaseRows());
+
+    expect(array_keys($diff['tables']))->toBe(['parishes', 'sources']);
+    expect(rowIds($diff['tables']['parishes']['removed']))->toBe([$duplicate->id]);
+    expect(collect($diff['tables']['parishes']['changed'])->pluck('after.id')->all())->toBe([$target->id]);
+    expect($diff['tables']['parishes']['changed'][0]['after']['locality_id'])->toBe($seat->id);
+    expect($diff['tables']['parishes']['changed'][0]['after']['religion'])->toBe(Religion::RomanCatholic->value);
+    expect(collect($diff['tables']['sources']['changed'])->pluck('after.id')->all())->toBe([$movedAct->id]);
+    expect($diff['tables']['sources']['changed'][0]['after']['parish_id'])->toBe($target->id);
+    expect($otherAct->refresh()->parish_id)->toBe($untouched->id);
+    foreach (['parishes', 'sources'] as $table) {
+        expect($diff['tables'][$table]['added'])->toBe([]);
+    }
     expect($diff['files'])->toBe(['removed' => [], 'added' => []]);
 });

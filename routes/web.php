@@ -8,6 +8,7 @@ use App\Http\Controllers\LocalityMergeController;
 use App\Http\Controllers\MarriageController;
 use App\Http\Controllers\ParentChildRelationController;
 use App\Http\Controllers\ParishController;
+use App\Http\Controllers\ParishMergeController;
 use App\Http\Controllers\PersonChildController;
 use App\Http\Controllers\PersonController;
 use App\Http\Controllers\PersonParentController;
@@ -38,7 +39,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('localities/{locality}/merge', LocalityMergeController::class)->name('localities.merge');
 
     Route::post('parishes/inline', [InlineParishController::class, 'store'])->name('parishes.inline.store');
-    Route::resource('parishes', ParishController::class)->only(['index', 'store', 'update']);
+    Route::resource('parishes', ParishController::class)->only(['index', 'store', 'update', 'destroy']);
+    Route::post('parishes/{parish}/merge', ParishMergeController::class)->name('parishes.merge');
 
     Route::post('events/{event}/sources', [EventSourceController::class, 'store'])->name('events.sources.store');
     Route::patch('events/{event}/sources/{source}', [EventSourceController::class, 'update'])->name('events.sources.update');

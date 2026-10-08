@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Actions\Parishes\DeleteParish;
 use App\Actions\Parishes\StoreParish;
 use App\Actions\Parishes\UpdateParish;
 use App\Enums\Religion;
@@ -26,7 +27,7 @@ class ParishController extends Controller
 
         return Inertia::render('parishes/index', [
             'parishes' => fn (): array => ParishResource::collection(
-                $tree->parishes()->with('locality')->orderBy('name')->get()
+                $tree->parishes()->with('locality')->withCount('sources')->orderBy('name')->get()
             )->resolve(),
             'filters' => ['q' => $this->normalizeSearchQuery($request->query('q'))],
             'religions' => Religion::options(),
@@ -44,7 +45,7 @@ class ParishController extends Controller
                     return null;
                 }
 
-                $parish = $request->user()->tree->parishes()->with('locality')->findOrFail((int) $key);
+                $parish = $request->user()->tree->parishes()->with('locality')->withCount('sources')->findOrFail((int) $key);
 
                 Gate::authorize('view', $parish);
 
@@ -97,5 +98,19 @@ class ParishController extends Controller
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Zapisano parafię')]);
 
         return back();
+    }
+
+    /**
+     * Delete the given parish, which must be unused.
+     */
+    public function destroy(Parish $parish, DeleteParish $deleteParish): RedirectResponse
+    {
+        Gate::authorize('delete', $parish);
+
+        $deleteParish->handle($parish);
+
+        Inertia::flash('toast', ['type' => 'success', 'message' => __('Usunięto parafię')]);
+
+        return to_route('parishes.index');
     }
 }

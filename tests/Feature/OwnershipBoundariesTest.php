@@ -87,6 +87,7 @@ function ownershipRouteCases(): array
         ['localities.update', 'put', fn (array $r): array => ['locality' => $r['victimLocality']->id], fn (array $r): array => ['name' => 'Przejęta']],
         ['localities.merge', 'post', fn (array $r): array => ['locality' => $r['victimLocality']->id], fn (array $r): array => ['target_id' => $r['ownLocality']->id]],
         ['parishes.update', 'put', fn (array $r): array => ['parish' => $r['victimParish']->id], fn (array $r): array => ['name' => 'Przejęta']],
+        ['parishes.merge', 'post', fn (array $r): array => ['parish' => $r['victimParish']->id], fn (array $r): array => ['target_id' => $r['ownParish']->id]],
         ['events.sources.store', 'post', fn (array $r): array => ['event' => $r['victimEvent']->id], fn (array $r): array => ['source_id' => $r['ownSource']->id]],
         ['marriages.update', 'put', fn (array $r): array => ['marriage' => $r['victimMarriage']->id], fn (array $r): array => ['marriage' => ['year' => 1950]]],
     ];
@@ -106,6 +107,7 @@ function ownershipRouteCases(): array
         ['sources.destroy', 'delete', fn (array $r): array => ['source' => $r['victimSource']->id]],
         ['sources.legacy-entry-number.destroy', 'delete', fn (array $r): array => ['source' => $r['victimSource']->id]],
         ['localities.destroy', 'delete', fn (array $r): array => ['locality' => $r['victimLocality']->id]],
+        ['parishes.destroy', 'delete', fn (array $r): array => ['parish' => $r['victimParish']->id]],
         ['parent-child-relations.destroy', 'delete', fn (array $r): array => ['parent_child_relation' => $r['victimRelation']->id]],
         ['marriages.destroy', 'delete', fn (array $r): array => ['marriage' => $r['victimMarriage']->id]],
     ];

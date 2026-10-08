@@ -365,17 +365,17 @@ Bez migracji schematu. Scalanie i usuwanie zmieniają dane produkcyjne tylko na 
 
 #### Automated
 
-- [x] 1.1 Testy miejscowości przechodzą: `vendor/bin/sail artisan test --compact tests/Feature/LocalitiesTest.php tests/Feature/OwnershipBoundariesTest.php tests/Feature/DeleteImpactTest.php`
-- [x] 1.2 Larastan przechodzi: `vendor/bin/sail composer types:check`
-- [x] 1.3 Pint czysty: `vendor/bin/sail bin pint --dirty --format agent`
+- [x] 1.1 Testy miejscowości przechodzą: `vendor/bin/sail artisan test --compact tests/Feature/LocalitiesTest.php tests/Feature/OwnershipBoundariesTest.php tests/Feature/DeleteImpactTest.php` — 5413a42
+- [x] 1.2 Larastan przechodzi: `vendor/bin/sail composer types:check` — 5413a42
+- [x] 1.3 Pint czysty: `vendor/bin/sail bin pint --dirty --format agent` — 5413a42
 
 ### Phase 2: Backend — parafie
 
 #### Automated
 
-- [ ] 2.1 Testy parafii przechodzą: `vendor/bin/sail artisan test --compact tests/Feature/ParishesTest.php tests/Feature/OwnershipBoundariesTest.php tests/Feature/DeleteImpactTest.php`
-- [ ] 2.2 Larastan przechodzi: `vendor/bin/sail composer types:check`
-- [ ] 2.3 Pint czysty: `vendor/bin/sail bin pint --dirty --format agent`
+- [x] 2.1 Testy parafii przechodzą: `vendor/bin/sail artisan test --compact tests/Feature/ParishesTest.php tests/Feature/OwnershipBoundariesTest.php tests/Feature/DeleteImpactTest.php`
+- [x] 2.2 Larastan przechodzi: `vendor/bin/sail composer types:check`
+- [x] 2.3 Pint czysty: `vendor/bin/sail bin pint --dirty --format agent`
 
 ### Phase 3: Frontend — kolumna „Użycia”, scalanie i usuwanie w panelach
 

@@ -27,4 +27,14 @@ class ParishPolicy
             ? Response::allow()
             : Response::denyAsNotFound();
     }
+
+    /**
+     * Determine whether the user can delete the model.
+     */
+    public function delete(User $user, Parish $parish): Response
+    {
+        return $parish->tree_id === $user->tree->id
+            ? Response::allow()
+            : Response::denyAsNotFound();
+    }
 }
