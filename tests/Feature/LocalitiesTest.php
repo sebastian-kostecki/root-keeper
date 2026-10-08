@@ -254,6 +254,35 @@ test('merging keeps one residence where the same person lived in the same years'
     'only one year known differs' => [1900, null, 1900, 1910, 2],
 ]);
 
+test('merging keeps a moved residence that is lower-id than the identical one already at the target only once', function () {
+    $user = User::factory()->create();
+    $duplicate = Locality::factory()->for($user->tree)->create();
+    $target = Locality::factory()->for($user->tree)->create();
+    $person = Person::factory()->for($user->tree)->create();
+
+    $moved = Residence::factory()->for($person)->create(['tree_id' => $user->tree->id, 'locality_id' => $duplicate->id, 'year_from' => 1900, 'year_to' => 1910]);
+    $existing = Residence::factory()->for($person)->create(['tree_id' => $user->tree->id, 'locality_id' => $target->id, 'year_from' => 1900, 'year_to' => 1910]);
+
+    $this->actingAs($user)->post(route('localities.merge', $duplicate), ['target_id' => $target->id])->assertSessionHasNoErrors();
+
+    expect(Residence::where('locality_id', $target->id)->pluck('id')->all())->toBe([$existing->id])
+        ->and(Residence::find($moved->id))->toBeNull();
+});
+
+test('merging leaves identical residences that were already at the target alone', function () {
+    $user = User::factory()->create();
+    $duplicate = Locality::factory()->for($user->tree)->create();
+    $target = Locality::factory()->for($user->tree)->create();
+    $person = Person::factory()->for($user->tree)->create();
+
+    Residence::factory()->for($person)->count(2)->create(['tree_id' => $user->tree->id, 'locality_id' => $target->id, 'year_from' => 1900, 'year_to' => 1910]);
+    Residence::factory()->for($person)->create(['tree_id' => $user->tree->id, 'locality_id' => $duplicate->id, 'year_from' => 1920, 'year_to' => 1930]);
+
+    $this->actingAs($user)->post(route('localities.merge', $duplicate), ['target_id' => $target->id])->assertSessionHasNoErrors();
+
+    expect(Residence::where('locality_id', $target->id)->count())->toBe(3);
+});
+
 test('merging keeps the residences of different people even in the same years', function () {
     $user = User::factory()->create();
     $duplicate = Locality::factory()->for($user->tree)->create();

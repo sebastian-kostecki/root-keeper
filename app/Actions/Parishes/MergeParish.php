@@ -3,6 +3,7 @@
 namespace App\Actions\Parishes;
 
 use App\Models\Parish;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -52,12 +53,34 @@ class MergeParish
                 $fields['religion'] = $duplicateReligion;
             }
 
-            if ($fields !== []) {
-                $lockedTarget->update($fields);
-            }
+            $this->fillTarget($lockedTarget, $fields);
         });
 
         return $target->refresh();
+    }
+
+    /**
+     * Fill the target's empty fields. A parish created or renamed concurrently to the target's name and the
+     * borrowed religion makes the savepoint fail; the religion then stays empty, as with a detected collision.
+     *
+     * @param  array<string, mixed>  $fields
+     */
+    private function fillTarget(Parish $target, array $fields): void
+    {
+        if ($fields === []) {
+            return;
+        }
+
+        try {
+            DB::transaction(fn () => $target->update($fields));
+        } catch (UniqueConstraintViolationException) {
+            $target->refresh();
+            unset($fields['religion']);
+
+            if ($fields !== []) {
+                $target->update($fields);
+            }
+        }
     }
 
     /**

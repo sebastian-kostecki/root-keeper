@@ -162,6 +162,11 @@ function ParishForm({
                                         type="button"
                                         variant="outline"
                                         disabled={isDirty}
+                                        aria-describedby={
+                                            isDirty
+                                                ? 'panel-actions-hint'
+                                                : undefined
+                                        }
                                         onClick={() => setMergeOpen(true)}
                                     >
                                         Scal z…
@@ -171,6 +176,11 @@ function ParishForm({
                                         variant="ghost"
                                         className="text-destructive hover:text-destructive"
                                         disabled={isDirty}
+                                        aria-describedby={
+                                            isDirty
+                                                ? 'panel-actions-hint'
+                                                : undefined
+                                        }
                                         onClick={() => setDeleteOpen(true)}
                                     >
                                         Usuń
@@ -178,6 +188,15 @@ function ParishForm({
                                 </>
                             )}
                         </div>
+
+                        {isDirty && (
+                            <p
+                                id="panel-actions-hint"
+                                className="text-muted-foreground text-sm"
+                            >
+                                Zapisz zmiany, aby scalić lub usunąć.
+                            </p>
+                        )}
                     </>
                 )}
             </Form>

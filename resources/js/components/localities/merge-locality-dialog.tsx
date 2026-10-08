@@ -74,7 +74,8 @@ export function MergeLocalityDialog({
                     „{locality.name}” zniknie ze spisu. Jej odwołania (
                     {localityUsageNominative(usage)}) przejdą na wybraną
                     miejscowość. Puste pola wybranej uzupełnią się danymi „
-                    {locality.name}”. Tej operacji nie można cofnąć.
+                    {locality.name}”, a różne opisy zostaną połączone. Tej
+                    operacji nie można cofnąć.
                 </DialogDescription>
 
                 <div className="grid gap-2">
