@@ -48,7 +48,7 @@ test('sources index shows only the authenticated user own sources, newest first'
         ->component('sources/index')
         ->has('sources', 2)
         ->has('sources.0', fn ($source) => $source->hasAll([
-            'id', 'kind', 'kind_label', 'kind_short_label', 'name', 'display_name', 'record_type', 'record_type_label', 'legacy_entry_number', 'year', 'parish_id', 'parish_label', 'parish_name', 'locality_name', 'cemetery_locality_id', 'cemetery_name', 'archive', 'url', 'note', 'original_name', 'mime_type', 'size', 'width', 'height', 'has_thumbnail', 'uploaded_at', 'events_count',
+            'id', 'kind', 'kind_label', 'kind_short_label', 'name', 'display_name', 'record_type', 'record_type_label', 'legacy_entry_number', 'year', 'parish_id', 'parish_label', 'parish_name', 'parish_locality_id', 'locality_name', 'cemetery_locality_id', 'cemetery_name', 'archive', 'url', 'note', 'original_name', 'mime_type', 'size', 'width', 'height', 'has_thumbnail', 'uploaded_at', 'events_count',
         ]))
         ->where('sources.0.id', $newer->id)
         ->where('sources.1.id', $older->id));
@@ -851,7 +851,153 @@ test('the source panel and the picker payload carry no events count', function (
 
 test('the index filters default to all kinds, the gallery and newest first', function () {
     $this->actingAs(User::factory()->create())->get(route('sources.index'))->assertInertia(fn ($page) => $page
-        ->where('filters', ['q' => '', 'kind' => 'wszystkie', 'view' => 'galeria', 'sort' => '-dodano']));
+        ->where('filters', [
+            'q' => '',
+            'kind' => 'wszystkie',
+            'view' => 'galeria',
+            'sort' => '-dodano',
+            'place' => '',
+            'year_from' => null,
+            'year_to' => null,
+            'archive' => '',
+        ]));
+});
+
+test('the index echoes a valid place', function (string $place) {
+    $this->actingAs(User::factory()->create())->get(route('sources.index', ['place' => $place]))->assertInertia(fn ($page) => $page
+        ->where('filters.place', $place));
+})->with(['locality' => ['miejscowosc-3'], 'parish' => ['parafia-5']]);
+
+test('the index echoes the year bounds and the archive', function () {
+    $this->actingAs(User::factory()->create())->get(route('sources.index', [
+        'year_from' => '1850',
+        'year_to' => '1900',
+        'archive' => 'Archiwum Diecezjalne w Tarnowie',
+    ]))->assertInertia(fn ($page) => $page
+        ->where('filters.year_from', 1850)
+        ->where('filters.year_to', 1900)
+        ->where('filters.archive', 'Archiwum Diecezjalne w Tarnowie'));
+});
+
+test('the index echoes a reversed year range without swapping its bounds', function () {
+    $this->actingAs(User::factory()->create())->get(route('sources.index', ['year_from' => '1900', 'year_to' => '1850']))
+        ->assertInertia(fn ($page) => $page
+            ->where('filters.year_from', 1900)
+            ->where('filters.year_to', 1850));
+});
+
+test('the index drops invalid place, year and archive parameters', function (array $query, string $key, mixed $expected) {
+    $this->actingAs(User::factory()->create())->get(route('sources.index', $query))->assertInertia(fn ($page) => $page
+        ->where("filters.{$key}", $expected));
+})->with([
+    'place with another prefix' => [['place' => 'osoba-3'], 'place', ''],
+    'place without an id' => [['place' => 'parafia-'], 'place', ''],
+    'place array' => [['place' => ['miejscowosc-3']], 'place', ''],
+    'year letters' => [['year_from' => 'abc'], 'year_from', null],
+    'year zero' => [['year_from' => '0'], 'year_from', null],
+    'year above 9999' => [['year_to' => '10000'], 'year_to', null],
+    'year array' => [['year_to' => ['1900']], 'year_to', null],
+    'archive of spaces' => [['archive' => '     '], 'archive', ''],
+    'archive array' => [['archive' => ['Archiwum A']], 'archive', ''],
+]);
+
+test('a partial reload of the filters with the new parameters runs no sources query', function () {
+    $user = User::factory()->create();
+    Source::factory()->for($user->tree)->create();
+
+    $version = $this->actingAs($user)->get(route('sources.index'), ['X-Inertia' => 'true'])->headers->get('X-Inertia-Version');
+
+    DB::enableQueryLog();
+
+    $response = $this->actingAs($user)->get(route('sources.index', [
+        'place' => 'miejscowosc-3',
+        'year_from' => '1850',
+        'year_to' => '1900',
+        'archive' => 'Archiwum A',
+    ]), [
+        'X-Inertia' => 'true',
+        'X-Inertia-Version' => $version,
+        'X-Inertia-Partial-Data' => 'filters',
+        'X-Inertia-Partial-Component' => 'sources/index',
+    ]);
+
+    $sourceQueries = collect(DB::getQueryLog())->filter(fn (array $log): bool => str_contains($log['query'], '"sources"'));
+
+    $response->assertOk();
+    expect($response->json('props.filters'))->toMatchArray([
+        'place' => 'miejscowosc-3',
+        'year_from' => 1850,
+        'year_to' => 1900,
+        'archive' => 'Archiwum A',
+    ]);
+    expect($response->json('props'))->not->toHaveKey('sources')->not->toHaveKey('placeOptions')->not->toHaveKey('archiveOptions');
+    expect($sourceQueries)->toBeEmpty();
+});
+
+test('the place options list the cemeteries of gravestones and the seats of act parishes of the tree only', function () {
+    $user = User::factory()->create();
+    $other = User::factory()->create();
+    $cemetery = Locality::factory()->for($user->tree)->create(['name' => 'Luboml']);
+    $seat = Locality::factory()->for($user->tree)->create(['name' => 'Tarnów']);
+    Locality::factory()->for($user->tree)->create(['name' => 'Nieużyta']);
+    $foreignLocality = Locality::factory()->for($other->tree)->create(['name' => 'Obca']);
+    $seated = Parish::factory()->for($user->tree)->seatedIn($seat)->create(['name' => 'Św. Jana']);
+    $seatless = Parish::factory()->for($user->tree)->create(['name' => 'Bez siedziby']);
+    Parish::factory()->for($user->tree)->seatedIn($cemetery)->create(['name' => 'Nieużywana']);
+
+    Source::factory()->for($user->tree)->gravestone()->create(['cemetery_locality_id' => $cemetery->id]);
+    Source::factory()->for($user->tree)->create(['parish_id' => $seated->id]);
+    Source::factory()->for($user->tree)->create(['parish_id' => $seatless->id]);
+    Source::factory()->for($other->tree)->gravestone()->create(['cemetery_locality_id' => $foreignLocality->id]);
+
+    $options = $this->actingAs($user)->get(route('sources.index'))->inertiaProps('placeOptions');
+
+    expect($options)->toEqual([
+        'localities' => [
+            ['id' => $cemetery->id, 'name' => 'Luboml'],
+            ['id' => $seat->id, 'name' => 'Tarnów'],
+        ],
+        'parishes' => [
+            ['id' => $seatless->id, 'label' => $seatless->label()],
+            ['id' => $seated->id, 'label' => $seated->label()],
+        ],
+    ]);
+});
+
+test('the archive options list the distinct non-blank archives of the tree only', function () {
+    $user = User::factory()->create();
+    $other = User::factory()->create();
+
+    Source::factory()->for($user->tree)->create(['archive' => 'Archiwum B']);
+    Source::factory()->for($user->tree)->create(['archive' => 'Archiwum A']);
+    Source::factory()->for($user->tree)->create(['archive' => 'Archiwum A']);
+    Source::factory()->for($user->tree)->create(['archive' => '   ']);
+    Source::factory()->for($user->tree)->create(['archive' => null]);
+    Source::factory()->for($other->tree)->create(['archive' => 'Cudze archiwum']);
+
+    $this->actingAs($user)->get(route('sources.index'))->assertInertia(fn ($page) => $page
+        ->where('archiveOptions', ['Archiwum A', 'Archiwum B']));
+});
+
+test('the source resource exposes the id of the parish seat, null without a seat or a parish', function () {
+    $user = User::factory()->create();
+    $locality = Locality::factory()->for($user->tree)->create();
+    $seated = Parish::factory()->for($user->tree)->seatedIn($locality)->create();
+    $seatless = Parish::factory()->for($user->tree)->create();
+
+    $withSeat = Source::factory()->for($user->tree)->create(['parish_id' => $seated->id]);
+    $withoutSeat = Source::factory()->for($user->tree)->create(['parish_id' => $seatless->id]);
+    $withoutParish = Source::factory()->for($user->tree)->create(['parish_id' => null]);
+
+    $sources = collect($this->actingAs($user)->get(route('sources.index'))->inertiaProps('sources'))
+        ->mapWithKeys(fn (array $source): array => [$source['id'] => $source['parish_locality_id']])
+        ->all();
+
+    expect($sources)->toEqual([
+        $withSeat->id => $locality->id,
+        $withoutSeat->id => null,
+        $withoutParish->id => null,
+    ]);
 });
 
 test('the index echoes each valid kind, the table view and each valid sort', function (array $query, string $key, string $expected) {
@@ -1067,6 +1213,131 @@ test('destroying closes the panel and keeps the list filters of the previous pag
         ->assertRedirect(route('sources.index', ['view' => 'tabela']));
 
     expect(Source::find($source->id))->toBeNull();
+});
+
+test('storing keeps the place, year bounds and archive that fit the new source', function () {
+    Storage::fake('local');
+
+    $user = User::factory()->create();
+    $seat = Locality::factory()->for($user->tree)->create();
+    $parish = Parish::factory()->for($user->tree)->seatedIn($seat)->create();
+
+    $response = $this->actingAs($user)
+        ->from("/sources?place=miejscowosc-{$seat->id}&year_from=1850&year_to=1900&archive=Archiwum%20A&source=new")
+        ->post(route('sources.store'), [
+            'kind' => 'metrical_record',
+            'year' => 1880,
+            'archive' => 'Archiwum A',
+            'parish_id' => $parish->id,
+            'file' => UploadedFile::fake()->image('akt.jpg', 400, 300),
+        ]);
+
+    $response->assertRedirect(route('sources.index', [
+        'place' => "miejscowosc-{$seat->id}",
+        'year_from' => '1850',
+        'year_to' => '1900',
+        'archive' => 'Archiwum A',
+        'source' => Source::sole()->id,
+    ]));
+});
+
+test('storing an akt keeps a place that names its parish', function () {
+    Storage::fake('local');
+
+    $user = User::factory()->create();
+    $parish = Parish::factory()->for($user->tree)->create();
+
+    $this->actingAs($user)
+        ->from("/sources?place=parafia-{$parish->id}&source=new")
+        ->post(route('sources.store'), [
+            'kind' => 'metrical_record',
+            'parish_id' => $parish->id,
+            'file' => UploadedFile::fake()->image('akt.jpg', 400, 300),
+        ])
+        ->assertRedirect(route('sources.index', ['place' => "parafia-{$parish->id}", 'source' => Source::sole()->id]));
+});
+
+test('storing an akt drops a place that names another parish', function () {
+    Storage::fake('local');
+
+    $user = User::factory()->create();
+    $parish = Parish::factory()->for($user->tree)->create();
+    $otherParish = Parish::factory()->for($user->tree)->create();
+
+    $this->actingAs($user)
+        ->from("/sources?place=parafia-{$otherParish->id}&source=new")
+        ->post(route('sources.store'), [
+            'kind' => 'metrical_record',
+            'parish_id' => $parish->id,
+            'file' => UploadedFile::fake()->image('akt.jpg', 400, 300),
+        ])
+        ->assertRedirect(route('sources.index', ['source' => Source::sole()->id]));
+});
+
+test('storing drops the place, year bound and archive that would hide the new source', function () {
+    Storage::fake('local');
+
+    $user = User::factory()->create();
+    $seat = Locality::factory()->for($user->tree)->create();
+    $parish = Parish::factory()->for($user->tree)->seatedIn($seat)->create();
+
+    $response = $this->actingAs($user)
+        ->from('/sources?place=parafia-999&year_from=1850&year_to=1870&archive=Archiwum%20B&source=new')
+        ->post(route('sources.store'), [
+            'kind' => 'metrical_record',
+            'year' => 1880,
+            'archive' => 'Archiwum A',
+            'parish_id' => $parish->id,
+            'file' => UploadedFile::fake()->image('akt.jpg', 400, 300),
+        ]);
+
+    $response->assertRedirect(route('sources.index', [
+        'year_from' => '1850',
+        'source' => Source::sole()->id,
+    ]));
+});
+
+test('storing drops the year bounds when the new source has no year', function () {
+    Storage::fake('local');
+
+    $user = User::factory()->create();
+
+    $this->actingAs($user)
+        ->from('/sources?year_from=1850&year_to=1900&source=new')
+        ->post(route('sources.store'), [
+            'kind' => 'gravestone',
+            'file' => UploadedFile::fake()->image('nagrobek.jpg', 400, 300),
+        ])
+        ->assertRedirect(route('sources.index', ['source' => Source::sole()->id]));
+});
+
+test('storing drops invalid and blank new list parameters', function () {
+    Storage::fake('local');
+
+    $user = User::factory()->create();
+
+    $this->actingAs($user)
+        ->from('/sources?place=osoba-1&year_from=abc&year_to=0&archive=%20%20&source=new')
+        ->post(route('sources.store'), [
+            'kind' => 'metrical_record',
+            'file' => UploadedFile::fake()->image('akt.jpg', 400, 300),
+        ])
+        ->assertRedirect(route('sources.index', ['source' => Source::sole()->id]));
+});
+
+test('destroying keeps the place, year bounds and archive of the previous page', function () {
+    $user = User::factory()->create();
+    $source = Source::factory()->for($user->tree)->create();
+
+    $this->actingAs($user)
+        ->from("/sources?place=parafia-5&year_from=1850&year_to=1900&archive=Archiwum%20A&source={$source->id}")
+        ->delete(route('sources.destroy', $source))
+        ->assertRedirect(route('sources.index', [
+            'place' => 'parafia-5',
+            'year_from' => '1850',
+            'year_to' => '1900',
+            'archive' => 'Archiwum A',
+        ]));
 });
 
 test('storing an akt saves the parish and the archive', function () {

@@ -16,8 +16,11 @@ use App\Http\Resources\SourceResource;
 use App\Models\Event;
 use App\Models\EventSource;
 use App\Models\Locality;
+use App\Models\Parish;
 use App\Models\Person;
 use App\Models\Source;
+use App\Models\Tree;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -39,6 +42,10 @@ class SourceController extends Controller
         $kind = $this->normalizeKind($request->query('kind'));
         $view = $this->normalizeView($request->query('view'));
         $sort = $view === 'tabela' ? $this->normalizeSort($request->query('sort')) : '-dodano';
+        $place = $this->normalizePlace($request->query('place'));
+        $yearFrom = $this->normalizeYear($request->query('year_from'));
+        $yearTo = $this->normalizeYear($request->query('year_to'));
+        $archive = $this->normalizeArchive($request->query('archive'));
         $tree = $request->user()->tree;
 
         return Inertia::render('sources/index', [
@@ -46,7 +53,18 @@ class SourceController extends Controller
                 $tree->sources()->with(['parish.locality', 'cemetery'])->withCount('events')->latest()->orderByDesc('id')->get()
             )->resolve(),
             'personCandidates' => Inertia::optional(fn (): array => $listPersonCandidates->handle($tree)),
-            'filters' => ['q' => $query, 'kind' => $kind, 'view' => $view, 'sort' => $sort],
+            'filters' => [
+                'q' => $query,
+                'kind' => $kind,
+                'view' => $view,
+                'sort' => $sort,
+                'place' => $place,
+                'year_from' => $yearFrom,
+                'year_to' => $yearTo,
+                'archive' => $archive,
+            ],
+            'placeOptions' => fn (): array => $this->placeOptions($tree),
+            'archiveOptions' => fn (): array => $this->distinctArchives($tree),
             'kinds' => SourceKind::options(),
             'recordTypes' => SourceRecordType::options(),
             'sourcePanel' => function () use ($request): ?array {
@@ -89,15 +107,53 @@ class SourceController extends Controller
             'localities' => $tree->localities()->orderBy('name')->get(['id', 'name'])
                 ->map(fn (Locality $locality): array => ['id' => $locality->id, 'name' => $locality->name])
                 ->all(),
-            'archives' => $tree->sources()
-                ->whereNotNull('archive')
-                ->whereRaw("btrim(archive) <> ''")
-                ->distinct()
-                ->orderBy('archive')
-                ->pluck('archive')
-                ->all(),
+            'archives' => $this->distinctArchives($tree),
             'religions' => Religion::options(),
         ];
+    }
+
+    /**
+     * The places the list filter offers: localities that are a gravestone's cemetery or an act parish's seat,
+     * and the parishes an act uses; both by name.
+     *
+     * @return array{localities: array<int, array{id: int, name: string}>, parishes: array<int, array{id: int, label: string}>}
+     */
+    private function placeOptions(Tree $tree): array
+    {
+        return [
+            'localities' => $tree->localities()
+                ->where(fn (Builder $query) => $query
+                    ->whereHas('cemeterySources')
+                    ->orWhereHas('parishes.sources'))
+                ->orderBy('name')
+                ->get(['id', 'name'])
+                ->map(fn (Locality $locality): array => ['id' => $locality->id, 'name' => $locality->name])
+                ->all(),
+            'parishes' => $tree->parishes()
+                ->whereHas('sources')
+                ->with('locality')
+                ->orderBy('name')
+                ->get()
+                ->map(fn (Parish $parish): array => ['id' => $parish->id, 'label' => $parish->label()])
+                ->values()
+                ->all(),
+        ];
+    }
+
+    /**
+     * The distinct, non-blank archive names of the tree's sources, by name.
+     *
+     * @return array<int, string>
+     */
+    private function distinctArchives(Tree $tree): array
+    {
+        return $tree->sources()
+            ->whereNotNull('archive')
+            ->whereRaw("btrim(archive) <> ''")
+            ->distinct()
+            ->orderBy('archive')
+            ->pluck('archive')
+            ->all();
     }
 
     /**
@@ -141,6 +197,30 @@ class SourceController extends Controller
             if ($sort !== '-dodano') {
                 $query['sort'] = $sort;
             }
+        }
+
+        $place = $this->normalizePlace($params['place'] ?? null);
+
+        if ($place !== '') {
+            $query['place'] = $place;
+        }
+
+        $yearFrom = $this->normalizeYear($params['year_from'] ?? null);
+
+        if ($yearFrom !== null) {
+            $query['year_from'] = (string) $yearFrom;
+        }
+
+        $yearTo = $this->normalizeYear($params['year_to'] ?? null);
+
+        if ($yearTo !== null) {
+            $query['year_to'] = (string) $yearTo;
+        }
+
+        $archive = $this->normalizeArchive($params['archive'] ?? null);
+
+        if ($archive !== '') {
+            $query['archive'] = $archive;
         }
 
         return $query;
@@ -192,9 +272,10 @@ class SourceController extends Controller
     }
 
     /**
-     * The list filters without `kind` and `q` when they would hide the given source, so its open card stays on the list.
+     * The list filters without the ones that would hide the given source, so its open card stays on the list.
      *
-     * Matches the list's own filter (`filterSources` in resources/js/lib/sources-index.ts): every search word is in the display name.
+     * Kind and search follow the list's own filter (`filterSources` in resources/js/lib/sources-index.ts): every search word
+     * is in the display name. Place, the year bounds and the archive are dropped when the source does not match them.
      *
      * @param  array<string, string>  $query
      * @return array<string, string>
@@ -218,7 +299,79 @@ class SourceController extends Controller
             unset($query['q']);
         }
 
+        if (isset($query['place']) && ! $this->placeShows($source, $query['place'])) {
+            unset($query['place']);
+        }
+
+        if (isset($query['year_from']) && ($source->year === null || $source->year < (int) $query['year_from'])) {
+            unset($query['year_from']);
+        }
+
+        if (isset($query['year_to']) && ($source->year === null || $source->year > (int) $query['year_to'])) {
+            unset($query['year_to']);
+        }
+
+        if (isset($query['archive']) && $source->archive !== $query['archive']) {
+            unset($query['archive']);
+        }
+
         return $query;
+    }
+
+    /**
+     * Whether the source sits in the place the `place` filter names: a locality (a gravestone's cemetery or an act parish's seat)
+     * or a parish (an act's parish). Other sources have no place.
+     */
+    private function placeShows(Source $source, string $place): bool
+    {
+        [$type, $id] = explode('-', $place, 2);
+        $id = (int) $id;
+
+        if ($type === 'parafia') {
+            return $source->kind === SourceKind::MetricalRecord && $source->parish_id === $id;
+        }
+
+        return match ($source->kind) {
+            SourceKind::Gravestone => $source->cemetery_locality_id === $id,
+            SourceKind::MetricalRecord => $source->parish?->locality_id === $id,
+            SourceKind::Other => false,
+        };
+    }
+
+    /**
+     * Normalize the raw `place` query parameter: `miejscowosc-{id}` or `parafia-{id}`, or '' when absent or malformed.
+     */
+    private function normalizePlace(mixed $place): string
+    {
+        return is_string($place) && preg_match('/^(miejscowosc|parafia)-\d+$/', $place) === 1 ? $place : '';
+    }
+
+    /**
+     * Normalize the raw `year_from` or `year_to` query parameter: a whole year from 1 to 9999, or null.
+     *
+     * The bounds are not swapped when reversed; a reversed range simply matches nothing.
+     */
+    private function normalizeYear(mixed $year): ?int
+    {
+        if (! is_string($year)) {
+            return null;
+        }
+
+        $value = filter_var($year, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1, 'max_range' => 9999]]);
+
+        return is_int($value) ? $value : null;
+    }
+
+    /**
+     * Normalize the raw `archive` query parameter: the trimmed archive name, cut to 255 characters, or '' when absent.
+     */
+    private function normalizeArchive(mixed $archive): string
+    {
+        if (! is_string($archive)) {
+            return '';
+        }
+
+        return rtrim(mb_substr(trim($archive), 0, 255));
     }
 
     /**
@@ -261,6 +414,7 @@ class SourceController extends Controller
             SourceKind::from($request->validated('kind')),
             $request->safe()->except(['kind', 'file']),
         );
+        $source->loadMissing('parish');
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Dodano źródło')]);
 

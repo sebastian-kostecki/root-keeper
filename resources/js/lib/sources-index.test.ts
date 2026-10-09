@@ -26,6 +26,7 @@ function source(id: number, overrides: Partial<IndexSource> = {}): IndexSource {
         parish_id: null,
         parish_label: null,
         parish_name: null,
+        parish_locality_id: null,
         locality_name: null,
         cemetery_locality_id: null,
         cemetery_name: null,

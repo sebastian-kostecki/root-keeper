@@ -22,6 +22,7 @@ export type Source = {
     parish_id: number | null;
     parish_label: string | null;
     parish_name: string | null;
+    parish_locality_id: number | null;
     locality_name: string | null;
     cemetery_locality_id: number | null;
     cemetery_name: string | null;
