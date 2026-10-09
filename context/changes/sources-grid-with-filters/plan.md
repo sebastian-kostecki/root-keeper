@@ -333,19 +333,19 @@ Brak zmian w schemacie i danych. Stare adresy `/sources?…` działają bez zmia
 
 #### Manual
 
-- [x] 3.6 Wybór miejscowości pokazuje akty jej parafii i nagrobki z jej cmentarza; wybór parafii — tylko jej akty; liczniki rodzaju zmieniają się razem z filtrem
-- [x] 3.7 Zakres „od 1890 do 1895” pokazuje źródła z tych lat włącznie i komunikat „Ukryto N … bez roku”, gdy są akty bez roku
-- [x] 3.8 Przeładowanie strony, otwarcie i zamknięcie panelu źródła oraz dodanie nowego źródła zachowują filtry (albo zdejmują ten, który ukryłby nowe źródło)
-- [x] 3.9 „Wyczyść filtry” zeruje wszystko poza widokiem; tabela pokazuje te same źródła co siatka i nadal sortuje
-- [x] 3.10 Siatka: ok. 5–6 kolumn na 1920 px, mniej przy otwartym panelu, 2 na telefonie; pasek zawija się czytelnie przy 375 px i 1366 px
+- [x] 3.6 Wybór miejscowości pokazuje akty jej parafii i nagrobki z jej cmentarza; wybór parafii — tylko jej akty; liczniki rodzaju zmieniają się razem z filtrem — a0d0505
+- [x] 3.7 Zakres „od 1890 do 1895” pokazuje źródła z tych lat włącznie i komunikat „Ukryto N … bez roku”, gdy są akty bez roku — a0d0505
+- [x] 3.8 Przeładowanie strony, otwarcie i zamknięcie panelu źródła oraz dodanie nowego źródła zachowują filtry (albo zdejmują ten, który ukryłby nowe źródło) — a0d0505
+- [x] 3.9 „Wyczyść filtry” zeruje wszystko poza widokiem; tabela pokazuje te same źródła co siatka i nadal sortuje — a0d0505
+- [x] 3.10 Siatka: ok. 5–6 kolumn na 1920 px, mniej przy otwartym panelu, 2 na telefonie; pasek zawija się czytelnie przy 375 px i 1366 px — a0d0505
 
 ### Phase 4: E2E filtrów (`/10x-e2e`)
 
 #### Automated
 
-- [x] 4.1 Nowa specyfikacja przechodzi: `npx playwright test tests/e2e/sources-grid-with-filters.spec.ts`
-- [x] 4.2 Cała suita E2E przechodzi: `npx playwright test`
+- [x] 4.1 Nowa specyfikacja przechodzi: `npx playwright test tests/e2e/sources-grid-with-filters.spec.ts` — 73a8176
+- [x] 4.2 Cała suita E2E przechodzi: `npx playwright test` — 73a8176
 
 #### Manual
 
-- [x] 4.3 Celowo wprowadzony błąd (np. zgubiony `year_to` w adresie) przewraca test, a po cofnięciu test znów przechodzi
+- [x] 4.3 Celowo wprowadzony błąd (np. zgubiony `year_to` w adresie) przewraca test, a po cofnięciu test znów przechodzi — 73a8176

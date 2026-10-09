@@ -1,7 +1,7 @@
 ---
 change_id: sources-grid-with-filters
 title: Sources grid with filters
-status: implementing
+status: implemented
 created: 2026-10-09
 updated: 2026-10-09
 archived_at: null
