@@ -131,7 +131,6 @@ class SourceController extends Controller
                 ->all(),
             'parishes' => $tree->parishes()
                 ->whereHas('sources')
-                ->with('locality')
                 ->orderBy('name')
                 ->get()
                 ->map(fn (Parish $parish): array => ['id' => $parish->id, 'label' => $parish->label()])

@@ -131,6 +131,12 @@ export default function Index({
 
     /** Every /sources visit goes through `withSourcesQuery`, so no control drops another's parameter or the panel key. */
     const visit = (next: Partial<SourcesFilters>, replace = false) => {
+        // This visit commits what is typed, so a debounce still waiting would only replay it with stale filters.
+        if (pendingSearch.current !== null) {
+            clearTimeout(pendingSearch.current);
+            pendingSearch.current = null;
+        }
+
         // Years come from the fields, so a visit from another control also commits the years typed so far.
         const merged = { ...filters, q: trimmedSearch, ...typedYears, ...next };
 
@@ -282,11 +288,6 @@ export default function Index({
 
     /** Clears the search, the years and every filter; the view and the sort stay. */
     const clearFilters = () => {
-        if (pendingSearch.current !== null) {
-            clearTimeout(pendingSearch.current);
-            pendingSearch.current = null;
-        }
-
         setSearch('');
         setYearFrom('');
         setYearTo('');
@@ -315,6 +316,17 @@ export default function Index({
         filters.year_from !== null ||
         filters.year_to !== null ||
         filters.archive !== '';
+
+    const isEmptyKind =
+        visible.length === 0 &&
+        counts.wszystkie > 0 &&
+        filters.kind !== 'wszystkie';
+    // The empty state carries its own „Wyczyść filtry”, so the bar's would be a duplicate.
+    const emptyStateClears =
+        sources.length > 0 &&
+        visible.length === 0 &&
+        !isEmptyKind &&
+        hasFilterBeyondSearch;
 
     const addButton = (
         <Button asChild>
@@ -422,7 +434,9 @@ export default function Index({
                             archiveOptions={archiveOptions}
                             yearFrom={yearFrom}
                             yearTo={yearTo}
-                            showClear={isFiltering(filters)}
+                            showClear={
+                                isFiltering(filters) && !emptyStateClears
+                            }
                             onPlaceChange={(place) => visit({ place })}
                             onArchiveChange={(archive) => visit({ archive })}
                             onYearFromChange={setYearFrom}
