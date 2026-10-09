@@ -325,27 +325,27 @@ Brak zmian w schemacie i danych. Stare adresy `/sources?…` działają bez zmia
 
 #### Automated
 
-- [x] 3.1 Format i lint przechodzą: `vendor/bin/sail npm run check`
-- [x] 3.2 Typy przechodzą: `vendor/bin/sail npm run types:check`
-- [x] 3.3 Vitest przechodzi: `vendor/bin/sail npm run test:js`
-- [x] 3.4 Build przechodzi: `vendor/bin/sail npm run build`
-- [x] 3.5 Dotychczasowe E2E źródeł przechodzą: `npx playwright test tests/e2e/source-panel-edit.spec.ts tests/e2e/source-panel-parish.spec.ts`
+- [x] 3.1 Format i lint przechodzą: `vendor/bin/sail npm run check` — a0d0505
+- [x] 3.2 Typy przechodzą: `vendor/bin/sail npm run types:check` — a0d0505
+- [x] 3.3 Vitest przechodzi: `vendor/bin/sail npm run test:js` — a0d0505
+- [x] 3.4 Build przechodzi: `vendor/bin/sail npm run build` — a0d0505
+- [x] 3.5 Dotychczasowe E2E źródeł przechodzą: `npx playwright test tests/e2e/source-panel-edit.spec.ts tests/e2e/source-panel-parish.spec.ts` — a0d0505
 
 #### Manual
 
-- [ ] 3.6 Wybór miejscowości pokazuje akty jej parafii i nagrobki z jej cmentarza; wybór parafii — tylko jej akty; liczniki rodzaju zmieniają się razem z filtrem
-- [ ] 3.7 Zakres „od 1890 do 1895” pokazuje źródła z tych lat włącznie i komunikat „Ukryto N … bez roku”, gdy są akty bez roku
-- [ ] 3.8 Przeładowanie strony, otwarcie i zamknięcie panelu źródła oraz dodanie nowego źródła zachowują filtry (albo zdejmują ten, który ukryłby nowe źródło)
-- [ ] 3.9 „Wyczyść filtry” zeruje wszystko poza widokiem; tabela pokazuje te same źródła co siatka i nadal sortuje
-- [ ] 3.10 Siatka: ok. 5–6 kolumn na 1920 px, mniej przy otwartym panelu, 2 na telefonie; pasek zawija się czytelnie przy 375 px i 1366 px
+- [x] 3.6 Wybór miejscowości pokazuje akty jej parafii i nagrobki z jej cmentarza; wybór parafii — tylko jej akty; liczniki rodzaju zmieniają się razem z filtrem
+- [x] 3.7 Zakres „od 1890 do 1895” pokazuje źródła z tych lat włącznie i komunikat „Ukryto N … bez roku”, gdy są akty bez roku
+- [x] 3.8 Przeładowanie strony, otwarcie i zamknięcie panelu źródła oraz dodanie nowego źródła zachowują filtry (albo zdejmują ten, który ukryłby nowe źródło)
+- [x] 3.9 „Wyczyść filtry” zeruje wszystko poza widokiem; tabela pokazuje te same źródła co siatka i nadal sortuje
+- [x] 3.10 Siatka: ok. 5–6 kolumn na 1920 px, mniej przy otwartym panelu, 2 na telefonie; pasek zawija się czytelnie przy 375 px i 1366 px
 
 ### Phase 4: E2E filtrów (`/10x-e2e`)
 
 #### Automated
 
-- [ ] 4.1 Nowa specyfikacja przechodzi: `npx playwright test tests/e2e/sources-grid-with-filters.spec.ts`
-- [ ] 4.2 Cała suita E2E przechodzi: `npx playwright test`
+- [x] 4.1 Nowa specyfikacja przechodzi: `npx playwright test tests/e2e/sources-grid-with-filters.spec.ts`
+- [x] 4.2 Cała suita E2E przechodzi: `npx playwright test`
 
 #### Manual
 
-- [ ] 4.3 Celowo wprowadzony błąd (np. zgubiony `year_to` w adresie) przewraca test, a po cofnięciu test znów przechodzi
+- [x] 4.3 Celowo wprowadzony błąd (np. zgubiony `year_to` w adresie) przewraca test, a po cofnięciu test znów przechodzi
