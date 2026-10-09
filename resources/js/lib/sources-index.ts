@@ -20,13 +20,34 @@ export type SourcesFilters = {
     kind: SourcesKindFilter;
     view: SourcesView;
     sort: SourcesSort;
+    place: string;
+    year_from: number | null;
+    year_to: number | null;
+    archive: string;
+};
+
+export type SourcesPlaceOptions = {
+    localities: { id: number; name: string }[];
+    parishes: { id: number; label: string }[];
 };
 
 export type SourcesCounts = Record<SourcesKindFilter, number>;
 
+export type SourcesMissingCriterion = 'year' | 'place' | 'archive';
+
+export type SourcesResult = {
+    visible: IndexSource[];
+    counts: SourcesCounts;
+    hidden: { count: number; missing: SourcesMissingCriterion[] };
+};
+
 const BASE_URL = 'http://localhost';
 
 const DEFAULT_SORT: SourcesSort = '-dodano';
+
+const PLACE_PATTERN = /^(miejscowosc|parafia)-(\d+)$/;
+
+const CRITERIA_ORDER: SourcesMissingCriterion[] = ['year', 'place', 'archive'];
 
 const collator = new Intl.Collator('pl', { numeric: true });
 
@@ -68,6 +89,26 @@ export function buildSourcesQuery(
         }
     }
 
+    const place = filters.place?.trim() ?? '';
+
+    if (place !== '') {
+        query.place = place;
+    }
+
+    if (typeof filters.year_from === 'number') {
+        query.year_from = String(filters.year_from);
+    }
+
+    if (typeof filters.year_to === 'number') {
+        query.year_to = String(filters.year_to);
+    }
+
+    const archive = filters.archive?.trim() ?? '';
+
+    if (archive !== '') {
+        query.archive = archive;
+    }
+
     return query;
 }
 
@@ -79,7 +120,16 @@ export function withSourcesQuery(
     const parsed = new URL(url, BASE_URL);
     const query = buildSourcesQuery(filters);
 
-    for (const key of ['q', 'kind', 'view', 'sort']) {
+    for (const key of [
+        'q',
+        'kind',
+        'view',
+        'sort',
+        'place',
+        'year_from',
+        'year_to',
+        'archive',
+    ]) {
         const value = query[key];
 
         if (value === undefined) {
@@ -92,25 +142,152 @@ export function withSourcesQuery(
     return `${parsed.pathname}${parsed.search}${parsed.hash}`;
 }
 
+/** The filters the page can actually show: a place or archive not among the options is blank. */
+export function resolveFilters(
+    filters: SourcesFilters,
+    placeOptions: SourcesPlaceOptions,
+    archiveOptions: string[],
+): SourcesFilters {
+    const places = new Set([
+        ...placeOptions.localities.map(
+            (locality) => `miejscowosc-${locality.id}`,
+        ),
+        ...placeOptions.parishes.map((parish) => `parafia-${parish.id}`),
+    ]);
+
+    return {
+        ...filters,
+        place: places.has(filters.place) ? filters.place : '',
+        archive: archiveOptions.includes(filters.archive)
+            ? filters.archive
+            : '',
+    };
+}
+
+/** Whether anything beyond the view and the sort differs from the defaults. */
+export function isFiltering(filters: SourcesFilters): boolean {
+    return (
+        filters.q.trim() !== '' ||
+        filters.kind !== 'wszystkie' ||
+        filters.place !== '' ||
+        filters.year_from !== null ||
+        filters.year_to !== null ||
+        filters.archive !== ''
+    );
+}
+
 function matchesSearch(source: IndexSource, words: string[]): boolean {
     const name = source.display_name.toLocaleLowerCase('pl');
 
     return words.every((word) => name.includes(word));
 }
 
+function parsePlace(
+    place: string,
+): { prefix: 'miejscowosc' | 'parafia'; id: number } | null {
+    const match = PLACE_PATTERN.exec(place);
+
+    if (match === null) {
+        return null;
+    }
+
+    return {
+        prefix: match[1] === 'parafia' ? 'parafia' : 'miejscowosc',
+        id: Number(match[2]),
+    };
+}
+
+function matchesPlace(
+    source: IndexSource,
+    place: ReturnType<typeof parsePlace>,
+): boolean {
+    if (place === null) {
+        return false;
+    }
+
+    if (place.prefix === 'parafia') {
+        return source.parish_id === place.id;
+    }
+
+    return (
+        (source.kind === 'gravestone' &&
+            source.cemetery_locality_id === place.id) ||
+        (source.kind === 'metrical_record' &&
+            source.parish_locality_id === place.id)
+    );
+}
+
+function matchesYears(source: IndexSource, filters: SourcesFilters): boolean {
+    if (filters.year_from === null && filters.year_to === null) {
+        return true;
+    }
+
+    if (source.year === null) {
+        return false;
+    }
+
+    if (filters.year_from !== null && source.year < filters.year_from) {
+        return false;
+    }
+
+    return filters.year_to === null || source.year <= filters.year_to;
+}
+
+/** The active criteria the source fails, in the fixed order year, place, archive. */
+function failedCriteria(
+    source: IndexSource,
+    filters: SourcesFilters,
+    place: ReturnType<typeof parsePlace>,
+): SourcesMissingCriterion[] {
+    const failed: SourcesMissingCriterion[] = [];
+
+    if (!matchesYears(source, filters)) {
+        failed.push('year');
+    }
+
+    if (filters.place !== '' && !matchesPlace(source, place)) {
+        failed.push('place');
+    }
+
+    if (filters.archive !== '' && source.archive !== filters.archive) {
+        failed.push('archive');
+    }
+
+    return failed;
+}
+
+/** Whether the source has no data that the criterion needs. */
+function lacksData(
+    source: IndexSource,
+    criterion: SourcesMissingCriterion,
+): boolean {
+    switch (criterion) {
+        case 'year':
+            return source.year === null;
+        case 'place':
+            return (
+                source.parish_id === null &&
+                source.cemetery_locality_id === null
+            );
+        case 'archive':
+            return (source.archive ?? '').trim() === '';
+    }
+}
+
 /**
- * The sources shown for a search and a kind, and the counters of the kind switcher.
- * Counters follow the search and ignore the chosen kind.
+ * The sources shown for the filters, the counters of the kind switcher and the sources hidden
+ * only because they lack data an active filter needs. Filters must already be resolved.
+ * Counters follow the search and all filters except the kind.
  */
 export function filterSources(
     sources: IndexSource[],
-    q: string,
-    kind: SourcesKindFilter,
-): { visible: IndexSource[]; counts: SourcesCounts } {
-    const words = q
+    filters: SourcesFilters,
+): SourcesResult {
+    const words = filters.q
         .toLocaleLowerCase('pl')
         .split(/\s+/)
         .filter((word) => word !== '');
+    const place = parsePlace(filters.place);
     const counts: SourcesCounts = {
         wszystkie: 0,
         akty: 0,
@@ -118,6 +295,8 @@ export function filterSources(
         inne: 0,
     };
     const visible: IndexSource[] = [];
+    const hiddenMissing = new Set<SourcesMissingCriterion>();
+    let hiddenCount = 0;
 
     for (const source of sources) {
         if (!matchesSearch(source, words)) {
@@ -125,16 +304,40 @@ export function filterSources(
         }
 
         const sourceKind = kindFilterOf[source.kind];
+        const failed = failedCriteria(source, filters, place);
+        const matchesKind =
+            filters.kind === 'wszystkie' || filters.kind === sourceKind;
 
-        counts.wszystkie++;
-        counts[sourceKind]++;
+        if (failed.length === 0) {
+            counts.wszystkie++;
+            counts[sourceKind]++;
 
-        if (kind === 'wszystkie' || kind === sourceKind) {
-            visible.push(source);
+            if (matchesKind) {
+                visible.push(source);
+            }
+
+            continue;
+        }
+
+        if (
+            matchesKind &&
+            failed.every((criterion) => lacksData(source, criterion))
+        ) {
+            hiddenCount++;
+            failed.forEach((criterion) => hiddenMissing.add(criterion));
         }
     }
 
-    return { visible, counts };
+    return {
+        visible,
+        counts,
+        hidden: {
+            count: hiddenCount,
+            missing: CRITERIA_ORDER.filter((criterion) =>
+                hiddenMissing.has(criterion),
+            ),
+        },
+    };
 }
 
 function compareTail(a: IndexSource, b: IndexSource): number {

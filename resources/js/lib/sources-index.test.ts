@@ -4,9 +4,12 @@ import {
     buildSourcesQuery,
     eventsLabel,
     filterSources,
+    isFiltering,
+    resolveFilters,
     sortSources,
     withSourcesQuery,
 } from './sources-index';
+import type { SourcesFilters } from './sources-index';
 
 function source(id: number, overrides: Partial<IndexSource> = {}): IndexSource {
     const name = overrides.name === undefined ? `Źródło ${id}` : overrides.name;
@@ -40,6 +43,20 @@ function source(id: number, overrides: Partial<IndexSource> = {}): IndexSource {
         has_thumbnail: false,
         uploaded_at: '2026-09-24T12:00:00+00:00',
         events_count: 0,
+        ...overrides,
+    };
+}
+
+function filtersOf(overrides: Partial<SourcesFilters> = {}): SourcesFilters {
+    return {
+        q: '',
+        kind: 'wszystkie',
+        view: 'galeria',
+        sort: '-dodano',
+        place: '',
+        year_from: null,
+        year_to: null,
+        archive: '',
         ...overrides,
     };
 }
@@ -80,6 +97,30 @@ describe('buildSourcesQuery', () => {
             {},
         );
     });
+
+    it('keeps place, years and archive, and omits blank or null ones', () => {
+        expect(
+            buildSourcesQuery({
+                place: 'parafia-3',
+                year_from: 1900,
+                year_to: 1910,
+                archive: ' AP Poznań ',
+            }),
+        ).toEqual({
+            place: 'parafia-3',
+            year_from: '1900',
+            year_to: '1910',
+            archive: 'AP Poznań',
+        });
+        expect(
+            buildSourcesQuery({
+                place: '',
+                year_from: null,
+                year_to: null,
+                archive: '  ',
+            }),
+        ).toEqual({});
+    });
 });
 
 describe('withSourcesQuery', () => {
@@ -107,6 +148,21 @@ describe('withSourcesQuery', () => {
         );
     });
 
+    it('replaces and removes the place, year and archive keys', () => {
+        expect(
+            withSourcesQuery('/sources?place=parafia-1&year_to=1900&source=5', {
+                place: '',
+                year_to: 1900,
+            }),
+        ).toBe('/sources?year_to=1900&source=5');
+        expect(
+            withSourcesQuery('/sources?year_from=1800&archive=A&source=5', {
+                year_from: null,
+                archive: 'B',
+            }),
+        ).toBe('/sources?archive=B&source=5');
+    });
+
     it('leaves other parameters and the hash untouched', () => {
         expect(
             withSourcesQuery('/sources?person=7&source=5#top', {
@@ -114,6 +170,57 @@ describe('withSourcesQuery', () => {
                 kind: 'wszystkie',
             }),
         ).toBe('/sources?person=7&source=5&q=x#top');
+    });
+});
+
+describe('resolveFilters', () => {
+    const placeOptions = {
+        localities: [{ id: 10, name: 'Lipnica' }],
+        parishes: [{ id: 1, label: 'Lipnica (Lipnica)' }],
+    };
+
+    it('keeps a place and an archive among the options', () => {
+        const resolved = resolveFilters(
+            filtersOf({ place: 'miejscowosc-10', archive: 'AP Poznań' }),
+            placeOptions,
+            ['AP Poznań'],
+        );
+
+        expect(resolved.place).toBe('miejscowosc-10');
+        expect(resolved.archive).toBe('AP Poznań');
+    });
+
+    it('blanks a place or an archive outside the options', () => {
+        const resolved = resolveFilters(
+            filtersOf({
+                place: 'miejscowosc-99',
+                archive: 'AP Gniezno',
+                q: 'x',
+            }),
+            placeOptions,
+            ['AP Poznań'],
+        );
+
+        expect(resolved.place).toBe('');
+        expect(resolved.archive).toBe('');
+        expect(resolved.q).toBe('x');
+    });
+});
+
+describe('isFiltering', () => {
+    it('is false for the defaults and the view or sort alone', () => {
+        expect(isFiltering(filtersOf())).toBe(false);
+        expect(isFiltering(filtersOf({ view: 'tabela', sort: 'nazwa' }))).toBe(
+            false,
+        );
+    });
+
+    it('is true for any filter', () => {
+        expect(isFiltering(filtersOf({ q: 'x' }))).toBe(true);
+        expect(isFiltering(filtersOf({ kind: 'akty' }))).toBe(true);
+        expect(isFiltering(filtersOf({ place: 'parafia-1' }))).toBe(true);
+        expect(isFiltering(filtersOf({ year_to: 1900 }))).toBe(true);
+        expect(isFiltering(filtersOf({ archive: 'AP' }))).toBe(true);
     });
 });
 
@@ -130,35 +237,213 @@ describe('filterSources', () => {
 
     it('finds every word in any order, ignoring case', () => {
         expect(
-            ids(filterSources(list, '1878 lipnica', 'wszystkie').visible),
+            ids(filterSources(list, filtersOf({ q: '1878 lipnica' })).visible),
         ).toEqual([1]);
         expect(
-            ids(filterSources(list, 'LIPNICA', 'wszystkie').visible),
+            ids(filterSources(list, filtersOf({ q: 'LIPNICA' })).visible),
         ).toEqual([1, 2]);
     });
 
     it('does not fold Polish diacritics', () => {
-        expect(filterSources(list, 'swietego', 'wszystkie').visible).toEqual(
-            [],
-        );
         expect(
-            ids(filterSources(list, 'świętego', 'wszystkie').visible),
+            filterSources(list, filtersOf({ q: 'swietego' })).visible,
+        ).toEqual([]);
+        expect(
+            ids(filterSources(list, filtersOf({ q: 'świętego' })).visible),
         ).toEqual([2]);
     });
 
     it('matches a blank query against every source', () => {
-        expect(filterSources(list, '   ', 'wszystkie').visible).toHaveLength(4);
+        expect(
+            filterSources(list, filtersOf({ q: '   ' })).visible,
+        ).toHaveLength(4);
     });
 
     it('does not find a named source by its file name, but an unnamed one', () => {
-        expect(filterSources(list, 'plik-1', 'wszystkie').visible).toEqual([]);
-        expect(ids(filterSources(list, 'plik-3', 'wszystkie').visible)).toEqual(
-            [3],
+        expect(filterSources(list, filtersOf({ q: 'plik-1' })).visible).toEqual(
+            [],
         );
+        expect(
+            ids(filterSources(list, filtersOf({ q: 'plik-3' })).visible),
+        ).toEqual([3]);
     });
 
     it('counts by the search and ignores the chosen kind', () => {
-        const { visible, counts } = filterSources(list, 'lipnica', 'nagrobki');
+        const { visible, counts } = filterSources(
+            list,
+            filtersOf({ q: 'lipnica', kind: 'nagrobki' }),
+        );
+
+        expect(ids(visible)).toEqual([2]);
+        expect(counts).toEqual({ wszystkie: 2, akty: 1, nagrobki: 1, inne: 0 });
+    });
+
+    it('matches a locality by a cemetery or a parish seated there, not a parish seated elsewhere', () => {
+        const sources = [
+            source(1, {
+                kind: 'metrical_record',
+                parish_id: 1,
+                parish_locality_id: 10,
+            }),
+            source(2, { kind: 'gravestone', cemetery_locality_id: 10 }),
+            source(3, {
+                kind: 'metrical_record',
+                parish_id: 2,
+                parish_locality_id: 20,
+            }),
+        ];
+
+        expect(
+            ids(
+                filterSources(sources, filtersOf({ place: 'miejscowosc-10' }))
+                    .visible,
+            ),
+        ).toEqual([1, 2]);
+    });
+
+    it('matches a parish only by its own sources, not a gravestone in the same locality', () => {
+        const sources = [
+            source(1, {
+                kind: 'metrical_record',
+                parish_id: 1,
+                parish_locality_id: 10,
+            }),
+            source(2, { kind: 'gravestone', cemetery_locality_id: 10 }),
+            source(3, {
+                kind: 'metrical_record',
+                parish_id: 2,
+                parish_locality_id: 10,
+            }),
+        ];
+
+        expect(
+            ids(
+                filterSources(sources, filtersOf({ place: 'parafia-1' }))
+                    .visible,
+            ),
+        ).toEqual([1]);
+    });
+
+    it('includes both ends of the year range and nothing outside it', () => {
+        const sources = [1890, 1900, 1910, 1920].map((year, index) =>
+            source(index + 1, { year }),
+        );
+
+        expect(
+            ids(
+                filterSources(
+                    sources,
+                    filtersOf({ year_from: 1900, year_to: 1910 }),
+                ).visible,
+            ),
+        ).toEqual([2, 3]);
+        expect(
+            ids(filterSources(sources, filtersOf({ year_from: 1910 })).visible),
+        ).toEqual([3, 4]);
+        expect(
+            ids(filterSources(sources, filtersOf({ year_to: 1900 })).visible),
+        ).toEqual([1, 2]);
+    });
+
+    it('hides and counts a source without a year under an active range', () => {
+        const sources = [source(1, { year: 1900 }), source(2)];
+        const result = filterSources(sources, filtersOf({ year_from: 1890 }));
+
+        expect(ids(result.visible)).toEqual([1]);
+        expect(result.hidden).toEqual({ count: 1, missing: ['year'] });
+    });
+
+    it('does not count a missing year when no range is active', () => {
+        const sources = [source(1), source(2, { year: 1900 })];
+        const result = filterSources(sources, filtersOf());
+
+        expect(ids(result.visible)).toEqual([1, 2]);
+        expect(result.hidden).toEqual({ count: 0, missing: [] });
+    });
+
+    it('matches nothing for a reversed range', () => {
+        const sources = [source(1, { year: 1900 }), source(2, { year: 1905 })];
+        const result = filterSources(
+            sources,
+            filtersOf({ year_from: 1910, year_to: 1900 }),
+        );
+
+        expect(result.visible).toEqual([]);
+        expect(result.hidden).toEqual({ count: 0, missing: [] });
+    });
+
+    it('counts "brak miejsca" only for a source with no parish and no cemetery', () => {
+        const sources = [
+            source(1, { kind: 'other' }),
+            source(2, { kind: 'gravestone', cemetery_locality_id: 10 }),
+            source(3, { kind: 'metrical_record', parish_id: 2 }),
+        ];
+
+        const parishResult = filterSources(
+            sources,
+            filtersOf({ place: 'parafia-1' }),
+        );
+        expect(parishResult.visible).toEqual([]);
+        expect(parishResult.hidden).toEqual({ count: 1, missing: ['place'] });
+
+        const localityResult = filterSources(
+            sources,
+            filtersOf({ place: 'miejscowosc-10' }),
+        );
+        expect(ids(localityResult.visible)).toEqual([2]);
+        expect(localityResult.hidden).toEqual({ count: 1, missing: ['place'] });
+    });
+
+    it('matches the archive exactly', () => {
+        const sources = [
+            source(1, { archive: 'AP Poznań' }),
+            source(2, { archive: 'AP Poznań, oddz. Gniezno' }),
+        ];
+
+        expect(
+            ids(
+                filterSources(sources, filtersOf({ archive: 'AP Poznań' }))
+                    .visible,
+            ),
+        ).toEqual([1]);
+    });
+
+    it('lists only the active criteria a hidden source lacks, in fixed order', () => {
+        const sources = [source(1, { archive: null })];
+
+        expect(
+            filterSources(sources, filtersOf({ archive: 'AP Poznań' })).hidden,
+        ).toEqual({ count: 1, missing: ['archive'] });
+        expect(
+            filterSources(
+                sources,
+                filtersOf({ archive: 'AP Poznań', year_from: 1900 }),
+            ).hidden,
+        ).toEqual({ count: 1, missing: ['year', 'archive'] });
+    });
+
+    it('does not count a source that is hidden by a mismatch, not by missing data', () => {
+        const sources = [source(1, { year: 1850 })];
+        const result = filterSources(sources, filtersOf({ year_from: 1900 }));
+
+        expect(result.visible).toEqual([]);
+        expect(result.hidden).toEqual({ count: 0, missing: [] });
+    });
+
+    it('counts places after the search and the years, ignoring the chosen kind', () => {
+        const sources = [
+            source(1, {
+                kind: 'metrical_record',
+                parish_id: 1,
+                parish_locality_id: 10,
+            }),
+            source(2, { kind: 'gravestone', cemetery_locality_id: 10 }),
+            source(3, { kind: 'gravestone', cemetery_locality_id: 20 }),
+        ];
+        const { visible, counts } = filterSources(
+            sources,
+            filtersOf({ place: 'miejscowosc-10', kind: 'nagrobki' }),
+        );
 
         expect(ids(visible)).toEqual([2]);
         expect(counts).toEqual({ wszystkie: 2, akty: 1, nagrobki: 1, inne: 0 });

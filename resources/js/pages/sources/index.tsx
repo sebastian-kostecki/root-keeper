@@ -20,10 +20,16 @@ import { useSidePanelNavigation } from '@/hooks/use-side-panel-navigation';
 import { useUnsavedChangesGuard } from '@/hooks/use-unsaved-changes-guard';
 import { pluralPhrase } from '@/lib/plural';
 import { panelVisitOptions } from '@/lib/side-panel-url';
-import { filterSources, withSourcesQuery } from '@/lib/sources-index';
+import {
+    filterSources,
+    isFiltering,
+    resolveFilters,
+    withSourcesQuery,
+} from '@/lib/sources-index';
 import type {
     SourcesFilters,
     SourcesKindFilter,
+    SourcesPlaceOptions,
     SourcesSort,
     SourcesView,
 } from '@/lib/sources-index';
@@ -41,6 +47,8 @@ type Props = {
     kinds: { value: SourceKind; label: string }[];
     recordTypes: { value: SourceRecordType; label: string }[];
     filters: SourcesFilters;
+    placeOptions: SourcesPlaceOptions;
+    archiveOptions: string[];
     sourcePanel: SourcePanelProps;
 };
 
@@ -55,9 +63,17 @@ export default function Index({
     sources,
     kinds,
     recordTypes,
-    filters,
+    filters: requestedFilters,
+    placeOptions,
+    archiveOptions,
     sourcePanel,
 }: Props) {
+    /** The filters that are actually applied: a place or archive missing from the options is blank. */
+    const filters = resolveFilters(
+        requestedFilters,
+        placeOptions,
+        archiveOptions,
+    );
     const [search, setSearch] = useState(filters.q);
     const lastVisitedQuery = useRef(filters.q);
     /** The debounced search visit still waiting to fire, if any. */
@@ -162,11 +178,10 @@ export default function Index({
         guard(() => openPerson(personId));
     };
 
-    const { visible, counts } = filterSources(
-        sources,
-        trimmedSearch,
-        filters.kind,
-    );
+    const { visible, counts } = filterSources(sources, {
+        ...filters,
+        q: trimmedSearch,
+    });
 
     const clearSearch = () => {
         setSearch('');
@@ -174,15 +189,13 @@ export default function Index({
     };
 
     // The status follows the committed query, so it is announced once per pause, not per keystroke.
-    const committedCount = filterSources(sources, filters.q, filters.kind)
-        .visible.length;
+    const committedCount = filterSources(sources, filters).visible.length;
 
-    const statusText =
-        filters.q === '' && filters.kind === 'wszystkie'
-            ? ''
-            : committedCount === 0
-              ? 'Brak wyników'
-              : `Znaleziono: ${committedCount} ${pluralPhrase(committedCount, 'źródło', 'źródła', 'źródeł')}`;
+    const statusText = !isFiltering(filters)
+        ? ''
+        : committedCount === 0
+          ? 'Brak wyników'
+          : `Znaleziono: ${committedCount} ${pluralPhrase(committedCount, 'źródło', 'źródła', 'źródeł')}`;
 
     const addButton = (
         <Button asChild>

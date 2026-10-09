@@ -309,17 +309,17 @@ Brak zmian w schemacie i danych. Stare adresy `/sources?…` działają bez zmia
 
 #### Automated
 
-- [x] 1.1 Testy źródeł przechodzą: `vendor/bin/sail artisan test --compact tests/Feature/SourcesTest.php`
-- [x] 1.2 Larastan przechodzi: `vendor/bin/sail composer types:check`
-- [x] 1.3 Pint czysty: `vendor/bin/sail bin pint --dirty --format agent`
+- [x] 1.1 Testy źródeł przechodzą: `vendor/bin/sail artisan test --compact tests/Feature/SourcesTest.php` — aa3dd97
+- [x] 1.2 Larastan przechodzi: `vendor/bin/sail composer types:check` — aa3dd97
+- [x] 1.3 Pint czysty: `vendor/bin/sail bin pint --dirty --format agent` — aa3dd97
 
 ### Phase 2: Logika filtrowania (lib)
 
 #### Automated
 
-- [ ] 2.1 Vitest przechodzi: `vendor/bin/sail npm run test:js`
-- [ ] 2.2 Typy przechodzą: `vendor/bin/sail npm run types:check`
-- [ ] 2.3 Format i lint przechodzą: `vendor/bin/sail npm run check`
+- [x] 2.1 Vitest przechodzi: `vendor/bin/sail npm run test:js`
+- [x] 2.2 Typy przechodzą: `vendor/bin/sail npm run types:check`
+- [x] 2.3 Format i lint przechodzą: `vendor/bin/sail npm run check`
 
 ### Phase 3: Pasek filtrów i gęsta siatka (UI)
 
