@@ -3,7 +3,7 @@ project: root-keeper
 version: 5
 status: draft
 created: 2026-10-04
-updated: 2026-10-06
+updated: 2026-10-09
 prd_version: 1
 main_goal: speed
 top_blocker: time
@@ -53,8 +53,8 @@ root-keeper to prywatne, samodzielnie hostowane drzewo genealogiczne, w którym 
 | S-07 | fact-places-from-gazetteer           | wybrać miejsce urodzenia, ślubu, zgonu i pochowania ze spisu miejscowości                                 | S-01                   | FR-010, FR-022                           | done |
 | S-08 | residence-history                    | ustawić osobie kilka miejscowości zamieszkania z opcjonalnymi latami od–do                                | S-01                   | FR-011                                   | done |
 | S-09 | gravestone-cemetery-and-buried       | opisać nagrobek cmentarzem ze spisu i osobami pochowanymi, z podpowiedzią miejsca pochowania              | S-04, S-07             | FR-002, FR-004                           | done |
-| S-10 | sources-grid-with-filters            | przeglądać źródła jako siatkę mniejszych kart i filtrować po rodzaju, parafii/miejscu, roku i archiwum     | S-09                   | FR-005                                   | proposed |
-| S-11 | places-merge-and-delete              | scalić zduplikowaną miejscowość lub parafię z właściwą i usunąć wpis nigdzie nieużywany                   | S-03, S-07, S-08, S-09 | FR-012                                   | proposed |
+| S-10 | sources-grid-with-filters            | przeglądać źródła jako siatkę mniejszych kart i filtrować po rodzaju, parafii/miejscu, roku i archiwum     | S-09                   | FR-005                                   | done |
+| S-11 | places-merge-and-delete              | scalić zduplikowaną miejscowość lub parafię z właściwą i usunąć wpis nigdzie nieużywany                   | S-03, S-07, S-08, S-09 | FR-012                                   | done |
 | S-12 | marriage-side-panel                  | otworzyć panel małżeństwa z datą, miejscem, źródłem (z edycją) i dziećmi pary                             | S-06                   | FR-017                                   | proposed |
 | S-13 | maiden-name-and-age                  | zapisać nazwisko rodowe („z d. …”, wyszukiwanie po obu nazwiskach) i widzieć wiek osoby                   | —                      | FR-020, FR-024                           | done |
 | S-14 | person-events-and-note-tabs          | zobaczyć w panelu osoby zakładkę wydarzeń (własnych i najbliższej rodziny) po roku i zakładkę notatki     | S-06                   | FR-021, FR-023                           | proposed |
@@ -247,7 +247,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Unknowns:**
   - Czy widok „Tabela” zostaje obok nowej siatki? Owner: user. Block: no.
 - **Risk:** Czeka na komplet pól opisu (akt w `S-03`, nagrobek w `S-09`), żeby karty i filtry powstały raz; punkt wyjścia — istniejąca galeria z filtrem rodzaju.
-- **Status:** proposed
+- **Status:** done
 
 ### S-11: Scalanie i usuwanie miejscowości i parafii
 
@@ -261,7 +261,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Uwaga (zamieszkania):** usuwanie wpisu musi liczyć też `residences` (`Locality::residences()`), a scalanie je przepinać. Kolumna `people.residence` (zamrożona w S-08) nie ma jeszcze migracji usuwającej — zaplanować osobno.
 - **Uwaga (E2E):** dopisać sprzątanie parafii i miejscowości w `source-panel-parish.spec.ts` (dziś zostają w bazie `e2e`, bo nie ma tras usuwania).
 - **Risk:** Na końcu strumienia miejsc, bo musi objąć każdy rodzaj odwołania naraz; do tego czasu literówki po automatycznym przeniesieniu poprawia się edycją nazwy w spisie.
-- **Status:** proposed
+- **Status:** done
 
 ### S-12: Panel małżeństwa
 
@@ -392,3 +392,5 @@ Rozstrzygnięte:
 - **S-07: autor wybiera miejsce urodzenia, ślubu, zgonu i pochowania ze spisu miejscowości (z podpowiedziami i dopisaniem w locie); istniejące tekstowe miejsca faktów wskazują na miejscowości ze spisu; niepewność opisuje w notatce.** — Archived 2026-10-06 → `context/archive/2026-10-06-fact-places-from-gazetteer/`. Lesson: —.
 - **S-08: autor ustawia osobie kilka miejscowości zamieszkania ze spisu z opcjonalnymi latami od–do; dotychczasowe pole „Zamieszkanie” jest pierwszą pozycją listy, bez lat.** — Archived 2026-10-06 → `context/archive/2026-10-06-residence-history/`. Lesson: —.
 - **S-09: autor opisuje zdjęcie nagrobka cmentarzem (miejscowość ze spisu) i osobami pochowanymi; miejsce pochowania osoby z listy podpowiada się cmentarzem nagrobka (można zmienić); przy wyborze źródła do faktu nagrobek odnajduje się po miejscowości cmentarza i roku.** — Archived 2026-10-06 → `context/archive/2026-10-06-gravestone-cemetery-and-buried/`. Lesson: —.
+- **S-11: autor scala zduplikowaną miejscowość lub parafię z właściwym wpisem — wszystkie odwołania (parafie, cmentarze nagrobków, miejsca faktów, miejsca pochowania, zamieszkania) przechodzą na właściwy wpis — i usuwa wpis, który nie jest nigdzie używany.** — Archived 2026-10-08 → `context/archive/2026-10-06-places-merge-and-delete/`. Lesson: —.
+- **S-10: autor przegląda listę źródeł jako siatkę mniejszych kart z rodzajem, typem, parafią lub cmentarzem, rokiem i archiwum oraz filtruje ją po rodzaju, parafii/miejscu, roku i archiwum.** — Archived 2026-10-09 → `context/archive/2026-10-09-sources-grid-with-filters/`. Lesson: —.
