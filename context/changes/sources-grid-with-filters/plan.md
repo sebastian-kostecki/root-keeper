@@ -317,19 +317,19 @@ Brak zmian w schemacie i danych. Stare adresy `/sources?…` działają bez zmia
 
 #### Automated
 
-- [x] 2.1 Vitest przechodzi: `vendor/bin/sail npm run test:js`
-- [x] 2.2 Typy przechodzą: `vendor/bin/sail npm run types:check`
-- [x] 2.3 Format i lint przechodzą: `vendor/bin/sail npm run check`
+- [x] 2.1 Vitest przechodzi: `vendor/bin/sail npm run test:js` — c2e493e
+- [x] 2.2 Typy przechodzą: `vendor/bin/sail npm run types:check` — c2e493e
+- [x] 2.3 Format i lint przechodzą: `vendor/bin/sail npm run check` — c2e493e
 
 ### Phase 3: Pasek filtrów i gęsta siatka (UI)
 
 #### Automated
 
-- [ ] 3.1 Format i lint przechodzą: `vendor/bin/sail npm run check`
-- [ ] 3.2 Typy przechodzą: `vendor/bin/sail npm run types:check`
-- [ ] 3.3 Vitest przechodzi: `vendor/bin/sail npm run test:js`
-- [ ] 3.4 Build przechodzi: `vendor/bin/sail npm run build`
-- [ ] 3.5 Dotychczasowe E2E źródeł przechodzą: `npx playwright test tests/e2e/source-panel-edit.spec.ts tests/e2e/source-panel-parish.spec.ts`
+- [x] 3.1 Format i lint przechodzą: `vendor/bin/sail npm run check`
+- [x] 3.2 Typy przechodzą: `vendor/bin/sail npm run types:check`
+- [x] 3.3 Vitest przechodzi: `vendor/bin/sail npm run test:js`
+- [x] 3.4 Build przechodzi: `vendor/bin/sail npm run build`
+- [x] 3.5 Dotychczasowe E2E źródeł przechodzą: `npx playwright test tests/e2e/source-panel-edit.spec.ts tests/e2e/source-panel-parish.spec.ts`
 
 #### Manual
 

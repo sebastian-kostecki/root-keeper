@@ -44,6 +44,32 @@ export function SourcesNoResults({
     );
 }
 
+/** Nothing matches while a filter beyond the search is active; „Wyczyść filtry” clears them all. */
+export function SourcesFilteredNoResults({
+    query,
+    onClearFilters,
+}: {
+    query: string;
+    onClearFilters: () => void;
+}) {
+    return (
+        <EmptyState
+            icon={<SearchXIcon />}
+            title="Brak wyników"
+            description={
+                query === ''
+                    ? 'Żadne źródło nie pasuje do wybranych filtrów.'
+                    : `Nie znaleziono źródeł pasujących do „${query}” i wybranych filtrów.`
+            }
+            action={
+                <Button variant="outline" onClick={onClearFilters}>
+                    Wyczyść filtry
+                </Button>
+            }
+        />
+    );
+}
+
 /** The chosen kind has no match while other kinds have. */
 export function SourcesEmptyKind({
     kind,

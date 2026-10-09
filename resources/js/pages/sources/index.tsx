@@ -11,8 +11,10 @@ import { SourcePanel } from '@/components/sources/source-panel';
 import {
     SourcesEmptyKind,
     SourcesEmptyTree,
+    SourcesFilteredNoResults,
     SourcesNoResults,
 } from '@/components/sources/sources-empty-state';
+import { SourcesFilterFields } from '@/components/sources/sources-filters';
 import { SourcesGallery } from '@/components/sources/sources-gallery';
 import { SourcesTable } from '@/components/sources/sources-table';
 import { Button } from '@/components/ui/button';
@@ -23,12 +25,14 @@ import { panelVisitOptions } from '@/lib/side-panel-url';
 import {
     filterSources,
     isFiltering,
+    parseYearInput,
     resolveFilters,
     withSourcesQuery,
 } from '@/lib/sources-index';
 import type {
     SourcesFilters,
     SourcesKindFilter,
+    SourcesMissingCriterion,
     SourcesPlaceOptions,
     SourcesSort,
     SourcesView,
@@ -59,6 +63,31 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
+const missingNouns: Record<SourcesMissingCriterion, string> = {
+    year: 'roku',
+    place: 'miejsca',
+    archive: 'archiwum',
+};
+
+/** „Ukryto 2 źródła bez roku lub miejsca”; the criteria are listed in the order they come in. */
+function hiddenMessage(
+    count: number,
+    missing: SourcesMissingCriterion[],
+): string {
+    const nouns = missing.map((criterion) => missingNouns[criterion]);
+    const last = nouns[nouns.length - 1];
+    const joined =
+        nouns.length > 1
+            ? `${nouns.slice(0, -1).join(', ')} lub ${last}`
+            : last;
+
+    return `Ukryto ${count} ${pluralPhrase(count, 'źródło', 'źródła', 'źródeł')} bez ${joined}`;
+}
+
+function yearText(year: number | null): string {
+    return year === null ? '' : String(year);
+}
+
 export default function Index({
     sources,
     kinds,
@@ -75,10 +104,21 @@ export default function Index({
         archiveOptions,
     );
     const [search, setSearch] = useState(filters.q);
+    /** The year fields hold text while typing; the committed years are in `filters`. */
+    const [yearFrom, setYearFrom] = useState(yearText(filters.year_from));
+    const [yearTo, setYearTo] = useState(yearText(filters.year_to));
     const lastVisitedQuery = useRef(filters.q);
-    /** The debounced search visit still waiting to fire, if any. */
+    const lastVisitedYears = useRef({
+        year_from: filters.year_from,
+        year_to: filters.year_to,
+    });
+    /** The debounced visit still waiting to fire, if any. */
     const pendingSearch = useRef<ReturnType<typeof setTimeout> | null>(null);
     const trimmedSearch = search.trim();
+    const typedYears = {
+        year_from: parseYearInput(yearFrom),
+        year_to: parseYearInput(yearTo),
+    };
     const { hrefFor, open, close } = useSidePanelNavigation('source');
     const { open: openPerson } = useSidePanelNavigation('person');
 
@@ -91,9 +131,14 @@ export default function Index({
 
     /** Every /sources visit goes through `withSourcesQuery`, so no control drops another's parameter or the panel key. */
     const visit = (next: Partial<SourcesFilters>, replace = false) => {
-        const merged = { ...filters, q: trimmedSearch, ...next };
+        // Years come from the fields, so a visit from another control also commits the years typed so far.
+        const merged = { ...filters, q: trimmedSearch, ...typedYears, ...next };
 
         lastVisitedQuery.current = merged.q;
+        lastVisitedYears.current = {
+            year_from: merged.year_from,
+            year_to: merged.year_to,
+        };
 
         // From the live address, not a render-time copy: the debounced visit may fire after a panel opened.
         const { pathname, search: liveSearch, hash } = window.location;
@@ -118,16 +163,48 @@ export default function Index({
         }
     }, [filters.q]);
 
+    // History navigation changes the years the same way.
+    useEffect(() => {
+        if (
+            filters.year_from !== lastVisitedYears.current.year_from ||
+            filters.year_to !== lastVisitedYears.current.year_to
+        ) {
+            lastVisitedYears.current = {
+                year_from: filters.year_from,
+                year_to: filters.year_to,
+            };
+            setYearFrom(yearText(filters.year_from));
+            setYearTo(yearText(filters.year_to));
+        }
+    }, [filters.year_from, filters.year_to]);
+
+    // Search and the year fields share one debounce, so the address gets one visit per pause.
     useEffect(() => {
         const trimmed = search.trim();
+        const years = {
+            year_from: parseYearInput(yearFrom),
+            year_to: parseYearInput(yearTo),
+        };
 
-        if (trimmed === lastVisitedQuery.current) {
+        if (
+            trimmed === lastVisitedQuery.current &&
+            years.year_from === lastVisitedYears.current.year_from &&
+            years.year_to === lastVisitedYears.current.year_to
+        ) {
             return;
         }
 
         const timeoutId = setTimeout(() => {
             pendingSearch.current = null;
-            visit({ q: trimmed, kind: filters.kind, view: filters.view }, true);
+            visit(
+                {
+                    q: trimmed,
+                    ...years,
+                    kind: filters.kind,
+                    view: filters.view,
+                },
+                true,
+            );
         }, 300);
 
         pendingSearch.current = timeoutId;
@@ -136,10 +213,20 @@ export default function Index({
             clearTimeout(timeoutId);
             pendingSearch.current = null;
         };
-        // visit closes over `filters`; only its display fields matter here.
-    }, [search, filters.q, filters.kind, filters.view, filters.sort]);
+        // visit closes over `filters`; every field it reads is listed so a waiting visit never restores a stale value.
+    }, [
+        search,
+        yearFrom,
+        yearTo,
+        filters.q,
+        filters.kind,
+        filters.view,
+        filters.sort,
+        filters.place,
+        filters.archive,
+    ]);
 
-    /** Opens a record from the list; a search still waiting for its debounce goes in the same visit, which it would otherwise cancel. */
+    /** Opens a record from the list; a search or year still waiting for its debounce goes in the same visit, which it would otherwise cancel. */
     const openFromList = (event: MouseEvent<Element>, id: number | string) => {
         guardLink(event, id);
 
@@ -158,9 +245,14 @@ export default function Index({
         clearTimeout(pendingSearch.current);
         pendingSearch.current = null;
         lastVisitedQuery.current = trimmedSearch;
+        lastVisitedYears.current = typedYears;
 
         router.visit(
-            withSourcesQuery(hrefFor(id), { ...filters, q: trimmedSearch }),
+            withSourcesQuery(hrefFor(id), {
+                ...filters,
+                q: trimmedSearch,
+                ...typedYears,
+            }),
             {
                 ...panelVisitOptions,
                 only: [...panelVisitOptions.only, 'filters'],
@@ -178,7 +270,7 @@ export default function Index({
         guard(() => openPerson(personId));
     };
 
-    const { visible, counts } = filterSources(sources, {
+    const { visible, counts, hidden } = filterSources(sources, {
         ...filters,
         q: trimmedSearch,
     });
@@ -186,6 +278,26 @@ export default function Index({
     const clearSearch = () => {
         setSearch('');
         visit({ q: '' });
+    };
+
+    /** Clears the search, the years and every filter; the view and the sort stay. */
+    const clearFilters = () => {
+        if (pendingSearch.current !== null) {
+            clearTimeout(pendingSearch.current);
+            pendingSearch.current = null;
+        }
+
+        setSearch('');
+        setYearFrom('');
+        setYearTo('');
+        visit({
+            q: '',
+            kind: 'wszystkie',
+            place: '',
+            year_from: null,
+            year_to: null,
+            archive: '',
+        });
     };
 
     // The status follows the committed query, so it is announced once per pause, not per keystroke.
@@ -196,6 +308,13 @@ export default function Index({
         : committedCount === 0
           ? 'Brak wyników'
           : `Znaleziono: ${committedCount} ${pluralPhrase(committedCount, 'źródło', 'źródła', 'źródeł')}`;
+
+    const hasFilterBeyondSearch =
+        filters.kind !== 'wszystkie' ||
+        filters.place !== '' ||
+        filters.year_from !== null ||
+        filters.year_to !== null ||
+        filters.archive !== '';
 
     const addButton = (
         <Button asChild>
@@ -295,12 +414,33 @@ export default function Index({
                                 },
                             ]}
                         />
+
+                        <SourcesFilterFields
+                            place={filters.place}
+                            placeOptions={placeOptions}
+                            archive={filters.archive}
+                            archiveOptions={archiveOptions}
+                            yearFrom={yearFrom}
+                            yearTo={yearTo}
+                            showClear={isFiltering(filters)}
+                            onPlaceChange={(place) => visit({ place })}
+                            onArchiveChange={(archive) => visit({ archive })}
+                            onYearFromChange={setYearFrom}
+                            onYearToChange={setYearTo}
+                            onClear={clearFilters}
+                        />
                     </div>
                 )}
 
                 <p className="sr-only" role="status" aria-live="polite">
                     {statusText}
                 </p>
+
+                {hidden.count > 0 && (
+                    <p className="text-muted-foreground text-sm">
+                        {hiddenMessage(hidden.count, hidden.missing)}
+                    </p>
+                )}
 
                 {sources.length === 0 ? (
                     <SourcesEmptyTree action={addButton} />
@@ -310,6 +450,11 @@ export default function Index({
                             kind={filters.kind}
                             query={trimmedSearch}
                             onShowAll={() => visit({ kind: 'wszystkie' })}
+                        />
+                    ) : hasFilterBeyondSearch ? (
+                        <SourcesFilteredNoResults
+                            query={trimmedSearch}
+                            onClearFilters={clearFilters}
                         />
                     ) : (
                         <SourcesNoResults

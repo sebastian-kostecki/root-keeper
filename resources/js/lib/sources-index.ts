@@ -164,6 +164,19 @@ export function resolveFilters(
     };
 }
 
+/** A year typed into a field: a whole number from 1 to 9999, otherwise null (as the server normalizes it). */
+export function parseYearInput(value: string): number | null {
+    const trimmed = value.trim();
+
+    if (!/^\d+$/.test(trimmed)) {
+        return null;
+    }
+
+    const year = Number(trimmed);
+
+    return year >= 1 && year <= 9999 ? year : null;
+}
+
 /** Whether anything beyond the view and the sort differs from the defaults. */
 export function isFiltering(filters: SourcesFilters): boolean {
     return (
