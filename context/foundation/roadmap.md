@@ -57,7 +57,7 @@ root-keeper to prywatne, samodzielnie hostowane drzewo genealogiczne, w którym 
 | S-11 | places-merge-and-delete              | scalić zduplikowaną miejscowość lub parafię z właściwą i usunąć wpis nigdzie nieużywany                   | S-03, S-07, S-08, S-09 | FR-012                                   | done |
 | S-12 | marriage-side-panel                  | otworzyć panel małżeństwa z datą, miejscem, źródłem (z edycją) i dziećmi pary                             | S-06                   | FR-017                                   | done |
 | S-13 | maiden-name-and-age                  | zapisać nazwisko rodowe („z d. …”, wyszukiwanie po obu nazwiskach) i widzieć wiek osoby                   | —                      | FR-020, FR-024                           | done |
-| S-14 | person-events-and-note-tabs          | zobaczyć w panelu osoby zakładkę wydarzeń (własnych i najbliższej rodziny) po roku i zakładkę notatki     | S-06                   | FR-021, FR-023                           | proposed |
+| S-14 | person-events-and-note-tabs          | zobaczyć w panelu osoby zakładkę wydarzeń (własnych i najbliższej rodziny) po roku i zakładkę notatki     | S-06                   | FR-021, FR-023                           | in-progress |
 | S-15 | ancestors-view                       | zobaczyć osobę i wszystkich jej przodków w jednym widoku z wyborem liczby pokoleń                         | S-05                   | FR-018, FR-029                           | proposed |
 | S-16 | person-photo-on-card                 | dodać zdjęcie osoby i widzieć je na karcie drzewa (inicjały, gdy zdjęcia brak)                            | S-05, S-06             | FR-015                                   | proposed |
 
@@ -299,7 +299,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Blockers:** —
 - **Unknowns:** —
 - **Risk:** Rozbudowuje panel osoby o zakładki, więc idzie po `S-06`; samodzielny i bez ryzyka dla guardrails.
-- **Status:** proposed
+- **Status:** in-progress
 
 ### S-15: Widok wszystkich przodków
 
