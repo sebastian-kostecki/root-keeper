@@ -111,12 +111,27 @@ export type Relative = {
     death_date: string | null;
 };
 
+/** One row of the person's timeline, already ordered by the server. */
+export type TimelineEntry = {
+    id: number;
+    type: 'birth' | 'death' | 'marriage' | 'burial';
+    label: string;
+    date: string | null;
+    place: string | null;
+    relative: {
+        id: number;
+        display_name: string;
+    } | null;
+};
+
 export type PersonPreview = Omit<Person, 'birth' | 'death'> & {
     birth: SourcedPersonEvent | null;
     death: SourcedPersonEvent | null;
     parents: Relative[];
     children: Relative[];
     marriages: Marriage[];
+    note: string | null;
+    timeline: TimelineEntry[];
 };
 
 export type PersonPreviewPayload = {

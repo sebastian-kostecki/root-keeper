@@ -1,5 +1,7 @@
 import { useState } from 'react';
+import { EventsTab } from '@/components/persons/events-tab';
 import { FamilyTab } from '@/components/persons/family-tab';
+import { NoteTab } from '@/components/persons/note-tab';
 import { OverviewTab } from '@/components/persons/overview-tab';
 import { useSectionEditor } from '@/components/persons/section-editor';
 import { SourcesTab } from '@/components/persons/sources-tab';
@@ -23,7 +25,7 @@ function TabCount({ count }: { count: number }) {
     );
 }
 
-/** Tabbed body of the person panel (view mode): Przegląd, Rodzina, Źródła. */
+/** Tabbed body of the person panel (view mode): Przegląd, Rodzina, Źródła, Wydarzenia, Notatka. */
 export function PersonModal({ preview, availableSources }: Props) {
     const { person } = preview;
     const { requestExit } = useSectionEditor();
@@ -48,6 +50,8 @@ export function PersonModal({ preview, availableSources }: Props) {
         ].map((source) => source.id),
     ).size;
 
+    const hasNote = Boolean(person.note);
+
     return (
         <Tabs
             value={tab}
@@ -55,17 +59,38 @@ export function PersonModal({ preview, availableSources }: Props) {
             className="gap-0"
         >
             <div className="border-b pb-3">
-                <TabsList className="w-full sm:w-fit">
-                    <TabsTrigger value="przeglad">Przegląd</TabsTrigger>
-                    <TabsTrigger value="rodzina">
-                        Rodzina
-                        <TabCount count={familyCount} />
-                    </TabsTrigger>
-                    <TabsTrigger value="zrodla">
-                        Źródła
-                        <TabCount count={sourceCount} />
-                    </TabsTrigger>
-                </TabsList>
+                <div className="overflow-x-auto">
+                    <TabsList className="w-full sm:w-fit">
+                        <TabsTrigger value="przeglad" className="shrink-0">
+                            Przegląd
+                        </TabsTrigger>
+                        <TabsTrigger value="rodzina" className="shrink-0">
+                            Rodzina
+                            <TabCount count={familyCount} />
+                        </TabsTrigger>
+                        <TabsTrigger value="zrodla" className="shrink-0">
+                            Źródła
+                            <TabCount count={sourceCount} />
+                        </TabsTrigger>
+                        <TabsTrigger value="wydarzenia" className="shrink-0">
+                            Wydarzenia
+                        </TabsTrigger>
+                        <TabsTrigger value="notatka" className="shrink-0">
+                            Notatka
+                            {hasNote && (
+                                <>
+                                    <span
+                                        aria-hidden
+                                        className="bg-primary size-1.5 rounded-full"
+                                    />
+                                    <span className="sr-only">
+                                        (jest notatka)
+                                    </span>
+                                </>
+                            )}
+                        </TabsTrigger>
+                    </TabsList>
+                </div>
             </div>
 
             <TabsContent value="przeglad" className="py-4">
@@ -82,6 +107,12 @@ export function PersonModal({ preview, availableSources }: Props) {
                     person={person}
                     availableSources={availableSources}
                 />
+            </TabsContent>
+            <TabsContent value="wydarzenia" className="py-4">
+                <EventsTab person={person} />
+            </TabsContent>
+            <TabsContent value="notatka" className="py-4">
+                <NoteTab person={person} />
             </TabsContent>
         </Tabs>
     );

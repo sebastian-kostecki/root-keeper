@@ -2,7 +2,11 @@ import { router } from '@inertiajs/react';
 import { useState } from 'react';
 import { useSectionEditor } from '@/components/persons/section-editor';
 import type { SectionId } from '@/components/persons/section-editor';
-import type { MarriageSavePayload, PersonPayload } from '@/lib/person-payload';
+import type {
+    MarriageSavePayload,
+    PersonNotePayload,
+    PersonPayload,
+} from '@/lib/person-payload';
 
 type Errors = Record<string, string>;
 
@@ -26,7 +30,7 @@ export function useSectionSave(
     const save = (
         id: SectionId,
         url: string,
-        payload: PersonPayload | MarriageSavePayload,
+        payload: PersonPayload | MarriageSavePayload | PersonNotePayload,
     ): Promise<boolean> =>
         new Promise((resolve) => {
             router.put(url, payload, {

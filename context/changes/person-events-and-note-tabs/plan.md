@@ -421,25 +421,25 @@ Migracja dodaje tylko nullable kolumnę `people.note` — nie przenosi danych i 
 
 #### Automated
 
-- [x] 2.1 Testy osi przechodzą: `vendor/bin/sail artisan test --compact tests/Feature/PersonTimelineTest.php`
-- [x] 2.2 Testy podglądu bez regresji: `vendor/bin/sail artisan test --compact tests/Feature/PersonsTest.php tests/Feature/MarriagesTest.php tests/Feature/EventSourcesTest.php`
-- [x] 2.3 Larastan i Pint czyste: `vendor/bin/sail composer types:check` oraz `vendor/bin/sail bin pint --dirty --format agent`
+- [x] 2.1 Testy osi przechodzą: `vendor/bin/sail artisan test --compact tests/Feature/PersonTimelineTest.php` — bdba899
+- [x] 2.2 Testy podglądu bez regresji: `vendor/bin/sail artisan test --compact tests/Feature/PersonsTest.php tests/Feature/MarriagesTest.php tests/Feature/EventSourcesTest.php` — bdba899
+- [x] 2.3 Larastan i Pint czyste: `vendor/bin/sail composer types:check` oraz `vendor/bin/sail bin pint --dirty --format agent` — bdba899
 
 ### Phase 3: Zakładki Wydarzenia i Notatka — frontend
 
 #### Automated
 
-- [ ] 3.1 Format i lint: `vendor/bin/sail npm run check`
-- [ ] 3.2 Typy: `vendor/bin/sail npm run types:check`
-- [ ] 3.3 Testy JS bez regresji: `vendor/bin/sail npm run test:js`
-- [ ] 3.4 Build: `vendor/bin/sail npm run build`
+- [x] 3.1 Format i lint: `vendor/bin/sail npm run check`
+- [x] 3.2 Typy: `vendor/bin/sail npm run types:check`
+- [x] 3.3 Testy JS bez regresji: `vendor/bin/sail npm run test:js`
+- [x] 3.4 Build: `vendor/bin/sail npm run build`
 
 #### Manual
 
-- [ ] 3.5 Przy 1366 px pięć zakładek mieści się lub przewija poziomo bez łamania układu; przy 375 px pasek zakładek przewija się, a treść jest czytelna
-- [ ] 3.6 Zakładka Wydarzenia osoby z dziećmi i małżonkiem pokazuje oczekiwaną kolejność i etykiety; kliknięcie imienia dziecka podmienia panel na panel dziecka
-- [ ] 3.7 Edycja notatki: ołówek ustawia fokus w textarea; zapis z wieloma akapitami zachowuje akapity; kropka przy „Notatka” pojawia się po zapisie i znika po wyczyszczeniu
-- [ ] 3.8 Brudna notatka + zmiana zakładki albo zamknięcie panelu pokazuje pasek „Masz niezapisane zmiany w notatce.”; „Zapisz” zapisuje i wykonuje wyjście, „Porzuć” odrzuca
+- [x] 3.5 Przy 1366 px pięć zakładek mieści się lub przewija poziomo bez łamania układu; przy 375 px pasek zakładek przewija się, a treść jest czytelna
+- [x] 3.6 Zakładka Wydarzenia osoby z dziećmi i małżonkiem pokazuje oczekiwaną kolejność i etykiety; kliknięcie imienia dziecka podmienia panel na panel dziecka
+- [x] 3.7 Edycja notatki: ołówek ustawia fokus w textarea; zapis z wieloma akapitami zachowuje akapity; kropka przy „Notatka” pojawia się po zapisie i znika po wyczyszczeniu
+- [x] 3.8 Brudna notatka + zmiana zakładki albo zamknięcie panelu pokazuje pasek „Masz niezapisane zmiany w notatce.”; „Zapisz” zapisuje i wykonuje wyjście, „Porzuć” odrzuca
 
 ### Phase 4: E2E zakładek wydarzeń i notatki
 

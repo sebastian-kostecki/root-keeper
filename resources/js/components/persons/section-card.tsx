@@ -170,7 +170,7 @@ function SectionCardEditor({
         });
 
         form.querySelector<HTMLElement>(
-            'input:not([type="hidden"]), [role="checkbox"]',
+            'input:not([type="hidden"]), textarea, [role="checkbox"]',
         )?.focus();
 
         return () => {

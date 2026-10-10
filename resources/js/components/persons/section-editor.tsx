@@ -16,6 +16,7 @@ export type SectionId =
     | 'birth'
     | 'death'
     | 'residences'
+    | 'note'
     | `marriage-${number}`;
 
 /** Hints how an edit starts, e.g. "Oznacz zgon" opens Zgon with the checkbox on. */
@@ -65,6 +66,10 @@ function labelFor(id: SectionId | null): string {
 
     if (id === 'death') {
         return 'zgonie';
+    }
+
+    if (id === 'note') {
+        return 'notatce';
     }
 
     return 'małżeństwie';

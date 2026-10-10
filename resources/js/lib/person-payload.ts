@@ -12,6 +12,9 @@ export type SectionValues = Record<string, string>;
 /** Sections that save through `PUT persons/{id}`. */
 export type PersonSection = 'personal' | 'birth' | 'death' | 'residences';
 
+/** Body of `PUT persons/{id}/note`. */
+export type PersonNotePayload = { note: string | null };
+
 /** Body of `PUT marriages/{id}`. */
 export type MarriageSavePayload = { marriage: PartialDatePayload };
 
