@@ -26,7 +26,7 @@ import {
 import type { SectionValues } from '@/lib/person-payload';
 import { formatPartialDate } from '@/lib/partial-date';
 import { cn } from '@/lib/utils';
-import type { PersonSummary } from '@/types';
+import type { MarriagePanelPayload, PersonSummary } from '@/types';
 
 /** Only the marriage's own fields (`marriage.*`) belong to the card. */
 function belongsToMarriage(_section: SectionId, key: string): boolean {
@@ -86,18 +86,34 @@ function PersonLink({ person }: { person: PersonSummary }) {
 
 /**
  * Side panel of one marriage, hosted by the layout beside the page; open whenever
- * the page carries a `marriagePanel`.
+ * the page carries a `marriagePanel`. The content mounts only while a panel is
+ * open (keyed by marriage), so save errors never outlive the panel they came from.
  */
 export function MarriagePanel() {
-    const { marriagePanel, availableSources } = usePage().props;
-    const { close } = useMarriagePanel();
-    const { requestExit, hasPendingExit } = useSectionEditor();
-    const { savingId, errorsFor, strayErrorFor, save } =
-        useSectionSave(belongsToMarriage);
+    const { marriagePanel } = usePage().props;
 
     if (marriagePanel === null) {
         return null;
     }
+
+    return (
+        <MarriagePanelContent
+            key={marriagePanel.marriage.id}
+            marriagePanel={marriagePanel}
+        />
+    );
+}
+
+function MarriagePanelContent({
+    marriagePanel,
+}: {
+    marriagePanel: MarriagePanelPayload;
+}) {
+    const { availableSources } = usePage().props;
+    const { close } = useMarriagePanel();
+    const { requestExit, hasPendingExit } = useSectionEditor();
+    const { savingId, errorsFor, strayErrorFor, save } =
+        useSectionSave(belongsToMarriage);
 
     const { marriage, spouses, children } = marriagePanel;
     const [firstSpouse, secondSpouse] = spouses;

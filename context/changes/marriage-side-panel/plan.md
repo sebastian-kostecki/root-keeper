@@ -475,6 +475,14 @@ Brak zmian schematu i danych.
 - Edycja małżeństwa w panelu osoby: `resources/js/components/persons/overview-tab.tsx:271-314, 439-483`
 - Wyrocznia rodziny: `tests/Pest.php:240-330` (`familyScene`)
 
+## Addendum (przegląd implementacji, 2026-10-10)
+
+Odstępstwa od planu wykryte w przeglądzie, intencja zachowana:
+
+- **Link do panelu małżeństwa w Rodzinie (Phase 3.2).** Zamiast `MarriagePanelLink` w części `extra` wiersza jest nowy slot `action` w `PersonRow` i przycisk-ikona z nazwą dostępną „Szczegóły małżeństwa z {małżonek}” obok linku małżonka. Powód: zagnieżdżone linki to nieprawidłowy HTML.
+- **Wiersze osób w panelu (Phase 2.6).** Małżonkowie i dzieci używają lokalnego `PersonLink` w `marriage-panel.tsx`, nie wiersza z Rodziny.
+- **Pasek niezapisanych zmian.** Pasek trafił do propa `footer` w `SidePanel` (panel osoby i małżeństwa), a `UnsavedChangesBar` nie jest już pozycjonowany `absolute`. Kreator osoby opakowuje go sam w `person-create-dialog.tsx`.
+
 ## Progress
 
 > Convention: `- [ ]` pending, `- [x]` done. Append ` — <commit sha>` when a step lands. Do not rename step titles. See `references/progress-format.md`.

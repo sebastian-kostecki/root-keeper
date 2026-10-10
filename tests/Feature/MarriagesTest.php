@@ -576,6 +576,17 @@ test('a birth event in ?marriage= is a not found', function () {
         ->assertNotFound();
 });
 
+test('a marriage without exactly two spouses in ?marriage= is a not found', function () {
+    $user = User::factory()->create();
+    $focus = Person::factory()->for($user->tree)->create();
+    $spouse = Person::factory()->for($user->tree)->create();
+    $marriage = attachMarriage($focus, $spouse);
+    $marriage->participants()->detach($spouse->id);
+
+    $this->actingAs($user)->get(marriagePanelUrl($marriage, 'persons.index'))
+        ->assertNotFound();
+});
+
 test('a non-numeric or missing ?marriage= leaves the marriage panel null', function (?string $value) {
     $user = User::factory()->create();
     $focus = Person::factory()->for($user->tree)->create();
@@ -631,6 +642,18 @@ test('destroy with a foreign referer returns to the tree index', function () {
     $marriage = attachMarriage($focus, $spouse);
 
     $this->from('https://example.com/tree/1?marriage='.$marriage->id)
+        ->actingAs($user)
+        ->delete(route('marriages.destroy', $marriage))
+        ->assertRedirect(route('tree.index'));
+});
+
+test('destroy with a protocol-relative referer returns to the tree index', function () {
+    $user = User::factory()->create();
+    $focus = Person::factory()->for($user->tree)->create();
+    $spouse = Person::factory()->for($user->tree)->create();
+    $marriage = attachMarriage($focus, $spouse);
+
+    $this->from('//evil.example.com/tree/1?marriage='.$marriage->id)
         ->actingAs($user)
         ->delete(route('marriages.destroy', $marriage))
         ->assertRedirect(route('tree.index'));

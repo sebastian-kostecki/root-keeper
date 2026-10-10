@@ -27,7 +27,7 @@ class BuildMarriagePanel
      */
     public function handle(Event $marriage): array
     {
-        $marriage->load(['locality', 'sources', 'participants.events', 'tree']);
+        $marriage->loadMissing(['locality', 'sources', 'participants.events', 'tree']);
 
         /** @var Collection<int, Person> $spouses */
         $spouses = PersonOrdering::spouses($marriage->participants);

@@ -1,7 +1,7 @@
 ---
 change_id: marriage-side-panel
 title: Marriage side panel
-status: implemented
+status: impl_reviewed
 created: 2026-10-09
 updated: 2026-10-10
 archived_at: null

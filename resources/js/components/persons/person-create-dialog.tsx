@@ -65,7 +65,7 @@ function Card({
 
 function PersonCreateDialogContent({ religions, trigger }: Props) {
     const [open, setOpen] = useState(false);
-    const { isDirty, requestExit } = useSectionEditor();
+    const { isDirty, hasPendingExit, requestExit } = useSectionEditor();
     const resolver: Resolver = useRef(null);
 
     const settle = (isSaved: boolean) => {
@@ -138,7 +138,11 @@ function PersonCreateDialogContent({ religions, trigger }: Props) {
                     )}
                 </Form>
 
-                <UnsavedChangesBar />
+                {hasPendingExit && (
+                    <div className="bg-background border-t px-6 py-4">
+                        <UnsavedChangesBar />
+                    </div>
+                )}
             </FormDialogContent>
         </Dialog>
     );
