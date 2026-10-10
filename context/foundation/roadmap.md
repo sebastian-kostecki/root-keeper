@@ -58,7 +58,7 @@ root-keeper to prywatne, samodzielnie hostowane drzewo genealogiczne, w którym 
 | S-12 | marriage-side-panel                  | otworzyć panel małżeństwa z datą, miejscem, źródłem (z edycją) i dziećmi pary                             | S-06                   | FR-017                                   | done |
 | S-13 | maiden-name-and-age                  | zapisać nazwisko rodowe („z d. …”, wyszukiwanie po obu nazwiskach) i widzieć wiek osoby                   | —                      | FR-020, FR-024                           | done |
 | S-14 | person-events-and-note-tabs          | zobaczyć w panelu osoby zakładkę wydarzeń (własnych i najbliższej rodziny) po roku i zakładkę notatki     | S-06                   | FR-021, FR-023                           | done |
-| S-15 | ancestors-view                       | zobaczyć osobę i wszystkich jej przodków w jednym widoku z wyborem liczby pokoleń                         | S-05                   | FR-018, FR-029                           | proposed |
+| S-15 | ancestors-view                       | zobaczyć osobę i wszystkich jej przodków w jednym widoku z wyborem liczby pokoleń                         | S-05                   | FR-018, FR-029                           | done |
 | S-16 | person-photo-on-card                 | dodać zdjęcie osoby i widzieć je na karcie drzewa (inicjały, gdy zdjęcia brak)                            | S-05, S-06             | FR-015                                   | proposed |
 
 ## Streams
@@ -303,16 +303,16 @@ Foundations below assume these are present and do NOT re-scaffold them.
 
 ### S-15: Widok wszystkich przodków
 
-- **Outcome:** autor wybiera osobę i widzi ją oraz wszystkich jej przodków w jednym widoku z wyborem liczby pokoleń, dopasowanym do ekranu i z przybliżaniem jak w drzewie; widok służy do oglądania (bez dodawania osób i relacji); cudza osoba to 404.
+- **Outcome:** autor wybiera osobę i widzi ją oraz wszystkich jej przodków w jednym widoku z wyborem liczby pokoleń, dopasowanym do ekranu i z przybliżaniem w tym widoku (przyciski, Ctrl+kółko, szczypanie); widok służy do oglądania (bez dodawania osób i relacji); cudza osoba to 404.
 - **Change ID:** ancestors-view
 - **PRD refs:** FR-018, FR-029
 - **Prerequisites:** S-05
 - **Parallel with:** F-02, S-01, S-02, S-03, S-04, S-06, S-07, S-08, S-09, S-10, S-11, S-12, S-13, S-14, S-16
 - **Blockers:** —
 - **Unknowns:**
-  - Czy kliknięcie przodka w tym widoku otwiera panel osoby (wtedy zależność od `S-06`)? Owner: user. Block: no.
+  - ~~Czy kliknięcie przodka w tym widoku otwiera panel osoby (wtedy zależność od `S-06`)? Owner: user. Block: no.~~ Rozstrzygnięte (autor, 2026-10-10): kliknięcie karty przodka otwiera panel osoby (`?person=`); zależność od `S-06` spełniona.
 - **Risk:** Korzysta z mechanizmu dopasowania i przybliżania z `S-05`, żeby 6+ pokoleń pozostało czytelne; samodzielny nowy widok, więc może iść równolegle z resztą.
-- **Status:** proposed
+- **Status:** done
 
 ### S-16: Zdjęcie osoby na karcie drzewa
 
@@ -396,3 +396,4 @@ Rozstrzygnięte:
 - **S-10: autor przegląda listę źródeł jako siatkę mniejszych kart z rodzajem, typem, parafią lub cmentarzem, rokiem i archiwum oraz filtruje ją po rodzaju, parafii/miejscu, roku i archiwum.** — Archived 2026-10-09 → `context/archive/2026-10-09-sources-grid-with-filters/`. Lesson: —.
 - **S-12: autor otwiera panel małżeństwa z datą, miejscem, źródłem (z edycją) i dziećmi pary; małżeństwo nadal można edytować także w panelu osoby.** — Archived 2026-10-10 → `context/archive/2026-10-09-marriage-side-panel/`. Lesson: —.
 - **S-14: autor widzi w panelu osoby zakładkę wydarzeń — własnych oraz urodzeń i zgonów dzieci, ślubu i zgonu małżonka — uporządkowanych po roku, z wydarzeniami bez daty na końcu, oraz zakładkę z jedną notatką tekstową o osobie.** — Archived 2026-10-10 → `context/archive/2026-10-10-person-events-and-note-tabs/`. Lesson: —.
+- **S-15: autor wybiera osobę i widzi ją oraz wszystkich jej przodków w jednym widoku z wyborem liczby pokoleń, dopasowanym do ekranu i z przybliżaniem w tym widoku (przyciski, Ctrl+kółko, szczypanie); widok służy do oglądania (bez dodawania osób i relacji); cudza osoba to 404.** — Archived 2026-10-10 → `context/archive/2026-10-10-ancestors-view/`. Lesson: —.
