@@ -450,25 +450,25 @@ Brak migracji i zmian danych.
 
 #### Automated
 
-- [x] 4.1 Typy, lint i Vitest przechodzą: `vendor/bin/sail npm run types:check`, `vendor/bin/sail npm run check`, `vendor/bin/sail npm run test:js`
-- [x] 4.2 Seeder działa na czystej bazie dev: `vendor/bin/sail artisan db:seed --class=AncestorsDemoSeeder`
-- [x] 4.3 Pint i testy Pest przechodzą: `vendor/bin/sail bin pint --dirty --format agent` oraz `vendor/bin/sail artisan test --compact tests/Feature/AncestorsTest.php tests/Feature/OwnershipBoundariesTest.php`
+- [x] 4.1 Typy, lint i Vitest przechodzą: `vendor/bin/sail npm run types:check`, `vendor/bin/sail npm run check`, `vendor/bin/sail npm run test:js` — 98e5f9e
+- [x] 4.2 Seeder działa na czystej bazie dev: `vendor/bin/sail artisan db:seed --class=AncestorsDemoSeeder` — 98e5f9e
+- [x] 4.3 Pint i testy Pest przechodzą: `vendor/bin/sail bin pint --dirty --format agent` oraz `vendor/bin/sail artisan test --compact tests/Feature/AncestorsTest.php tests/Feature/OwnershipBoundariesTest.php` — 98e5f9e
 
 #### Manual
 
-- [x] 4.4 Panel osoby na drzewie, liście osób i widoku przodków ma „Pokaż przodków” w menu „⋯”; nagłówek panelu i tytuł z imieniem wyglądają jak dziś
-- [x] 4.5 Na widoku przodków osoby X jej panel nie pokazuje „Pokaż przodków”, panel przodka pokazuje; kliknięcie przecentrowuje z zachowaną liczbą pokoleń i otwartym panelem
-- [x] 4.6 Niezapisana edycja w panelu blokuje przejście „Pokaż przodków” tak samo jak „Pokaż na drzewie”
-- [x] 4.7 Na danych `AncestorsDemoSeeder` przy 6 pokoleniach całość startuje dopasowana, a po „Powiększ” imiona są czytelne
-- [x] 4.8 Usunięcie osoby w centrum z jej panelu na widoku przodków wraca do drzewa probanta
+- [x] 4.4 Panel osoby na drzewie, liście osób i widoku przodków ma „Pokaż przodków” w menu „⋯”; nagłówek panelu i tytuł z imieniem wyglądają jak dziś — 98e5f9e
+- [x] 4.5 Na widoku przodków osoby X jej panel nie pokazuje „Pokaż przodków”, panel przodka pokazuje; kliknięcie przecentrowuje z zachowaną liczbą pokoleń i otwartym panelem — 98e5f9e
+- [x] 4.6 Niezapisana edycja w panelu blokuje przejście „Pokaż przodków” tak samo jak „Pokaż na drzewie” — 98e5f9e
+- [x] 4.7 Na danych `AncestorsDemoSeeder` przy 6 pokoleniach całość startuje dopasowana, a po „Powiększ” imiona są czytelne — 98e5f9e
+- [x] 4.8 Usunięcie osoby w centrum z jej panelu na widoku przodków wraca do drzewa probanta — 98e5f9e
 
 ### Phase 5: E2E ścieżki wejścia i przecentrowania
 
 #### Automated
 
-- [ ] 5.1 Spec przechodzi: `npx playwright test tests/e2e/ancestors-view.spec.ts`
-- [ ] 5.2 Spec zawodzi po celowym zepsuciu (np. „Pokaż przodków” linkuje do osoby w centrum zamiast osoby z panelu) i wraca do zieleni po cofnięciu
+- [x] 5.1 Spec przechodzi: `npx playwright test tests/e2e/ancestors-view.spec.ts`
+- [x] 5.2 Spec zawodzi po celowym zepsuciu (np. „Pokaż przodków” linkuje do osoby w centrum zamiast osoby z panelu) i wraca do zieleni po cofnięciu
 
 #### Manual
 
-- [ ] 5.3 Przegląd testu względem pięciu antywzorców z `/10x-e2e` bez uwag
+- [x] 5.3 Przegląd testu względem pięciu antywzorców z `/10x-e2e` bez uwag
