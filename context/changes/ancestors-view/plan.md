@@ -406,28 +406,28 @@ Brak migracji i zmian danych.
 
 #### Automated
 
-- [x] 1.1 Testy widoku przodków przechodzą: `vendor/bin/sail artisan test --compact tests/Feature/AncestorsTest.php`
-- [x] 1.2 Testy granic własności przechodzą (z przypadkiem `tree.ancestors` i testem kompletności): `vendor/bin/sail artisan test --compact tests/Feature/OwnershipBoundariesTest.php`
-- [x] 1.3 Testy osób i drzewa przechodzą po wydzieleniu kolejności rodziców: `vendor/bin/sail artisan test --compact tests/Feature/PersonsTest.php tests/Feature/TreeTest.php`
-- [x] 1.4 Larastan przechodzi: `vendor/bin/sail composer types:check`
-- [x] 1.5 Pint bez zmian: `vendor/bin/sail bin pint --dirty --format agent`
-- [x] 1.6 Typy i lint frontendu przechodzą: `vendor/bin/sail npm run types:check` i `vendor/bin/sail npm run check`
+- [x] 1.1 Testy widoku przodków przechodzą: `vendor/bin/sail artisan test --compact tests/Feature/AncestorsTest.php` — 5522689
+- [x] 1.2 Testy granic własności przechodzą (z przypadkiem `tree.ancestors` i testem kompletności): `vendor/bin/sail artisan test --compact tests/Feature/OwnershipBoundariesTest.php` — 5522689
+- [x] 1.3 Testy osób i drzewa przechodzą po wydzieleniu kolejności rodziców: `vendor/bin/sail artisan test --compact tests/Feature/PersonsTest.php tests/Feature/TreeTest.php` — 5522689
+- [x] 1.4 Larastan przechodzi: `vendor/bin/sail composer types:check` — 5522689
+- [x] 1.5 Pint bez zmian: `vendor/bin/sail bin pint --dirty --format agent` — 5522689
+- [x] 1.6 Typy i lint frontendu przechodzą: `vendor/bin/sail npm run types:check` i `vendor/bin/sail npm run check` — 5522689
 
 #### Manual
 
-- [x] 1.7 `/tree/{id}/ancestors` własnej osoby otwiera stronę z nagłówkiem i breadcrumbs, a „Drzewo” w pasku bocznym jest podświetlone
+- [x] 1.7 `/tree/{id}/ancestors` własnej osoby otwiera stronę z nagłówkiem i breadcrumbs, a „Drzewo” w pasku bocznym jest podświetlone — 5522689
 
 ### Phase 2: Przybliżanie w `ZoomCanvas` (tylko na żądanie)
 
 #### Automated
 
-- [ ] 2.1 Testy Vitest przechodzą (w tym `fit-view.test.ts`): `vendor/bin/sail npm run test:js`
-- [ ] 2.2 Typy i lint przechodzą: `vendor/bin/sail npm run types:check` i `vendor/bin/sail npm run check`
-- [ ] 2.3 Istniejące E2E drzewa przechodzą bez zmian: `npx playwright test tests/e2e/tree-card-recentre.spec.ts tests/e2e/tree-slot-parent.spec.ts`
+- [x] 2.1 Testy Vitest przechodzą (w tym `fit-view.test.ts`): `vendor/bin/sail npm run test:js`
+- [x] 2.2 Typy i lint przechodzą: `vendor/bin/sail npm run types:check` i `vendor/bin/sail npm run check`
+- [x] 2.3 Istniejące E2E drzewa przechodzą bez zmian: `npx playwright test tests/e2e/tree-card-recentre.spec.ts tests/e2e/tree-slot-parent.spec.ts`
 
 #### Manual
 
-- [ ] 2.4 Na drzewie (`/tree/{id}`) kółko, Ctrl+kółko i szczypanie nie zmieniają skali, a kontrolek nie ma
+- [x] 2.4 Na drzewie (`/tree/{id}`) kółko, Ctrl+kółko i szczypanie nie zmieniają skali, a kontrolek nie ma
 
 ### Phase 3: Układ i karty przodków
 

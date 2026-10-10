@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { FocusEvent, PointerEvent, ReactNode, RefObject } from 'react';
 import { TransformComponent, TransformWrapper } from 'react-zoom-pan-pinch';
 import type { ReactZoomPanPinchContentRef } from 'react-zoom-pan-pinch';
+import { Button } from '@/components/ui/button';
 import { chooseFitView, TREE_FIT_FLOOR, TREE_FIT_MAX } from '@/lib/fit-view';
 import { cn } from '@/lib/utils';
 
@@ -20,27 +21,32 @@ type Props = {
     floor?: number;
     /** Highest start scale, so a small content does not blow up on a large screen. */
     max?: number;
+    /** Adds zoom buttons, Ctrl+wheel and pinch zoom, all within `[floor, max]`. Off by default. */
+    zoomControls?: boolean;
     className?: string;
 };
 
 /**
- * Pan area that fills its parent; give the parent a definite height. No manual
- * zoom: the scale depends on the screen only. Starts fitted (whole content, or
- * anchored when that would be too small) and fits again on resize until the
- * author pans the view. Remount it with a
- * `key` to fit from scratch.
+ * Pan area that fills its parent; give the parent a definite height. Without
+ * `zoomControls` there is no manual zoom: the scale depends on the screen only.
+ * With it, the buttons, Ctrl+wheel and pinch zoom within `[floor, max]`.
+ * Starts fitted (whole content, or anchored when that would be too small) and
+ * fits again on resize until the author pans or zooms the view. "Dopasuj"
+ * fits again. Remount it with a `key` to fit from scratch.
  */
 export function ZoomCanvas({
     children,
     anchorRef,
     floor = TREE_FIT_FLOOR,
     max = TREE_FIT_MAX,
+    zoomControls = false,
     className,
 }: Props) {
     const controlsRef = useRef<ReactZoomPanPinchContentRef>(null);
     const containerRef = useRef<HTMLDivElement>(null);
     const movedRef = useRef(false);
     const fittedRef = useRef(false);
+    const fitRef = useRef<(() => void) | null>(null);
     const dragRef = useRef({ x: 0, y: 0, down: false, dragged: false });
     const [ready, setReady] = useState(false);
 
@@ -106,6 +112,8 @@ export function ZoomCanvas({
             }
         };
 
+        fitRef.current = fit;
+
         let frame = 0;
         const schedule = () => {
             cancelAnimationFrame(frame);
@@ -150,11 +158,29 @@ export function ZoomCanvas({
             cancelAnimationFrame(frame);
             observer.disconnect();
             wrapper.removeEventListener('scroll', onScroll);
+            fitRef.current = null;
         };
     }, [anchorRef, floor, max]);
 
     const markMoved = () => {
         movedRef.current = true;
+    };
+
+    /** Manual zoom keeps the author's view: a later resize no longer refits it. */
+    const zoomByButton = (direction: 'in' | 'out') => {
+        markMoved();
+
+        if (direction === 'in') {
+            void controlsRef.current?.zoomIn();
+        } else {
+            void controlsRef.current?.zoomOut();
+        }
+    };
+
+    /** "Dopasuj" runs the same fit as the start view. */
+    const fitAgain = () => {
+        movedRef.current = false;
+        fitRef.current?.();
     };
 
     /** A press that jitters under the drag threshold is a click, not a pan. */
@@ -282,16 +308,53 @@ export function ZoomCanvas({
             onClickCapture={onClickCapture}
             onFocus={onFocus}
         >
+            {zoomControls && (
+                <div className="absolute top-2 right-2 z-10 flex gap-2">
+                    <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className={ZOOM_NO_PAN_CLASS}
+                        onClick={() => zoomByButton('in')}
+                    >
+                        Powiększ
+                    </Button>
+                    <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className={ZOOM_NO_PAN_CLASS}
+                        onClick={() => zoomByButton('out')}
+                    >
+                        Pomniejsz
+                    </Button>
+                    <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className={ZOOM_NO_PAN_CLASS}
+                        onClick={fitAgain}
+                    >
+                        Dopasuj
+                    </Button>
+                </div>
+            )}
             <TransformWrapper
                 ref={controlsRef}
                 initialScale={1}
                 minScale={floor}
                 maxScale={max}
-                wheel={{ disabled: true }}
-                pinch={{ disabled: true }}
+                wheel={
+                    zoomControls
+                        ? { activationKeys: ['Control'] }
+                        : { disabled: true }
+                }
+                pinch={{ disabled: !zoomControls }}
                 doubleClick={{ disabled: true }}
                 panning={{ excluded: [ZOOM_NO_PAN_CLASS] }}
                 onPanning={onPanning}
+                onWheelStart={markMoved}
+                onPinchStart={markMoved}
             >
                 <TransformComponent
                     wrapperClass={WRAPPER_CLASS}
