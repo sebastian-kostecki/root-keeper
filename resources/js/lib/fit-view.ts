@@ -6,9 +6,9 @@ export const TREE_FIT_MAX = 1.5;
 
 /**
  * Lowest scale the ancestors view starts at. Six full generations are 32 cards
- * in the top row, about 5120 px at 10 rem per card; that row fits a 1000 px
- * screen at scale 0.2, so 0.1 keeps the whole row as the start view down to
- * narrower screens and only anchors below that.
+ * in the top row, about 5490 px at 10 rem per card and 0.75 rem between them;
+ * that row fits a 1000 px screen at scale 0.18, so 0.1 keeps the whole row as
+ * the start view down to screens of about 550 px and only anchors below that.
  */
 export const ANCESTORS_FIT_FLOOR = 0.1;
 

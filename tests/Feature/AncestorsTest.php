@@ -16,7 +16,7 @@ function ancestorsChartFor($test, User $user, Person $person, array $query = [])
 
     $response->assertOk();
 
-    return $response->viewData('page')['props']['chart'];
+    return $response->viewData('page')['props']['ancestorChart'];
 }
 
 /**
@@ -139,7 +139,7 @@ test('the father is shown on the left and the mother on the right, whatever the 
     expect($parents[1]['person']['id'])->toBe($mother->id);
 });
 
-test('a known parent is shown with a placeholder for the missing one', function (Gender $gender, string $label, int $knownIndex) {
+test('a known parent is shown with a placeholder for the missing one', function (?Gender $gender, string $label, int $knownIndex) {
     $user = User::factory()->create();
     $child = Person::factory()->for($user->tree)->create();
     $parent = Person::factory()->for($user->tree)->state(['gender' => $gender])->create();
@@ -153,6 +153,7 @@ test('a known parent is shown with a placeholder for the missing one', function 
 })->with([
     'ojciec znany' => [Gender::Male, 'Nieznana matka', 0],
     'matka znana' => [Gender::Female, 'Nieznany ojciec', 1],
+    'rodzic bez płci' => [null, 'Nieznany rodzic', 0],
 ]);
 
 test('a placeholder has no parents of its own', function () {
@@ -205,10 +206,10 @@ test('a cycle in the stored relations does not hang the request', function () {
     linkParent($parent, $child);
     linkParent($child, $parent);
 
-    $chart = ancestorsChartFor($this, $user, $child);
+    $nodes = ancestorsChartPersonNodes(ancestorsChartFor($this, $user, $child)['root']);
 
-    expect($chart['root']['person']['id'])->toBe($child->id);
-    expect(ancestorsChartDepth($chart['root']))->toBeLessThanOrEqual(4);
+    expect(collect($nodes)->pluck('person.id')->all())->toBe([$child->id, $parent->id, $child->id, $parent->id]);
+    expect(collect($nodes)->pluck('repeated')->unique()->all())->toBe([true]);
 });
 
 test('the number of queries does not grow with the size of the tree', function () {
@@ -229,7 +230,7 @@ test('the number of queries does not grow with the size of the tree', function (
     expect($countQueries(5))->toBe($countQueries(0));
 });
 
-test('another tree\'s person is a 404 and the chart is not built', function () {
+test('another tree\'s person is a 404', function () {
     $user = User::factory()->create();
     $foreign = Person::factory()->create();
 

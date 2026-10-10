@@ -314,7 +314,6 @@ export function ZoomCanvas({
                         type="button"
                         variant="outline"
                         size="sm"
-                        className={ZOOM_NO_PAN_CLASS}
                         onClick={() => zoomByButton('in')}
                     >
                         Powiększ
@@ -323,7 +322,6 @@ export function ZoomCanvas({
                         type="button"
                         variant="outline"
                         size="sm"
-                        className={ZOOM_NO_PAN_CLASS}
                         onClick={() => zoomByButton('out')}
                     >
                         Pomniejsz
@@ -332,7 +330,6 @@ export function ZoomCanvas({
                         type="button"
                         variant="outline"
                         size="sm"
-                        className={ZOOM_NO_PAN_CLASS}
                         onClick={fitAgain}
                     >
                         Dopasuj

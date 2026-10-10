@@ -106,6 +106,7 @@ test('guests are redirected to the login page from the tree routes', function ()
 
     $this->get(route('tree.index'))->assertRedirect(route('login'));
     $this->get(route('tree.show', $person))->assertRedirect(route('login'));
+    $this->get(route('tree.ancestors', $person))->assertRedirect(route('login'));
 });
 
 test('the tree index has no sheet without a proband', function () {

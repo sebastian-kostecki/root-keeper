@@ -25,7 +25,7 @@ class TreeAncestorsController extends Controller
         Gate::authorize('view', $person);
 
         return Inertia::render('tree/ancestors', [
-            'chart' => $buildAncestorChart->handle($person, $this->generationsParameter($request)),
+            'ancestorChart' => $buildAncestorChart->handle($person, $this->generationsParameter($request)),
         ]);
     }
 

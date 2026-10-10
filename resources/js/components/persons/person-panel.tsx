@@ -33,7 +33,9 @@ export function PersonPanel() {
     const hints = sheet ? centreHints(sheet) : null;
     // Only the ancestors page passes a chart; its centre and generations go to "Pokaż przodków".
     const chart =
-        'chart' in props ? (props.chart as AncestorChart | null) : null;
+        'ancestorChart' in props
+            ? (props.ancestorChart as AncestorChart | null)
+            : null;
     const ancestorsContext = chart
         ? { focusId: chart.focus.id, generations: chart.generations }
         : null;

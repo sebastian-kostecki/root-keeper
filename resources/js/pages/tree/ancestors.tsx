@@ -10,7 +10,7 @@ import {
 import type { AncestorChart as AncestorChartData } from '@/types';
 
 type Props = {
-    chart: AncestorChartData;
+    ancestorChart: AncestorChartData;
 };
 
 /** Generation counts the switch offers; the server accepts the same range. */
@@ -19,7 +19,7 @@ const GENERATION_ITEMS = ['2', '3', '4', '5', '6'].map((value) => ({
     label: value,
 }));
 
-export default function Ancestors({ chart }: Props) {
+export default function Ancestors({ ancestorChart: chart }: Props) {
     setLayoutProps({
         breadcrumbs: [
             { title: 'Drzewo', href: treeIndex() },

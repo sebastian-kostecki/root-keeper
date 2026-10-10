@@ -102,6 +102,20 @@ describe('layoutAncestorChart', () => {
         expect(new Set(layout.cards.map((card) => card.key)).size).toBe(3);
     });
 
+    it('centres the uneven branches of a three-column chart', () => {
+        const layout = layoutAncestorChart(
+            known(1, [known(2, [unknown(), unknown()]), unknown()]),
+        );
+
+        expect(layout.links).toHaveLength(2);
+        expect(layout.links).toEqual(
+            expect.arrayContaining([
+                { generation: 1, from: 1, to: 2.5, trunk: 1.5 },
+                { generation: 2, from: 0.5, to: 1.5, trunk: 1 },
+            ]),
+        );
+    });
+
     it('keeps every link with from <= trunk <= to', () => {
         const layout = layoutAncestorChart(
             known(1, [known(2, [unknown(), unknown()]), known(3)]),
