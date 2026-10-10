@@ -11,6 +11,7 @@ use App\Http\Controllers\ParishController;
 use App\Http\Controllers\ParishMergeController;
 use App\Http\Controllers\PersonChildController;
 use App\Http\Controllers\PersonController;
+use App\Http\Controllers\PersonNoteController;
 use App\Http\Controllers\PersonParentController;
 use App\Http\Controllers\PersonSpouseController;
 use App\Http\Controllers\SidePanelDemoController;
@@ -51,6 +52,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('persons/{person}/children', [PersonChildController::class, 'store'])->name('persons.children.store');
     Route::post('persons/{person}/spouses/attach', [PersonSpouseController::class, 'attach'])->name('persons.spouses.attach');
     Route::post('persons/{person}/spouses', [PersonSpouseController::class, 'store'])->name('persons.spouses.store');
+    Route::put('persons/{person}/note', [PersonNoteController::class, 'update'])->name('persons.note.update');
 
     Route::resource('parent-child-relations', ParentChildRelationController::class)->only(['store', 'destroy']);
 

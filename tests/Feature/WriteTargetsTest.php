@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Locality;
+use App\Models\Person;
 use App\Models\Residence;
 use App\Models\User;
 use Illuminate\Support\Facades\Storage;
@@ -301,6 +302,37 @@ test('editing a person in the preview changes only that person and the birth fac
         expect($table['added'])->toBe([]);
     }
 
+    expect($diff['files'])->toBe(['removed' => [], 'added' => []]);
+});
+
+test('saving a note from the preview changes only that person people row', function () {
+    Storage::fake('local');
+
+    $user = User::factory()->create();
+    $person = Person::factory()->for($user->tree)->create(['note' => 'Stara notatka']);
+    Person::factory()->for($user->tree)->create(['note' => 'Cudza notatka']);
+
+    $before = databaseRows();
+
+    $this->actingAs($user)->put(route('persons.note.update', $person), ['note' => "Nowy akapit.\n\nDrugi."])
+        ->assertSessionHasNoErrors()
+        ->assertRedirect();
+
+    $diff = rowDiff($before, databaseRows());
+
+    expect(array_keys($diff['tables']))->toBe(['people']);
+    expect($diff['tables']['people']['added'])->toBe([]);
+    expect($diff['tables']['people']['removed'])->toBe([]);
+    expect($diff['tables']['people']['changed'])->toHaveCount(1);
+
+    $change = $diff['tables']['people']['changed'][0];
+
+    expect($change['before']['id'])->toBe($person->id);
+    expect($change['after']['note'])->toBe("Nowy akapit.\n\nDrugi.");
+    // updated_at is bumped but may land in the same second as the previous write.
+    $changedColumns = array_keys(array_diff_assoc($change['after'], $change['before']));
+    expect($changedColumns)->toContain('note');
+    expect(array_diff($changedColumns, ['note', 'updated_at']))->toBe([]);
     expect($diff['files'])->toBe(['removed' => [], 'added' => []]);
 });
 

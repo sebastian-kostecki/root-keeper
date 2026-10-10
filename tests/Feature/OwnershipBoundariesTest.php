@@ -83,6 +83,7 @@ function ownershipRouteCases(): array
         ['persons.spouses.attach', 'post', fn (array $r): array => ['person' => $r['victimPerson']->id], fn (array $r): array => ['spouse_id' => $r['ownPerson']->id]],
         ['persons.spouses.store', 'post', fn (array $r): array => ['person' => $r['victimPerson']->id], fn (array $r): array => ['first_name' => 'Anna']],
         ['persons.update', 'put', fn (array $r): array => ['person' => $r['victimPerson']->id], fn (array $r): array => ['first_name' => 'Hacked']],
+        ['persons.note.update', 'put', fn (array $r): array => ['person' => $r['victimPerson']->id], fn (array $r): array => ['note' => 'Przejęta']],
         ['sources.update', 'put', fn (array $r): array => ['source' => $r['victimSource']->id], fn (array $r): array => ['kind' => 'other', 'name' => 'Przejęte']],
         ['localities.update', 'put', fn (array $r): array => ['locality' => $r['victimLocality']->id], fn (array $r): array => ['name' => 'Przejęta']],
         ['localities.merge', 'post', fn (array $r): array => ['locality' => $r['victimLocality']->id], fn (array $r): array => ['target_id' => $r['ownLocality']->id]],

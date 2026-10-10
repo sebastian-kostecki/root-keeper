@@ -27,7 +27,10 @@ class BuildPersonPreview
         $person->load(['events.sources', 'events.locality', 'parents.events', 'children.events', 'marriages.sources', 'marriages.locality', 'marriages.participants.events', 'residences.locality', 'gravestones.cemetery']);
 
         return [
-            'person' => PersonResource::make($person)->resolve(),
+            'person' => [
+                ...PersonResource::make($person)->resolve(),
+                'note' => $person->note,
+            ],
             'personForm' => PersonFormResource::make($person)->resolve(),
             'genders' => Gender::options(),
             'religions' => Religion::options(),

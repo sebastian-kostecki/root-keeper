@@ -25,10 +25,11 @@ use Illuminate\Support\Facades\Date;
  * @property Gender|null $gender
  * @property string|null $residence
  * @property Religion|null $religion
+ * @property string|null $note
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
-#[Fillable(['tree_id', 'first_name', 'last_name', 'maiden_name', 'gender', 'residence', 'religion'])]
+#[Fillable(['tree_id', 'first_name', 'last_name', 'maiden_name', 'gender', 'residence', 'religion', 'note'])]
 class Person extends Model
 {
     /** @use HasFactory<PersonFactory> */
