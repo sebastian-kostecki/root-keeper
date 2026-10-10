@@ -1,10 +1,19 @@
-import type { PersonFormData, PersonFormEvent } from '@/types';
+import MarriageController from '@/actions/App/Http/Controllers/MarriageController';
+import type {
+    LocalityOption,
+    PersonFormData,
+    PersonFormEvent,
+    SourcedPersonEvent,
+} from '@/types';
 
 /** Form values of one edited section, keyed by input name (`birth.year`, ...). */
 export type SectionValues = Record<string, string>;
 
 /** Sections that save through `PUT persons/{id}`. */
 export type PersonSection = 'personal' | 'birth' | 'death' | 'residences';
+
+/** Body of `PUT marriages/{id}`. */
+export type MarriageSavePayload = { marriage: PartialDatePayload };
 
 export type PartialDatePayload = {
     year: number | null;
@@ -169,4 +178,32 @@ export function mergeSectionIntoPayload(
     }
 
     return payload;
+}
+
+/** Values of the marriage fields as `MarriageFields` shows them. */
+export function marriageFieldDefaults(marriage: SourcedPersonEvent): {
+    year: number | null;
+    month: number | null;
+    day: number | null;
+    is_approximate: boolean;
+    locality: LocalityOption | null;
+} {
+    return {
+        ...marriage.date_parts,
+        locality:
+            marriage.locality_id === null
+                ? null
+                : { id: marriage.locality_id, name: marriage.place ?? '' },
+    };
+}
+
+/** `PUT marriages/{id}` request for the edited values of the marriage card. */
+export function marriageSaveRequest(
+    marriageId: number,
+    values: SectionValues,
+): readonly [string, MarriageSavePayload] {
+    return [
+        MarriageController.update.url(marriageId),
+        { marriage: eventPayloadFromValues('marriage', values) },
+    ];
 }

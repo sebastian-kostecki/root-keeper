@@ -5,6 +5,7 @@
  */
 export const PANEL_PROPS = {
     person: 'personPreview',
+    marriage: 'marriagePanel',
     demo: 'demoPanel',
     locality: 'localityPanel',
     parish: 'parishPanel',

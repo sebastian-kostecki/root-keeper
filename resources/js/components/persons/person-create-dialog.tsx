@@ -39,7 +39,7 @@ type Resolver = RefObject<((isSaved: boolean) => void) | null>;
 /** "Dodaj osobę": the person modal shell in create mode, every card open. */
 export function PersonCreateDialog(props: Props) {
     return (
-        <SectionEditorProvider personId={0}>
+        <SectionEditorProvider record={{ key: 'person', id: 0 }}>
             <PersonCreateDialogContent {...props} />
         </SectionEditorProvider>
     );

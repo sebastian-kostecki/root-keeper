@@ -56,6 +56,18 @@ export type Marriage = SourcedPersonEvent & {
     } | null;
 };
 
+/** A spouse as the marriage carries it: `Marriage['spouse']` once the null case is handled. */
+export type PersonSummary = NonNullable<Marriage['spouse']>;
+
+/** Payload of the marriage side panel (`marriagePanel` shared prop, `BuildMarriagePanel`). */
+export type MarriagePanelPayload = {
+    marriage: SourcedPersonEvent;
+    /** Both spouses, in the fixed order of `PersonOrdering::spouses`. */
+    spouses: PersonSummary[];
+    /** Children both spouses share. */
+    children: PersonSummary[];
+};
+
 export type PersonAge = {
     unit: 'years' | 'months' | 'days' | 'under_year';
     value: number | null;

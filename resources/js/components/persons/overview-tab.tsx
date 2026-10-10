@@ -1,9 +1,8 @@
 import { Link, router } from '@inertiajs/react';
-import { useState } from 'react';
-import MarriageController from '@/actions/App/Http/Controllers/MarriageController';
 import PersonController from '@/actions/App/Http/Controllers/PersonController';
 import SourceController from '@/actions/App/Http/Controllers/SourceController';
 import { EventSourceStatus } from '@/components/persons/event-source-status';
+import { Field } from '@/components/persons/fact-field';
 import {
     BirthFields,
     DeathFields,
@@ -20,9 +19,13 @@ import type { SectionId } from '@/components/persons/section-editor';
 import { SourcePickerDialog } from '@/components/sources/source-picker-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { mergeSectionIntoPayload } from '@/lib/person-payload';
+import { useSectionSave } from '@/hooks/use-section-save';
+import {
+    marriageFieldDefaults,
+    marriageSaveRequest,
+    mergeSectionIntoPayload,
+} from '@/lib/person-payload';
 import type { PersonSection, SectionValues } from '@/lib/person-payload';
-import { eventPayloadFromValues } from '@/lib/person-payload';
 import { formatPartialDate } from '@/lib/partial-date';
 import { formatYearRange } from '@/lib/year-range';
 import type {
@@ -38,8 +41,6 @@ type Props = {
     preview: PersonPreviewPayload;
     availableSources?: Source[];
 };
-
-type Errors = Record<string, string>;
 
 const PERSONAL_KEYS = [
     'first_name',
@@ -80,17 +81,6 @@ function SectionHeading({ title }: { title: string }) {
             <h3 className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
                 {title}
             </h3>
-        </div>
-    );
-}
-
-function Field({ label, value }: { label: string; value: string | null }) {
-    return (
-        <div>
-            <p className="text-muted-foreground text-sm">{label}</p>
-            <p className={value ? undefined : 'text-muted-foreground'}>
-                {value ?? 'brak danych'}
-            </p>
         </div>
     );
 }
@@ -250,11 +240,8 @@ function EmptyFact({
 export function OverviewTab({ preview, availableSources }: Props) {
     const { person, personForm } = preview;
     const editor = useSectionEditor();
-    const [savingId, setSavingId] = useState<SectionId | null>(null);
-    const [failure, setFailure] = useState<{
-        id: SectionId;
-        errors: Errors;
-    } | null>(null);
+    const { savingId, errorsFor, strayErrorFor, save } =
+        useSectionSave(belongsToSection);
 
     const residences = person.residences ?? [];
     const gravestones = person.gravestones ?? [];
@@ -268,67 +255,36 @@ export function OverviewTab({ preview, availableSources }: Props) {
      * render (the one on screen at submit time), never from a snapshot taken
      * when editing began.
      */
-    const save = (id: SectionId, values: SectionValues): Promise<boolean> =>
-        new Promise((resolve) => {
-            const marriageId = id.startsWith('marriage-')
-                ? Number(id.slice('marriage-'.length))
-                : null;
+    const saveSection = (
+        id: SectionId,
+        values: SectionValues,
+    ): Promise<boolean> => {
+        const marriageId = id.startsWith('marriage-')
+            ? Number(id.slice('marriage-'.length))
+            : null;
 
-            const [url, payload] =
-                marriageId === null
-                    ? ([
-                          PersonController.update.url(personForm.id),
-                          mergeSectionIntoPayload(
-                              personForm,
-                              id as PersonSection,
-                              values,
-                          ),
-                      ] as const)
-                    : ([
-                          MarriageController.update.url(marriageId),
-                          {
-                              marriage: eventPayloadFromValues(
-                                  'marriage',
-                                  values,
-                              ),
-                          },
-                      ] as const);
+        if (marriageId === null) {
+            return save(
+                id,
+                PersonController.update.url(personForm.id),
+                mergeSectionIntoPayload(
+                    personForm,
+                    id as PersonSection,
+                    values,
+                ),
+            );
+        }
 
-            router.put(url, payload, {
-                preserveScroll: true,
-                preserveState: true,
-                onStart: () => setSavingId(id),
-                onSuccess: () => {
-                    setFailure(null);
-                    resolve(true);
-                },
-                onError: (errors) => {
-                    setFailure({ id, errors });
-                    resolve(false);
-                },
-                onFinish: () => {
-                    setSavingId(null);
-                    resolve(false);
-                },
-            });
-        });
+        const [url, payload] = marriageSaveRequest(marriageId, values);
 
-    const errorsFor = (id: SectionId): Errors =>
-        failure !== null && failure.id === id && editor.editing === id
-            ? failure.errors
-            : {};
-
-    /** First server error the section's fields do not show. */
-    const strayErrorFor = (id: SectionId): string | undefined =>
-        Object.entries(errorsFor(id)).find(
-            ([key]) => !belongsToSection(id, key),
-        )?.[1];
+        return save(id, url, payload);
+    };
 
     const cardProps = (id: SectionId) => ({
         id,
         processing: savingId === id,
         error: strayErrorFor(id),
-        onSubmit: (values: SectionValues) => save(id, values),
+        onSubmit: (values: SectionValues) => saveSection(id, values),
     });
 
     return (
@@ -462,18 +418,9 @@ export function OverviewTab({ preview, availableSources }: Props) {
                                 edit={
                                     <MarriageFields
                                         errors={errorsFor(id)}
-                                        defaultValue={{
-                                            ...marriage.date_parts,
-                                            locality:
-                                                marriage.locality_id === null
-                                                    ? null
-                                                    : {
-                                                          id: marriage.locality_id,
-                                                          name:
-                                                              marriage.place ??
-                                                              '',
-                                                      },
-                                        }}
+                                        defaultValue={marriageFieldDefaults(
+                                            marriage,
+                                        )}
                                     />
                                 }
                             />

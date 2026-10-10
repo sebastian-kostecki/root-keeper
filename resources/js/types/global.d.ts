@@ -1,6 +1,9 @@
 import type { Auth } from '@/types/auth';
 import type { LocalityOption } from '@/types/parish';
-import type { PersonPreviewPayload } from '@/types/person';
+import type {
+    MarriagePanelPayload,
+    PersonPreviewPayload,
+} from '@/types/person';
 import type { Source } from '@/types/source';
 
 declare module 'react' {
@@ -22,6 +25,7 @@ declare module '@inertiajs/core' {
                 parishes: number;
             } | null;
             personPreview: PersonPreviewPayload | null;
+            marriagePanel: MarriagePanelPayload | null;
             availableSources?: Source[];
             localityOptions?: LocalityOption[];
             [key: string]: unknown;

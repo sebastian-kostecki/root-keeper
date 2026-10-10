@@ -29,6 +29,18 @@ describe('withPanel', () => {
         );
     });
 
+    it('opens the marriage panel and drops the key of the person panel', () => {
+        expect(withPanel('/tree?person=7', 'marriage', 4)).toBe(
+            '/tree?marriage=4',
+        );
+    });
+
+    it('opens the person panel and drops the key of the marriage panel', () => {
+        expect(withPanel('/tree?marriage=4&sort=name', 'person', 7)).toBe(
+            '/tree?sort=name&person=7',
+        );
+    });
+
     it('removes only its own key on null', () => {
         expect(withPanel('/tree?person=7&sort=name', 'person', null)).toBe(
             '/tree?sort=name',
@@ -55,5 +67,9 @@ describe('panelVisitOptions', () => {
         for (const prop of Object.values(PANEL_PROPS)) {
             expect(panelVisitOptions.only).toContain(prop);
         }
+    });
+
+    it('reloads the marriage panel prop', () => {
+        expect(panelVisitOptions.only).toContain('marriagePanel');
     });
 });

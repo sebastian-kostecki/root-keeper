@@ -9,6 +9,7 @@ import {
 } from 'react';
 import type { MouseEvent, ReactNode } from 'react';
 import { Button } from '@/components/ui/button';
+import type { PanelKey } from '@/lib/side-panel-url';
 
 export type SectionId =
     | 'personal'
@@ -75,18 +76,22 @@ type PendingExit = { action: () => void };
 
 /**
  * Owns "which section is editing, is it dirty, what exit is waiting for the
- * user's decision" for the person panel. Hosted by the layout, so it also wraps
- * the page beside the panel; `personId` is null while no panel is open. Resets
- * whenever the shown person changes, including to and from null.
+ * user's decision" for the side panels that edit records: the person panel and
+ * the marriage panel. Hosted by the layout, so it also wraps the page beside
+ * the panel; `record` is null while no panel is open. Resets whenever the
+ * shown record changes (`${key}:${id}`), including to and from null.
  */
 export function SectionEditorProvider({
-    personId,
+    record,
     children,
 }: {
-    personId: number | null;
+    record: { key: PanelKey; id: number } | null;
     children: ReactNode;
 }) {
-    const [shownPersonId, setShownPersonId] = useState(personId);
+    const recordParam = record === null ? null : record.key;
+    const recordId = record === null ? null : record.id;
+    const recordKey = record === null ? null : `${record.key}:${record.id}`;
+    const [shownRecordKey, setShownRecordKey] = useState(recordKey);
     const [edit, setEdit] = useState<EditState | null>(null);
     const [isDirty, setIsDirty] = useState(false);
     const [pending, setPending] = useState<PendingExit | null>(null);
@@ -95,8 +100,8 @@ export function SectionEditorProvider({
     /** True while an exit the user already let through runs; its visits pass the page guard. */
     const isLeavingRef = useRef(false);
 
-    if (shownPersonId !== personId) {
-        setShownPersonId(personId);
+    if (shownRecordKey !== recordKey) {
+        setShownRecordKey(recordKey);
         setEdit(null);
         setIsDirty(false);
         setPending(null);
@@ -104,25 +109,25 @@ export function SectionEditorProvider({
 
     /**
      * A visit started beside the panel (sidebar, breadcrumbs, another record's
-     * panel from a list) drops `?person` and the unsaved section with it, so
-     * while a section is dirty it waits on the guard bar. Saves, prefetches and
-     * visits that keep the shown person open pass.
+     * panel from a list) drops the panel's query key and the unsaved section
+     * with it, so while a section is dirty it waits on the guard bar. Saves,
+     * prefetches and visits that keep the shown record open pass.
      */
     useEffect(() => {
-        if (!isDirty || personId === null) {
+        if (!isDirty || recordParam === null || recordId === null) {
             return;
         }
 
         return router.on('before', (event) => {
             const { visit } = event.detail;
-            const keepsPerson =
-                visit.url.searchParams.get('person') === String(personId);
+            const keepsRecord =
+                visit.url.searchParams.get(recordParam) === String(recordId);
 
             if (
                 isLeavingRef.current ||
                 visit.prefetch ||
                 visit.method !== 'get' ||
-                keepsPerson
+                keepsRecord
             ) {
                 return;
             }
@@ -143,7 +148,7 @@ export function SectionEditorProvider({
 
             return false;
         });
-    }, [isDirty, isSaving, personId]);
+    }, [isDirty, isSaving, recordParam, recordId]);
 
     /** Runs an exit the user let through, so the page guard lets its visit pass. */
     const leave = (action: () => void) => {

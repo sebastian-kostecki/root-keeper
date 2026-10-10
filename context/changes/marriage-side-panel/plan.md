@@ -483,33 +483,33 @@ Brak zmian schematu i danych.
 
 #### Automated
 
-- [x] 1.1 Pest małżeństw, drzewa i granic przechodzi: `vendor/bin/sail artisan test --compact tests/Feature/MarriagesTest.php tests/Feature/TreeTest.php tests/Feature/OwnershipBoundariesTest.php`
-- [x] 1.2 Pest pozostałych miejsc z małżeństwami przechodzi: `vendor/bin/sail artisan test --compact tests/Feature/PersonsTest.php tests/Feature/WriteTargetsTest.php tests/Feature/DeleteImpactTest.php tests/Feature/SourcesTest.php`
-- [x] 1.3 Larastan przechodzi: `vendor/bin/sail composer types:check`
-- [x] 1.4 Pint czysty: `vendor/bin/sail bin pint --dirty --format agent`
-- [x] 1.5 Typy przechodzą po dodaniu `marriage_id`: `vendor/bin/sail npm run types:check`
+- [x] 1.1 Pest małżeństw, drzewa i granic przechodzi: `vendor/bin/sail artisan test --compact tests/Feature/MarriagesTest.php tests/Feature/TreeTest.php tests/Feature/OwnershipBoundariesTest.php` — 6308889
+- [x] 1.2 Pest pozostałych miejsc z małżeństwami przechodzi: `vendor/bin/sail artisan test --compact tests/Feature/PersonsTest.php tests/Feature/WriteTargetsTest.php tests/Feature/DeleteImpactTest.php tests/Feature/SourcesTest.php` — 6308889
+- [x] 1.3 Larastan przechodzi: `vendor/bin/sail composer types:check` — 6308889
+- [x] 1.4 Pint czysty: `vendor/bin/sail bin pint --dirty --format agent` — 6308889
+- [x] 1.5 Typy przechodzą po dodaniu `marriage_id`: `vendor/bin/sail npm run types:check` — 6308889
 
 #### Manual
 
-- [x] 1.6 `/tree/{id}?marriage={id}` w przeglądarce zwraca stronę, a w props Inertii (devtools) jest `marriagePanel` z małżonkami w kolejności mężczyzna–kobieta i samymi wspólnymi dziećmi
+- [x] 1.6 `/tree/{id}?marriage={id}` w przeglądarce zwraca stronę, a w props Inertii (devtools) jest `marriagePanel` z małżonkami w kolejności mężczyzna–kobieta i samymi wspólnymi dziećmi — 6308889
 
 ### Phase 2: Uogólniony strażnik i panel małżeństwa
 
 #### Automated
 
-- [ ] 2.1 Format i lint przechodzą: `vendor/bin/sail npm run check`
-- [ ] 2.2 Typy przechodzą: `vendor/bin/sail npm run types:check`
-- [ ] 2.3 Vitest przechodzi, w tym nowe przypadki rejestru: `vendor/bin/sail npm run test:js`
-- [ ] 2.4 Build przechodzi: `vendor/bin/sail npm run build`
-- [ ] 2.5 Istniejące E2E panelu osoby i strażnika przechodzą bez zmian w specach: `npx playwright test tests/e2e/person-side-panel.spec.ts tests/e2e/person-panel-unsaved-guard.spec.ts tests/e2e/person-panel-page-navigation-guard.spec.ts tests/e2e/tree-slot-spouse.spec.ts`
+- [x] 2.1 Format i lint przechodzą: `vendor/bin/sail npm run check`
+- [x] 2.2 Typy przechodzą: `vendor/bin/sail npm run types:check`
+- [x] 2.3 Vitest przechodzi, w tym nowe przypadki rejestru: `vendor/bin/sail npm run test:js`
+- [x] 2.4 Build przechodzi: `vendor/bin/sail npm run build`
+- [x] 2.5 Istniejące E2E panelu osoby i strażnika przechodzą bez zmian w specach: `npx playwright test tests/e2e/person-side-panel.spec.ts tests/e2e/person-panel-unsaved-guard.spec.ts tests/e2e/person-panel-page-navigation-guard.spec.ts tests/e2e/tree-slot-spouse.spec.ts`
 
 #### Manual
 
-- [ ] 2.6 `/tree/{id}?marriage={id}` przy 1366 px pokazuje panel obok zwężonego drzewa: tytuł mężczyzna i kobieta, karta „Ślub”, źródła, tylko wspólne dzieci
-- [ ] 2.7 Edycja daty i miejsca w karcie „Ślub” zapisuje się, a panel osoby małżonka pokazuje nową wartość
-- [ ] 2.8 Powiązanie źródła, numer wpisu i odpięcie w panelu małżeństwa działają, a panel zostaje otwarty
-- [ ] 2.9 Brudna karta „Ślub” i kolejno X, Escape, klik dziecka, klik „Źródła” w menu bocznym: każde pokazuje pasek „Masz niezapisane zmiany w małżeństwie”
-- [ ] 2.10 „Usuń małżeństwo” w nagłówku: po potwierdzeniu panel znika, drzewo zostaje w tym samym miejscu, bez strony 404
+- [x] 2.6 `/tree/{id}?marriage={id}` przy 1366 px pokazuje panel obok zwężonego drzewa: tytuł mężczyzna i kobieta, karta „Ślub”, źródła, tylko wspólne dzieci
+- [x] 2.7 Edycja daty i miejsca w karcie „Ślub” zapisuje się, a panel osoby małżonka pokazuje nową wartość
+- [x] 2.8 Powiązanie źródła, numer wpisu i odpięcie w panelu małżeństwa działają, a panel zostaje otwarty
+- [x] 2.9 Brudna karta „Ślub” i kolejno X, Escape, klik dziecka, klik „Źródła” w menu bocznym: każde pokazuje pasek „Masz niezapisane zmiany w małżeństwie”
+- [x] 2.10 „Usuń małżeństwo” w nagłówku: po potwierdzeniu panel znika, drzewo zostaje w tym samym miejscu, bez strony 404
 
 ### Phase 3: Wejścia do panelu
 

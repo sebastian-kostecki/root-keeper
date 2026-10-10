@@ -1,4 +1,5 @@
 import { usePage } from '@inertiajs/react';
+import { MarriagePanel } from '@/components/marriages/marriage-panel';
 import { PersonPanel } from '@/components/persons/person-panel';
 import { PersonPreviewProvider } from '@/components/persons/person-preview-provider';
 import { SectionEditorProvider } from '@/components/persons/section-editor';
@@ -15,14 +16,18 @@ export default function AppLayout({
     fillHeight?: boolean;
     children: React.ReactNode;
 }) {
-    const { personPreview } = usePage().props;
+    const { personPreview, marriagePanel } = usePage().props;
+
+    const record = personPreview
+        ? { key: 'person' as const, id: personPreview.person.id }
+        : marriagePanel
+          ? { key: 'marriage' as const, id: marriagePanel.marriage.id }
+          : null;
 
     return (
         <PersonPreviewProvider>
             <SidePanelSlotProvider>
-                <SectionEditorProvider
-                    personId={personPreview?.person.id ?? null}
-                >
+                <SectionEditorProvider record={record}>
                     <AppLayoutTemplate
                         breadcrumbs={breadcrumbs}
                         fillHeight={fillHeight}
@@ -30,6 +35,7 @@ export default function AppLayout({
                         {children}
                     </AppLayoutTemplate>
                     <PersonPanel />
+                    <MarriagePanel />
                 </SectionEditorProvider>
             </SidePanelSlotProvider>
         </PersonPreviewProvider>
