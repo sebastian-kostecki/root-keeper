@@ -408,22 +408,22 @@ Migracja dodaje tylko nullable kolumnę `people.note` — nie przenosi danych i 
 
 #### Automated
 
-- [x] 1.1 Migracja stosuje się i cofa: `vendor/bin/sail artisan migrate` oraz `vendor/bin/sail artisan migrate:rollback --step=1 && vendor/bin/sail artisan migrate`
-- [x] 1.2 Testy notatki przechodzą: `vendor/bin/sail artisan test --compact tests/Feature/PersonNoteTest.php`
-- [x] 1.3 Testy granic przechodzą: `vendor/bin/sail artisan test --compact tests/Feature/OwnershipBoundariesTest.php tests/Feature/WriteTargetsTest.php tests/Feature/PersonsTest.php`
-- [x] 1.4 Larastan i Pint czyste: `vendor/bin/sail composer types:check` oraz `vendor/bin/sail bin pint --dirty --format agent`
+- [x] 1.1 Migracja stosuje się i cofa: `vendor/bin/sail artisan migrate` oraz `vendor/bin/sail artisan migrate:rollback --step=1 && vendor/bin/sail artisan migrate` — 60f92a5
+- [x] 1.2 Testy notatki przechodzą: `vendor/bin/sail artisan test --compact tests/Feature/PersonNoteTest.php` — 60f92a5
+- [x] 1.3 Testy granic przechodzą: `vendor/bin/sail artisan test --compact tests/Feature/OwnershipBoundariesTest.php tests/Feature/WriteTargetsTest.php tests/Feature/PersonsTest.php` — 60f92a5
+- [x] 1.4 Larastan i Pint czyste: `vendor/bin/sail composer types:check` oraz `vendor/bin/sail bin pint --dirty --format agent` — 60f92a5
 
 #### Manual
 
-- [x] 1.5 `vendor/bin/sail artisan route:list --name=persons.note` pokazuje `PUT persons/{person}/note`
+- [x] 1.5 `vendor/bin/sail artisan route:list --name=persons.note` pokazuje `PUT persons/{person}/note` — 60f92a5
 
 ### Phase 2: Oś wydarzeń — backend
 
 #### Automated
 
-- [ ] 2.1 Testy osi przechodzą: `vendor/bin/sail artisan test --compact tests/Feature/PersonTimelineTest.php`
-- [ ] 2.2 Testy podglądu bez regresji: `vendor/bin/sail artisan test --compact tests/Feature/PersonsTest.php tests/Feature/MarriagesTest.php tests/Feature/EventSourcesTest.php`
-- [ ] 2.3 Larastan i Pint czyste: `vendor/bin/sail composer types:check` oraz `vendor/bin/sail bin pint --dirty --format agent`
+- [x] 2.1 Testy osi przechodzą: `vendor/bin/sail artisan test --compact tests/Feature/PersonTimelineTest.php`
+- [x] 2.2 Testy podglądu bez regresji: `vendor/bin/sail artisan test --compact tests/Feature/PersonsTest.php tests/Feature/MarriagesTest.php tests/Feature/EventSourcesTest.php`
+- [x] 2.3 Larastan i Pint czyste: `vendor/bin/sail composer types:check` oraz `vendor/bin/sail bin pint --dirty --format agent`
 
 ### Phase 3: Zakładki Wydarzenia i Notatka — frontend
 
