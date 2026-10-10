@@ -33,6 +33,11 @@ export type PersonPreview = {
             id: number;
             sources?: { id: number; entry_number: string | null }[];
         } | null;
+        marriages: {
+            id: number;
+            date: string | null;
+            spouse: { id: number } | null;
+        }[];
     };
 };
 
@@ -192,6 +197,59 @@ export async function createParent(
     }
 
     return parent.id;
+}
+
+/**
+ * `persons.children.store`: a new child of `parentId`, and of `otherParentId`
+ * when given. The route redirects back with no id, so the child is found again
+ * by its unique name.
+ */
+async function createChild(
+    page: Page,
+    parentId: number,
+    fields: PersonFields & { first_name: string; last_name: string },
+    otherParentId?: number,
+): Promise<number> {
+    const response = await page.request.post(`/persons/${parentId}/children`, {
+        headers: await writeHeaders(page),
+        form: {
+            ...personForm(fields),
+            ...(otherParentId !== undefined && {
+                other_parent_id: otherParentId,
+            }),
+        },
+        maxRedirects: 0,
+    });
+    await expectRedirect(response);
+
+    const name = `${fields.first_name} ${fields.last_name}`;
+    const child = (await findPersons(page, fields.last_name)).find(
+        (person) => person.display_name === name,
+    );
+    if (!child) {
+        throw new Error(`The new child ${name} was not created`);
+    }
+
+    return child.id;
+}
+
+/** A child of both spouses of a marriage: `persons.children.store` with `other_parent_id`. */
+export function createChildOfCouple(
+    page: Page,
+    husbandId: number,
+    wifeId: number,
+    fields: PersonFields & { first_name: string; last_name: string },
+): Promise<number> {
+    return createChild(page, husbandId, fields, wifeId);
+}
+
+/** A child of one parent only: `persons.children.store` without `other_parent_id`. */
+export function createChildOfOneParent(
+    page: Page,
+    parentId: number,
+    fields: PersonFields & { first_name: string; last_name: string },
+): Promise<number> {
+    return createChild(page, parentId, fields);
 }
 
 /**

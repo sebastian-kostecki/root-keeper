@@ -91,7 +91,7 @@ function PersonLink({ person }: { person: PersonSummary }) {
 export function MarriagePanel() {
     const { marriagePanel, availableSources } = usePage().props;
     const { close } = useMarriagePanel();
-    const { requestExit } = useSectionEditor();
+    const { requestExit, hasPendingExit } = useSectionEditor();
     const { savingId, errorsFor, strayErrorFor, save } =
         useSectionSave(belongsToMarriage);
 
@@ -133,6 +133,7 @@ export function MarriagePanel() {
                     }
                 />
             }
+            footer={hasPendingExit ? <UnsavedChangesBar /> : undefined}
         >
             <div className="space-y-6">
                 <PanelRegion title="Małżonkowie">
@@ -193,8 +194,6 @@ export function MarriagePanel() {
                     )}
                 </PanelRegion>
             </div>
-
-            <UnsavedChangesBar />
         </SidePanel>
     );
 }

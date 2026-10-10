@@ -21,7 +21,7 @@ export function PersonPanel() {
     const props = usePage().props;
     const { personPreview, availableSources } = props;
     const { close } = usePersonPreview();
-    const { requestExit } = useSectionEditor();
+    const { requestExit, hasPendingExit } = useSectionEditor();
 
     if (personPreview === null) {
         return null;
@@ -46,6 +46,7 @@ export function PersonPanel() {
                     hints={hints}
                 />
             }
+            footer={hasPendingExit ? <UnsavedChangesBar /> : undefined}
         >
             <PersonModalHeader person={person} isRootPerson={isRootPerson} />
 
@@ -53,8 +54,6 @@ export function PersonPanel() {
                 preview={personPreview}
                 availableSources={availableSources}
             />
-
-            <UnsavedChangesBar />
         </SidePanel>
     );
 }

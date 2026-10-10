@@ -344,7 +344,7 @@ export function UnsavedChangesBar() {
     return (
         <div
             role="alert"
-            className="bg-background absolute inset-x-0 bottom-0 z-30 flex flex-col gap-3 border-t px-6 py-4 shadow-lg sm:flex-row sm:items-center sm:justify-between"
+            className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
         >
             <p className="text-sm font-medium">
                 Masz niezapisane zmiany w {dirtyLabel}.

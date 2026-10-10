@@ -62,6 +62,16 @@ export async function chooseUnionMenuItem(
     await page.getByRole('menuitem', { name: item }).click();
 }
 
+/** Opens the marriage panel of the union shown on the tree (`Szczegóły małżeństwa`). */
+export async function openMarriageFromUnion(page: Page): Promise<void> {
+    await chooseUnionMenuItem(page, 'Szczegóły małżeństwa');
+}
+
+/** The marriage side panel, named `{husband} i {wife}`; a side panel, not a modal. */
+export function marriagePanel(page: Page, title: string): Locator {
+    return page.getByRole('dialog', { name: title });
+}
+
 /** From a confirmed fact (its region in the person dialog) to the linked source. */
 export async function openLinkedSource(
     fact: Locator,

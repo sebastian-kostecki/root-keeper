@@ -515,25 +515,25 @@ Brak zmian schematu i danych.
 
 #### Automated
 
-- [x] 3.1 Format i lint przechodzą: `vendor/bin/sail npm run check`
-- [x] 3.2 Typy przechodzą: `vendor/bin/sail npm run types:check`
-- [x] 3.3 Istniejące E2E drzewa przechodzą bez zmian w specach: `npx playwright test tests/e2e/tree-card-recentre.spec.ts tests/e2e/tree-slot-child.spec.ts tests/e2e/tree-slot-spouse.spec.ts tests/e2e/person-panel-show-on-tree.spec.ts`
+- [x] 3.1 Format i lint przechodzą: `vendor/bin/sail npm run check` — 125d5fa
+- [x] 3.2 Typy przechodzą: `vendor/bin/sail npm run types:check` — 125d5fa
+- [x] 3.3 Istniejące E2E drzewa przechodzą bez zmian w specach: `npx playwright test tests/e2e/tree-card-recentre.spec.ts tests/e2e/tree-slot-child.spec.ts tests/e2e/tree-slot-spouse.spec.ts tests/e2e/person-panel-show-on-tree.spec.ts` — 125d5fa
 
 #### Manual
 
-- [ ] 3.4 Menu węzła wybranego związku ze ślubem ma „Szczegóły małżeństwa”, a związek bez ślubu i nieznany partner jej nie mają
-- [ ] 3.5 Rodzina panelu osoby: link „Szczegóły małżeństwa z …” podmienia panel osoby na panel małżeństwa, a nazwa małżonka nadal otwiera jego panel
-- [ ] 3.6 Przy otwartym panelu małżeństwa klik karty centruje drzewo, a panel zostaje otwarty; zamknięcie panelu zostawia drzewo w tym samym miejscu
-- [ ] 3.7 Brudna sekcja w panelu osoby i „Szczegóły małżeństwa” w menu węzła: najpierw pasek, a „Porzuć” otwiera panel małżeństwa
+- [x] 3.4 Menu węzła wybranego związku ze ślubem ma „Szczegóły małżeństwa”, a związek bez ślubu i nieznany partner jej nie mają — 125d5fa
+- [x] 3.5 Rodzina panelu osoby: link „Szczegóły małżeństwa z …” podmienia panel osoby na panel małżeństwa, a nazwa małżonka nadal otwiera jego panel — 125d5fa
+- [x] 3.6 Przy otwartym panelu małżeństwa klik karty centruje drzewo, a panel zostaje otwarty; zamknięcie panelu zostawia drzewo w tym samym miejscu — 125d5fa
+- [x] 3.7 Brudna sekcja w panelu osoby i „Szczegóły małżeństwa” w menu węzła: najpierw pasek, a „Porzuć” otwiera panel małżeństwa — 125d5fa
 
 ### Phase 4: E2E panelu małżeństwa
 
 #### Automated
 
-- [ ] 4.1 Nowy spec przechodzi dwukrotnie: `npx playwright test tests/e2e/marriage-side-panel.spec.ts --repeat-each=2`
-- [ ] 4.2 Pełne E2E przechodzi: `npx playwright test`
-- [ ] 4.3 Format i lint przechodzą (specy i helpery): `vendor/bin/sail npm run check`
+- [x] 4.1 Nowy spec przechodzi dwukrotnie: `npx playwright test tests/e2e/marriage-side-panel.spec.ts --repeat-each=2`
+- [x] 4.2 Pełne E2E przechodzi: `npx playwright test`
+- [x] 4.3 Format i lint przechodzą (specy i helpery): `vendor/bin/sail npm run check`
 
 #### Manual
 
-- [ ] 4.4 Oba celowe błędy dały czerwony wynik w oczekiwanym miejscu i zostały cofnięte (zapis w raporcie `/10x-e2e`)
+- [x] 4.4 Oba celowe błędy dały czerwony wynik w oczekiwanym miejscu i zostały cofnięte (zapis w raporcie `/10x-e2e`)
