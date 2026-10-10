@@ -1,5 +1,6 @@
-import { EllipsisIcon } from 'lucide-react';
+import { EllipsisIcon, HeartHandshake } from 'lucide-react';
 import { useId, useState } from 'react';
+import { MarriagePanelLink } from '@/components/marriages/marriage-panel-link';
 import { EventSourceStatus } from '@/components/persons/event-source-status';
 import { PersonPreviewLink } from '@/components/persons/person-preview-link';
 import { RemoveMarriageDialog } from '@/components/persons/remove-marriage-dialog';
@@ -108,10 +109,12 @@ function PersonRowBody({
 
 function PersonRow({
     person,
+    action,
     menu,
     extra,
 }: {
     person: PersonLike;
+    action?: React.ReactNode;
     menu: React.ReactNode;
     extra?: React.ReactNode;
 }) {
@@ -128,6 +131,7 @@ function PersonRow({
             >
                 <PersonRowBody person={person} extra={extra} />
             </PersonPreviewLink>
+            {action}
             {menu}
         </li>
     );
@@ -254,7 +258,27 @@ function MarriageRow({
         );
     }
 
-    return <PersonRow person={marriage.spouse} menu={menu} extra={extra} />;
+    // The marriage link sits beside the spouse link, not inside it: nested links are invalid HTML.
+    const action = (
+        <Button variant="ghost" size="icon" className="size-8 shrink-0" asChild>
+            <MarriagePanelLink
+                marriageId={marriage.id}
+                aria-label={`Szczegóły małżeństwa z ${spouseName}`}
+                title="Szczegóły małżeństwa"
+            >
+                <HeartHandshake aria-hidden="true" />
+            </MarriagePanelLink>
+        </Button>
+    );
+
+    return (
+        <PersonRow
+            person={marriage.spouse}
+            action={action}
+            menu={menu}
+            extra={extra}
+        />
+    );
 }
 
 export function FamilyTab({ person }: Props) {

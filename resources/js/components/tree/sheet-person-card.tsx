@@ -8,6 +8,7 @@ import {
     cardInteractive,
     cardSurface,
 } from '@/components/tree/card-styles';
+import { useMarriagePanel } from '@/hooks/use-marriage-panel';
 import { formatAge } from '@/lib/age';
 import { genderCard } from '@/lib/gender-styles';
 import { cn } from '@/lib/utils';
@@ -53,6 +54,7 @@ function CardBody({ person }: { person: SheetPerson }) {
  */
 export function SheetPersonCard({ person, spouse, isFocus = false }: Props) {
     const { currentId } = usePersonPreview();
+    const { currentId: currentMarriageId } = useMarriagePanel();
     const body = cn(
         cardSurface,
         'text-card-foreground shadow-xs',
@@ -73,6 +75,9 @@ export function SheetPersonCard({ person, spouse, isFocus = false }: Props) {
                             ...(currentId === null
                                 ? {}
                                 : { person: currentId }),
+                            ...(currentMarriageId === null
+                                ? {}
+                                : { marriage: currentMarriageId }),
                         },
                     })}
                     className={cn(body, cardInteractive)}

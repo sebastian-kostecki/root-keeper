@@ -1,6 +1,7 @@
 import { router } from '@inertiajs/react';
 import { ChevronsUpDown, Plus } from 'lucide-react';
 import { useRef, useState } from 'react';
+import { useOptionalSectionEditor } from '@/components/persons/section-editor';
 import { AddSpouseDialog } from '@/components/tree/add-spouse-dialog';
 import { cardInteractive } from '@/components/tree/card-styles';
 import { ZOOM_NO_PAN_CLASS } from '@/components/zoom-canvas';
@@ -14,6 +15,7 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { useMarriagePanel } from '@/hooks/use-marriage-panel';
 import { pluralPhrase } from '@/lib/plural';
 import { cn } from '@/lib/utils';
 import { show as treeShow } from '@/routes/tree';
@@ -66,6 +68,8 @@ export function UnionNode({
 }: Props) {
     const triggerRef = useRef<HTMLButtonElement>(null);
     const [addSpouseOpen, setAddSpouseOpen] = useState(false);
+    const { open: openMarriagePanel } = useMarriagePanel();
+    const editor = useOptionalSectionEditor();
 
     if (unions.length === 0) {
         return null;
@@ -172,6 +176,31 @@ export function UnionNode({
                             );
                         })}
                     </DropdownMenuRadioGroup>
+                    {selectedUnion?.is_marriage &&
+                        selectedUnion.marriage_id !== null && (
+                            <DropdownMenuItem
+                                onSelect={() => {
+                                    const marriageId =
+                                        selectedUnion.marriage_id;
+
+                                    if (marriageId === null) {
+                                        return;
+                                    }
+
+                                    if (editor === null) {
+                                        openMarriagePanel(marriageId);
+
+                                        return;
+                                    }
+
+                                    editor.requestExit(() =>
+                                        openMarriagePanel(marriageId),
+                                    );
+                                }}
+                            >
+                                Szczegóły małżeństwa
+                            </DropdownMenuItem>
+                        )}
                     <DropdownMenuSeparator />
                     <DropdownMenuItem
                         onSelect={() => {
