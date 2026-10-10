@@ -445,9 +445,9 @@ Migracja dodaje tylko nullable kolumnę `people.note` — nie przenosi danych i 
 
 #### Automated
 
-- [x] 4.1 Spec przechodzi: `npx playwright test tests/e2e/person-events-and-note-tabs.spec.ts`
-- [x] 4.2 Istniejące specy panelu osoby bez regresji: `npx playwright test tests/e2e/person-side-panel.spec.ts tests/e2e/person-panel-unsaved-guard.spec.ts`
+- [x] 4.1 Spec przechodzi: `npx playwright test tests/e2e/person-events-and-note-tabs.spec.ts` — 86b63b0
+- [x] 4.2 Istniejące specy panelu osoby bez regresji: `npx playwright test tests/e2e/person-side-panel.spec.ts tests/e2e/person-panel-unsaved-guard.spec.ts` — 86b63b0
 
 #### Manual
 
-- [x] 4.3 Celowe wprowadzenie błędu (np. usunięcie `requestExit` z `onValueChange` albo odwrócenie rangi małżeństwa i urodzenia dziecka) czerwieni odpowiedni test
+- [x] 4.3 Celowe wprowadzenie błędu (np. usunięcie `requestExit` z `onValueChange` albo odwrócenie rangi małżeństwa i urodzenia dziecka) czerwieni odpowiedni test — 86b63b0
