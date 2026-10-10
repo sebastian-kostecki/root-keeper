@@ -1,10 +1,10 @@
 ---
 change_id: person-events-and-note-tabs
 title: Person events and note tabs
-status: impl_reviewed
+status: archived
 created: 2026-10-10
 updated: 2026-10-10
-archived_at: null
+archived_at: 2026-10-10T20:39:18Z
 ---
 
 ## Notes

@@ -57,7 +57,7 @@ root-keeper to prywatne, samodzielnie hostowane drzewo genealogiczne, w którym 
 | S-11 | places-merge-and-delete              | scalić zduplikowaną miejscowość lub parafię z właściwą i usunąć wpis nigdzie nieużywany                   | S-03, S-07, S-08, S-09 | FR-012                                   | done |
 | S-12 | marriage-side-panel                  | otworzyć panel małżeństwa z datą, miejscem, źródłem (z edycją) i dziećmi pary                             | S-06                   | FR-017                                   | done |
 | S-13 | maiden-name-and-age                  | zapisać nazwisko rodowe („z d. …”, wyszukiwanie po obu nazwiskach) i widzieć wiek osoby                   | —                      | FR-020, FR-024                           | done |
-| S-14 | person-events-and-note-tabs          | zobaczyć w panelu osoby zakładkę wydarzeń (własnych i najbliższej rodziny) po roku i zakładkę notatki     | S-06                   | FR-021, FR-023                           | in-progress |
+| S-14 | person-events-and-note-tabs          | zobaczyć w panelu osoby zakładkę wydarzeń (własnych i najbliższej rodziny) po roku i zakładkę notatki     | S-06                   | FR-021, FR-023                           | done |
 | S-15 | ancestors-view                       | zobaczyć osobę i wszystkich jej przodków w jednym widoku z wyborem liczby pokoleń                         | S-05                   | FR-018, FR-029                           | proposed |
 | S-16 | person-photo-on-card                 | dodać zdjęcie osoby i widzieć je na karcie drzewa (inicjały, gdy zdjęcia brak)                            | S-05, S-06             | FR-015                                   | proposed |
 
@@ -299,7 +299,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Blockers:** —
 - **Unknowns:** —
 - **Risk:** Rozbudowuje panel osoby o zakładki, więc idzie po `S-06`; samodzielny i bez ryzyka dla guardrails.
-- **Status:** in-progress
+- **Status:** done
 
 ### S-15: Widok wszystkich przodków
 
@@ -395,3 +395,4 @@ Rozstrzygnięte:
 - **S-11: autor scala zduplikowaną miejscowość lub parafię z właściwym wpisem — wszystkie odwołania (parafie, cmentarze nagrobków, miejsca faktów, miejsca pochowania, zamieszkania) przechodzą na właściwy wpis — i usuwa wpis, który nie jest nigdzie używany.** — Archived 2026-10-08 → `context/archive/2026-10-06-places-merge-and-delete/`. Lesson: —.
 - **S-10: autor przegląda listę źródeł jako siatkę mniejszych kart z rodzajem, typem, parafią lub cmentarzem, rokiem i archiwum oraz filtruje ją po rodzaju, parafii/miejscu, roku i archiwum.** — Archived 2026-10-09 → `context/archive/2026-10-09-sources-grid-with-filters/`. Lesson: —.
 - **S-12: autor otwiera panel małżeństwa z datą, miejscem, źródłem (z edycją) i dziećmi pary; małżeństwo nadal można edytować także w panelu osoby.** — Archived 2026-10-10 → `context/archive/2026-10-09-marriage-side-panel/`. Lesson: —.
+- **S-14: autor widzi w panelu osoby zakładkę wydarzeń — własnych oraz urodzeń i zgonów dzieci, ślubu i zgonu małżonka — uporządkowanych po roku, z wydarzeniami bez daty na końcu, oraz zakładkę z jedną notatką tekstową o osobie.** — Archived 2026-10-10 → `context/archive/2026-10-10-person-events-and-note-tabs/`. Lesson: —.
