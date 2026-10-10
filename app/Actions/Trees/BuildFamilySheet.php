@@ -22,7 +22,7 @@ use Illuminate\Support\Facades\DB;
  * @phpstan-type AddChild array{parents: list<array{id: int, display_name: string}>, default_last_name: string|null, excluded_ids: list<int>, blocked_ids: list<int>}
  * @phpstan-type AddSpouse array{excluded_ids: list<int>}
  * @phpstan-type UnmarriedParents array{focus: bool, partner: bool}
- * @phpstan-type Union array{key: string, partner_id: int|null, partner_name: string|null, is_marriage: bool, marriage_year: string|null, children_count: int}
+ * @phpstan-type Union array{key: string, partner_id: int|null, partner_name: string|null, is_marriage: bool, marriage_id: int|null, marriage_year: string|null, children_count: int}
  */
 class BuildFamilySheet
 {
@@ -108,6 +108,7 @@ class BuildFamilySheet
                 'partner_id' => $partnerId,
                 'partner_name' => $partner->displayName(),
                 'is_marriage' => $marriage !== null,
+                'marriage_id' => $marriage?->id,
                 'marriage_year' => $marriageYear,
                 'children_count' => count($childrenByOtherParent[$partnerId] ?? []),
             ];
@@ -119,6 +120,7 @@ class BuildFamilySheet
                 'partner_id' => null,
                 'partner_name' => null,
                 'is_marriage' => false,
+                'marriage_id' => null,
                 'marriage_year' => null,
                 'children_count' => count($childrenByOtherParent[0]),
             ];

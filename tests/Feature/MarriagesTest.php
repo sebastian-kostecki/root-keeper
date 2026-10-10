@@ -499,3 +499,151 @@ test('a foreign or missing locality in marriage.locality_id fails validation and
         ->and($marriage->refresh()->date_year)->toBe(1850)
         ->and($marriage->locality_id)->toBeNull();
 });
+
+test('the marriage panel opens the marriage with its spouses, shared children and sources in order', function () {
+    Storage::fake('local');
+
+    $user = User::factory()->create();
+    $scene = familyScene($user);
+    $focus = $scene['focus'];
+    $marriageA = $scene['marriageA'];
+    $marriageA->sources()->updateExistingPivot($scene['sourceShared']->id, ['entry_number' => '12']);
+    $marriageA->sources()->updateExistingPivot($scene['sourceOther']->id, ['entry_number' => '34']);
+
+    $this->actingAs($user)->get(marriagePanelUrl($marriageA))
+        ->assertInertia(fn ($page) => $page
+            ->where('marriagePanel.spouses.0.id', $focus->id)
+            ->where('marriagePanel.spouses.1.id', $scene['wifeA']->id)
+            ->has('marriagePanel.children', 1)
+            ->where('marriagePanel.children.0.id', $scene['childA']->id)
+            ->has('marriagePanel.marriage.sources', 2)
+            ->where('marriagePanel.marriage.sources.0.id', $scene['sourceShared']->id)
+            ->where('marriagePanel.marriage.sources.0.entry_number', '12')
+            ->where('marriagePanel.marriage.sources.1.id', $scene['sourceOther']->id)
+            ->where('marriagePanel.marriage.sources.1.entry_number', '34'));
+});
+
+test('the marriage panel lists only the children both spouses share', function () {
+    Storage::fake('local');
+
+    $user = User::factory()->create();
+    $scene = familyScene($user);
+
+    $this->actingAs($user)->get(marriagePanelUrl($scene['marriageB']))
+        ->assertInertia(fn ($page) => $page
+            ->has('marriagePanel.children', 1)
+            ->where('marriagePanel.children.0.id', $scene['childB']->id));
+});
+
+test('spouses put the man first whatever the creation order', function () {
+    $user = User::factory()->create();
+    $woman = Person::factory()->for($user->tree)->female()->create();
+    $man = Person::factory()->for($user->tree)->male()->create();
+    $marriage = attachMarriage($woman, $man, 1900);
+
+    $this->actingAs($user)->get(marriagePanelUrl($marriage))
+        ->assertInertia(fn ($page) => $page
+            ->where('marriagePanel.spouses.0.id', $man->id)
+            ->where('marriagePanel.spouses.1.id', $woman->id));
+});
+
+test('a man with an unknown-sex spouse orders the older spouse first, unknown birth dates last', function () {
+    $user = User::factory()->create();
+    $man = Person::factory()->for($user->tree)->male()->create();
+    $olderUnknownSex = Person::factory()->for($user->tree)->create(['gender' => null]);
+    $youngerUnknownSex = Person::factory()->for($user->tree)->create(['gender' => null]);
+    attachBirth($man, 1900);
+    attachBirth($olderUnknownSex, 1850);
+
+    $marriage = attachMarriage($man, $olderUnknownSex, 1920);
+    $this->actingAs($user)->get(marriagePanelUrl($marriage))
+        ->assertInertia(fn ($page) => $page
+            ->where('marriagePanel.spouses.0.id', $olderUnknownSex->id)
+            ->where('marriagePanel.spouses.1.id', $man->id));
+
+    $undatedMarriage = attachMarriage($man, $youngerUnknownSex, 1930);
+    $this->actingAs($user)->get(marriagePanelUrl($undatedMarriage))
+        ->assertInertia(fn ($page) => $page
+            ->where('marriagePanel.spouses.0.id', $man->id)
+            ->where('marriagePanel.spouses.1.id', $youngerUnknownSex->id));
+});
+
+test('a birth event in ?marriage= is a not found', function () {
+    $user = User::factory()->create();
+    $scene = familyScene($user);
+
+    $this->actingAs($user)->get(route('persons.index', ['marriage' => $scene['focusBirth']->id]))
+        ->assertNotFound();
+});
+
+test('a non-numeric or missing ?marriage= leaves the marriage panel null', function (?string $value) {
+    $user = User::factory()->create();
+    $focus = Person::factory()->for($user->tree)->create();
+    $query = $value === null ? [] : ['marriage' => $value];
+
+    $this->actingAs($user)->get(route('persons.index', $query))
+        ->assertInertia(fn ($page) => $page->where('marriagePanel', null));
+})->with([
+    'nienumeryczna' => ['abc'],
+    'pusta' => [''],
+    'brak klucza' => [null],
+]);
+
+test('the marriage panel resolves on the tree, persons and sources host pages', function (string $route) {
+    Storage::fake('local');
+
+    $user = User::factory()->create();
+    $scene = familyScene($user);
+    $parameters = $route === 'tree.show' ? [$scene['focus']] : [];
+
+    $this->actingAs($user)->get(marriagePanelUrl($scene['marriageA'], $route, $parameters))
+        ->assertInertia(fn ($page) => $page->where('marriagePanel.spouses.0.id', $scene['focus']->id));
+})->with(['tree.show', 'persons.index', 'sources.index']);
+
+test('destroy from the marriage panel returns to the referring page without the marriage key', function () {
+    $user = User::factory()->create();
+    $focus = Person::factory()->for($user->tree)->create();
+    $spouse = Person::factory()->for($user->tree)->create();
+    $marriage = attachMarriage($focus, $spouse);
+
+    $this->from(marriagePanelUrl($marriage, 'tree.show', [$focus]).'&person='.$focus->id)
+        ->actingAs($user)
+        ->delete(route('marriages.destroy', $marriage))
+        ->assertRedirect(route('tree.show', $focus).'?'.http_build_query(['person' => $focus->id]));
+});
+
+test('destroy without a referer returns to the tree index even when the session holds an old marriage address', function () {
+    $user = User::factory()->create();
+    $focus = Person::factory()->for($user->tree)->create();
+    $spouse = Person::factory()->for($user->tree)->create();
+    $marriage = attachMarriage($focus, $spouse);
+
+    $this->actingAs($user)
+        ->withSession(['_previous' => ['url' => marriagePanelUrl($marriage, 'tree.show', [$focus])]])
+        ->delete(route('marriages.destroy', $marriage))
+        ->assertRedirect(route('tree.index'));
+});
+
+test('destroy with a foreign referer returns to the tree index', function () {
+    $user = User::factory()->create();
+    $focus = Person::factory()->for($user->tree)->create();
+    $spouse = Person::factory()->for($user->tree)->create();
+    $marriage = attachMarriage($focus, $spouse);
+
+    $this->from('https://example.com/tree/1?marriage='.$marriage->id)
+        ->actingAs($user)
+        ->delete(route('marriages.destroy', $marriage))
+        ->assertRedirect(route('tree.index'));
+});
+
+test('destroy from a referer carrying only the person key keeps it unchanged', function () {
+    $user = User::factory()->create();
+    $focus = Person::factory()->for($user->tree)->create();
+    $spouse = Person::factory()->for($user->tree)->create();
+    $marriage = attachMarriage($focus, $spouse);
+
+    $this->from(personPreviewUrl($focus, 'tree.show', [$focus]))
+        ->actingAs($user)
+        ->delete(route('marriages.destroy', $marriage))
+        ->assertRedirect(personPreviewUrl($focus, 'tree.show', [$focus]));
+});

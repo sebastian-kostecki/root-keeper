@@ -712,3 +712,30 @@ test('the partner block marks the partners unmarried parents only when there is 
     attachMarriage($focus, $wife, 1900);
     expect(sheetFor($this, $user, $focus)['unmarried_parents'])->toBe(['focus' => false, 'partner' => true]);
 });
+
+test('a union carries the marriage id for a marriage and null for a co-parent and the unknown union', function () {
+    $user = User::factory()->create();
+    $tree = $user->tree;
+    $focus = Person::factory()->for($tree)->male()->create();
+    $wife = Person::factory()->for($tree)->female()->create();
+    $coParent = Person::factory()->for($tree)->female()->create();
+
+    $marriage = attachMarriage($focus, $wife, 1880);
+
+    $childOfWife = Person::factory()->for($tree)->create();
+    $childOfCoParent = Person::factory()->for($tree)->create();
+    $childOfUnknown = Person::factory()->for($tree)->create();
+    linkParent($focus, $childOfWife);
+    linkParent($wife, $childOfWife);
+    linkParent($focus, $childOfCoParent);
+    linkParent($coParent, $childOfCoParent);
+    linkParent($focus, $childOfUnknown);
+
+    $sheet = sheetFor($this, $user, $focus);
+
+    expect(collect($sheet['unions'])->pluck('marriage_id', 'key')->all())->toBe([
+        "person-{$wife->id}" => $marriage->id,
+        "person-{$coParent->id}" => null,
+        'unknown' => null,
+    ]);
+});

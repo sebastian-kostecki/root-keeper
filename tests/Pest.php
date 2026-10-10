@@ -110,6 +110,18 @@ function personPreviewUrl(Person $person, string $route = 'persons.index', array
 }
 
 /**
+ * Build a host-page URL that opens the marriage panel of the given marriage.
+ *
+ * @param  array<int|string, mixed>  $parameters  Route parameters and query values of the host page.
+ */
+function marriagePanelUrl(Event $marriage, string $route = 'persons.index', array $parameters = []): string
+{
+    $url = route($route, $parameters);
+
+    return $url.(str_contains($url, '?') ? '&' : '?').http_build_query(['marriage' => $marriage->id]);
+}
+
+/**
  * Snapshot of every durable table (row count and content hash) and of the `local` disk,
  * so a test can prove a refused request wrote nothing anywhere. Call `Storage::fake('local')` first.
  *

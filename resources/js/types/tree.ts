@@ -47,6 +47,7 @@ export type SheetUnion = {
     partner_id: number | null;
     partner_name: string | null;
     is_marriage: boolean;
+    marriage_id: number | null;
     marriage_year: string | null;
     children_count: number;
 };

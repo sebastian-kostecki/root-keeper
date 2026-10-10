@@ -2,6 +2,7 @@
 
 namespace App\Support;
 
+use App\Enums\Gender;
 use App\Models\Event;
 use App\Models\Person;
 use App\Models\Residence;
@@ -44,6 +45,28 @@ final class PersonOrdering
     }
 
     /**
+     * Order the two spouses of a marriage: a man before a woman, otherwise by
+     * birth date (known before unknown, then year/month/day ascending), then id.
+     *
+     * @param  Collection<int, Person>  $spouses
+     * @return Collection<int, Person>
+     */
+    public static function spouses(Collection $spouses): Collection
+    {
+        return $spouses->sort(function (Person $a, Person $b): int {
+            if ($a->gender === Gender::Male && $b->gender === Gender::Female) {
+                return -1;
+            }
+
+            if ($a->gender === Gender::Female && $b->gender === Gender::Male) {
+                return 1;
+            }
+
+            return self::spouseSortKey($a) <=> self::spouseSortKey($b);
+        })->values();
+    }
+
+    /**
      * Order residences by year (year_from, else year_to) ascending, entries
      * without any year last, ties by id (order of adding).
      *
@@ -74,6 +97,22 @@ final class PersonOrdering
             $person->last_name === null ? 1 : 0,
             $person->last_name ?? '',
             $person->first_name ?? '',
+            $person->id,
+        ];
+    }
+
+    /**
+     * @return array{0: int, 1: int, 2: int, 3: int, 4: int}
+     */
+    private static function spouseSortKey(Person $person): array
+    {
+        $date = $person->birth()?->date;
+
+        return [
+            $date?->year === null ? 1 : 0,
+            $date->year ?? 0,
+            $date->month ?? 0,
+            $date->day ?? 0,
             $person->id,
         ];
     }

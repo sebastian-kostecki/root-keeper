@@ -333,3 +333,23 @@ it('rejects a residence in another tree\'s or a missing locality with a validati
 
     expect(ownershipSnapshot())->toBe($before);
 })->with(['foreign locality' => 'foreign', 'missing locality' => 'missing']);
+
+it('answers 404 and writes nothing when ?marriage= names another tree\'s marriage on a host page', function (string $route) {
+    Storage::fake('local');
+
+    $attacker = User::factory()->create();
+    $victim = User::factory()->create();
+    $records = ownershipRecords($attacker, $victim);
+
+    $before = ownershipSnapshot();
+
+    $this->actingAs($attacker)
+        ->get(marriagePanelUrl($records['victimMarriage'], $route))
+        ->assertNotFound();
+
+    expect(ownershipSnapshot())->toBe($before);
+})->with([
+    'tree.index' => ['tree.index'],
+    'persons.index' => ['persons.index'],
+    'sources.index' => ['sources.index'],
+]);
