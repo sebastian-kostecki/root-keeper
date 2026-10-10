@@ -466,9 +466,9 @@ Brak migracji i zmian danych.
 
 #### Automated
 
-- [x] 5.1 Spec przechodzi: `npx playwright test tests/e2e/ancestors-view.spec.ts`
-- [x] 5.2 Spec zawodzi po celowym zepsuciu (np. „Pokaż przodków” linkuje do osoby w centrum zamiast osoby z panelu) i wraca do zieleni po cofnięciu
+- [x] 5.1 Spec przechodzi: `npx playwright test tests/e2e/ancestors-view.spec.ts` — 0a2dcee
+- [x] 5.2 Spec zawodzi po celowym zepsuciu (np. „Pokaż przodków” linkuje do osoby w centrum zamiast osoby z panelu) i wraca do zieleni po cofnięciu — 0a2dcee
 
 #### Manual
 
-- [x] 5.3 Przegląd testu względem pięciu antywzorców z `/10x-e2e` bez uwag
+- [x] 5.3 Przegląd testu względem pięciu antywzorców z `/10x-e2e` bez uwag — 0a2dcee
