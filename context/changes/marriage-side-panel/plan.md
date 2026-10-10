@@ -530,10 +530,10 @@ Brak zmian schematu i danych.
 
 #### Automated
 
-- [x] 4.1 Nowy spec przechodzi dwukrotnie: `npx playwright test tests/e2e/marriage-side-panel.spec.ts --repeat-each=2`
-- [x] 4.2 Pełne E2E przechodzi: `npx playwright test`
-- [x] 4.3 Format i lint przechodzą (specy i helpery): `vendor/bin/sail npm run check`
+- [x] 4.1 Nowy spec przechodzi dwukrotnie: `npx playwright test tests/e2e/marriage-side-panel.spec.ts --repeat-each=2` — cdce140
+- [x] 4.2 Pełne E2E przechodzi: `npx playwright test` — cdce140
+- [x] 4.3 Format i lint przechodzą (specy i helpery): `vendor/bin/sail npm run check` — cdce140
 
 #### Manual
 
-- [x] 4.4 Oba celowe błędy dały czerwony wynik w oczekiwanym miejscu i zostały cofnięte (zapis w raporcie `/10x-e2e`)
+- [x] 4.4 Oba celowe błędy dały czerwony wynik w oczekiwanym miejscu i zostały cofnięte (zapis w raporcie `/10x-e2e`) — cdce140
