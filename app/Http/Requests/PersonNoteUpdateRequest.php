@@ -25,7 +25,7 @@ class PersonNoteUpdateRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'note' => ['nullable', 'string', 'max:5000'],
+            'note' => ['present', 'nullable', 'string', 'max:5000'],
         ];
     }
 

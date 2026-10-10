@@ -9,7 +9,9 @@ use App\Models\Person;
 /**
  * The timeline of a person: own events, the birth and death of each child and
  * the death of each spouse, ordered by date. Reads only the relations already
- * loaded by BuildPersonPreview, so it issues no queries.
+ * loaded by BuildPersonPreview, so it issues no queries. The caller must preload
+ * `events.locality`, `children.events.locality` and
+ * `marriages.participants.events.locality`; otherwise every row lazy-loads its place.
  */
 final class PersonTimeline
 {
@@ -124,8 +126,8 @@ final class PersonTimeline
         return [
             $year === null ? 1 : 0,
             $year ?? 0,
-            $month ?? 0,
-            $day ?? 0,
+            $year === null ? 0 : $month ?? 0,
+            $year === null ? 0 : $day ?? 0,
             $entry->rank(),
             $entry->event->id,
         ];

@@ -49,6 +49,16 @@ test('a note of 5001 characters is rejected on the note field', function () {
     expect($person->refresh()->note)->toBe('Zostaje');
 });
 
+test('a request without the note key is rejected and keeps the stored note', function () {
+    $user = User::factory()->create();
+    $person = Person::factory()->for($user->tree)->create(['note' => 'Zostaje']);
+
+    $this->actingAs($user)->put(route('persons.note.update', $person), [])
+        ->assertSessionHasErrors('note');
+
+    expect($person->refresh()->note)->toBe('Zostaje');
+});
+
 test('a full person save without a note field leaves the note unchanged', function () {
     $user = User::factory()->create();
     $person = Person::factory()->for($user->tree)->create([

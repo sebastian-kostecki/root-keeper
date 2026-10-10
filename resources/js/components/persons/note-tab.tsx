@@ -39,7 +39,9 @@ export function NoteTab({ person }: Props) {
             onSubmit={saveNote}
             view={
                 person.note ? (
-                    <p className="text-sm whitespace-pre-wrap">{person.note}</p>
+                    <p className="text-sm break-words whitespace-pre-wrap">
+                        {person.note}
+                    </p>
                 ) : (
                     <p className="text-muted-foreground text-sm">
                         Brak notatki.

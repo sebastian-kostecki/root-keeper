@@ -6,6 +6,8 @@ type Props = {
 };
 
 function EventRow({ entry }: { entry: TimelineEntry }) {
+    const showDate = entry.type !== 'burial';
+
     return (
         <li className="space-y-0.5 py-2.5">
             <p className="text-sm font-medium">
@@ -19,17 +21,17 @@ function EventRow({ entry }: { entry: TimelineEntry }) {
                     </>
                 )}
             </p>
-            <p className="text-muted-foreground text-sm">
-                {entry.type !== 'burial' && (
-                    <span>{entry.date ?? 'data nieznana'}</span>
-                )}
-                {entry.place !== null && (
-                    <span>
-                        {entry.type !== 'burial' && ' · '}
-                        {entry.place}
-                    </span>
-                )}
-            </p>
+            {(showDate || entry.place !== null) && (
+                <p className="text-muted-foreground text-sm">
+                    {showDate && <span>{entry.date ?? 'data nieznana'}</span>}
+                    {entry.place !== null && (
+                        <span>
+                            {showDate && ' · '}
+                            {entry.place}
+                        </span>
+                    )}
+                </p>
+            )}
         </li>
     );
 }

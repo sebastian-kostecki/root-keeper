@@ -50,7 +50,7 @@ export function PersonModal({ preview, availableSources }: Props) {
         ].map((source) => source.id),
     ).size;
 
-    const hasNote = Boolean(person.note);
+    const hasNote = Boolean(person.note?.trim());
 
     return (
         <Tabs
@@ -59,7 +59,7 @@ export function PersonModal({ preview, availableSources }: Props) {
             className="gap-0"
         >
             <div className="border-b pb-3">
-                <div className="overflow-x-auto">
+                <div className="-m-1 overflow-x-auto p-1">
                     <TabsList className="w-full sm:w-fit">
                         <TabsTrigger value="przeglad" className="shrink-0">
                             Przegląd
