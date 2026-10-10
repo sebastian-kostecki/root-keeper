@@ -20,7 +20,7 @@ import { useSetRootPerson } from '@/hooks/use-set-root-person';
 import { formatAge } from '@/lib/age';
 import type { centreHints } from '@/lib/centre-hints';
 import { formatLifespan } from '@/lib/lifespan';
-import { show as treeShow } from '@/routes/tree';
+import { ancestors as treeAncestors, show as treeShow } from '@/routes/tree';
 import type { PersonPreview } from '@/types';
 
 type Props = {
@@ -66,13 +66,19 @@ export function PersonModalHeader({ person, isRootPerson }: Props) {
 /**
  * Header actions of the person panel: "Pokaż na drzewie" and the "⋯" menu.
  * Re-centring keeps the panel open and, on the tree, the union of the person's
- * card; it is hidden when the person is already the centre.
+ * card; it is hidden when the person is already the centre. "Pokaż przodków"
+ * lives only in the menu and opens the ancestors view of the person; on that
+ * view it keeps the current generations and is hidden for its centre.
  */
 export function PersonPanelActions({
     person,
     isRootPerson,
     hints,
-}: Props & { hints: ReturnType<typeof centreHints> | null }) {
+    ancestorsContext,
+}: Props & {
+    hints: ReturnType<typeof centreHints> | null;
+    ancestorsContext: { focusId: number; generations: number } | null;
+}) {
     const { setRootPerson, processing } = useSetRootPerson(person.id);
     const [isDeleteOpen, setIsDeleteOpen] = useState(false);
     const { requestExit } = useSectionEditor();
@@ -82,6 +88,15 @@ export function PersonPanelActions({
         query: { person: person.id, ...(spouse ? { spouse } : {}) },
     });
     const showOnTree = hints?.focusId !== person.id;
+    const showAncestors = ancestorsContext?.focusId !== person.id;
+    const ancestorsHref = treeAncestors(person.id, {
+        query: {
+            person: person.id,
+            ...(ancestorsContext
+                ? { generations: ancestorsContext.generations }
+                : {}),
+        },
+    });
 
     return (
         <div className="flex shrink-0 items-center gap-1.5">
@@ -126,6 +141,20 @@ export function PersonPanelActions({
                                 }
                             >
                                 Pokaż na drzewie
+                            </Link>
+                        </DropdownMenuItem>
+                    )}
+                    {showAncestors && (
+                        <DropdownMenuItem asChild>
+                            <Link
+                                href={ancestorsHref}
+                                onClick={(event) =>
+                                    guardClick(event, () =>
+                                        router.visit(ancestorsHref),
+                                    )
+                                }
+                            >
+                                Pokaż przodków
                             </Link>
                         </DropdownMenuItem>
                     )}

@@ -232,7 +232,7 @@ Wykluczenia uzgodnione w wywiadzie (P5). Obowiązują, dopóki nie zmieni się z
 
 - **Wygląd — kolory, odstępy, tryb ciemny** — autor ocenia to sam przy każdej przebudowie UI. Ponownie rozważyć, gdy aplikacja zyska innych użytkowników. (Source: Phase 2 interview Q5.)
 - **Same widoki i układ stron** — autor widzi je sam; testy UI sprawdzają tylko skutek w danych (§3 Phase 4), nie układ. Ponownie rozważyć, gdy błąd widoku ukryje lub zafałszuje dane. (Source: Phase 2 interview Q5.)
-- **Eksport danych** — funkcja nie istnieje (FR-018 odłożony); ochronę przed utratą dostępu daje odtworzenie z kopii (§2 #2). Ponownie rozważyć, gdy eksport wejdzie do zakresu. (Source: roadmap `## Parked`, interview Q2.)
+- **Eksport danych** — funkcja nie istnieje; ochronę przed utratą dostępu daje odtworzenie z kopii (§2 #2). Ponownie rozważyć, gdy eksport wejdzie do zakresu. (Source: roadmap `## Parked`, interview Q2.)
 
 ## 8. Freshness Ledger
 

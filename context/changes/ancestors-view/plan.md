@@ -433,34 +433,34 @@ Brak migracji i zmian danych.
 
 #### Automated
 
-- [x] 3.1 Testy Vitest układu przechodzą: `vendor/bin/sail npm run test:js`
-- [x] 3.2 Typy, lint i build przechodzą: `vendor/bin/sail npm run types:check`, `vendor/bin/sail npm run check`, `vendor/bin/sail npm run build`
-- [x] 3.3 Testy Pest widoku przodków nadal przechodzą: `vendor/bin/sail artisan test --compact tests/Feature/AncestorsTest.php`
+- [x] 3.1 Testy Vitest układu przechodzą: `vendor/bin/sail npm run test:js` — dd61429
+- [x] 3.2 Typy, lint i build przechodzą: `vendor/bin/sail npm run types:check`, `vendor/bin/sail npm run check`, `vendor/bin/sail npm run build` — dd61429
+- [x] 3.3 Testy Pest widoku przodków nadal przechodzą: `vendor/bin/sail artisan test --compact tests/Feature/AncestorsTest.php` — dd61429
 
 #### Manual
 
-- [x] 3.4 4 pokolenia startują jako cała widoczna struktura, ojciec po lewej, matka po prawej, linie łączą parę rodziców z dzieckiem
-- [x] 3.5 Przełącznik 2–6 zmienia liczbę pokoleń i ponownie dopasowuje widok; adres zawiera `?generations=`
-- [x] 3.6 „Powiększ / Pomniejsz / Dopasuj”, Ctrl+kółko i szczypanie na touchpadzie działają; samo kółko nic nie robi
-- [x] 3.7 Kliknięcie karty otwiera panel osoby, płótno zwęża się obok; przeciągnięcie zakończone nad kartą nie otwiera panelu
-- [x] 3.8 Szara karta brakującego rodzica jest statyczna; powtórzona osoba ma znacznik w obu miejscach
-- [x] 3.9 Tryb ciemny: karty, linie i kontrolki czytelne
+- [x] 3.4 4 pokolenia startują jako cała widoczna struktura, ojciec po lewej, matka po prawej, linie łączą parę rodziców z dzieckiem — dd61429
+- [x] 3.5 Przełącznik 2–6 zmienia liczbę pokoleń i ponownie dopasowuje widok; adres zawiera `?generations=` — dd61429
+- [x] 3.6 „Powiększ / Pomniejsz / Dopasuj”, Ctrl+kółko i szczypanie na touchpadzie działają; samo kółko nic nie robi — dd61429
+- [x] 3.7 Kliknięcie karty otwiera panel osoby, płótno zwęża się obok; przeciągnięcie zakończone nad kartą nie otwiera panelu — dd61429
+- [x] 3.8 Szara karta brakującego rodzica jest statyczna; powtórzona osoba ma znacznik w obu miejscach — dd61429
+- [x] 3.9 Tryb ciemny: karty, linie i kontrolki czytelne — dd61429
 
 ### Phase 4: Wejście z panelu osoby i domknięcie
 
 #### Automated
 
-- [ ] 4.1 Typy, lint i Vitest przechodzą: `vendor/bin/sail npm run types:check`, `vendor/bin/sail npm run check`, `vendor/bin/sail npm run test:js`
-- [ ] 4.2 Seeder działa na czystej bazie dev: `vendor/bin/sail artisan db:seed --class=AncestorsDemoSeeder`
-- [ ] 4.3 Pint i testy Pest przechodzą: `vendor/bin/sail bin pint --dirty --format agent` oraz `vendor/bin/sail artisan test --compact tests/Feature/AncestorsTest.php tests/Feature/OwnershipBoundariesTest.php`
+- [x] 4.1 Typy, lint i Vitest przechodzą: `vendor/bin/sail npm run types:check`, `vendor/bin/sail npm run check`, `vendor/bin/sail npm run test:js`
+- [x] 4.2 Seeder działa na czystej bazie dev: `vendor/bin/sail artisan db:seed --class=AncestorsDemoSeeder`
+- [x] 4.3 Pint i testy Pest przechodzą: `vendor/bin/sail bin pint --dirty --format agent` oraz `vendor/bin/sail artisan test --compact tests/Feature/AncestorsTest.php tests/Feature/OwnershipBoundariesTest.php`
 
 #### Manual
 
-- [ ] 4.4 Panel osoby na drzewie, liście osób i widoku przodków ma „Pokaż przodków” w menu „⋯”; nagłówek panelu i tytuł z imieniem wyglądają jak dziś
-- [ ] 4.5 Na widoku przodków osoby X jej panel nie pokazuje „Pokaż przodków”, panel przodka pokazuje; kliknięcie przecentrowuje z zachowaną liczbą pokoleń i otwartym panelem
-- [ ] 4.6 Niezapisana edycja w panelu blokuje przejście „Pokaż przodków” tak samo jak „Pokaż na drzewie”
-- [ ] 4.7 Na danych `AncestorsDemoSeeder` przy 6 pokoleniach całość startuje dopasowana, a po „Powiększ” imiona są czytelne
-- [ ] 4.8 Usunięcie osoby w centrum z jej panelu na widoku przodków wraca do drzewa probanta
+- [x] 4.4 Panel osoby na drzewie, liście osób i widoku przodków ma „Pokaż przodków” w menu „⋯”; nagłówek panelu i tytuł z imieniem wyglądają jak dziś
+- [x] 4.5 Na widoku przodków osoby X jej panel nie pokazuje „Pokaż przodków”, panel przodka pokazuje; kliknięcie przecentrowuje z zachowaną liczbą pokoleń i otwartym panelem
+- [x] 4.6 Niezapisana edycja w panelu blokuje przejście „Pokaż przodków” tak samo jak „Pokaż na drzewie”
+- [x] 4.7 Na danych `AncestorsDemoSeeder` przy 6 pokoleniach całość startuje dopasowana, a po „Powiększ” imiona są czytelne
+- [x] 4.8 Usunięcie osoby w centrum z jej panelu na widoku przodków wraca do drzewa probanta
 
 ### Phase 5: E2E ścieżki wejścia i przecentrowania
 

@@ -147,9 +147,9 @@ Wszystkie FR są `must-have` (zakres: całość do 2026-11-04). Jeśli zabraknie
 - [new] FR-017: Autor can otworzyć panel małżeństwa: data, miejsce, źródło (z edycją) i dzieci pary. Priority: must-have.
   > Socrates: Counter-argument considered: "panel małżeństwa dubluje sekcję małżeństwa w panelu osoby."
   > Resolution: kept; oba miejsca pozwalają edytować małżeństwo — wygoda ważniejsza niż jedno miejsce edycji.
-- [new] FR-018: Autor can zobaczyć wybraną osobę i wszystkich jej przodków w jednym widoku z wyborem liczby pokoleń, z dopasowaniem do ekranu i przybliżaniem jak w drzewie. Priority: must-have.
+- [new] FR-018: Autor can zobaczyć wybraną osobę i wszystkich jej przodków w jednym widoku z wyborem liczby pokoleń, z dopasowaniem do ekranu i przybliżaniem w tym widoku (przyciski, Ctrl+kółko, szczypanie). Priority: must-have.
   > Socrates: Counter-argument considered: "przy 6+ pokoleniach widok przodków robi się nieczytelny."
-  > Resolution: kept; ten sam mechanizm dopasowania i przybliżania co FR-013.
+  > Resolution: kept; dopasowanie jak w FR-013, a przybliżanie tylko w widoku przodków, bez zmiany drzewa.
 
 ### Osoba
 - [modified] FR-019: Autor can oglądać i edytować osobę w wysuwanym panelu z prawej zamiast modala; otwarty panel nie zasłania drzewa — drzewo zwęża się obok niego. Priority: must-have. (Było: podgląd i formularz osoby w modalach.)

@@ -12,7 +12,7 @@ import {
 } from '@/components/persons/section-editor';
 import { SidePanel } from '@/components/side-panel';
 import { centreHints } from '@/lib/centre-hints';
-import type { FamilySheet } from '@/types';
+import type { AncestorChart, FamilySheet } from '@/types';
 
 /**
  * Side panel hosted by the layout; open whenever the page carries a `personPreview`.
@@ -31,6 +31,12 @@ export function PersonPanel() {
     // Only the tree page passes a sheet; elsewhere there is nothing to re-centre.
     const sheet = 'sheet' in props ? (props.sheet as FamilySheet | null) : null;
     const hints = sheet ? centreHints(sheet) : null;
+    // Only the ancestors page passes a chart; its centre and generations go to "Pokaż przodków".
+    const chart =
+        'chart' in props ? (props.chart as AncestorChart | null) : null;
+    const ancestorsContext = chart
+        ? { focusId: chart.focus.id, generations: chart.generations }
+        : null;
 
     return (
         <SidePanel
@@ -44,6 +50,7 @@ export function PersonPanel() {
                     person={person}
                     isRootPerson={isRootPerson}
                     hints={hints}
+                    ancestorsContext={ancestorsContext}
                 />
             }
             footer={hasPendingExit ? <UnsavedChangesBar /> : undefined}
