@@ -22,7 +22,7 @@ type Props = {
     isFocus?: boolean;
 };
 
-function CardBody({ person }: { person: SheetPerson }) {
+export function CardBody({ person }: { person: SheetPerson }) {
     return (
         <>
             <span className="text-card-foreground text-base leading-tight font-semibold [overflow-wrap:anywhere] break-words">

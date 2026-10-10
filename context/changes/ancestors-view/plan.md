@@ -421,30 +421,30 @@ Brak migracji i zmian danych.
 
 #### Automated
 
-- [x] 2.1 Testy Vitest przechodzą (w tym `fit-view.test.ts`): `vendor/bin/sail npm run test:js`
-- [x] 2.2 Typy i lint przechodzą: `vendor/bin/sail npm run types:check` i `vendor/bin/sail npm run check`
-- [x] 2.3 Istniejące E2E drzewa przechodzą bez zmian: `npx playwright test tests/e2e/tree-card-recentre.spec.ts tests/e2e/tree-slot-parent.spec.ts`
+- [x] 2.1 Testy Vitest przechodzą (w tym `fit-view.test.ts`): `vendor/bin/sail npm run test:js` — 50b64d9
+- [x] 2.2 Typy i lint przechodzą: `vendor/bin/sail npm run types:check` i `vendor/bin/sail npm run check` — 50b64d9
+- [x] 2.3 Istniejące E2E drzewa przechodzą bez zmian: `npx playwright test tests/e2e/tree-card-recentre.spec.ts tests/e2e/tree-slot-parent.spec.ts` — 50b64d9
 
 #### Manual
 
-- [x] 2.4 Na drzewie (`/tree/{id}`) kółko, Ctrl+kółko i szczypanie nie zmieniają skali, a kontrolek nie ma
+- [x] 2.4 Na drzewie (`/tree/{id}`) kółko, Ctrl+kółko i szczypanie nie zmieniają skali, a kontrolek nie ma — 50b64d9
 
 ### Phase 3: Układ i karty przodków
 
 #### Automated
 
-- [ ] 3.1 Testy Vitest układu przechodzą: `vendor/bin/sail npm run test:js`
-- [ ] 3.2 Typy, lint i build przechodzą: `vendor/bin/sail npm run types:check`, `vendor/bin/sail npm run check`, `vendor/bin/sail npm run build`
-- [ ] 3.3 Testy Pest widoku przodków nadal przechodzą: `vendor/bin/sail artisan test --compact tests/Feature/AncestorsTest.php`
+- [x] 3.1 Testy Vitest układu przechodzą: `vendor/bin/sail npm run test:js`
+- [x] 3.2 Typy, lint i build przechodzą: `vendor/bin/sail npm run types:check`, `vendor/bin/sail npm run check`, `vendor/bin/sail npm run build`
+- [x] 3.3 Testy Pest widoku przodków nadal przechodzą: `vendor/bin/sail artisan test --compact tests/Feature/AncestorsTest.php`
 
 #### Manual
 
-- [ ] 3.4 4 pokolenia startują jako cała widoczna struktura, ojciec po lewej, matka po prawej, linie łączą parę rodziców z dzieckiem
-- [ ] 3.5 Przełącznik 2–6 zmienia liczbę pokoleń i ponownie dopasowuje widok; adres zawiera `?generations=`
-- [ ] 3.6 „Powiększ / Pomniejsz / Dopasuj”, Ctrl+kółko i szczypanie na touchpadzie działają; samo kółko nic nie robi
-- [ ] 3.7 Kliknięcie karty otwiera panel osoby, płótno zwęża się obok; przeciągnięcie zakończone nad kartą nie otwiera panelu
-- [ ] 3.8 Szara karta brakującego rodzica jest statyczna; powtórzona osoba ma znacznik w obu miejscach
-- [ ] 3.9 Tryb ciemny: karty, linie i kontrolki czytelne
+- [x] 3.4 4 pokolenia startują jako cała widoczna struktura, ojciec po lewej, matka po prawej, linie łączą parę rodziców z dzieckiem
+- [x] 3.5 Przełącznik 2–6 zmienia liczbę pokoleń i ponownie dopasowuje widok; adres zawiera `?generations=`
+- [x] 3.6 „Powiększ / Pomniejsz / Dopasuj”, Ctrl+kółko i szczypanie na touchpadzie działają; samo kółko nic nie robi
+- [x] 3.7 Kliknięcie karty otwiera panel osoby, płótno zwęża się obok; przeciągnięcie zakończone nad kartą nie otwiera panelu
+- [x] 3.8 Szara karta brakującego rodzica jest statyczna; powtórzona osoba ma znacznik w obu miejscach
+- [x] 3.9 Tryb ciemny: karty, linie i kontrolki czytelne
 
 ### Phase 4: Wejście z panelu osoby i domknięcie
 

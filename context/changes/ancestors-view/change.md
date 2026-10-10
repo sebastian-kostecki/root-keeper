@@ -3,7 +3,7 @@ change_id: ancestors-view
 title: Ancestors view
 status: implementing
 created: 2026-10-10
-updated: 2026-10-10
+updated: 2026-10-11
 archived_at: null
 ---
 
