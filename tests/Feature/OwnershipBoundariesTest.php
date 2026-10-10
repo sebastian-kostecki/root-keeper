@@ -100,6 +100,7 @@ function ownershipRouteCases(): array
 
     $withoutBody = [
         ['tree.show', 'get', fn (array $r): array => ['person' => $r['victimPerson']->id]],
+        ['tree.ancestors', 'get', fn (array $r): array => ['person' => $r['victimPerson']->id]],
         ['sources.show', 'get', fn (array $r): array => ['source' => $r['victimSource']->id]],
         ['sources.file', 'get', fn (array $r): array => ['source' => $r['victimSource']->id]],
         ['sources.thumbnail', 'get', fn (array $r): array => ['source' => $r['victimSource']->id]],
@@ -195,6 +196,7 @@ it('answers 404 and writes nothing when ?person= names another tree\'s person on
 })->with([
     'tree.index' => ['tree.index', fn (array $r): array => []],
     'tree.show (własna osoba w adresie)' => ['tree.show', fn (array $r): array => ['person' => $r['ownPerson']->id]],
+    'tree.ancestors (własna osoba w adresie)' => ['tree.ancestors', fn (array $r): array => ['person' => $r['ownPerson']->id]],
     'sources.index' => ['sources.index', fn (array $r): array => []],
     'localities.index' => ['localities.index', fn (array $r): array => []],
     'sources.index (otwarty panel własnego źródła)' => ['sources.index', fn (array $r): array => ['source' => $r['ownSource']->id]],

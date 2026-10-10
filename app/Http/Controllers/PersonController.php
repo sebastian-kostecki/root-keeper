@@ -135,7 +135,7 @@ class PersonController extends Controller
     /**
      * Resolve where to go after deleting the person: the referring page without its `person` preview key.
      *
-     * Falls back to the persons list when the referrer is missing, external or unmatchable; a tree centred on the deleted person returns to the proband's tree.
+     * Falls back to the persons list when the referrer is missing, external or unmatchable; a tree or ancestors view centred on the deleted person returns to the proband's tree.
      */
     private function urlAfterDelete(Request $request, Person $person): string
     {
@@ -154,7 +154,7 @@ class PersonController extends Controller
 
         $name = $route->getName();
 
-        if ($name === 'tree.show' && $route->originalParameter('person') === (string) $person->id) {
+        if (in_array($name, ['tree.show', 'tree.ancestors'], true) && $route->originalParameter('person') === (string) $person->id) {
             return route('tree.index');
         }
 

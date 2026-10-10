@@ -17,6 +17,7 @@ use App\Http\Controllers\PersonSpouseController;
 use App\Http\Controllers\SidePanelDemoController;
 use App\Http\Controllers\SourceController;
 use App\Http\Controllers\SourceLegacyEntryNumberController;
+use App\Http\Controllers\TreeAncestorsController;
 use App\Http\Controllers\TreeController;
 use App\Http\Controllers\TreeRootPersonController;
 use Illuminate\Support\Facades\Route;
@@ -28,6 +29,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::get('tree', [TreeController::class, 'index'])->name('tree.index');
     Route::get('tree/{person}', [TreeController::class, 'show'])->name('tree.show');
+    Route::get('tree/{person}/ancestors', TreeAncestorsController::class)->name('tree.ancestors');
     Route::put('tree/root-person/{person}', [TreeRootPersonController::class, 'update'])->name('tree.root-person.update');
 
     Route::resource('sources', SourceController::class)->only(['index', 'store', 'show', 'update', 'destroy']);

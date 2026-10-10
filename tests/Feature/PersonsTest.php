@@ -1207,6 +1207,32 @@ test('destroy from another persons tree keeps that tree without the person param
         ->assertInertia(fn ($page) => $page->component('tree/show')->where('personPreview', null));
 });
 
+test('destroy from the ancestors view centred on the deleted person returns to the proband tree', function () {
+    $user = User::factory()->create();
+    $person = Person::factory()->for($user->tree)->create();
+
+    $this->actingAs($user)->from(personPreviewUrl($person, 'tree.ancestors', [$person]))
+        ->delete(route('persons.destroy', $person))
+        ->assertRedirect(route('tree.index'));
+
+    expect(Person::find($person->id))->toBeNull();
+});
+
+test('destroy of an ancestor from the ancestors view keeps the view without the person parameter', function () {
+    $user = User::factory()->create();
+    $child = Person::factory()->for($user->tree)->create();
+    $father = Person::factory()->for($user->tree)->male()->create();
+    linkParent($father, $child);
+
+    $from = personPreviewUrl($father, 'tree.ancestors', [$child, 'generations' => 3]);
+
+    $this->actingAs($user)->from($from)
+        ->delete(route('persons.destroy', $father))
+        ->assertRedirect(route('tree.ancestors', [$child, 'generations' => 3]));
+
+    expect(Person::find($father->id))->toBeNull();
+});
+
 test('destroy from the filtered list keeps the search and drops the person parameter', function () {
     $user = User::factory()->create();
     $person = Person::factory()->for($user->tree)->create(['last_name' => 'Kowalski']);

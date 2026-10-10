@@ -148,7 +148,7 @@ class BuildFamilySheet
             'unions' => $unions,
             'selected_union' => $selected['key'] ?? null,
             'partner' => $partner,
-            'focus_side' => $partnerPerson !== null && $this->rank($partnerPerson) < $this->rank($focusPerson) ? 'right' : 'left',
+            'focus_side' => $partnerPerson !== null && PersonOrdering::parentRank($partnerPerson) < PersonOrdering::parentRank($focusPerson) ? 'right' : 'left',
             'parents' => $parentSlots,
             'grandparents' => [
                 'focus' => $this->grandparentSlots($focusPerson),
@@ -395,11 +395,11 @@ class BuildFamilySheet
             return [['kind' => 'empty'], ['kind' => 'empty']];
         }
 
-        $known = PersonOrdering::relatives(
+        $known = PersonOrdering::parents(
             (new Collection($this->graph->parentsOf($person->id)))
                 ->map(fn (int $id): ?Person => $this->people->get($id))
                 ->filter()
-        )->sortBy(fn (Person $parent): int => $this->rank($parent))->values();
+        );
 
         if ($known->count() >= 2) {
             return [$this->personSlot($known[0]), $this->personSlot($known[1])];
@@ -472,15 +472,6 @@ class BuildFamilySheet
                 ])),
             ],
         ];
-    }
-
-    private function rank(Person $person): int
-    {
-        return match ($person->gender) {
-            Gender::Male => 0,
-            null => 1,
-            Gender::Female => 2,
-        };
     }
 
     /**

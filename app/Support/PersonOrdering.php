@@ -30,6 +30,31 @@ final class PersonOrdering
     }
 
     /**
+     * Order the parents of a person: relatives order, then men first, unknown sex in the middle, women last.
+     *
+     * @param  Collection<int, Person>  $parents
+     * @return Collection<int, Person>
+     */
+    public static function parents(Collection $parents): Collection
+    {
+        return self::relatives($parents)
+            ->sortBy(fn (Person $parent): int => self::parentRank($parent))
+            ->values();
+    }
+
+    /**
+     * The position of a parent within a pair: men 0, unknown sex 1, women 2.
+     */
+    public static function parentRank(Person $parent): int
+    {
+        return match ($parent->gender) {
+            Gender::Male => 0,
+            null => 1,
+            Gender::Female => 2,
+        };
+    }
+
+    /**
      * Order marriages by date (known year first, then year/month/day
      * ascending with a missing month/day sorting before a known one within
      * the same year), then by id.

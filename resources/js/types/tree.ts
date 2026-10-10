@@ -65,3 +65,18 @@ export type FamilySheet = {
     add_spouse: AddSpouseTarget;
     unmarried_parents: { focus: boolean; partner: boolean };
 };
+
+export type AncestorNode =
+    | {
+          kind: 'person';
+          person: SheetPerson;
+          repeated: boolean;
+          parents: AncestorNode[];
+      }
+    | { kind: 'unknown'; label: string };
+
+export type AncestorChart = {
+    focus: SheetPerson;
+    generations: number;
+    root: AncestorNode;
+};
