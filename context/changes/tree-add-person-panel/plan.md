@@ -488,27 +488,27 @@ Brak migracji danych. Zakładki/linki z `?add=` po zmianie arkusza degradują si
 
 #### Automated
 
-- [x] 4.1 Testy JS przechodzą (w tym `fit-view.test.ts`)
-- [x] 4.2 Typy, lint i build przechodzą
-- [x] 4.3 Skan zakodowanych wartości zwraca wyłącznie `ring-[3px]`
-- [x] 4.4 Specy drzewa przechodzą (sloty, `tree-card-recentre`, `ancestors-view`)
+- [x] 4.1 Testy JS przechodzą (w tym `fit-view.test.ts`) — d83b387
+- [x] 4.2 Typy, lint i build przechodzą — d83b387
+- [x] 4.3 Skan zakodowanych wartości zwraca wyłącznie `ring-[3px]` — d83b387
+- [x] 4.4 Specy drzewa przechodzą (sloty, `tree-card-recentre`, `ancestors-view`) — d83b387
 
 #### Manual
 
-- [x] 4.5 1440×900 i 1366×768: aktywny slot w kadrze i wyróżniony; zamknięcie wraca do dopasowania
-- [x] 4.6 390×844: karta osoby centralnej w kadrze
-- [x] 4.7 Menu związku → „Dodaj małżonka”: węzeł wyróżniony i w kadrze
-- [x] 4.8 Widok przodków kadruje jak przed zmianą
+- [x] 4.5 1440×900 i 1366×768: aktywny slot w kadrze i wyróżniony; zamknięcie wraca do dopasowania — d83b387
+- [x] 4.6 390×844: karta osoby centralnej w kadrze — d83b387
+- [x] 4.7 Menu związku → „Dodaj małżonka”: węzeł wyróżniony i w kadrze — d83b387
+- [x] 4.8 Widok przodków kadruje jak przed zmianą — d83b387
 
 ### Phase 5: E2E, reguła agenta i bramka wizualna
 
 #### Automated
 
-- [ ] 5.1 Specy slotów i strażnika przechodzą
-- [ ] 5.2 Spec strażnika czerwienieje po celowym wyłączeniu `markDirty` i zielenieje po przywróceniu
-- [ ] 5.3 Pełny zestaw E2E przechodzi: `npx playwright test`
-- [ ] 5.4 `CLAUDE.md` nie zawiera już „small pickers (choose a person”
-- [ ] 5.5 Lint i format przechodzą: `vendor/bin/sail npm run check`
+- [x] 5.1 Specy slotów i strażnika przechodzą
+- [x] 5.2 Spec strażnika czerwienieje po celowym wyłączeniu `markDirty` i zielenieje po przywróceniu
+- [x] 5.3 Pełny zestaw E2E przechodzi: `npx playwright test`
+- [x] 5.4 `CLAUDE.md` nie zawiera już „small pickers (choose a person”
+- [x] 5.5 Lint i format przechodzą: `vendor/bin/sail npm run check`
 
 #### Manual
 

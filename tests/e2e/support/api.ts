@@ -172,8 +172,8 @@ export async function createSpouse(
 }
 
 /**
- * `persons.parents.store`: a new parent of `childId`. The route redirects back
- * and carries no id, so the parent is found again by its unique name.
+ * `persons.parents.store`: a new parent of `childId`. The redirect opens the
+ * new parent's panel (`?person=`), so the id is read from its `Location`.
  */
 export async function createParent(
     page: Page,
@@ -186,23 +186,15 @@ export async function createParent(
         form: { ...personForm(fields), role },
         maxRedirects: 0,
     });
-    await expectRedirect(response);
+    await expectRedirect(response, /^\/tree\/\d+$/);
 
-    const name = `${fields.first_name} ${fields.last_name}`;
-    const parent = (await findPersons(page, fields.last_name)).find(
-        (person) => person.display_name === name,
-    );
-    if (!parent) {
-        throw new Error(`The new parent ${name} was not created`);
-    }
-
-    return parent.id;
+    return idFromLocation(response, 'person');
 }
 
 /**
  * `persons.children.store`: a new child of `parentId`, and of `otherParentId`
- * when given. The route redirects back with no id, so the child is found again
- * by its unique name.
+ * when given. The redirect opens the new child's panel (`?person=`), so the id
+ * is read from its `Location`.
  */
 async function createChild(
     page: Page,
@@ -220,17 +212,9 @@ async function createChild(
         },
         maxRedirects: 0,
     });
-    await expectRedirect(response);
+    await expectRedirect(response, /^\/tree\/\d+$/);
 
-    const name = `${fields.first_name} ${fields.last_name}`;
-    const child = (await findPersons(page, fields.last_name)).find(
-        (person) => person.display_name === name,
-    );
-    if (!child) {
-        throw new Error(`The new child ${name} was not created`);
-    }
-
-    return child.id;
+    return idFromLocation(response, 'person');
 }
 
 /** A child of both spouses of a marriage: `persons.children.store` with `other_parent_id`. */

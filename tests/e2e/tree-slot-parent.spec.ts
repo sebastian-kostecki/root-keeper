@@ -45,6 +45,7 @@ test('tree-slot-parent: a parent added from an empty slot is linked from both si
     // The dialog closes on success and the filled slot is gone. (Not the
     // toast: flash data lives in the one session all parallel tests share.)
     await expect(pickFather).toBeHidden();
+    await expect(page.getByRole('dialog', { name: fatherName })).toBeVisible();
     await expect(treeSlot(page, 'ojca', childName)).toHaveCount(0);
 
     // 2. A new person fills the mother slot.
@@ -55,6 +56,7 @@ test('tree-slot-parent: a parent added from an empty slot is linked from both si
     await addMother.getByRole('radio', { name: 'Kobieta' }).click();
     await addMother.getByRole('button', { name: 'Zapisz' }).click();
     await expect(addMother).toBeHidden();
+    await expect(page.getByRole('dialog', { name: motherName })).toBeVisible();
     await expect(treeSlot(page, 'matkę', childName)).toHaveCount(0);
 
     const mother = (await findPersons(page, motherName)).find(

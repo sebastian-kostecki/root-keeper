@@ -54,7 +54,7 @@ PHP 8.5 · Laravel 13 · Inertia v3 (inertia-laravel 3.5, @inertiajs/react 3.8) 
 
 ## Side panels vs modals
 
-- Person, source, marriage and locality open in a right-hand side panel, not a modal. Delete confirmations and small pickers (choose a person, add a parish inline) stay modal (`resources/js/components/ui/dialog.tsx`).
+- Person, source, marriage and locality open in a right-hand side panel, not a modal. Tree add/choose person (slots, spouse menu, empty tree) happens in the add panel `?add=` (reference: `resources/js/components/tree/add-person-panel.tsx`). Modals remain for delete confirmations, `MarryCoupleDialog`, small pickers without a form (parish inline, buried pick-person-dialog) and "Dodaj osobę" on `/persons` until a separate change (`resources/js/components/ui/dialog.tsx`).
 - An open panel must not cover the tree: the tree area narrows beside it. Do not use an overlay for these panels — `resources/js/components/ui/sheet.tsx` is an overlay (Radix Dialog) and does not meet this as-is.
 - Build one shared panel shell and reuse it for all four; the source panel is wider (scan beside the form).
 - Closing a panel returns the user to the same tree position; moving to a relative replaces the panel content.

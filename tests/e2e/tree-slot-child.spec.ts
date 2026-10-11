@@ -67,6 +67,9 @@ test("tree-slot-child: a child added in the second union has that union's partne
         .getByRole('button', { name: new RegExp(`^${candidateName}`) })
         .click();
     await expect(pickChild).toBeHidden();
+    await expect(
+        page.getByRole('dialog', { name: candidateName }),
+    ).toBeVisible();
 
     // 3. A new person through the same slot.
     await expect(childSlot).toBeVisible();
@@ -77,6 +80,9 @@ test("tree-slot-child: a child added in the second union has that union's partne
     await addChild.getByLabel('Nazwisko', { exact: true }).fill(suffix);
     await addChild.getByRole('button', { name: 'Zapisz' }).click();
     await expect(addChild).toBeHidden();
+    await expect(
+        page.getByRole('dialog', { name: newChildName }),
+    ).toBeVisible();
 
     const newChild = (await findPersons(page, newChildName)).find(
         (person) => person.display_name === newChildName,

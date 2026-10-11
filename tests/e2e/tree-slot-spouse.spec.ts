@@ -44,6 +44,9 @@ test('tree-slot-spouse: spouses added from the slot and the union menu are marri
     await addSpouse.getByLabel('Nazwisko', { exact: true }).fill(suffix);
     await addSpouse.getByRole('button', { name: 'Zapisz' }).click();
     await expect(addSpouse).toBeHidden();
+    await expect(
+        page.getByRole('dialog', { name: newSpouseName }),
+    ).toBeVisible();
 
     // 2. An existing person through the union node's menu.
     await chooseUnionMenuItem(page, 'Dodaj małżonka');
@@ -55,6 +58,9 @@ test('tree-slot-spouse: spouses added from the slot and the union menu are marri
         .getByRole('button', { name: new RegExp(`^${candidateName}`) })
         .click();
     await expect(pickSpouse).toBeHidden();
+    await expect(
+        page.getByRole('dialog', { name: candidateName }),
+    ).toBeVisible();
 
     const newSpouse = (await findPersons(page, newSpouseName)).find(
         (person) => person.display_name === newSpouseName,
