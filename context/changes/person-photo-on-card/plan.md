@@ -483,10 +483,10 @@ Migracja tylko dodaje dwie kolumny nullable. Istniejące osoby nie mają zdjęci
 
 #### Automated
 
-- [x] 4.1 Spec przechodzi
-- [x] 4.2 Spec przechodzi dwa razy z rzędu
-- [x] 4.3 Format i lint przechodzą
+- [x] 4.1 Spec przechodzi — 72037d8
+- [x] 4.2 Spec przechodzi dwa razy z rzędu — 72037d8
+- [x] 4.3 Format i lint przechodzą — 72037d8
 
 #### Manual
 
-- [ ] 4.4 Celowe zepsucie czerwieni test, a po cofnięciu znów jest zielony
+- [x] 4.4 Celowe zepsucie czerwieni test, a po cofnięciu znów jest zielony — 72037d8
