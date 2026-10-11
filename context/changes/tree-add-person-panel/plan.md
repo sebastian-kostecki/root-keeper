@@ -454,35 +454,35 @@ Brak migracji danych. Zakładki/linki z `?add=` po zmianie arkusza degradują si
 
 #### Automated
 
-- [x] 2.1 Testy JS przechodzą: `vendor/bin/sail npm run test:js`
-- [x] 2.2 Typy przechodzą: `vendor/bin/sail npm run types:check`
-- [x] 2.3 Lint i format przechodzą: `vendor/bin/sail npm run check`
-- [x] 2.4 Build przechodzi: `vendor/bin/sail npm run build`
-- [x] 2.5 Trzy specy slotów przechodzą bez zmian w kodzie testów
-- [x] 2.6 Brak odwołań do usuniętego modala
+- [x] 2.1 Testy JS przechodzą: `vendor/bin/sail npm run test:js` — 9350c59
+- [x] 2.2 Typy przechodzą: `vendor/bin/sail npm run types:check` — 9350c59
+- [x] 2.3 Lint i format przechodzą: `vendor/bin/sail npm run check` — 9350c59
+- [x] 2.4 Build przechodzi: `vendor/bin/sail npm run build` — 9350c59
+- [x] 2.5 Trzy specy slotów przechodzą bez zmian w kodzie testów — 9350c59
+- [x] 2.6 Brak odwołań do usuniętego modala — 9350c59
 
 #### Manual
 
 - [x] 2.7 Klik „Dodaj ojca” przy otwartym panelu osoby zamienia go na panel dodawania; drzewo zwężone, nie przyciemnione
-- [x] 2.8 Wybór kandydata i zapis nowej osoby przełączają panel na podgląd tej osoby
-- [x] 2.9 Strażnik: pasek przy kliknięciu w kartę / X / Escape; Porzuć i Zapisz działają
-- [x] 2.10 Pierścień fokusu na wierszu kandydata; „Spróbuj ponownie” wczytuje listę
-- [x] 2.11 Nieaktualny `?add=` nie otwiera panelu i nie wywala strony
+- [x] 2.8 Wybór kandydata i zapis nowej osoby przełączają panel na podgląd tej osoby — 9350c59
+- [x] 2.9 Strażnik: pasek przy kliknięciu w kartę / X / Escape; Porzuć i Zapisz działają — 9350c59
+- [x] 2.10 Pierścień fokusu na wierszu kandydata; „Spróbuj ponownie” wczytuje listę — 9350c59
+- [x] 2.11 Nieaktualny `?add=` nie otwiera panelu i nie wywala strony — 9350c59
 
 ### Phase 3: Pusty stan drzewa i wybór probanta
 
 #### Automated
 
-- [ ] 3.1 Testy JS przechodzą: `vendor/bin/sail npm run test:js`
-- [ ] 3.2 Typy, lint i build przechodzą
-- [ ] 3.3 Testy probanta przechodzą: `vendor/bin/sail artisan test --compact tests/Feature/TreeProbandTest.php tests/Feature/TreeTest.php`
+- [x] 3.1 Testy JS przechodzą: `vendor/bin/sail npm run test:js`
+- [x] 3.2 Typy, lint i build przechodzą
+- [x] 3.3 Testy probanta przechodzą: `vendor/bin/sail artisan test --compact tests/Feature/TreeProbandTest.php tests/Feature/TreeTest.php`
 
 #### Manual
 
-- [ ] 3.4 Konto bez osób: pierwsza osoba zostaje probantem, arkusz z jej podglądem
-- [ ] 3.5 Osoby bez probanta: wybór z listy i „Nowa osoba” ustawiają probanta
-- [ ] 3.6 Strażnik działa w formularzu probanta
-- [ ] 3.7 390 px: pusty stan czytelny, panel pełnoekranowy, zamknięcie wraca do pustego stanu
+- [x] 3.4 Konto bez osób: pierwsza osoba zostaje probantem, arkusz z jej podglądem
+- [x] 3.5 Osoby bez probanta: wybór z listy i „Nowa osoba” ustawiają probanta
+- [x] 3.6 Strażnik działa w formularzu probanta
+- [x] 3.7 390 px: pusty stan czytelny, panel pełnoekranowy, zamknięcie wraca do pustego stanu
 
 ### Phase 4: Kadrowanie i aktywny slot
 

@@ -12,7 +12,8 @@ import type {
 export type AddTarget =
     | { kind: 'parent'; slot: ParentSlotTarget }
     | { kind: 'child'; target: AddChildTarget }
-    | { kind: 'spouse'; focus: SheetPerson; target: AddSpouseTarget };
+    | { kind: 'spouse'; focus: SheetPerson; target: AddSpouseTarget }
+    | { kind: 'proband'; hasPeople: boolean };
 
 /** `father:<childId>`, `mother:<childId>` or `parent:<childId>`. */
 const PARENT_VALUE = /^(father|mother|parent):(\d+)$/;
@@ -20,14 +21,23 @@ const PARENT_VALUE = /^(father|mother|parent):(\d+)$/;
 /**
  * Resolves the value of the `add` query key to a target of the sheet. A value
  * that does not match the sheet (a parent slot filled since, an unknown key,
- * a malformed value) gives null, so no panel opens.
+ * a malformed value) gives null, so no panel opens. `proband` is only a target
+ * while the tree has no proband (no sheet); `hasPeople` tells the panel whether
+ * it picks from the tree's people or only creates one.
  */
 export function resolveAddTarget(
     sheet: FamilySheet | null,
     value: string | null,
+    options: { hasPeople: boolean } = { hasPeople: false },
 ): AddTarget | null {
-    if (sheet === null || value === null) {
+    if (value === null) {
         return null;
+    }
+
+    if (sheet === null) {
+        return value === 'proband'
+            ? { kind: 'proband', hasPeople: options.hasPeople }
+            : null;
     }
 
     if (value === 'child') {

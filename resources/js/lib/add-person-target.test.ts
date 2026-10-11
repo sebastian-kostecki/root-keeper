@@ -152,6 +152,27 @@ describe('resolveAddTarget', () => {
         expect(resolveAddTarget(sheet(), null)).toBeNull();
     });
 
+    it('resolves the proband target only without a sheet', () => {
+        expect(resolveAddTarget(null, 'proband', { hasPeople: false })).toEqual(
+            { kind: 'proband', hasPeople: false },
+        );
+        expect(resolveAddTarget(null, 'proband', { hasPeople: true })).toEqual({
+            kind: 'proband',
+            hasPeople: true,
+        });
+        expect(
+            resolveAddTarget(sheet(), 'proband', { hasPeople: true }),
+        ).toBeNull();
+    });
+
+    it('gives null for the sheet targets without a sheet', () => {
+        for (const value of ['child', 'spouse', 'father:1']) {
+            expect(
+                resolveAddTarget(null, value, { hasPeople: true }),
+            ).toBeNull();
+        }
+    });
+
     it('gives null for an unknown or malformed value', () => {
         for (const value of [
             '',
@@ -177,6 +198,12 @@ describe('addValueFor', () => {
 
             expect(addValueFor(target)).toBe(value);
         }
+    });
+
+    it('names the proband target', () => {
+        const target = resolveAddTarget(null, 'proband', { hasPeople: true });
+
+        expect(addValueFor(target as AddTarget)).toBe('proband');
     });
 
     it('names the parent role and the child id', () => {

@@ -3,6 +3,7 @@ import ParentChildRelationController from '@/actions/App/Http/Controllers/Parent
 import PersonChildController from '@/actions/App/Http/Controllers/PersonChildController';
 import PersonParentController from '@/actions/App/Http/Controllers/PersonParentController';
 import PersonSpouseController from '@/actions/App/Http/Controllers/PersonSpouseController';
+import TreeProbandController from '@/actions/App/Http/Controllers/TreeProbandController';
 import type { AddTarget } from '@/lib/add-person-target';
 import { pluralPhrase } from '@/lib/plural';
 import type {
@@ -42,7 +43,14 @@ export type AddPersonConfig = {
     };
     /** Without it, the "Nowa osoba" view is not offered. */
     form?: PickOrCreateForm;
+    /** The panel opens on the form and offers no way back to a list (the tree has no people yet). */
+    startsInForm?: boolean;
 };
+
+/** Title of the proband target: the empty tree creates the first person, the others pick one. */
+function probandTitle(hasPeople: boolean): string {
+    return hasPeople ? 'Wybierz probanta' : 'Dodaj pierwszą osobę';
+}
 
 const ROLE_TITLE: Record<ParentSlotRole, string> = {
     father: 'Dodaj ojca',
@@ -72,6 +80,12 @@ export function addTriggerLabels(target: AddTarget): {
     label: string;
     addLabel: string;
 } {
+    if (target.kind === 'proband') {
+        const label = probandTitle(target.hasPeople);
+
+        return { label, addLabel: label };
+    }
+
     if (target.kind === 'parent') {
         return {
             label: ROLE_TITLE[target.slot.role],
@@ -102,6 +116,33 @@ export function addPersonConfig(
     options: { genders: Gender[]; religions: Religion[] },
 ): AddPersonConfig {
     const { genders, religions } = options;
+
+    if (target.kind === 'proband') {
+        const { hasPeople } = target;
+
+        return {
+            title: probandTitle(hasPeople),
+            description: hasPeople
+                ? 'Wybierz osobę, od której zaczyna się drzewo, albo dodaj nową.'
+                : 'Dodaj pierwszą osobę — zostanie probantem, od którego zaczyna się drzewo.',
+            select: (list) => ({
+                visible: list,
+                hiddenCount: 0,
+                hiddenHint: '',
+            }),
+            pick: (candidateId) => ({
+                url: TreeProbandController.attach().url,
+                data: { person_id: candidateId },
+            }),
+            form: {
+                definition: TreeProbandController.store.form(),
+                genders,
+                religions,
+                submitTestId: 'create-proband-button',
+            },
+            startsInForm: !hasPeople,
+        };
+    }
 
     if (target.kind === 'parent') {
         const { slot } = target;

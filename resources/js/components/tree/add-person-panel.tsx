@@ -26,7 +26,10 @@ import type { FamilySheet, Gender, PersonCandidate, Religion } from '@/types';
 type Props = {
     /** The `add` query value, e.g. `father:987`; null closes the panel. */
     value: string | null;
+    /** Null while the tree has no proband; then only the `proband` value resolves. */
     sheet: FamilySheet | null;
+    /** Whether the tree has any person; only the proband target reads it. */
+    hasPeople: boolean;
     personCandidates: PersonCandidate[] | undefined;
     genders: Gender[];
     religions: Religion[];
@@ -38,18 +41,19 @@ type Resolver = RefObject<((isSaved: boolean) => void) | null>;
 
 /**
  * The "add a person" side panel of the tree: the people of the tree to pick
- * from, or a new-person form. Opened by `?add=<value>` from an empty slot; the
- * target is resolved from the sheet on screen, so a stale value renders nothing.
- * Its own section editor guards the form against leaving unsaved.
+ * from, or a new-person form. Opened by `?add=<value>` from an empty slot or
+ * the empty tree; the target is resolved from the sheet on screen, so a stale
+ * value renders nothing. Its own section editor guards the form against leaving unsaved.
  */
 export function AddPersonPanel({
     value,
     sheet,
+    hasPeople,
     personCandidates,
     genders,
     religions,
 }: Props) {
-    const target = resolveAddTarget(sheet, value);
+    const target = resolveAddTarget(sheet, value, { hasPeople });
 
     if (value === null || target === null) {
         return null;
@@ -75,13 +79,14 @@ type BodyProps = {
 };
 
 function AddPersonPanelBody({ value, config, personCandidates }: BodyProps) {
+    const initialView: View = config.startsInForm ? 'form' : 'list';
     const { close } = useSidePanelNavigation('add');
     const { list, loading, loaded, load } = useOptionalList(
         'personCandidates',
         personCandidates,
     );
     const { hasPendingExit, requestExit } = useSectionEditor();
-    const [view, setView] = useState<View>('list');
+    const [view, setView] = useState<View>(initialView);
     const [filter, setFilter] = useState('');
     const [processingId, setProcessingId] = useState<number | null>(null);
     const [error, setError] = useState<string | undefined>(undefined);
@@ -95,7 +100,7 @@ function AddPersonPanelBody({ value, config, personCandidates }: BodyProps) {
     // A different slot starts again from the list, as a fresh panel would.
     if (shownValue !== value) {
         setShownValue(value);
-        setView('list');
+        setView(initialView);
         setFilter('');
         setError(undefined);
         setProcessingId(null);
@@ -153,7 +158,8 @@ function AddPersonPanelBody({ value, config, personCandidates }: BodyProps) {
                         errors.child_id ??
                         errors.parent_id ??
                         errors.other_parent_id ??
-                        errors.spouse_id,
+                        errors.spouse_id ??
+                        errors.proband,
                 ),
             onFinish: () => setProcessingId(null),
         });
@@ -174,14 +180,16 @@ function AddPersonPanelBody({ value, config, personCandidates }: BodyProps) {
             <div className="space-y-3">
                 {hasPendingExit && <UnsavedChangesBar />}
                 <div className="flex justify-end gap-2">
-                    <Button
-                        type="button"
-                        variant="secondary"
-                        disabled={isSaving}
-                        onClick={() => requestExit(showList)}
-                    >
-                        Wróć do listy
-                    </Button>
+                    {!config.startsInForm && (
+                        <Button
+                            type="button"
+                            variant="secondary"
+                            disabled={isSaving}
+                            onClick={() => requestExit(showList)}
+                        >
+                            Wróć do listy
+                        </Button>
+                    )}
                     <Button
                         type="submit"
                         form={formId}
@@ -343,7 +351,9 @@ function AddPersonFormBody({
                 lockedGender={form.lockedGender}
                 defaults={form.defaults}
             />
-            <InputError message={errors.relation ?? errors.role} />
+            <InputError
+                message={errors.relation ?? errors.role ?? errors.proband}
+            />
         </div>
     );
 }
