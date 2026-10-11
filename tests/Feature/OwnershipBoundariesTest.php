@@ -21,7 +21,13 @@ use Illuminate\Support\Facades\Storage;
  */
 function ownershipRecords(User $attacker, User $victim): array
 {
-    $victimPerson = Person::factory()->for($victim->tree)->create();
+    $victimPerson = Person::factory()->for($victim->tree)->create([
+        'photo_path' => "persons/{$victim->tree->id}/victim.jpg",
+        'photo_thumbnail_path' => "persons/{$victim->tree->id}/thumbnails/victim.jpg",
+    ]);
+    Storage::disk('local')->put($victimPerson->photo_path, 'original-bytes');
+    Storage::disk('local')->put($victimPerson->photo_thumbnail_path, 'thumbnail-bytes');
+
     $victimSpouse = Person::factory()->for($victim->tree)->create();
     $victimChild = Person::factory()->for($victim->tree)->create();
 

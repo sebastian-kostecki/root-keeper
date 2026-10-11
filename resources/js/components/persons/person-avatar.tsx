@@ -1,5 +1,5 @@
-import { useState } from 'react';
 import { useInitials } from '@/hooks/use-initials';
+import { useVisiblePhoto } from '@/hooks/use-visible-photo';
 import { genderSurface } from '@/lib/gender-styles';
 import { cn } from '@/lib/utils';
 
@@ -35,9 +35,7 @@ export function PersonAvatar({
     className,
 }: Props) {
     const getInitials = useInitials();
-    // Remembers the URL that failed; a new URL is tried again without a reload.
-    const [failedPhotoUrl, setFailedPhotoUrl] = useState<string | null>(null);
-    const visiblePhotoUrl = photoUrl !== failedPhotoUrl ? photoUrl : null;
+    const { visiblePhotoUrl, onError } = useVisiblePhoto(photoUrl);
 
     return (
         <span
@@ -53,7 +51,7 @@ export function PersonAvatar({
                     src={visiblePhotoUrl}
                     alt=""
                     loading="lazy"
-                    onError={() => setFailedPhotoUrl(visiblePhotoUrl)}
+                    onError={onError}
                     className="absolute inset-0 size-full object-cover object-center"
                 />
             ) : (

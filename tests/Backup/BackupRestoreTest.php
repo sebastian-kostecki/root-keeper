@@ -55,9 +55,12 @@ test('--force restores an occupied instance to the archived state and keeps a sa
 
     $this->delete(route('persons.destroy', $parent))->assertSessionHasNoErrors();
     $extra = $this->uploadSource($this->backupUser, 'akt-3.jpg', 'portrait-small.jpg');
+    $extraPhoto = "persons/{$parent->tree_id}/po-kopii.jpg";
+    Storage::disk('local')->put($extraPhoto, 'zdjecie-po-kopii');
 
     expect(Person::query()->find($parent->id))->toBeNull()
         ->and(Storage::disk('local')->exists($extra->path))->toBeTrue()
+        ->and(Storage::disk('local')->exists($extraPhoto))->toBeTrue()
         ->and($this->tableDigests('pgsql'))->not->toBe($snapshot);
 
     $this->travel(1)->seconds();
@@ -70,6 +73,7 @@ test('--force restores an occupied instance to the archived state and keeps a sa
 
     expect($this->tableDigests('pgsql'))->toBe($snapshot)
         ->and(Storage::disk('local')->exists($extra->path))->toBeFalse()
+        ->and(Storage::disk('local')->exists($extraPhoto))->toBeFalse()
         ->and($archives)->toHaveCount(2)
         ->and(array_unique(array_map('basename', $archives)))->toHaveCount(2)
         ->and(hash_file('sha256', $archive))->toBe($archiveHash);

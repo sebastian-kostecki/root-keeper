@@ -1,6 +1,5 @@
 import { Link } from '@inertiajs/react';
 import { Eye } from 'lucide-react';
-import { useState } from 'react';
 import { PersonPreviewLink } from '@/components/persons/person-preview-link';
 import { usePersonPreview } from '@/components/persons/person-preview-provider';
 import { Button } from '@/components/ui/button';
@@ -11,6 +10,7 @@ import {
 } from '@/components/tree/card-styles';
 import { useInitials } from '@/hooks/use-initials';
 import { useMarriagePanel } from '@/hooks/use-marriage-panel';
+import { useVisiblePhoto } from '@/hooks/use-visible-photo';
 import { formatAge } from '@/lib/age';
 import { genderCard } from '@/lib/gender-styles';
 import { personPhotoUrl } from '@/lib/person-photo';
@@ -36,9 +36,7 @@ const stripGender = {
 function PhotoStrip({ person }: { person: SheetPerson }) {
     const getInitials = useInitials();
     const photoUrl = personPhotoUrl(person.id, person.photo_version);
-    // Remembers the URL that failed; a new URL is tried again without a reload.
-    const [failedPhotoUrl, setFailedPhotoUrl] = useState<string | null>(null);
-    const visiblePhotoUrl = photoUrl !== failedPhotoUrl ? photoUrl : null;
+    const { visiblePhotoUrl, onError } = useVisiblePhoto(photoUrl);
 
     return (
         <span
@@ -52,7 +50,7 @@ function PhotoStrip({ person }: { person: SheetPerson }) {
                     src={visiblePhotoUrl}
                     alt=""
                     loading="lazy"
-                    onError={() => setFailedPhotoUrl(visiblePhotoUrl)}
+                    onError={onError}
                     className="absolute inset-0 size-full object-cover object-center"
                 />
             ) : (

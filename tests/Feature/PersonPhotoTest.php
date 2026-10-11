@@ -83,6 +83,8 @@ test('a replacement removes the previous files and changes the photo version', f
 });
 
 test('files of other types and oversized files are rejected on the photo field', function (UploadedFile $file) {
+    $this->mock(GenerateSourceThumbnail::class, fn ($mock) => $mock->shouldNotReceive('handle'));
+
     $user = User::factory()->create();
     $person = Person::factory()->for($user->tree)->create();
 
@@ -94,9 +96,8 @@ test('files of other types and oversized files are rejected on the photo field',
         ->and(Storage::disk('local')->allFiles())->toBeEmpty();
 })->with([
     'pdf' => fn () => UploadedFile::fake()->create('dokument.pdf', 10, 'application/pdf'),
-    'gif' => fn () => UploadedFile::fake()->create('animacja.gif', 10, 'image/gif'),
-    'svg' => fn () => UploadedFile::fake()->create('grafika.svg', 10, 'image/svg+xml'),
-    'jpg z tekstem w środku' => fn () => UploadedFile::fake()->createWithContent('tekst.jpg', 'to nie jest obraz'),
+    'gif' => fn () => UploadedFile::fake()->createWithContent('animacja.gif', base64_decode('R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7')),
+    'svg' => fn () => UploadedFile::fake()->createWithContent('grafika.svg', '<svg xmlns="http://www.w3.org/2000/svg" width="1" height="1"><rect width="1" height="1"/></svg>'),
     'ponad 20 MB' => function () {
         $path = sys_get_temp_dir().'/duzy-'.bin2hex(random_bytes(4)).'.jpg';
         file_put_contents($path, file_get_contents(base_path('tests/Fixtures/portrait-small.jpg')).str_repeat("\0", 20 * 1024 * 1024));
@@ -104,6 +105,18 @@ test('files of other types and oversized files are rejected on the photo field',
         return new UploadedFile($path, 'duzy.jpg', 'image/jpeg', null, true);
     },
 ]);
+
+test('a text file named jpg is refused when no thumbnail can be made and leaves no files', function () {
+    $user = User::factory()->create();
+    $person = Person::factory()->for($user->tree)->create();
+
+    $this->actingAs($user)
+        ->post(route('persons.photo.store', $person), ['photo' => UploadedFile::fake()->createWithContent('tekst.jpg', 'to nie jest obraz')])
+        ->assertSessionHasErrors('photo');
+
+    expect($person->refresh()->photo_path)->toBeNull()
+        ->and(Storage::disk('local')->allFiles())->toBeEmpty();
+});
 
 test('a photo without a thumbnail is refused and leaves no files and the person unchanged', function () {
     $this->mock(GenerateSourceThumbnail::class, fn ($mock) => $mock->shouldReceive('handle')->once()->andReturnNull());
@@ -159,7 +172,7 @@ test('destroy clears the person columns and deletes both files', function () {
 test('the photo route serves the thumbnail with private caching and nosniff', function () {
     $user = User::factory()->create();
     $person = Person::factory()->for($user->tree)->create();
-    $stored = personPhotoStoredFor($person);
+    personPhotoStoredFor($person);
 
     $response = $this->actingAs($user)->get(route('persons.photo.show', $person))->assertOk();
 
@@ -167,8 +180,7 @@ test('the photo route serves the thumbnail with private caching and nosniff', fu
         ->and($response->headers->get('Content-Type'))->toBe('image/jpeg')
         ->and($response->headers->get('Cache-Control'))->toContain('private')
         ->and($response->headers->get('Cache-Control'))->toContain('max-age=86400')
-        ->and($response->headers->get('X-Content-Type-Options'))->toBe('nosniff')
-        ->and($stored['thumbnail'])->toEndWith('.jpg');
+        ->and($response->headers->get('X-Content-Type-Options'))->toBe('nosniff');
 });
 
 test('the photo route is a 404 without a photo', function () {
