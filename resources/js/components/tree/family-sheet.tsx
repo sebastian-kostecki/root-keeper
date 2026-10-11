@@ -19,7 +19,7 @@ import type {
 type BlockKey = 'focus' | 'partner';
 
 /** One sheet column and the gap between columns, in rem (a column is a grandparent card). */
-const COLUMN_REM = 10;
+const COLUMN_REM = 12;
 const COLUMN_GAP_REM = 0.75;
 
 /** Width of the eight-column grandparent row: the base width of the sheet. */

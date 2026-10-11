@@ -1,16 +1,19 @@
 import { Link } from '@inertiajs/react';
 import { Eye } from 'lucide-react';
+import { useState } from 'react';
 import { PersonPreviewLink } from '@/components/persons/person-preview-link';
 import { usePersonPreview } from '@/components/persons/person-preview-provider';
 import { Button } from '@/components/ui/button';
 import {
     cardFocus,
     cardInteractive,
-    cardSurface,
+    personCardSurface,
 } from '@/components/tree/card-styles';
+import { useInitials } from '@/hooks/use-initials';
 import { useMarriagePanel } from '@/hooks/use-marriage-panel';
 import { formatAge } from '@/lib/age';
 import { genderCard } from '@/lib/gender-styles';
+import { personPhotoUrl } from '@/lib/person-photo';
 import { cn } from '@/lib/utils';
 import { show as treeShow } from '@/routes/tree';
 import type { SheetPerson } from '@/types';
@@ -22,28 +25,94 @@ type Props = {
     isFocus?: boolean;
 };
 
-export function CardBody({ person }: { person: SheetPerson }) {
+/** Strip fill without a photo: the gender colour at full strength, unlike the lighter card fill. */
+const stripGender = {
+    male: 'bg-gender-male',
+    female: 'bg-gender-female',
+    unknown: 'bg-gender-unknown',
+} as const;
+
+/** Photo strip on the left edge of a person card: the photo, or the initials on the gender colour. */
+function PhotoStrip({ person }: { person: SheetPerson }) {
+    const getInitials = useInitials();
+    const photoUrl = personPhotoUrl(person.id, person.photo_version);
+    // Remembers the URL that failed; a new URL is tried again without a reload.
+    const [failedPhotoUrl, setFailedPhotoUrl] = useState<string | null>(null);
+    const visiblePhotoUrl = photoUrl !== failedPhotoUrl ? photoUrl : null;
+
+    return (
+        <span
+            className={cn(
+                'relative w-18 shrink-0 overflow-hidden',
+                stripGender[person.gender ?? 'unknown'],
+            )}
+        >
+            {visiblePhotoUrl !== null ? (
+                <img
+                    src={visiblePhotoUrl}
+                    alt=""
+                    loading="lazy"
+                    onError={() => setFailedPhotoUrl(visiblePhotoUrl)}
+                    className="absolute inset-0 size-full object-cover object-center"
+                />
+            ) : (
+                <span
+                    aria-hidden="true"
+                    className="text-background absolute inset-0 flex items-center justify-center text-lg font-semibold"
+                >
+                    {getInitials(person.display_name)}
+                </span>
+            )}
+        </span>
+    );
+}
+
+/**
+ * Photo strip and data column of a person card. The data column stacks the
+ * name, the dates and the age, aligned to the top left; `children` adds lines
+ * below them. `reserveActionSpace` leaves room for the eye button in the first
+ * line of the name.
+ */
+export function CardBody({
+    person,
+    children,
+    reserveActionSpace = false,
+}: {
+    person: SheetPerson;
+    children?: React.ReactNode;
+    reserveActionSpace?: boolean;
+}) {
     return (
         <>
-            <span className="text-card-foreground text-base leading-tight font-semibold [overflow-wrap:anywhere] break-words">
-                {person.gender === 'male' && (
-                    <span className="sr-only">mężczyzna</span>
+            <PhotoStrip person={person} />
+            <span className="flex min-w-0 flex-1 flex-col items-start justify-start px-3 py-3.5">
+                <span className="text-card-foreground text-base leading-tight font-semibold [overflow-wrap:anywhere] break-words">
+                    {reserveActionSpace && (
+                        <span
+                            aria-hidden="true"
+                            className="float-right size-7"
+                        />
+                    )}
+                    {person.gender === 'male' && (
+                        <span className="sr-only">mężczyzna</span>
+                    )}
+                    {person.gender === 'female' && (
+                        <span className="sr-only">kobieta</span>
+                    )}
+                    {person.display_name}
+                </span>
+                {person.lifespan && (
+                    <span className="text-tree-meta mt-1 block text-sm">
+                        {person.lifespan}
+                    </span>
                 )}
-                {person.gender === 'female' && (
-                    <span className="sr-only">kobieta</span>
+                {person.lifespan && person.age && (
+                    <span className="text-tree-meta block text-sm whitespace-nowrap">
+                        {`(${formatAge(person.age)})`}
+                    </span>
                 )}
-                {person.display_name}
+                {children}
             </span>
-            {person.lifespan && (
-                <span className="text-tree-meta mt-1 block text-sm">
-                    {person.lifespan}
-                </span>
-            )}
-            {person.lifespan && person.age && (
-                <span className="text-tree-meta block text-sm whitespace-nowrap">
-                    {`(${formatAge(person.age)})`}
-                </span>
-            )}
         </>
     );
 }
@@ -56,7 +125,7 @@ export function SheetPersonCard({ person, spouse, isFocus = false }: Props) {
     const { currentId } = usePersonPreview();
     const { currentId: currentMarriageId } = useMarriagePanel();
     const body = cn(
-        cardSurface,
+        personCardSurface,
         'text-card-foreground shadow-xs',
         genderCard[person.gender ?? 'unknown'],
     );
@@ -65,7 +134,7 @@ export function SheetPersonCard({ person, spouse, isFocus = false }: Props) {
         <div className="relative h-full">
             {isFocus ? (
                 <div aria-current="true" className={cn(body, cardFocus)}>
-                    <CardBody person={person} />
+                    <CardBody person={person} reserveActionSpace />
                 </div>
             ) : (
                 <Link
@@ -82,7 +151,7 @@ export function SheetPersonCard({ person, spouse, isFocus = false }: Props) {
                     })}
                     className={cn(body, cardInteractive)}
                 >
-                    <CardBody person={person} />
+                    <CardBody person={person} reserveActionSpace />
                 </Link>
             )}
 

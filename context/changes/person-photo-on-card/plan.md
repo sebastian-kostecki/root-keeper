@@ -446,38 +446,38 @@ Migracja tylko dodaje dwie kolumny nullable. Istniejące osoby nie mają zdjęci
 
 #### Automated
 
-- [x] 2.1 Format i lint przechodzą
-- [x] 2.2 Typy przechodzą
-- [x] 2.3 Build przechodzi
-- [x] 2.4 Istniejące E2E panelu przechodzą
+- [x] 2.1 Format i lint przechodzą — bd08e00
+- [x] 2.2 Typy przechodzą — bd08e00
+- [x] 2.3 Build przechodzi — bd08e00
+- [x] 2.4 Istniejące E2E panelu przechodzą — bd08e00
 
 #### Manual
 
-- [x] 2.5 Dodanie zdjęcia z menu awatara pokazuje toast i zdjęcie w panelu bez zamykania panelu
-- [x] 2.6 „Zmień zdjęcie” od razu pokazuje nowe zdjęcie
-- [x] 2.7 „Usuń zdjęcie” po potwierdzeniu przywraca inicjały
-- [x] 2.8 Plik PDF lub zbyt duży pokazuje błąd pod wierszem tożsamości
-- [x] 2.9 Lista i tabela osób pokazują zdjęcie w awatarze
-- [x] 2.10 Potwierdzenie usunięcia osoby ze zdjęciem wymienia „zdjęcie osoby”
-- [x] 2.11 Upload przy otwartej edycji sekcji nie gubi zmian i nie pokazuje pytania o niezapisane zmiany
+- [x] 2.5 Dodanie zdjęcia z menu awatara pokazuje toast i zdjęcie w panelu bez zamykania panelu — bd08e00
+- [x] 2.6 „Zmień zdjęcie” od razu pokazuje nowe zdjęcie — bd08e00
+- [x] 2.7 „Usuń zdjęcie” po potwierdzeniu przywraca inicjały — bd08e00
+- [x] 2.8 Plik PDF lub zbyt duży pokazuje błąd pod wierszem tożsamości — bd08e00
+- [x] 2.9 Lista i tabela osób pokazują zdjęcie w awatarze — bd08e00
+- [x] 2.10 Potwierdzenie usunięcia osoby ze zdjęciem wymienia „zdjęcie osoby” — bd08e00
+- [x] 2.11 Upload przy otwartej edycji sekcji nie gubi zmian i nie pokazuje pytania o niezapisane zmiany — bd08e00
 
 ### Phase 3: Nowy układ karty
 
 #### Automated
 
-- [ ] 3.1 Format i lint przechodzą
-- [ ] 3.2 Typy przechodzą
-- [ ] 3.3 Testy JS przechodzą
-- [ ] 3.4 E2E drzewa i przodków przechodzą bez zmiany lokatorów
+- [x] 3.1 Format i lint przechodzą
+- [x] 3.2 Typy przechodzą
+- [x] 3.3 Testy JS przechodzą
+- [x] 3.4 E2E drzewa i przodków przechodzą bez zmiany lokatorów
 
 #### Manual
 
-- [ ] 3.5 Karty pokazują pasek zdjęcia albo inicjałów, dane wyrównane do lewej obok paska
-- [ ] 3.6 Długie imię na karcie dziadka łamie się czytelnie i nie wchodzi pod oko
-- [ ] 3.7 Gruba ramka osoby centralnej obejmuje pasek bez prześwitu w rogach
-- [ ] 3.8 Drzewo czytelne na 1366 px i wypełnia przestrzeń na 2560 px
-- [ ] 3.9 Widok przodków przy 4 i 6 pokoleniach spójny z drzewem, linie trafiają w środek kart
-- [ ] 3.10 Zaślepki mają tę samą wysokość co karty osób
+- [x] 3.5 Karty pokazują pasek zdjęcia albo inicjałów, dane wyrównane do lewej obok paska
+- [x] 3.6 Długie imię na karcie dziadka łamie się czytelnie i nie wchodzi pod oko
+- [x] 3.7 Gruba ramka osoby centralnej obejmuje pasek bez prześwitu w rogach
+- [x] 3.8 Drzewo czytelne na 1366 px i wypełnia przestrzeń na 2560 px
+- [x] 3.9 Widok przodków przy 4 i 6 pokoleniach spójny z drzewem, linie trafiają w środek kart
+- [x] 3.10 Zaślepki mają tę samą wysokość co karty osób
 
 ### Phase 4: E2E zdjęcia na karcie
 

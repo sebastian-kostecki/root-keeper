@@ -1,9 +1,16 @@
 /**
- * Geometry shared by person cards and placeholder cards (variant C): rounded,
- * centred column content, side padding that leaves room for the eye button.
+ * Geometry of placeholder cards (variant C): rounded, centred column content,
+ * side padding that leaves room for the eye button.
  */
 export const cardSurface =
     'flex h-full min-h-24 flex-col items-center justify-center rounded-xl border px-7 py-3.5 text-center';
+
+/**
+ * Geometry of person cards: a row with a photo strip on the left, no inner
+ * padding, clipped to the rounded corners so the strip follows the border.
+ */
+export const personCardSurface =
+    'flex h-full min-h-24 flex-row items-stretch overflow-hidden rounded-xl border text-left';
 
 /**
  * Keyboard focus for a card that acts as a link or button.

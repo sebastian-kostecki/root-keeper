@@ -2,7 +2,7 @@ import { PersonPreviewLink } from '@/components/persons/person-preview-link';
 import {
     cardFocus,
     cardInteractive,
-    cardSurface,
+    personCardSurface,
 } from '@/components/tree/card-styles';
 import { CardBody } from '@/components/tree/sheet-person-card';
 import { UnknownPersonCard } from '@/components/tree/unknown-person-card';
@@ -31,19 +31,20 @@ export function AncestorCard({ node, isFocus = false }: Props) {
             personId={person.id}
             aria-current={isFocus ? 'true' : undefined}
             className={cn(
-                cardSurface,
+                personCardSurface,
                 'text-card-foreground shadow-xs',
                 genderCard[person.gender ?? 'unknown'],
                 cardInteractive,
                 isFocus && cardFocus,
             )}
         >
-            <CardBody person={person} />
-            {repeated && (
-                <span className="text-tree-meta mt-1 block text-sm">
-                    Występuje kilka razy
-                </span>
-            )}
+            <CardBody person={person}>
+                {repeated && (
+                    <span className="text-tree-meta mt-1 block text-sm">
+                        Występuje kilka razy
+                    </span>
+                )}
+            </CardBody>
         </PersonPreviewLink>
     );
 }

@@ -7,7 +7,7 @@ import { ANCESTORS_FIT_FLOOR, ANCESTORS_ZOOM_MAX } from '@/lib/fit-view';
 import type { AncestorChart as AncestorChartData } from '@/types';
 
 /** One grid column and the gap between columns, in rem; a card is one column wide. */
-const COLUMN_REM = 10;
+const COLUMN_REM = 12;
 const COLUMN_GAP_REM = 0.75;
 
 /** Distance from one column's left edge to the next one's. */
