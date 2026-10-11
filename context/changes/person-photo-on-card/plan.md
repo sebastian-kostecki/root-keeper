@@ -465,27 +465,27 @@ Migracja tylko dodaje dwie kolumny nullable. Istniejące osoby nie mają zdjęci
 
 #### Automated
 
-- [x] 3.1 Format i lint przechodzą
-- [x] 3.2 Typy przechodzą
-- [x] 3.3 Testy JS przechodzą
-- [x] 3.4 E2E drzewa i przodków przechodzą bez zmiany lokatorów
+- [x] 3.1 Format i lint przechodzą — fb35d0b
+- [x] 3.2 Typy przechodzą — fb35d0b
+- [x] 3.3 Testy JS przechodzą — fb35d0b
+- [x] 3.4 E2E drzewa i przodków przechodzą bez zmiany lokatorów — fb35d0b
 
 #### Manual
 
-- [x] 3.5 Karty pokazują pasek zdjęcia albo inicjałów, dane wyrównane do lewej obok paska
-- [x] 3.6 Długie imię na karcie dziadka łamie się czytelnie i nie wchodzi pod oko
-- [x] 3.7 Gruba ramka osoby centralnej obejmuje pasek bez prześwitu w rogach
-- [x] 3.8 Drzewo czytelne na 1366 px i wypełnia przestrzeń na 2560 px
-- [x] 3.9 Widok przodków przy 4 i 6 pokoleniach spójny z drzewem, linie trafiają w środek kart
-- [x] 3.10 Zaślepki mają tę samą wysokość co karty osób
+- [x] 3.5 Karty pokazują pasek zdjęcia albo inicjałów, dane wyrównane do lewej obok paska — fb35d0b
+- [x] 3.6 Długie imię na karcie dziadka łamie się czytelnie i nie wchodzi pod oko — fb35d0b
+- [x] 3.7 Gruba ramka osoby centralnej obejmuje pasek bez prześwitu w rogach — fb35d0b
+- [x] 3.8 Drzewo czytelne na 1366 px i wypełnia przestrzeń na 2560 px — fb35d0b
+- [x] 3.9 Widok przodków przy 4 i 6 pokoleniach spójny z drzewem, linie trafiają w środek kart — fb35d0b
+- [x] 3.10 Zaślepki mają tę samą wysokość co karty osób — fb35d0b
 
 ### Phase 4: E2E zdjęcia na karcie
 
 #### Automated
 
-- [ ] 4.1 Spec przechodzi
-- [ ] 4.2 Spec przechodzi dwa razy z rzędu
-- [ ] 4.3 Format i lint przechodzą
+- [x] 4.1 Spec przechodzi
+- [x] 4.2 Spec przechodzi dwa razy z rzędu
+- [x] 4.3 Format i lint przechodzą
 
 #### Manual
 
