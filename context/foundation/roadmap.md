@@ -9,7 +9,7 @@ main_goal: speed
 top_blocker: time
 milestone_id: described-sources-and-places
 milestone_seq: 2
-milestone_status: open
+milestone_status: done
 ---
 
 # Roadmap: root-keeper
@@ -21,7 +21,7 @@ milestone_status: open
 
 ## Milestone
 
-**M-2: Opisane źródła, spis miejscowości i czytelne drzewo** — Status: open
+**M-2: Opisane źródła, spis miejscowości i czytelne drzewo** — Status: done
 
 - **Intent:** Autor opisuje akt metrykalny parafią, rokiem, typem i archiwum, a nagrobek cmentarzem i osobami pochowanymi; przy fakcie odnajduje akt po miejscu i roku i podaje numer wpisu. Każda miejscowość istnieje w drzewie raz. Drzewo wypełnia ekran, osoba, źródło, małżeństwo i miejscowość otwierają się w panelu bocznym, a autor widzi wszystkich przodków osoby — bez psucia powiązań fakt–źródło i dodawania relacji z drzewa.
 - **Source materials:** `context/foundation/prd.md` (v1, zmiana brownfield; poprzednie PRD w `context/foundation/archive/prd-v1.md` – `prd-v4.md`).
@@ -377,6 +377,7 @@ Rozstrzygnięte:
 ## Milestone History
 
 - **M-1: Drzewo potwierdzone źródłami** (`sourced-family-tree`) — closed 2026-10-04. Fakty urodzenia, małżeństwa i zgonu prowadzą do źródeł każdego rodzaju, podgląd osoby w modalu, relacje dodawane z drzewa (prd-v1 – prd-v4; spis miejscowości odłożony).
+- **M-2: Opisane źródła, spis miejscowości i czytelne drzewo** (`described-sources-and-places`) — closed 2026-10-11. Akt opisany parafią, rokiem, typem i archiwum; spis miejscowości używany w faktach, nagrobkach i zamieszkaniu; drzewo dopasowane do ekranu z panelami bocznymi osoby, źródła i małżeństwa, widok przodków oraz zdjęcie osoby na karcie (prd-v1, FR-001 – FR-029).
 
 ## Done
 
