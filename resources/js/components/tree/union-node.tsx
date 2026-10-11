@@ -1,8 +1,6 @@
 import { router } from '@inertiajs/react';
 import { ChevronsUpDown, Plus } from 'lucide-react';
-import { useRef, useState } from 'react';
 import { useOptionalSectionEditor } from '@/components/persons/section-editor';
-import { AddSpouseDialog } from '@/components/tree/add-spouse-dialog';
 import { cardInteractive } from '@/components/tree/card-styles';
 import { ZOOM_NO_PAN_CLASS } from '@/components/zoom-canvas';
 import {
@@ -16,26 +14,18 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useMarriagePanel } from '@/hooks/use-marriage-panel';
+import { useSidePanelNavigation } from '@/hooks/use-side-panel-navigation';
+import { addValueFor } from '@/lib/add-person-target';
 import { pluralPhrase } from '@/lib/plural';
 import { cn } from '@/lib/utils';
 import { show as treeShow } from '@/routes/tree';
-import type {
-    AddSpouseTarget,
-    Gender,
-    PersonCandidate,
-    Religion,
-    SheetPerson,
-    SheetUnion,
-} from '@/types';
+import type { AddSpouseTarget, SheetPerson, SheetUnion } from '@/types';
 
 type Props = {
     focus: SheetPerson;
     unions: SheetUnion[];
     selected: string | null;
     addSpouse: AddSpouseTarget;
-    candidates: PersonCandidate[] | undefined;
-    genders: Gender[];
-    religions: Religion[];
 };
 
 /** Status of a union; empty for an unknown partner. */
@@ -57,18 +47,9 @@ function unionStatus(union: SheetUnion): string {
  * The node on the couple line: shows the selected union and opens a menu to
  * switch unions or add a spouse.
  */
-export function UnionNode({
-    focus,
-    unions,
-    selected,
-    addSpouse,
-    candidates,
-    genders,
-    religions,
-}: Props) {
-    const triggerRef = useRef<HTMLButtonElement>(null);
-    const [addSpouseOpen, setAddSpouseOpen] = useState(false);
+export function UnionNode({ focus, unions, selected, addSpouse }: Props) {
     const { open: openMarriagePanel } = useMarriagePanel();
+    const { open: openAddPanel } = useSidePanelNavigation('add');
     const editor = useOptionalSectionEditor();
 
     if (unions.length === 0) {
@@ -110,7 +91,6 @@ export function UnionNode({
             <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                     <button
-                        ref={triggerRef}
                         type="button"
                         aria-label={ariaLabel}
                         className={cn(
@@ -204,8 +184,22 @@ export function UnionNode({
                     <DropdownMenuSeparator />
                     <DropdownMenuItem
                         onSelect={() => {
+                            const value = addValueFor({
+                                kind: 'spouse',
+                                focus,
+                                target: addSpouse,
+                            });
+
                             // Open after the menu has released the page.
-                            requestAnimationFrame(() => setAddSpouseOpen(true));
+                            requestAnimationFrame(() => {
+                                if (editor === null) {
+                                    openAddPanel(value);
+
+                                    return;
+                                }
+
+                                editor.requestExit(() => openAddPanel(value));
+                            });
                         }}
                     >
                         <Plus className="size-4" aria-hidden="true" />
@@ -213,21 +207,6 @@ export function UnionNode({
                     </DropdownMenuItem>
                 </DropdownMenuContent>
             </DropdownMenu>
-
-            <AddSpouseDialog
-                variant="menu"
-                open={addSpouseOpen}
-                onOpenChange={setAddSpouseOpen}
-                onCloseAutoFocus={(event) => {
-                    event.preventDefault();
-                    triggerRef.current?.focus();
-                }}
-                focus={focus}
-                target={addSpouse}
-                candidates={candidates}
-                genders={genders}
-                religions={religions}
-            />
         </>
     );
 }

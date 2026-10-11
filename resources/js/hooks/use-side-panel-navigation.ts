@@ -1,6 +1,6 @@
 import { router, usePage } from '@inertiajs/react';
 import {
-    PANEL_PROPS,
+    panelPropFor,
     panelVisitOptions,
     withPanel,
 } from '@/lib/side-panel-url';
@@ -24,6 +24,7 @@ function liveUrl(): string {
 
 export function useSidePanelNavigation(key: PanelKey): SidePanelNavigation {
     const { url } = usePage();
+    const propName = panelPropFor(key);
 
     const hrefFor = (id: number | string) => withPanel(url, key, id);
 
@@ -32,9 +33,17 @@ export function useSidePanelNavigation(key: PanelKey): SidePanelNavigation {
     };
 
     const close = () => {
+        const url = withPanel(liveUrl(), key, null);
+
+        if (propName === null) {
+            router.replace({ url, preserveScroll: true, preserveState: true });
+
+            return;
+        }
+
         router.replace({
-            url: withPanel(liveUrl(), key, null),
-            props: (current) => ({ ...current, [PANEL_PROPS[key]]: null }),
+            url,
+            props: (current) => ({ ...current, [propName]: null }),
             preserveScroll: true,
             preserveState: true,
         });

@@ -85,6 +85,7 @@ export function PickPersonDialog({
                                 : null
                         }
                         processingId={null}
+                        onRetry={load}
                         emptyState={
                             <p className="text-muted-foreground text-sm">
                                 Brak pasujących osób w drzewie.

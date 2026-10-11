@@ -441,33 +441,33 @@ Brak migracji danych. Zakładki/linki z `?add=` po zmianie arkusza degradują si
 
 #### Automated
 
-- [x] 1.1 Testy fazy przechodzą: `vendor/bin/sail artisan test --compact tests/Feature/ParentChildRelationsTest.php tests/Feature/MarriagesTest.php tests/Feature/TreeTest.php tests/Feature/TreeProbandTest.php tests/Feature/WriteTargetsTest.php tests/Feature/OwnershipBoundariesTest.php`
-- [x] 1.2 Larastan przechodzi: `vendor/bin/sail bin phpstan analyse`
-- [x] 1.3 Formatowanie PHP: `vendor/bin/sail bin pint --dirty --format agent`
-- [x] 1.4 Wayfinder wygenerowany i typy przechodzą: `vendor/bin/sail npm run types:check`
+- [x] 1.1 Testy fazy przechodzą: `vendor/bin/sail artisan test --compact tests/Feature/ParentChildRelationsTest.php tests/Feature/MarriagesTest.php tests/Feature/TreeTest.php tests/Feature/TreeProbandTest.php tests/Feature/WriteTargetsTest.php tests/Feature/OwnershipBoundariesTest.php` — fccf66e
+- [x] 1.2 Larastan przechodzi: `vendor/bin/sail bin phpstan analyse` — fccf66e
+- [x] 1.3 Formatowanie PHP: `vendor/bin/sail bin pint --dirty --format agent` — fccf66e
+- [x] 1.4 Wayfinder wygenerowany i typy przechodzą: `vendor/bin/sail npm run types:check` — fccf66e
 
 #### Manual
 
-- [x] 1.5 Na drzewie dodanie rodzica przez obecny modal otwiera po zapisie podgląd nowego rodzica obok drzewa
+- [x] 1.5 Na drzewie dodanie rodzica przez obecny modal otwiera po zapisie podgląd nowego rodzica obok drzewa — fccf66e
 
 ### Phase 2: Panel dodawania dla slotów drzewa
 
 #### Automated
 
-- [ ] 2.1 Testy JS przechodzą: `vendor/bin/sail npm run test:js`
-- [ ] 2.2 Typy przechodzą: `vendor/bin/sail npm run types:check`
-- [ ] 2.3 Lint i format przechodzą: `vendor/bin/sail npm run check`
-- [ ] 2.4 Build przechodzi: `vendor/bin/sail npm run build`
-- [ ] 2.5 Trzy specy slotów przechodzą bez zmian w kodzie testów
-- [ ] 2.6 Brak odwołań do usuniętego modala
+- [x] 2.1 Testy JS przechodzą: `vendor/bin/sail npm run test:js`
+- [x] 2.2 Typy przechodzą: `vendor/bin/sail npm run types:check`
+- [x] 2.3 Lint i format przechodzą: `vendor/bin/sail npm run check`
+- [x] 2.4 Build przechodzi: `vendor/bin/sail npm run build`
+- [x] 2.5 Trzy specy slotów przechodzą bez zmian w kodzie testów
+- [x] 2.6 Brak odwołań do usuniętego modala
 
 #### Manual
 
-- [ ] 2.7 Klik „Dodaj ojca” przy otwartym panelu osoby zamienia go na panel dodawania; drzewo zwężone, nie przyciemnione
-- [ ] 2.8 Wybór kandydata i zapis nowej osoby przełączają panel na podgląd tej osoby
-- [ ] 2.9 Strażnik: pasek przy kliknięciu w kartę / X / Escape; Porzuć i Zapisz działają
-- [ ] 2.10 Pierścień fokusu na wierszu kandydata; „Spróbuj ponownie” wczytuje listę
-- [ ] 2.11 Nieaktualny `?add=` nie otwiera panelu i nie wywala strony
+- [x] 2.7 Klik „Dodaj ojca” przy otwartym panelu osoby zamienia go na panel dodawania; drzewo zwężone, nie przyciemnione
+- [x] 2.8 Wybór kandydata i zapis nowej osoby przełączają panel na podgląd tej osoby
+- [x] 2.9 Strażnik: pasek przy kliknięciu w kartę / X / Escape; Porzuć i Zapisz działają
+- [x] 2.10 Pierścień fokusu na wierszu kandydata; „Spróbuj ponownie” wczytuje listę
+- [x] 2.11 Nieaktualny `?add=` nie otwiera panelu i nie wywala strony
 
 ### Phase 3: Pusty stan drzewa i wybór probanta
 

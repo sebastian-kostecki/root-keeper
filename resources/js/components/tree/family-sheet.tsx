@@ -1,20 +1,16 @@
 import { useRef } from 'react';
-import { AddChildDialog } from '@/components/tree/add-child-dialog';
-import { AddSpouseDialog } from '@/components/tree/add-spouse-dialog';
+import { useOptionalSectionEditor } from '@/components/persons/section-editor';
+import { addTriggerLabels } from '@/components/tree/add-person-config';
 import { MarryCoupleDialog } from '@/components/tree/marry-couple-dialog';
-import { ParentSlotDialog } from '@/components/tree/parent-slot-dialog';
 import { SheetPersonCard } from '@/components/tree/sheet-person-card';
 import { UnionNode } from '@/components/tree/union-node';
 import { UnknownPersonCard } from '@/components/tree/unknown-person-card';
 import { ZoomCanvas } from '@/components/zoom-canvas';
+import { useSidePanelNavigation } from '@/hooks/use-side-panel-navigation';
 import { centreHints } from '@/lib/centre-hints';
-import type {
-    FamilySheet as FamilySheetData,
-    Gender,
-    PersonCandidate,
-    Religion,
-    SheetSlot,
-} from '@/types';
+import { addValueFor } from '@/lib/add-person-target';
+import type { AddTarget } from '@/lib/add-person-target';
+import type { FamilySheet as FamilySheetData, SheetSlot } from '@/types';
 
 type BlockKey = 'focus' | 'partner';
 
@@ -40,19 +36,40 @@ const CELL_PADDING_STYLE = { paddingInline: `${COLUMN_GAP_REM / 2}rem` };
 /** Children cards are two columns wide up to this many children, one column beyond. */
 const WIDE_CHILDREN_MAX = 4;
 
+/**
+ * An empty slot of the tree: its card opens the add-person panel for the
+ * target. A click while another panel is dirty waits on that panel's guard.
+ */
+function AddPersonSlot({ target }: { target: AddTarget }) {
+    const { open } = useSidePanelNavigation('add');
+    const editor = useOptionalSectionEditor();
+    const value = addValueFor(target);
+    const { label, addLabel } = addTriggerLabels(target);
+
+    return (
+        <UnknownPersonCard
+            label={label}
+            addLabel={addLabel}
+            onClick={() => {
+                if (editor === null) {
+                    open(value);
+
+                    return;
+                }
+
+                editor.requestExit(() => open(value));
+            }}
+        />
+    );
+}
+
 function Slot({
     slot,
     spouses,
-    candidates,
-    genders,
-    religions,
 }: {
     slot: SheetSlot;
     /** Union to preselect per person id when re-centring on a card. */
     spouses: Record<number, string>;
-    candidates: PersonCandidate[] | undefined;
-    genders: Gender[];
-    religions: Religion[];
 }) {
     if (slot.kind === 'person') {
         return (
@@ -67,12 +84,7 @@ function Slot({
         return slot.parent_of === undefined ? (
             <UnknownPersonCard label={slot.label} />
         ) : (
-            <ParentSlotDialog
-                slot={slot.parent_of}
-                candidates={candidates}
-                genders={genders}
-                religions={religions}
-            />
+            <AddPersonSlot target={{ kind: 'parent', slot: slot.parent_of }} />
         );
     }
 
@@ -254,17 +266,7 @@ function ChildrenRow({
     );
 }
 
-export function FamilySheet({
-    sheet,
-    personCandidates,
-    genders,
-    religions,
-}: {
-    sheet: FamilySheetData;
-    personCandidates: PersonCandidate[] | undefined;
-    genders: Gender[];
-    religions: Religion[];
-}) {
+export function FamilySheet({ sheet }: { sheet: FamilySheetData }) {
     const order: BlockKey[] =
         sheet.focus_side === 'right'
             ? ['partner', 'focus']
@@ -285,12 +287,7 @@ export function FamilySheet({
     const coupleRef = useRef<HTMLDivElement>(null);
 
     const addChild = (
-        <AddChildDialog
-            target={sheet.add_child}
-            candidates={personCandidates}
-            genders={genders}
-            religions={religions}
-        />
+        <AddPersonSlot target={{ kind: 'child', target: sheet.add_child }} />
     );
     const childrenRow = childrenRowLayout(sheet.children.length);
     const sheetRem = Math.max(GRID_REM, childrenRow.rowRem);
@@ -317,13 +314,7 @@ export function FamilySheet({
                                 key={`${block}-grandparent-${i}`}
                                 className="col-span-1"
                             >
-                                <Slot
-                                    slot={slot}
-                                    spouses={spouses}
-                                    candidates={personCandidates}
-                                    genders={genders}
-                                    religions={religions}
-                                />
+                                <Slot slot={slot} spouses={spouses} />
                             </div>
                         )),
                     )}
@@ -348,13 +339,7 @@ export function FamilySheet({
                                 key={`${block}-parent-${i}`}
                                 className="col-span-2"
                             >
-                                <Slot
-                                    slot={slot}
-                                    spouses={spouses}
-                                    candidates={personCandidates}
-                                    genders={genders}
-                                    religions={religions}
-                                />
+                                <Slot slot={slot} spouses={spouses} />
                             </div>
                         )),
                     )}
@@ -392,21 +377,17 @@ export function FamilySheet({
                                         isFocus
                                     />
                                 ) : sheet.partner.kind === 'empty' ? (
-                                    <AddSpouseDialog
-                                        variant="slot"
-                                        focus={sheet.focus}
-                                        target={sheet.add_spouse}
-                                        candidates={personCandidates}
-                                        genders={genders}
-                                        religions={religions}
+                                    <AddPersonSlot
+                                        target={{
+                                            kind: 'spouse',
+                                            focus: sheet.focus,
+                                            target: sheet.add_spouse,
+                                        }}
                                     />
                                 ) : (
                                     <Slot
                                         slot={sheet.partner}
                                         spouses={spouses}
-                                        candidates={personCandidates}
-                                        genders={genders}
-                                        religions={religions}
                                     />
                                 )}
                             </div>
@@ -417,9 +398,6 @@ export function FamilySheet({
                                 unions={sheet.unions}
                                 selected={sheet.selected_union}
                                 addSpouse={sheet.add_spouse}
-                                candidates={personCandidates}
-                                genders={genders}
-                                religions={religions}
                             />
                         </div>
                     </div>

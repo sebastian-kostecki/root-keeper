@@ -1,5 +1,6 @@
-import { Head, Link, setLayoutProps } from '@inertiajs/react';
+import { Head, Link, setLayoutProps, usePage } from '@inertiajs/react';
 import Heading from '@/components/heading';
+import { AddPersonPanel } from '@/components/tree/add-person-panel';
 import { FamilySheet } from '@/components/tree/family-sheet';
 import { SetRootPersonButton } from '@/components/tree/set-root-person-button';
 import { Badge } from '@/components/ui/badge';
@@ -29,6 +30,9 @@ export default function Show({
     genders,
     religions,
 }: Props) {
+    const { url } = usePage();
+    const addValue = new URL(url, 'http://localhost').searchParams.get('add');
+
     setLayoutProps({
         breadcrumbs: [
             { title: 'Drzewo', href: treeIndex() },
@@ -102,7 +106,10 @@ export default function Show({
                     </div>
                 </div>
 
-                <FamilySheet
+                <FamilySheet sheet={sheet} />
+
+                <AddPersonPanel
+                    value={addValue}
                     sheet={sheet}
                     personCandidates={personCandidates}
                     genders={genders}

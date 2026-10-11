@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vite-plus/test';
-import { PANEL_PROPS, panelVisitOptions, withPanel } from './side-panel-url';
+import {
+    PANEL_PROPS,
+    panelPropFor,
+    panelVisitOptions,
+    withPanel,
+} from './side-panel-url';
 
 describe('withPanel', () => {
     it('opens a panel on a URL without a query', () => {
@@ -60,6 +65,34 @@ describe('withPanel', () => {
         expect(withPanel('/tree/5', 'person', 8)).toBe('/tree/5?person=8');
         expect(withPanel('/tree/5?person=8', 'person', null)).toBe('/tree/5');
     });
+
+    it('opens the add panel and drops the key of the person panel', () => {
+        expect(withPanel('/tree/5?person=7', 'add', 'father:9')).toBe(
+            '/tree/5?add=father%3A9',
+        );
+    });
+
+    it('opens the person panel and drops the key of the add panel', () => {
+        expect(withPanel('/tree/5?add=child', 'person', 7)).toBe(
+            '/tree/5?person=7',
+        );
+    });
+
+    it('removes the add key on null', () => {
+        expect(withPanel('/tree/5?add=spouse&sort=name', 'add', null)).toBe(
+            '/tree/5?sort=name',
+        );
+    });
+});
+
+describe('panelPropFor', () => {
+    it('returns the server prop of a registered panel', () => {
+        expect(panelPropFor('person')).toBe('personPreview');
+    });
+
+    it('returns null for the client-only add key', () => {
+        expect(panelPropFor('add')).toBeNull();
+    });
 });
 
 describe('panelVisitOptions', () => {
@@ -71,5 +104,9 @@ describe('panelVisitOptions', () => {
 
     it('reloads the marriage panel prop', () => {
         expect(panelVisitOptions.only).toContain('marriagePanel');
+    });
+
+    it('does not reload a prop for the add key', () => {
+        expect(panelVisitOptions.only).not.toContain('add');
     });
 });

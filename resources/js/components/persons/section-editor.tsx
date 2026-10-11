@@ -82,15 +82,16 @@ type PendingExit = { action: () => void };
 /**
  * Owns "which section is editing, is it dirty, what exit is waiting for the
  * user's decision" for the side panels that edit records: the person panel and
- * the marriage panel. Hosted by the layout, so it also wraps the page beside
- * the panel; `record` is null while no panel is open. Resets whenever the
- * shown record changes (`${key}:${id}`), including to and from null.
+ * the marriage panel, and (nested) the add-person panel, whose id is the value
+ * of its key (e.g. `father:987`). Hosted by the layout, so it also wraps the
+ * page beside the panel; `record` is null while no panel is open. Resets
+ * whenever the shown record changes (`${key}:${id}`), including to and from null.
  */
 export function SectionEditorProvider({
     record,
     children,
 }: {
-    record: { key: PanelKey; id: number } | null;
+    record: { key: PanelKey; id: number | string } | null;
     children: ReactNode;
 }) {
     const recordParam = record === null ? null : record.key;

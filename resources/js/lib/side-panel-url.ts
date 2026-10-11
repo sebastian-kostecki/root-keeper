@@ -12,7 +12,15 @@ export const PANEL_PROPS = {
     source: 'sourcePanel',
 } as const;
 
-export type PanelKey = keyof typeof PANEL_PROPS;
+/**
+ * Panel keys without a server prop: the page reads them from the address and
+ * they never reach `panelVisitOptions.only`.
+ */
+export const CLIENT_PANEL_KEYS = ['add'] as const;
+
+export type PanelKey =
+    | keyof typeof PANEL_PROPS
+    | (typeof CLIENT_PANEL_KEYS)[number];
 
 /** Options shared by every visit that only swaps the panel shown beside the page. */
 export const panelVisitOptions: {
@@ -26,6 +34,13 @@ export const panelVisitOptions: {
     preserveScroll: true,
     only: Object.values(PANEL_PROPS),
 };
+
+/** The Inertia prop of a panel key, or null for a client-only key. */
+export function panelPropFor(key: PanelKey): string | null {
+    return key in PANEL_PROPS
+        ? PANEL_PROPS[key as keyof typeof PANEL_PROPS]
+        : null;
+}
 
 const BASE_URL = 'http://localhost';
 
@@ -43,7 +58,10 @@ export function withPanel(
     if (id === null) {
         parsed.searchParams.delete(key);
     } else {
-        for (const panelKey of Object.keys(PANEL_PROPS)) {
+        for (const panelKey of [
+            ...Object.keys(PANEL_PROPS),
+            ...CLIENT_PANEL_KEYS,
+        ]) {
             parsed.searchParams.delete(panelKey);
         }
 
