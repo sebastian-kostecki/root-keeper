@@ -1,10 +1,10 @@
 ---
 change_id: person-photo-on-card
 title: Person photo on card
-status: impl_reviewed
+status: archived
 created: 2026-10-11
 updated: 2026-10-11
-archived_at: null
+archived_at: 2026-10-11T09:58:06Z
 ---
 
 ## Notes
