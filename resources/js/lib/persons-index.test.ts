@@ -42,6 +42,7 @@ function person(
         birth: null,
         death: null,
         age: null,
+        photo_version: null,
         ...overrides,
     };
 }

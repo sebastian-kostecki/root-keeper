@@ -13,6 +13,7 @@ use App\Http\Controllers\PersonChildController;
 use App\Http\Controllers\PersonController;
 use App\Http\Controllers\PersonNoteController;
 use App\Http\Controllers\PersonParentController;
+use App\Http\Controllers\PersonPhotoController;
 use App\Http\Controllers\PersonSpouseController;
 use App\Http\Controllers\SidePanelDemoController;
 use App\Http\Controllers\SourceController;
@@ -55,6 +56,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('persons/{person}/spouses/attach', [PersonSpouseController::class, 'attach'])->name('persons.spouses.attach');
     Route::post('persons/{person}/spouses', [PersonSpouseController::class, 'store'])->name('persons.spouses.store');
     Route::put('persons/{person}/note', [PersonNoteController::class, 'update'])->name('persons.note.update');
+    Route::post('persons/{person}/photo', [PersonPhotoController::class, 'store'])->name('persons.photo.store');
+    Route::delete('persons/{person}/photo', [PersonPhotoController::class, 'destroy'])->name('persons.photo.destroy');
+    Route::get('persons/{person}/photo', [PersonPhotoController::class, 'show'])->name('persons.photo.show');
 
     Route::resource('parent-child-relations', ParentChildRelationController::class)->only(['store', 'destroy']);
 

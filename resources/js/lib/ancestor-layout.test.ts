@@ -10,6 +10,7 @@ function sheetPerson(id: number): SheetPerson {
         lifespan: null,
         is_deceased: false,
         age: null,
+        photo_version: null,
     };
 }
 

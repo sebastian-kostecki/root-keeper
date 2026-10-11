@@ -238,3 +238,17 @@ test('another tree\'s person is a 404', function () {
         ->get(route('tree.ancestors', ['person' => $foreign]))
         ->assertNotFound();
 });
+
+test('the ancestor chart carries the photo version of each person', function () {
+    $user = User::factory()->create();
+    $child = Person::factory()->for($user->tree)->create([
+        'photo_thumbnail_path' => "persons/{$user->tree->id}/thumbnails/dziecko.jpg",
+    ]);
+    $parent = Person::factory()->for($user->tree)->male()->create();
+    linkParent($parent, $child);
+
+    $chart = ancestorsChartFor($this, $user, $child);
+
+    expect($chart['focus']['photo_version'])->toBe('dziecko')
+        ->and($chart['root']['parents'][0]['person']['photo_version'])->toBeNull();
+});

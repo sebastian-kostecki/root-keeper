@@ -31,6 +31,7 @@ class PersonResource extends JsonResource
      *     death: array<string, mixed>|null,
      *     burial_place: string|null,
      *     age: array{unit: 'years'|'months'|'days'|'under_year', value: int|null}|null,
+     *     photo_version: string|null,
      *     parents?: list<array<string, mixed>>,
      *     children?: list<array<string, mixed>>,
      *     marriages?: list<array<string, mixed>>,
@@ -58,6 +59,7 @@ class PersonResource extends JsonResource
             'death' => $this->death() === null ? null : EventResource::make($this->death())->resolve(),
             'burial_place' => $this->burial()?->locality?->name,
             'age' => $this->age()?->toArray(),
+            'photo_version' => $this->photo_thumbnail_path === null ? null : pathinfo($this->photo_thumbnail_path, PATHINFO_FILENAME),
             'parents' => $this->whenLoaded('parents', fn (): array => RelativeResource::collection(
                 PersonOrdering::relatives($this->parents)
             )->resolve()),

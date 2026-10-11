@@ -25,6 +25,7 @@ class SheetPersonResource extends JsonResource
      *     lifespan: string|null,
      *     is_deceased: bool,
      *     age: array{unit: 'years'|'months'|'days'|'under_year', value: int|null}|null,
+     *     photo_version: string|null,
      * }
      */
     public function toArray(Request $request): array
@@ -45,6 +46,7 @@ class SheetPersonResource extends JsonResource
             'lifespan' => $lifespan,
             'is_deceased' => $death !== null,
             'age' => $this->age()?->toArray(),
+            'photo_version' => $this->photo_thumbnail_path === null ? null : pathinfo($this->photo_thumbnail_path, PATHINFO_FILENAME),
         ];
     }
 }

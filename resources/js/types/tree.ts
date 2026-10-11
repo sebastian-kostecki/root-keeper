@@ -7,6 +7,7 @@ export type SheetPerson = {
     lifespan: string | null;
     is_deceased: boolean;
     age: PersonAge | null;
+    photo_version: string | null;
 };
 
 export type ParentSlotRole = 'father' | 'mother' | 'parent';

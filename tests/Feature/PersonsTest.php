@@ -1050,6 +1050,27 @@ test('destroy of a person sharing an event with another person keeps the event a
     expect($sharedEvent->fresh()->participants()->pluck('people.id')->all())->toBe([$spouse->id]);
 });
 
+test('destroy of a person deletes the photo and thumbnail files of that person', function () {
+    Storage::fake('local');
+    $user = User::factory()->create();
+    $person = Person::factory()->for($user->tree)->create([
+        'photo_path' => "persons/{$user->tree->id}/foto.jpg",
+        'photo_thumbnail_path' => "persons/{$user->tree->id}/thumbnails/foto.jpg",
+    ]);
+    $other = Person::factory()->for($user->tree)->create([
+        'photo_path' => "persons/{$user->tree->id}/inne.jpg",
+    ]);
+    Storage::disk('local')->put($person->photo_path, 'original');
+    Storage::disk('local')->put($person->photo_thumbnail_path, 'thumbnail');
+    Storage::disk('local')->put($other->photo_path, 'inne');
+
+    $this->actingAs($user)->delete(route('persons.destroy', $person))->assertRedirect();
+
+    expect(Storage::disk('local')->exists("persons/{$user->tree->id}/foto.jpg"))->toBeFalse()
+        ->and(Storage::disk('local')->exists("persons/{$user->tree->id}/thumbnails/foto.jpg"))->toBeFalse()
+        ->and(Storage::disk('local')->exists($other->photo_path))->toBeTrue();
+});
+
 test('persons index carries the preview props of the person named by the person query parameter', function () {
     $user = User::factory()->create();
     $person = Person::factory()->for($user->tree)->male()->create(['first_name' => 'Jan', 'last_name' => 'Kowalski']);

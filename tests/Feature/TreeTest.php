@@ -740,3 +740,18 @@ test('a union carries the marriage id for a marriage and null for a co-parent an
         'unknown' => null,
     ]);
 });
+
+test('the family sheet carries the photo version of the focus person and the shown spouse', function () {
+    $user = User::factory()->create();
+    $focus = Person::factory()->for($user->tree)->male()->create([
+        'photo_path' => "persons/{$user->tree->id}/a.jpg",
+        'photo_thumbnail_path' => "persons/{$user->tree->id}/thumbnails/0f3c2a1e-aaaa-4bbb-8ccc-123456789abc.jpg",
+    ]);
+    $wife = Person::factory()->for($user->tree)->female()->create();
+    attachMarriage($focus, $wife, 1880);
+
+    $sheet = sheetFor($this, $user, $focus);
+
+    expect($sheet['focus']['photo_version'])->toBe('0f3c2a1e-aaaa-4bbb-8ccc-123456789abc')
+        ->and($sheet['partner']['person']['photo_version'])->toBeNull();
+});

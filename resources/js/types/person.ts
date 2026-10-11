@@ -100,6 +100,7 @@ export type Person = {
     birth: IndexPersonEvent | null;
     death: IndexPersonEvent | null;
     age: PersonAge | null;
+    photo_version: string | null;
 };
 
 export type Relative = {
