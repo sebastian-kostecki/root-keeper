@@ -3,7 +3,7 @@ project: root-keeper
 version: 5
 status: draft
 created: 2026-10-04
-updated: 2026-10-10
+updated: 2026-10-11
 prd_version: 1
 main_goal: speed
 top_blocker: time
@@ -59,7 +59,7 @@ root-keeper to prywatne, samodzielnie hostowane drzewo genealogiczne, w którym 
 | S-13 | maiden-name-and-age                  | zapisać nazwisko rodowe („z d. …”, wyszukiwanie po obu nazwiskach) i widzieć wiek osoby                   | —                      | FR-020, FR-024                           | done |
 | S-14 | person-events-and-note-tabs          | zobaczyć w panelu osoby zakładkę wydarzeń (własnych i najbliższej rodziny) po roku i zakładkę notatki     | S-06                   | FR-021, FR-023                           | done |
 | S-15 | ancestors-view                       | zobaczyć osobę i wszystkich jej przodków w jednym widoku z wyborem liczby pokoleń                         | S-05                   | FR-018, FR-029                           | done |
-| S-16 | person-photo-on-card                 | dodać zdjęcie osoby i widzieć je na karcie drzewa (inicjały, gdy zdjęcia brak)                            | S-05, S-06             | FR-015                                   | proposed |
+| S-16 | person-photo-on-card                 | dodać zdjęcie osoby i widzieć je na karcie drzewa (inicjały, gdy zdjęcia brak)                            | S-05, S-06             | FR-015                                   | done |
 
 ## Streams
 
@@ -325,7 +325,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Unknowns:**
   - Czy zdjęcie przechodzi przez tę samą obsługę plików i miniatur co źródła? Owner: `/10x-plan`. Block: no.
 - **Risk:** Ostatni z rozmysłem — PRD wskazuje FR-015 jako pierwsze do odcięcia, gdy zabraknie czasu; kopie `storage/app` obejmują zdjęcia bez nowej pracy.
-- **Status:** proposed
+- **Status:** done
 
 ## Backlog Handoff
 
@@ -397,3 +397,4 @@ Rozstrzygnięte:
 - **S-12: autor otwiera panel małżeństwa z datą, miejscem, źródłem (z edycją) i dziećmi pary; małżeństwo nadal można edytować także w panelu osoby.** — Archived 2026-10-10 → `context/archive/2026-10-09-marriage-side-panel/`. Lesson: —.
 - **S-14: autor widzi w panelu osoby zakładkę wydarzeń — własnych oraz urodzeń i zgonów dzieci, ślubu i zgonu małżonka — uporządkowanych po roku, z wydarzeniami bez daty na końcu, oraz zakładkę z jedną notatką tekstową o osobie.** — Archived 2026-10-10 → `context/archive/2026-10-10-person-events-and-note-tabs/`. Lesson: —.
 - **S-15: autor wybiera osobę i widzi ją oraz wszystkich jej przodków w jednym widoku z wyborem liczby pokoleń, dopasowanym do ekranu i z przybliżaniem w tym widoku (przyciski, Ctrl+kółko, szczypanie); widok służy do oglądania (bez dodawania osób i relacji); cudza osoba to 404.** — Archived 2026-10-10 → `context/archive/2026-10-10-ancestors-view/`. Lesson: —.
+- **S-16: autor dodaje zdjęcie osoby w panelu i widzi je na karcie drzewa; karta bez zdjęcia pokazuje inicjały lub sylwetkę.** — Archived 2026-10-11 → `context/archive/2026-10-11-person-photo-on-card/`. Lesson: —.
