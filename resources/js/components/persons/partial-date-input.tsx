@@ -99,7 +99,7 @@ export function PartialDateInput({ prefix, errors, defaultValue }: Props) {
                     id={`${prefix}-date-hint`}
                     className={
                         clientError
-                            ? 'text-sm text-red-600 dark:text-red-400'
+                            ? 'text-destructive-foreground text-sm'
                             : 'text-muted-foreground text-sm'
                     }
                 >

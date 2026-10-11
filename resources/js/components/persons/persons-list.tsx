@@ -5,12 +5,14 @@ import {
 } from '@/components/persons/person-list-parts';
 import { PersonAvatar } from '@/components/persons/person-avatar';
 import { PersonPreviewLink } from '@/components/persons/person-preview-link';
+import { focusRing } from '@/lib/focus-ring';
 import { personPhotoUrl } from '@/lib/person-photo';
 import {
     formatEventMeta,
     groupBySurnameInitial,
     peopleCount,
 } from '@/lib/persons-index';
+import { cn } from '@/lib/utils';
 import type { IndexPersonEvent, Person } from '@/types';
 
 type Props = {
@@ -57,7 +59,10 @@ function PersonRow({
     return (
         <PersonPreviewLink
             personId={person.id}
-            className="hover:bg-accent/50 focus-visible:bg-accent/50 focus-visible:ring-ring/50 flex items-center gap-3 px-4 py-3 transition-colors outline-none focus-visible:ring-[3px] focus-visible:ring-inset"
+            className={cn(
+                focusRing,
+                'hover:bg-accent/50 focus-visible:bg-accent/50 flex items-center gap-3 px-4 py-3 transition-colors focus-visible:ring-inset',
+            )}
         >
             <PersonAvatar
                 name={person.display_name}

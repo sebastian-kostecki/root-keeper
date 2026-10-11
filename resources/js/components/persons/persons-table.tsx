@@ -23,6 +23,7 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
+import { focusRing } from '@/lib/focus-ring';
 import { personPhotoUrl } from '@/lib/person-photo';
 import { sortPersons } from '@/lib/persons-index';
 import type { PersonsSort } from '@/lib/persons-index';
@@ -138,7 +139,10 @@ export function PersonsTable({
                             <TableCell className={cn(stickyCell, 'px-4 py-3')}>
                                 <PersonPreviewLink
                                     personId={person.id}
-                                    className="focus-visible:ring-ring/50 -m-1 flex items-center gap-3 rounded-md p-1 outline-none focus-visible:ring-[3px]"
+                                    className={cn(
+                                        focusRing,
+                                        '-m-1 flex items-center gap-3 rounded-md p-1',
+                                    )}
                                 >
                                     <PersonAvatar
                                         name={person.display_name}
