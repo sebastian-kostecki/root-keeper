@@ -1,7 +1,27 @@
 import { describe, expect, it } from 'vite-plus/test';
-import { chooseFitView, TREE_FIT_FLOOR, TREE_FIT_MAX } from './fit-view';
+import {
+    chooseAnchor,
+    chooseFitView,
+    TREE_FIT_FLOOR,
+    TREE_FIT_MAX,
+} from './fit-view';
 
 const options = { floor: TREE_FIT_FLOOR, max: TREE_FIT_MAX };
+
+describe('chooseAnchor', () => {
+    it('anchors on the pair when it fits with the margin on both sides', () => {
+        expect(chooseAnchor(300, 1000, 16)).toBe('primary');
+    });
+
+    it('falls back to the focus card when the pair does not fit', () => {
+        expect(chooseAnchor(990, 1000, 16)).toBe('fallback');
+    });
+
+    it('keeps the pair at exactly the limit, margin included', () => {
+        expect(chooseAnchor(968, 1000, 16)).toBe('primary');
+        expect(chooseAnchor(968.5, 1000, 16)).toBe('fallback');
+    });
+});
 
 describe('chooseFitView', () => {
     it('shows the whole content when it fits above the floor', () => {

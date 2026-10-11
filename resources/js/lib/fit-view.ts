@@ -20,6 +20,20 @@ type Size = { width: number; height: number };
 export type FitView = { kind: 'whole' | 'anchor'; scale: number };
 
 /**
+ * Picks the anchor of an anchored start view: the primary (a couple, centred on
+ * its axis) when it fits the wrapper with `margin` on each side, otherwise the
+ * fallback (the focus card). Both widths are measured at the target scale. A
+ * width that equals the limit still fits.
+ */
+export function chooseAnchor(
+    primaryWidth: number,
+    wrapperWidth: number,
+    margin: number,
+): 'primary' | 'fallback' {
+    return primaryWidth + 2 * margin <= wrapperWidth ? 'primary' : 'fallback';
+}
+
+/**
  * Picks the start view: the whole content when it fits at `floor` or more
  * (capped at `max`), otherwise an anchor view held at `floor`. Returns `null`
  * while the viewport or the content has no size yet.

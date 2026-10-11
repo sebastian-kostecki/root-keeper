@@ -1,7 +1,8 @@
 import { router } from '@inertiajs/react';
 import { ChevronsUpDown, Plus } from 'lucide-react';
+import type { RefObject } from 'react';
 import { useOptionalSectionEditor } from '@/components/persons/section-editor';
-import { cardInteractive } from '@/components/tree/card-styles';
+import { cardInteractive, triggerActive } from '@/components/tree/card-styles';
 import { ZOOM_NO_PAN_CLASS } from '@/components/zoom-canvas';
 import {
     DropdownMenu,
@@ -26,6 +27,10 @@ type Props = {
     unions: SheetUnion[];
     selected: string | null;
     addSpouse: AddSpouseTarget;
+    /** The open add panel is for a spouse and this node is its target (the partner exists). */
+    addActive: boolean;
+    /** Attached to the trigger only while `addActive`, so the sheet can reveal it. */
+    revealRef: RefObject<HTMLButtonElement | null>;
 };
 
 /** Status of a union; empty for an unknown partner. */
@@ -47,7 +52,14 @@ function unionStatus(union: SheetUnion): string {
  * The node on the couple line: shows the selected union and opens a menu to
  * switch unions or add a spouse.
  */
-export function UnionNode({ focus, unions, selected, addSpouse }: Props) {
+export function UnionNode({
+    focus,
+    unions,
+    selected,
+    addSpouse,
+    addActive,
+    revealRef,
+}: Props) {
     const { open: openMarriagePanel } = useMarriagePanel();
     const { open: openAddPanel } = useSidePanelNavigation('add');
     const editor = useOptionalSectionEditor();
@@ -91,12 +103,14 @@ export function UnionNode({ focus, unions, selected, addSpouse }: Props) {
             <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                     <button
+                        ref={addActive ? revealRef : undefined}
                         type="button"
                         aria-label={ariaLabel}
                         className={cn(
-                            'bg-background hover:bg-accent data-[state=open]:border-primary inline-flex h-[34px] items-center gap-2 rounded-lg border px-2.5 text-xs whitespace-nowrap shadow-xs',
+                            'bg-background hover:bg-accent data-[state=open]:border-primary inline-flex h-8.5 items-center gap-2 rounded-lg border px-2.5 text-xs whitespace-nowrap shadow-xs',
                             cardInteractive,
                             ZOOM_NO_PAN_CLASS,
+                            addActive && triggerActive,
                         )}
                     >
                         {showPosition && (

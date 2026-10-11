@@ -105,7 +105,7 @@ export default function Show({
                     </div>
                 </div>
 
-                <FamilySheet sheet={sheet} />
+                <FamilySheet sheet={sheet} activeAdd={addValue} />
 
                 <AddPersonPanel
                     value={addValue}

@@ -3,7 +3,12 @@ import type { FocusEvent, PointerEvent, ReactNode, RefObject } from 'react';
 import { TransformComponent, TransformWrapper } from 'react-zoom-pan-pinch';
 import type { ReactZoomPanPinchContentRef } from 'react-zoom-pan-pinch';
 import { Button } from '@/components/ui/button';
-import { chooseFitView, TREE_FIT_FLOOR, TREE_FIT_MAX } from '@/lib/fit-view';
+import {
+    chooseAnchor,
+    chooseFitView,
+    TREE_FIT_FLOOR,
+    TREE_FIT_MAX,
+} from '@/lib/fit-view';
 import { cn } from '@/lib/utils';
 
 /** Marker class: panning cannot start on an element that has it. */
@@ -13,10 +18,22 @@ const WRAPPER_CLASS = 'zoom-canvas-wrapper';
 const CONTENT_CLASS = 'zoom-canvas-content';
 const DRAG_THRESHOLD = 5;
 
+/** Space kept between an element and the wrapper edge, when anchoring or revealing. */
+const EDGE_MARGIN = 16;
+
 type Props = {
     children: ReactNode;
-    /** Element the start view centres on when the whole content does not fit at the floor scale. */
-    anchorRef: RefObject<HTMLElement | null>;
+    /**
+     * Element(s) the start view centres on when the whole content does not fit
+     * at the floor scale. Several refs centre on the box that holds them all.
+     */
+    anchorRef: RefObject<HTMLElement | null> | RefObject<HTMLElement | null>[];
+    /** Used instead of `anchorRef` when those do not fit the wrapper at the anchored scale. */
+    fallbackAnchorRef?: RefObject<HTMLElement | null>;
+    /** Element that is scrolled into view after each fit, while it is set. */
+    revealRef?: RefObject<HTMLElement | null>;
+    /** Schedules a reveal of `revealRef` when it changes; null or undefined does nothing. */
+    revealKey?: string | null;
     /** Lowest start scale before the view anchors instead of showing the whole content. */
     floor?: number;
     /** Highest start scale, so a small content does not blow up on a large screen. */
@@ -25,6 +42,30 @@ type Props = {
     zoomControls?: boolean;
     className?: string;
 };
+
+/** Shift that brings `box` inside `frame` with `margin` to each edge; zero when it already is. */
+function revealOffset(
+    frame: DOMRect,
+    box: DOMRect,
+    margin: number,
+): { dx: number; dy: number } {
+    let dx = 0;
+    let dy = 0;
+
+    if (box.left < frame.left + margin) {
+        dx = frame.left + margin - box.left;
+    } else if (box.right > frame.right - margin) {
+        dx = frame.right - margin - box.right;
+    }
+
+    if (box.top < frame.top + margin) {
+        dy = frame.top + margin - box.top;
+    } else if (box.bottom > frame.bottom - margin) {
+        dy = frame.bottom - margin - box.bottom;
+    }
+
+    return { dx, dy };
+}
 
 /**
  * Pan area that fills its parent; give the parent a definite height. Without
@@ -37,6 +78,9 @@ type Props = {
 export function ZoomCanvas({
     children,
     anchorRef,
+    fallbackAnchorRef,
+    revealRef,
+    revealKey,
     floor = TREE_FIT_FLOOR,
     max = TREE_FIT_MAX,
     zoomControls = false,
@@ -47,8 +91,15 @@ export function ZoomCanvas({
     const movedRef = useRef(false);
     const fittedRef = useRef(false);
     const fitRef = useRef<(() => void) | null>(null);
+    const scheduleRef = useRef<(() => void) | null>(null);
+    const pendingRevealRef = useRef(false);
+    const revealRefLatest = useRef(revealRef);
     const dragRef = useRef({ x: 0, y: 0, down: false, dragged: false });
     const [ready, setReady] = useState(false);
+
+    useEffect(() => {
+        revealRefLatest.current = revealRef;
+    });
 
     useEffect(() => {
         const container = containerRef.current;
@@ -62,6 +113,26 @@ export function ZoomCanvas({
         if (!wrapper || !content) {
             return;
         }
+
+        const anchors = Array.isArray(anchorRef) ? anchorRef : [anchorRef];
+
+        /** Box holding every given element, or null while none of them is laid out. */
+        const boxOf = (elements: (HTMLElement | null)[]): DOMRect | null => {
+            const boxes = elements
+                .filter((element) => element !== null)
+                .map((element) => element.getBoundingClientRect());
+
+            if (boxes.length === 0) {
+                return null;
+            }
+
+            const left = Math.min(...boxes.map((box) => box.left));
+            const right = Math.max(...boxes.map((box) => box.right));
+            const top = Math.min(...boxes.map((box) => box.top));
+            const bottom = Math.max(...boxes.map((box) => box.bottom));
+
+            return new DOMRect(left, top, right - left, bottom - top);
+        };
 
         const fit = () => {
             const instance = controlsRef.current?.instance;
@@ -86,21 +157,50 @@ export function ZoomCanvas({
                 (wrapper.clientWidth - content.offsetWidth * view.scale) / 2;
             let y =
                 (wrapper.clientHeight - content.offsetHeight * view.scale) / 2;
-            const anchor = anchorRef.current;
 
-            if (view.kind === 'anchor' && anchor) {
+            if (view.kind === 'anchor') {
                 const current = instance.state.scale;
-                const contentBox = content.getBoundingClientRect();
-                const anchorBox = anchor.getBoundingClientRect();
-                const anchorX =
-                    (anchorBox.left + anchorBox.width / 2 - contentBox.left) /
-                    current;
-                const anchorY =
-                    (anchorBox.top + anchorBox.height / 2 - contentBox.top) /
-                    current;
+                const primary = anchors.map((anchor) => anchor.current);
+                let anchorBox = boxOf(primary);
 
-                x = wrapper.clientWidth / 2 - anchorX * view.scale;
-                y = wrapper.clientHeight / 2 - anchorY * view.scale;
+                // Sum of the primary widths at the target scale, against the wrapper.
+                if (anchorBox !== null && fallbackAnchorRef?.current) {
+                    const primaryWidth =
+                        primary.reduce(
+                            (sum, element) =>
+                                sum +
+                                (element?.getBoundingClientRect().width ?? 0),
+                            0,
+                        ) *
+                        (view.scale / current);
+
+                    if (
+                        chooseAnchor(
+                            primaryWidth,
+                            wrapper.clientWidth,
+                            EDGE_MARGIN,
+                        ) === 'fallback'
+                    ) {
+                        anchorBox = boxOf([fallbackAnchorRef.current]);
+                    }
+                }
+
+                if (anchorBox !== null) {
+                    const contentBox = content.getBoundingClientRect();
+                    const anchorX =
+                        (anchorBox.left +
+                            anchorBox.width / 2 -
+                            contentBox.left) /
+                        current;
+                    const anchorY =
+                        (anchorBox.top +
+                            anchorBox.height / 2 -
+                            contentBox.top) /
+                        current;
+
+                    x = wrapper.clientWidth / 2 - anchorX * view.scale;
+                    y = wrapper.clientHeight / 2 - anchorY * view.scale;
+                }
             }
 
             void controlsRef.current?.setTransform(x, y, view.scale, 0);
@@ -112,18 +212,56 @@ export function ZoomCanvas({
             }
         };
 
+        /** Minimal shift that brings the element into the frame; leaves `movedRef` as it is. */
+        const reveal = (target: HTMLElement) => {
+            const instance = controlsRef.current?.instance;
+
+            if (!instance) {
+                return;
+            }
+
+            const { dx, dy } = revealOffset(
+                wrapper.getBoundingClientRect(),
+                target.getBoundingClientRect(),
+                EDGE_MARGIN,
+            );
+
+            if (dx !== 0 || dy !== 0) {
+                const { positionX, positionY, scale } = instance.state;
+
+                void controlsRef.current?.setTransform(
+                    positionX + dx,
+                    positionY + dy,
+                    scale,
+                    0,
+                );
+            }
+        };
+
         fitRef.current = fit;
 
         let frame = 0;
         const schedule = () => {
             cancelAnimationFrame(frame);
-            // After the library has aligned to its bounds on resize.
+            // After the library has aligned to its bounds on resize. A pending
+            // reveal runs after the fit of the same pass, so the fit cannot undo it.
             frame = requestAnimationFrame(() => {
                 if (!fittedRef.current || !movedRef.current) {
                     fit();
                 }
+
+                const target = revealRefLatest.current?.current;
+
+                if (pendingRevealRef.current || target) {
+                    pendingRevealRef.current = false;
+
+                    if (target) {
+                        reveal(target);
+                    }
+                }
             });
         };
+        scheduleRef.current = schedule;
 
         /** Find-in-page or scroll-into-view scrolls the clipped wrapper natively: turn that into a pan. */
         const onScroll = () => {
@@ -159,8 +297,19 @@ export function ZoomCanvas({
             observer.disconnect();
             wrapper.removeEventListener('scroll', onScroll);
             fitRef.current = null;
+            scheduleRef.current = null;
         };
-    }, [anchorRef, floor, max]);
+    }, [anchorRef, fallbackAnchorRef, floor, max]);
+
+    // Separate effect: a change of the revealed slot must not detach the observer above.
+    useEffect(() => {
+        if (revealKey === undefined || revealKey === null) {
+            return;
+        }
+
+        pendingRevealRef.current = true;
+        scheduleRef.current?.();
+    }, [revealKey]);
 
     const markMoved = () => {
         movedRef.current = true;
@@ -263,23 +412,11 @@ export function ZoomCanvas({
         wrapper.scrollLeft = 0;
         wrapper.scrollTop = 0;
 
-        const frame = wrapper.getBoundingClientRect();
-        const box = target.getBoundingClientRect();
-        const margin = 16;
-        let dx = 0;
-        let dy = 0;
-
-        if (box.left < frame.left + margin) {
-            dx = frame.left + margin - box.left;
-        } else if (box.right > frame.right - margin) {
-            dx = frame.right - margin - box.right;
-        }
-
-        if (box.top < frame.top + margin) {
-            dy = frame.top + margin - box.top;
-        } else if (box.bottom > frame.bottom - margin) {
-            dy = frame.bottom - margin - box.bottom;
-        }
+        const { dx, dy } = revealOffset(
+            wrapper.getBoundingClientRect(),
+            target.getBoundingClientRect(),
+            EDGE_MARGIN,
+        );
 
         if (dx !== 0 || dy !== 0) {
             const { positionX, positionY, scale } = instance.state;

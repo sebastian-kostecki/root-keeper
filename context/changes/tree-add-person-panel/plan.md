@@ -473,32 +473,32 @@ Brak migracji danych. Zakładki/linki z `?add=` po zmianie arkusza degradują si
 
 #### Automated
 
-- [x] 3.1 Testy JS przechodzą: `vendor/bin/sail npm run test:js`
-- [x] 3.2 Typy, lint i build przechodzą
-- [x] 3.3 Testy probanta przechodzą: `vendor/bin/sail artisan test --compact tests/Feature/TreeProbandTest.php tests/Feature/TreeTest.php`
+- [x] 3.1 Testy JS przechodzą: `vendor/bin/sail npm run test:js` — af8606e
+- [x] 3.2 Typy, lint i build przechodzą — af8606e
+- [x] 3.3 Testy probanta przechodzą: `vendor/bin/sail artisan test --compact tests/Feature/TreeProbandTest.php tests/Feature/TreeTest.php` — af8606e
 
 #### Manual
 
-- [x] 3.4 Konto bez osób: pierwsza osoba zostaje probantem, arkusz z jej podglądem
-- [x] 3.5 Osoby bez probanta: wybór z listy i „Nowa osoba” ustawiają probanta
-- [x] 3.6 Strażnik działa w formularzu probanta
-- [x] 3.7 390 px: pusty stan czytelny, panel pełnoekranowy, zamknięcie wraca do pustego stanu
+- [x] 3.4 Konto bez osób: pierwsza osoba zostaje probantem, arkusz z jej podglądem — af8606e
+- [x] 3.5 Osoby bez probanta: wybór z listy i „Nowa osoba” ustawiają probanta — af8606e
+- [x] 3.6 Strażnik działa w formularzu probanta — af8606e
+- [x] 3.7 390 px: pusty stan czytelny, panel pełnoekranowy, zamknięcie wraca do pustego stanu — af8606e
 
 ### Phase 4: Kadrowanie i aktywny slot
 
 #### Automated
 
-- [ ] 4.1 Testy JS przechodzą (w tym `fit-view.test.ts`)
-- [ ] 4.2 Typy, lint i build przechodzą
-- [ ] 4.3 Skan zakodowanych wartości zwraca wyłącznie `ring-[3px]`
-- [ ] 4.4 Specy drzewa przechodzą (sloty, `tree-card-recentre`, `ancestors-view`)
+- [x] 4.1 Testy JS przechodzą (w tym `fit-view.test.ts`)
+- [x] 4.2 Typy, lint i build przechodzą
+- [x] 4.3 Skan zakodowanych wartości zwraca wyłącznie `ring-[3px]`
+- [x] 4.4 Specy drzewa przechodzą (sloty, `tree-card-recentre`, `ancestors-view`)
 
 #### Manual
 
-- [ ] 4.5 1440×900 i 1366×768: aktywny slot w kadrze i wyróżniony; zamknięcie wraca do dopasowania
-- [ ] 4.6 390×844: karta osoby centralnej w kadrze
-- [ ] 4.7 Menu związku → „Dodaj małżonka”: węzeł wyróżniony i w kadrze
-- [ ] 4.8 Widok przodków kadruje jak przed zmianą
+- [x] 4.5 1440×900 i 1366×768: aktywny slot w kadrze i wyróżniony; zamknięcie wraca do dopasowania
+- [x] 4.6 390×844: karta osoby centralnej w kadrze
+- [x] 4.7 Menu związku → „Dodaj małżonka”: węzeł wyróżniony i w kadrze
+- [x] 4.8 Widok przodków kadruje jak przed zmianą
 
 ### Phase 5: E2E, reguła agenta i bramka wizualna
 

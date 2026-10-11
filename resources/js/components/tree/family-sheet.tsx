@@ -1,4 +1,5 @@
-import { useRef } from 'react';
+import type { RefObject } from 'react';
+import { useRef, useState } from 'react';
 import { useOptionalSectionEditor } from '@/components/persons/section-editor';
 import { addTriggerLabels } from '@/components/tree/add-person-config';
 import { MarryCoupleDialog } from '@/components/tree/marry-couple-dialog';
@@ -37,19 +38,38 @@ const CELL_PADDING_STYLE = { paddingInline: `${COLUMN_GAP_REM / 2}rem` };
 const WIDE_CHILDREN_MAX = 4;
 
 /**
+ * The open add panel sheet-wide: its `add` value, and the ref that the trigger
+ * of that value takes. The ref is set on that trigger only, so the sheet can
+ * reveal it.
+ */
+export type ActiveAdd = {
+    value: string | null;
+    revealRef: RefObject<HTMLButtonElement | null>;
+};
+
+/**
  * An empty slot of the tree: its card opens the add-person panel for the
  * target. A click while another panel is dirty waits on that panel's guard.
  */
-function AddPersonSlot({ target }: { target: AddTarget }) {
+function AddPersonSlot({
+    target,
+    active,
+}: {
+    target: AddTarget;
+    active: ActiveAdd;
+}) {
     const { open } = useSidePanelNavigation('add');
     const editor = useOptionalSectionEditor();
     const value = addValueFor(target);
     const { label, addLabel } = addTriggerLabels(target);
+    const isActive = active.value === value;
 
     return (
         <UnknownPersonCard
+            ref={isActive ? active.revealRef : undefined}
             label={label}
             addLabel={addLabel}
+            active={isActive}
             onClick={() => {
                 if (editor === null) {
                     open(value);
@@ -66,10 +86,12 @@ function AddPersonSlot({ target }: { target: AddTarget }) {
 function Slot({
     slot,
     spouses,
+    active,
 }: {
     slot: SheetSlot;
     /** Union to preselect per person id when re-centring on a card. */
     spouses: Record<number, string>;
+    active: ActiveAdd;
 }) {
     if (slot.kind === 'person') {
         return (
@@ -84,7 +106,10 @@ function Slot({
         return slot.parent_of === undefined ? (
             <UnknownPersonCard label={slot.label} />
         ) : (
-            <AddPersonSlot target={{ kind: 'parent', slot: slot.parent_of }} />
+            <AddPersonSlot
+                target={{ kind: 'parent', slot: slot.parent_of }}
+                active={active}
+            />
         );
     }
 
@@ -266,7 +291,14 @@ function ChildrenRow({
     );
 }
 
-export function FamilySheet({ sheet }: { sheet: FamilySheetData }) {
+export function FamilySheet({
+    sheet,
+    activeAdd,
+}: {
+    sheet: FamilySheetData;
+    /** The `add` query value of the open panel, or null. */
+    activeAdd: string | null;
+}) {
     const order: BlockKey[] =
         sheet.focus_side === 'right'
             ? ['partner', 'focus']
@@ -284,10 +316,17 @@ export function FamilySheet({ sheet }: { sheet: FamilySheetData }) {
             />
         ) : null;
 
-    const coupleRef = useRef<HTMLDivElement>(null);
+    const focusCoupleRef = useRef<HTMLDivElement>(null);
+    const partnerCoupleRef = useRef<HTMLDivElement>(null);
+    const [coupleRefs] = useState(() => [focusCoupleRef, partnerCoupleRef]);
+    const activeSlotRef = useRef<HTMLButtonElement>(null);
+    const active: ActiveAdd = { value: activeAdd, revealRef: activeSlotRef };
 
     const addChild = (
-        <AddPersonSlot target={{ kind: 'child', target: sheet.add_child }} />
+        <AddPersonSlot
+            target={{ kind: 'child', target: sheet.add_child }}
+            active={active}
+        />
     );
     const childrenRow = childrenRowLayout(sheet.children.length);
     const sheetRem = Math.max(GRID_REM, childrenRow.rowRem);
@@ -298,7 +337,10 @@ export function FamilySheet({ sheet }: { sheet: FamilySheetData }) {
     return (
         <ZoomCanvas
             key={`${sheet.focus.id}:${sheet.selected_union ?? ''}`}
-            anchorRef={coupleRef}
+            anchorRef={coupleRefs}
+            fallbackAnchorRef={focusCoupleRef}
+            revealRef={activeSlotRef}
+            revealKey={activeAdd}
         >
             <div
                 className="flex w-max flex-col items-center p-2"
@@ -314,7 +356,11 @@ export function FamilySheet({ sheet }: { sheet: FamilySheetData }) {
                                 key={`${block}-grandparent-${i}`}
                                 className="col-span-1"
                             >
-                                <Slot slot={slot} spouses={spouses} />
+                                <Slot
+                                    slot={slot}
+                                    spouses={spouses}
+                                    active={active}
+                                />
                             </div>
                         )),
                     )}
@@ -339,7 +385,11 @@ export function FamilySheet({ sheet }: { sheet: FamilySheetData }) {
                                 key={`${block}-parent-${i}`}
                                 className="col-span-2"
                             >
-                                <Slot slot={slot} spouses={spouses} />
+                                <Slot
+                                    slot={slot}
+                                    spouses={spouses}
+                                    active={active}
+                                />
                             </div>
                         )),
                     )}
@@ -355,7 +405,6 @@ export function FamilySheet({ sheet }: { sheet: FamilySheetData }) {
 
                     <RowLabel>Związek</RowLabel>
                     <div
-                        ref={coupleRef}
                         className="relative col-span-8 grid"
                         style={GRID_STYLE}
                     >
@@ -368,6 +417,11 @@ export function FamilySheet({ sheet }: { sheet: FamilySheetData }) {
                         {order.map((block) => (
                             <div
                                 key={`${block}-couple`}
+                                ref={
+                                    block === 'focus'
+                                        ? focusCoupleRef
+                                        : partnerCoupleRef
+                                }
                                 className="relative col-span-4 mx-auto w-full"
                                 style={{ maxWidth: `${COUPLE_CARD_REM}rem` }}
                             >
@@ -383,11 +437,13 @@ export function FamilySheet({ sheet }: { sheet: FamilySheetData }) {
                                             focus: sheet.focus,
                                             target: sheet.add_spouse,
                                         }}
+                                        active={active}
                                     />
                                 ) : (
                                     <Slot
                                         slot={sheet.partner}
                                         spouses={spouses}
+                                        active={active}
                                     />
                                 )}
                             </div>
@@ -398,12 +454,17 @@ export function FamilySheet({ sheet }: { sheet: FamilySheetData }) {
                                 unions={sheet.unions}
                                 selected={sheet.selected_union}
                                 addSpouse={sheet.add_spouse}
+                                addActive={
+                                    sheet.partner.kind !== 'empty' &&
+                                    activeAdd === 'spouse'
+                                }
+                                revealRef={activeSlotRef}
                             />
                         </div>
                     </div>
 
                     <div
-                        className={`relative col-span-8 ${marryCentreCouple ? 'h-12' : 'h-[30px]'}`}
+                        className={`relative col-span-8 ${marryCentreCouple ? 'h-12' : 'h-7.5'}`}
                     >
                         <div
                             className="bg-tree-line absolute inset-y-0 left-1/2 w-px"

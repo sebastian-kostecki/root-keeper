@@ -35,3 +35,6 @@ export const placeholderAction = [
     'hover:bg-accent hover:text-foreground hover:border-solid',
     cardInteractive,
 ].join(' ');
+
+/** The trigger whose add panel is open: filled with the accent and a solid border. */
+export const triggerActive = 'bg-accent text-foreground border-solid';
