@@ -305,7 +305,7 @@ test('attach marries the centre to an existing person without a date and shows t
     $response = $this->actingAs($user)
         ->post(route('persons.spouses.attach', $focus), ['spouse_id' => $spouse->id]);
 
-    $response->assertRedirect(route('tree.show', ['person' => $focus->id, 'spouse' => $spouse->id]));
+    $response->assertRedirect(route('tree.show', ['person' => $focus->id, 'spouse' => $spouse->id]).'&person='.$spouse->id);
     $response->assertSessionHas('inertia.flash_data.toast', ['type' => 'success', 'message' => 'Dodano małżonka']);
 
     $marriage = Event::where('type', EventType::Marriage)->sole();
@@ -316,7 +316,7 @@ test('attach marries the centre to an existing person without a date and shows t
     expect($marriage->participants()->get()->every(fn (Person $participant): bool => $participant->pivot->role === ParticipantRole::Spouse))->toBeTrue();
 });
 
-test('attach keeps the panel that was open before adding the spouse', function () {
+test("attach opens the new spouse's panel instead of the previously open one", function () {
     $user = User::factory()->create();
     $focus = Person::factory()->for($user->tree)->male()->create();
     $spouse = Person::factory()->for($user->tree)->female()->create();
@@ -325,7 +325,7 @@ test('attach keeps the panel that was open before adding the spouse', function (
     $this->from(route('tree.show', ['person' => $focus]).'?person='.$openPerson->id)
         ->actingAs($user)
         ->post(route('persons.spouses.attach', $focus), ['spouse_id' => $spouse->id])
-        ->assertRedirect(route('tree.show', ['person' => $focus->id, 'spouse' => $spouse->id]).'&person='.$openPerson->id);
+        ->assertRedirect(route('tree.show', ['person' => $focus->id, 'spouse' => $spouse->id]).'&person='.$spouse->id);
 });
 
 test('attach ignores a person kept only in the session previous url', function () {
@@ -337,7 +337,7 @@ test('attach ignores a person kept only in the session previous url', function (
     $this->withSession(['_previous' => ['url' => route('tree.show', ['person' => $focus]).'?person='.$openPerson->id]])
         ->actingAs($user)
         ->post(route('persons.spouses.attach', $focus), ['spouse_id' => $spouse->id])
-        ->assertRedirect(route('tree.show', ['person' => $focus->id, 'spouse' => $spouse->id]));
+        ->assertRedirect(route('tree.show', ['person' => $focus->id, 'spouse' => $spouse->id]).'&person='.$spouse->id);
 });
 
 test('attach ignores a non-numeric person in the previous url', function () {
@@ -348,7 +348,7 @@ test('attach ignores a non-numeric person in the previous url', function () {
     $this->from(route('tree.show', ['person' => $focus]).'?person=abc')
         ->actingAs($user)
         ->post(route('persons.spouses.attach', $focus), ['spouse_id' => $spouse->id])
-        ->assertRedirect(route('tree.show', ['person' => $focus->id, 'spouse' => $spouse->id]));
+        ->assertRedirect(route('tree.show', ['person' => $focus->id, 'spouse' => $spouse->id]).'&person='.$spouse->id);
 });
 
 test('attach adds a second marriage and the redirected sheet selects the new union', function () {
@@ -360,7 +360,7 @@ test('attach adds a second marriage and the redirected sheet selects the new uni
 
     $this->actingAs($user)
         ->post(route('persons.spouses.attach', $focus), ['spouse_id' => $second->id])
-        ->assertRedirect(route('tree.show', ['person' => $focus->id, 'spouse' => $second->id]));
+        ->assertRedirect(route('tree.show', ['person' => $focus->id, 'spouse' => $second->id]).'&person='.$second->id);
 
     expect($focus->marriages()->count())->toBe(2);
 
@@ -422,7 +422,7 @@ test('store creates a new person married to the centre without a date and shows 
 
     $spouse = Person::where('first_name', 'Anna')->sole();
 
-    $response->assertRedirect(route('tree.show', ['person' => $focus->id, 'spouse' => $spouse->id]));
+    $response->assertRedirect(route('tree.show', ['person' => $focus->id, 'spouse' => $spouse->id]).'&person='.$spouse->id);
     $response->assertSessionHas('inertia.flash_data.toast', ['type' => 'success', 'message' => 'Dodano małżonka']);
 
     $this->assertDatabaseCount('people', 2);
@@ -433,7 +433,7 @@ test('store creates a new person married to the centre without a date and shows 
         ->toBe(collect([$focus->id, $spouse->id])->sort()->values()->all());
 });
 
-test('store keeps the panel that was open before adding the spouse', function () {
+test("store opens the new spouse's panel instead of the previously open one", function () {
     $user = User::factory()->create();
     $focus = Person::factory()->for($user->tree)->male()->create();
     $openPerson = Person::factory()->for($user->tree)->create();
@@ -444,7 +444,7 @@ test('store keeps the panel that was open before adding the spouse', function ()
 
     $spouse = Person::where('first_name', 'Anna')->sole();
 
-    $response->assertRedirect(route('tree.show', ['person' => $focus->id, 'spouse' => $spouse->id]).'&person='.$openPerson->id);
+    $response->assertRedirect(route('tree.show', ['person' => $focus->id, 'spouse' => $spouse->id]).'&person='.$spouse->id);
 });
 
 test('store without a first name creates no person and no marriage', function () {

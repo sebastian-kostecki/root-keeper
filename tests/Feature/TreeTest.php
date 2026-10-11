@@ -116,6 +116,19 @@ test('the tree index has no sheet without a proband', function () {
         ->assertInertia(fn ($page) => $page
             ->component('tree/show')
             ->where('sheet', null)
+            ->where('hasPeople', false)
+            ->where('rootPersonId', null));
+});
+
+test('the tree index without a proband but with people has no sheet and reports people', function () {
+    $user = User::factory()->create();
+    Person::factory()->for($user->tree)->create();
+
+    $this->actingAs($user)->get(route('tree.index'))
+        ->assertInertia(fn ($page) => $page
+            ->component('tree/show')
+            ->where('sheet', null)
+            ->where('hasPeople', true)
             ->where('rootPersonId', null));
 });
 

@@ -7,6 +7,7 @@ use App\Actions\Relations\CreateChildForParents;
 use App\Http\Requests\PersonChildAttachRequest;
 use App\Http\Requests\PersonChildStoreRequest;
 use App\Models\Person;
+use App\Support\PersonPanelRedirect;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
 
@@ -14,7 +15,7 @@ class PersonChildController extends Controller
 {
     /**
      * Make an existing person the child of the given person and, when given,
-     * their partner.
+     * their partner, then open the child's panel on the referring tree.
      */
     public function attach(PersonChildAttachRequest $request, Person $person, AttachChildToParents $attachChildToParents): RedirectResponse
     {
@@ -28,12 +29,12 @@ class PersonChildController extends Controller
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Dodano dziecko')]);
 
-        return back();
+        return PersonPanelRedirect::to($request, $child, route('tree.show', $person));
     }
 
     /**
      * Create a new person and link them as the child of the given person and,
-     * when given, their partner.
+     * when given, their partner, then open the new child's panel on the referring tree.
      */
     public function store(PersonChildStoreRequest $request, Person $person, CreateChildForParents $createChildForParents): RedirectResponse
     {
@@ -42,7 +43,7 @@ class PersonChildController extends Controller
             ? $tree->people()->findOrFail($request->integer('other_parent_id'))
             : null;
 
-        $createChildForParents->handle(
+        $child = $createChildForParents->handle(
             $tree,
             $otherParent === null ? [$person] : [$person, $otherParent],
             $request->safe()->except('other_parent_id'),
@@ -50,6 +51,6 @@ class PersonChildController extends Controller
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Dodano dziecko')]);
 
-        return back();
+        return PersonPanelRedirect::to($request, $child, route('tree.show', $person));
     }
 }

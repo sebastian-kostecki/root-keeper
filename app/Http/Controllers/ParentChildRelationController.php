@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Actions\Relations\CreateParentChildRelation;
 use App\Http\Requests\ParentChildRelationStoreRequest;
 use App\Models\ParentChildRelation;
+use App\Support\PersonPanelRedirect;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
@@ -12,7 +13,8 @@ use Inertia\Inertia;
 class ParentChildRelationController extends Controller
 {
     /**
-     * Link a parent and a child within the user's own tree.
+     * Link a parent and a child within the user's own tree, then open the parent's
+     * panel on the referring tree.
      */
     public function store(ParentChildRelationStoreRequest $request, CreateParentChildRelation $createParentChildRelation): RedirectResponse
     {
@@ -25,7 +27,7 @@ class ParentChildRelationController extends Controller
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Dodano relację')]);
 
-        return back();
+        return PersonPanelRedirect::to($request, $parent, route('tree.show', $child));
     }
 
     /**

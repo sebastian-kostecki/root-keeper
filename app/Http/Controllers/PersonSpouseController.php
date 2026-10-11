@@ -8,7 +8,6 @@ use App\Http\Requests\PersonSpouseAttachRequest;
 use App\Http\Requests\PersonSpouseStoreRequest;
 use App\Models\Person;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class PersonSpouseController extends Controller
@@ -26,7 +25,7 @@ class PersonSpouseController extends Controller
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Dodano małżonka')]);
 
-        return $this->showNewUnion($request, $person, $spouse);
+        return $this->showNewUnion($person, $spouse);
     }
 
     /**
@@ -39,27 +38,18 @@ class PersonSpouseController extends Controller
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Dodano małżonka')]);
 
-        return $this->showNewUnion($request, $person, $spouse);
+        return $this->showNewUnion($person, $spouse);
     }
 
     /**
-     * Redirect to the tree on the new union, keeping the panel that was open on
-     * the previous page. The `person` query key cannot go through `route()`
-     * parameters because `person` is already the route parameter.
-     *
-     * Reads the Referer only: url()->previous() falls back to an address stored in the session.
+     * Redirect to the tree centred on the given person, on the union with the new
+     * spouse, with the spouse's panel open. Does not read the Referer.
      */
-    private function showNewUnion(Request $request, Person $person, Person $spouse): RedirectResponse
+    private function showNewUnion(Person $person, Person $spouse): RedirectResponse
     {
-        $url = route('tree.show', ['person' => $person, 'spouse' => $spouse->id]);
-
-        parse_str((string) parse_url((string) $request->headers->get('referer'), PHP_URL_QUERY), $previousQuery);
-        $openPerson = $previousQuery['person'] ?? null;
-
-        if (is_string($openPerson) && ctype_digit($openPerson)) {
-            $url .= '&person='.$openPerson;
-        }
-
-        return redirect()->to($url);
+        return redirect()->to(route('tree.show', $person).'?'.http_build_query([
+            'spouse' => $spouse->id,
+            'person' => $spouse->id,
+        ]));
     }
 }
