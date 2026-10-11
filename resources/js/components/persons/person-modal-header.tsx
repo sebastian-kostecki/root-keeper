@@ -2,7 +2,7 @@ import { Link, router } from '@inertiajs/react';
 import { EllipsisIcon } from 'lucide-react';
 import { useState } from 'react';
 import { DeletePersonDialog } from '@/components/persons/delete-person-dialog';
-import { PersonAvatar } from '@/components/persons/person-avatar';
+import { PersonPhotoMenu } from '@/components/persons/person-photo-menu';
 import {
     useGuardedClick,
     useSectionEditor,
@@ -37,27 +37,39 @@ export function personLifespan(person: PersonPreview): string | null {
         : baseLifespan;
 }
 
-/** Identity row of the person panel: avatar and chips. Name and lifespan are the panel title and description. */
+/** Identity row of the person panel: photo menu and chips. Name and lifespan are the panel title and description. */
 export function PersonModalHeader({ person, isRootPerson }: Props) {
-    return (
-        <div className="flex items-center gap-4 pb-4">
-            <PersonAvatar
-                name={person.display_name}
-                gender={person.gender?.value ?? null}
-            />
+    const [photoError, setPhotoError] = useState<string | null>(null);
 
-            {(person.gender || person.religion || isRootPerson) && (
-                <div className="flex flex-wrap gap-1.5">
-                    {person.gender && (
-                        <Badge variant="secondary">{person.gender.label}</Badge>
-                    )}
-                    {person.religion && (
-                        <Badge variant="secondary">
-                            {person.religion.label}
-                        </Badge>
-                    )}
-                    {isRootPerson && <Badge>Probant</Badge>}
-                </div>
+    return (
+        <div className="pb-4">
+            <div className="flex items-center gap-4">
+                <PersonPhotoMenu
+                    person={person}
+                    onErrorChange={setPhotoError}
+                />
+
+                {(person.gender || person.religion || isRootPerson) && (
+                    <div className="flex flex-wrap gap-1.5">
+                        {person.gender && (
+                            <Badge variant="secondary">
+                                {person.gender.label}
+                            </Badge>
+                        )}
+                        {person.religion && (
+                            <Badge variant="secondary">
+                                {person.religion.label}
+                            </Badge>
+                        )}
+                        {isRootPerson && <Badge>Probant</Badge>}
+                    </div>
+                )}
+            </div>
+
+            {photoError && (
+                <p role="alert" className="text-destructive mt-2 text-sm">
+                    {photoError}
+                </p>
             )}
         </div>
     );

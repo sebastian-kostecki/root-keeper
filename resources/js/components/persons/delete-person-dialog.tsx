@@ -73,6 +73,10 @@ export function DeletePersonDialog({
         );
     }
 
+    if (person.photo_version !== null) {
+        extras.push('zdjęcie osoby');
+    }
+
     const handleConfirm = () => {
         setProcessing(true);
 

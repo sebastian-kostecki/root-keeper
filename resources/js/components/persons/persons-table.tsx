@@ -23,6 +23,7 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
+import { personPhotoUrl } from '@/lib/person-photo';
 import { sortPersons } from '@/lib/persons-index';
 import type { PersonsSort } from '@/lib/persons-index';
 import { columnOf } from '@/lib/table-sort';
@@ -144,6 +145,10 @@ export function PersonsTable({
                                         gender={person.gender?.value ?? null}
                                         size="sm"
                                         announceGender={false}
+                                        photoUrl={personPhotoUrl(
+                                            person.id,
+                                            person.photo_version,
+                                        )}
                                     />
                                     <span className="min-w-0 font-medium whitespace-normal">
                                         {person.display_name}

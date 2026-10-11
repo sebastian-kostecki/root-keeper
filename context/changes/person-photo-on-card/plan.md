@@ -430,36 +430,36 @@ Migracja tylko dodaje dwie kolumny nullable. Istniejące osoby nie mają zdjęci
 
 #### Automated
 
-- [x] 1.1 Migracja przechodzi w obie strony
-- [x] 1.2 Testy zdjęcia przechodzą (PersonPhotoTest)
-- [x] 1.3 Testy granic, osób, profilu i kopii przechodzą
-- [x] 1.4 Testy drzewa i przodków (w tym liczba zapytań) przechodzą
-- [x] 1.5 Larastan przechodzi
-- [x] 1.6 Pint bez zmian
-- [x] 1.7 Typy TS po wayfinder:generate przechodzą
+- [x] 1.1 Migracja przechodzi w obie strony — 223c2ae
+- [x] 1.2 Testy zdjęcia przechodzą (PersonPhotoTest) — 223c2ae
+- [x] 1.3 Testy granic, osób, profilu i kopii przechodzą — 223c2ae
+- [x] 1.4 Testy drzewa i przodków (w tym liczba zapytań) przechodzą — 223c2ae
+- [x] 1.5 Larastan przechodzi — 223c2ae
+- [x] 1.6 Pint bez zmian — 223c2ae
+- [x] 1.7 Typy TS po wayfinder:generate przechodzą — 223c2ae
 
 #### Manual
 
-- [x] 1.8 route:list pokazuje trzy trasy persons.photo.* w grupie auth, verified
+- [x] 1.8 route:list pokazuje trzy trasy persons.photo.* w grupie auth, verified — 223c2ae
 
 ### Phase 2: Zdjęcie w panelu i awatarach
 
 #### Automated
 
-- [ ] 2.1 Format i lint przechodzą
-- [ ] 2.2 Typy przechodzą
-- [ ] 2.3 Build przechodzi
-- [ ] 2.4 Istniejące E2E panelu przechodzą
+- [x] 2.1 Format i lint przechodzą
+- [x] 2.2 Typy przechodzą
+- [x] 2.3 Build przechodzi
+- [x] 2.4 Istniejące E2E panelu przechodzą
 
 #### Manual
 
-- [ ] 2.5 Dodanie zdjęcia z menu awatara pokazuje toast i zdjęcie w panelu bez zamykania panelu
-- [ ] 2.6 „Zmień zdjęcie” od razu pokazuje nowe zdjęcie
-- [ ] 2.7 „Usuń zdjęcie” po potwierdzeniu przywraca inicjały
-- [ ] 2.8 Plik PDF lub zbyt duży pokazuje błąd pod wierszem tożsamości
-- [ ] 2.9 Lista i tabela osób pokazują zdjęcie w awatarze
-- [ ] 2.10 Potwierdzenie usunięcia osoby ze zdjęciem wymienia „zdjęcie osoby”
-- [ ] 2.11 Upload przy otwartej edycji sekcji nie gubi zmian i nie pokazuje pytania o niezapisane zmiany
+- [x] 2.5 Dodanie zdjęcia z menu awatara pokazuje toast i zdjęcie w panelu bez zamykania panelu
+- [x] 2.6 „Zmień zdjęcie” od razu pokazuje nowe zdjęcie
+- [x] 2.7 „Usuń zdjęcie” po potwierdzeniu przywraca inicjały
+- [x] 2.8 Plik PDF lub zbyt duży pokazuje błąd pod wierszem tożsamości
+- [x] 2.9 Lista i tabela osób pokazują zdjęcie w awatarze
+- [x] 2.10 Potwierdzenie usunięcia osoby ze zdjęciem wymienia „zdjęcie osoby”
+- [x] 2.11 Upload przy otwartej edycji sekcji nie gubi zmian i nie pokazuje pytania o niezapisane zmiany
 
 ### Phase 3: Nowy układ karty
 

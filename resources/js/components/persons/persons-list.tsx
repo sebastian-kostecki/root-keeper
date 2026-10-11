@@ -5,6 +5,7 @@ import {
 } from '@/components/persons/person-list-parts';
 import { PersonAvatar } from '@/components/persons/person-avatar';
 import { PersonPreviewLink } from '@/components/persons/person-preview-link';
+import { personPhotoUrl } from '@/lib/person-photo';
 import {
     formatEventMeta,
     groupBySurnameInitial,
@@ -63,6 +64,7 @@ function PersonRow({
                 gender={person.gender?.value ?? null}
                 size="sm"
                 announceGender={false}
+                photoUrl={personPhotoUrl(person.id, person.photo_version)}
             />
             <span className="min-w-0 flex-1">
                 <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
