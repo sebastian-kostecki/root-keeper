@@ -439,4 +439,4 @@ The scan list grid, the upload page, the zoom preview with `react-zoom-pan-pinch
 - [x] 2.8 In the preview, the handwriting of a real act is comfortably readable using wheel zoom and drag-to-pan, and Dopasuj resets to fit — 18ee96e
 - [x] 2.9 Uploading a PDF and a file over 20 MB shows a Polish validation error and stores nothing — 18ee96e
 - [x] 2.10 A second test account sees an empty Skany grid and gets 404 on the first account's scan preview and file URLs — 18ee96e
-- [ ] 2.11 After deploying to production, the F-01 handoff drill passes: upload a real scan via the UI, run `./scripts/artisan.sh backup:run`, restore the archive into a throwaway instance and confirm the scan file opens
+- [x] 2.11 After deploying to production, the F-01 handoff drill passes: upload a real scan via the UI, run `./scripts/artisan.sh backup:run`, restore the archive into a throwaway instance and confirm the scan file opens
