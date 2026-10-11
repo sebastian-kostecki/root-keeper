@@ -1,7 +1,7 @@
 ---
 change_id: tree-add-person-panel
 title: Dodawanie osób na drzewie w panelu bocznym i przegląd strony drzewa
-status: implementing
+status: implemented
 created: 2026-10-11
 updated: 2026-10-11
 archived_at: null

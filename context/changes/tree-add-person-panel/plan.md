@@ -504,11 +504,11 @@ Brak migracji danych. Zakładki/linki z `?add=` po zmianie arkusza degradują si
 
 #### Automated
 
-- [x] 5.1 Specy slotów i strażnika przechodzą
-- [x] 5.2 Spec strażnika czerwienieje po celowym wyłączeniu `markDirty` i zielenieje po przywróceniu
-- [x] 5.3 Pełny zestaw E2E przechodzi: `npx playwright test`
-- [x] 5.4 `CLAUDE.md` nie zawiera już „small pickers (choose a person”
-- [x] 5.5 Lint i format przechodzą: `vendor/bin/sail npm run check`
+- [x] 5.1 Specy slotów i strażnika przechodzą — 962cd10
+- [x] 5.2 Spec strażnika czerwienieje po celowym wyłączeniu `markDirty` i zielenieje po przywróceniu — 962cd10
+- [x] 5.3 Pełny zestaw E2E przechodzi: `npx playwright test` — 962cd10
+- [x] 5.4 `CLAUDE.md` nie zawiera już „small pickers (choose a person” — 962cd10
+- [x] 5.5 Lint i format przechodzą: `vendor/bin/sail npm run check` — 962cd10
 
 #### Manual
 
