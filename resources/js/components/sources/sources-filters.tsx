@@ -24,11 +24,6 @@ import {
     PopoverContent,
     PopoverTrigger,
 } from '@/components/ui/popover';
-import {
-    Tooltip,
-    TooltipContent,
-    TooltipTrigger,
-} from '@/components/ui/tooltip';
 import { focusRing, focusRingOffset } from '@/lib/focus-ring';
 import { pluralPhrase } from '@/lib/plural';
 import {
@@ -268,25 +263,20 @@ function FilterPill({
 
     if (disabledReason !== undefined) {
         return (
-            <Tooltip>
-                <TooltipTrigger asChild>
-                    <span className="inline-flex max-sm:w-full">
-                        <button
-                            type="button"
-                            disabled
-                            aria-describedby={reasonId}
-                            className={cn(triggerClass, 'max-sm:w-full')}
-                        >
-                            <Icon className="size-3.5 shrink-0" />
-                            {name}
-                        </button>
-                        <span id={reasonId} className="sr-only">
-                            {disabledReason}
-                        </span>
-                    </span>
-                </TooltipTrigger>
-                <TooltipContent>{disabledReason}</TooltipContent>
-            </Tooltip>
+            <span className="inline-flex flex-col items-start gap-1 max-sm:w-full">
+                <button
+                    type="button"
+                    disabled
+                    aria-describedby={reasonId}
+                    className={cn(triggerClass, 'max-sm:w-full')}
+                >
+                    <Icon className="size-3.5 shrink-0" />
+                    {name}
+                </button>
+                <span id={reasonId} className="text-muted-foreground text-xs">
+                    {disabledReason}
+                </span>
+            </span>
         );
     }
 
@@ -421,7 +411,7 @@ export function SourcesFilterBar({
         <div
             role="group"
             aria-label="Filtry"
-            className="flex flex-wrap items-center gap-3"
+            className="flex flex-wrap items-center gap-3 sm:items-start"
         >
             <Collapsible
                 open={isMobileOpen}
