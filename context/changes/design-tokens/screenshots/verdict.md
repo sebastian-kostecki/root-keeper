@@ -29,3 +29,7 @@ Pierwszy przebieg dał `oklab(… / 0.5) 0px 0px 0px 3px` (krycie 50%). Przyczyn
 ## Wnioski
 
 Zmiany tokenów są widoczne i spójne: papierowe tło, mech jako jedyny akcent, ciemne menu w obu motywach, szeryfowe tytuły. Jedyne zastrzeżenie to miniatury źródeł w ciemnym motywie (patrz wyżej) i łamanie imion na wąskich kartach drzewa, które szeryf nasila. Oba do decyzji użytkownika przed akceptacją.
+
+## Decyzja po przeglądzie implementacji (2026-10-12)
+
+Miniatury dokumentów w ciemnym motywie `/sources` (słaby kontrast `--muted` względem `--background`) są świadomie zostawione do osobnej zmiany „źródła (bursztyn)”, która wprowadzi tokeny `--source*` w `source-thumbnail.tsx` i `sources-gallery.tsx` (plan.md, What We're NOT Doing). Do tego czasu zrzut `/sources` w ciemnym motywie jest zaakceptowany z tym zastrzeżeniem. Łamanie imion na wąskich kartach drzewa: patrz F4 w `reviews/impl-review.md`.
