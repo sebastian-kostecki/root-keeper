@@ -20,7 +20,7 @@ export const personCardSurface =
  * person's attached border.
  */
 export const cardInteractive =
-    'focus-visible:ring-ring focus-visible:ring-offset-background focus-visible:ring-[3px] focus-visible:ring-offset-2 focus-visible:outline-none';
+    'focus-visible:ring-ring focus-visible:ring-offset-background focus-visible:ring-3 focus-visible:ring-offset-2 focus-visible:outline-none';
 
 /** The focus person: a thick primary border and a light shadow. */
 export const cardFocus = 'border-2 border-primary shadow-sm';

@@ -346,17 +346,17 @@ Rozszerzenie `view-tokens.test.ts` o drzewo i panele, pełne bramki z sekcji 4 i
 
 #### Automated
 
-- [ ] 2.1 `grep -rn "ring-ring/50" resources/js` nic nie zwraca
-- [ ] 2.2 `grep -rnE "text-destructive([^-]|$)" resources/js` nic nie zwraca
-- [ ] 2.3 `vendor/bin/sail npm run check` przechodzi
-- [ ] 2.4 `vendor/bin/sail npm run types:check` przechodzi
-- [ ] 2.5 `vendor/bin/sail npm run test:js` przechodzi
+- [x] 2.1 `grep -rn "ring-ring/50" resources/js` nic nie zwraca
+- [x] 2.2 `grep -rnE "text-destructive([^-]|$)" resources/js` nic nie zwraca
+- [x] 2.3 `vendor/bin/sail npm run check` przechodzi
+- [x] 2.4 `vendor/bin/sail npm run types:check` przechodzi
+- [x] 2.5 `vendor/bin/sail npm run test:js` przechodzi
 
 #### Manual
 
-- [ ] 2.6 Tab po `/persons`, panelu osoby i menu: pierścień pełny, 3 px, w jasnym i ciemnym motywie
-- [ ] 2.7 Przycisk „Usuń” w dialogu usuwania ma biały tekst na czerwieni w obu motywach; tekst błędu w ciemnym motywie jest jasnoczerwony
-- [ ] 2.8 Toast po zapisie pokazuje zieloną ikonę
+- [x] 2.6 Tab po `/persons`, panelu osoby i menu: pierścień pełny, 3 px, w jasnym i ciemnym motywie
+- [x] 2.7 Przycisk „Usuń” w dialogu usuwania ma biały tekst na czerwieni w obu motywach; tekst błędu w ciemnym motywie jest jasnoczerwony
+- [x] 2.8 Toast po zapisie pokazuje zieloną ikonę
 
 ### Phase 3: Typografia i teksty
 

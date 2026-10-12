@@ -109,7 +109,7 @@ export function LocalityPanel({
                                     <Button
                                         type="button"
                                         variant="ghost"
-                                        className="text-destructive hover:text-destructive"
+                                        className="text-destructive-foreground hover:text-destructive-foreground"
                                         disabled={isDirty}
                                         aria-describedby={
                                             isDirty

@@ -151,7 +151,7 @@ export function SourceGroup({
                                                 type="button"
                                                 variant="ghost"
                                                 size="sm"
-                                                className="text-muted-foreground hover:text-destructive"
+                                                className="text-muted-foreground hover:text-destructive-foreground"
                                                 aria-label={`Odepnij źródło ${source.display_name}`}
                                             >
                                                 Odepnij

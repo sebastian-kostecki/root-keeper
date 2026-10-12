@@ -5,4 +5,4 @@
  * Place-specific parts (e.g. `focus-visible:ring-inset`) are added with `cn()`.
  */
 export const focusRing =
-    'outline-none focus-visible:ring-ring/50 focus-visible:ring-[3px]';
+    'outline-none focus-visible:ring-ring focus-visible:ring-3';

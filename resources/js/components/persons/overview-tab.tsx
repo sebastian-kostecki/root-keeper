@@ -20,6 +20,7 @@ import { SourcePickerDialog } from '@/components/sources/source-picker-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useSectionSave } from '@/hooks/use-section-save';
+import { focusRing } from '@/lib/focus-ring';
 import {
     marriageFieldDefaults,
     marriageSaveRequest,
@@ -27,6 +28,7 @@ import {
 } from '@/lib/person-payload';
 import type { PersonSection, SectionValues } from '@/lib/person-payload';
 import { formatPartialDate } from '@/lib/partial-date';
+import { cn } from '@/lib/utils';
 import { formatYearRange } from '@/lib/year-range';
 import type {
     Marriage,
@@ -140,7 +142,10 @@ function FactView({
                                     }
                                     aria-label={`Otwórz źródło ${source.display_name}`}
                                     title={source.display_name}
-                                    className="text-primary focus-visible:ring-ring/50 min-w-0 truncate rounded-sm underline-offset-4 outline-none hover:underline focus-visible:ring-[3px]"
+                                    className={cn(
+                                        'text-primary min-w-0 truncate rounded-sm underline-offset-4 hover:underline',
+                                        focusRing,
+                                    )}
                                 >
                                     {source.display_name}
                                 </Link>
@@ -206,7 +211,10 @@ function GravestoneLinks({ gravestones }: { gravestones: PersonGravestone[] }) {
                                 ),
                             )
                         }
-                        className="text-primary focus-visible:ring-ring/50 rounded-sm underline-offset-4 outline-none hover:underline focus-visible:ring-[3px]"
+                        className={cn(
+                            'text-primary rounded-sm underline-offset-4 hover:underline',
+                            focusRing,
+                        )}
                     >
                         {gravestone.display_name}
                         {gravestone.cemetery_name &&

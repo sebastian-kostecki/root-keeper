@@ -76,14 +76,14 @@ export function AppSidebar() {
                             <Button
                                 variant="ghost"
                                 size="icon"
-                                className="focus-visible:ring-sidebar-ring size-11 shrink-0 focus-visible:ring-2"
+                                className="hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-sidebar-ring size-11 shrink-0 focus-visible:ring-3"
                                 onClick={() => setOpenMobile(false)}
                             >
                                 <X />
                                 <span className="sr-only">Zamknij menu</span>
                             </Button>
                         ) : (
-                            <SidebarTrigger className="focus-visible:ring-sidebar-ring shrink-0 group-data-[collapsible=icon]:size-8 focus-visible:ring-2" />
+                            <SidebarTrigger className="hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-sidebar-ring shrink-0 group-data-[collapsible=icon]:size-8 focus-visible:ring-3" />
                         )}
                     </SidebarMenuItem>
                 </SidebarMenu>

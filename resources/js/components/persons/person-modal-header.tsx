@@ -67,7 +67,10 @@ export function PersonModalHeader({ person, isRootPerson }: Props) {
             </div>
 
             {photoError && (
-                <p role="alert" className="text-destructive mt-2 text-sm">
+                <p
+                    role="alert"
+                    className="text-destructive-foreground mt-2 text-sm"
+                >
                     {photoError}
                 </p>
             )}

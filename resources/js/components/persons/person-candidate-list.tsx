@@ -2,6 +2,8 @@ import { Link } from '@inertiajs/react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
+import { focusRing } from '@/lib/focus-ring';
+import { cn } from '@/lib/utils';
 import { index as personsIndex } from '@/routes/persons';
 
 type CandidateRow = {
@@ -129,7 +131,10 @@ export function PersonCandidateList<T extends CandidateRow>({
                                 blockedReason !== null || processingId !== null
                             }
                             onClick={() => onSelect(candidate.id)}
-                            className="hover:bg-accent focus-visible:ring-ring/50 flex w-full items-center justify-between rounded-md px-3 py-2 text-left text-sm outline-none focus-visible:ring-[3px] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-transparent"
+                            className={cn(
+                                'hover:bg-accent flex w-full items-center justify-between rounded-md px-3 py-2 text-left text-sm disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-transparent',
+                                focusRing,
+                            )}
                         >
                             <span>
                                 {candidate.display_name}

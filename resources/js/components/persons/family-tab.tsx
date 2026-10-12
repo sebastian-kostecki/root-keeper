@@ -13,6 +13,7 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useInitials } from '@/hooks/use-initials';
+import { focusRing } from '@/lib/focus-ring';
 import { genderCard } from '@/lib/gender-styles';
 import { formatLifespan } from '@/lib/lifespan';
 import { cn } from '@/lib/utils';
@@ -127,7 +128,10 @@ function PersonRow({
         >
             <PersonPreviewLink
                 personId={person.id}
-                className="focus-visible:ring-ring flex min-w-0 flex-1 items-center gap-3 rounded-xl px-3 py-2.5 focus-visible:ring-[3px] focus-visible:outline-none"
+                className={cn(
+                    'flex min-w-0 flex-1 items-center gap-3 rounded-xl px-3 py-2.5',
+                    focusRing,
+                )}
             >
                 <PersonRowBody person={person} extra={extra} />
             </PersonPreviewLink>

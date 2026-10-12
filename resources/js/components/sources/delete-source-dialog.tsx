@@ -68,7 +68,7 @@ export function DeleteSourceDialog({ source, confirms, trigger }: Props) {
                                         {confirmation.event_label} —{' '}
                                         {confirmation.person.display_name} —{' '}
                                         {confirmation.is_last_source ? (
-                                            <span className="text-destructive font-medium">
+                                            <span className="text-destructive-foreground font-medium">
                                                 stanie się niepotwierdzone
                                             </span>
                                         ) : (

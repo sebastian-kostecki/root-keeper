@@ -18,7 +18,9 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Spinner } from '@/components/ui/spinner';
+import { focusRing } from '@/lib/focus-ring';
 import { personPhotoUrl } from '@/lib/person-photo';
+import { cn } from '@/lib/utils';
 import type { PersonPreview } from '@/types';
 
 type Props = {
@@ -87,7 +89,10 @@ export function PersonPhotoMenu({ person, onErrorChange }: Props) {
                         type="button"
                         aria-label="Zdjęcie osoby"
                         disabled={processing}
-                        className="focus-visible:ring-ring/50 relative shrink-0 rounded-full outline-none focus-visible:ring-[3px] disabled:cursor-wait"
+                        className={cn(
+                            'relative shrink-0 rounded-full disabled:cursor-wait',
+                            focusRing,
+                        )}
                     >
                         <PersonAvatar
                             name={person.display_name}

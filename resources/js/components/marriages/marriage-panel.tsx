@@ -17,6 +17,7 @@ import { SidePanel } from '@/components/side-panel';
 import { Button } from '@/components/ui/button';
 import { useMarriagePanel } from '@/hooks/use-marriage-panel';
 import { useSectionSave } from '@/hooks/use-section-save';
+import { focusRing } from '@/lib/focus-ring';
 import { genderCard } from '@/lib/gender-styles';
 import { formatLifespan } from '@/lib/lifespan';
 import {
@@ -67,7 +68,10 @@ function PersonLink({ person }: { person: PersonSummary }) {
         >
             <PersonPreviewLink
                 personId={person.id}
-                className="focus-visible:ring-ring flex min-w-0 items-center gap-3 rounded-xl px-3 py-2.5 focus-visible:ring-[3px] focus-visible:outline-none"
+                className={cn(
+                    'flex min-w-0 items-center gap-3 rounded-xl px-3 py-2.5',
+                    focusRing,
+                )}
             >
                 <span className="min-w-0 flex-1">
                     <span className="block font-medium [overflow-wrap:anywhere]">

@@ -144,7 +144,7 @@ export function SourcePanel({
                                 type="button"
                                 variant="outline"
                                 size="sm"
-                                className="text-destructive hover:text-destructive"
+                                className="text-destructive-foreground hover:text-destructive-foreground"
                             >
                                 Usuń
                             </Button>
@@ -510,7 +510,7 @@ function EditSourceForm({
                                 }
                                 notice={
                                     erased.length > 0 ? (
-                                        <div className="text-destructive space-y-1 text-sm">
+                                        <div className="text-destructive-foreground space-y-1 text-sm">
                                             <p className="font-medium">
                                                 Te pola zostaną usunięte przy
                                                 zapisie:
@@ -588,7 +588,7 @@ function EditSourceForm({
                     <DialogDescription>
                         Te pola zostaną usunięte przy zapisie:
                     </DialogDescription>
-                    <div className="text-destructive">
+                    <div className="text-destructive-foreground">
                         <ErasedFieldList erased={erased} />
                     </div>
                     <DialogFooter className="gap-2">
