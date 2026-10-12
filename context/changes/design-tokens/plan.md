@@ -362,16 +362,16 @@ Rozszerzenie `view-tokens.test.ts` o drzewo i panele, pełne bramki z sekcji 4 i
 
 #### Automated
 
-- [x] 3.1 `grep -rn "Twoim\|Twojego\|(data nieznana)" resources/js` i `grep -rn "Password updated\|Profile updated" app lang` nic nie zwracają
-- [x] 3.2 `vendor/bin/sail npm run test:js` przechodzi (w tym `persons-index.test.ts`)
-- [x] 3.3 `vendor/bin/sail artisan test --compact tests/Feature/Settings` przechodzi
-- [x] 3.4 `vendor/bin/sail bin pint --dirty --format agent` bez zmian do zrobienia
-- [x] 3.5 `vendor/bin/sail npm run check` i `vendor/bin/sail npm run types:check` przechodzą
+- [x] 3.1 `grep -rn "Twoim\|Twojego\|(data nieznana)" resources/js` i `grep -rn "Password updated\|Profile updated" app lang` nic nie zwracają — 92b118b
+- [x] 3.2 `vendor/bin/sail npm run test:js` przechodzi (w tym `persons-index.test.ts`) — 92b118b
+- [x] 3.3 `vendor/bin/sail artisan test --compact tests/Feature/Settings` przechodzi — 92b118b
+- [x] 3.4 `vendor/bin/sail bin pint --dirty --format agent` bez zmian do zrobienia — 92b118b
+- [x] 3.5 `vendor/bin/sail npm run check` i `vendor/bin/sail npm run types:check` przechodzą — 92b118b
 
 #### Manual
 
-- [x] 3.6 Tytuły stron list, panelu, okna, pustego stanu, nazwa w logo i imię na karcie drzewa są szeryfowe; przyciski, etykiety i tabele zostają bezszeryfowe
-- [x] 3.7 Zmiana hasła i profilu pokazuje polski toast
+- [x] 3.6 Tytuły stron list, panelu, okna, pustego stanu, nazwa w logo i imię na karcie drzewa są szeryfowe; przyciski, etykiety i tabele zostają bezszeryfowe — 92b118b
+- [x] 3.7 Zmiana hasła i profilu pokazuje polski toast — 92b118b
 
 ### Phase 4: Strażnik i bramka wizualna
 
