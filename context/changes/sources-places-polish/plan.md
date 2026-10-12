@@ -334,36 +334,36 @@ Tytuły i warianty pustych stanów, etykieta przełącznika spisu, polskie nagł
 
 #### Automated
 
-- [x] 2.1 Format i lint przechodzą: `vendor/bin/sail npm run check`
-- [x] 2.2 Typy przechodzą: `vendor/bin/sail npm run types:check`
-- [x] 2.3 Testy JS (z panelami w `VIEW_FILES`) przechodzą: `vendor/bin/sail npm run test:js`
-- [x] 2.4 Specy paneli przechodzą: `npx playwright test tests/e2e/places-merge-and-delete.spec.ts tests/e2e/places-page.spec.ts tests/e2e/source-panel-edit.spec.ts tests/e2e/source-panel-parish.spec.ts tests/e2e/gravestone-cemetery-and-buried.spec.ts`
-- [x] 2.5 W zakresie nie zostało gołe „Zapisz”/„Usuń”/„Scal” jako etykieta przycisku
+- [x] 2.1 Format i lint przechodzą: `vendor/bin/sail npm run check` — fb229f7
+- [x] 2.2 Typy przechodzą: `vendor/bin/sail npm run types:check` — fb229f7
+- [x] 2.3 Testy JS (z panelami w `VIEW_FILES`) przechodzą: `vendor/bin/sail npm run test:js` — fb229f7
+- [x] 2.4 Specy paneli przechodzą: `npx playwright test tests/e2e/places-merge-and-delete.spec.ts tests/e2e/places-page.spec.ts tests/e2e/source-panel-edit.spec.ts tests/e2e/source-panel-parish.spec.ts tests/e2e/gravestone-cemetery-and-buried.spec.ts` — fb229f7
+- [x] 2.5 W zakresie nie zostało gołe „Zapisz”/„Usuń”/„Scal” jako etykieta przycisku — fb229f7
 
 #### Manual
 
-- [x] 2.6 Panel miejscowości i parafii: „Zapisz …” w przypiętej stopce, „Scal z…” i „Usuń” w nagłówku; nowy rekord bez przycisków w nagłówku
-- [x] 2.7 Po zmianie pola „Scal z…” i „Usuń” są wyłączone, podpowiedź w stopce; po zapisie wracają
-- [x] 2.8 Strażnik niezapisanych zmian na `/places` nadal pyta przed zamknięciem panelu ze zmianami
-- [x] 2.9 Okna scalania i usuwania otwierają się z nagłówka i działają jak wcześniej
-- [x] 2.10 W panelu źródła „Opis” i „Potwierdza” są nagłówkami h3
+- [x] 2.6 Panel miejscowości i parafii: „Zapisz …” w przypiętej stopce, „Scal z…” i „Usuń” w nagłówku; nowy rekord bez przycisków w nagłówku — fb229f7
+- [x] 2.7 Po zmianie pola „Scal z…” i „Usuń” są wyłączone, podpowiedź w stopce; po zapisie wracają — fb229f7
+- [x] 2.8 Strażnik niezapisanych zmian na `/places` nadal pyta przed zamknięciem panelu ze zmianami — fb229f7
+- [x] 2.9 Okna scalania i usuwania otwierają się z nagłówka i działają jak wcześniej — fb229f7
+- [x] 2.10 W panelu źródła „Opis” i „Potwierdza” są nagłówkami h3 — fb229f7
 
 ### Phase 3: Puste stany, /places, ustawienia i bramka
 
 #### Automated
 
-- [ ] 3.1 Format i lint przechodzą: `vendor/bin/sail npm run check`
-- [ ] 3.2 Typy przechodzą: `vendor/bin/sail npm run types:check`
-- [ ] 3.3 Testy JS przechodzą: `vendor/bin/sail npm run test:js`
-- [ ] 3.4 Build przechodzi: `vendor/bin/sail npm run build`
-- [ ] 3.5 Specy stron przechodzą: `npx playwright test tests/e2e/places-page.spec.ts tests/e2e/sources-page-states.spec.ts tests/e2e/sources-grid-with-filters.spec.ts`
-- [ ] 3.6 Testy ustawień przechodzą: `vendor/bin/sail artisan test --compact tests/Feature/Settings`
-- [ ] 3.7 Zrzuty „po” i `verdict.md` zapisane w `screenshots/`
+- [x] 3.1 Format i lint przechodzą: `vendor/bin/sail npm run check`
+- [x] 3.2 Typy przechodzą: `vendor/bin/sail npm run types:check`
+- [x] 3.3 Testy JS przechodzą: `vendor/bin/sail npm run test:js`
+- [x] 3.4 Build przechodzi: `vendor/bin/sail npm run build`
+- [x] 3.5 Specy stron przechodzą: `npx playwright test tests/e2e/places-page.spec.ts tests/e2e/sources-page-states.spec.ts tests/e2e/sources-grid-with-filters.spec.ts`
+- [x] 3.6 Testy ustawień przechodzą: `vendor/bin/sail artisan test --compact tests/Feature/Settings`
+- [x] 3.7 Zrzuty „po” i `verdict.md` zapisane w `screenshots/`
 
 #### Manual
 
-- [ ] 3.8 Pusty spis `/places` ma tytuł „Brak miejscowości” / „Brak parafii”; brak wyników pokazuje „Pokaż w parafiach (n)” / „Pokaż w miejscowościach (n)” jako outline
-- [ ] 3.9 Pusta lista `/sources` ma tytuł „Brak źródeł”
-- [ ] 3.10 Czytnik ogłasza przełącznik na `/places` jako „Rodzaj miejsca”
-- [ ] 3.11 Karta przeglądarki, breadcrumbs, menu i nagłówki trzech stron ustawień są po polsku
-- [ ] 3.12 Werdykt zrzutów przejrzany i zaakceptowany
+- [x] 3.8 Pusty spis `/places` ma tytuł „Brak miejscowości” / „Brak parafii”; brak wyników pokazuje „Pokaż w parafiach (n)” / „Pokaż w miejscowościach (n)” jako outline
+- [x] 3.9 Pusta lista `/sources` ma tytuł „Brak źródeł”
+- [x] 3.10 Czytnik ogłasza przełącznik na `/places` jako „Rodzaj miejsca”
+- [x] 3.11 Karta przeglądarki, breadcrumbs, menu i nagłówki trzech stron ustawień są po polsku
+- [x] 3.12 Werdykt zrzutów przejrzany i zaakceptowany

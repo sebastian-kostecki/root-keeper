@@ -12,14 +12,16 @@ type OtherKindAction = {
 
 const emptyTreeCopy: Record<
     PlacesKind,
-    { icon: ReactNode; description: string }
+    { icon: ReactNode; title: string; description: string }
 > = {
     miejscowosci: {
         icon: <MapPinIcon />,
+        title: 'Brak miejscowości',
         description: 'Dodaj pierwszą miejscowość: nazwę i krótki opis.',
     },
     parafie: {
         icon: <ChurchIcon />,
+        title: 'Brak parafii',
         description: 'Dodaj pierwszą parafię: nazwę, wyznanie i siedzibę.',
     },
 };
@@ -41,7 +43,7 @@ export function PlacesEmptyTree({
     return (
         <EmptyState
             icon={emptyTreeCopy[kind].icon}
-            title="Spis jest pusty"
+            title={emptyTreeCopy[kind].title}
             description={emptyTreeCopy[kind].description}
             action={action}
         />
@@ -71,7 +73,7 @@ export function PlacesNoResults({
             action={
                 <div className="flex flex-wrap justify-center gap-2">
                     {other !== undefined && (
-                        <Button onClick={other.onShow}>
+                        <Button variant="outline" onClick={other.onShow}>
                             {other.label} ({other.count})
                         </Button>
                     )}

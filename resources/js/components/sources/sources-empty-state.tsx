@@ -15,7 +15,7 @@ export function SourcesEmptyTree({ action }: { action: ReactNode }) {
     return (
         <EmptyState
             icon={<FileSearchIcon />}
-            title="Nie dodano jeszcze żadnego źródła"
+            title="Brak źródeł"
             description="Zacznij od dodania aktu, zdjęcia nagrobka albo innego dokumentu."
             action={action}
         />

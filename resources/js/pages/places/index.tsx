@@ -368,7 +368,7 @@ export default function Index({
                 <SegmentedToggle
                     value={filters.kind}
                     onValueChange={switchKind}
-                    ariaLabel="Spis"
+                    ariaLabel="Rodzaj miejsca"
                     items={kindItems}
                 />
 
