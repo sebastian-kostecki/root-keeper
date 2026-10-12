@@ -352,18 +352,18 @@ Tytuły i warianty pustych stanów, etykieta przełącznika spisu, polskie nagł
 
 #### Automated
 
-- [x] 3.1 Format i lint przechodzą: `vendor/bin/sail npm run check`
-- [x] 3.2 Typy przechodzą: `vendor/bin/sail npm run types:check`
-- [x] 3.3 Testy JS przechodzą: `vendor/bin/sail npm run test:js`
-- [x] 3.4 Build przechodzi: `vendor/bin/sail npm run build`
-- [x] 3.5 Specy stron przechodzą: `npx playwright test tests/e2e/places-page.spec.ts tests/e2e/sources-page-states.spec.ts tests/e2e/sources-grid-with-filters.spec.ts`
-- [x] 3.6 Testy ustawień przechodzą: `vendor/bin/sail artisan test --compact tests/Feature/Settings`
-- [x] 3.7 Zrzuty „po” i `verdict.md` zapisane w `screenshots/`
+- [x] 3.1 Format i lint przechodzą: `vendor/bin/sail npm run check` — 4a8c046
+- [x] 3.2 Typy przechodzą: `vendor/bin/sail npm run types:check` — 4a8c046
+- [x] 3.3 Testy JS przechodzą: `vendor/bin/sail npm run test:js` — 4a8c046
+- [x] 3.4 Build przechodzi: `vendor/bin/sail npm run build` — 4a8c046
+- [x] 3.5 Specy stron przechodzą: `npx playwright test tests/e2e/places-page.spec.ts tests/e2e/sources-page-states.spec.ts tests/e2e/sources-grid-with-filters.spec.ts` — 4a8c046
+- [x] 3.6 Testy ustawień przechodzą: `vendor/bin/sail artisan test --compact tests/Feature/Settings` — 4a8c046
+- [x] 3.7 Zrzuty „po” i `verdict.md` zapisane w `screenshots/` — 4a8c046
 
 #### Manual
 
-- [x] 3.8 Pusty spis `/places` ma tytuł „Brak miejscowości” / „Brak parafii”; brak wyników pokazuje „Pokaż w parafiach (n)” / „Pokaż w miejscowościach (n)” jako outline
-- [x] 3.9 Pusta lista `/sources` ma tytuł „Brak źródeł”
-- [x] 3.10 Czytnik ogłasza przełącznik na `/places` jako „Rodzaj miejsca”
-- [x] 3.11 Karta przeglądarki, breadcrumbs, menu i nagłówki trzech stron ustawień są po polsku
-- [x] 3.12 Werdykt zrzutów przejrzany i zaakceptowany
+- [x] 3.8 Pusty spis `/places` ma tytuł „Brak miejscowości” / „Brak parafii”; brak wyników pokazuje „Pokaż w parafiach (n)” / „Pokaż w miejscowościach (n)” jako outline — 4a8c046
+- [x] 3.9 Pusta lista `/sources` ma tytuł „Brak źródeł” — 4a8c046
+- [x] 3.10 Czytnik ogłasza przełącznik na `/places` jako „Rodzaj miejsca” — 4a8c046
+- [x] 3.11 Karta przeglądarki, breadcrumbs, menu i nagłówki trzech stron ustawień są po polsku — 4a8c046
+- [x] 3.12 Werdykt zrzutów przejrzany i zaakceptowany — 4a8c046
