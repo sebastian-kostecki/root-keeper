@@ -23,6 +23,7 @@ use Illuminate\Support\Facades\DB;
  * @phpstan-type AddSpouse array{excluded_ids: list<int>}
  * @phpstan-type UnmarriedParents array{focus: bool, partner: bool}
  * @phpstan-type Union array{key: string, partner_id: int|null, partner_name: string|null, is_marriage: bool, marriage_id: int|null, marriage_year: string|null, children_count: int}
+ * @phpstan-type PairMarriage array{year: string|null}
  */
 class BuildFamilySheet
 {
@@ -44,6 +45,8 @@ class BuildFamilySheet
      *     focus_side: 'left'|'right',
      *     parents: array{focus: list<Slot>, partner: list<Slot>},
      *     grandparents: array{focus: list<Slot>, partner: list<Slot>},
+     *     parent_marriages: array{focus: PairMarriage|null, partner: PairMarriage|null},
+     *     grandparent_marriages: array{focus: list<PairMarriage|null>, partner: list<PairMarriage|null>},
      *     children: list<SheetPerson>,
      *     add_child: AddChild,
      *     add_spouse: AddSpouse,
@@ -142,6 +145,10 @@ class BuildFamilySheet
             'focus' => $this->parentSlots($focusPerson),
             'partner' => $this->parentSlots($partnerPerson),
         ];
+        $grandparentSlots = [
+            'focus' => $this->grandparentSlots($focusPerson),
+            'partner' => $this->grandparentSlots($partnerPerson),
+        ];
 
         return [
             'focus' => $this->render($focusPerson),
@@ -150,9 +157,20 @@ class BuildFamilySheet
             'partner' => $partner,
             'focus_side' => $partnerPerson !== null && PersonOrdering::parentRank($partnerPerson) < PersonOrdering::parentRank($focusPerson) ? 'right' : 'left',
             'parents' => $parentSlots,
-            'grandparents' => [
-                'focus' => $this->grandparentSlots($focusPerson),
-                'partner' => $this->grandparentSlots($partnerPerson),
+            'grandparents' => $grandparentSlots,
+            'parent_marriages' => [
+                'focus' => $this->pairMarriage($parentSlots['focus']),
+                'partner' => $this->pairMarriage($parentSlots['partner']),
+            ],
+            'grandparent_marriages' => [
+                'focus' => [
+                    $this->pairMarriage(array_slice($grandparentSlots['focus'], 0, 2)),
+                    $this->pairMarriage(array_slice($grandparentSlots['focus'], 2, 2)),
+                ],
+                'partner' => [
+                    $this->pairMarriage(array_slice($grandparentSlots['partner'], 0, 2)),
+                    $this->pairMarriage(array_slice($grandparentSlots['partner'], 2, 2)),
+                ],
             ],
             'children' => array_map(
                 fn (Person $child) => $this->render($child),
@@ -341,6 +359,35 @@ class BuildFamilySheet
             ->whereIn('id', array_values(array_unique($ids)))
             ->get()
             ->keyBy('id');
+    }
+
+    /**
+     * The marriage year of a shown pair: only two known people, joined by a
+     * marriage among the loaded events; the earliest one wins.
+     *
+     * @param  list<Slot>  $pair
+     * @return PairMarriage|null
+     */
+    private function pairMarriage(array $pair): ?array
+    {
+        if (count($pair) !== 2 || $pair[0]['kind'] !== 'person' || $pair[1]['kind'] !== 'person') {
+            return null;
+        }
+
+        $firstPerson = $this->people->get($pair[0]['person']['id']);
+        $secondPerson = $this->people->get($pair[1]['person']['id']);
+
+        if ($firstPerson === null || $secondPerson === null) {
+            return null;
+        }
+
+        $sharedMarriages = $firstPerson->events
+            ->filter(fn (Event $event): bool => $event->type === EventType::Marriage
+                && $secondPerson->events->contains('id', $event->id));
+
+        $marriage = PersonOrdering::marriages($sharedMarriages)->first();
+
+        return $marriage === null ? null : ['year' => $marriage->date->formatYear()];
     }
 
     /**

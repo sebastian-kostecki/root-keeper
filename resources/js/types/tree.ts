@@ -53,6 +53,8 @@ export type SheetUnion = {
     children_count: number;
 };
 
+export type PairMarriage = { year: string | null };
+
 export type FamilySheet = {
     focus: SheetPerson;
     unions: SheetUnion[];
@@ -61,6 +63,14 @@ export type FamilySheet = {
     focus_side: 'left' | 'right';
     parents: { focus: SheetSlot[]; partner: SheetSlot[] };
     grandparents: { focus: SheetSlot[]; partner: SheetSlot[] };
+    parent_marriages: {
+        focus: PairMarriage | null;
+        partner: PairMarriage | null;
+    };
+    grandparent_marriages: {
+        focus: [PairMarriage | null, PairMarriage | null];
+        partner: [PairMarriage | null, PairMarriage | null];
+    };
     children: SheetPerson[];
     add_child: AddChildTarget;
     add_spouse: AddSpouseTarget;

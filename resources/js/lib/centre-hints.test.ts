@@ -41,6 +41,8 @@ function sheet(overrides: Partial<FamilySheet> = {}): FamilySheet {
             blocked_ids: [],
         },
         add_spouse: { excluded_ids: [] },
+        parent_marriages: { focus: null, partner: null },
+        grandparent_marriages: { focus: [null, null], partner: [null, null] },
         unmarried_parents: { focus: false, partner: false },
         ...overrides,
     };
