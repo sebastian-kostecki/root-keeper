@@ -225,12 +225,14 @@ export function isFiltering(filters: SourcesFilters): boolean {
     );
 }
 
-/** How many of the fields hidden below `sm` (place, years, archive) are set: the count on „Filtry (N)”. */
+/**
+ * How many filter pills (place, years, archive) are active: the count on „Filtry (N)”. The years count as one
+ * pill whether one bound or both are set.
+ */
 export function hiddenFilterCount(filters: SourcesFilters): number {
     return [
         filters.place !== '',
-        filters.year_from !== null,
-        filters.year_to !== null,
+        filters.year_from !== null || filters.year_to !== null,
         filters.archive !== '',
     ].filter(Boolean).length;
 }
@@ -476,4 +478,73 @@ export function eventsLabel(count: number): string | null {
     }
 
     return `${count} ${pluralPhrase(count, 'wydarzenie', 'wydarzenia', 'wydarzeń')}`;
+}
+
+/**
+ * How many sources the list would show for each value of one popover filter (place or archive), with the
+ * search, kind, years and the other filter applied. `''` is the "all …" option. Filters must be resolved.
+ */
+export function filterOptionCounts(
+    sources: IndexSource[],
+    filters: SourcesFilters,
+    key: 'place' | 'archive',
+    values: string[],
+): Record<string, number> {
+    return Object.fromEntries(
+        values.map((value) => [
+            value,
+            filterSources(sources, { ...filters, [key]: value }).visible.length,
+        ]),
+    );
+}
+
+/** The Lata pill value: „1880 – 1900”, „od 1880”, „do 1900”; '' when neither bound is set. */
+export function formatYearsFilter(
+    from: number | null,
+    to: number | null,
+): string {
+    if (from !== null && to !== null) {
+        return `${from} – ${to}`;
+    }
+
+    if (from !== null) {
+        return `od ${from}`;
+    }
+
+    if (to !== null) {
+        return `do ${to}`;
+    }
+
+    return '';
+}
+
+/**
+ * The half-century quick-pick ranges that contain at least one source with a year, ascending and without
+ * duplicates. Pass all tree sources, not the filtered ones, so the buttons do not vanish while filtering.
+ */
+export function halfCenturyPresets(
+    sources: IndexSource[],
+): { from: number; to: number }[] {
+    const starts = [
+        ...new Set(
+            sources
+                .filter((source) => source.year !== null)
+                .map((source) => Math.floor((source.year as number) / 50) * 50),
+        ),
+    ].sort((a, b) => a - b);
+
+    return starts.map((start) => ({ from: start, to: start + 49 }));
+}
+
+/** The result count line: „12 z 64 źródeł” while filtering, otherwise „3 źródła”. */
+export function resultCountText(
+    shown: number,
+    total: number,
+    filtering: boolean,
+): string {
+    if (filtering) {
+        return `${shown} z ${total} ${total === 1 ? 'źródła' : 'źródeł'}`;
+    }
+
+    return `${total} ${pluralPhrase(total, 'źródło', 'źródła', 'źródeł')}`;
 }

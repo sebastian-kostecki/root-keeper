@@ -3,10 +3,14 @@ import type { IndexSource } from '@/types';
 import {
     buildSourcesQuery,
     eventsLabel,
+    filterOptionCounts,
     filterSources,
+    formatYearsFilter,
+    halfCenturyPresets,
     hiddenFilterCount,
     isFiltering,
     resolveFilters,
+    resultCountText,
     sortSources,
     withSourcesQuery,
     yearFieldsError,
@@ -275,17 +279,17 @@ describe('yearFieldsError', () => {
 });
 
 describe('hiddenFilterCount', () => {
-    it('counts the set fields among place, years and archive', () => {
+    it('counts the years range as one pill', () => {
         expect(
             hiddenFilterCount(filtersOf({ year_from: 1850, year_to: 1900 })),
-        ).toBe(2);
+        ).toBe(1);
     });
 
-    it('is 0 for the defaults', () => {
-        expect(hiddenFilterCount(filtersOf())).toBe(0);
+    it('counts the years once with only one bound', () => {
+        expect(hiddenFilterCount(filtersOf({ year_from: 1850 }))).toBe(1);
     });
 
-    it('is 4 when all four are set', () => {
+    it('is 3 when place, years and archive are all set', () => {
         expect(
             hiddenFilterCount(
                 filtersOf({
@@ -295,11 +299,146 @@ describe('hiddenFilterCount', () => {
                     archive: 'AP Poznań',
                 }),
             ),
-        ).toBe(4);
+        ).toBe(3);
+    });
+
+    it('is 0 for the defaults', () => {
+        expect(hiddenFilterCount(filtersOf())).toBe(0);
     });
 
     it('does not count the kind', () => {
         expect(hiddenFilterCount(filtersOf({ kind: 'akty' }))).toBe(0);
+    });
+});
+
+describe('filterOptionCounts', () => {
+    const sources = [
+        source(1, {
+            kind: 'metrical_record',
+            name: 'Lipnica akt',
+            year: 1880,
+            archive: 'AP A',
+            parish_id: 1,
+            parish_locality_id: 10,
+        }),
+        source(2, {
+            kind: 'gravestone',
+            name: 'Lipnica grób',
+            year: 1890,
+            archive: 'AP B',
+            cemetery_locality_id: 20,
+        }),
+        source(3, {
+            kind: 'gravestone',
+            name: 'Inne',
+            year: 1950,
+            archive: 'AP A',
+            cemetery_locality_id: 10,
+        }),
+    ];
+
+    it('counts each archive with the search and years applied', () => {
+        expect(
+            filterOptionCounts(
+                sources,
+                filtersOf({ q: 'lipnica', year_from: 1850, year_to: 1900 }),
+                'archive',
+                ['', 'AP A', 'AP B'],
+            ),
+        ).toEqual({ '': 2, 'AP A': 1, 'AP B': 1 });
+    });
+
+    it('counts each place with the kind applied', () => {
+        expect(
+            filterOptionCounts(
+                sources,
+                filtersOf({ kind: 'nagrobki' }),
+                'place',
+                ['', 'miejscowosc-10', 'miejscowosc-20'],
+            ),
+        ).toEqual({ '': 2, 'miejscowosc-10': 1, 'miejscowosc-20': 1 });
+    });
+
+    it('counts the blank option without its own filter but with the other one', () => {
+        const counts = filterOptionCounts(
+            sources,
+            filtersOf({ archive: 'AP A', year_from: 1850 }),
+            'archive',
+            [''],
+        );
+
+        expect(counts['']).toBe(
+            filterSources(sources, filtersOf({ year_from: 1850 })).visible
+                .length,
+        );
+    });
+
+    it('is 0 for an option with no matching sources', () => {
+        expect(
+            filterOptionCounts(sources, filtersOf(), 'archive', ['AP Z']),
+        ).toEqual({ 'AP Z': 0 });
+    });
+});
+
+describe('formatYearsFilter', () => {
+    it('joins both bounds with a spaced en dash', () => {
+        expect(formatYearsFilter(1880, 1900)).toBe('1880 – 1900');
+    });
+
+    it('uses od for only a from bound', () => {
+        expect(formatYearsFilter(1880, null)).toBe('od 1880');
+    });
+
+    it('uses do for only a to bound', () => {
+        expect(formatYearsFilter(null, 1900)).toBe('do 1900');
+    });
+
+    it('is empty when neither bound is set', () => {
+        expect(formatYearsFilter(null, null)).toBe('');
+    });
+});
+
+describe('halfCenturyPresets', () => {
+    it('spans the half-century of a year', () => {
+        expect(halfCenturyPresets([source(1, { year: 1850 })])).toEqual([
+            { from: 1850, to: 1899 },
+        ]);
+        expect(halfCenturyPresets([source(1, { year: 1849 })])).toEqual([
+            { from: 1800, to: 1849 },
+        ]);
+    });
+
+    it('merges duplicates and sorts ascending', () => {
+        const sources = [
+            source(1, { year: 1950 }),
+            source(2, { year: 1850 }),
+            source(3, { year: 1899 }),
+            source(4, { year: 1860 }),
+            source(5),
+        ];
+
+        expect(halfCenturyPresets(sources)).toEqual([
+            { from: 1850, to: 1899 },
+            { from: 1950, to: 1999 },
+        ]);
+    });
+
+    it('is empty when no source has a year', () => {
+        expect(halfCenturyPresets([source(1), source(2)])).toEqual([]);
+    });
+});
+
+describe('resultCountText', () => {
+    it('uses the plural forms when not filtering', () => {
+        expect(resultCountText(1, 1, false)).toBe('1 źródło');
+        expect(resultCountText(3, 3, false)).toBe('3 źródła');
+        expect(resultCountText(5, 5, false)).toBe('5 źródeł');
+    });
+
+    it('shows the shown and total counts while filtering', () => {
+        expect(resultCountText(12, 64, true)).toBe('12 z 64 źródeł');
+        expect(resultCountText(1, 1, true)).toBe('1 z 1 źródła');
+        expect(resultCountText(0, 64, true)).toBe('0 z 64 źródeł');
     });
 });
 
