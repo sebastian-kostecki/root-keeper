@@ -1,3 +1,5 @@
+import { focusRingOffset } from '@/lib/focus-ring';
+
 /**
  * Geometry of placeholder cards (variant C): rounded, centred column content,
  * side padding that leaves room for the eye button.
@@ -19,8 +21,7 @@ export const personCardSurface =
  * `genderCard` in `lib/gender-styles`). Focus is a detached, offset halo, distinct from the focus
  * person's attached border.
  */
-export const cardInteractive =
-    'focus-visible:ring-ring focus-visible:ring-offset-background focus-visible:ring-3 focus-visible:ring-offset-2 focus-visible:outline-none';
+export const cardInteractive = focusRingOffset;
 
 /** The focus person: a thick primary border and a light shadow. */
 export const cardFocus = 'border-2 border-primary shadow-sm';

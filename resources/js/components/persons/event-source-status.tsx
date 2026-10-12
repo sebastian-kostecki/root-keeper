@@ -1,4 +1,4 @@
-import { CheckIcon, TriangleAlertIcon } from 'lucide-react';
+import { CircleDashedIcon, FileTextIcon } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
 type Props = {
@@ -10,18 +10,22 @@ export function EventSourceStatus({ kinds }: Props) {
     if (kinds.length > 0) {
         return (
             <Badge
-                variant="default"
-                className="h-auto max-w-full shrink whitespace-normal"
+                variant="outline"
+                className="bg-source-surface border-source-border text-source h-auto max-w-full shrink whitespace-normal"
             >
-                <CheckIcon />
-                Potwierdzone: {kinds.join(', ')}
+                <FileTextIcon />
+                <span className="sr-only">Potwierdzone: </span>
+                {kinds.join(', ')}
             </Badge>
         );
     }
 
     return (
-        <Badge variant="outline" className="text-muted-foreground">
-            <TriangleAlertIcon />
+        <Badge
+            variant="outline"
+            className="text-muted-foreground border bg-transparent"
+        >
+            <CircleDashedIcon />
             Bez źródła
         </Badge>
     );

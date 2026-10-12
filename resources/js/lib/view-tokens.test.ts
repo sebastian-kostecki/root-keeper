@@ -23,6 +23,7 @@ const VIEW_FILES = [
     'components/persons/persons-table.tsx',
     'components/persons/persons-empty-state.tsx',
     'components/persons/person-list-parts.tsx',
+    'components/persons/event-source-status.tsx',
     'components/persons/partial-date-input.tsx',
     'components/table-parts.tsx',
     'pages/sources/index.tsx',

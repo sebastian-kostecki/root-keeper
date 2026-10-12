@@ -60,6 +60,7 @@ test('fact-source-scan: a confirmed birth leads to the same source and the same 
         exact: true,
     });
     await expect(birth.getByText(/^Potwierdzone/)).toBeVisible();
+    await expect(birth.getByText(/Potwierdzone: akt$/)).toBeVisible();
     await openLinkedSource(birth, sourceName);
 
     // 2. The source panel on the list: the title is the linked source and the

@@ -1,6 +1,7 @@
 /**
  * Selected state of an item in a list (the card of the open record). The element sets
- * `data-state="selected"` and `aria-current`; its focus ring comes from `focusRing`.
+ * `data-state="selected"` and `aria-current`; its focus ring comes from `focusRing`, or
+ * from `focusRingOffset` for cards with a gap around the focus ring.
  * Keyboard focus wins over the selection ring: the selection ring shows only without
  * `focus-visible`. Without focus the look is the same as before the selection styles.
  */

@@ -25,7 +25,8 @@ export function SourceThumbnail({
     return (
         <div
             className={cn(
-                'bg-muted flex aspect-square items-center justify-center overflow-hidden',
+                'flex aspect-square items-center justify-center overflow-hidden',
+                showImage ? 'bg-muted' : 'bg-source-surface',
                 className,
             )}
         >
@@ -38,9 +39,7 @@ export function SourceThumbnail({
                     onError={() => setFailedSourceId(source.id)}
                 />
             ) : (
-                <ImageOff
-                    className={cn('text-muted-foreground', iconClassName)}
-                />
+                <ImageOff className={cn('text-source', iconClassName)} />
             )}
         </div>
     );

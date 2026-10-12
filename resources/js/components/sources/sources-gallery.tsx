@@ -2,7 +2,7 @@ import { Link } from '@inertiajs/react';
 import { LinkIcon } from 'lucide-react';
 import type { MouseEvent } from 'react';
 import { SourceThumbnail } from '@/components/sources/source-thumbnail';
-import { focusRing } from '@/lib/focus-ring';
+import { focusRingOffset } from '@/lib/focus-ring';
 import { selectedListItem } from '@/lib/list-item-styles';
 import { formatSourceSummary } from '@/lib/source-description';
 import { eventsLabel } from '@/lib/sources-index';
@@ -44,7 +44,7 @@ export function SourcesGallery({
                                 }
                                 onClick={(event) => onOpen(event, source.id)}
                                 className={cn(
-                                    focusRing,
+                                    focusRingOffset,
                                     'bg-card hover:bg-accent/50 flex h-full min-w-0 flex-col overflow-hidden rounded-lg border shadow-sm transition-colors',
                                     selectedListItem,
                                 )}
@@ -77,9 +77,11 @@ export function SourcesGallery({
                                             <>
                                                 <LinkIcon
                                                     aria-hidden="true"
-                                                    className="size-3 shrink-0"
+                                                    className="text-source size-3 shrink-0"
                                                 />
-                                                <span>potwierdza {events}</span>
+                                                <span className="text-source">
+                                                    potwierdza {events}
+                                                </span>
                                             </>
                                         ) : (
                                             <span className="text-muted-foreground">
