@@ -12,6 +12,7 @@
         'Instrument Sans', ui-sans-serif, system-ui, sans-serif,
         'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
         'Noto Color Emoji';
+    --font-display: 'Newsreader', 'Source Serif 4', Georgia, serif;
 
     --radius-lg: var(--radius);
     --radius-md: calc(var(--radius) - 2px);
@@ -40,16 +41,15 @@
 
     --color-destructive: var(--destructive);
     --color-destructive-foreground: var(--destructive-foreground);
+    --color-on-destructive: var(--on-destructive);
 
     --color-border: var(--border);
     --color-input: var(--input);
     --color-ring: var(--ring);
 
-    --color-chart-1: var(--chart-1);
-    --color-chart-2: var(--chart-2);
-    --color-chart-3: var(--chart-3);
-    --color-chart-4: var(--chart-4);
-    --color-chart-5: var(--chart-5);
+    --color-source: var(--source);
+    --color-source-surface: var(--source-surface);
+    --color-source-border: var(--source-border);
 
     --color-sidebar: var(--sidebar);
     --color-sidebar-foreground: var(--sidebar-foreground);
@@ -71,99 +71,92 @@
     --color-tree-meta: var(--tree-meta);
 }
 
+/* Palette and component values: design system artifact https://claude.ai/artifact/U31mtUCgmLXcrgocGCWstU (project/implementation.md, sections 1-2). */
 :root {
-    --background: oklch(1 0 0);
-    --foreground: oklch(0.145 0 0);
-    --card: oklch(1 0 0);
-    --card-foreground: oklch(0.145 0 0);
-    --popover: oklch(1 0 0);
-    --popover-foreground: oklch(0.145 0 0);
-    --primary: oklch(0.205 0 0);
-    --primary-foreground: oklch(0.985 0 0);
-    --secondary: oklch(0.97 0 0);
-    --secondary-foreground: oklch(0.205 0 0);
-    --muted: oklch(0.97 0 0);
-    --muted-foreground: oklch(0.556 0 0);
-    --accent: oklch(0.97 0 0);
-    --accent-foreground: oklch(0.205 0 0);
-    --destructive: oklch(0.577 0.245 27.325);
-    --destructive-foreground: oklch(0.577 0.245 27.325);
-    --border: oklch(0.922 0 0);
-    --input: oklch(0.922 0 0);
-    /* Source: Tailwind v4 neutral-500 (same as --muted-foreground), ~4.7:1 on --background; WCAG 2.2 SC 1.4.11 non-text contrast target is 3:1. */
-    --ring: oklch(0.556 0 0);
-    --chart-1: oklch(0.646 0.222 41.116);
-    --chart-2: oklch(0.6 0.118 184.704);
-    --chart-3: oklch(0.398 0.07 227.392);
-    --chart-4: oklch(0.828 0.189 84.429);
-    --chart-5: oklch(0.769 0.188 70.08);
+    --background: #faf8f4;
+    --foreground: #1d2420;
+    --card: #fffefb;
+    --card-foreground: var(--foreground);
+    --popover: #fffefb;
+    --popover-foreground: var(--foreground);
+    --primary: #2c5a43;
+    --primary-foreground: #fbfaf6;
+    --secondary: #ece7dc;
+    --secondary-foreground: var(--foreground);
+    --muted: #f1ede4;
+    --muted-foreground: #566058;
+    --accent: #e1ece4;
+    --accent-foreground: #1b3a2b;
+    --destructive: #b0261c;
+    --destructive-foreground: #b0261c;
+    --on-destructive: #ffffff;
+    --border: #ddd6c8;
+    --input: #7f847a;
+    --ring: #2c5a43;
+    --source: #845609;
+    --source-surface: #f6ecd3;
+    --source-border: #e0cb98;
     --radius: 0.625rem;
-    --sidebar: oklch(0.985 0 0);
-    --sidebar-foreground: oklch(0.145 0 0);
-    --sidebar-primary: oklch(0.205 0 0);
-    --sidebar-primary-foreground: oklch(0.985 0 0);
-    /* Source: context/changes/app-shell-sidebar/tokens.md, design canvas https://claude.ai/artifact/EgWsEjc3AE64kvCcXpKAKN */
-    --sidebar-accent: oklch(0.945 0 0);
-    --sidebar-accent-foreground: oklch(0.205 0 0);
-    --sidebar-border: oklch(0.922 0 0);
-    --sidebar-ring: oklch(0.556 0 0);
-    /* Gender frames on tree cards: blue / rose / grey, the convention of Ancestris'
-       dynamic tree (context/changes/graphical-tree-view/research.md section 3). */
-    --gender-male: oklch(0.55 0.17 250);
-    --gender-female: oklch(0.6 0.19 5);
-    --gender-unknown: oklch(0.556 0 0);
-    /* Source: context/changes/tree-sheet-variant-c/tokens.md, design canvas https://claude.ai/artifact/NUAmTZj36Pyx1aMj19mt3F */
-    --gender-male-surface: oklch(0.965 0.02 250);
-    --gender-male-border: oklch(0.86 0.06 250);
-    --gender-female-surface: oklch(0.965 0.02 5);
-    --gender-female-border: oklch(0.87 0.06 5);
-    --tree-line: oklch(0.8 0 0);
-    --tree-meta: oklch(0.48 0 0);
+    --sidebar: #1c2822;
+    --sidebar-foreground: #e8eee9;
+    --sidebar-primary: #86c7a2;
+    --sidebar-primary-foreground: #1c2822;
+    --sidebar-accent: #2a3a32;
+    --sidebar-accent-foreground: #e8eee9;
+    --sidebar-border: #2f4036;
+    --sidebar-ring: #86c7a2;
+    --gender-male: #2a6496;
+    --gender-female: #a8365f;
+    --gender-unknown: #5e655d;
+    --gender-male-surface: #eaf1f8;
+    --gender-male-border: #a9c3dc;
+    --gender-female-surface: #f9ecf0;
+    --gender-female-border: #dfaebf;
+    --tree-line: #8e8878;
+    --tree-meta: #566058;
 }
 
 .dark {
-    --background: oklch(0.145 0 0);
-    --foreground: oklch(0.985 0 0);
-    --card: oklch(0.145 0 0);
-    --card-foreground: oklch(0.985 0 0);
-    --popover: oklch(0.145 0 0);
-    --popover-foreground: oklch(0.985 0 0);
-    --primary: oklch(0.985 0 0);
-    --primary-foreground: oklch(0.205 0 0);
-    --secondary: oklch(0.269 0 0);
-    --secondary-foreground: oklch(0.985 0 0);
-    --muted: oklch(0.269 0 0);
-    --muted-foreground: oklch(0.708 0 0);
-    --accent: oklch(0.269 0 0);
-    --accent-foreground: oklch(0.985 0 0);
-    --destructive: oklch(0.396 0.141 25.723);
-    --destructive-foreground: oklch(0.637 0.237 25.331);
-    --border: oklch(0.269 0 0);
-    --input: oklch(0.269 0 0);
-    /* Source: shadcn neutral dark preset (ui.shadcn.com/docs/theming), ~4:1 on --background; WCAG 2.2 SC 1.4.11 non-text contrast target is 3:1. */
-    --ring: oklch(0.556 0 0);
-    --chart-1: oklch(0.488 0.243 264.376);
-    --chart-2: oklch(0.696 0.17 162.48);
-    --chart-3: oklch(0.769 0.188 70.08);
-    --chart-4: oklch(0.627 0.265 303.9);
-    --chart-5: oklch(0.645 0.246 16.439);
-    --sidebar: oklch(0.205 0 0);
-    --sidebar-foreground: oklch(0.985 0 0);
-    --sidebar-primary: oklch(0.985 0 0);
-    --sidebar-primary-foreground: oklch(0.205 0 0);
-    --sidebar-accent: oklch(0.29 0 0);
-    --sidebar-accent-foreground: oklch(0.985 0 0);
-    --sidebar-border: oklch(0.269 0 0);
-    --sidebar-ring: oklch(0.556 0 0);
-    --gender-male: oklch(0.72 0.14 250);
-    --gender-female: oklch(0.75 0.15 5);
-    --gender-unknown: oklch(0.708 0 0);
-    --gender-male-surface: oklch(0.25 0.04 250);
-    --gender-male-border: oklch(0.4 0.08 250);
-    --gender-female-surface: oklch(0.25 0.04 5);
-    --gender-female-border: oklch(0.42 0.08 5);
-    --tree-line: oklch(0.42 0 0);
-    --tree-meta: oklch(0.75 0 0);
+    --background: #131814;
+    --foreground: #ece9e0;
+    --card: #1a201b;
+    --card-foreground: var(--foreground);
+    --popover: #1a201b;
+    --popover-foreground: var(--foreground);
+    --primary: #86c7a2;
+    --primary-foreground: #0f2217;
+    --secondary: #252d27;
+    --secondary-foreground: var(--foreground);
+    --muted: #202721;
+    --muted-foreground: #a3aca4;
+    --accent: #233229;
+    --accent-foreground: #d6ebdd;
+    --destructive: #b0261c;
+    --destructive-foreground: #f28b82;
+    --on-destructive: #ffffff;
+    --border: #2c352e;
+    --input: #6f7a71;
+    --ring: #86c7a2;
+    --source: #e3bd62;
+    --source-surface: #2a2310;
+    --source-border: #5b4a1c;
+    --sidebar: #0e1310;
+    --sidebar-foreground: #e8eee9;
+    --sidebar-primary: #86c7a2;
+    --sidebar-primary-foreground: #0e1310;
+    --sidebar-accent: #1c2620;
+    --sidebar-accent-foreground: #e8eee9;
+    --sidebar-border: #1c2620;
+    --sidebar-ring: #86c7a2;
+    --gender-male: #7fb2e0;
+    --gender-female: #e68aa9;
+    --gender-unknown: #a3aca4;
+    --gender-male-surface: #18232d;
+    --gender-male-border: #35566f;
+    --gender-female-surface: #2b1b22;
+    --gender-female-border: #6c3a4d;
+    --tree-line: #6c766e;
+    --tree-meta: #a3aca4;
 }
 
 @layer base {
