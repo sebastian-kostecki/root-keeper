@@ -1,9 +1,8 @@
-import { Head, router } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import { LayoutListIcon, TableIcon } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
-import PersonController from '@/actions/App/Http/Controllers/PersonController';
+import type { MouseEvent } from 'react';
 import Heading from '@/components/heading';
-import { PersonCreateDialog } from '@/components/persons/person-create-dialog';
 import {
     PersonsEmptyTree,
     PersonsNoResults,
@@ -12,13 +11,17 @@ import { PersonsList } from '@/components/persons/persons-list';
 import { PersonsTable } from '@/components/persons/persons-table';
 import { SearchField } from '@/components/search-field';
 import { SegmentedToggle } from '@/components/segmented-toggle';
+import { AddPersonPanel } from '@/components/tree/add-person-panel';
 import { Button } from '@/components/ui/button';
-import { buildPersonsQuery, peopleCount } from '@/lib/persons-index';
+import { useSidePanelNavigation } from '@/hooks/use-side-panel-navigation';
+import { resolvePersonsAddTarget } from '@/lib/add-person-target';
+import { peopleCount, withPersonsQuery } from '@/lib/persons-index';
 import type {
     PersonsFilters,
     PersonsSort,
     PersonsView,
 } from '@/lib/persons-index';
+import { panelVisitOptions } from '@/lib/side-panel-url';
 import { index as personsIndex } from '@/routes/persons';
 import type { BreadcrumbItem, Gender, Person, Religion } from '@/types';
 
@@ -39,25 +42,37 @@ const breadcrumbs: BreadcrumbItem[] = [
 
 export default function Index({
     persons,
+    genders,
     religions,
     rootPersonId,
     filters,
 }: Props) {
+    const { url } = usePage();
+    const add = new URL(url, 'http://localhost').searchParams.get('add');
+    const { hrefFor } = useSidePanelNavigation('add');
     const [search, setSearch] = useState(filters.q);
     const [isSearching, setIsSearching] = useState(false);
     const lastVisitedQuery = useRef(filters.q);
     const latestSearchVisit = useRef(0);
+    /** The debounced search visit still waiting to fire, if any. */
+    const pendingSearch = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const trimmedSearch = search.trim();
 
-    /** Full reload with the search visit options: no history entry per keystroke. */
+    /** The address of the list now, not a render-time copy: a debounced visit fires later, after a panel may have opened or closed. */
+    const liveAddress = () => {
+        const { pathname, search: liveSearch, hash } = window.location;
+
+        return `${pathname}${liveSearch}${hash}`;
+    };
+
+    /** Full reload with the search visit options: no history entry per keystroke. Panel keys stay in the address. */
     const visitSearch = (next: Partial<PersonsFilters>) => {
         const visitId = ++latestSearchVisit.current;
 
         lastVisitedQuery.current = next.q ?? filters.q;
 
         router.get(
-            PersonController.index({
-                query: buildPersonsQuery({ ...filters, ...next }),
-            }),
+            withPersonsQuery(liveAddress(), { ...filters, ...next }),
             {},
             {
                 preserveState: true,
@@ -83,14 +98,43 @@ export default function Index({
     /** View and sort only change how the loaded list is shown, so only `filters` is reloaded. */
     const visitDisplay = (next: Partial<PersonsFilters>) => {
         router.get(
-            PersonController.index({
-                query: buildPersonsQuery({ ...filters, ...next }),
-            }),
+            withPersonsQuery(liveAddress(), { ...filters, ...next }),
             {},
             {
                 preserveState: true,
                 preserveScroll: true,
                 only: ['filters'],
+            },
+        );
+    };
+
+    /** "Dodaj osobę": a search still waiting for its debounce goes in the same visit, which it would otherwise cancel. */
+    const openCreatePanel = (event: MouseEvent<Element>) => {
+        const isModifiedClick =
+            event.metaKey || event.ctrlKey || event.shiftKey || event.altKey;
+
+        if (
+            event.defaultPrevented ||
+            isModifiedClick ||
+            pendingSearch.current === null
+        ) {
+            return;
+        }
+
+        event.preventDefault();
+        clearTimeout(pendingSearch.current);
+        pendingSearch.current = null;
+        lastVisitedQuery.current = trimmedSearch;
+
+        router.visit(
+            withPersonsQuery(hrefFor('person'), {
+                ...filters,
+                q: trimmedSearch,
+            }),
+            {
+                replace: true,
+                preserveState: true,
+                preserveScroll: true,
             },
         );
     };
@@ -110,9 +154,17 @@ export default function Index({
             return;
         }
 
-        const timeoutId = setTimeout(() => visitSearch({ q: trimmed }), 300);
+        const timeoutId = setTimeout(() => {
+            pendingSearch.current = null;
+            visitSearch({ q: trimmed });
+        }, 300);
 
-        return () => clearTimeout(timeoutId);
+        pendingSearch.current = timeoutId;
+
+        return () => {
+            clearTimeout(timeoutId);
+            pendingSearch.current = null;
+        };
         // visitSearch closes over `filters`; only its display fields matter here.
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [search, filters.q, filters.view, filters.sort]);
@@ -122,7 +174,17 @@ export default function Index({
         visitSearch({ q: '' });
     };
 
-    const createTrigger = <Button>Dodaj osobę</Button>;
+    const createLink = (
+        <Button asChild>
+            <Link
+                href={hrefFor('person')}
+                {...panelVisitOptions}
+                onClick={openCreatePanel}
+            >
+                Dodaj osobę
+            </Link>
+        </Button>
+    );
 
     return (
         <>
@@ -136,10 +198,7 @@ export default function Index({
                         description="Osoby zapisane w Twoim drzewie genealogicznym"
                     />
 
-                    <PersonCreateDialog
-                        religions={religions}
-                        trigger={createTrigger}
-                    />
+                    {createLink}
                 </div>
 
                 {(persons.length > 0 || filters.q !== '') && (
@@ -188,14 +247,7 @@ export default function Index({
                 </p>
 
                 {persons.length === 0 && filters.q === '' ? (
-                    <PersonsEmptyTree
-                        action={
-                            <PersonCreateDialog
-                                religions={religions}
-                                trigger={createTrigger}
-                            />
-                        }
-                    />
+                    <PersonsEmptyTree action={createLink} />
                 ) : persons.length === 0 ? (
                     <PersonsNoResults query={filters.q} onClear={clearSearch} />
                 ) : (
@@ -225,6 +277,13 @@ export default function Index({
                     </div>
                 )}
             </div>
+
+            <AddPersonPanel
+                value={add}
+                target={resolvePersonsAddTarget(add)}
+                genders={genders}
+                religions={religions}
+            />
         </>
     );
 }

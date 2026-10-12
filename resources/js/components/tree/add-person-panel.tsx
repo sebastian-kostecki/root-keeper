@@ -20,17 +20,15 @@ import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { useOptionalList } from '@/hooks/use-relation-candidates';
 import { useSidePanelNavigation } from '@/hooks/use-side-panel-navigation';
-import { resolveAddTarget } from '@/lib/add-person-target';
-import type { FamilySheet, Gender, PersonCandidate, Religion } from '@/types';
+import type { AddTarget } from '@/lib/add-person-target';
+import type { Gender, PersonCandidate, Religion } from '@/types';
 
 type Props = {
     /** The `add` query value, e.g. `father:987`; null closes the panel. */
     value: string | null;
-    /** Null while the tree has no proband; then only the `proband` value resolves. */
-    sheet: FamilySheet | null;
-    /** Whether the tree has any person; only the proband target reads it. */
-    hasPeople: boolean;
-    personCandidates: PersonCandidate[] | undefined;
+    /** The resolved target of `value` (the page resolves it); null renders nothing. */
+    target: AddTarget | null;
+    personCandidates?: PersonCandidate[];
     genders: Gender[];
     religions: Religion[];
 };
@@ -40,21 +38,18 @@ type View = 'list' | 'form';
 type Resolver = RefObject<((isSaved: boolean) => void) | null>;
 
 /**
- * The "add a person" side panel of the tree: the people of the tree to pick
- * from, or a new-person form. Opened by `?add=<value>` from an empty slot or
- * the empty tree; the target is resolved from the sheet on screen, so a stale
- * value renders nothing. Its own section editor guards the form against leaving unsaved.
+ * The "add a person" side panel: the people to pick from, or a new-person
+ * form. The tree opens it from an empty slot or the empty tree; `/persons`
+ * opens it as a bare form. The page resolves the target, so a stale value
+ * renders nothing. Its own section editor guards the form against leaving unsaved.
  */
 export function AddPersonPanel({
     value,
-    sheet,
-    hasPeople,
+    target,
     personCandidates,
     genders,
     religions,
 }: Props) {
-    const target = resolveAddTarget(sheet, value, { hasPeople });
-
     if (value === null || target === null) {
         return null;
     }
@@ -107,9 +102,11 @@ function AddPersonPanelBody({ value, config, personCandidates }: BodyProps) {
     }
 
     // Layout effect: the list starts loading before paint, so the "could not
-    // load" state never flashes on open.
+    // load" state never flashes on open. A form-first target has no list to load.
     useLayoutEffect(() => {
-        load();
+        if (!config.startsInForm) {
+            load();
+        }
     }, []);
 
     useEffect(() => {
@@ -143,11 +140,19 @@ function AddPersonPanelBody({ value, config, personCandidates }: BodyProps) {
 
     const { visible, hiddenCount, hiddenHint } = config.select(list ?? []);
 
+    const { pick } = config;
+    /** The list is offered only for a target that picks; a target without `pick` only creates. */
+    const isListShown = view === 'list' && pick !== undefined;
+
     const handleSelect = (candidateId: number) => {
+        if (pick === undefined) {
+            return;
+        }
+
         setProcessingId(candidateId);
         setError(undefined);
 
-        const { url, data } = config.pick(candidateId);
+        const { url, data } = pick(candidateId);
 
         // No onSuccess: the redirect of the server replaces this panel with the new person's.
         router.post(url, data, {
@@ -167,41 +172,40 @@ function AddPersonPanelBody({ value, config, personCandidates }: BodyProps) {
 
     const { form } = config;
 
-    const footer =
-        view === 'list' ? (
-            form !== undefined && (
-                <div className="flex justify-end">
-                    <Button type="button" onClick={() => setView('form')}>
-                        Nowa osoba
-                    </Button>
-                </div>
-            )
-        ) : (
-            <div className="space-y-3">
-                {hasPendingExit && <UnsavedChangesBar />}
-                <div className="flex justify-end gap-2">
-                    {!config.startsInForm && (
-                        <Button
-                            type="button"
-                            variant="secondary"
-                            disabled={isSaving}
-                            onClick={() => requestExit(showList)}
-                        >
-                            Wróć do listy
-                        </Button>
-                    )}
-                    <Button
-                        type="submit"
-                        form={formId}
-                        disabled={isSaving}
-                        data-test={form?.submitTestId}
-                    >
-                        {isSaving && <Spinner />}
-                        Zapisz
-                    </Button>
-                </div>
+    const footer = isListShown ? (
+        form !== undefined && (
+            <div className="flex justify-end">
+                <Button type="button" onClick={() => setView('form')}>
+                    Nowa osoba
+                </Button>
             </div>
-        );
+        )
+    ) : (
+        <div className="space-y-3">
+            {hasPendingExit && <UnsavedChangesBar />}
+            <div className="flex justify-end gap-2">
+                {!config.startsInForm && (
+                    <Button
+                        type="button"
+                        variant="secondary"
+                        disabled={isSaving}
+                        onClick={() => requestExit(showList)}
+                    >
+                        Wróć do listy
+                    </Button>
+                )}
+                <Button
+                    type="submit"
+                    form={formId}
+                    disabled={isSaving}
+                    data-test={form?.submitTestId}
+                >
+                    {isSaving && <Spinner />}
+                    Zapisz
+                </Button>
+            </div>
+        </div>
+    );
 
     return (
         <SidePanel
@@ -213,7 +217,7 @@ function AddPersonPanelBody({ value, config, personCandidates }: BodyProps) {
             footer={footer}
         >
             <div ref={contentRef} className="space-y-4">
-                {view === 'list' || form === undefined ? (
+                {isListShown || form === undefined ? (
                     <>
                         <PersonCandidateList
                             loading={loading}

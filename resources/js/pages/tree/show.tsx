@@ -8,6 +8,7 @@ import { SetRootPersonButton } from '@/components/tree/set-root-person-button';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useSidePanelNavigation } from '@/hooks/use-side-panel-navigation';
+import { resolveAddTarget } from '@/lib/add-person-target';
 import { index as treeIndex, show as treeShow } from '@/routes/tree';
 import type {
     FamilySheet as FamilySheetData,
@@ -35,6 +36,7 @@ export default function Show({
 }: Props) {
     const { url } = usePage();
     const addValue = new URL(url, 'http://localhost').searchParams.get('add');
+    const addTarget = resolveAddTarget(sheet, addValue, { hasPeople });
 
     setLayoutProps({
         breadcrumbs: [
@@ -64,8 +66,7 @@ export default function Show({
 
                 <AddPersonPanel
                     value={addValue}
-                    sheet={null}
-                    hasPeople={hasPeople}
+                    target={addTarget}
                     personCandidates={personCandidates}
                     genders={genders}
                     religions={religions}
@@ -109,8 +110,7 @@ export default function Show({
 
                 <AddPersonPanel
                     value={addValue}
-                    sheet={sheet}
-                    hasPeople
+                    target={addTarget}
                     personCandidates={personCandidates}
                     genders={genders}
                     religions={religions}

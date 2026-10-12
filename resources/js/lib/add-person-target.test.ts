@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vite-plus/test';
-import { addValueFor, resolveAddTarget } from './add-person-target';
+import {
+    addValueFor,
+    resolveAddTarget,
+    resolvePersonsAddTarget,
+} from './add-person-target';
 import type { AddTarget } from './add-person-target';
 import type {
     FamilySheet,
@@ -191,7 +195,35 @@ describe('resolveAddTarget', () => {
     });
 });
 
+describe('resolvePersonsAddTarget', () => {
+    it('resolves the person target on /persons', () => {
+        expect(resolvePersonsAddTarget('person')).toEqual({ kind: 'person' });
+    });
+
+    it('gives null for any other value on /persons', () => {
+        for (const value of [null, '', 'proband', 'child', 'Person']) {
+            expect(resolvePersonsAddTarget(value)).toBeNull();
+        }
+    });
+});
+
+describe('the person value on the tree', () => {
+    it('gives null with and without a sheet', () => {
+        expect(resolveAddTarget(sheet(), 'person')).toBeNull();
+        expect(
+            resolveAddTarget(null, 'person', { hasPeople: true }),
+        ).toBeNull();
+        expect(
+            resolveAddTarget(null, 'person', { hasPeople: false }),
+        ).toBeNull();
+    });
+});
+
 describe('addValueFor', () => {
+    it('names the person target', () => {
+        expect(addValueFor({ kind: 'person' })).toBe('person');
+    });
+
     it('is the inverse of resolveAddTarget for every kind', () => {
         for (const value of ['father:1', 'mother:1', 'child', 'spouse']) {
             const target = resolveAddTarget(sheet(), value) as AddTarget;

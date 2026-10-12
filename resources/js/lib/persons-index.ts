@@ -22,6 +22,29 @@ export type PersonGroup = {
     persons: Person[];
 };
 
+const BASE_URL = 'http://localhost';
+
+/** The URL with only the list keys (`q`, `view`, `sort`) replaced, defaults removed; panel keys, other parameters and hash stay. */
+export function withPersonsQuery(
+    url: string,
+    filters: Partial<PersonsFilters>,
+): string {
+    const parsed = new URL(url, BASE_URL);
+    const query = buildPersonsQuery(filters);
+
+    for (const key of ['q', 'view', 'sort']) {
+        const value = query[key];
+
+        if (value === undefined) {
+            parsed.searchParams.delete(key);
+        } else {
+            parsed.searchParams.set(key, value);
+        }
+    }
+
+    return `${parsed.pathname}${parsed.search}${parsed.hash}`;
+}
+
 const NO_SURNAME_KEY = 'bez-nazwiska';
 const NO_SURNAME_TITLE = 'Bez nazwiska';
 

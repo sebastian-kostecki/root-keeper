@@ -5,6 +5,7 @@ import {
     formatEventMeta,
     groupBySurnameInitial,
     sortPersons,
+    withPersonsQuery,
 } from './persons-index';
 
 function event(
@@ -73,6 +74,51 @@ describe('buildPersonsQuery', () => {
         expect(
             buildPersonsQuery({ q: 'Kow', view: 'lista', sort: '-zgon' }),
         ).toEqual({ q: 'Kow' });
+    });
+});
+
+describe('withPersonsQuery', () => {
+    const lista = { q: '', view: 'lista', sort: 'nazwisko' } as const;
+
+    it('keeps the panel keys and other parameters of the address', () => {
+        expect(
+            withPersonsQuery('/persons?add=person&q=Kow&view=lista', {
+                ...lista,
+                q: 'Kow',
+            }),
+        ).toBe('/persons?add=person&q=Kow');
+        expect(
+            withPersonsQuery('/persons?person=7&foo=bar#x', {
+                ...lista,
+                q: 'Kow',
+            }),
+        ).toBe('/persons?person=7&foo=bar&q=Kow#x');
+    });
+
+    it('removes an empty search and keeps the panel key', () => {
+        expect(
+            withPersonsQuery('/persons?q=Kow&add=person', {
+                ...lista,
+                q: '  ',
+            }),
+        ).toBe('/persons?add=person');
+    });
+
+    it('sets the view and sort only for the table', () => {
+        expect(
+            withPersonsQuery('/persons?add=person', {
+                q: '',
+                view: 'tabela',
+                sort: '-zgon',
+            }),
+        ).toBe('/persons?add=person&view=tabela&sort=-zgon');
+        expect(
+            withPersonsQuery('/persons?view=tabela&sort=-zgon', {
+                ...lista,
+                view: 'lista',
+                sort: '-zgon',
+            }),
+        ).toBe('/persons');
     });
 });
 

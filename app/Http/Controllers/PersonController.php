@@ -12,6 +12,7 @@ use App\Http\Requests\PersonStoreRequest;
 use App\Http\Requests\PersonUpdateRequest;
 use App\Http\Resources\PersonResource;
 use App\Models\Person;
+use App\Support\PersonPanelRedirect;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -96,6 +97,9 @@ class PersonController extends Controller
 
     /**
      * Store a newly created person in the tree.
+     *
+     * Returns to the referring page (the persons list with its filters) with the new person's preview open;
+     * without a usable referrer it goes to the persons list.
      */
     public function store(PersonStoreRequest $request, CreatePerson $createPerson): RedirectResponse
     {
@@ -103,7 +107,7 @@ class PersonController extends Controller
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Dodano osobę')]);
 
-        return redirect(route('tree.show', $person).'?'.http_build_query(['person' => $person->id]));
+        return PersonPanelRedirect::to($request, $person, route('persons.index'));
     }
 
     /**

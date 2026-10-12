@@ -441,7 +441,7 @@ test('store creates a person and a birth event even when birth fields are empty'
 
     $person = Person::where('first_name', 'Jan')->where('last_name', 'Kowalski')->firstOrFail();
 
-    $response->assertRedirect(personPreviewUrl($person, 'tree.show', [$person]));
+    $response->assertRedirect(personPreviewUrl($person, 'persons.index', ['q' => 'Kowal']));
 
     expect($person->tree_id)->toBe($user->tree->id);
 
@@ -692,14 +692,26 @@ test('the old create and edit urls return not found', function () {
     $this->actingAs($user)->get("/persons/{$person->id}/edit")->assertNotFound();
 });
 
-test('store redirects to the tree of the created person regardless of the referrer', function () {
+test('store without a referrer redirects to the persons list with the new person open', function () {
     $user = User::factory()->create();
 
     $response = $this->actingAs($user)->post(route('persons.store'), ['first_name' => 'Jan']);
 
     $person = Person::where('first_name', 'Jan')->firstOrFail();
 
-    $response->assertRedirect(personPreviewUrl($person, 'tree.show', [$person]));
+    $response->assertRedirect(personPreviewUrl($person));
+});
+
+test('store from the persons list keeps its filters, drops the add key and opens the new person', function () {
+    $user = User::factory()->create();
+
+    $response = $this->actingAs($user)
+        ->from(route('persons.index', ['q' => 'Kowal', 'view' => 'tabela', 'add' => 'person']))
+        ->post(route('persons.store'), ['first_name' => 'Jan', 'last_name' => 'Kowalski']);
+
+    $person = Person::where('first_name', 'Jan')->firstOrFail();
+
+    $response->assertRedirect(personPreviewUrl($person, 'persons.index', ['q' => 'Kowal', 'view' => 'tabela']));
 });
 
 test('store rejects death fields when the person is not marked deceased', function () {

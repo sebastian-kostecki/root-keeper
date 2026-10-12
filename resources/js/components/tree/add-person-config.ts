@@ -1,5 +1,6 @@
 import type { RequestPayload } from '@inertiajs/core';
 import ParentChildRelationController from '@/actions/App/Http/Controllers/ParentChildRelationController';
+import PersonController from '@/actions/App/Http/Controllers/PersonController';
 import PersonChildController from '@/actions/App/Http/Controllers/PersonChildController';
 import PersonParentController from '@/actions/App/Http/Controllers/PersonParentController';
 import PersonSpouseController from '@/actions/App/Http/Controllers/PersonSpouseController';
@@ -36,14 +37,14 @@ export type AddPersonConfig = {
     description: string;
     /** The caller's filtering of the loaded candidates. */
     select: (list: PersonCandidate[]) => PickOrCreateSelection;
-    /** Where and what to post when a candidate is picked. */
-    pick: (candidateId: number) => {
+    /** Where and what to post when a candidate is picked. Without it there is no list view (the target only creates). */
+    pick?: (candidateId: number) => {
         url: string;
         data: RequestPayload;
     };
     /** Without it, the "Nowa osoba" view is not offered. */
     form?: PickOrCreateForm;
-    /** The panel opens on the form and offers no way back to a list (the tree has no people yet). */
+    /** The panel opens on the form and offers no way back to a list (the tree has no people yet; `/persons` only creates). */
     startsInForm?: boolean;
 };
 
@@ -80,6 +81,10 @@ export function addTriggerLabels(target: AddTarget): {
     label: string;
     addLabel: string;
 } {
+    if (target.kind === 'person') {
+        return { label: 'Dodaj osobę', addLabel: 'Dodaj osobę' };
+    }
+
     if (target.kind === 'proband') {
         const label = probandTitle(target.hasPeople);
 
@@ -116,6 +121,21 @@ export function addPersonConfig(
     options: { genders: Gender[]; religions: Religion[] },
 ): AddPersonConfig {
     const { genders, religions } = options;
+
+    if (target.kind === 'person') {
+        return {
+            title: 'Dodaj osobę',
+            description: 'Po zapisaniu otworzy się podgląd tej osoby.',
+            select: () => ({ visible: [], hiddenCount: 0, hiddenHint: '' }),
+            form: {
+                definition: PersonController.store.form(),
+                genders,
+                religions,
+                submitTestId: 'create-person-button',
+            },
+            startsInForm: true,
+        };
+    }
 
     if (target.kind === 'proband') {
         const { hasPeople } = target;

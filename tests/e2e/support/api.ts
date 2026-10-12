@@ -140,7 +140,7 @@ async function expectRedirect(
     }
 }
 
-/** `persons.store`; the id is read from the redirect to `/tree/{id}`. */
+/** `persons.store`; the id is read from `?person=` of the redirect to `/persons`. */
 export async function createPerson(
     page: Page,
     fields: PersonFields,
@@ -150,7 +150,7 @@ export async function createPerson(
         form: personForm(fields),
         maxRedirects: 0,
     });
-    await expectRedirect(response, /^\/tree\/\d+$/);
+    await expectRedirect(response, /^\/persons$/);
 
     return idFromLocation(response, 'person');
 }

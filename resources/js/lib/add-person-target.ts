@@ -8,12 +8,13 @@ import type {
     SheetSlot,
 } from '@/types';
 
-/** What the add-person panel adds, resolved from the family sheet on screen. */
+/** What the add-person panel adds, resolved from the family sheet on screen or from the page (`person` on `/persons`). */
 export type AddTarget =
     | { kind: 'parent'; slot: ParentSlotTarget }
     | { kind: 'child'; target: AddChildTarget }
     | { kind: 'spouse'; focus: SheetPerson; target: AddSpouseTarget }
-    | { kind: 'proband'; hasPeople: boolean };
+    | { kind: 'proband'; hasPeople: boolean }
+    | { kind: 'person' };
 
 /** `father:<childId>`, `mother:<childId>` or `parent:<childId>`. */
 const PARENT_VALUE = /^(father|mother|parent):(\d+)$/;
@@ -80,6 +81,16 @@ export function resolveAddTarget(
     }
 
     return null;
+}
+
+/**
+ * The target of the `/persons` page: `person` opens the bare new-person form, any other value opens nothing.
+ * The tree never resolves `person` (it has no such target), so the tree page keeps ignoring it.
+ */
+export function resolvePersonsAddTarget(
+    value: string | null,
+): AddTarget | null {
+    return value === 'person' ? { kind: 'person' } : null;
 }
 
 /** The `add` query value that opens the given target; the inverse of `resolveAddTarget`. */

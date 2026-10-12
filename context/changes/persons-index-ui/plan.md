@@ -406,36 +406,36 @@ Test przeglądarkowy nowego zachowania, kontrola zakodowanych wartości, reguła
 
 #### Automated
 
-- [x] 2.1 Typy, lint i build przechodzą
-- [x] 2.2 Specy listy przechodzą (`seed`, `person-side-panel`, `person-panel-page-navigation-guard`)
-- [x] 2.3 Brak ręcznego pierścienia w widoku
+- [x] 2.1 Typy, lint i build przechodzą — abd0be5
+- [x] 2.2 Specy listy przechodzą (`seed`, `person-side-panel`, `person-panel-page-navigation-guard`) — abd0be5
+- [x] 2.3 Brak ręcznego pierścienia w widoku — abd0be5
 
 #### Manual
 
-- [x] 2.4 1440 px: „Dodaj osobę” w linii tytułu; `<h1>` i landmark `search`
-- [x] 2.5 375 px: przełącznik z samymi ikonami, wiersz wyszukiwania mieści się
-- [x] 2.6 Skoki do litery: hover i fokus jak przycisk obrysowany; klik przewija do grupy
+- [x] 2.4 1440 px: „Dodaj osobę” w linii tytułu; `<h1>` i landmark `search` — abd0be5
+- [x] 2.5 375 px: przełącznik z samymi ikonami, wiersz wyszukiwania mieści się — abd0be5
+- [x] 2.6 Skoki do litery: hover i fokus jak przycisk obrysowany; klik przewija do grupy — abd0be5
 
 ### Phase 3: Panel tworzenia osoby
 
 #### Automated
 
-- [ ] 3.1 Testy Pest przechodzą (`PersonsTest`, `OwnershipBoundariesTest`, `WriteTargetsTest`)
-- [ ] 3.2 Formatowanie PHP i Larastan
-- [ ] 3.3 Testy JS przechodzą (`add-person-target`, `persons-index`)
-- [ ] 3.4 Typy, lint i build przechodzą
-- [ ] 3.5 Specy drzewa nadal przechodzą
-- [ ] 3.6 Brak odwołań do modala
+- [x] 3.1 Testy Pest przechodzą (`PersonsTest`, `OwnershipBoundariesTest`, `WriteTargetsTest`) — 6fccebc
+- [x] 3.2 Formatowanie PHP i Larastan — 6fccebc
+- [x] 3.3 Testy JS przechodzą (`add-person-target`, `persons-index`) — 6fccebc
+- [x] 3.4 Typy, lint i build przechodzą — 6fccebc
+- [x] 3.5 Specy drzewa nadal przechodzą — 6fccebc
+- [x] 3.6 Brak odwołań do modala — 6fccebc
 
 #### Manual
 
-- [ ] 3.7 Zapis przy `?q=Kowal` otwiera podgląd nowej osoby, lista z filtrami zostaje
-- [ ] 3.8 Strażnik: pasek przy kliknięciu osoby / X / Escape; Porzuć i Zapisz działają
-- [ ] 3.9 Wyszukiwanie i przełączenie widoku nie zamykają panelu tworzenia ani danych
-- [ ] 3.10 Wyszukiwanie nie zamyka podglądu osoby
-- [ ] 3.11 Pusty `/persons`: „Dodaj osobę” otwiera ten sam panel
-- [ ] 3.12 375 px: panel pełnoekranowy, zamknięcie wraca do listy
-- [ ] 3.13 `/tree/<id>?add=person` nie otwiera panelu i nie wywala strony
+- [x] 3.7 Zapis przy `?q=Kowal` otwiera podgląd nowej osoby, lista z filtrami zostaje — 6fccebc
+- [x] 3.8 Strażnik: pasek przy kliknięciu osoby / X / Escape; Porzuć i Zapisz działają — 6fccebc
+- [x] 3.9 Wyszukiwanie i przełączenie widoku nie zamykają panelu tworzenia ani danych — 6fccebc
+- [x] 3.10 Wyszukiwanie nie zamyka podglądu osoby — 6fccebc
+- [x] 3.11 Pusty `/persons`: „Dodaj osobę” otwiera ten sam panel — 6fccebc
+- [x] 3.12 375 px: panel pełnoekranowy, zamknięcie wraca do listy — 6fccebc
+- [x] 3.13 `/tree/<id>?add=person` nie otwiera panelu i nie wywala strony — 6fccebc
 
 ### Phase 4: Stany wyszukiwania
 
