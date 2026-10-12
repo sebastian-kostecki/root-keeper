@@ -1,15 +1,21 @@
 // Gate screenshots for context/changes/places-page ("before" set now, "after" set once the merged page exists).
 // Structure follows context/archive/2026-10-12-sources-page/screenshots/shots.mjs.
-// Run: node shots.mjs <out-dir>
-// Needs the E2E server on 127.0.0.1:8100 (scripts/e2e-server.sh, DB `e2e`) seeded with
+// Run: node shots.mjs <out-dir> [before|after]   (default: before)
+//   before: the old /localities and /parishes pages (run only while those pages still render).
+//   after:  the merged /places page (tabs, panels, focus, search counts, "Pokaż w …").
+// Needs the app on SHOTS_BASE (default 127.0.0.1:8100: scripts/e2e-server.sh, DB `e2e`) seeded with
 // TreeViewDemoSeeder (`tree-demo@example.com`). Playwright comes from the repo (@playwright/test).
 // Besides the PNGs, the script logs the measurements the audit needs (:focus-visible on a row link,
-// heading row wrap on 375 px, sidebar entries).
+// heading row wrap on 375 px, sidebar entries, sticky first column, counts on the segments).
 import fs from 'node:fs';
 import { chromium } from '@playwright/test';
 
 const base = process.env.SHOTS_BASE ?? 'http://127.0.0.1:8100';
 const out = process.argv[2];
+const mode = process.argv[3] ?? 'before';
+if (!['before', 'after'].includes(mode)) {
+    throw new Error(`Unknown mode "${mode}" (before|after)`);
+}
 if (!out) {
     throw new Error('Usage: node shots.mjs <out-dir>');
 }
@@ -64,10 +70,132 @@ async function snap(page, name, fullPage = false) {
     console.log(name);
 }
 
-const lists = [
-    { path: '/localities', key: 'locality', slug: 'localities' },
-    { path: '/parishes', key: 'parish', slug: 'parishes' },
-];
+const lists = mode === 'before'
+    ? [
+          { path: '/localities', key: 'locality', slug: 'localities' },
+          { path: '/parishes', key: 'parish', slug: 'parishes' },
+      ]
+    : [];
+
+/** Waits until no CSS animation or transition runs (the panel slide, the button ring). */
+async function settle(page) {
+    await page.waitForFunction(() => document.getAnimations().every((a) => a.playState !== 'running'));
+}
+
+/** After-merge set: /places on both tabs and both widths, panels, focus, search counts and „Pokaż w …”. */
+async function afterShots() {
+    const tabs = [
+        { path: '/places', slug: 'miejscowosci' },
+        { path: '/places?kind=parafie', slug: 'parafie' },
+    ];
+    let counter = 0;
+    const num = () => String(++counter).padStart(2, '0');
+
+    const viewports = [
+        { size: DESKTOP, label: 'desktop' },
+        { size: MOBILE, label: 'mobile' },
+    ];
+    for (const { size, label } of viewports) {
+        for (const tab of tabs) {
+            await run(size, async (page) => {
+                await visit(page, tab.path);
+                const heading = await page.getByRole('heading', { level: 1 }).boundingBox();
+                const add = await page.getByRole('link', { name: /^Dodaj/ }).boundingBox();
+                const firstCellPosition = await page
+                    .locator('tbody td')
+                    .first()
+                    .evaluate((el) => getComputedStyle(el).position)
+                    .catch(() => 'no rows');
+                const segments = await page.evaluate(() => document.body.innerText.match(/(Miejscowości|Parafie) \d+/g));
+                console.log(`places ${tab.slug} ${label}: heading`, JSON.stringify(heading), 'add', JSON.stringify(add), 'first cell', firstCellPosition, 'segments', JSON.stringify(segments));
+                await snap(page, `${num()}-places-${tab.slug}-${label}`, true);
+            });
+        }
+    }
+
+    // The open record: a panel beside the list with its row marked as open (aria-current).
+    const openRecords = [
+        { tab: tabs[0], key: 'locality', slug: 'miejscowosc' },
+        { tab: tabs[1], key: 'parish', slug: 'parafia' },
+    ];
+    for (const { tab, key, slug } of openRecords) {
+        await run(DESKTOP, async (page) => {
+            await visit(page, tab.path);
+            await page.locator(`tbody a[href*="${key}="]`).first().click();
+            await page.waitForURL(new RegExp(`${key}=\\d+`));
+            await page.locator('tbody tr[data-state="selected"]').waitFor({ state: 'visible' });
+            await settle(page);
+            await snap(page, `${num()}-places-panel-${slug}-desktop`);
+        });
+    }
+
+    // Keyboard focus on each tab: the „Dodaj …” button first, then the first row link.
+    for (const tab of tabs) {
+        await run(DESKTOP, async (page) => {
+            await visit(page, tab.path);
+            const focusOf = () =>
+                page.evaluate(() => {
+                    const el = document.activeElement;
+                    return {
+                        text: el?.textContent?.trim().slice(0, 40),
+                        inTable: !!el?.closest('tbody'),
+                        focusVisible: el?.matches(':focus-visible') ?? false,
+                        boxShadow: el ? getComputedStyle(el).boxShadow : null,
+                    };
+                });
+            let addSeen = false;
+            let rowSeen = false;
+            for (let i = 0; i < 60 && !(addSeen && rowSeen); i += 1) {
+                await page.keyboard.press('Tab');
+                const info = await page.evaluate(() => ({
+                    text: document.activeElement?.textContent?.trim() ?? '',
+                    inTable: !!document.activeElement?.closest('tbody'),
+                }));
+                if (!addSeen && info.text.startsWith('Dodaj')) {
+                    addSeen = true;
+                    await settle(page);
+                    console.log(`places ${tab.slug} focus add`, JSON.stringify(await focusOf()));
+                    await snap(page, `${num()}-places-${tab.slug}-focus-add`);
+                } else if (!rowSeen && info.inTable) {
+                    rowSeen = true;
+                    await settle(page);
+                    console.log(`places ${tab.slug} focus row`, JSON.stringify(await focusOf()));
+                    await snap(page, `${num()}-places-${tab.slug}-focus-row`);
+                }
+            }
+        });
+    }
+
+    // Search: the parish's name typed on the localities tab must offer „Pokaż w parafiach (n)”.
+    let parishName = '';
+    await run(DESKTOP, async (page) => {
+        await visit(page, '/places?kind=parafie');
+        parishName = ((await page.locator('tbody a').first().textContent()) ?? '').trim();
+    });
+    if (parishName === '') {
+        console.log('no parish in the demo tree: the search and "Pokaż w parafiach" shots are skipped');
+    } else {
+        await run(DESKTOP, async (page) => {
+            await visit(page, '/places');
+            await page.getByRole('searchbox', { name: 'Szukaj miejscowości i parafii' }).fill(parishName);
+            const show = page.getByRole('button', { name: /^Pokaż w parafiach \(\d+\)$/ });
+            const shown = await show.waitFor({ state: 'visible', timeout: 5000 }).then(
+                () => true,
+                () => false,
+            );
+            const counts = await page.evaluate(() => document.body.innerText.match(/(Miejscowości|Parafie) \d+/g));
+            console.log('search counts on Miejscowości', JSON.stringify(counts), 'button shown', shown);
+            await snap(page, `${num()}-places-search-localities-tab`, true);
+            if (shown) {
+                await show.click();
+                await page.waitForURL((url) => url.searchParams.get('kind') === 'parafie');
+                await settle(page);
+                console.log('after Pokaż w parafiach', page.url());
+                await snap(page, `${num()}-places-search-after-pokaz-w-parafiach`, true);
+            }
+        });
+    }
+}
 
 for (const [index, list] of lists.entries()) {
     const n = index * 4;
@@ -136,6 +264,10 @@ for (const [index, list] of lists.entries()) {
         }
         await snap(page, `${id(4)}-${list.slug}-focus-row`);
     });
+}
+
+if (mode === 'after') {
+    await afterShots();
 }
 
 await browser.close();

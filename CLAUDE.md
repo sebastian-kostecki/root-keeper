@@ -57,7 +57,7 @@ PHP 8.5 · Laravel 13 · Inertia v3 (inertia-laravel 3.5, @inertiajs/react 3.8) 
 - Tokens live in `resources/css/app.css` (`:root` / `.dark` mapped into `@theme`). Use role classes (`text-destructive-foreground`, `bg-accent`, `text-muted-foreground`). In views: no Tailwind palette classes (`text-red-600`), no hex, `rgb()` or `oklch()`, no arbitrary pixel values (`ring-[3px]`) and no inline `style=`.
 - Before creating a component, check `resources/js/components/ui/` and the shared `components/{heading,search-field,segmented-toggle,empty-state,side-panel,table-parts}.tsx`. A missing shadcn component comes from `npx shadcn add <name>` (new dependencies need approval).
 - Focus ring for elements outside `components/ui/`: `focusRing` from `resources/js/lib/focus-ring.ts`. The open record on list cards is `selectedListItem` from `resources/js/lib/list-item-styles.ts` (focus wins over the selection ring). Sticky table columns come from `resources/js/lib/table-styles.ts`. List pages: `Heading variant="page"` and the search row with `role="search"`.
-- Controls: `resources/js/lib/view-tokens.test.ts` scans the `/persons` and `/sources` view files (runs in `npm run test:js`). Visual gate: screenshots in `context/changes/<id>/screenshots/`.
+- Controls: `resources/js/lib/view-tokens.test.ts` scans the `/persons`, `/sources` and `/places` view files (runs in `npm run test:js`). Visual gate: screenshots in `context/changes/<id>/screenshots/`.
 
 ## Side panels vs modals
 
@@ -84,6 +84,7 @@ PHP 8.5 · Laravel 13 · Inertia v3 (inertia-laravel 3.5, @inertiajs/react 3.8) 
 - Places and parishes are tree-owned records like every other: unique per tree, scoped through `$request->user()->tree`, Policy with `denyAsNotFound()`.
 - Merging a duplicate (place or parish) moves every reference — parishes, gravestones, event places, burial places, residences — to the target inside one DB transaction, then deletes the duplicate. Both records must belong to the same tree; the merge test covers every reference type and the other-user 404.
 - Deleting a place or parish is allowed only when nothing references it.
+- Miejscowości i parafie to jedna strona `/places` z przełącznikiem `?kind=` i jednym wpisem „Miejsca” w menu; nie dodawaj osobnej listy ani wpisu. Stare `/localities` i `/parishes` tylko przekierowują, a segmenty z licznikiem 0 nie są wyłączane (w odróżnieniu od `/sources`), bo pusta zakładka dodaje pierwszy rekord.
 
 ===
 

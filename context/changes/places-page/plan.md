@@ -462,27 +462,27 @@ Bez migracji danych. Stare adresy działają przez 302. Wayfinder po dodaniu tra
 
 #### Automated
 
-- [x] 3.1 Vitest dla `placesCounts` i `otherKindHint` (pusty `q`, trafienia w obu, zero w bieżącej i ≥1 w drugiej, zero w obu) przechodzi: `vendor/bin/sail npm run test:js`
-- [x] 3.2 Typy i lint przechodzą: `vendor/bin/sail npm run types:check` i `vendor/bin/sail npm run check`
-- [x] 3.3 Pest bez regresji: `vendor/bin/sail artisan test --compact tests/Feature/PlacesTest.php tests/Feature/ParishesTest.php`
+- [x] 3.1 Vitest dla `placesCounts` i `otherKindHint` (pusty `q`, trafienia w obu, zero w bieżącej i ≥1 w drugiej, zero w obu) przechodzi: `vendor/bin/sail npm run test:js` — 4b85fa9
+- [x] 3.2 Typy i lint przechodzą: `vendor/bin/sail npm run types:check` i `vendor/bin/sail npm run check` — 4b85fa9
+- [x] 3.3 Pest bez regresji: `vendor/bin/sail artisan test --compact tests/Feature/PlacesTest.php tests/Feature/ParishesTest.php` — 4b85fa9
 
 #### Manual
 
-- [x] 3.4 „Tarnów” na zakładce Miejscowości pokazuje liczniki trafień obu spisów; fraza pasująca tylko do parafii daje „Pokaż w parafiach (n)”, który przełącza zakładkę z zachowaną frazą
-- [x] 3.5 W drzewie bez parafii segment „Parafie 0” jest klikalny, a pusta zakładka ma „Dodaj parafię”
-- [x] 3.6 Po zatrzymaniu serwera wyszukiwanie pokazuje komunikat z „Spróbuj ponownie”, a po wznowieniu ponowienie działa
-- [x] 3.7 Miejscowość dodana w pickerze siedziby (bez zapisu parafii) jest widoczna w zakładce Miejscowości i w liczniku „Miejsca”
+- [x] 3.4 „Tarnów” na zakładce Miejscowości pokazuje liczniki trafień obu spisów; fraza pasująca tylko do parafii daje „Pokaż w parafiach (n)”, który przełącza zakładkę z zachowaną frazą — 4b85fa9
+- [x] 3.5 W drzewie bez parafii segment „Parafie 0” jest klikalny, a pusta zakładka ma „Dodaj parafię” — 4b85fa9
+- [x] 3.6 Po zatrzymaniu serwera wyszukiwanie pokazuje komunikat z „Spróbuj ponownie”, a po wznowieniu ponowienie działa — 4b85fa9
+- [x] 3.7 Miejscowość dodana w pickerze siedziby (bez zapisu parafii) jest widoczna w zakładce Miejscowości i w liczniku „Miejsca” — 4b85fa9
 
 ### Phase 4: Utrwal to i bramka wizualna
 
 #### Automated
 
-- [ ] 4.1 Skan tokenów obejmuje `/places` i przechodzi: `vendor/bin/sail npm run test:js`
-- [ ] 4.2 Nowy spec przechodzi: `npx playwright test tests/e2e/places-page.spec.ts`
-- [ ] 4.3 Spec scalania przechodzi: `npx playwright test tests/e2e/places-merge-and-delete.spec.ts`
-- [ ] 4.4 Pełny CI lokalnie: `vendor/bin/sail composer ci:check`
+- [x] 4.1 Skan tokenów obejmuje `/places` i przechodzi: `vendor/bin/sail npm run test:js`
+- [x] 4.2 Nowy spec przechodzi: `npx playwright test tests/e2e/places-page.spec.ts`
+- [x] 4.3 Spec scalania przechodzi: `npx playwright test tests/e2e/places-merge-and-delete.spec.ts`
+- [x] 4.4 Pełny CI lokalnie: `vendor/bin/sail composer ci:check`
 
 #### Manual
 
-- [ ] 4.5 Zrzuty „po” w `screenshots/after/` i `verdict.md` potwierdzają zamknięcie C1–C5 na desktopie i 375 px
-- [ ] 4.6 Celowo wprowadzony `ring-[3px]` w `places/index.tsx` czerwieni `test:js` (sprawdzenie i cofnięcie)
+- [x] 4.5 Zrzuty „po” w `screenshots/after/` i `verdict.md` potwierdzają zamknięcie C1–C5 na desktopie i 375 px
+- [x] 4.6 Celowo wprowadzony `ring-[3px]` w `places/index.tsx` czerwieni `test:js` (sprawdzenie i cofnięcie)
