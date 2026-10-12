@@ -40,6 +40,7 @@ const VIEW_FILES = [
     'components/tree/sheet-person-card.tsx',
     'components/tree/unknown-person-card.tsx',
     'components/tree/union-node.tsx',
+    'components/tree/marriage-rings-icon.tsx',
     'components/tree/add-person-panel.tsx',
     'components/tree/marry-couple-dialog.tsx',
     'components/tree/set-root-person-button.tsx',
@@ -83,7 +84,7 @@ const RULES: Rule[] = [
     },
     {
         name: 'arbitrary pixel value',
-        pattern: /[\w:.-]*-\[-?\d+px\]/g,
+        pattern: /[\w:.-]*-\[-?\d+(?:\.\d+)?px\]/g,
         fix: 'use a scale class (e.g. ring-3, size-4), or the shared focusRing from lib/focus-ring.ts for focus rings',
     },
     {

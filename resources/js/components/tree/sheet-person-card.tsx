@@ -46,13 +46,15 @@ function PhotoStrip({ person }: { person: SheetPerson }) {
             )}
         >
             {visiblePhotoUrl !== null ? (
-                <img
-                    src={visiblePhotoUrl}
-                    alt=""
-                    loading="lazy"
-                    onError={onError}
-                    className="absolute inset-0 size-full object-cover object-center"
-                />
+                <span className="absolute inset-x-0 top-0 bottom-1 overflow-hidden">
+                    <img
+                        src={visiblePhotoUrl}
+                        alt=""
+                        loading="lazy"
+                        onError={onError}
+                        className="size-full object-cover object-center"
+                    />
+                </span>
             ) : (
                 <span
                     aria-hidden="true"

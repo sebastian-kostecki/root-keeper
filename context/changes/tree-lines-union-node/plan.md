@@ -321,29 +321,29 @@ Brak migracji. Nowe pola tylko dochodzą do propsa `sheet`, nic nie jest usuwane
 
 #### Automated
 
-- [x] 1.1 Testy arkusza przechodzą: `vendor/bin/sail artisan test --compact tests/Feature/TreeTest.php`
-- [x] 1.2 Larastan poziom 7 bez błędów: `vendor/bin/sail composer types:check`
-- [x] 1.3 Pint bez zmian po formatowaniu: `vendor/bin/sail bin pint --dirty --format agent`
-- [x] 1.4 Typy TS: `vendor/bin/sail npm run types:check`
+- [x] 1.1 Testy arkusza przechodzą: `vendor/bin/sail artisan test --compact tests/Feature/TreeTest.php` — 3400d95
+- [x] 1.2 Larastan poziom 7 bez błędów: `vendor/bin/sail composer types:check` — 3400d95
+- [x] 1.3 Pint bez zmian po formatowaniu: `vendor/bin/sail bin pint --dirty --format agent` — 3400d95
+- [x] 1.4 Typy TS: `vendor/bin/sail npm run types:check` — 3400d95
 
 #### Manual
 
-- [x] 1.5 Prop `sheet` na `/tree` zawiera `parent_marriages` i `grandparent_marriages` w opisanym kształcie
+- [x] 1.5 Prop `sheet` na `/tree` zawiera `parent_marriages` i `grandparent_marriages` w opisanym kształcie — 3400d95
 
 ### Phase 2: Tokeny, obrączki, pigułka i listwa płci
 
 #### Automated
 
-- [ ] 2.1 Strażnik tokenów i testy JS: `vendor/bin/sail npm run test:js`
-- [ ] 2.2 Format i lint: `vendor/bin/sail npm run check`
-- [ ] 2.3 Typy TS: `vendor/bin/sail npm run types:check`
-- [ ] 2.4 Build: `vendor/bin/sail npm run build`
-- [ ] 2.5 Brak `[1.5px]` i `[2px]` w widokach drzewa (`resources/js/components/tree`)
+- [x] 2.1 Strażnik tokenów i testy JS: `vendor/bin/sail npm run test:js`
+- [x] 2.2 Format i lint: `vendor/bin/sail npm run check`
+- [x] 2.3 Typy TS: `vendor/bin/sail npm run types:check`
+- [x] 2.4 Build: `vendor/bin/sail npm run build`
+- [x] 2.5 Brak `[1.5px]` i `[2px]` w widokach drzewa (`resources/js/components/tree`)
 
 #### Manual
 
-- [ ] 2.6 Pigułka na `/tree` we wszystkich stanach, także osoba bez związków
-- [ ] 2.7 Karta ze zdjęciem pokazuje listwę 4 px w kolorze płci pod zdjęciem
+- [x] 2.6 Pigułka na `/tree` we wszystkich stanach, także osoba bez związków
+- [x] 2.7 Karta ze zdjęciem pokazuje listwę 4 px w kolorze płci pod zdjęciem
 
 ### Phase 3: Linie arkusza
 

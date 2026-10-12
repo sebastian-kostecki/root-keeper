@@ -14,6 +14,7 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { MarriageRingsIcon } from '@/components/tree/marriage-rings-icon';
 import { useMarriagePanel } from '@/hooks/use-marriage-panel';
 import { useSidePanelNavigation } from '@/hooks/use-side-panel-navigation';
 import { addValueFor } from '@/lib/add-person-target';
@@ -64,15 +65,15 @@ export function UnionNode({
     const { open: openAddPanel } = useSidePanelNavigation('add');
     const editor = useOptionalSectionEditor();
 
-    if (unions.length === 0) {
-        return null;
-    }
-
     const selectedIndex = unions.findIndex((union) => union.key === selected);
     const selectedUnion = selectedIndex === -1 ? null : unions[selectedIndex];
     const status = selectedUnion ? unionStatus(selectedUnion) : '';
     const position = `${selectedIndex + 1} z ${unions.length}`;
     const showPosition = unions.length > 1 && selectedUnion !== null;
+    const isMarriage =
+        selectedUnion !== null && status !== '' && selectedUnion.is_marriage;
+    const isBezSlubu =
+        selectedUnion !== null && status !== '' && !selectedUnion.is_marriage;
 
     const choose = (key: string) => {
         const union = unions.find((candidate) => candidate.key === key);
@@ -94,9 +95,12 @@ export function UnionNode({
         );
     };
 
-    const ariaLabel = `Związek ${position}: ${
-        status || selectedUnion?.partner_name || 'nieznany partner'
-    }. Zmień związek lub dodaj małżonka`;
+    const ariaLabel =
+        unions.length === 0
+            ? 'Związki: brak związków. Dodaj małżonka'
+            : `Związek ${position}: ${
+                  status || selectedUnion?.partner_name || 'nieznany partner'
+              }. Zmień związek lub dodaj małżonka`;
 
     return (
         <>
@@ -107,24 +111,22 @@ export function UnionNode({
                         type="button"
                         aria-label={ariaLabel}
                         className={cn(
-                            'bg-background hover:bg-accent data-[state=open]:border-primary inline-flex h-8.5 items-center gap-2 rounded-lg border px-2.5 text-xs whitespace-nowrap shadow-xs',
+                            'bg-background hover:bg-accent data-[state=open]:border-primary border-line border-tree-line inline-flex h-8 items-center gap-1.5 rounded-full px-3 text-xs font-semibold whitespace-nowrap tabular-nums shadow-xs',
+                            isBezSlubu && 'border-dashed',
                             cardInteractive,
                             ZOOM_NO_PAN_CLASS,
                             addActive && triggerActive,
                         )}
                     >
                         {showPosition && (
-                            <span className="text-muted-foreground">
+                            <span className="text-muted-foreground font-medium">
                                 {position}
                             </span>
                         )}
-                        {status ? (
-                            <span className="font-semibold">{status}</span>
-                        ) : (
-                            !showPosition && (
-                                <span className="font-semibold">Związki</span>
-                            )
+                        {isMarriage && (
+                            <MarriageRingsIcon className="text-tree-line" />
                         )}
+                        <span>{status || 'Związki'}</span>
                         <ChevronsUpDown
                             className="text-muted-foreground size-3.5"
                             aria-hidden="true"
@@ -135,41 +137,43 @@ export function UnionNode({
                     <DropdownMenuLabel>
                         Związki — {focus.display_name}
                     </DropdownMenuLabel>
-                    <DropdownMenuRadioGroup
-                        value={selected ?? ''}
-                        onValueChange={choose}
-                    >
-                        {unions.map((union) => {
-                            const detail = [
-                                unionStatus(union),
-                                pluralPhrase(
-                                    union.children_count,
-                                    '1 dziecko',
-                                    `${union.children_count} dzieci`,
-                                    `${union.children_count} dzieci`,
-                                ),
-                            ]
-                                .filter((part) => part !== '')
-                                .join(' · ');
+                    {unions.length > 0 && (
+                        <DropdownMenuRadioGroup
+                            value={selected ?? ''}
+                            onValueChange={choose}
+                        >
+                            {unions.map((union) => {
+                                const detail = [
+                                    unionStatus(union),
+                                    pluralPhrase(
+                                        union.children_count,
+                                        '1 dziecko',
+                                        `${union.children_count} dzieci`,
+                                        `${union.children_count} dzieci`,
+                                    ),
+                                ]
+                                    .filter((part) => part !== '')
+                                    .join(' · ');
 
-                            return (
-                                <DropdownMenuRadioItem
-                                    key={union.key}
-                                    value={union.key}
-                                >
-                                    <span className="flex flex-col">
-                                        <span>
-                                            {union.partner_name ??
-                                                'Nieznany partner'}
+                                return (
+                                    <DropdownMenuRadioItem
+                                        key={union.key}
+                                        value={union.key}
+                                    >
+                                        <span className="flex flex-col">
+                                            <span>
+                                                {union.partner_name ??
+                                                    'Nieznany partner'}
+                                            </span>
+                                            <span className="text-muted-foreground text-xs">
+                                                {detail}
+                                            </span>
                                         </span>
-                                        <span className="text-muted-foreground text-xs">
-                                            {detail}
-                                        </span>
-                                    </span>
-                                </DropdownMenuRadioItem>
-                            );
-                        })}
-                    </DropdownMenuRadioGroup>
+                                    </DropdownMenuRadioItem>
+                                );
+                            })}
+                        </DropdownMenuRadioGroup>
+                    )}
                     {selectedUnion?.is_marriage &&
                         selectedUnion.marriage_id !== null && (
                             <DropdownMenuItem
@@ -195,7 +199,7 @@ export function UnionNode({
                                 Szczegóły małżeństwa
                             </DropdownMenuItem>
                         )}
-                    <DropdownMenuSeparator />
+                    {unions.length > 0 && <DropdownMenuSeparator />}
                     <DropdownMenuItem
                         onSelect={() => {
                             const value = addValueFor({

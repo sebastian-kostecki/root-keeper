@@ -69,6 +69,9 @@
     --color-gender-female-border: var(--gender-female-border);
     --color-tree-line: var(--tree-line);
     --color-tree-meta: var(--tree-meta);
+
+    --border-width-line: var(--tree-line-width);
+    --border-width-lineage: var(--lineage-line-width);
 }
 
 /* Palette and component values: design system artifact https://claude.ai/artifact/U31mtUCgmLXcrgocGCWstU (project/implementation.md, sections 1-2). */
@@ -114,6 +117,8 @@
     --gender-female-border: #dfaebf;
     --tree-line: #8e8878;
     --tree-meta: #566058;
+    --tree-line-width: 1.5px;
+    --lineage-line-width: 2px;
 }
 
 .dark {
