@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { MouseEvent } from 'react';
 import { DiscardChangesDialog } from '@/components/discard-changes-dialog';
 import Heading from '@/components/heading';
+import InputError from '@/components/input-error';
 import { LocalitiesTable } from '@/components/localities/localities-table';
 import { LocalityPanel } from '@/components/localities/locality-panel';
 import { ParishesTable } from '@/components/parishes/parishes-table';
@@ -18,11 +19,17 @@ import { Button } from '@/components/ui/button';
 import { useSidePanelNavigation } from '@/hooks/use-side-panel-navigation';
 import { useUnsavedChangesGuard } from '@/hooks/use-unsaved-changes-guard';
 import { filterLocalities, sortLocalities } from '@/lib/localities-index';
-import { withPlacesQuery } from '@/lib/places-index';
+import {
+    otherKindHint,
+    placesCounts,
+    withPlacesQuery,
+} from '@/lib/places-index';
 import type { PlacesKind } from '@/lib/places-index';
 import { filterParishes, sortParishes } from '@/lib/parishes-index';
 import { panelVisitOptions } from '@/lib/side-panel-url';
 import { pluralPhrase } from '@/lib/plural';
+import { failureHandlers } from '@/lib/visit-failure';
+import type { VisitError } from '@/lib/visit-failure';
 import { index as placesIndex } from '@/routes/places';
 import type { BreadcrumbItem, Locality, Parish, ReligionOption } from '@/types';
 
@@ -42,11 +49,27 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
+const VISIT_ERROR = 'Nie udało się wczytać listy.';
+
+/** The list name after „Pokaż w …”. */
+const kindLocative: Record<PlacesKind, string> = {
+    miejscowosci: 'miejscowościach',
+    parafie: 'parafiach',
+};
+
 /** Splits a panel key such as `parish:3` into its panel and record id. */
 function splitPanelKey(key: number | string): [string, string] {
     const [panel, id = ''] = String(key).split(':');
 
     return [panel, id];
+}
+
+/** The address from the live `window.location`, with `q` and/or `kind` replaced. */
+function liveUrl(filters: { q?: string; kind?: PlacesKind }): string {
+    // From the live address, not a render-time copy: a debounced visit may fire after a panel opened.
+    const { pathname, search, hash } = window.location;
+
+    return withPlacesQuery(`${pathname}${search}${hash}`, filters);
 }
 
 export default function Index({
@@ -58,7 +81,11 @@ export default function Index({
     parishPanel,
 }: Props) {
     const [search, setSearch] = useState(filters.q);
+    const [visitError, setVisitError] = useState<VisitError | null>(null);
+    const [isVisiting, setIsVisiting] = useState(false);
     const lastVisitedQuery = useRef(filters.q);
+    /** Numbers every visit of this page; only the latest one owns the spinner and the error. */
+    const latestVisit = useRef(0);
     /** The debounced search visit still waiting to fire, if any. */
     const pendingSearch = useRef<ReturnType<typeof setTimeout> | null>(null);
     const trimmedSearch = search.trim();
@@ -89,22 +116,59 @@ export default function Index({
     const { setIsDirty, guard, guardLink, discardDialog } =
         useUnsavedChangesGuard({ openKey, open: openByKey });
 
-    const visit = (q: string, replace = false) => {
-        lastVisitedQuery.current = q;
-
-        // From the live address, not a render-time copy: the debounced visit may fire after a panel opened.
-        const { pathname, search, hash } = window.location;
+    /**
+     * Every /places visit goes through here: the spinner and the error belong to the latest visit,
+     * and a failed one offers a retry that repeats this same visit.
+     */
+    const runVisit = (
+        next: { q?: string; kind?: PlacesKind },
+        replace = false,
+    ) => {
+        const visitId = ++latestVisit.current;
 
         router.get(
-            withPlacesQuery(`${pathname}${search}${hash}`, { q }),
+            liveUrl(next),
             {},
             {
                 preserveState: true,
                 preserveScroll: true,
                 replace,
                 only: ['filters'],
+                onStart: () => {
+                    setIsVisiting(true);
+                    setVisitError(null);
+                },
+                onFinish: () => {
+                    if (visitId === latestVisit.current) {
+                        setIsVisiting(false);
+                    }
+                },
+                ...failureHandlers(
+                    VISIT_ERROR,
+                    () => runVisit(next, replace),
+                    setVisitError,
+                    () => visitId === latestVisit.current,
+                ),
             },
         );
+    };
+
+    /** Drops the debounced search visit and reports whether there was one; its query then goes in the caller's visit. */
+    const takePendingSearch = (): boolean => {
+        if (pendingSearch.current === null) {
+            return false;
+        }
+
+        clearTimeout(pendingSearch.current);
+        pendingSearch.current = null;
+        lastVisitedQuery.current = trimmedSearch;
+
+        return true;
+    };
+
+    const visit = (q: string, replace = false) => {
+        lastVisitedQuery.current = q;
+        runVisit({ q }, replace);
     };
 
     // History navigation changes `q` or `kind` without a visit of ours: show `q` in the input.
@@ -138,29 +202,15 @@ export default function Index({
 
     /** Switches the list between the localities and the parishes; a search still waiting for its debounce goes in the same visit. */
     const switchKind = (kind: PlacesKind) => {
-        const hasPendingSearch = pendingSearch.current !== null;
+        const hasPendingSearch = takePendingSearch();
 
-        if (hasPendingSearch) {
-            clearTimeout(pendingSearch.current ?? undefined);
-            pendingSearch.current = null;
-            lastVisitedQuery.current = trimmedSearch;
-        }
+        runVisit(hasPendingSearch ? { kind, q: trimmedSearch } : { kind });
+    };
 
-        const { pathname, search, hash } = window.location;
-        const url = withPlacesQuery(
-            `${pathname}${search}${hash}`,
-            hasPendingSearch ? { kind, q: trimmedSearch } : { kind },
-        );
-
-        router.get(
-            url,
-            {},
-            {
-                preserveState: true,
-                preserveScroll: true,
-                only: ['filters'],
-            },
-        );
+    /** „Pokaż w …”: the other list with the current search, pushed so Back returns to this one. */
+    const showInKind = (kind: PlacesKind) => {
+        takePendingSearch();
+        runVisit({ kind, q: trimmedSearch });
     };
 
     /** Opens a record from the list; a search still waiting for its debounce goes in the same visit, which it would otherwise cancel. */
@@ -202,18 +252,26 @@ export default function Index({
         filterParishes(parishes, trimmedSearch),
     );
 
-    const committedCount = isParishTab
-        ? filterParishes(parishes, filters.q).length
-        : filterLocalities(localities, filters.q).length;
+    // Counts follow the live search, like the table; the status text follows the committed one, so it is read once per pause.
+    const counts = placesCounts(localities, parishes, trimmedSearch);
+    const hint = otherKindHint(filters.kind, counts, trimmedSearch);
+    const otherAction =
+        hint === null
+            ? undefined
+            : {
+                  label: `Pokaż w ${kindLocative[hint.kind]}`,
+                  count: hint.count,
+                  onShow: () => showInKind(hint.kind),
+              };
+
+    const committed = placesCounts(localities, parishes, filters.q);
 
     const statusText =
-        filters.q === ''
+        filters.q.trim() === ''
             ? ''
-            : committedCount === 0
+            : committed.miejscowosci === 0 && committed.parafie === 0
               ? 'Brak wyników'
-              : isParishTab
-                ? `Znaleziono: ${committedCount} ${pluralPhrase(committedCount, 'parafia', 'parafie', 'parafii')}`
-                : `Znaleziono: ${committedCount} ${pluralPhrase(committedCount, 'miejscowość', 'miejscowości', 'miejscowości')}`;
+              : `Znaleziono: ${committed.miejscowosci} ${pluralPhrase(committed.miejscowosci, 'miejscowość', 'miejscowości', 'miejscowości')}, ${committed.parafie} ${pluralPhrase(committed.parafie, 'parafia', 'parafie', 'parafii')}`;
 
     const addButton = isParishTab ? (
         <Button asChild>
@@ -241,12 +299,12 @@ export default function Index({
         {
             value: 'miejscowosci',
             label: 'Miejscowości',
-            count: localities.length,
+            count: counts.miejscowosci,
         },
         {
             value: 'parafie',
             label: 'Parafie',
-            count: parishes.length,
+            count: counts.parafie,
         },
     ];
 
@@ -263,6 +321,7 @@ export default function Index({
                 kind="parafie"
                 query={trimmedSearch}
                 onClear={clearSearch}
+                other={otherAction}
             />
         ) : (
             <ParishesTable
@@ -279,6 +338,7 @@ export default function Index({
             kind="miejscowosci"
             query={trimmedSearch}
             onClear={clearSearch}
+            other={otherAction}
         />
     ) : (
         <LocalitiesTable
@@ -304,6 +364,7 @@ export default function Index({
                     {addButton}
                 </div>
 
+                {/* Segments are never disabled: an empty list still shows its „Dodaj …” empty state, a deliberate difference from /sources. */}
                 <SegmentedToggle
                     value={filters.kind}
                     onValueChange={switchKind}
@@ -318,8 +379,23 @@ export default function Index({
                             onChange={setSearch}
                             placeholder="Szukaj po nazwie"
                             ariaLabel="Szukaj miejscowości i parafii"
+                            busy={isVisiting}
+                            busyLabel="Wczytywanie"
                             maxLength={100}
                         />
+                    </div>
+                )}
+
+                {visitError !== null && (
+                    <div className="flex flex-wrap items-center gap-3">
+                        <InputError role="alert" message={visitError.message} />
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => visitError.retry()}
+                        >
+                            Spróbuj ponownie
+                        </Button>
                     </div>
                 )}
 
@@ -347,6 +423,9 @@ export default function Index({
                     localities={localities}
                     onRequestClose={() => guard(parishNav.close)}
                     onDirtyChange={setIsDirty}
+                    onLocalityCreated={() =>
+                        router.reload({ only: ['localities', 'navCounts'] })
+                    }
                 />
             )}
 

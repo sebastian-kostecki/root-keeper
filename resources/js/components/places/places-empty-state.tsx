@@ -48,11 +48,15 @@ export function PlacesEmptyTree({
     );
 }
 
-/** Nothing matches the search. `other` is reserved for the cross-kind hint (phase 3). */
+/**
+ * Nothing matches the search in this list. `other` offers the list where the search does hit,
+ * shown first as „Pokaż w … (n)”.
+ */
 export function PlacesNoResults({
     kind,
     query,
     onClear,
+    other,
 }: {
     kind: PlacesKind;
     query: string;
@@ -65,9 +69,16 @@ export function PlacesNoResults({
             title="Brak wyników"
             description={noResultsDescription[kind](query)}
             action={
-                <Button variant="outline" onClick={onClear}>
-                    Wyczyść wyszukiwanie
-                </Button>
+                <div className="flex flex-wrap justify-center gap-2">
+                    {other !== undefined && (
+                        <Button onClick={other.onShow}>
+                            {other.label} ({other.count})
+                        </Button>
+                    )}
+                    <Button variant="outline" onClick={onClear}>
+                        Wyczyść wyszukiwanie
+                    </Button>
+                </div>
             }
         />
     );

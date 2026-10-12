@@ -449,29 +449,29 @@ Bez migracji danych. Stare adresy działają przez 302. Wayfinder po dodaniu tra
 
 #### Automated
 
-- [x] 2.1 Vitest, typy i lint przechodzą: `vendor/bin/sail npm run test:js`, `vendor/bin/sail npm run types:check`, `vendor/bin/sail npm run check`
-- [x] 2.2 W plikach widoku nie ma literału pierścienia: `grep -rn "ring-\[3px\]" resources/js/components/localities/localities-table.tsx resources/js/components/parishes/parishes-table.tsx resources/js/pages/places` nic nie zwraca
+- [x] 2.1 Vitest, typy i lint przechodzą: `vendor/bin/sail npm run test:js`, `vendor/bin/sail npm run types:check`, `vendor/bin/sail npm run check` — 05b09ef
+- [x] 2.2 W plikach widoku nie ma literału pierścienia: `grep -rn "ring-\[3px\]" resources/js/components/localities/localities-table.tsx resources/js/components/parishes/parishes-table.tsx resources/js/pages/places` nic nie zwraca — 05b09ef
 
 #### Manual
 
-- [ ] 2.3 Na 375 px w obu zakładkach nazwa zostaje widoczna przy przewijaniu tabeli w bok, a otwarty wiersz ma to samo tło w przyklejonej komórce
-- [ ] 2.4 Tab z klawiatury pokazuje pierścień 3 px na linku wiersza (jak przed zmianą)
-- [ ] 2.5 Zakładka Parafie ma kolumnę „Źródła”, Miejscowości „Użycia”
+- [x] 2.3 Na 375 px w obu zakładkach nazwa zostaje widoczna przy przewijaniu tabeli w bok, a otwarty wiersz ma to samo tło w przyklejonej komórce — 05b09ef
+- [x] 2.4 Tab z klawiatury pokazuje pierścień 3 px na linku wiersza (jak przed zmianą) — 05b09ef
+- [x] 2.5 Zakładka Parafie ma kolumnę „Źródła”, Miejscowości „Użycia” — 05b09ef
 
 ### Phase 3: Stany — liczniki trafień, przejście, pusty, błąd, ładowanie
 
 #### Automated
 
-- [ ] 3.1 Vitest dla `placesCounts` i `otherKindHint` (pusty `q`, trafienia w obu, zero w bieżącej i ≥1 w drugiej, zero w obu) przechodzi: `vendor/bin/sail npm run test:js`
-- [ ] 3.2 Typy i lint przechodzą: `vendor/bin/sail npm run types:check` i `vendor/bin/sail npm run check`
-- [ ] 3.3 Pest bez regresji: `vendor/bin/sail artisan test --compact tests/Feature/PlacesTest.php tests/Feature/ParishesTest.php`
+- [x] 3.1 Vitest dla `placesCounts` i `otherKindHint` (pusty `q`, trafienia w obu, zero w bieżącej i ≥1 w drugiej, zero w obu) przechodzi: `vendor/bin/sail npm run test:js`
+- [x] 3.2 Typy i lint przechodzą: `vendor/bin/sail npm run types:check` i `vendor/bin/sail npm run check`
+- [x] 3.3 Pest bez regresji: `vendor/bin/sail artisan test --compact tests/Feature/PlacesTest.php tests/Feature/ParishesTest.php`
 
 #### Manual
 
-- [ ] 3.4 „Tarnów” na zakładce Miejscowości pokazuje liczniki trafień obu spisów; fraza pasująca tylko do parafii daje „Pokaż w parafiach (n)”, który przełącza zakładkę z zachowaną frazą
-- [ ] 3.5 W drzewie bez parafii segment „Parafie 0” jest klikalny, a pusta zakładka ma „Dodaj parafię”
-- [ ] 3.6 Po zatrzymaniu serwera wyszukiwanie pokazuje komunikat z „Spróbuj ponownie”, a po wznowieniu ponowienie działa
-- [ ] 3.7 Miejscowość dodana w pickerze siedziby (bez zapisu parafii) jest widoczna w zakładce Miejscowości i w liczniku „Miejsca”
+- [x] 3.4 „Tarnów” na zakładce Miejscowości pokazuje liczniki trafień obu spisów; fraza pasująca tylko do parafii daje „Pokaż w parafiach (n)”, który przełącza zakładkę z zachowaną frazą
+- [x] 3.5 W drzewie bez parafii segment „Parafie 0” jest klikalny, a pusta zakładka ma „Dodaj parafię”
+- [x] 3.6 Po zatrzymaniu serwera wyszukiwanie pokazuje komunikat z „Spróbuj ponownie”, a po wznowieniu ponowienie działa
+- [x] 3.7 Miejscowość dodana w pickerze siedziby (bez zapisu parafii) jest widoczna w zakładce Miejscowości i w liczniku „Miejsca”
 
 ### Phase 4: Utrwal to i bramka wizualna
 

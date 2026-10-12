@@ -30,6 +30,8 @@ type Props = {
     onRequestClose: () => void;
     /** Reports whether the form holds unsaved changes. */
     onDirtyChange: (isDirty: boolean) => void;
+    /** A locality added in the seat picker, so the caller can refresh its list. */
+    onLocalityCreated?: (locality: LocalityOption) => void;
 };
 
 /** Radix Select does not allow an empty item value. */
@@ -43,6 +45,7 @@ export function ParishPanel({
     localities,
     onRequestClose,
     onDirtyChange,
+    onLocalityCreated,
 }: Props) {
     return (
         <SidePanel
@@ -57,6 +60,7 @@ export function ParishPanel({
                 religions={religions}
                 localities={localities}
                 onDirtyChange={onDirtyChange}
+                onLocalityCreated={onLocalityCreated}
             />
         </SidePanel>
     );
@@ -68,6 +72,7 @@ function ParishForm({
     religions,
     localities,
     onDirtyChange,
+    onLocalityCreated,
 }: Omit<Props, 'onRequestClose'>) {
     const [religion, setReligion] = useState(parish?.religion ?? '');
     const [mergeOpen, setMergeOpen] = useState(false);
@@ -148,6 +153,7 @@ function ParishForm({
                             value={seat}
                             options={localities}
                             errors={errors}
+                            onCreated={onLocalityCreated}
                         />
 
                         <div className="flex flex-wrap items-center gap-2">

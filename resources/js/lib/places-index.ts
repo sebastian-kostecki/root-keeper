@@ -1,6 +1,46 @@
+import { filterLocalities } from '@/lib/localities-index';
+import { filterParishes } from '@/lib/parishes-index';
+import type { Locality, Parish } from '@/types';
+
 export type PlacesKind = 'miejscowosci' | 'parafie';
 
+export type PlacesCounts = Record<PlacesKind, number>;
+
 const BASE_URL = 'http://localhost';
+
+/** Hits per list for `q`; a blank `q` gives the size of each list. */
+export function placesCounts(
+    localities: Locality[],
+    parishes: Parish[],
+    q: string,
+): PlacesCounts {
+    return {
+        miejscowosci: filterLocalities(localities, q).length,
+        parafie: filterParishes(parishes, q).length,
+    };
+}
+
+/**
+ * The other list, when the search has no hits here but some there; `null` otherwise, including a blank search.
+ */
+export function otherKindHint(
+    kind: PlacesKind,
+    counts: PlacesCounts,
+    q: string,
+): { kind: PlacesKind; count: number } | null {
+    if (q.trim() === '') {
+        return null;
+    }
+
+    const other: PlacesKind =
+        kind === 'miejscowosci' ? 'parafie' : 'miejscowosci';
+
+    if (counts[kind] !== 0 || counts[other] < 1) {
+        return null;
+    }
+
+    return { kind: other, count: counts[other] };
+}
 
 /**
  * The URL with `q` and/or `kind` replaced: a blank search and the default kind (miejscowosci) are removed.
