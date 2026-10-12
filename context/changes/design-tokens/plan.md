@@ -332,15 +332,15 @@ Rozszerzenie `view-tokens.test.ts` o drzewo i panele, pełne bramki z sekcji 4 i
 
 #### Automated
 
-- [x] 1.1 Zestaw `screenshots/before/` istnieje (8 zrzutów tras + 2 zrzuty fokusu) — ad83395
-- [x] 1.2 `grep -rn "chart-" resources/js resources/css` nic nie zwraca — ad83395
-- [x] 1.3 `vendor/bin/sail npm run check` przechodzi — ad83395
-- [x] 1.4 `vendor/bin/sail npm run build` przechodzi — ad83395
+- [x] 1.1 Zestaw `screenshots/before/` istnieje (8 zrzutów tras + 2 zrzuty fokusu) — 2e766b5
+- [x] 1.2 `grep -rn "chart-" resources/js resources/css` nic nie zwraca — 2e766b5
+- [x] 1.3 `vendor/bin/sail npm run check` przechodzi — 2e766b5
+- [x] 1.4 `vendor/bin/sail npm run build` przechodzi — 2e766b5
 
 #### Manual
 
-- [x] 1.5 Aplikacja w jasnym motywie ma papierowe tło i mech; menu jest ciemne w obu motywach — ad83395
-- [x] 1.6 W zakładce Network ładuje się plik fontu Newsreader — ad83395
+- [x] 1.5 Aplikacja w jasnym motywie ma papierowe tło i mech; menu jest ciemne w obu motywach — 2e766b5
+- [x] 1.6 W zakładce Network ładuje się plik fontu Newsreader — 2e766b5
 
 ### Phase 2: Fokus i kolory w komponentach
 
