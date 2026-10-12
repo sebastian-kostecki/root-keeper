@@ -523,14 +523,14 @@ Scenariusze:
 
 #### Automated
 
-- [x] 4.1 Spec `sources-page-states.spec.ts` przechodzi
-- [x] 4.2 Scenariusze 1 i 3 czerwienieją po wprowadzonym błędzie i zielenieją po przywróceniu
-- [x] 4.3 Skan przechodzi i czerwienieje po wstawieniu klasy palety do `sources-gallery.tsx`
-- [x] 4.4 Pełny zestaw E2E przechodzi: `npx playwright test`
-- [x] 4.5 `CLAUDE.md` wskazuje `list-item-styles.ts` i `view-tokens.test.ts`, blok 10x-cli nietknięty, brak odwołań do `persons-view-tokens`
-- [x] 4.6 Lint i format przechodzą: `vendor/bin/sail npm run check`
+- [x] 4.1 Spec `sources-page-states.spec.ts` przechodzi — 7ae6541
+- [x] 4.2 Scenariusze 1 i 3 czerwienieją po wprowadzonym błędzie i zielenieją po przywróceniu — 7ae6541
+- [x] 4.3 Skan przechodzi i czerwienieje po wstawieniu klasy palety do `sources-gallery.tsx` — 7ae6541
+- [x] 4.4 Pełny zestaw E2E przechodzi: `npx playwright test` — 7ae6541
+- [x] 4.5 `CLAUDE.md` wskazuje `list-item-styles.ts` i `view-tokens.test.ts`, blok 10x-cli nietknięty, brak odwołań do `persons-view-tokens` — 7ae6541
+- [x] 4.6 Lint i format przechodzą: `vendor/bin/sail npm run check` — 7ae6541
 
 #### Manual
 
-- [x] 4.7 Zrzuty `after/01–12` porównane z `before/` w `verdict.md`
-- [x] 4.8 Pełny zestaw Pest uruchomiony przez użytkownika: `vendor/bin/sail artisan test --compact`
+- [x] 4.7 Zrzuty `after/01–12` porównane z `before/` w `verdict.md` — 7ae6541
+- [x] 4.8 Pełny zestaw Pest uruchomiony przez użytkownika: `vendor/bin/sail artisan test --compact` — 7ae6541

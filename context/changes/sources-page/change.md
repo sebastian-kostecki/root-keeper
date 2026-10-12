@@ -1,7 +1,7 @@
 ---
 change_id: sources-page
 title: Sources page
-status: implementing
+status: implemented
 created: 2026-10-12
 updated: 2026-10-12
 archived_at: null
