@@ -93,15 +93,15 @@ await run('05-no-results-desktop', DESKTOP, async (page) => {
     await snap(page, '05-no-results-desktop');
 });
 
-// 06-07: create modal (Dodaj osobę) on desktop and mobile.
+// 06-07: create panel (Dodaj osobę, ?add=person) on desktop and mobile.
 for (const [name, viewport] of [
     ['06-create-modal-desktop', DESKTOP],
     ['07-create-modal-mobile', MOBILE],
 ]) {
     await run(name, viewport, async (page) => {
         await visit(page);
-        await page.getByRole('button', { name: /dodaj osobę/i }).first().click();
-        await page.getByRole('dialog').waitFor({ state: 'visible' });
+        await page.getByRole('link', { name: /dodaj osobę/i }).first().click();
+        await page.getByRole('dialog', { name: 'Dodaj osobę' }).waitFor({ state: 'visible' });
         await snap(page, name);
     });
 }
@@ -124,6 +124,18 @@ await run('09-focus-table-row', DESKTOP, async (page) => {
     const focusVisible = await row.evaluate((el) => el.matches(':focus-visible'));
     console.log('table row link :focus-visible =', focusVisible);
     await snap(page, '09-focus-table-row');
+});
+
+// 10: a search whose request is cut off (the same approach as persons-add-person-panel.spec.ts).
+await run('10-search-error-desktop', DESKTOP, async (page) => {
+    await visit(page);
+    await page.route(
+        (url) => url.pathname === '/persons' && url.searchParams.has('q'),
+        (route) => (route.request().headers()['x-inertia'] ? route.abort() : route.continue()),
+    );
+    await page.getByRole('searchbox', { name: 'Szukaj osoby' }).fill('zzzzzz');
+    await page.getByRole('alert').waitFor({ state: 'visible' });
+    await snap(page, '10-search-error-desktop');
 });
 
 await browser.close();

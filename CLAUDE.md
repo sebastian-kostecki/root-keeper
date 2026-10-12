@@ -52,9 +52,16 @@ PHP 8.5 · Laravel 13 · Inertia v3 (inertia-laravel 3.5, @inertiajs/react 3.8) 
 - Frontend routes come from Wayfinder: import from `@/actions/...` or `@/routes/...`; never hardcode URLs. After adding or renaming a route, regenerate with `vendor/bin/sail artisan wayfinder:generate` (the Vite plugin also does it in dev).
 - Before adding a frontend dependency, check `package.json`: zoom/pan already uses `react-zoom-pan-pinch` (`resources/js/components/sources/source-viewer.tsx`); UI primitives come from `resources/js/components/ui/`. New dependencies need the user's approval.
 
+## UI: tokens and shared components
+
+- Tokens live in `resources/css/app.css` (`:root` / `.dark` mapped into `@theme`). Use role classes (`text-destructive-foreground`, `bg-accent`, `text-muted-foreground`). In views: no Tailwind palette classes (`text-red-600`), no hex, `rgb()` or `oklch()`, no arbitrary pixel values (`ring-[3px]`) and no inline `style=`.
+- Before creating a component, check `resources/js/components/ui/` and the shared `components/{heading,search-field,segmented-toggle,empty-state,side-panel,table-parts}.tsx`. A missing shadcn component comes from `npx shadcn add <name>` (new dependencies need approval).
+- Focus ring for elements outside `components/ui/`: `focusRing` from `resources/js/lib/focus-ring.ts`. List pages: `Heading variant="page"` and the search row with `role="search"`.
+- Controls: `resources/js/lib/persons-view-tokens.test.ts` scans the `/persons` view files (runs in `npm run test:js`). Visual gate: screenshots in `context/changes/<id>/screenshots/`.
+
 ## Side panels vs modals
 
-- Person, source, marriage and locality open in a right-hand side panel, not a modal. Tree add/choose person (slots, spouse menu, empty tree) happens in the add panel `?add=` (reference: `resources/js/components/tree/add-person-panel.tsx`). Modals remain for delete confirmations, `MarryCoupleDialog`, small pickers without a form (parish inline, buried pick-person-dialog) and "Dodaj osobę" on `/persons` until a separate change (`resources/js/components/ui/dialog.tsx`).
+- Person, source, marriage and locality open in a right-hand side panel, not a modal. Tree add/choose person (slots, spouse menu, empty tree) happens in the add panel `?add=` (reference: `resources/js/components/tree/add-person-panel.tsx`). Creating a person from `/persons` is the same add panel as `?add=person` (a bare form), not a modal. Modals remain for delete confirmations, `MarryCoupleDialog` and small pickers without a form (parish inline, buried pick-person-dialog) (`resources/js/components/ui/dialog.tsx`).
 - An open panel must not cover the tree: the tree area narrows beside it. Do not use an overlay for these panels — `resources/js/components/ui/sheet.tsx` is an overlay (Radix Dialog) and does not meet this as-is.
 - Build one shared panel shell and reuse it for all four; the source panel is wider (scan beside the form).
 - Closing a panel returns the user to the same tree position; moving to a relative replaces the panel content.

@@ -441,31 +441,31 @@ Test przeglądarkowy nowego zachowania, kontrola zakodowanych wartości, reguła
 
 #### Automated
 
-- [x] 4.1 Typy, lint i build przechodzą
-- [x] 4.2 Testy JS przechodzą
+- [x] 4.1 Typy, lint i build przechodzą — 30f2de2
+- [x] 4.2 Testy JS przechodzą — 30f2de2
 
 #### Manual
 
-- [x] 4.3 Pole wyszukiwania: 7 stanów, w tym błąd i ponowienie po odcięciu sieci
-- [x] 4.4 Przełącznik Lista/Tabela: stany i komunikat błędu
-- [x] 4.5 Nagłówki sortowania: stany i błąd
-- [x] 4.6 Skoki do litery: default / hover / focus-visible
-- [x] 4.7 Wiersz osoby: stany, przygaszenie także przy „brak wyników”
-- [x] 4.8 „Dodaj osobę”: stany, w tym błędy walidacji i spinner zapisu w panelu
-- [x] 4.9 Menu akcji w tabeli: default / hover / focus-visible
+- [x] 4.3 Pole wyszukiwania: 7 stanów, w tym błąd i ponowienie po odcięciu sieci — 30f2de2
+- [x] 4.4 Przełącznik Lista/Tabela: stany i komunikat błędu — 30f2de2
+- [x] 4.5 Nagłówki sortowania: stany i błąd — 30f2de2
+- [x] 4.6 Skoki do litery: default / hover / focus-visible — 30f2de2
+- [x] 4.7 Wiersz osoby: stany, przygaszenie także przy „brak wyników” — 30f2de2
+- [x] 4.8 „Dodaj osobę”: stany, w tym błędy walidacji i spinner zapisu w panelu — 30f2de2
+- [x] 4.9 Menu akcji w tabeli: default / hover / focus-visible — 30f2de2
 
 ### Phase 5: Utrwal to i bramka wizualna
 
 #### Automated
 
-- [ ] 5.1 Spec `persons-add-person-panel.spec.ts` przechodzi
-- [ ] 5.2 Scenariusz strażnika czerwienieje po wyłączeniu `markDirty` i zielenieje po przywróceniu
-- [ ] 5.3 Test skanu przechodzi i czerwienieje po wstawieniu klasy palety
-- [ ] 5.4 Pełny zestaw E2E przechodzi: `npx playwright test`
-- [ ] 5.5 `CLAUDE.md` zawiera regułę UI i `add=person`, blok 10x-cli nietknięty
-- [ ] 5.6 Lint i format przechodzą: `vendor/bin/sail npm run check`
+- [x] 5.1 Spec `persons-add-person-panel.spec.ts` przechodzi
+- [x] 5.2 Scenariusz strażnika czerwienieje po wyłączeniu `markDirty` i zielenieje po przywróceniu
+- [x] 5.3 Test skanu przechodzi i czerwienieje po wstawieniu klasy palety
+- [x] 5.4 Pełny zestaw E2E przechodzi: `npx playwright test`
+- [x] 5.5 `CLAUDE.md` zawiera regułę UI i `add=person`, blok 10x-cli nietknięty
+- [x] 5.6 Lint i format przechodzą: `vendor/bin/sail npm run check`
 
 #### Manual
 
-- [ ] 5.7 Zrzuty `after/01–10` porównane z `before/` w `verdict.md`
-- [ ] 5.8 Pełny zestaw Pest uruchomiony przez użytkownika: `vendor/bin/sail artisan test --compact`
+- [x] 5.7 Zrzuty `after/01–10` porównane z `before/` w `verdict.md`
+- [x] 5.8 Pełny zestaw Pest uruchomiony przez użytkownika: `vendor/bin/sail artisan test --compact`
