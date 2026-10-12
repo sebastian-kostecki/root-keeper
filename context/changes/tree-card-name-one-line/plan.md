@@ -334,15 +334,15 @@ Brak zmian w bazie. `card_name` jest nowym polem w ładunku; stare klienty go ni
 
 #### Automated
 
-- [ ] 2.1 Format i lint przechodzą
-- [ ] 2.2 Typy TS przechodzą
-- [ ] 2.3 Brak wartości arbitralnych na plikach kart
-- [ ] 2.4 Istniejące E2E kart przechodzą
+- [x] 2.1 Format i lint przechodzą
+- [x] 2.2 Typy TS przechodzą
+- [x] 2.3 Brak wartości arbitralnych na plikach kart
+- [x] 2.4 Istniejące E2E kart przechodzą
 
 #### Manual
 
-- [ ] 2.5 Przy 1366 pasek 3rem/4,5rem, długa nazwa w 2 liniach z wielokropkiem, nic pod okiem
-- [ ] 2.6 Podpowiedź z pełną nazwą, karta przodka bez zmian w układzie
+- [x] 2.5 Przy 1366 pasek 3rem/4,5rem, długa nazwa w 2 liniach z wielokropkiem, nic pod okiem
+- [x] 2.6 Podpowiedź z pełną nazwą, karta przodka bez zmian w układzie
 
 ### Phase 3: Kolumna z szerokości obszaru
 
