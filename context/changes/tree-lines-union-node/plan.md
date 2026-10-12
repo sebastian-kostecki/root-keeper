@@ -349,20 +349,20 @@ Brak migracji. Nowe pola tylko dochodzą do propsa `sheet`, nic nie jest usuwane
 
 #### Automated
 
-- [x] 3.1 Strażnik tokenów z `family-sheet.tsx` i testy JS: `vendor/bin/sail npm run test:js`
-- [x] 3.2 Format i lint: `vendor/bin/sail npm run check`
-- [x] 3.3 Typy TS: `vendor/bin/sail npm run types:check`
-- [x] 3.4 Build: `vendor/bin/sail npm run build`
-- [x] 3.5 Testy arkusza nadal zielone: `vendor/bin/sail artisan test --compact tests/Feature/TreeTest.php`
-- [x] 3.6 Brak linii jako wypełnień w arkuszu
-- [x] 3.7 Zrzuty i werdykt istnieją
+- [x] 3.1 Strażnik tokenów z `family-sheet.tsx` i testy JS: `vendor/bin/sail npm run test:js` — ce6b16c
+- [x] 3.2 Format i lint: `vendor/bin/sail npm run check` — ce6b16c
+- [x] 3.3 Typy TS: `vendor/bin/sail npm run types:check` — ce6b16c
+- [x] 3.4 Build: `vendor/bin/sail npm run build` — ce6b16c
+- [x] 3.5 Testy arkusza nadal zielone: `vendor/bin/sail artisan test --compact tests/Feature/TreeTest.php` — ce6b16c
+- [x] 3.6 Brak linii jako wypełnień w arkuszu — ce6b16c
+- [x] 3.7 Zrzuty i werdykt istnieją — ce6b16c
 
 #### Manual
 
-- [x] 3.8 Linia przodków probanda 2 px w `primary`, rodzina partnera i dzieci w `tree-line`
-- [x] 3.9 Ramię i pień do zaślepek przerywane i w `tree-line`
-- [x] 3.10 Węzły rodziców: rok, „ok. …”, same obrączki, brak węzła dla pary bez ślubu i niepełnej
-- [x] 3.11 Linia pary: ciągła, przerywana przy „bez ślubu”, połówka partnera przerywana przy braku partnera
-- [x] 3.12 Belka dzieci przy 0, 1, 2, 3 i ≥4 dzieciach
-- [x] 3.13 Linie dochodzą do środka krawędzi kart w obu motywach
-- [x] 3.14 `verdict.md` i zrzuty jasny/ciemny zaakceptowane przez użytkownika
+- [x] 3.8 Linia przodków probanda 2 px w `primary`, rodzina partnera i dzieci w `tree-line` — ce6b16c
+- [x] 3.9 Ramię i pień do zaślepek przerywane i w `tree-line` — ce6b16c
+- [x] 3.10 Węzły rodziców: rok, „ok. …”, same obrączki, brak węzła dla pary bez ślubu i niepełnej — ce6b16c
+- [x] 3.11 Linia pary: ciągła, przerywana przy „bez ślubu”, połówka partnera przerywana przy braku partnera — ce6b16c
+- [x] 3.12 Belka dzieci przy 0, 1, 2, 3 i ≥4 dzieciach — ce6b16c
+- [x] 3.13 Linie dochodzą do środka krawędzi kart w obu motywach — ce6b16c
+- [x] 3.14 `verdict.md` i zrzuty jasny/ciemny zaakceptowane przez użytkownika — ce6b16c
