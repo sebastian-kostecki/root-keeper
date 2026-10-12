@@ -7,7 +7,10 @@ if (existsSync('.env')) process.loadEnvFile('.env');
 
 // 8100 is the chosen E2E port (the dev app owns 8000 through Sail); E2E_PORT overrides it.
 const PORT = Number(process.env.E2E_PORT ?? 8100);
-const baseURL = `http://localhost:${PORT}`;
+// 127.0.0.1, not localhost: /etc/hosts maps localhost only to IPv4, so the
+// Playwright client's IPv6 lookup of localhost goes to the WSL DNS and adds
+// ~10 s to every request when that DNS is slow.
+const baseURL = `http://127.0.0.1:${PORT}`;
 
 export default defineConfig({
     testDir: './tests/e2e',
@@ -27,6 +30,8 @@ export default defineConfig({
             name: 'chromium',
             use: {
                 ...devices['Desktop Chrome'],
+                // Lower bound of the NFR (1366-2560 px); the tree must work at the smallest screen.
+                viewport: { width: 1366, height: 768 },
                 storageState: 'playwright/.auth/user.json',
             },
             dependencies: ['setup'],

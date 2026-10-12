@@ -40,6 +40,8 @@ class RestoreBackup extends Command
 
     private const SOURCES_DIRECTORY = 'sources';
 
+    private const PERSONS_DIRECTORY = 'persons';
+
     private string $stagingPath = '';
 
     private string $safetyArchive = '';
@@ -116,12 +118,14 @@ class RestoreBackup extends Command
 
         $userCount = $this->userCount();
         $sourceFileCount = count(Storage::disk('local')->allFiles(self::SOURCES_DIRECTORY));
-        $occupied = $userCount > 0 || $sourceFileCount > 0;
+        $personFileCount = count(Storage::disk('local')->allFiles(self::PERSONS_DIRECTORY));
+        $occupied = $userCount > 0 || $sourceFileCount > 0 || $personFileCount > 0;
 
         if ($occupied && ! $this->option('force')) {
             $this->error('Ta instancja zawiera już dane, nic nie zmieniono. Użyj --force, aby je nadpisać.');
             $this->line("  użytkownicy: {$userCount}");
             $this->line("  pliki źródeł: {$sourceFileCount}");
+            $this->line("  pliki zdjęć osób: {$personFileCount}");
 
             return self::FAILURE;
         }
@@ -130,6 +134,7 @@ class RestoreBackup extends Command
             $this->warn('Ta instancja zawiera dane, które zostaną zastąpione:');
             $this->table(['Tabela', 'Wiersze'], $this->durableRowCounts());
             $this->line("Pliki źródeł: {$sourceFileCount}");
+            $this->line("Pliki zdjęć osób: {$personFileCount}");
 
             if (! $this->confirm('Zastąpić dane z archiwum? Przed zmianą zostanie wykonana kopia bezpieczeństwa.', false)) {
                 $this->error('Przerwano, nic nie zmieniono.');
@@ -164,6 +169,7 @@ class RestoreBackup extends Command
 
         if ($occupied) {
             Storage::disk('local')->deleteDirectory(self::SOURCES_DIRECTORY);
+            Storage::disk('local')->deleteDirectory(self::PERSONS_DIRECTORY);
         }
 
         $this->components->info('Ładowanie bazy danych...');
@@ -182,13 +188,13 @@ class RestoreBackup extends Command
 
         $filesWritten = $this->copyStagedFiles();
 
-        $missing = $this->missingSourceFiles();
+        $missing = $this->missingStoredFiles();
 
         $this->table(['Tabela', 'Wiersze'], $this->durableRowCounts());
         $this->line("Zapisane pliki: {$filesWritten}");
 
         if ($missing !== []) {
-            $this->error('Brakuje plików przywróconych źródeł:');
+            $this->error('Brakuje plików przywróconych źródeł lub zdjęć osób:');
 
             foreach ($missing as $path) {
                 $this->line('  '.$path);
@@ -376,15 +382,25 @@ class RestoreBackup extends Command
     }
 
     /**
+     * The source files and person photo files the restored rows point at that are not on disk.
+     *
      * @return list<string>
      */
-    private function missingSourceFiles(): array
+    private function missingStoredFiles(): array
     {
         $disk = Storage::disk('local');
         $missing = [];
 
         foreach (DB::table('sources')->get(['path', 'thumbnail_path']) as $source) {
             foreach ([$source->path, $source->thumbnail_path] as $path) {
+                if ($path !== null && ! $disk->exists($path)) {
+                    $missing[] = $path;
+                }
+            }
+        }
+
+        foreach (DB::table('people')->get(['photo_path', 'photo_thumbnail_path']) as $person) {
+            foreach ([$person->photo_path, $person->photo_thumbnail_path] as $path) {
                 if ($path !== null && ! $disk->exists($path)) {
                     $missing[] = $path;
                 }

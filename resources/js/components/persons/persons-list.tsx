@@ -5,11 +5,15 @@ import {
 } from '@/components/persons/person-list-parts';
 import { PersonAvatar } from '@/components/persons/person-avatar';
 import { PersonPreviewLink } from '@/components/persons/person-preview-link';
+import { Button } from '@/components/ui/button';
+import { focusRing } from '@/lib/focus-ring';
+import { personPhotoUrl } from '@/lib/person-photo';
 import {
     formatEventMeta,
     groupBySurnameInitial,
     peopleCount,
 } from '@/lib/persons-index';
+import { cn } from '@/lib/utils';
 import type { IndexPersonEvent, Person } from '@/types';
 
 type Props = {
@@ -56,13 +60,17 @@ function PersonRow({
     return (
         <PersonPreviewLink
             personId={person.id}
-            className="hover:bg-accent/50 focus-visible:bg-accent/50 focus-visible:ring-ring/50 flex items-center gap-3 px-4 py-3 transition-colors outline-none focus-visible:ring-[3px] focus-visible:ring-inset"
+            className={cn(
+                focusRing,
+                'hover:bg-accent/50 focus-visible:bg-accent/50 flex items-center gap-3 px-4 py-3 transition-colors focus-visible:ring-inset',
+            )}
         >
             <PersonAvatar
                 name={person.display_name}
                 gender={person.gender?.value ?? null}
                 size="sm"
                 announceGender={false}
+                photoUrl={personPhotoUrl(person.id, person.photo_version)}
             />
             <span className="min-w-0 flex-1">
                 <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
@@ -100,13 +108,15 @@ export function PersonsList({ persons, rootPersonId }: Props) {
                 className="flex flex-wrap gap-1.5"
             >
                 {groups.map((group) => (
-                    <a
+                    <Button
                         key={group.key}
-                        href={`#grupa-${group.key}`}
-                        className="text-muted-foreground hover:bg-accent hover:text-accent-foreground focus-visible:ring-ring/50 inline-flex h-8 min-w-8 items-center justify-center rounded-md border px-2 text-sm font-medium transition-colors outline-none focus-visible:ring-[3px]"
+                        variant="outline"
+                        size="sm"
+                        className="min-w-8"
+                        asChild
                     >
-                        {group.title}
-                    </a>
+                        <a href={`#grupa-${group.key}`}>{group.title}</a>
+                    </Button>
                 ))}
             </nav>
 

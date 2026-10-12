@@ -29,6 +29,7 @@ export function SearchField({
         <div className={cn('relative flex-1', className)}>
             {busy ? (
                 <Spinner
+                    aria-hidden="true"
                     aria-label={busyLabel}
                     className="text-muted-foreground absolute top-1/2 left-3 -translate-y-1/2"
                 />

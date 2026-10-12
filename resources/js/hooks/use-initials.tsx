@@ -8,6 +8,7 @@ function getInitial(name: string): string {
 
 export function getInitials(fullName: string): string {
     const names = fullName
+        .replace(/\s+z d\..*$/u, '')
         .trim()
         .split(/\s+/u)
         .filter((part) => /^[\p{L}\p{N}]/u.test(part));

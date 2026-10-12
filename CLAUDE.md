@@ -35,29 +35,56 @@ Dwie granice, które należy jasno rozróżniać:
 
 <!-- END @przeprogramowani/10x-cli -->
 
-## Frontend toolchain — Vite+ (vite-plus 0.3.0)
+## Frontend toolchain — Vite+ (vite-plus 1.0.0)
 
 - The frontend toolchain is Vite+ (`vp` CLI), not plain Vite. Lint = Oxlint, format = Oxfmt, both configured in the `lint` and `fmt` blocks of `vite.config.ts`. There is no ESLint or Prettier in this repo — never add `.eslintrc*`, `eslint.config.*`, `.prettierrc*` or install those packages.
 - `vite.config.ts` imports `defineConfig` and `lazyPlugins` from `'vite-plus'`, not from `'vite'`. Add new plugins inside the `lazyPlugins(() => [...])` array.
-- Commands (run through Sail): `vendor/bin/sail npm run check` (format + lint, must pass in CI), `vendor/bin/sail npm run check:fix` (auto-fix), `vendor/bin/sail npm run types:check` (tsc), `vendor/bin/sail npm run build`.
+- The package manager is npm (`package-lock.json`). In `package.json`, `vite` is an alias (`npm:@voidzero-dev/vite-plus-core@<version>`) and `overrides` pin `vite` (`$vite`) and `vitest` to the versions Vite+ bundles. Never replace the alias with plain `vite`, never add `pnpm-workspace.yaml` or `pnpm-lock.yaml`. When bumping `vite-plus`, bump the alias and the `vitest` pin with it (`vendor/bin/sail npx vp toolchain` shows the bundled versions); do not run `vp migrate` — it detects the wrong package manager here.
+- Commands (run through Sail): `vendor/bin/sail npm run check` (format + lint, must pass in CI), `vendor/bin/sail npm run check:fix` (auto-fix), `vendor/bin/sail npm run types:check` (tsc), `vendor/bin/sail npm run test:js` (Vitest via `vp test`), `vendor/bin/sail npm run build`.
 - Lint runs with `denyWarnings: true` and `typeAware: true`: a warning fails CI. Fix the code; do not add ignore patterns except for generated dirs (`resources/js/actions`, `resources/js/routes`, `resources/js/wayfinder`) and shadcn `resources/js/components/ui/*`.
 - Before changing toolchain config, read the version-matched docs in `node_modules/vite-plus/docs/guide/` (`check.md`, `lint.md`, `fmt.md`, `build.md`) and `node_modules/vite-plus/AGENTS.md` — your training data likely predates this tool.
 
 ## Installed versions (check before relying on an API)
 
-PHP 8.5 · Laravel 13 · Inertia v3 (inertia-laravel 3.3, @inertiajs/react 3) · React 19 (React Compiler on) · TypeScript 7 · Tailwind v4 · Pest 5 / PHPUnit 13 · Larastan 3 (level 7) · Fortify 1.39 · Wayfinder 0.1 (pre-1.0) · PostgreSQL 18 · Vite 8 via vite-plus 0.3.
+PHP 8.5 · Laravel 13 · Inertia v3 (inertia-laravel 3.5, @inertiajs/react 3.8) · React 19 (React Compiler on) · TypeScript 7 · Tailwind v4 · Pest 5 / PHPUnit 13 · Larastan 3 (level 7) · Fortify 1.40 · Wayfinder 0.1 (pre-1.0) · PostgreSQL 18 · Vite 8 via vite-plus 1.0 · Vitest 5 (run as `vp test`) · Playwright 1.63 · react-zoom-pan-pinch 4.
 
 - These are newer than most training data. Use Boost `search-docs` for Laravel/Inertia/Pest APIs instead of recalling them.
 - Frontend routes come from Wayfinder: import from `@/actions/...` or `@/routes/...`; never hardcode URLs. After adding or renaming a route, regenerate with `vendor/bin/sail artisan wayfinder:generate` (the Vite plugin also does it in dev).
+- Before adding a frontend dependency, check `package.json`: zoom/pan already uses `react-zoom-pan-pinch` (`resources/js/components/sources/source-viewer.tsx`); UI primitives come from `resources/js/components/ui/`. New dependencies need the user's approval.
+
+## UI: tokens and shared components
+
+- Tokens live in `resources/css/app.css` (`:root` / `.dark` mapped into `@theme`). Use role classes (`text-destructive-foreground`, `bg-accent`, `text-muted-foreground`). In views: no Tailwind palette classes (`text-red-600`), no hex, `rgb()` or `oklch()`, no arbitrary pixel values (`ring-[3px]`) and no inline `style=`.
+- Before creating a component, check `resources/js/components/ui/` and the shared `components/{heading,search-field,segmented-toggle,empty-state,side-panel,table-parts}.tsx`. A missing shadcn component comes from `npx shadcn add <name>` (new dependencies need approval).
+- Focus ring for elements outside `components/ui/`: `focusRing` from `resources/js/lib/focus-ring.ts`. The open record on list cards is `selectedListItem` from `resources/js/lib/list-item-styles.ts` (focus wins over the selection ring). Sticky table columns come from `resources/js/lib/table-styles.ts`. List pages: `Heading variant="page"` and the search row with `role="search"`.
+- Controls: `resources/js/lib/view-tokens.test.ts` scans the `/persons`, `/sources` and `/places` view files (runs in `npm run test:js`). Visual gate: screenshots in `context/changes/<id>/screenshots/`.
+
+## Side panels vs modals
+
+- Person, source, marriage and locality open in a right-hand side panel, not a modal. Tree add/choose person (slots, spouse menu, empty tree) happens in the add panel `?add=` (reference: `resources/js/components/tree/add-person-panel.tsx`). Creating a person from `/persons` is the same add panel as `?add=person` (a bare form), not a modal. Modals remain for delete confirmations, `MarryCoupleDialog` and small pickers without a form (parish inline, buried pick-person-dialog) (`resources/js/components/ui/dialog.tsx`).
+- An open panel must not cover the tree: the tree area narrows beside it. Do not use an overlay for these panels — `resources/js/components/ui/sheet.tsx` is an overlay (Radix Dialog) and does not meet this as-is.
+- Build one shared panel shell and reuse it for all four; the source panel is wider (scan beside the form).
+- Closing a panel returns the user to the same tree position; moving to a relative replaces the panel content.
+
+## Migrations that move existing data
+
+- A migration that rewrites existing rows (free text → reference, field → other field) gets its own Pest test in `tests/Feature/<Name>MigrationTest.php`, following `tests/Feature/SourceMigrationTest.php`: insert rows in the old shape, run the migration, assert the new shape and that no value was lost.
+- Copy first, drop later: never drop the source column in the same migration that copies from it. Values the user must transfer by hand (e.g. the old source "Numer wpisu") stay readable until the user removes them.
+- Migrations must be reversible (`down()`) or state in a comment why they cannot be.
+- Production runs `backup:run --only-db` before `migrate` (`scripts/deploy.sh`); do not remove that step.
 
 ## Backend conventions for tree-owned data
 
-- Every domain record belongs to a tree (`tree_id`). Scope reads through the user's tree (`$request->user()->tree->scans()`), never through a global query.
+- Every domain record belongs to a tree (`tree_id`). Scope reads through the user's tree (`$request->user()->tree->sources()`), never through a global query.
 - Authorization: one Policy per model in `app/Policies/`; ownership check is `$model->tree_id === $user->tree->id`, denial is `Response::denyAsNotFound()` (another user's record is a 404, not a 403).
 - Write path: controller → Form Request (`app/Http/Requests/<Model><Action>Request.php`) → Action class (`app/Actions/<Domain>/<Verb><Model>.php` with a `handle()` method) → redirect with `Inertia::flash('toast', ['type' => 'success', 'message' => __('...')])`. UI strings are Polish.
 - Read path: pass data to Inertia pages through API Resources (`app/Http/Resources/`) with `->resolve()`; pages live in `resources/js/pages/<domain>/{index,create,show,edit}.tsx`, domain components in `resources/js/components/<domain>/`.
-- Deleting a record that others reference shows the affected items first and requires explicit confirmation (pattern: `resources/js/components/scans/delete-scan-dialog.tsx`).
+- Deleting a record that others reference shows the affected items first and requires explicit confirmation (pattern: `resources/js/components/sources/delete-source-dialog.tsx`).
 - Every new endpoint gets a Pest feature test in `tests/Feature/<Domain>Test.php` covering the happy path and the other-user 404.
+- Places and parishes are tree-owned records like every other: unique per tree, scoped through `$request->user()->tree`, Policy with `denyAsNotFound()`.
+- Merging a duplicate (place or parish) moves every reference — parishes, gravestones, event places, burial places, residences — to the target inside one DB transaction, then deletes the duplicate. Both records must belong to the same tree; the merge test covers every reference type and the other-user 404.
+- Deleting a place or parish is allowed only when nothing references it.
+- Miejscowości i parafie to jedna strona `/places` z przełącznikiem `?kind=` i jednym wpisem „Miejsca” w menu; nie dodawaj osobnej listy ani wpisu. Stare `/localities` i `/parishes` tylko przekierowują, a segmenty z licznikiem 0 nie są wyłączane (w odróżnieniu od `/sources`), bo pusta zakładka dodaje pierwszy rekord.
 
 ===
 

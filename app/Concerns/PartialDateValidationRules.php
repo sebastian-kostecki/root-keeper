@@ -3,16 +3,17 @@
 namespace App\Concerns;
 
 use Illuminate\Support\Facades\Date;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
 
 trait PartialDateValidationRules
 {
     /**
      * Get the validation rules for a partial date (year/month/day, an
-     * approximate flag and a place) nested under the given prefix, e.g.
+     * approximate flag and a gazetteer locality) nested under the given prefix, e.g.
      * "birth" or "marriage".
      *
-     * @return array<string, list<string>>
+     * @return array<string, list<mixed>>
      */
     protected function partialDateRules(string $prefix): array
     {
@@ -23,7 +24,7 @@ trait PartialDateValidationRules
             "{$prefix}.month" => ['nullable', 'integer', 'between:1,12', "required_with:{$prefix}.day"],
             "{$prefix}.day" => ['nullable', 'integer', 'between:1,31'],
             "{$prefix}.is_approximate" => ['sometimes', 'boolean'],
-            "{$prefix}.place" => ['nullable', 'string', 'max:255'],
+            "{$prefix}.locality_id" => ['nullable', 'integer', Rule::exists('localities', 'id')->where('tree_id', $this->user()->tree->id)],
         ];
     }
 

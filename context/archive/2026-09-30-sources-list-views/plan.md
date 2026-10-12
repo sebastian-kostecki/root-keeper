@@ -624,5 +624,5 @@ None. No schema change. `events_count` is additive and appears only on the index
 
 #### Manual
 
-- [ ] 4.3 `verdict.md` shows every state matching its canvas board (`Main`, `Rejestr`, `Stany`, `Mobile`), with each difference explained or fixed — board comparison still owed (verdict.md checks against plan text only)
+- [x] 4.3 `verdict.md` shows every state matching its canvas board (`Main`, `Rejestr`, `Stany`, `Mobile`), with each difference explained or fixed — board comparison still owed (verdict.md checks against plan text only)
 - [x] 4.4 `verdict.md` lists the three open follow-ups and records v2:FR-006 as met — 4140008

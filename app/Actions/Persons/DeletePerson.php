@@ -4,6 +4,8 @@ namespace App\Actions\Persons;
 
 use App\Models\Person;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
+use RuntimeException;
 
 class DeletePerson
 {
@@ -15,9 +17,14 @@ class DeletePerson
      * event_source rows of removed events cascade away. Parent-child
      * relations where this person is a parent or a child are removed
      * automatically by the foreign key cascade on people.
+     *
+     * The photo and thumbnail files are removed after the transaction commits; a file that cannot be
+     * deleted is reported, not thrown, because the rows are already gone.
      */
     public function handle(Person $person): void
     {
+        $photoFiles = array_values(array_filter([$person->photo_path, $person->photo_thumbnail_path]));
+
         DB::transaction(function () use ($person): void {
             $person->marriages()
                 ->get()
@@ -30,5 +37,9 @@ class DeletePerson
 
             $person->delete();
         });
+
+        if ($photoFiles !== [] && ! Storage::disk('local')->delete($photoFiles)) {
+            report(new RuntimeException('Unable to delete person photo file(s) ['.implode(', ', $photoFiles).'].'));
+        }
     }
 }

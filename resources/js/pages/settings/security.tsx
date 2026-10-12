@@ -24,15 +24,15 @@ export default function Security(props: Props) {
 
     return (
         <>
-            <Head title="Security settings" />
+            <Head title="Ustawienia zabezpieczeń" />
 
-            <h1 className="sr-only">Security settings</h1>
+            <h1 className="sr-only">Ustawienia zabezpieczeń</h1>
 
             <div className="space-y-6">
                 <Heading
                     variant="small"
-                    title="Update password"
-                    description="Ensure your account is using a long, random password to stay secure"
+                    title="Zmiana hasła"
+                    description="Długie, losowe hasło chroni konto"
                 />
 
                 <Form
@@ -141,7 +141,7 @@ export default function Security(props: Props) {
 Security.layout = {
     breadcrumbs: [
         {
-            title: 'Security settings',
+            title: 'Ustawienia zabezpieczeń',
             href: edit(),
         },
     ],

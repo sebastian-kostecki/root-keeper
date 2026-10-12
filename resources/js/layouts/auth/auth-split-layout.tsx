@@ -1,6 +1,8 @@
 import { Link } from '@inertiajs/react';
 import AppLogo from '@/components/app-logo';
 import AuthBrandPanel from '@/components/auth/auth-brand-panel';
+import { focusRing } from '@/lib/focus-ring';
+import { cn } from '@/lib/utils';
 import { home } from '@/routes';
 import type { AuthLayoutProps } from '@/types';
 
@@ -16,7 +18,10 @@ export default function AuthSplitLayout({
                 <div className="p-6 lg:hidden">
                     <Link
                         href={home()}
-                        className="focus-visible:ring-ring flex w-fit items-center rounded-md outline-none focus-visible:ring-2"
+                        className={cn(
+                            'flex w-fit items-center rounded-md',
+                            focusRing,
+                        )}
                     >
                         <AppLogo />
                     </Link>

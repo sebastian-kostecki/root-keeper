@@ -3,7 +3,11 @@
 namespace App\Http\Middleware;
 
 use App\Actions\Persons\BuildPersonPreview;
+use App\Actions\Relations\BuildMarriagePanel;
+use App\Enums\EventType;
 use App\Http\Resources\SourceResource;
+use App\Models\Event;
+use App\Models\Locality;
 use App\Models\Person;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -50,14 +54,26 @@ class HandleInertiaRequests extends Middleware
             'navCounts' => fn (): ?array => $request->user() === null ? null : [
                 'people' => $request->user()->tree->people()->count(),
                 'sources' => $request->user()->tree->sources()->count(),
+                'localities' => $request->user()->tree->localities()->count(),
+                'parishes' => $request->user()->tree->parishes()->count(),
             ],
             'personPreview' => function () use ($request): ?array {
                 $person = $this->previewPerson($request);
 
                 return $person === null ? null : app(BuildPersonPreview::class)->handle($person, $request->user());
             },
+            'marriagePanel' => function () use ($request): ?array {
+                $marriage = $this->marriagePanelEvent($request);
+
+                return $marriage === null ? null : app(BuildMarriagePanel::class)->handle($marriage);
+            },
+            'localityOptions' => Inertia::optional(fn (): array => $request->user() === null ? [] : $request->user()->tree->localities()
+                ->orderBy('name')
+                ->get(['id', 'name'])
+                ->map(fn (Locality $locality): array => ['id' => $locality->id, 'name' => $locality->name])
+                ->all()),
             'availableSources' => Inertia::optional(fn (): array => $request->user() === null ? [] : SourceResource::collection(
-                $request->user()->tree->sources()->latest()->orderByDesc('id')->get()
+                $request->user()->tree->sources()->with(['parish.locality', 'cemetery'])->latest()->orderByDesc('id')->get()
             )->resolve()),
         ];
     }
@@ -88,5 +104,36 @@ class HandleInertiaRequests extends Middleware
         $request->attributes->set('previewPerson', $person);
 
         return $person;
+    }
+
+    /**
+     * Resolve the marriage named by the `marriage` query parameter from the user's own tree.
+     *
+     * Returns null without an authenticated user or a numeric parameter; a missing, foreign, non-marriage
+     * or not-two-spouse id is a 404. The resolved marriage is memoized on the request.
+     */
+    private function marriagePanelEvent(Request $request): ?Event
+    {
+        $user = $request->user();
+        $id = $request->query('marriage');
+
+        if ($user === null || ! is_string($id) || ! ctype_digit($id)) {
+            return null;
+        }
+
+        if ($request->attributes->has('marriagePanelEvent')) {
+            return $request->attributes->get('marriagePanelEvent');
+        }
+
+        $marriage = $user->tree->events()->where('type', EventType::Marriage)->findOrFail((int) $id);
+
+        Gate::authorize('view', $marriage);
+
+        $marriage->loadMissing('participants');
+        abort_unless($marriage->participants->count() === 2, 404);
+
+        $request->attributes->set('marriagePanelEvent', $marriage);
+
+        return $marriage;
     }
 }

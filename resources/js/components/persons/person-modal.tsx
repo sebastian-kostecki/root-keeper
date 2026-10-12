@@ -1,5 +1,7 @@
 import { useState } from 'react';
+import { EventsTab } from '@/components/persons/events-tab';
 import { FamilyTab } from '@/components/persons/family-tab';
+import { NoteTab } from '@/components/persons/note-tab';
 import { OverviewTab } from '@/components/persons/overview-tab';
 import { useSectionEditor } from '@/components/persons/section-editor';
 import { SourcesTab } from '@/components/persons/sources-tab';
@@ -23,7 +25,7 @@ function TabCount({ count }: { count: number }) {
     );
 }
 
-/** Tabbed body of the person modal (view mode): Przegląd, Rodzina, Źródła. */
+/** Tabbed body of the person panel (view mode): Przegląd, Rodzina, Źródła, Wydarzenia, Notatka. */
 export function PersonModal({ preview, availableSources }: Props) {
     const { person } = preview;
     const { requestExit } = useSectionEditor();
@@ -48,49 +50,69 @@ export function PersonModal({ preview, availableSources }: Props) {
         ].map((source) => source.id),
     ).size;
 
+    const hasNote = Boolean(person.note?.trim());
+
     return (
         <Tabs
             value={tab}
             onValueChange={(value) => requestExit(() => setTab(value))}
-            className="min-h-0 flex-1 gap-0"
+            className="gap-0"
         >
-            <div className="border-b px-6 pb-3">
-                <TabsList className="w-full sm:w-fit">
-                    <TabsTrigger value="przeglad">Przegląd</TabsTrigger>
-                    <TabsTrigger value="rodzina">
-                        Rodzina
-                        <TabCount count={familyCount} />
-                    </TabsTrigger>
-                    <TabsTrigger value="zrodla">
-                        Źródła
-                        <TabCount count={sourceCount} />
-                    </TabsTrigger>
-                </TabsList>
+            <div className="border-b pb-3">
+                <div className="-m-1 overflow-x-auto p-1">
+                    <TabsList className="w-full sm:w-fit">
+                        <TabsTrigger value="przeglad" className="shrink-0">
+                            Przegląd
+                        </TabsTrigger>
+                        <TabsTrigger value="rodzina" className="shrink-0">
+                            Rodzina
+                            <TabCount count={familyCount} />
+                        </TabsTrigger>
+                        <TabsTrigger value="zrodla" className="shrink-0">
+                            Źródła
+                            <TabCount count={sourceCount} />
+                        </TabsTrigger>
+                        <TabsTrigger value="wydarzenia" className="shrink-0">
+                            Wydarzenia
+                        </TabsTrigger>
+                        <TabsTrigger value="notatka" className="shrink-0">
+                            Notatka
+                            {hasNote && (
+                                <>
+                                    <span
+                                        aria-hidden
+                                        className="bg-primary size-1.5 rounded-full"
+                                    />
+                                    <span className="sr-only">
+                                        (jest notatka)
+                                    </span>
+                                </>
+                            )}
+                        </TabsTrigger>
+                    </TabsList>
+                </div>
             </div>
 
-            <TabsContent
-                value="przeglad"
-                className="min-h-0 flex-1 overflow-y-auto px-6 py-4"
-            >
+            <TabsContent value="przeglad" className="py-4">
                 <OverviewTab
                     preview={preview}
                     availableSources={availableSources}
                 />
             </TabsContent>
-            <TabsContent
-                value="rodzina"
-                className="min-h-0 flex-1 overflow-y-auto px-6 py-4"
-            >
+            <TabsContent value="rodzina" className="py-4">
                 <FamilyTab person={person} />
             </TabsContent>
-            <TabsContent
-                value="zrodla"
-                className="min-h-0 flex-1 overflow-y-auto px-6 py-4"
-            >
+            <TabsContent value="zrodla" className="py-4">
                 <SourcesTab
                     person={person}
                     availableSources={availableSources}
                 />
+            </TabsContent>
+            <TabsContent value="wydarzenia" className="py-4">
+                <EventsTab person={person} />
+            </TabsContent>
+            <TabsContent value="notatka" className="py-4">
+                <NoteTab person={person} />
             </TabsContent>
         </Tabs>
     );

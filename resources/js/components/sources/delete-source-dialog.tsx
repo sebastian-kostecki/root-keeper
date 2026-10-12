@@ -22,6 +22,7 @@ type Props = {
 export function DeleteSourceDialog({ source, confirms, trigger }: Props) {
     const [open, setOpen] = useState(false);
     const [processing, setProcessing] = useState(false);
+    const buried = source.buried_people ?? [];
 
     const handleConfirm = () => {
         setProcessing(true);
@@ -67,7 +68,7 @@ export function DeleteSourceDialog({ source, confirms, trigger }: Props) {
                                         {confirmation.event_label} —{' '}
                                         {confirmation.person.display_name} —{' '}
                                         {confirmation.is_last_source ? (
-                                            <span className="text-destructive font-medium">
+                                            <span className="text-destructive-foreground font-medium">
                                                 stanie się niepotwierdzone
                                             </span>
                                         ) : (
@@ -83,6 +84,22 @@ export function DeleteSourceDialog({ source, confirms, trigger }: Props) {
                     </>
                 )}
 
+                {buried.length > 0 && (
+                    <div className="space-y-1">
+                        <p className="text-muted-foreground text-sm">
+                            Ten nagrobek zniknie z listy pochowanych:
+                        </p>
+                        <ul className="list-disc space-y-1 pl-5 text-sm">
+                            {buried.map((person) => (
+                                <li key={person.id}>{person.display_name}</li>
+                            ))}
+                        </ul>
+                        <p className="text-muted-foreground text-sm">
+                            Miejsca pochowania tych osób zostają.
+                        </p>
+                    </div>
+                )}
+
                 <DialogFooter className="gap-2">
                     <DialogClose asChild>
                         <Button type="button" variant="secondary">
@@ -96,7 +113,7 @@ export function DeleteSourceDialog({ source, confirms, trigger }: Props) {
                         disabled={processing}
                         onClick={handleConfirm}
                     >
-                        Usuń
+                        Usuń źródło
                     </Button>
                 </DialogFooter>
             </DialogContent>

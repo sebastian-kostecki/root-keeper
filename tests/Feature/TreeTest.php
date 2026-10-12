@@ -1,6 +1,7 @@
 <?php
 
 use App\Actions\Trees\SetTreeRootPerson;
+use App\Enums\EventType;
 use App\Enums\ParticipantRole;
 use App\Models\Event;
 use App\Models\Person;
@@ -106,6 +107,7 @@ test('guests are redirected to the login page from the tree routes', function ()
 
     $this->get(route('tree.index'))->assertRedirect(route('login'));
     $this->get(route('tree.show', $person))->assertRedirect(route('login'));
+    $this->get(route('tree.ancestors', $person))->assertRedirect(route('login'));
 });
 
 test('the tree index has no sheet without a proband', function () {
@@ -115,6 +117,19 @@ test('the tree index has no sheet without a proband', function () {
         ->assertInertia(fn ($page) => $page
             ->component('tree/show')
             ->where('sheet', null)
+            ->where('hasPeople', false)
+            ->where('rootPersonId', null));
+});
+
+test('the tree index without a proband but with people has no sheet and reports people', function () {
+    $user = User::factory()->create();
+    Person::factory()->for($user->tree)->create();
+
+    $this->actingAs($user)->get(route('tree.index'))
+        ->assertInertia(fn ($page) => $page
+            ->component('tree/show')
+            ->where('sheet', null)
+            ->where('hasPeople', true)
             ->where('rootPersonId', null));
 });
 
@@ -473,6 +488,28 @@ test('the lifespan label covers approximate, missing and unknown years', functio
     expect(sheetFor($this, $user, $nothing)['focus']['lifespan'])->toBeNull();
 });
 
+test('the sheet card carries the age of a deceased and a living person, leaving the lifespan unchanged', function () {
+    $this->travelTo('2026-10-05 12:00:00');
+    $user = User::factory()->create();
+    $tree = $user->tree;
+
+    $deceased = Person::factory()->for($tree)->create();
+    attachBirth($deceased, 1850);
+    attachDeath($deceased, 1922);
+    $sheet = sheetFor($this, $user, $deceased);
+    expect($sheet['focus']['age'])->toBe(['unit' => 'years', 'value' => 72]);
+    expect($sheet['focus']['lifespan'])->toBe('1850 – 1922');
+
+    $living = Person::factory()->for($tree)->create();
+    attachBirth($living, 1980, 3, 10);
+    $sheet = sheetFor($this, $user, $living);
+    expect($sheet['focus']['age'])->toBe(['unit' => 'years', 'value' => 46]);
+    expect($sheet['focus']['lifespan'])->toBe('1980 –');
+
+    $unknown = Person::factory()->for($tree)->create();
+    expect(sheetFor($this, $user, $unknown)['focus']['age'])->toBeNull();
+});
+
 test('the sheet query count does not grow with the size of the tree', function () {
     $countQueries = function (int $extraPeople) {
         $user = User::factory()->create();
@@ -689,4 +726,179 @@ test('the partner block marks the partners unmarried parents only when there is 
 
     attachMarriage($focus, $wife, 1900);
     expect(sheetFor($this, $user, $focus)['unmarried_parents'])->toBe(['focus' => false, 'partner' => true]);
+});
+
+test('a union carries the marriage id for a marriage and null for a co-parent and the unknown union', function () {
+    $user = User::factory()->create();
+    $tree = $user->tree;
+    $focus = Person::factory()->for($tree)->male()->create();
+    $wife = Person::factory()->for($tree)->female()->create();
+    $coParent = Person::factory()->for($tree)->female()->create();
+
+    $marriage = attachMarriage($focus, $wife, 1880);
+
+    $childOfWife = Person::factory()->for($tree)->create();
+    $childOfCoParent = Person::factory()->for($tree)->create();
+    $childOfUnknown = Person::factory()->for($tree)->create();
+    linkParent($focus, $childOfWife);
+    linkParent($wife, $childOfWife);
+    linkParent($focus, $childOfCoParent);
+    linkParent($coParent, $childOfCoParent);
+    linkParent($focus, $childOfUnknown);
+
+    $sheet = sheetFor($this, $user, $focus);
+
+    expect(collect($sheet['unions'])->pluck('marriage_id', 'key')->all())->toBe([
+        "person-{$wife->id}" => $marriage->id,
+        "person-{$coParent->id}" => null,
+        'unknown' => null,
+    ]);
+});
+
+test('the family sheet carries the photo version of the focus person and the shown spouse', function () {
+    $user = User::factory()->create();
+    $focus = Person::factory()->for($user->tree)->male()->create([
+        'photo_path' => "persons/{$user->tree->id}/a.jpg",
+        'photo_thumbnail_path' => "persons/{$user->tree->id}/thumbnails/0f3c2a1e-aaaa-4bbb-8ccc-123456789abc.jpg",
+    ]);
+    $wife = Person::factory()->for($user->tree)->female()->create();
+    attachMarriage($focus, $wife, 1880);
+
+    $sheet = sheetFor($this, $user, $focus);
+
+    expect($sheet['focus']['photo_version'])->toBe('0f3c2a1e-aaaa-4bbb-8ccc-123456789abc')
+        ->and($sheet['partner']['person']['photo_version'])->toBeNull();
+});
+
+test('a shown parent pair carries the year of its marriage, and the partner block stays null without a partner', function () {
+    $user = User::factory()->create();
+    $tree = $user->tree;
+    $focus = Person::factory()->for($tree)->create();
+    $father = Person::factory()->for($tree)->male()->create();
+    $mother = Person::factory()->for($tree)->female()->create();
+    linkParent($father, $focus);
+    linkParent($mother, $focus);
+    attachMarriage($father, $mother, 1861);
+
+    $sheet = sheetFor($this, $user, $focus);
+
+    expect($sheet['parent_marriages']['focus'])->toBe(['year' => '1861']);
+    expect($sheet['parent_marriages']['partner'])->toBeNull();
+});
+
+test('a parent pair married without a known date carries a null year', function () {
+    $user = User::factory()->create();
+    $tree = $user->tree;
+    $focus = Person::factory()->for($tree)->create();
+    $father = Person::factory()->for($tree)->male()->create();
+    $mother = Person::factory()->for($tree)->female()->create();
+    linkParent($father, $focus);
+    linkParent($mother, $focus);
+    attachMarriage($father, $mother);
+
+    expect(sheetFor($this, $user, $focus)['parent_marriages']['focus'])->toBe(['year' => null]);
+});
+
+test('an approximate parent marriage is labelled with ok.', function () {
+    $user = User::factory()->create();
+    $tree = $user->tree;
+    $focus = Person::factory()->for($tree)->create();
+    $father = Person::factory()->for($tree)->male()->create();
+    $mother = Person::factory()->for($tree)->female()->create();
+    linkParent($father, $focus);
+    linkParent($mother, $focus);
+
+    $marriage = Event::factory()->for($tree)->create([
+        'type' => EventType::Marriage,
+        'date_year' => 1828,
+        'date_month' => null,
+        'date_day' => null,
+        'date_is_approximate' => true,
+    ]);
+    $marriage->participants()->attach([
+        $father->id => ['role' => ParticipantRole::Spouse],
+        $mother->id => ['role' => ParticipantRole::Spouse],
+    ]);
+
+    expect(sheetFor($this, $user, $focus)['parent_marriages']['focus'])->toBe(['year' => 'ok. 1828']);
+});
+
+test('a parent pair without a marriage carries null', function () {
+    $user = User::factory()->create();
+    $tree = $user->tree;
+    $focus = Person::factory()->for($tree)->create();
+    linkParent(Person::factory()->for($tree)->male()->create(), $focus);
+    linkParent(Person::factory()->for($tree)->female()->create(), $focus);
+
+    expect(sheetFor($this, $user, $focus)['parent_marriages']['focus'])->toBeNull();
+});
+
+test('a parent pair with an unknown parent carries null even when the known parent is married', function () {
+    $user = User::factory()->create();
+    $tree = $user->tree;
+    $focus = Person::factory()->for($tree)->create();
+    $father = Person::factory()->for($tree)->male()->create();
+    linkParent($father, $focus);
+    attachMarriage($father, Person::factory()->for($tree)->female()->create(), 1861);
+
+    expect(sheetFor($this, $user, $focus)['parent_marriages']['focus'])->toBeNull();
+});
+
+test('a grandparent pair carries the year of its marriage and the other pairs stay null', function () {
+    $user = User::factory()->create();
+    $tree = $user->tree;
+    $focus = Person::factory()->for($tree)->create();
+    $father = Person::factory()->for($tree)->male()->create();
+    $grandfather = Person::factory()->for($tree)->male()->create();
+    $grandmother = Person::factory()->for($tree)->female()->create();
+    linkParent($father, $focus);
+    linkParent($grandfather, $father);
+    linkParent($grandmother, $father);
+    attachMarriage($grandfather, $grandmother, 1820);
+
+    $sheet = sheetFor($this, $user, $focus);
+
+    expect($sheet['grandparent_marriages']['focus'])->toBe([['year' => '1820'], null]);
+    expect($sheet['grandparent_marriages']['partner'])->toBe([null, null]);
+});
+
+test('the partner block carries the marriage year of the partners parents', function () {
+    $user = User::factory()->create();
+    $tree = $user->tree;
+    $focus = Person::factory()->for($tree)->male()->create();
+    $wife = Person::factory()->for($tree)->female()->create();
+    $wifeFather = Person::factory()->for($tree)->male()->create();
+    $wifeMother = Person::factory()->for($tree)->female()->create();
+    attachMarriage($focus, $wife, 1900);
+    linkParent($wifeFather, $wife);
+    linkParent($wifeMother, $wife);
+    attachMarriage($wifeFather, $wifeMother, 1870);
+
+    $sheet = sheetFor($this, $user, $focus);
+
+    expect($sheet['parent_marriages']['partner'])->toBe(['year' => '1870']);
+    expect($sheet['parent_marriages']['focus'])->toBeNull();
+});
+
+test('two marriages of the same parent pair carry the year of the earliest', function () {
+    $user = User::factory()->create();
+    $tree = $user->tree;
+    $focus = Person::factory()->for($tree)->create();
+    $father = Person::factory()->for($tree)->male()->create();
+    $mother = Person::factory()->for($tree)->female()->create();
+    linkParent($father, $focus);
+    linkParent($mother, $focus);
+    attachMarriage($father, $mother, 1890);
+    attachMarriage($father, $mother, 1880);
+
+    expect(sheetFor($this, $user, $focus)['parent_marriages']['focus'])->toBe(['year' => '1880']);
+});
+
+test('another tree\'s person is a 404 on the tree page', function () {
+    $user = User::factory()->create();
+    $foreign = Person::factory()->create();
+
+    $this->actingAs($user)
+        ->get(route('tree.show', $foreign))
+        ->assertNotFound();
 });

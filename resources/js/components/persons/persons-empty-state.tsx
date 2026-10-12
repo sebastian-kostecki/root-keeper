@@ -3,7 +3,7 @@ import type { ReactNode } from 'react';
 import { EmptyState } from '@/components/empty-state';
 import { Button } from '@/components/ui/button';
 
-/** The tree has no people yet; `action` is the „Dodaj osobę” trigger. */
+/** The tree has no people yet; `action` is the „Dodaj osobę” link that opens the add panel (`?add=person`). */
 export function PersonsEmptyTree({ action }: { action: ReactNode }) {
     return (
         <EmptyState

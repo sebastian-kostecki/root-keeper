@@ -1,6 +1,8 @@
 <?php
 
+use App\Models\Person;
 use App\Models\User;
+use Illuminate\Support\Facades\Storage;
 
 test('profile page is displayed', function () {
     $user = User::factory()->create();
@@ -65,6 +67,21 @@ test('user can delete their account', function () {
 
     $this->assertGuest();
     expect($user->fresh())->toBeNull();
+});
+
+test('deleting the account removes the photo folder of the tree', function () {
+    Storage::fake('local');
+    $user = User::factory()->create();
+    $person = Person::factory()->for($user->tree)->create();
+    $photo = "persons/{$user->tree->id}/thumbnails/foto.jpg";
+    Storage::disk('local')->put($photo, 'thumbnail');
+
+    $this->actingAs($user)
+        ->delete(route('profile.destroy'), ['password' => 'password'])
+        ->assertRedirect(route('home'));
+
+    expect(Storage::disk('local')->exists($photo))->toBeFalse()
+        ->and(Person::find($person->id))->toBeNull();
 });
 
 test('correct password must be provided to delete account', function () {

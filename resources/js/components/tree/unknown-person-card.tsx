@@ -4,6 +4,7 @@ import {
     cardSurface,
     placeholderAction,
     placeholderStatic,
+    triggerActive,
 } from '@/components/tree/card-styles';
 import { cn } from '@/lib/utils';
 
@@ -12,6 +13,8 @@ type Props = Omit<React.ComponentProps<'button'>, 'children'> & {
     label: string;
     /** When set, the card is a button (a dialog trigger) with this aria-label. */
     addLabel?: string;
+    /** The add panel of this card is open: the card is marked expanded and filled. */
+    active?: boolean;
 };
 
 /**
@@ -19,10 +22,15 @@ type Props = Omit<React.ComponentProps<'button'>, 'children'> & {
  * dashed button (a dialog trigger) showing a plus and the verb; without, a
  * static muted block with the label.
  */
-export function UnknownPersonCard({ label, addLabel, ...props }: Props) {
+export function UnknownPersonCard({
+    label,
+    addLabel,
+    active = false,
+    ...props
+}: Props) {
     if (addLabel === undefined) {
         return (
-            <div className={cn(cardSurface, placeholderStatic, 'text-sm')}>
+            <div className={cn(cardSurface, placeholderStatic, 'text-base')}>
                 {label}
             </div>
         );
@@ -32,11 +40,13 @@ export function UnknownPersonCard({ label, addLabel, ...props }: Props) {
         <button
             type="button"
             aria-label={addLabel}
+            aria-expanded={active ? true : undefined}
             {...props}
             className={cn(
                 cardSurface,
                 placeholderAction,
-                'w-full cursor-pointer flex-row gap-1 text-sm',
+                active && triggerActive,
+                'w-full cursor-pointer flex-row gap-1 text-base',
             )}
         >
             <Plus className="size-4 shrink-0" aria-hidden="true" />

@@ -2,7 +2,9 @@
 
 use App\Enums\ParticipantRole;
 use App\Models\Event;
+use App\Models\Locality;
 use App\Models\ParentChildRelation;
+use App\Models\Parish;
 use App\Models\Person;
 use App\Models\Source;
 use App\Models\User;
@@ -19,7 +21,13 @@ use Illuminate\Support\Facades\Storage;
  */
 function ownershipRecords(User $attacker, User $victim): array
 {
-    $victimPerson = Person::factory()->for($victim->tree)->create();
+    $victimPerson = Person::factory()->for($victim->tree)->create([
+        'photo_path' => "persons/{$victim->tree->id}/victim.jpg",
+        'photo_thumbnail_path' => "persons/{$victim->tree->id}/thumbnails/victim.jpg",
+    ]);
+    Storage::disk('local')->put($victimPerson->photo_path, 'original-bytes');
+    Storage::disk('local')->put($victimPerson->photo_thumbnail_path, 'thumbnail-bytes');
+
     $victimSpouse = Person::factory()->for($victim->tree)->create();
     $victimChild = Person::factory()->for($victim->tree)->create();
 
@@ -46,6 +54,8 @@ function ownershipRecords(User $attacker, User $victim): array
         'victimSource' => $victimSource,
         'victimEvent' => $victimEvent,
         'victimMarriage' => $victimMarriage,
+        'victimLocality' => Locality::factory()->for($victim->tree)->create(),
+        'victimParish' => Parish::factory()->for($victim->tree)->create(),
         'victimRelation' => ParentChildRelation::factory()->create([
             'tree_id' => $victim->tree->id,
             'parent_id' => $victimPerson->id,
@@ -54,6 +64,8 @@ function ownershipRecords(User $attacker, User $victim): array
         'ownPerson' => Person::factory()->for($attacker->tree)->create(),
         'ownSource' => $ownSource,
         'ownEvent' => $ownEvent,
+        'ownLocality' => Locality::factory()->for($attacker->tree)->create(),
+        'ownParish' => Parish::factory()->for($attacker->tree)->create(),
     ];
 }
 
@@ -77,7 +89,13 @@ function ownershipRouteCases(): array
         ['persons.spouses.attach', 'post', fn (array $r): array => ['person' => $r['victimPerson']->id], fn (array $r): array => ['spouse_id' => $r['ownPerson']->id]],
         ['persons.spouses.store', 'post', fn (array $r): array => ['person' => $r['victimPerson']->id], fn (array $r): array => ['first_name' => 'Anna']],
         ['persons.update', 'put', fn (array $r): array => ['person' => $r['victimPerson']->id], fn (array $r): array => ['first_name' => 'Hacked']],
+        ['persons.note.update', 'put', fn (array $r): array => ['person' => $r['victimPerson']->id], fn (array $r): array => ['note' => 'Przejęta']],
+        ['persons.photo.store', 'post', fn (array $r): array => ['person' => $r['victimPerson']->id], fn (array $r): array => ['photo' => new UploadedFile(base_path('tests/Fixtures/portrait-small.jpg'), 'portret.jpg', 'image/jpeg', null, true)]],
         ['sources.update', 'put', fn (array $r): array => ['source' => $r['victimSource']->id], fn (array $r): array => ['kind' => 'other', 'name' => 'Przejęte']],
+        ['localities.update', 'put', fn (array $r): array => ['locality' => $r['victimLocality']->id], fn (array $r): array => ['name' => 'Przejęta']],
+        ['localities.merge', 'post', fn (array $r): array => ['locality' => $r['victimLocality']->id], fn (array $r): array => ['target_id' => $r['ownLocality']->id]],
+        ['parishes.update', 'put', fn (array $r): array => ['parish' => $r['victimParish']->id], fn (array $r): array => ['name' => 'Przejęta']],
+        ['parishes.merge', 'post', fn (array $r): array => ['parish' => $r['victimParish']->id], fn (array $r): array => ['target_id' => $r['ownParish']->id]],
         ['events.sources.store', 'post', fn (array $r): array => ['event' => $r['victimEvent']->id], fn (array $r): array => ['source_id' => $r['ownSource']->id]],
         ['marriages.update', 'put', fn (array $r): array => ['marriage' => $r['victimMarriage']->id], fn (array $r): array => ['marriage' => ['year' => 1950]]],
     ];
@@ -89,12 +107,18 @@ function ownershipRouteCases(): array
 
     $withoutBody = [
         ['tree.show', 'get', fn (array $r): array => ['person' => $r['victimPerson']->id]],
+        ['tree.ancestors', 'get', fn (array $r): array => ['person' => $r['victimPerson']->id]],
         ['sources.show', 'get', fn (array $r): array => ['source' => $r['victimSource']->id]],
         ['sources.file', 'get', fn (array $r): array => ['source' => $r['victimSource']->id]],
         ['sources.thumbnail', 'get', fn (array $r): array => ['source' => $r['victimSource']->id]],
         ['tree.root-person.update', 'put', fn (array $r): array => ['person' => $r['victimPerson']->id]],
         ['persons.destroy', 'delete', fn (array $r): array => ['person' => $r['victimPerson']->id]],
+        ['persons.photo.show', 'get', fn (array $r): array => ['person' => $r['victimPerson']->id]],
+        ['persons.photo.destroy', 'delete', fn (array $r): array => ['person' => $r['victimPerson']->id]],
         ['sources.destroy', 'delete', fn (array $r): array => ['source' => $r['victimSource']->id]],
+        ['sources.legacy-entry-number.destroy', 'delete', fn (array $r): array => ['source' => $r['victimSource']->id]],
+        ['localities.destroy', 'delete', fn (array $r): array => ['locality' => $r['victimLocality']->id]],
+        ['parishes.destroy', 'delete', fn (array $r): array => ['parish' => $r['victimParish']->id]],
         ['parent-child-relations.destroy', 'delete', fn (array $r): array => ['parent_child_relation' => $r['victimRelation']->id]],
         ['marriages.destroy', 'delete', fn (array $r): array => ['marriage' => $r['victimMarriage']->id]],
     ];
@@ -112,6 +136,19 @@ function ownershipRouteCases(): array
         'events.sources.destroy', 'delete',
         fn (array $r): array => ['event' => $r['ownEvent']->id, 'source' => $r['victimSource']->id],
         $noBody,
+    ];
+
+    $updateBody = fn (array $r): array => ['entry_number' => '1'];
+
+    $cases['events.sources.update / cudze wydarzenie i źródło atakującego'] = [
+        'events.sources.update', 'patch',
+        fn (array $r): array => ['event' => $r['victimEvent']->id, 'source' => $r['ownSource']->id],
+        $updateBody,
+    ];
+    $cases['events.sources.update / wydarzenie atakującego i cudze źródło'] = [
+        'events.sources.update', 'patch',
+        fn (array $r): array => ['event' => $r['ownEvent']->id, 'source' => $r['victimSource']->id],
+        $updateBody,
     ];
 
     return $cases;
@@ -168,9 +205,87 @@ it('answers 404 and writes nothing when ?person= names another tree\'s person on
 })->with([
     'tree.index' => ['tree.index', fn (array $r): array => []],
     'tree.show (własna osoba w adresie)' => ['tree.show', fn (array $r): array => ['person' => $r['ownPerson']->id]],
+    'tree.ancestors (własna osoba w adresie)' => ['tree.ancestors', fn (array $r): array => ['person' => $r['ownPerson']->id]],
     'sources.index' => ['sources.index', fn (array $r): array => []],
-    'sources.show (własne źródło w adresie)' => ['sources.show', fn (array $r): array => ['source' => $r['ownSource']->id]],
+    'places.index' => ['places.index', fn (array $r): array => []],
+    'sources.index (otwarty panel własnego źródła)' => ['sources.index', fn (array $r): array => ['source' => $r['ownSource']->id]],
 ]);
+
+it('answers 404 and writes nothing when ?locality= names another tree\'s locality', function () {
+    Storage::fake('local');
+
+    $attacker = User::factory()->create();
+    $victim = User::factory()->create();
+    $records = ownershipRecords($attacker, $victim);
+
+    $before = ownershipSnapshot();
+
+    $this->actingAs($attacker)
+        ->get(route('places.index', ['locality' => $records['victimLocality']->id]))
+        ->assertNotFound();
+
+    expect(ownershipSnapshot())->toBe($before);
+});
+
+it('answers 404 and writes nothing when ?parish= names another tree\'s parish', function () {
+    Storage::fake('local');
+
+    $attacker = User::factory()->create();
+    $victim = User::factory()->create();
+    $records = ownershipRecords($attacker, $victim);
+
+    $before = ownershipSnapshot();
+
+    $this->actingAs($attacker)
+        ->get(route('places.index', ['kind' => 'parafie', 'parish' => $records['victimParish']->id]))
+        ->assertNotFound();
+
+    expect(ownershipSnapshot())->toBe($before);
+});
+
+it('answers 404 and writes nothing when ?source= names another tree\'s source', function () {
+    Storage::fake('local');
+
+    $attacker = User::factory()->create();
+    $victim = User::factory()->create();
+    $records = ownershipRecords($attacker, $victim);
+
+    $before = ownershipSnapshot();
+
+    $this->actingAs($attacker)
+        ->get(route('sources.index', ['source' => $records['victimSource']->id]))
+        ->assertNotFound();
+
+    expect(ownershipSnapshot())->toBe($before);
+});
+
+it('ignores a tree_id sent in the body and creates the locality in the attacker\'s tree', function () {
+    $attacker = User::factory()->create();
+    $victim = User::factory()->create();
+    $victimLocalitiesBefore = $victim->tree->localities()->count();
+
+    $this->actingAs($attacker)
+        ->post(route('localities.store'), ['name' => 'Wstrzyknięta', 'tree_id' => $victim->tree->id]);
+
+    $locality = Locality::where('name', 'Wstrzyknięta')->firstOrFail();
+
+    expect($locality->tree_id)->toBe($attacker->tree->id);
+    expect($victim->tree->localities()->count())->toBe($victimLocalitiesBefore);
+});
+
+it('ignores a tree_id sent in the body and creates the parish in the attacker\'s tree', function (string $route) {
+    $attacker = User::factory()->create();
+    $victim = User::factory()->create();
+    $victimParishesBefore = $victim->tree->parishes()->count();
+
+    $this->actingAs($attacker)
+        ->postJson(route($route), ['name' => 'Wstrzyknięta', 'tree_id' => $victim->tree->id]);
+
+    $parish = Parish::where('name', 'Wstrzyknięta')->firstOrFail();
+
+    expect($parish->tree_id)->toBe($attacker->tree->id);
+    expect($victim->tree->parishes()->count())->toBe($victimParishesBefore);
+})->with(['parishes.store', 'parishes.inline.store']);
 
 it('ignores a tree_id sent in the body and creates the person in the attacker\'s tree', function () {
     $attacker = User::factory()->create();
@@ -207,3 +322,46 @@ it('ignores a tree_id sent in the body and stores the source and its file under 
     expect($source->path)->toStartWith("sources/{$attacker->tree->id}/");
     Storage::disk('local')->assertExists($source->path);
 });
+
+it('rejects a residence in another tree\'s or a missing locality with a validation error and writes nothing', function (string $kind) {
+    Storage::fake('local');
+
+    $attacker = User::factory()->create();
+    $victim = User::factory()->create();
+    $records = ownershipRecords($attacker, $victim);
+
+    $localityId = $kind === 'foreign'
+        ? Locality::factory()->for($victim->tree)->create()->id
+        : 999999;
+
+    $before = ownershipSnapshot();
+
+    $this->actingAs($attacker)
+        ->put(route('persons.update', $records['ownPerson']), [
+            'first_name' => 'Jan',
+            'residences' => [['locality_id' => $localityId]],
+        ])
+        ->assertSessionHasErrors('residences.0.locality_id');
+
+    expect(ownershipSnapshot())->toBe($before);
+})->with(['foreign locality' => 'foreign', 'missing locality' => 'missing']);
+
+it('answers 404 and writes nothing when ?marriage= names another tree\'s marriage on a host page', function (string $route) {
+    Storage::fake('local');
+
+    $attacker = User::factory()->create();
+    $victim = User::factory()->create();
+    $records = ownershipRecords($attacker, $victim);
+
+    $before = ownershipSnapshot();
+
+    $this->actingAs($attacker)
+        ->get(marriagePanelUrl($records['victimMarriage'], $route))
+        ->assertNotFound();
+
+    expect(ownershipSnapshot())->toBe($before);
+})->with([
+    'tree.index' => ['tree.index'],
+    'persons.index' => ['persons.index'],
+    'sources.index' => ['sources.index'],
+]);

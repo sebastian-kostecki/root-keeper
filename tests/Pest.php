@@ -3,6 +3,7 @@
 use App\Enums\EventType;
 use App\Enums\ParticipantRole;
 use App\Models\Event;
+use App\Models\Locality;
 use App\Models\ParentChildRelation;
 use App\Models\Person;
 use App\Models\Source;
@@ -50,7 +51,7 @@ function attachBirth(Person $person, ?int $year = null, ?int $month = null, ?int
 /**
  * Attach a marriage event with the given partial date to the two people.
  */
-function attachMarriage(Person $person, Person $spouse, ?int $year = null, ?int $month = null, ?int $day = null, ?string $place = null): Event
+function attachMarriage(Person $person, Person $spouse, ?int $year = null, ?int $month = null, ?int $day = null, ?Locality $locality = null): Event
 {
     $event = Event::factory()->for($person->tree)->create([
         'type' => EventType::Marriage,
@@ -58,7 +59,7 @@ function attachMarriage(Person $person, Person $spouse, ?int $year = null, ?int 
         'date_month' => $month,
         'date_day' => $day,
         'date_is_approximate' => false,
-        'place' => $place,
+        'locality_id' => $locality?->id,
     ]);
 
     $event->participants()->attach([
@@ -97,7 +98,7 @@ function attachDeath(Person $person, ?int $year, bool $approximate = false): voi
 }
 
 /**
- * Build a host-page URL that opens the preview modal of the given person.
+ * Build a host-page URL that opens the panel of the given person.
  *
  * @param  array<int|string, mixed>  $parameters  Route parameters and query values of the host page.
  */
@@ -106,6 +107,18 @@ function personPreviewUrl(Person $person, string $route = 'persons.index', array
     $url = route($route, $parameters);
 
     return $url.(str_contains($url, '?') ? '&' : '?').http_build_query(['person' => $person->id]);
+}
+
+/**
+ * Build a host-page URL that opens the marriage panel of the given marriage.
+ *
+ * @param  array<int|string, mixed>  $parameters  Route parameters and query values of the host page.
+ */
+function marriagePanelUrl(Event $marriage, string $route = 'persons.index', array $parameters = []): string
+{
+    $url = route($route, $parameters);
+
+    return $url.(str_contains($url, '?') ? '&' : '?').http_build_query(['marriage' => $marriage->id]);
 }
 
 /**

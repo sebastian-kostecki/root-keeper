@@ -15,7 +15,8 @@ import { pluralPhrase } from '@/lib/plural';
 import type { Marriage } from '@/types';
 
 type Props = {
-    marriage: Marriage;
+    /** A `Marriage` from the person panel, or the `SourcedPersonEvent` of the marriage panel. */
+    marriage: Pick<Marriage, 'id' | 'sources'>;
     personName: string;
     spouseName: string;
     trigger?: React.ReactNode;

@@ -12,6 +12,7 @@ use App\Http\Requests\PersonStoreRequest;
 use App\Http\Requests\PersonUpdateRequest;
 use App\Http\Resources\PersonResource;
 use App\Models\Person;
+use App\Support\PersonPanelRedirect;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -35,17 +36,20 @@ class PersonController extends Controller
             'persons' => fn (): array => PersonResource::collection(
                 $tree->people()
                     ->with(['events' => fn ($events) => $events
-                        ->whereIn('type', [EventType::Birth, EventType::Death])
-                        ->withExists('sources')])
+                        ->whereIn('type', [EventType::Birth, EventType::Death, EventType::Burial])
+                        ->withExists('sources')
+                        ->with('locality')])
                     ->when($query !== '', function ($builder) use ($query): void {
-                        $words = preg_split('/\s+/u', $query, -1, PREG_SPLIT_NO_EMPTY) ?: [];
+                        $nameWithoutMaidenMarker = preg_replace('/(?<!\S)z\s+d\.?(?!\S)/iu', ' ', $query) ?? $query;
+                        $words = preg_split('/\s+/u', $nameWithoutMaidenMarker, -1, PREG_SPLIT_NO_EMPTY) ?: [];
 
                         foreach ($words as $word) {
                             $pattern = '%'.str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $word).'%';
 
                             $builder->where(fn ($builder) => $builder
                                 ->whereLike('first_name', $pattern)
-                                ->orWhereLike('last_name', $pattern));
+                                ->orWhereLike('last_name', $pattern)
+                                ->orWhereLike('maiden_name', $pattern));
                         }
                     })
                     ->orderByRaw('last_name is null')
@@ -93,6 +97,9 @@ class PersonController extends Controller
 
     /**
      * Store a newly created person in the tree.
+     *
+     * Returns to the referring page (the persons list with its filters) with the new person's preview open;
+     * without a usable referrer it goes to the persons list.
      */
     public function store(PersonStoreRequest $request, CreatePerson $createPerson): RedirectResponse
     {
@@ -100,7 +107,7 @@ class PersonController extends Controller
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Dodano osobę')]);
 
-        return redirect(route('tree.show', $person).'?'.http_build_query(['person' => $person->id]));
+        return PersonPanelRedirect::to($request, $person, route('persons.index'));
     }
 
     /**
@@ -132,7 +139,7 @@ class PersonController extends Controller
     /**
      * Resolve where to go after deleting the person: the referring page without its `person` preview key.
      *
-     * Falls back to the persons list when the referrer is missing, external or unmatchable; a tree centred on the deleted person returns to the proband's tree.
+     * Falls back to the persons list when the referrer is missing, external or unmatchable; a tree or ancestors view centred on the deleted person returns to the proband's tree.
      */
     private function urlAfterDelete(Request $request, Person $person): string
     {
@@ -151,7 +158,7 @@ class PersonController extends Controller
 
         $name = $route->getName();
 
-        if ($name === 'tree.show' && $route->originalParameter('person') === (string) $person->id) {
+        if (in_array($name, ['tree.show', 'tree.ancestors'], true) && $route->originalParameter('person') === (string) $person->id) {
             return route('tree.index');
         }
 

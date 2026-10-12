@@ -1,143 +1,163 @@
 ---
 project: root-keeper
-assessed_at: 2026-09-28T04:53:57Z
+assessed_at: 2026-10-04T19:41:05Z
 agent_readiness: ready-with-compensation
 context_type: brownfield
 stack_components:
   language: PHP 8.5 + TypeScript 7
   framework: Laravel 13 + Inertia v3 + React 19
   build_tool: Vite 8 via vite-plus 0.3.0
-  test_runner: Pest 5
+  test_runner: Pest 5 (+ Vitest 4 via vp test, Playwright 1.63 for E2E)
   package_manager: composer + npm
   ci_provider: github-actions
-  deployment_target: self-host (Docker on VPS behind Traefik, manual scripts/deploy.sh)
-gates_passed: 9
+  deployment_target: self-host (Docker Compose on VPS behind Traefik, manual scripts/deploy.sh)
+gates_passed: 13
 gates_failed: 1
 ---
 
-Assessed against `context/foundation/prd-v2.md` (scan descriptions + places gazetteer + residence history). Detection confirmed by the user.
+Assessed against `context/foundation/prd.md` (source description, places gazetteer, tree look + side panels, all-ancestors view; delivery 4 weeks, deadline 2026-11-04). Detection confirmed by the user. Replaces the 2026-09-28 assessment made for `archive/prd-v2.md` (see git history).
 
 ## Stack Components
 
-**Language — PHP 8.5 + TypeScript 7.** `composer.json` requires `php: ^8.5`. Backend typing is enforced by Larastan 3.12 at level 7 (`phpstan.neon`, no baseline) over `app/`, `config/`, `database/`, `routes/`; 151 of 152 functions in `app/` declare a return type. None of the 61 PHP files in `app/` declare `strict_types=1`. Frontend is TypeScript `^7.0.2` with `strict: true` and `noImplicitAny: true` in `tsconfig.json`.
+**Language — PHP 8.5 + TypeScript 7.** `composer.json` requires `php: ^8.5`. Backend typing is enforced by Larastan 3.12.1 at level 7 (`phpstan.neon`, no baseline, no `ignoreErrors`) over `app/`, `bootstrap/app.php`, `config/`, `database/`, `routes/`. `declare(strict_types=1)` appears in 0 of 87 files in `app/` (dropped as a claim on 2026-09-28; not enforced). Frontend is TypeScript 7.0.2 with `strict: true` and `noImplicitAny: true` in `tsconfig.json` (`noUncheckedIndexedAccess` off).
 
-**Framework — Laravel 13.32 + Inertia v3.3 + React 19.** Built from Laravel's official React starter kit (`composer.json` name `laravel/react-starter-kit`). Supporting packages: Fortify 1.39 (auth), Wayfinder 0.1.21 (typed route functions for the frontend), spatie/laravel-backup 10, shadcn/ui (`components.json`, `resources/js/components/ui/`), Tailwind v4. Database: PostgreSQL 18 (`compose.yaml`, `docker-compose.prod.yml`). Established code path: route → controller → Form Request → Action class (`app/Actions/<Domain>/*::handle()`) → API Resource → Inertia page in `resources/js/pages/<domain>/`; ownership via Policies comparing `tree_id` and returning `denyAsNotFound()`.
+**Framework — Laravel 13.32 + Inertia v3 + React 19.3.** Built from `laravel/react-starter-kit`. inertia-laravel 3.3.4, @inertiajs/react 3.7.1, Fortify 1.39, Wayfinder 0.1.21 (pre-1.0, typed route functions), spatie/laravel-backup 10.3, shadcn/ui on Radix (`resources/js/components/ui/`, including `sheet.tsx`, `dialog.tsx`, `tabs.tsx`), Tailwind 4.3, react-zoom-pan-pinch 4 (used today in `resources/js/components/sources/source-viewer.tsx`). Database: PostgreSQL 18. Established code path: route → controller → Form Request → Action (`app/Actions/<Domain>/*::handle()`) → API Resource → Inertia page; ownership via Policies on `tree_id` with `denyAsNotFound()`.
 
-**Build tool — Vite 8 via vite-plus 0.3.0.** `package.json` scripts call the `vp` CLI (`vp build`, `vp dev`, `vp check`). `vite.config.ts` imports `defineConfig`/`lazyPlugins` from `vite-plus` and carries the `lint` (Oxlint, type-aware, `denyWarnings`) and `fmt` (Oxfmt) configuration — there is no ESLint or Prettier config in the repo. Plugins: laravel-vite-plugin, `@inertiajs/vite`, React + React Compiler, Tailwind, Wayfinder.
+**Build tool — Vite 8.3 via vite-plus 0.3.0.** `package.json` scripts call `vp` (`vp build`, `vp dev`, `vp check`, `vp test`). `vite.config.ts` imports from `vite-plus` and holds `lint` (Oxlint, type-aware, `denyWarnings`) and `fmt` (Oxfmt). No ESLint/Prettier config.
 
-**Test runner — Pest 5.2 (PHPUnit 13).** `tests/Feature` covers auth, persons, marriages, parent–child relations, scans, event–scan links, thumbnails, backups; `tests/Unit` covers partial dates. No frontend tests exist, although Vite+ bundles Vitest (`vp test`).
+**Test runners.** Pest 5.2.1 / PHPUnit 13.3 — 29 test files in `tests/`, including data-migration tests (`tests/Feature/SourceMigrationTest.php`, `tests/Feature/TreeBackfillTest.php`). Vitest 4.1 via `npm run test:js` (`vp test`) — 7 unit tests in `resources/js/lib/` and `resources/js/hooks/`, run in CI. Playwright 1.63 — `playwright.config.ts`, `tests/e2e/auth.setup.ts` and one seed spec (`tests/e2e/seed.spec.ts`, auth gate round-trip) against an isolated Sail server (`scripts/e2e-server.sh`, port 8100); details in `context/foundation/test-stack.md`. E2E does not run in CI.
 
-**Package manager — composer + npm.** `composer.lock` and `package-lock.json`; CI uses `cache: npm`. A `pnpm-workspace.yaml` is also present (starter leftover, no `pnpm-lock.yaml`).
+**Package manager — composer + npm.** `composer.lock`, `package-lock.json`. `pnpm-workspace.yaml` still present without `pnpm-lock.yaml` (starter leftover).
 
-**CI/CD — GitHub Actions.** `.github/workflows/lint.yml` (Pint + `npm run check`), `static-analysis.yml` (Larastan + `tsc --noEmit`), `tests.yml` (Pest). Deploys are manual: `scripts/deploy.sh` on the VPS builds `docker-compose.prod.yml` after merge to `main`.
+**CI/CD — GitHub Actions.** `lint.yml` (Pint `lint:check`, `npm run check`, `npm run test:js`), `static-analysis.yml` (Larastan, `tsc --noEmit`), `tests.yml` (Pest on a `postgres:18-alpine` service). Deploy is manual: `scripts/deploy.sh` → `production_backup_before_migrate` (`backup:run --only-db`) → `migrate --force` on the VPS (`docker-compose.prod.yml`, Traefik; see `infrastructure.md`).
 
-**Instruction files.** `CLAUDE.md` (10xDevs UI contract + Laravel Boost guidelines for PHP, Sail, Inertia v3, Wayfinder, Pint, Pest), Laravel Boost MCP (`search-docs`), project skills under `.claude/skills/`. `CLAUDE.md` asks agents to read `.ai/rules/index.md`, but `.ai/rules` does not exist.
+**Instruction files.** `CLAUDE.md`: 10xDevs E2E block (M3L4), Vite+ toolchain, installed versions, backend conventions for tree-owned data, Laravel Boost guidelines. Project skills in `.claude/skills/`. Boost MCP provides `search-docs`. `CLAUDE.md` tells agents to read `.ai/rules/index.md`, which does not exist (the same text says to continue without it).
 
 ## Quality Gate Assessment
 
-| Component                          | Typed | Convention | Training Data | Documented | Verdict |
-|------------------------------------|-------|------------|---------------|------------|---------|
-| Language: PHP 8.5                  | ✓     | —          | —             | —          | pass    |
-| Language: TypeScript 7             | ✓     | —          | —             | —          | pass    |
-| Framework: Laravel 13 + Inertia v3 + React 19 | — | ✓   | ✓             | ✓          | pass    |
-| Build tool: vite-plus 0.3.0 (Vite 8) | —   | ✓          | ✗             | ✓          | fail    |
-| Test runner: Pest 5                | —     | —          | ✓             | ✓          | pass    |
+| Component                                     | Typed | Convention | Training Data | Documented | Verdict |
+|-----------------------------------------------|-------|------------|---------------|------------|---------|
+| Language: PHP 8.5 (Larastan level 7)          | ✓     | —          | —             | —          | pass    |
+| Language: TypeScript 7 (strict)               | ✓     | —          | —             | —          | pass    |
+| Framework: Laravel 13 + Inertia v3 + React 19 | —     | ✓          | ✓             | ✓          | pass    |
+| Build tool: vite-plus 0.3.0 (Vite 8)          | —     | ✓          | ✗             | ✓          | fail    |
+| Test runner: Pest 5                           | —     | —          | ✓             | ✓          | pass    |
+| Test runner: Vitest 4 (via `vp test`)         | —     | —          | ✓             | ✓          | pass    |
+| E2E runner: Playwright 1.63                   | —     | —          | ✓             | ✓          | pass    |
 
 Legend: ✓ = pass, ✗ = fail, ~ = partial, — = not applicable
 
 ### Gate Details
 
 **Typed**
-- PHP ✓ — `phpstan.neon` includes `vendor/larastan/larastan/extension.neon` at `level: 7`, no `ignoreErrors`, no baseline; run in CI by `static-analysis.yml` (`composer types:check`). 151/152 functions in `app/` have return types; Form Requests exist for every write endpoint (`app/Http/Requests/*`). Note: `declare(strict_types=1)` is in 0/61 files; `tech-stack.md` listed it as a typing compensation until 2026-09-28 — see Gaps.
-- TypeScript ✓ — `tsconfig.json`: `"strict": true`, `"noImplicitAny": true`; `npm run types:check` (`tsc --noEmit`) in CI; Wayfinder generates typed route functions.
+- PHP ✓ — `phpstan.neon` includes the Larastan extension at `level: 7`, no baseline file, no `ignoreErrors`; run in CI by `static-analysis.yml` (`composer types:check` → `phpstan analyse`). Form Requests cover write endpoints.
+- TypeScript ✓ — `tsconfig.json` `strict: true`, `noImplicitAny: true`; `tsc --noEmit` in CI; Wayfinder generates typed route functions; Oxlint runs type-aware.
 
 **Convention-based**
-- Laravel ✓ — strongest-convention framework in PHP (fixed layout for routes, controllers, requests, policies, migrations, factories). The repo follows it and adds one consistent layer: `app/Actions/<Domain>/` classes with a `handle()` method.
-- vite-plus ✓ — single `vite.config.ts` holds build, lint and format config; scripts in `package.json`.
+- Laravel ✓ — the strongest-convention framework in PHP; the repo adds one consistent layer (Actions with `handle()`, Policies with `denyAsNotFound()`, Resources with `->resolve()`), documented in `CLAUDE.md`.
+- vite-plus ✓ — one `vite.config.ts` holds build, lint and format; commands in `package.json`.
 
-**Popular in training data** (assessed within each language family)
-- Laravel ✓ — the mainstream PHP web framework; Inertia + React is Laravel's official React starter path. Caveat: installed majors (Laravel 13, Inertia v3, Pest 5, TypeScript 7) are recent, so the agent's priors skew to older APIs (e.g. Inertia v2 `router.cancel()`, Axios). Already mitigated by `CLAUDE.md`'s "Inertia v3" section and the Boost `search-docs` rule.
-- Pest ✓ — the default test framework of current Laravel starters.
-- vite-plus ✗ — 0.3.0, pre-1.0 and recent; little training-data presence even within the JS family. Agents will default to ESLint/Prettier/`vite` CLI idioms that do not exist in this repo (`npx eslint`, `.prettierrc`, `import { defineConfig } from 'vite'`).
+**Popular in training data** (within each language family)
+- Laravel ✓ — mainstream PHP framework; Inertia + React is Laravel's official React starter path. Caveat: installed majors (Laravel 13, Inertia v3, Pest 5, TypeScript 7) are recent; agent priors skew to older APIs — mitigated by `CLAUDE.md` "Installed versions" and Boost `search-docs`.
+- Pest ✓ — default test framework of current Laravel starters.
+- Vitest ✓ — mainstream JS unit-test runner; here invoked through `vp test`, which the toolchain block already explains.
+- Playwright ✓ — mainstream JS E2E runner.
+- vite-plus ✗ — 0.3.0, pre-1.0, recent; little training-data presence even within JS. Agents default to `npx eslint`, `.prettierrc`, `import { defineConfig } from 'vite'`.
 
 **Well-documented**
 - Laravel / Inertia / Pest ✓ — versioned official docs, reachable via Boost `search-docs` scoped to installed versions.
-- vite-plus ✓ — official docs at https://viteplus.dev/guide/ and, more usefully, version-matched local docs bundled in `node_modules/vite-plus/docs/` plus an agent guide at `node_modules/vite-plus/AGENTS.md`.
+- Vitest / Playwright ✓ — versioned official docs (vitest.dev, playwright.dev).
+- vite-plus ✓ — https://viteplus.dev/guide/ plus version-matched local docs in `node_modules/vite-plus/docs/` and `node_modules/vite-plus/AGENTS.md`.
 
 ## Gaps & Compensation
 
-### 1. vite-plus is not in the agent's training data (build tool, training data ✗)
+### 1. vite-plus is not in the agent's training data (build tool, training data ✗) — compensated
 
-**Why it matters for this change:** every slice of `prd-v2` adds frontend code (scan form fields, place picker with suggestions, residence chips, gazetteer page). The agent's verification loop ends with `npm run check` / `check:fix`; if it reaches for ESLint/Prettier or edits a nonexistent config, it will either fail the lint CI job or add a second toolchain.
+**Why it matters for this change:** most of the PRD is frontend work (side panels for person, source, marriage, locality; tree redesign with zoom; ancestors view; filters on the source grid; autocomplete pickers). Every slice ends with `npm run check`; an agent reaching for ESLint/Prettier fails CI or adds a second toolchain.
 
-**Compensation:** tell the agent the toolchain explicitly and point it at the bundled, version-matched docs (entry below).
+**Compensation:** already in `CLAUDE.md` ("Frontend toolchain — Vite+") since 2026-09-28. Keep as is.
 
-### 2. Recent major versions (framework, not a gate failure — hardening)
+### 2. Recent major versions (framework — hardening, not a gate failure)
 
-**Why it matters:** the change adds new routes, controllers and forms. Wayfinder 0.1.x (pre-1.0) and Inertia v3 form helpers are where outdated priors are most likely to leak in.
+**Why it matters:** new routes, forms and pages; Wayfinder 0.1 and Inertia v3 form helpers are where outdated priors leak in. Since the last assessment Playwright 1.63 and Vitest (via `vp test`) joined the toolchain, and the change will lean on react-zoom-pan-pinch for tree and ancestors-view zoom (FR-013, FR-018).
 
-**Compensation:** a pinned-versions block, so the agent does not have to rediscover them each session (entry below). The existing Boost `search-docs` rule stays the primary mechanism.
+**Compensation:** refresh the "Installed versions" block (replacement below).
 
-### 3. `strict_types` claimed but absent (typing — resolved)
+### 3. Side panels replace modals in four places (framework conventions — hardening for this change)
 
-`tech-stack.md` named strict_types as a typing compensation, but no file declares it and `pint.json` (`"preset": "laravel"`) does not enforce it. Larastan level 7 already carries the typed gate, so this was not a failure — but the documented contract and the code disagreed.
+**Why it matters:** FR-006, FR-016, FR-017, FR-019 move person, source, marriage and locality into a right side panel, while delete confirmations and small pickers stay modal (shape-notes decision "side panel scope"). FR-019 requires the tree to narrow beside the open panel, not be covered by it. The shadcn `sheet.tsx` in the repo is an overlay built on Radix Dialog, so an agent picking it "because it is the side panel component" would ship an overlay that fails FR-019. Without a written rule, each of four slices will invent its own panel.
 
-**Resolved 2026-09-28:** the claim was dropped from `tech-stack.md`; strict_types is not enforced. Enforcing it (Pint `declare_strict_types` + full test run) remains possible later.
+**Compensation:** a panel rule (entry below). The concrete component choice belongs to `/10x-plan`; the rule fixes the constraints it must satisfy.
 
-### 4. Change-scope conventions (framework — hardening for prd-v2)
+### 4. Data moves with real data on production (framework conventions — hardening for this change)
 
-The change introduces a new tree-owned entity (places), a person↔place many-to-many (residences), place references on events, and new scan fields. The existing pattern (Form Request → Action → Resource, Policy on `tree_id` with `denyAsNotFound`) is visible in code but not written down; writing it down keeps the new gazetteer module from drifting (entry below).
+**Why it matters:** four data moves (free-text places → gazetteer, single residence → residence list, "Pochodzenie" → archive, "Numer wpisu" kept visible for manual transfer). The author accepts manual fixes, but a lost value is unrecoverable without a backup. The repo already has the right pattern — data migrations with their own Pest tests (`SourceMigrationTest.php`, `TreeBackfillTest.php`) and a DB backup before `migrate` in `scripts/deploy.sh` — but it is not written down.
+
+**Compensation:** a data-move rule (entry below).
+
+### 5. Gazetteer is a new tree-owned module with merge (framework conventions — hardening for this change)
+
+**Why it matters:** places and parishes are referenced from parishes, gravestones, facts and residences; merging a duplicate must move every reference (Business Logic Changes). Missing one reference type leaves orphans; a merge across trees would leak data.
+
+**Compensation:** extend the tree-owned conventions (entry below).
 
 ### Recommended Instruction File Additions
 
-Paste into `CLAUDE.md` (above the `<laravel-boost-guidelines>` block, which Boost regenerates).
+Paste into `CLAUDE.md` above the `<laravel-boost-guidelines>` block (Boost regenerates that block).
 
-**Frontend toolchain (Vite+) — compensates gap 1**
-
-```markdown
-## Frontend toolchain — Vite+ (vite-plus 0.3.0)
-
-- The frontend toolchain is Vite+ (`vp` CLI), not plain Vite. Lint = Oxlint, format = Oxfmt, both configured in the `lint` and `fmt` blocks of `vite.config.ts`. There is no ESLint or Prettier in this repo — never add `.eslintrc*`, `eslint.config.*`, `.prettierrc*` or install those packages.
-- `vite.config.ts` imports `defineConfig` and `lazyPlugins` from `'vite-plus'`, not from `'vite'`. Add new plugins inside the `lazyPlugins(() => [...])` array.
-- Commands (run through Sail): `vendor/bin/sail npm run check` (format + lint, must pass in CI), `vendor/bin/sail npm run check:fix` (auto-fix), `vendor/bin/sail npm run types:check` (tsc), `vendor/bin/sail npm run build`.
-- Lint runs with `denyWarnings: true` and `typeAware: true`: a warning fails CI. Fix the code; do not add ignore patterns except for generated dirs (`resources/js/actions`, `resources/js/routes`, `resources/js/wayfinder`) and shadcn `resources/js/components/ui/*`.
-- Before changing toolchain config, read the version-matched docs in `node_modules/vite-plus/docs/guide/` (`check.md`, `lint.md`, `fmt.md`, `build.md`) and `node_modules/vite-plus/AGENTS.md` — your training data likely predates this tool.
-```
-
-**Pinned versions — compensates gap 2**
+**Installed versions — replaces the existing block (gap 2)**
 
 ```markdown
 ## Installed versions (check before relying on an API)
 
-PHP 8.5 · Laravel 13 · Inertia v3 (inertia-laravel 3.3, @inertiajs/react 3) · React 19 (React Compiler on) · TypeScript 7 · Tailwind v4 · Pest 5 / PHPUnit 13 · Larastan 3 (level 7) · Fortify 1.39 · Wayfinder 0.1 (pre-1.0) · PostgreSQL 18 · Vite 8 via vite-plus 0.3.
+PHP 8.5 · Laravel 13 · Inertia v3 (inertia-laravel 3.3, @inertiajs/react 3.7) · React 19 (React Compiler on) · TypeScript 7 · Tailwind v4 · Pest 5 / PHPUnit 13 · Larastan 3 (level 7) · Fortify 1.39 · Wayfinder 0.1 (pre-1.0) · PostgreSQL 18 · Vite 8 via vite-plus 0.3 · Vitest 4 (run as `vp test`) · Playwright 1.63 · react-zoom-pan-pinch 4.
 
 - These are newer than most training data. Use Boost `search-docs` for Laravel/Inertia/Pest APIs instead of recalling them.
 - Frontend routes come from Wayfinder: import from `@/actions/...` or `@/routes/...`; never hardcode URLs. After adding or renaming a route, regenerate with `vendor/bin/sail artisan wayfinder:generate` (the Vite plugin also does it in dev).
+- Before adding a frontend dependency, check `package.json`: zoom/pan already uses `react-zoom-pan-pinch` (`resources/js/components/sources/source-viewer.tsx`); UI primitives come from `resources/js/components/ui/`. New dependencies need the user's approval.
 ```
 
-**Domain conventions — compensates gap 4**
+**Side panels — gap 3**
 
 ```markdown
-## Backend conventions for tree-owned data
+## Side panels vs modals
 
-- Every domain record belongs to a tree (`tree_id`). Scope reads through the user's tree (`$request->user()->tree->scans()`), never through a global query.
-- Authorization: one Policy per model in `app/Policies/`; ownership check is `$model->tree_id === $user->tree->id`, denial is `Response::denyAsNotFound()` (another user's record is a 404, not a 403).
-- Write path: controller → Form Request (`app/Http/Requests/<Model><Action>Request.php`) → Action class (`app/Actions/<Domain>/<Verb><Model>.php` with a `handle()` method) → redirect with `Inertia::flash('toast', ['type' => 'success', 'message' => __('...')])`. UI strings are Polish.
-- Read path: pass data to Inertia pages through API Resources (`app/Http/Resources/`) with `->resolve()`; pages live in `resources/js/pages/<domain>/{index,create,show,edit}.tsx`, domain components in `resources/js/components/<domain>/`.
-- Deleting a record that others reference shows the affected items first and requires explicit confirmation (pattern: `resources/js/components/scans/delete-scan-dialog.tsx`).
-- Every new endpoint gets a Pest feature test in `tests/Feature/<Domain>Test.php` covering the happy path and the other-user 404.
+- Person, source, marriage and locality open in a right-hand side panel, not a modal. Delete confirmations and small pickers (choose a person, add a parish inline) stay modal (`resources/js/components/ui/dialog.tsx`).
+- An open panel must not cover the tree: the tree area narrows beside it. Do not use an overlay for these panels — `resources/js/components/ui/sheet.tsx` is an overlay (Radix Dialog) and does not meet this as-is.
+- Build one shared panel shell and reuse it for all four; the source panel is wider (scan beside the form).
+- Closing a panel returns the user to the same tree position; moving to a relative replaces the panel content.
 ```
 
-All three blocks were added to `CLAUDE.md` on 2026-09-28, between the 10x-cli block and the Boost guidelines.
+**Data moves — gap 4**
+
+```markdown
+## Migrations that move existing data
+
+- A migration that rewrites existing rows (free text → reference, field → other field) gets its own Pest test in `tests/Feature/<Name>MigrationTest.php`, following `tests/Feature/SourceMigrationTest.php`: insert rows in the old shape, run the migration, assert the new shape and that no value was lost.
+- Copy first, drop later: never drop the source column in the same migration that copies from it. Values the user must transfer by hand (e.g. the old source "Numer wpisu") stay readable until the user removes them.
+- Migrations must be reversible (`down()`) or state in a comment why they cannot be.
+- Production runs `backup:run --only-db` before `migrate` (`scripts/deploy.sh`); do not remove that step.
+```
+
+**Tree-owned gazetteer — gap 5 (append to "Backend conventions for tree-owned data")**
+
+```markdown
+- Places and parishes are tree-owned records like every other: unique per tree, scoped through `$request->user()->tree`, Policy with `denyAsNotFound()`.
+- Merging a duplicate (place or parish) moves every reference — parishes, gravestones, event places, burial places, residences — to the target inside one DB transaction, then deletes the duplicate. Both records must belong to the same tree; the merge test covers every reference type and the other-user 404.
+- Deleting a place or parish is allowed only when nothing references it.
+```
 
 ## Summary
 
-**Overall agent-readiness: ready with compensation.** 9 of 10 applicable checks pass.
+**Overall agent-readiness: ready with compensation.** 13 of 14 applicable checks pass.
 
-**Strengths:** a mainstream, convention-heavy PHP framework on its official React starter; real type discipline on both sides (Larastan level 7 without a baseline, strict TypeScript, typed routes via Wayfinder); lint, static analysis and tests all gate CI; a consistent Action/Policy/Resource layer; Laravel Boost gives the agent version-scoped docs.
+**Strengths:** mainstream, convention-heavy PHP framework on its official React starter; real type discipline on both sides (Larastan level 7 without baseline, strict TypeScript, typed routes); lint, static analysis, PHP and JS unit tests all gate CI; consistent Action/Policy/Resource layer documented in `CLAUDE.md`; Boost gives version-scoped docs; data migrations already have a tested pattern.
 
-**Gaps:** the one failed check is the build toolchain — vite-plus 0.3 is too new for the agent to know, which a short `CLAUDE.md` block plus the bundled local docs fixes. Hardening items: pin installed versions, write down the tree-ownership conventions before the gazetteer module lands (all done in `CLAUDE.md`); the `strict_types` mismatch with `tech-stack.md` was resolved by dropping the claim. Minor: `CLAUDE.md` points to a nonexistent `.ai/rules/`, and `pnpm-workspace.yaml` sits beside an npm lockfile.
+**Gaps:** the only failed check is still vite-plus (too new for the agent), already compensated in `CLAUDE.md`. For this change, three new rules harden the riskiest areas — side panels in four places, four data moves on real data, and the gazetteer merge — plus a refreshed versions block.
 
-**Hand-off to the health check:** no frontend tests (Vitest is available through `vp test`); the backup scope must cover the new data (PRD constraint); confirm whether the `.ai/rules` pointer and `pnpm-workspace.yaml` are intentional.
+**Hand-off to the health check:**
+- The PRD's Current System Overview says critical paths (fact–source, relations from tree slots) are protected by E2E tests, but `tests/e2e/` holds only the auth-gate seed and E2E does not run in CI. The PRD guardrails depend on that coverage.
+- The pre-migration backup is `--only-db`; person photos (FR-015) are files, and the PRD requires backups to cover them (RPO 24 h). Confirm how `storage/app` is backed up.
+- Minor: `.ai/rules` pointer in `CLAUDE.md` without the directory; `pnpm-workspace.yaml` beside an npm lockfile.
 
 **Next step:** `/10x-health-check`.

@@ -1,4 +1,5 @@
 import { useInitials } from '@/hooks/use-initials';
+import { useVisiblePhoto } from '@/hooks/use-visible-photo';
 import { genderSurface } from '@/lib/gender-styles';
 import { cn } from '@/lib/utils';
 
@@ -8,6 +9,8 @@ type Props = {
     size?: 'sm' | 'md' | 'lg';
     /** Set false where the avatar sits inside a link that already carries the name. */
     announceGender?: boolean;
+    /** Thumbnail URL; without it, or when the image fails to load, the initials show. */
+    photoUrl?: string | null;
     className?: string;
 };
 
@@ -28,20 +31,32 @@ export function PersonAvatar({
     gender,
     size = 'md',
     announceGender = true,
+    photoUrl = null,
     className,
 }: Props) {
     const getInitials = useInitials();
+    const { visiblePhotoUrl, onError } = useVisiblePhoto(photoUrl);
 
     return (
         <span
             className={cn(
-                'flex shrink-0 items-center justify-center rounded-full border font-semibold',
+                'relative flex shrink-0 items-center justify-center overflow-hidden rounded-full border font-semibold',
                 sizes[size],
                 genderSurface[gender ?? 'unknown'],
                 className,
             )}
         >
-            <span aria-hidden="true">{getInitials(name)}</span>
+            {visiblePhotoUrl !== null ? (
+                <img
+                    src={visiblePhotoUrl}
+                    alt=""
+                    loading="lazy"
+                    onError={onError}
+                    className="absolute inset-0 size-full object-cover object-center"
+                />
+            ) : (
+                <span aria-hidden="true">{getInitials(name)}</span>
+            )}
             {gender && announceGender && (
                 <span className="sr-only">{genderLabels[gender]}</span>
             )}

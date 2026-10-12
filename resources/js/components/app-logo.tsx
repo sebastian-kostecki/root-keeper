@@ -9,7 +9,7 @@ export default function AppLogo() {
                 RK
             </div>
             <div className="ml-1 grid flex-1 text-left text-sm group-data-[collapsible=icon]:hidden">
-                <span className="mb-0.5 truncate leading-tight font-semibold">
+                <span className="font-display mb-0.5 truncate leading-tight font-semibold">
                     {name}
                 </span>
             </div>

@@ -1,8 +1,9 @@
 import { router } from '@inertiajs/react';
 import { ChevronsUpDown, Plus } from 'lucide-react';
-import { useRef, useState } from 'react';
-import { AddSpouseDialog } from '@/components/tree/add-spouse-dialog';
-import { cardInteractive } from '@/components/tree/card-styles';
+import type { RefObject } from 'react';
+import { useOptionalSectionEditor } from '@/components/persons/section-editor';
+import { cardInteractive, triggerActive } from '@/components/tree/card-styles';
+import { ZOOM_NO_PAN_CLASS } from '@/components/zoom-canvas';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -13,26 +14,24 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { MarriageRingsIcon } from '@/components/tree/marriage-rings-icon';
+import { useMarriagePanel } from '@/hooks/use-marriage-panel';
+import { useSidePanelNavigation } from '@/hooks/use-side-panel-navigation';
+import { addValueFor } from '@/lib/add-person-target';
 import { pluralPhrase } from '@/lib/plural';
 import { cn } from '@/lib/utils';
 import { show as treeShow } from '@/routes/tree';
-import type {
-    AddSpouseTarget,
-    Gender,
-    PersonCandidate,
-    Religion,
-    SheetPerson,
-    SheetUnion,
-} from '@/types';
+import type { AddSpouseTarget, SheetPerson, SheetUnion } from '@/types';
 
 type Props = {
     focus: SheetPerson;
     unions: SheetUnion[];
     selected: string | null;
     addSpouse: AddSpouseTarget;
-    candidates: PersonCandidate[] | undefined;
-    genders: Gender[];
-    religions: Religion[];
+    /** The open add panel is for a spouse and this node is its target (the partner exists). */
+    addActive: boolean;
+    /** Attached to the trigger only while `addActive`, so the sheet can reveal it. */
+    revealRef: RefObject<HTMLButtonElement | null>;
 };
 
 /** Status of a union; empty for an unknown partner. */
@@ -59,22 +58,22 @@ export function UnionNode({
     unions,
     selected,
     addSpouse,
-    candidates,
-    genders,
-    religions,
+    addActive,
+    revealRef,
 }: Props) {
-    const triggerRef = useRef<HTMLButtonElement>(null);
-    const [addSpouseOpen, setAddSpouseOpen] = useState(false);
-
-    if (unions.length === 0) {
-        return null;
-    }
+    const { open: openMarriagePanel } = useMarriagePanel();
+    const { open: openAddPanel } = useSidePanelNavigation('add');
+    const editor = useOptionalSectionEditor();
 
     const selectedIndex = unions.findIndex((union) => union.key === selected);
     const selectedUnion = selectedIndex === -1 ? null : unions[selectedIndex];
     const status = selectedUnion ? unionStatus(selectedUnion) : '';
     const position = `${selectedIndex + 1} z ${unions.length}`;
     const showPosition = unions.length > 1 && selectedUnion !== null;
+    const isMarriage =
+        selectedUnion !== null && status !== '' && selectedUnion.is_marriage;
+    const isUnmarried =
+        selectedUnion !== null && status !== '' && !selectedUnion.is_marriage;
 
     const choose = (key: string) => {
         const union = unions.find((candidate) => candidate.key === key);
@@ -85,7 +84,7 @@ export function UnionNode({
 
         router.visit(
             treeShow(focus.id, {
-                query: {
+                mergeQuery: {
                     spouse:
                         union.partner_id === null
                             ? 'unknown'
@@ -96,35 +95,38 @@ export function UnionNode({
         );
     };
 
-    const ariaLabel = `Związek ${position}: ${
-        status || selectedUnion?.partner_name || 'nieznany partner'
-    }. Zmień związek lub dodaj małżonka`;
+    const ariaLabel =
+        unions.length === 0
+            ? 'Związki: brak związków. Dodaj małżonka'
+            : `Związek ${position}: ${
+                  status || selectedUnion?.partner_name || 'nieznany partner'
+              }. Zmień związek lub dodaj małżonka`;
 
     return (
         <>
             <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                     <button
-                        ref={triggerRef}
+                        ref={addActive ? revealRef : undefined}
                         type="button"
                         aria-label={ariaLabel}
                         className={cn(
-                            'bg-background hover:bg-accent data-[state=open]:border-primary inline-flex h-[34px] items-center gap-2 rounded-lg border px-2.5 text-xs whitespace-nowrap shadow-xs',
+                            'bg-background hover:bg-accent data-[state=open]:border-primary border-line border-tree-line inline-flex h-8 items-center gap-1.5 rounded-full px-3 text-xs font-semibold whitespace-nowrap tabular-nums shadow-xs',
+                            isUnmarried && 'border-dashed',
                             cardInteractive,
+                            ZOOM_NO_PAN_CLASS,
+                            addActive && triggerActive,
                         )}
                     >
                         {showPosition && (
-                            <span className="text-muted-foreground">
+                            <span className="text-muted-foreground font-medium">
                                 {position}
                             </span>
                         )}
-                        {status ? (
-                            <span className="font-semibold">{status}</span>
-                        ) : (
-                            !showPosition && (
-                                <span className="font-semibold">Związki</span>
-                            )
+                        {isMarriage && (
+                            <MarriageRingsIcon className="text-tree-line" />
                         )}
+                        <span>{status || 'Związki'}</span>
                         <ChevronsUpDown
                             className="text-muted-foreground size-3.5"
                             aria-hidden="true"
@@ -135,46 +137,87 @@ export function UnionNode({
                     <DropdownMenuLabel>
                         Związki — {focus.display_name}
                     </DropdownMenuLabel>
-                    <DropdownMenuRadioGroup
-                        value={selected ?? ''}
-                        onValueChange={choose}
-                    >
-                        {unions.map((union) => {
-                            const detail = [
-                                unionStatus(union),
-                                pluralPhrase(
-                                    union.children_count,
-                                    '1 dziecko',
-                                    `${union.children_count} dzieci`,
-                                    `${union.children_count} dzieci`,
-                                ),
-                            ]
-                                .filter((part) => part !== '')
-                                .join(' · ');
+                    {unions.length > 0 && (
+                        <DropdownMenuRadioGroup
+                            value={selected ?? ''}
+                            onValueChange={choose}
+                        >
+                            {unions.map((union) => {
+                                const detail = [
+                                    unionStatus(union),
+                                    pluralPhrase(
+                                        union.children_count,
+                                        '1 dziecko',
+                                        `${union.children_count} dzieci`,
+                                        `${union.children_count} dzieci`,
+                                    ),
+                                ]
+                                    .filter((part) => part !== '')
+                                    .join(' · ');
 
-                            return (
-                                <DropdownMenuRadioItem
-                                    key={union.key}
-                                    value={union.key}
-                                >
-                                    <span className="flex flex-col">
-                                        <span>
-                                            {union.partner_name ??
-                                                'Nieznany partner'}
+                                return (
+                                    <DropdownMenuRadioItem
+                                        key={union.key}
+                                        value={union.key}
+                                    >
+                                        <span className="flex flex-col">
+                                            <span>
+                                                {union.partner_name ??
+                                                    'Nieznany partner'}
+                                            </span>
+                                            <span className="text-muted-foreground text-xs">
+                                                {detail}
+                                            </span>
                                         </span>
-                                        <span className="text-muted-foreground text-xs">
-                                            {detail}
-                                        </span>
-                                    </span>
-                                </DropdownMenuRadioItem>
-                            );
-                        })}
-                    </DropdownMenuRadioGroup>
-                    <DropdownMenuSeparator />
+                                    </DropdownMenuRadioItem>
+                                );
+                            })}
+                        </DropdownMenuRadioGroup>
+                    )}
+                    {selectedUnion?.is_marriage &&
+                        selectedUnion.marriage_id !== null && (
+                            <DropdownMenuItem
+                                onSelect={() => {
+                                    const marriageId =
+                                        selectedUnion.marriage_id;
+
+                                    if (marriageId === null) {
+                                        return;
+                                    }
+
+                                    if (editor === null) {
+                                        openMarriagePanel(marriageId);
+
+                                        return;
+                                    }
+
+                                    editor.requestExit(() =>
+                                        openMarriagePanel(marriageId),
+                                    );
+                                }}
+                            >
+                                Szczegóły małżeństwa
+                            </DropdownMenuItem>
+                        )}
+                    {unions.length > 0 && <DropdownMenuSeparator />}
                     <DropdownMenuItem
                         onSelect={() => {
+                            const value = addValueFor({
+                                kind: 'spouse',
+                                focus,
+                                target: addSpouse,
+                            });
+
                             // Open after the menu has released the page.
-                            requestAnimationFrame(() => setAddSpouseOpen(true));
+                            requestAnimationFrame(() => {
+                                if (editor === null) {
+                                    openAddPanel(value);
+
+                                    return;
+                                }
+
+                                editor.requestExit(() => openAddPanel(value));
+                            });
                         }}
                     >
                         <Plus className="size-4" aria-hidden="true" />
@@ -182,21 +225,6 @@ export function UnionNode({
                     </DropdownMenuItem>
                 </DropdownMenuContent>
             </DropdownMenu>
-
-            <AddSpouseDialog
-                variant="menu"
-                open={addSpouseOpen}
-                onOpenChange={setAddSpouseOpen}
-                onCloseAutoFocus={(event) => {
-                    event.preventDefault();
-                    triggerRef.current?.focus();
-                }}
-                focus={focus}
-                target={addSpouse}
-                candidates={candidates}
-                genders={genders}
-                religions={religions}
-            />
         </>
     );
 }

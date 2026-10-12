@@ -1,9 +1,13 @@
+import type { PersonAge } from './person';
+
 export type SheetPerson = {
     id: number;
     display_name: string;
     gender: 'male' | 'female' | null;
     lifespan: string | null;
     is_deceased: boolean;
+    age: PersonAge | null;
+    photo_version: string | null;
 };
 
 export type ParentSlotRole = 'father' | 'mother' | 'parent';
@@ -44,9 +48,12 @@ export type SheetUnion = {
     partner_id: number | null;
     partner_name: string | null;
     is_marriage: boolean;
+    marriage_id: number | null;
     marriage_year: string | null;
     children_count: number;
 };
+
+export type PairMarriage = { year: string | null };
 
 export type FamilySheet = {
     focus: SheetPerson;
@@ -56,8 +63,31 @@ export type FamilySheet = {
     focus_side: 'left' | 'right';
     parents: { focus: SheetSlot[]; partner: SheetSlot[] };
     grandparents: { focus: SheetSlot[]; partner: SheetSlot[] };
+    parent_marriages: {
+        focus: PairMarriage | null;
+        partner: PairMarriage | null;
+    };
+    grandparent_marriages: {
+        focus: [PairMarriage | null, PairMarriage | null];
+        partner: [PairMarriage | null, PairMarriage | null];
+    };
     children: SheetPerson[];
     add_child: AddChildTarget;
     add_spouse: AddSpouseTarget;
     unmarried_parents: { focus: boolean; partner: boolean };
+};
+
+export type AncestorNode =
+    | {
+          kind: 'person';
+          person: SheetPerson;
+          repeated: boolean;
+          parents: AncestorNode[];
+      }
+    | { kind: 'unknown'; label: string };
+
+export type AncestorChart = {
+    focus: SheetPerson;
+    generations: number;
+    root: AncestorNode;
 };

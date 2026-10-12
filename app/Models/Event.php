@@ -22,11 +22,12 @@ use Illuminate\Support\Carbon;
  * @property int|null $date_day
  * @property bool $date_is_approximate
  * @property string|null $place
+ * @property int|null $locality_id
  * @property-read PartialDate $date
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
-#[Fillable(['tree_id', 'type', 'date_year', 'date_month', 'date_day', 'date_is_approximate', 'place'])]
+#[Fillable(['tree_id', 'type', 'date_year', 'date_month', 'date_day', 'date_is_approximate', 'place', 'locality_id'])]
 class Event extends Model
 {
     /** @use HasFactory<EventFactory> */
@@ -54,6 +55,14 @@ class Event extends Model
     }
 
     /**
+     * @return BelongsTo<Locality, $this>
+     */
+    public function locality(): BelongsTo
+    {
+        return $this->belongsTo(Locality::class);
+    }
+
+    /**
      * @return BelongsToMany<Person, $this, EventParticipant>
      */
     public function participants(): BelongsToMany
@@ -64,11 +73,13 @@ class Event extends Model
     }
 
     /**
-     * @return BelongsToMany<Source, $this>
+     * @return BelongsToMany<Source, $this, EventSource>
      */
     public function sources(): BelongsToMany
     {
         return $this->belongsToMany(Source::class, 'event_source')
+            ->using(EventSource::class)
+            ->withPivot('entry_number')
             ->withTimestamps()
             ->orderBy('event_source.created_at')
             ->orderBy('event_source.id');

@@ -1,15 +1,15 @@
 import { Link, router } from '@inertiajs/react';
-import { useState } from 'react';
-import MarriageController from '@/actions/App/Http/Controllers/MarriageController';
 import PersonController from '@/actions/App/Http/Controllers/PersonController';
 import SourceController from '@/actions/App/Http/Controllers/SourceController';
 import { EventSourceStatus } from '@/components/persons/event-source-status';
+import { Field } from '@/components/persons/fact-field';
 import {
     BirthFields,
     DeathFields,
     MarriageFields,
     PersonalFields,
 } from '@/components/persons/person-section-fields';
+import { ResidencesFields } from '@/components/persons/residences-fields';
 import { SectionCard } from '@/components/persons/section-card';
 import {
     useGuardedClick,
@@ -19,13 +19,21 @@ import type { SectionId } from '@/components/persons/section-editor';
 import { SourcePickerDialog } from '@/components/sources/source-picker-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { mergeSectionIntoPayload } from '@/lib/person-payload';
+import { useSectionSave } from '@/hooks/use-section-save';
+import { focusRing } from '@/lib/focus-ring';
+import {
+    marriageFieldDefaults,
+    marriageSaveRequest,
+    mergeSectionIntoPayload,
+} from '@/lib/person-payload';
 import type { PersonSection, SectionValues } from '@/lib/person-payload';
-import { eventPayloadFromValues } from '@/lib/person-payload';
 import { formatPartialDate } from '@/lib/partial-date';
+import { cn } from '@/lib/utils';
+import { formatYearRange } from '@/lib/year-range';
 import type {
     Marriage,
     PersonFormEvent,
+    PersonGravestone,
     PersonPreviewPayload,
     Source,
     SourcedPersonEvent,
@@ -36,14 +44,12 @@ type Props = {
     availableSources?: Source[];
 };
 
-type Errors = Record<string, string>;
-
 const PERSONAL_KEYS = [
     'first_name',
     'last_name',
+    'maiden_name',
     'gender',
     'religion',
-    'residence',
 ];
 
 /** Whether a server error key is rendered by the fields of the given section. */
@@ -52,12 +58,20 @@ function belongsToSection(id: SectionId, key: string): boolean {
         return PERSONAL_KEYS.includes(key);
     }
 
+    if (id === 'residences') {
+        return key === 'residences' || key.startsWith('residences.');
+    }
+
     if (id === 'birth') {
         return key.startsWith('birth.');
     }
 
     if (id === 'death') {
-        return key === 'is_deceased' || key.startsWith('death.');
+        return (
+            key === 'is_deceased' ||
+            key.startsWith('death.') ||
+            key.startsWith('burial.')
+        );
     }
 
     return key.startsWith('marriage.');
@@ -73,24 +87,23 @@ function SectionHeading({ title }: { title: string }) {
     );
 }
 
-function Field({ label, value }: { label: string; value: string | null }) {
-    return (
-        <div>
-            <p className="text-muted-foreground text-sm">{label}</p>
-            <p className={value ? undefined : 'text-muted-foreground'}>
-                {value ?? 'brak danych'}
-            </p>
-        </div>
-    );
-}
-
 type FactViewProps = {
     event: SourcedPersonEvent;
     parts: PersonFormEvent | Marriage['date_parts'] | null;
     availableSources: Source[] | undefined;
+    /** Shown as „Miejsce pochowania” (the death section only). */
+    burialPlace?: string | null;
+    /** Gravestones linked from the death card. */
+    gravestones?: PersonGravestone[];
 };
 
-function FactView({ event, parts, availableSources }: FactViewProps) {
+function FactView({
+    event,
+    parts,
+    availableSources,
+    burialPlace,
+    gravestones,
+}: FactViewProps) {
     const date = parts ? formatPartialDate(parts, 'long') : '';
     const guardClick = useGuardedClick();
 
@@ -99,6 +112,9 @@ function FactView({ event, parts, availableSources }: FactViewProps) {
             <div className="grid gap-3 sm:grid-cols-2">
                 <Field label="Data" value={date === '' ? null : date} />
                 <Field label="Miejsce" value={event.place} />
+                {burialPlace !== undefined && (
+                    <Field label="Miejsce pochowania" value={burialPlace} />
+                )}
             </div>
 
             <div className="border-t pt-3 text-sm">
@@ -110,25 +126,37 @@ function FactView({ event, parts, availableSources }: FactViewProps) {
                                 className="flex items-center gap-2"
                             >
                                 <Link
-                                    href={SourceController.show(source.id)}
+                                    href={SourceController.index({
+                                        query: { source: source.id },
+                                    })}
                                     onClick={(clickEvent) =>
                                         guardClick(clickEvent, () =>
                                             router.visit(
-                                                SourceController.show(
-                                                    source.id,
-                                                ),
+                                                SourceController.index({
+                                                    query: {
+                                                        source: source.id,
+                                                    },
+                                                }),
                                             ),
                                         )
                                     }
                                     aria-label={`Otwórz źródło ${source.display_name}`}
                                     title={source.display_name}
-                                    className="text-primary focus-visible:ring-ring/50 min-w-0 truncate rounded-sm underline-offset-4 outline-none hover:underline focus-visible:ring-[3px]"
+                                    className={cn(
+                                        'text-primary min-w-0 truncate rounded-sm underline-offset-4 hover:underline',
+                                        focusRing,
+                                    )}
                                 >
                                     {source.display_name}
                                 </Link>
                                 <Badge variant="secondary" className="shrink-0">
                                     {source.kind_short_label}
                                 </Badge>
+                                {source.entry_number && (
+                                    <span className="text-muted-foreground min-w-0 truncate text-xs">
+                                        nr {source.entry_number}
+                                    </span>
+                                )}
                             </li>
                         ))}
                     </ul>
@@ -136,6 +164,8 @@ function FactView({ event, parts, availableSources }: FactViewProps) {
                     <SourcePickerDialog
                         eventId={event.id}
                         eventType={event.type}
+                        eventYear={event.date_parts.year}
+                        eventPlace={event.place}
                         linkedSourceIds={[]}
                         availableSources={availableSources}
                         trigger={
@@ -146,7 +176,53 @@ function FactView({ event, parts, availableSources }: FactViewProps) {
                     />
                 )}
             </div>
+
+            {gravestones !== undefined && gravestones.length > 0 && (
+                <div className="border-t pt-3">
+                    <GravestoneLinks gravestones={gravestones} />
+                </div>
+            )}
         </>
+    );
+}
+
+function GravestoneLinks({ gravestones }: { gravestones: PersonGravestone[] }) {
+    const guardClick = useGuardedClick();
+
+    if (gravestones.length === 0) {
+        return null;
+    }
+
+    return (
+        <ul className="space-y-1.5 text-sm">
+            {gravestones.map((gravestone) => (
+                <li key={gravestone.id}>
+                    <span className="text-muted-foreground">Nagrobek: </span>
+                    <Link
+                        href={SourceController.index({
+                            query: { source: gravestone.id },
+                        })}
+                        onClick={(clickEvent) =>
+                            guardClick(clickEvent, () =>
+                                router.visit(
+                                    SourceController.index({
+                                        query: { source: gravestone.id },
+                                    }),
+                                ),
+                            )
+                        }
+                        className={cn(
+                            'text-primary rounded-sm underline-offset-4 hover:underline',
+                            focusRing,
+                        )}
+                    >
+                        {gravestone.display_name}
+                        {gravestone.cemetery_name &&
+                            ` (cmentarz ${gravestone.cemetery_name})`}
+                    </Link>
+                </li>
+            ))}
+        </ul>
     );
 }
 
@@ -172,11 +248,11 @@ function EmptyFact({
 export function OverviewTab({ preview, availableSources }: Props) {
     const { person, personForm } = preview;
     const editor = useSectionEditor();
-    const [savingId, setSavingId] = useState<SectionId | null>(null);
-    const [failure, setFailure] = useState<{
-        id: SectionId;
-        errors: Errors;
-    } | null>(null);
+    const { savingId, errorsFor, strayErrorFor, save } =
+        useSectionSave(belongsToSection);
+
+    const residences = person.residences ?? [];
+    const gravestones = person.gravestones ?? [];
 
     const hasBirth =
         person.birth !== null &&
@@ -187,67 +263,36 @@ export function OverviewTab({ preview, availableSources }: Props) {
      * render (the one on screen at submit time), never from a snapshot taken
      * when editing began.
      */
-    const save = (id: SectionId, values: SectionValues): Promise<boolean> =>
-        new Promise((resolve) => {
-            const marriageId = id.startsWith('marriage-')
-                ? Number(id.slice('marriage-'.length))
-                : null;
+    const saveSection = (
+        id: SectionId,
+        values: SectionValues,
+    ): Promise<boolean> => {
+        const marriageId = id.startsWith('marriage-')
+            ? Number(id.slice('marriage-'.length))
+            : null;
 
-            const [url, payload] =
-                marriageId === null
-                    ? ([
-                          PersonController.update.url(personForm.id),
-                          mergeSectionIntoPayload(
-                              personForm,
-                              id as PersonSection,
-                              values,
-                          ),
-                      ] as const)
-                    : ([
-                          MarriageController.update.url(marriageId),
-                          {
-                              marriage: eventPayloadFromValues(
-                                  'marriage',
-                                  values,
-                              ),
-                          },
-                      ] as const);
+        if (marriageId === null) {
+            return save(
+                id,
+                PersonController.update.url(personForm.id),
+                mergeSectionIntoPayload(
+                    personForm,
+                    id as PersonSection,
+                    values,
+                ),
+            );
+        }
 
-            router.put(url, payload, {
-                preserveScroll: true,
-                preserveState: true,
-                onStart: () => setSavingId(id),
-                onSuccess: () => {
-                    setFailure(null);
-                    resolve(true);
-                },
-                onError: (errors) => {
-                    setFailure({ id, errors });
-                    resolve(false);
-                },
-                onFinish: () => {
-                    setSavingId(null);
-                    resolve(false);
-                },
-            });
-        });
+        const [url, payload] = marriageSaveRequest(marriageId, values);
 
-    const errorsFor = (id: SectionId): Errors =>
-        failure !== null && failure.id === id && editor.editing === id
-            ? failure.errors
-            : {};
-
-    /** First server error the section's fields do not show. */
-    const strayErrorFor = (id: SectionId): string | undefined =>
-        Object.entries(errorsFor(id)).find(
-            ([key]) => !belongsToSection(id, key),
-        )?.[1];
+        return save(id, url, payload);
+    };
 
     const cardProps = (id: SectionId) => ({
         id,
         processing: savingId === id,
         error: strayErrorFor(id),
-        onSubmit: (values: SectionValues) => save(id, values),
+        onSubmit: (values: SectionValues) => saveSection(id, values),
     });
 
     return (
@@ -262,8 +307,8 @@ export function OverviewTab({ preview, availableSources }: Props) {
                             <Field label="Imię" value={person.first_name} />
                             <Field label="Nazwisko" value={person.last_name} />
                             <Field
-                                label="Zamieszkanie"
-                                value={person.residence}
+                                label="Nazwisko rodowe"
+                                value={person.maiden_name}
                             />
                         </div>
                     }
@@ -275,6 +320,46 @@ export function OverviewTab({ preview, availableSources }: Props) {
                         />
                     }
                 />
+            </div>
+
+            <div className="space-y-3">
+                <SectionHeading title="Zamieszkania" />
+                {residences.length > 0 || editor.editing === 'residences' ? (
+                    <SectionCard
+                        {...cardProps('residences')}
+                        title="Zamieszkania"
+                        view={
+                            <ul className="space-y-1.5">
+                                {residences.map((residence) => (
+                                    <li
+                                        key={residence.id}
+                                        className="flex flex-wrap items-baseline gap-x-2"
+                                    >
+                                        <span>{residence.locality.name}</span>
+                                        <span className="text-muted-foreground text-sm">
+                                            {formatYearRange(
+                                                residence.year_from,
+                                                residence.year_to,
+                                            )}
+                                        </span>
+                                    </li>
+                                ))}
+                            </ul>
+                        }
+                        edit={
+                            <ResidencesFields
+                                errors={errorsFor('residences')}
+                                residences={personForm.residences}
+                            />
+                        }
+                    />
+                ) : (
+                    <EmptyFact
+                        text="Nie znamy miejsc zamieszkania."
+                        cta="Dodaj zamieszkanie"
+                        onStart={() => editor.start('residences')}
+                    />
+                )}
             </div>
 
             <div className="space-y-3">
@@ -341,10 +426,9 @@ export function OverviewTab({ preview, availableSources }: Props) {
                                 edit={
                                     <MarriageFields
                                         errors={errorsFor(id)}
-                                        defaultValue={{
-                                            ...marriage.date_parts,
-                                            place: marriage.place,
-                                        }}
+                                        defaultValue={marriageFieldDefaults(
+                                            marriage,
+                                        )}
                                     />
                                 }
                             />
@@ -372,6 +456,8 @@ export function OverviewTab({ preview, availableSources }: Props) {
                                     event={person.death}
                                     parts={personForm.death}
                                     availableSources={availableSources}
+                                    burialPlace={person.burial_place}
+                                    gravestones={gravestones}
                                 />
                             )
                         }
@@ -379,6 +465,8 @@ export function OverviewTab({ preview, availableSources }: Props) {
                             <DeathFields
                                 errors={errorsFor('death')}
                                 death={personForm.death}
+                                burial={personForm.burial}
+                                burialSuggestion={personForm.burial_suggestion}
                                 isDeceased={
                                     personForm.is_deceased ||
                                     editor.intent === 'mark-deceased'
@@ -393,6 +481,7 @@ export function OverviewTab({ preview, availableSources }: Props) {
                         onStart={() => editor.start('death', 'mark-deceased')}
                     />
                 )}
+                {!person.death && <GravestoneLinks gravestones={gravestones} />}
             </div>
         </div>
     );

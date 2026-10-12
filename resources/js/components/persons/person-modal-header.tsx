@@ -2,14 +2,13 @@ import { Link, router } from '@inertiajs/react';
 import { EllipsisIcon } from 'lucide-react';
 import { useState } from 'react';
 import { DeletePersonDialog } from '@/components/persons/delete-person-dialog';
-import { PersonAvatar } from '@/components/persons/person-avatar';
+import { PersonPhotoMenu } from '@/components/persons/person-photo-menu';
 import {
     useGuardedClick,
     useSectionEditor,
 } from '@/components/persons/section-editor';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { DialogDescription, DialogTitle } from '@/components/ui/dialog';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -18,126 +17,181 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useSetRootPerson } from '@/hooks/use-set-root-person';
+import { formatAge } from '@/lib/age';
+import type { centreHints } from '@/lib/centre-hints';
 import { formatLifespan } from '@/lib/lifespan';
-import { show as treeShow } from '@/routes/tree';
+import { ancestors as treeAncestors, show as treeShow } from '@/routes/tree';
 import type { PersonPreview } from '@/types';
 
 type Props = {
     person: PersonPreview;
     isRootPerson: boolean;
-    /** Optional element rendered above the identity row, e.g. a "Wstecz" button. */
-    leading?: React.ReactNode;
 };
 
-/** Identity header of the person modal: avatar, name, lifespan, chips and actions. */
-export function PersonModalHeader({ person, isRootPerson, leading }: Props) {
+/** Lifespan with the age in brackets, as shown under the panel title; null without dates. */
+export function personLifespan(person: PersonPreview): string | null {
+    const baseLifespan = formatLifespan(person.birth?.date, person.death?.date);
+
+    return baseLifespan && person.age
+        ? `${baseLifespan} (${formatAge(person.age)})`
+        : baseLifespan;
+}
+
+/** Identity row of the person panel: photo menu and chips. Name and lifespan are the panel title and description. */
+export function PersonModalHeader({ person, isRootPerson }: Props) {
+    const [photoError, setPhotoError] = useState<string | null>(null);
+
+    return (
+        <div className="pb-4">
+            <div className="flex items-center gap-4">
+                <PersonPhotoMenu
+                    person={person}
+                    onErrorChange={setPhotoError}
+                />
+
+                {(person.gender || person.religion || isRootPerson) && (
+                    <div className="flex flex-wrap gap-1.5">
+                        {person.gender && (
+                            <Badge variant="secondary">
+                                {person.gender.label}
+                            </Badge>
+                        )}
+                        {person.religion && (
+                            <Badge variant="secondary">
+                                {person.religion.label}
+                            </Badge>
+                        )}
+                        {isRootPerson && <Badge>Probant</Badge>}
+                    </div>
+                )}
+            </div>
+
+            {photoError && (
+                <p
+                    role="alert"
+                    className="text-destructive-foreground mt-2 text-sm"
+                >
+                    {photoError}
+                </p>
+            )}
+        </div>
+    );
+}
+
+/**
+ * Header actions of the person panel: "Pokaż na drzewie" and the "⋯" menu.
+ * Re-centring keeps the panel open and, on the tree, the union of the person's
+ * card; it is hidden when the person is already the centre. "Pokaż przodków"
+ * lives only in the menu and opens the ancestors view of the person; on that
+ * view it keeps the current generations and is hidden for its centre.
+ */
+export function PersonPanelActions({
+    person,
+    isRootPerson,
+    hints,
+    ancestorsContext,
+}: Props & {
+    hints: ReturnType<typeof centreHints> | null;
+    ancestorsContext: { focusId: number; generations: number } | null;
+}) {
     const { setRootPerson, processing } = useSetRootPerson(person.id);
     const [isDeleteOpen, setIsDeleteOpen] = useState(false);
     const { requestExit } = useSectionEditor();
     const guardClick = useGuardedClick();
-    const treeHref = treeShow(person.id);
-
-    const lifespan = formatLifespan(person.birth?.date, person.death?.date);
+    const spouse = hints?.spouses[person.id];
+    const treeHref = treeShow(person.id, {
+        query: { person: person.id, ...(spouse ? { spouse } : {}) },
+    });
+    const showOnTree = hints?.focusId !== person.id;
+    const showAncestors = ancestorsContext?.focusId !== person.id;
+    const ancestorsHref = treeAncestors(person.id, {
+        query: {
+            person: person.id,
+            ...(ancestorsContext
+                ? { generations: ancestorsContext.generations }
+                : {}),
+        },
+    });
 
     return (
-        <div className="flex flex-col gap-3 px-6 pt-6 pr-12 pb-4">
-            {leading}
-
-            <div className="flex items-start gap-4">
-                <PersonAvatar
-                    name={person.display_name}
-                    gender={person.gender?.value ?? null}
-                />
-
-                <div className="min-w-0 flex-1 space-y-1">
-                    <DialogTitle className="text-xl leading-tight [overflow-wrap:anywhere]">
-                        {person.display_name}
-                    </DialogTitle>
-                    <DialogDescription
-                        className={lifespan ? undefined : 'sr-only'}
+        <div className="flex shrink-0 items-center gap-1.5">
+            {showOnTree && (
+                <Button
+                    variant="outline"
+                    size="sm"
+                    className="hidden sm:inline-flex"
+                    asChild
+                >
+                    <Link
+                        href={treeHref}
+                        onClick={(event) =>
+                            guardClick(event, () => router.visit(treeHref))
+                        }
                     >
-                        {lifespan ?? 'Podgląd osoby'}
-                    </DialogDescription>
+                        Pokaż na drzewie
+                    </Link>
+                </Button>
+            )}
 
-                    {(person.gender || person.religion || isRootPerson) && (
-                        <div className="flex flex-wrap gap-1.5 pt-1">
-                            {person.gender && (
-                                <Badge variant="secondary">
-                                    {person.gender.label}
-                                </Badge>
-                            )}
-                            {person.religion && (
-                                <Badge variant="secondary">
-                                    {person.religion.label}
-                                </Badge>
-                            )}
-                            {isRootPerson && <Badge>Probant</Badge>}
-                        </div>
-                    )}
-                </div>
-
-                <div className="flex shrink-0 items-center gap-1.5">
+            <DropdownMenu>
+                <DropdownMenuTrigger asChild>
                     <Button
                         variant="outline"
-                        size="sm"
-                        className="hidden sm:inline-flex"
-                        asChild
+                        size="icon"
+                        className="size-8"
+                        aria-label="Więcej działań"
                     >
-                        <Link
-                            href={treeHref}
-                            onClick={(event) =>
-                                guardClick(event, () => router.visit(treeHref))
-                            }
-                        >
-                            Pokaż na drzewie
-                        </Link>
+                        <EllipsisIcon />
                     </Button>
-
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button
-                                variant="outline"
-                                size="icon"
-                                className="size-8"
-                                aria-label="Więcej działań"
-                            >
-                                <EllipsisIcon />
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                            <DropdownMenuItem asChild>
-                                <Link
-                                    href={treeHref}
-                                    onClick={(event) =>
-                                        guardClick(event, () =>
-                                            router.visit(treeHref),
-                                        )
-                                    }
-                                >
-                                    Pokaż na drzewie
-                                </Link>
-                            </DropdownMenuItem>
-                            {!isRootPerson && (
-                                <DropdownMenuItem
-                                    disabled={processing}
-                                    onSelect={() => requestExit(setRootPerson)}
-                                >
-                                    Ustaw jako probanta
-                                </DropdownMenuItem>
-                            )}
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem
-                                variant="destructive"
-                                onSelect={() =>
-                                    requestExit(() => setIsDeleteOpen(true))
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                    {showOnTree && (
+                        <DropdownMenuItem asChild>
+                            <Link
+                                href={treeHref}
+                                onClick={(event) =>
+                                    guardClick(event, () =>
+                                        router.visit(treeHref),
+                                    )
                                 }
                             >
-                                Usuń osobę…
-                            </DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
-                </div>
-            </div>
+                                Pokaż na drzewie
+                            </Link>
+                        </DropdownMenuItem>
+                    )}
+                    {showAncestors && (
+                        <DropdownMenuItem asChild>
+                            <Link
+                                href={ancestorsHref}
+                                onClick={(event) =>
+                                    guardClick(event, () =>
+                                        router.visit(ancestorsHref),
+                                    )
+                                }
+                            >
+                                Pokaż przodków
+                            </Link>
+                        </DropdownMenuItem>
+                    )}
+                    {!isRootPerson && (
+                        <DropdownMenuItem
+                            disabled={processing}
+                            onSelect={() => requestExit(setRootPerson)}
+                        >
+                            Ustaw jako probanta
+                        </DropdownMenuItem>
+                    )}
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                        variant="destructive"
+                        onSelect={() =>
+                            requestExit(() => setIsDeleteOpen(true))
+                        }
+                    >
+                        Usuń osobę…
+                    </DropdownMenuItem>
+                </DropdownMenuContent>
+            </DropdownMenu>
 
             <DeletePersonDialog
                 person={person}

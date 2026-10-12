@@ -4,6 +4,7 @@ namespace App\Http\Resources;
 
 use App\Enums\SourceKind;
 use App\Models\Event;
+use App\Models\EventSource;
 use App\Models\Source;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -26,10 +27,11 @@ class EventResource extends JsonResource
      *     type: string,
      *     date: string|null,
      *     place: string|null,
+     *     locality_id: int|null,
      *     date_parts: array{year: int|null, month: int|null, day: int|null, is_approximate: bool},
      *     is_confirmed?: bool,
      *     confirmed_kinds?: list<string>,
-     *     sources?: list<array{id: int, kind: string, kind_short_label: string, original_name: string, display_name: string, has_thumbnail: bool, uploaded_at: string|null}>,
+     *     sources?: list<array{id: int, kind: string, kind_short_label: string, original_name: string, display_name: string, has_thumbnail: bool, uploaded_at: string|null, entry_number: string|null}>,
      * }
      */
     public function toArray(Request $request): array
@@ -38,7 +40,8 @@ class EventResource extends JsonResource
             'id' => $this->id,
             'type' => $this->type->value,
             'date' => $this->date->format(),
-            'place' => $this->place,
+            'place' => $this->locality?->name,
+            'locality_id' => $this->locality_id,
             'date_parts' => [
                 'year' => $this->date_year,
                 'month' => $this->date_month,
@@ -67,7 +70,19 @@ class EventResource extends JsonResource
                 'display_name' => $source->displayName(),
                 'has_thumbnail' => $source->thumbnail_path !== null,
                 'uploaded_at' => $source->created_at?->toIso8601String(),
+                'entry_number' => $this->pivotOf($source)->entry_number,
             ])->all()),
         ];
+    }
+
+    /**
+     * The event-source link a source carries when it was loaded through `Event::sources()`.
+     */
+    private function pivotOf(Source $source): EventSource
+    {
+        /** @var EventSource $pivot */
+        $pivot = $source->getRelation('pivot');
+
+        return $pivot;
     }
 }

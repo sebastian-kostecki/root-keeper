@@ -297,12 +297,12 @@ None — no schema changes. Existing data with two same-sex parents (if any) is 
 
 #### Manual
 
-- [ ] 1.7 US-01: tree centred on Jan with „Nieznany ojciec", Józef (male, unrelated) exists → click the slot, pick Józef → Józef appears as Jan's father without leaving the tree; centre and union unchanged; the preview modal of Jan lists Józef under „Rodzice"
-- [ ] 1.8 The father slot lists only men, the mother slot only women, a „Nieznany rodzic" slot everyone; Jan himself, his parents and his descendants never appear; the hidden-count hint appears when unknown-sex people exist and disappears when there are none
-- [ ] 1.9 A grandparent slot (above Józef) opens „Dodaj ojca — Józef …" and attaches to Józef
-- [ ] 1.10 „Nieznany partner" is not clickable
-- [ ] 1.11 In the preview modal, adding a second father is blocked with „Ma już ojca"
-- [ ] 1.12 Visual gate: slot at rest / hover / keyboard focus, dialog with results, with filter and no matches, with hint, loading skeleton, error message — at 375px and 1280px, light and dark; screenshots attached to the review
+- [x] 1.7 US-01: tree centred on Jan with „Nieznany ojciec", Józef (male, unrelated) exists → click the slot, pick Józef → Józef appears as Jan's father without leaving the tree; centre and union unchanged; the preview modal of Jan lists Józef under „Rodzice"
+- [x] 1.8 The father slot lists only men, the mother slot only women, a „Nieznany rodzic" slot everyone; Jan himself, his parents and his descendants never appear; the hidden-count hint appears when unknown-sex people exist and disappears when there are none
+- [x] 1.9 A grandparent slot (above Józef) opens „Dodaj ojca — Józef …" and attaches to Józef
+- [x] 1.10 „Nieznany partner" is not clickable
+- [x] 1.11 In the preview modal, adding a second father is blocked with „Ma już ojca"
+- [x] 1.12 Visual gate: slot at rest / hover / keyboard focus, dialog with results, with filter and no matches, with hint, loading skeleton, error message — at 375px and 1280px, light and dark; screenshots attached to the review
 
 ### Phase 2: New parent from the same dialog
 

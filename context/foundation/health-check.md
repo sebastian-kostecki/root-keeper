@@ -1,6 +1,6 @@
 ---
 project: root-keeper
-checked_at: 2026-09-28T05:01:34Z
+checked_at: 2026-10-04T19:48:16Z
 health_status: needs-attention
 context_type: brownfield
 language_family: multi
@@ -14,17 +14,17 @@ checks_run:
   - configuration
 audit_findings:
   critical: 0
-  high: 0
-  moderate: 0
+  high: 1
+  moderate: 1
   low: 0
 test_runner_detected: true
 ci_provider: GitHub Actions
-recommended_fixes: 9
+recommended_fixes: 7
 ---
 
 # Health check — root-keeper
 
-> Project: Laravel 13 + Inertia 3 + React 19 (TypeScript), PHP 8.5, PostgreSQL 18, run locally with Sail. Checked before the brownfield change in `context/foundation/prd-v2.md` (scan descriptions, places gazetteer, residence history). Replaces the 2026-09-18 baseline check (see git history).
+> Project: Laravel 13 + Inertia 3 + React 19 (TypeScript), PHP 8.5, PostgreSQL 18, run locally with Sail. Checked before the brownfield change in `context/foundation/prd.md` (source description, places gazetteer, tree look + side panels, all-ancestors view; deadline 2026-11-04). Replaces the 2026-09-28 check (see git history) — all of its high and medium fixes (Larastan errors, PostgreSQL in CI, `.env.example`) are done.
 
 ## Dependency Health
 
@@ -41,11 +41,15 @@ Package manager: composer + npm
 
 ```
 Tool: vendor/bin/sail composer audit --format json; vendor/bin/sail npm audit --json
-Summary: 0 CRITICAL, 0 HIGH, 0 MODERATE, 0 LOW
-Direct vs transitive: composer — no advisories, no abandoned packages; npm — no advisories across 418 packages
+Summary: 0 CRITICAL, 1 HIGH, 1 MODERATE, 0 LOW
+Direct vs transitive: composer — both advisories in one transitive package (league/commonmark, via laravel/framework and laravel-lang/publisher); npm — no advisories
 ```
 
-The LOW `@babel/core` advisory from the 2026-09-18 check is gone.
+#### HIGH findings
+
+- **league/commonmark** 2.10.1 — PKSA-m4t9-vsgq-8khn (GHSA-3q6v-r5mr-hxv8): quadratic-time denial of service in the GitHub Flavored Markdown table extension. Fix: update to 2.10.2+ (2.10.3 available). Exposure is low: the app does not render Markdown (`Str::markdown`, CommonMark — no hits in `app/`, `routes/`, `resources/views/`, `config/`); the package comes in through the framework. Reported 2026-09-30.
+
+MODERATE: **league/commonmark** 2.10.1 — PKSA-m2dq-1fhr-29b1 (GHSA-97jj-33gv-5xf9): `DisallowedRawHtml` bypass when a disallowed tag name ends the raw-HTML literal. Same fix.
 
 ### Outdated Dependencies
 
@@ -53,32 +57,27 @@ The LOW `@babel/core` advisory from the 2026-09-18 check is gone.
 Packages with major version gaps: 2 (npm); composer: none
 ```
 
-- **vite-plus**: 0.3.0 → 1.0.0-rc.1 (pre-1.0 → 1.0 release candidate). The toolchain the stack assessment flagged as least known to agents is about to hit 1.0; upgrade once 1.0 is stable, not the RC.
-- **@types/node**: 24.13.5 → 26.6.3 (2 majors). Intentional — types should track the Node runtime (24 locally and in Sail), not "latest". CI, however, runs Node 22 (see Configuration).
+- **vite-plus**: 0.3.0 → 1.0.0 (pre-1.0 → stable 1.0). The 2026-09-28 check waited for 1.0 to leave RC; it now has. This is the toolchain the stack assessment flagged as least known to agents, and the `CLAUDE.md` Vite+ block pins 0.3.0.
+- **@types/node**: 24.13.5 → 26.6.4 (2 majors). Intentional — types track the Node 24 runtime (wanted 24.19.1).
 
-Minor/patch updates available (no action required mid-change): inertiajs/inertia-laravel 3.3.4 → 3.4.0, laravel/framework 13.32.0 → 13.33.0, laravel/fortify 1.39.0 → 1.40.0, laravel/boost 2.9.1 → 2.10.0, larastan/larastan 3.12.1 → 3.12.2, laravel/sail 1.67.0 → 1.68.0, phpunit/phpunit 13.3.4 → 13.3.5; vite 8.3.0 → 8.3.1, lucide-react 1.47.0 → 1.48.0. Windows-only optional binaries show as missing — expected on Linux/WSL.
+Minor/patch updates available (none urgent): inertiajs/inertia-laravel 3.3.4 → 3.5.1, laravel/framework 13.32.0 → 13.34.0, laravel/fortify 1.39.0 → 1.40.0, laravel/boost 2.9.1 → 2.10.1, larastan/larastan 3.12.1 → 3.12.2, laravel/sail 1.67.0 → 1.68.0, pestphp/pest 5.2.1 → 5.3.0, phpunit/phpunit 13.3.4 → 13.4.0; @inertiajs/react and @inertiajs/vite 3.7.1 → 3.8.0, vite 8.3.0 → 8.3.2, lucide-react 1.47.0 → 1.52.0. Windows-only optional binaries show as missing — expected on Linux/WSL.
 
 ## Test Suite
 
 ```
-Test runner: Pest 5.2 (PHPUnit 13.3) via `vendor/bin/sail artisan test`
-Tests found: 169 tests (Feature + Unit)
-Test execution: passing locally (169/169, 1026 assertions, ~15 s) against PostgreSQL 18; failing in CI (1 failed, 168 passed) against SQLite
+Test runner: Pest 5.2 (PHPUnit 13.3) via `vendor/bin/sail artisan test`; Vitest 4.1 via `npm run test:js` (`vp test`); Playwright 1.63 (E2E)
+Tests found: 454 Pest tests; 124 Vitest tests in 7 files; 2 Playwright tests (setup + 1 seed spec)
+Test execution: passing — Pest 454/454 (2944 assertions, ~76 s, PostgreSQL 18); Vitest 124/124 (~1.7 s); Playwright listed, not executed (needs the isolated E2E server)
 ```
 
 ```
-Configuration: phpunit.xml (DB_DATABASE=testing; driver comes from .env)
-Framework: Pest 5.2.1, pest-plugin-laravel 5, PHPUnit 13.3.4, Mockery
+Configuration: phpunit.xml; vite.config.ts (`vp test`); playwright.config.ts + scripts/e2e-server.sh (see context/foundation/test-stack.md)
+Framework: Pest 5.2.1 + pest-plugin-laravel 5, PHPUnit 13.3.4; Vitest 4.1.11; @playwright/test 1.63.0
 ```
 
-Other local gates:
+Other local gates, all passing: `composer types:check` (Larastan level 7, 0 errors), `npm run types:check` (tsc), `npm run check` (Oxfmt: 149 files formatted; Oxlint: 150 files, no warnings), `composer lint:check` (Pint).
 
-- `composer lint:check` (Pint) — pass.
-- `npm run check` (Vite+: Oxfmt + Oxlint) — pass, 98 files formatted, 89 files lint-clean.
-- `npm run types:check` (tsc) — pass.
-- `composer types:check` (Larastan level 7) — **fail, 12 errors in 8 files** (details under Recommended Fixes #1).
-
-The test command works as long as Sail is up (the hang noted on 2026-09-18 does not apply when run through Sail). No frontend tests exist; Vitest is available through `vp test`.
+**E2E coverage vs. PRD guardrails.** The only E2E spec protects the auth-gate round-trip. The two PRD guardrails (fact–source links; adding relations from tree slots) have no browser test. They are covered one layer down by Pest (`tests/Feature/WriteTargetsTest.php` pins "Inertia prop → request → database"), which is why `test-plan.md` §3 Phase 4 stayed `not started` on 2026-10-02 with the trigger: "run e2e when client-side id state appears". This change creates exactly that state — side panels whose content is swapped when moving to a relative (FR-019, FR-028), and a marriage panel editing a couple (FR-017). See Recommended Fixes #2.
 
 ## CI/CD
 
@@ -87,37 +86,37 @@ Provider: GitHub Actions
 Configuration: .github/workflows/lint.yml, static-analysis.yml, tests.yml (+ .github/dependabot.yml, github-actions ecosystem only)
 ```
 
-| Stage      | Status | Notes                                                                                   |
-|------------|--------|-----------------------------------------------------------------------------------------|
-| Lint       | ✓      | Pint (`composer lint:check`) + Vite+ (`npm run check`) — green on `main`                 |
-| Test       | ✓      | Pest (`php artisan test`) — **red on `main` since `a253498` (2026-09-25)**: 1 SQLite-only failure |
-| Build      | ✓      | `npm run build` inside `composer setup`                                                  |
-| Type check | ✓      | Larastan level 7 + `tsc --noEmit` — **red on `main` since `a253498`**: 12 Larastan errors |
-| Security   | ✗      | No `composer audit` / `npm audit` step; Dependabot covers GitHub Actions only           |
+| Stage      | Status | Notes                                                                                 |
+|------------|--------|---------------------------------------------------------------------------------------|
+| Lint       | ✓      | Pint (`composer lint:check`) + Vite+ (`npm run check`); Vitest (`npm run test:js`) runs here too |
+| Test       | ✓      | Pest on a `postgres:18-alpine` service with `pg_dump` 18 — green on `main`              |
+| Build      | ✓      | `npm run build` inside `composer setup`                                               |
+| Type check | ✓      | Larastan level 7 + `tsc --noEmit` — green on `main`                                   |
+| Security   | ✗      | No `composer audit` / `npm audit` step; Dependabot watches GitHub Actions only        |
 
-Last fully green run on `main`: `1c07eb4` (2026-09-24). Both `a253498` and `8addb52` (current `origin/main`) fail `tests` and `static-analysis`.
+All three workflows are green on `main` for the last three pushes (`0be67d4`, `e816162`, `4b23032`). E2E (Playwright) does not run in CI. Workflows still use `node-version: '22'` while Sail runs Node 24.
 
-**CI test failure:** `Tests\Feature\PersonsTest > persons index ignores case but not polish diacritics` — searching `ŁUKASZ żółk` returns 0 persons instead of 1. CI builds the app with `composer setup`, which copies `.env.example` (`DB_CONNECTION=sqlite`); SQLite's case-insensitive `LIKE` folds only ASCII, so `Ł`/`ł` and `Ż`/`ż` don't match. PostgreSQL (dev, prod) passes. The DB-parity risk flagged on 2026-09-18 has now produced a real false-red, and the planned change adds two more text searches over Polish names (scan name search, place suggestions).
+The missing security stage has a concrete cost now: the league/commonmark HIGH advisory (reported 2026-09-30) went unnoticed for four days.
 
 ## Configuration
 
 ### High severity
 
-No high-severity gaps. `.gitignore` present; `tsconfig.json` has `strict: true`; lint/format config present (`vite.config.ts` `lint`/`fmt`, `pint.json`).
+No high-severity gaps. `.gitignore` present; `tsconfig.json` `strict: true`; lint/format config present (`vite.config.ts` `lint`/`fmt`, `pint.json`); `phpstan.neon` level 7 without baseline.
 
 ### Medium severity
 
-- **`.env.example`** — still `DB_CONNECTION=sqlite` with MySQL-style comments, while dev/prod run PostgreSQL. Because CI copies this file, it decides which database CI tests on (root cause of the CI test failure). Fix: see Recommended Fixes #2.
+- **Docs describe E2E coverage that does not exist** — `prd.md` Current System Overview says the critical paths are "chronione testami E2E (Playwright)", and `test-plan.md` §4 Stack still says "e2e: none yet … kandydat: pest-plugin-browser" although Playwright is set up (`test-stack.md`, 2026-10-02). Agents planning slices from these files will either assume a safety net that isn't there or propose a second E2E tool. Fix: Recommended Fixes #3.
 
 ### Low severity
 
-- **CI Node version** — workflows use `node-version: '22'`; local and Sail run Node 24 and `@types/node` is 24.x. Fix: set `node-version: '24'` in all three workflows.
-- **`pnpm-workspace.yaml`** — suggests pnpm while the project uses npm. Fix: `git rm pnpm-workspace.yaml`.
-- **`.ai/rules` referenced but absent** — the Boost section of `CLAUDE.md` tells agents to read `.ai/rules/index.md`; the directory doesn't exist. The instruction is conditional ("If `.ai/rules` does not exist, continue without it"), so it only costs a lookup. No fix needed until the first rule is recorded.
+- **CI Node version** — `node-version: '22'` in all three workflows; Sail runs Node 24 and `@types/node` is 24.x. Fix: Recommended Fixes #5.
+- **`pnpm-workspace.yaml`** — suggests pnpm while the project uses npm. Fix: Recommended Fixes #6.
+- **`.ai/rules` referenced but absent** — Boost's section of `CLAUDE.md` points agents to `.ai/rules/index.md`; the instruction is conditional ("If `.ai/rules` does not exist, continue without it"), so it only costs a lookup. No fix needed until the first rule is recorded.
 
-Present and fine: `.editorconfig`, `.env.example`, `.gitignore`, `pint.json`, `phpstan.neon` (level 7, no baseline), `tsconfig.json` strict, `CLAUDE.md` (tracked; `.claude/` and `AGENTS.md` are gitignored — CLI-managed skills, intentional).
+Present and fine: `.editorconfig`, `.env.example` (now `DB_CONNECTION=pgsql`, Sail defaults), `.gitignore`, `pint.json`, `CLAUDE.md`.
 
-Backup scope (PRD constraint "backups must cover the new data"): `config/backup.php` backs up the whole database plus `storage/app`, so new scan fields, places and residences are covered without changes.
+**Backup scope (PRD NFR: new data incl. person photos, RPO 24 h).** `config/backup.php` includes the whole database and `storage_path('app')`; `bootstrap/app.php` schedules `backup:run` daily at 03:45 Europe/Warsaw in production (run by `schedule:work` in `docker/8.5/supervisord.prod.conf`). Photos stored under `storage/app` are therefore covered within 24 h. The pre-migration snapshot in `scripts/deploy.sh` is `--only-db`, which is enough — the planned data moves touch only the database. Store photos under `storage/app` (not outside it) to stay covered.
 
 ## Stack Assessment Cross-Reference
 
@@ -126,147 +125,106 @@ Stack assessment: context/foundation/stack-assessment.md
 Agent readiness (from stack-assess): ready-with-compensation
 ```
 
-| Quality Gate Gap / Assumption                         | Health-Check Finding                                                                 | Status      |
-|-------------------------------------------------------|--------------------------------------------------------------------------------------|-------------|
-| Build tool (vite-plus) not in training data           | `CLAUDE.md` Vite+ block present; `vp check` passes locally and in CI                 | Mitigated   |
-| Build tool version pin (0.3)                          | vite-plus 1.0.0-rc.1 published — pin and `CLAUDE.md` block need a refresh at 1.0     | Watch       |
-| Typed gate passes via Larastan level 7 in CI          | Larastan fails with 12 errors on `main`; CI static-analysis red since 2026-09-25    | Reinforced — the typing signal the gate relies on is currently off |
-| Tree-owned data conventions (Resources, Requests, controllers) | `CLAUDE.md` block present; 10 of the 12 Larastan errors sit in exactly these layers | Reinforced — fix before the gazetteer copies the patterns |
-| Recent major versions (Inertia v3, Pest 5, TS 7)      | Versions block in `CLAUDE.md`; all checks except Larastan pass on these versions    | Mitigated   |
-| `strict_types` claim                                  | Dropped from `tech-stack.md` (2026-09-28)                                            | Resolved    |
+| Quality Gate Gap / Assumption                               | Health-Check Finding                                                                  | Status      |
+|-------------------------------------------------------------|---------------------------------------------------------------------------------------|-------------|
+| Build tool (vite-plus 0.3) not in training data             | `CLAUDE.md` Vite+ block present; `vp check` green locally and in CI                   | Mitigated   |
+| vite-plus pinned at pre-1.0                                 | vite-plus 1.0.0 stable is out; `CLAUDE.md` block and versions line describe 0.3.0    | Watch — upgrade outside feature work (#4) |
+| Typed gate relies on Larastan level 7 in CI                 | Larastan 0 errors locally; `static-analysis` green on `main`                          | Mitigated (was Reinforced on 2026-09-28) |
+| Recent major versions (Inertia v3, Pest 5, TS 7)            | All gates pass on these versions; versions block refresh pending (stack-assessment gap 2) | Mitigated |
+| Side panels / data moves / gazetteer merge rules (gaps 3–5) | Proposed `CLAUDE.md` blocks not pasted yet (`CLAUDE.md` has no "Side panels" or "Migrations that move existing data" section) | Open — paste before the first slice (#7) |
+| Hand-off: E2E protects critical paths                       | Only the auth-gate seed exists; no E2E in CI; test-plan Phase 4 trigger now met by side panels | Reinforced (#2, #3) |
+| Hand-off: backups cover photos                              | Daily full backup covers `storage/app`; pre-migration DB-only snapshot suffices       | Resolved    |
 
 ## Recommended Fixes
 
 ### Fix before agent work (Category A)
 
-### 1. Make Larastan green again (12 errors)
+### 1. Patch league/commonmark (1 HIGH, 1 MODERATE advisory)
 
-**Impact**: The stack's typed rating rests on Larastan in CI. While it's red, every agent PR fails static analysis for pre-existing reasons, new type errors hide among the old ones, and the gazetteer module would copy the failing patterns (Resources, Form Requests, controllers).
+**Impact**: Every `composer audit` (and any future CI audit step) stays red until patched, which trains agents and humans to ignore it. Real exposure is low — the app renders no Markdown — but the fix is a one-package update.
 **Severity**: high
-**Effort**: moderate (15–30 min)
-**Fix**: run `vendor/bin/sail composer types:check` and fix the causes (no baseline, no `@phpstan-ignore`):
-
-- `MarriageController.php:27`, `ParentChildRelationController.php:24` — the `Person` passed to the Action is typed `Person|Collection<Person>` (4 errors). Resolve a single model (e.g. `Person::query()->findOrFail($id)` with an `int` id, or a Form Request method returning `Person`).
-- `ListRelationCandidates.php:50` — returns `array<int, …>` where `list<…>` is declared; wrap the result in `array_values()` or build it with `->values()->all()`.
-- `MarriageResource.php:43` — `toArray()` return shape doesn't match its PHPDoc array shape; align the shape.
-- `RelativeResource.php:30` — `$this->pivot` is undefined on the resource; annotate the underlying model (`@mixin Person` / `@property-read` pivot) or read the pivot from `$this->resource`.
-- `PersonResource.php:85-87` — drop the unnecessary `?->` on `year`/`month`/`day` (3 errors).
-- `MarriageUpdateRequest.php:25`, `PersonStoreRequest.php:24` — narrow the types in the rule closures/`array_map` callback.
-
-Verify: `vendor/bin/sail composer types:check` → 0 errors, then push and confirm the `static-analysis` workflow is green.
-
-### 2. Run CI tests on PostgreSQL (DB parity)
-
-**Impact**: CI tests on SQLite, dev and prod run PostgreSQL. This already produced a false-red (Polish diacritics search), and `prd-v2` adds scan name search (FR-006) and place suggestions while typing (FR-008) over Polish names — exactly where SQLite and PostgreSQL disagree. An agent seeing a CI-only failure may "fix" correct code.
-**Severity**: high
-**Effort**: moderate (15–30 min)
+**Effort**: quick (< 5 min)
 **Fix**:
 
-1. In `.github/workflows/tests.yml`, add a Postgres service and point the test step at it:
-
-```yaml
-jobs:
-  tests:
-    runs-on: ubuntu-latest
-    services:
-      pgsql:
-        image: postgres:18-alpine
-        env:
-          POSTGRES_DB: testing
-          POSTGRES_USER: sail
-          POSTGRES_PASSWORD: password
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd "pg_isready -U sail"
-          --health-interval 5s --health-timeout 5s --health-retries 10
-    env:
-      DB_CONNECTION: pgsql
-      DB_HOST: 127.0.0.1
-      DB_PORT: 5432
-      DB_DATABASE: testing
-      DB_USERNAME: sail
-      DB_PASSWORD: password
+```bash
+vendor/bin/sail composer update league/commonmark
+vendor/bin/sail composer audit
+vendor/bin/sail artisan test --compact
 ```
 
-and add `pdo_pgsql` to the `extensions:` list of `shivammathur/setup-php` (`extensions: gd, exif, pdo_pgsql`). Keep `composer setup`'s `migrate --force` working by setting the same env at job level (as above).
+Expected: league/commonmark 2.10.3, `composer audit` reports no advisories.
 
-2. Push and confirm `tests` is green, including `persons index ignores case but not polish diacritics`.
+### 2. Cover the PRD guardrails in the browser before the panel slices
 
-### 3. Align `.env.example` with the Sail/PostgreSQL setup
+**Impact**: The change replaces modals with side panels in four places and swaps panel content when moving to a relative (FR-019, FR-028). That is the "client-side id state" `test-plan.md` named as the trigger for E2E. Without a browser test on the two guardrails (fact–source link, relation added from a tree slot), an agent can wire a panel action to the wrong person and every Pest test will still pass.
+**Severity**: medium
+**Effort**: significant (> 1 hour)
+**Fix**: before the first panel slice, run `/10x-e2e` for two risks — (a) adding an existing parent from an empty tree slot lands on the right person; (b) linking a source to a fact keeps leading to the same source and scan. Assert on data, not layout (test-plan §6.6). Then flip `test-plan.md` §3 Phase 4 to in progress. Running E2E in CI is a separate step (see Category B).
 
-**Impact**: `.env.example` is what fresh clones, CI (`composer setup`) and agents read as the database truth; it still says SQLite.
+### 3. Correct the docs that describe E2E coverage
+
+**Impact**: `/10x-roadmap` and `/10x-plan` read `prd.md` and `test-plan.md`. Today they say critical paths are already E2E-protected, and that no E2E tool is chosen.
 **Severity**: medium
 **Effort**: quick (< 5 min)
-**Fix**: replace the `DB_*` block in `.env.example` with:
+**Fix**:
 
-```dotenv
-DB_CONNECTION=pgsql
-DB_HOST=pgsql
-DB_PORT=5432
-DB_DATABASE=root_keeper
-DB_USERNAME=sail
-DB_PASSWORD=password
+- `context/foundation/prd.md`, Current System Overview, "Jakość dziś": replace the E2E clause with "ścieżki krytyczne (fakt–źródło, relacje ze slotów drzewa) chronione testami Pest (`WriteTargetsTest`); E2E (Playwright) skonfigurowane — na razie tylko test seed logowania, poza CI."
+- `context/foundation/test-plan.md` §4 Stack, row `e2e`: Playwright 1.63 via `playwright.config.ts` (see `test-stack.md`), replacing the pest-plugin-browser candidate.
+
+### 4. Upgrade vite-plus to 1.0 — outside feature work
+
+**Impact**: 1.0 is stable. The change is frontend-heavy; upgrading mid-change mixes toolchain diffs with feature diffs, while staying on 0.3 keeps agents on a pre-1.0 tool whose `CLAUDE.md` block will age.
+**Severity**: low
+**Effort**: moderate (15–30 min)
+**Fix**: on its own branch, either before the first slice or after 2026-11-04 — not in between:
+
+```bash
+vendor/bin/sail npm i -D vite-plus@^1
+# read node_modules/vite-plus/docs/guide/upgrade.md (if present) and node_modules/vite-plus/AGENTS.md
+vendor/bin/sail npm run check && vendor/bin/sail npm run types:check && vendor/bin/sail npm run test:js && vendor/bin/sail npm run build
 ```
 
-(Sail defaults only, no secrets. CI overrides these via the job env from fix #2.)
+Then update "vite-plus 0.3.0" in the `CLAUDE.md` Vite+ block heading and the versions line.
 
-### 4. Match CI's Node version to the runtime
+### 5. Match CI's Node version to the runtime
 
 **Impact**: CI builds and type-checks on Node 22 while development runs Node 24 with `@types/node` 24 — an agent can use a Node 24 API that passes locally and breaks only in CI.
 **Severity**: low
 **Effort**: quick (< 5 min)
 **Fix**: in `.github/workflows/{lint,static-analysis,tests}.yml`, change `node-version: '22'` to `node-version: '24'`.
 
-### 5. Remove the package-manager ambiguity
+### 6. Remove the package-manager ambiguity
 
 **Impact**: agents that see `pnpm-workspace.yaml` may run `pnpm install` and create a second lockfile.
 **Severity**: low
 **Effort**: quick (< 5 min)
-**Fix**: `git rm pnpm-workspace.yaml` (the project uses npm; its `publicHoistPattern` setting has no effect under npm). Verify with `vendor/bin/sail npm ci && vendor/bin/sail npm run build`.
+**Fix**: `git rm pnpm-workspace.yaml`, then verify with `vendor/bin/sail npm ci && vendor/bin/sail npm run build`.
 
-### 6. Apply pending minor/patch updates between changes
+### 7. Paste the change-specific rules into `CLAUDE.md` and apply pending minor updates
 
-**Impact**: small, but keeps the "installed versions" block in `CLAUDE.md` accurate and avoids bundling version bumps into feature diffs.
+**Impact**: the stack assessment wrote rules for the riskiest parts of this change (side panels vs modals, migrations that move existing data, gazetteer merge) and a refreshed versions block. Until they are in `CLAUDE.md`, an agent will not see them. Minor updates keep that versions block accurate.
 **Severity**: low
-**Effort**: quick (< 5 min)
-**Fix**: on a separate branch, not mid-feature:
-
-```bash
-vendor/bin/sail composer update -W
-vendor/bin/sail npm update
-vendor/bin/sail artisan test --compact && vendor/bin/sail composer types:check && vendor/bin/sail npm run check
-```
-
-Update the versions line in `CLAUDE.md` if a listed version changes (e.g. inertia-laravel 3.4).
-
-### 7. Move to vite-plus 1.0 when it is stable
-
-**Impact**: 1.0 will likely change CLI or config details the `CLAUDE.md` Vite+ block describes; the local docs in `node_modules/vite-plus/docs/` will change with it.
-**Severity**: low
-**Effort**: quick (< 5 min) for the bump; re-read the upgrade guide first
-**Fix**: after 1.0.0 (not the RC) is out: read `node_modules/vite-plus/docs/guide/upgrade.md`, run `vendor/bin/sail npm i -D vite-plus@^1`, then `vendor/bin/sail npm run check && vendor/bin/sail npm run build`, and update the version in the `CLAUDE.md` Vite+ block and versions line.
-
-### 8. Add frontend tests when UI logic grows
-
-**Impact**: React components are only type-checked and linted. The place picker (suggest existing, offer "add new" only when nothing matches) is the first UI with real client-side logic that a test could pin down.
-**Severity**: low
-**Effort**: moderate (15–30 min)
-**Fix**: Vite+ already bundles Vitest — read `node_modules/vite-plus/docs/guide/test.md`, add `vendor/bin/sail npm i -D @testing-library/react jsdom`, a `"test": "vp test"` script, and a step `npm test` in `tests.yml`. Optional for `prd-v2`; backend rules stay covered by Pest feature tests.
+**Effort**: quick (< 5 min) for the paste; moderate for updates
+**Fix**: copy the four blocks from `context/foundation/stack-assessment.md` → "Recommended Instruction File Additions" into `CLAUDE.md` above `<laravel-boost-guidelines>` (replace the existing "Installed versions" block; append the gazetteer bullets to "Backend conventions for tree-owned data"). On a separate branch: `vendor/bin/sail composer update -W && vendor/bin/sail npm update`, then `vendor/bin/sail artisan test --compact && vendor/bin/sail composer types:check && vendor/bin/sail npm run check`.
 
 ### Addressed in upcoming lessons (Category B)
 
 ### CI security scanning
 
 **Lesson**: [Sprint Zero z Agentem: infrastruktura, walking skeleton i pierwszy deploy (M1L5)](https://platforma.przeprogramowani.pl/external/10xdevs-3/m1-l5)
-**What you'll do there**: harden the pipeline — add `composer audit` and `npm audit --audit-level=high` steps, and add `composer` and `npm` ecosystems to `.github/dependabot.yml` (today it watches GitHub Actions only). Both audits are clean today, so this is prevention, not a fix.
+**What you'll do there**: harden the pipeline — add `composer audit` and `npm audit --audit-level=high` steps, and add `composer` and `npm` ecosystems to `.github/dependabot.yml` (it watches GitHub Actions only). The league/commonmark advisory (#1) is what this would have caught.
 
-Agent instruction files are no longer a gap: `CLAUDE.md` now carries project rules (Vite+ toolchain, installed versions, tree-owned data conventions) added from the stack assessment on 2026-09-28.
+### E2E in CI
+
+**Lesson**: [Sprint Zero z Agentem: infrastruktura, walking skeleton i pierwszy deploy (M1L5)](https://platforma.przeprogramowani.pl/external/10xdevs-3/m1-l5)
+**What you'll do there**: wire the pipeline stages. Here the E2E server is Sail-based (`scripts/e2e-server.sh`), so CI needs its own way to boot the app and the `e2e` database before `npx playwright test`; `test-plan.md` §5 already lists "e2e on critical tree/modal flows — CI on PR" as a gate after Phase 4.
+
+Agent instruction files are not a gap: `CLAUDE.md` carries project rules (Vite+, versions, tree-owned data, E2E rules); the pending additions are in #7.
 
 ## Summary
 
 Health status: needs-attention
 
-Dependencies are in good shape: both lockfiles are present, `composer audit` and `npm audit` are clean, and no Composer package is a major version behind. Locally, all 169 Pest tests pass on PostgreSQL, and Pint, Vite+ lint/format and `tsc` are clean. The problem is CI: `main` has been red since 2026-09-25 for two reasons. Larastan reports 12 type errors in controllers, Resources and Form Requests, the same layers the gazetteer module will copy. And CI tests on SQLite, which fails a Polish-diacritics search that PostgreSQL passes. The planned change adds more searches over Polish names, so that gap will keep producing false-reds.
+The project is in good shape for agent work: CI is green on `main`, Larastan, tsc, Oxlint/Oxfmt and Pint are clean, and 454 Pest plus 124 Vitest tests pass on PostgreSQL. All fixes from the 2026-09-28 check are done, and backups already cover the photos the PRD adds. What keeps the status at needs-attention is one HIGH advisory in a transitive package the app does not use (a five-minute update), plus two gaps specific to this change. The PRD guardrails have no browser test while side panels introduce exactly the client-side state the test plan was waiting for. And the docs claim E2E coverage that does not exist.
 
-Next step: fix #1 (Larastan) and #2–#3 (PostgreSQL in CI and `.env.example`) — about an hour together, best done as one small change — so CI is green before the `prd-v2` slices start. Then proceed to planning the roadmap (`/10x-roadmap`).
+Next step: patch league/commonmark (#1), correct the E2E wording in `prd.md` and `test-plan.md` (#3), paste the `CLAUDE.md` blocks (#7), then plan the milestone with `/10x-roadmap` — scheduling the two guardrail E2E tests (#2) before the first panel slice.

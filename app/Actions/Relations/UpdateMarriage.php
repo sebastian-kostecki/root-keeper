@@ -10,10 +10,10 @@ class UpdateMarriage
     use MapsEventInput;
 
     /**
-     * Update a marriage event's date and place in place, leaving its
+     * Update a marriage event's date and locality in place, leaving its
      * participants and linked sources untouched.
      *
-     * @param  array{year?: int|string|null, month?: int|string|null, day?: int|string|null, is_approximate?: bool|int|string|null, place?: string|null}  $date
+     * @param  array{year?: int|string|null, month?: int|string|null, day?: int|string|null, is_approximate?: bool|int|string|null, locality_id?: int|string|null}  $date
      */
     public function handle(Event $marriage, array $date): Event
     {

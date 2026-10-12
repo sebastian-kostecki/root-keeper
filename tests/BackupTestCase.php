@@ -4,7 +4,10 @@ namespace Tests;
 
 use App\Enums\EventType;
 use App\Models\Event;
+use App\Models\Locality;
+use App\Models\Parish;
 use App\Models\Person;
+use App\Models\Residence;
 use App\Models\Source;
 use App\Models\User;
 use Illuminate\Contracts\Console\Kernel;
@@ -121,8 +124,9 @@ abstract class BackupTestCase extends TestCase
     }
 
     /**
-     * Create a two-factor user with a tree, people, events, relations, a passkey and two uploaded
-     * sources of different bytes, one linked to an event.
+     * Create a two-factor user with a tree, people, events, relations, a passkey, a locality, a parish seated in it and two
+     * uploaded sources of different bytes, one linked to an event and the other turned into a gravestone with that
+     * locality as cemetery and the parent as buried person.
      */
     protected function arrangeBackupData(): Person
     {
@@ -147,6 +151,10 @@ abstract class BackupTestCase extends TestCase
         attachMarriage($parent, Person::factory()->for($tree)->create(), 1945);
         linkParent($parent, $child);
 
+        $seat = Locality::factory()->for($tree)->create(['name' => 'Lipnica Murowana']);
+        Parish::factory()->for($tree)->seatedIn($seat)->create(['name' => 'Św. Leonarda']);
+        Residence::factory()->for($parent)->create(['tree_id' => $tree->id, 'locality_id' => $seat->id]);
+
         $this->uploadedSourceHashes = [];
 
         foreach (['akt-1.jpg' => 'rotated-exif.jpg', 'akt-2.jpg' => 'portrait-small.jpg'] as $name => $fixture) {
@@ -158,12 +166,21 @@ abstract class BackupTestCase extends TestCase
             ];
         }
 
+        $gravestone = Source::query()->where('original_name', 'akt-2.jpg')->firstOrFail();
+
+        $this->put(route('sources.update', $gravestone), [
+            'kind' => 'gravestone',
+            'cemetery_locality_id' => $seat->id,
+            'buried_person_ids' => [$parent->id],
+        ])->assertSessionHasNoErrors();
+
         $birth = Event::query()->where('tree_id', $tree->id)->where('type', EventType::Birth)->firstOrFail();
 
-        $this->post(route('events.sources.store', $birth), ['source_id' => Source::query()->orderBy('id')->firstOrFail()->id])
+        $this->post(route('events.sources.store', $birth), ['source_id' => Source::query()->orderBy('id')->firstOrFail()->id, 'entry_number' => '95'])
             ->assertSessionHasNoErrors();
 
         expect(Source::query()->count())->toBe(2)
+            ->and(DB::table('buried_people')->count())->toBe(1)
             ->and(DB::table('event_source')->count())->toBe(1)
             ->and(DB::table('passkeys')->count())->toBe(1);
 

@@ -2,9 +2,12 @@
 
 use App\Enums\EventType;
 use App\Enums\ParticipantRole;
+use App\Enums\Religion;
 use App\Enums\SourceKind;
 use App\Enums\SourceRecordType;
 use App\Models\Event;
+use App\Models\Locality;
+use App\Models\Parish;
 use App\Models\Person;
 use App\Models\Source;
 use App\Models\User;
@@ -45,7 +48,7 @@ test('sources index shows only the authenticated user own sources, newest first'
         ->component('sources/index')
         ->has('sources', 2)
         ->has('sources.0', fn ($source) => $source->hasAll([
-            'id', 'kind', 'kind_label', 'kind_short_label', 'name', 'display_name', 'record_type', 'record_type_label', 'entry_number', 'year', 'provenance', 'url', 'note', 'original_name', 'mime_type', 'size', 'width', 'height', 'has_thumbnail', 'uploaded_at', 'events_count',
+            'id', 'kind', 'kind_label', 'kind_short_label', 'name', 'display_name', 'record_type', 'record_type_label', 'legacy_entry_number', 'year', 'parish_id', 'parish_label', 'parish_name', 'parish_locality_id', 'locality_name', 'cemetery_locality_id', 'cemetery_name', 'archive', 'url', 'note', 'original_name', 'mime_type', 'size', 'width', 'height', 'has_thumbnail', 'uploaded_at', 'events_count',
         ]))
         ->where('sources.0.id', $newer->id)
         ->where('sources.1.id', $older->id));
@@ -57,58 +60,96 @@ test('the old upload page returns not found', function () {
     $this->actingAs($user)->get('/sources/create')->assertNotFound();
 });
 
-test('sources show renders the source', function () {
+test('the sources index renders the source panel for ?source=id', function () {
     $user = User::factory()->create();
     $source = Source::factory()->for($user->tree)->withThumbnail()->create();
 
-    $response = $this->actingAs($user)->get(route('sources.show', $source));
+    $response = $this->actingAs($user)->get(route('sources.index', ['source' => $source->id]));
 
     $response->assertOk();
     $response->assertInertia(fn ($page) => $page
-        ->component('sources/show')
-        ->where('source.id', $source->id)
-        ->where('source.has_thumbnail', true));
+        ->component('sources/index')
+        ->where('sourcePanel.source.id', $source->id)
+        ->where('sourcePanel.source.has_thumbnail', true));
 });
 
-test('source show confirms is empty for an unlinked source', function () {
+test('the source panel is null without a source key or with a non-numeric one', function (array $query) {
+    $user = User::factory()->create();
+
+    $this->actingAs($user)->get(route('sources.index', $query))->assertInertia(fn ($page) => $page
+        ->component('sources/index')
+        ->where('sourcePanel', null));
+})->with([
+    'no key' => [[]],
+    'letters' => [['source' => 'abc']],
+    'negative' => [['source' => '-1']],
+    'array' => [['source' => ['5']]],
+]);
+
+test('?source=new opens an empty panel for a new source', function () {
+    $user = User::factory()->create();
+
+    $this->actingAs($user)->get(route('sources.index', ['source' => 'new']))->assertInertia(fn ($page) => $page
+        ->component('sources/index')
+        ->where('sourcePanel.source', null)
+        ->where('sourcePanel.confirms', []));
+});
+
+test('?source= of a missing source is a 404', function () {
+    $user = User::factory()->create();
+
+    $this->actingAs($user)->get(route('sources.index', ['source' => 999999]))->assertNotFound();
+});
+
+test('sources show redirects to the panel on the list', function () {
     $user = User::factory()->create();
     $source = Source::factory()->for($user->tree)->create();
 
-    $response = $this->actingAs($user)->get(route('sources.show', $source));
+    $this->actingAs($user)->get(route('sources.show', $source))
+        ->assertRedirect(route('sources.index', ['source' => $source->id]));
+});
+
+test('source panel confirms is empty for an unlinked source', function () {
+    $user = User::factory()->create();
+    $source = Source::factory()->for($user->tree)->create();
+
+    $response = $this->actingAs($user)->get(route('sources.index', ['source' => $source->id]));
 
     $response->assertOk();
     $response->assertInertia(fn ($page) => $page
-        ->component('sources/show')
-        ->where('confirms', []));
+        ->component('sources/index')
+        ->where('sourcePanel.confirms', []));
 });
 
-test('source show confirms lists the linked events with the person names and whether this is the last source', function () {
+test('source panel confirms lists the linked events with the person names and whether this is the last source', function () {
     $user = User::factory()->create();
     $source = Source::factory()->for($user->tree)->create();
     $otherSource = Source::factory()->for($user->tree)->create();
     $person = Person::factory()->for($user->tree)->create(['first_name' => 'Jan', 'last_name' => 'Kowalski']);
     $birth = Event::factory()->for($user->tree)->birth()->create();
     $birth->participants()->attach($person, ['role' => ParticipantRole::Subject]);
-    $source->events()->attach($birth);
+    $source->events()->attach($birth, ['entry_number' => '95']);
 
     $death = Event::factory()->for($user->tree)->death()->create();
     $death->participants()->attach($person, ['role' => ParticipantRole::Subject]);
     $death->sources()->attach([$source->id, $otherSource->id]);
 
-    $response = $this->actingAs($user)->get(route('sources.show', $source));
+    $response = $this->actingAs($user)->get(route('sources.index', ['source' => $source->id]));
 
     $response->assertOk();
     $response->assertInertia(fn ($page) => $page
-        ->component('sources/show')
-        ->has('confirms', 2)
-        ->where('confirms.0.event_id', $birth->id)
-        ->where('confirms.0.event_type', 'birth')
-        ->where('confirms.0.event_label', 'Urodzenie')
-        ->where('confirms.0.is_last_source', true)
-        ->where('confirms.0.person.id', $person->id)
-        ->where('confirms.0.person.display_name', 'Jan Kowalski')
-        ->where('confirms.1.event_id', $death->id)
-        ->where('confirms.1.is_last_source', false));
+        ->component('sources/index')
+        ->has('sourcePanel.confirms', 2)
+        ->where('sourcePanel.confirms.0.event_id', $birth->id)
+        ->where('sourcePanel.confirms.0.event_type', 'birth')
+        ->where('sourcePanel.confirms.0.event_label', 'Urodzenie')
+        ->where('sourcePanel.confirms.0.is_last_source', true)
+        ->where('sourcePanel.confirms.0.entry_number', '95')
+        ->where('sourcePanel.confirms.0.person.id', $person->id)
+        ->where('sourcePanel.confirms.0.person.display_name', 'Jan Kowalski')
+        ->where('sourcePanel.confirms.1.event_id', $death->id)
+        ->where('sourcePanel.confirms.1.is_last_source', false)
+        ->where('sourcePanel.confirms.1.entry_number', null));
 });
 
 test('storing a jpg creates the source, the file and its thumbnail', function () {
@@ -124,7 +165,7 @@ test('storing a jpg creates the source, the file and its thumbnail', function ()
 
     $source = Source::firstOrFail();
 
-    $response->assertRedirect(route('sources.show', $source));
+    $response->assertRedirect(route('sources.index', ['source' => $source->id]));
 
     expect($source->tree_id)->toBe($user->tree->id);
     expect($source->original_name)->toBe('rodzinne-zdjecie.jpg');
@@ -177,13 +218,13 @@ test('storing a gravestone persists its kind', function () {
     expect(Source::firstOrFail()->kind)->toBe(SourceKind::Gravestone);
 });
 
-test('the kind is exposed on the show page', function () {
+test('the kind is exposed on the source panel', function () {
     $user = User::factory()->create();
     $source = Source::factory()->gravestone()->for($user->tree)->create();
 
-    $this->actingAs($user)->get(route('sources.show', $source))->assertInertia(fn ($page) => $page
-        ->where('source.kind', 'gravestone')
-        ->where('source.kind_label', 'zdjęcie nagrobka'));
+    $this->actingAs($user)->get(route('sources.index', ['source' => $source->id]))->assertInertia(fn ($page) => $page
+        ->where('sourcePanel.source.kind', 'gravestone')
+        ->where('sourcePanel.source.kind_label', 'zdjęcie nagrobka'));
 });
 
 test('the old scans routes no longer exist', function () {
@@ -203,7 +244,7 @@ test('storing a png is accepted', function () {
 
     $source = Source::sole();
 
-    $response->assertSessionHasNoErrors()->assertRedirect(route('sources.show', $source));
+    $response->assertSessionHasNoErrors()->assertRedirect(route('sources.index', ['source' => $source->id]));
     expect($source->mime_type)->toBe('image/png');
     expect($source->path)->toStartWith("sources/{$user->tree->id}/")->toEndWith('.png');
     Storage::disk('local')->assertExists($source->path);
@@ -223,7 +264,7 @@ test('storing a webp is accepted', function () {
 
     $source = Source::sole();
 
-    $response->assertSessionHasNoErrors()->assertRedirect(route('sources.show', $source));
+    $response->assertSessionHasNoErrors()->assertRedirect(route('sources.index', ['source' => $source->id]));
     expect($source->mime_type)->toBe('image/webp');
     expect($source->path)->toStartWith("sources/{$user->tree->id}/")->toEndWith('.webp');
     Storage::disk('local')->assertExists($source->path);
@@ -489,21 +530,25 @@ test('storing with only a file and a kind leaves the description empty', functio
 
     $source = Source::firstOrFail();
 
-    expect($source->only(['name', 'record_type', 'entry_number', 'year', 'provenance', 'url', 'note']))
+    expect($source->only(['name', 'record_type', 'entry_number', 'parish_id', 'year', 'archive', 'url', 'note']))
         ->each->toBeNull();
 });
 
-test('storing with a full description persists every field', function () {
+test('storing with a full description persists every field and ignores a submitted entry number', function () {
     Storage::fake('local');
 
-    $this->actingAs(User::factory()->create())->post(route('sources.store'), [
+    $user = User::factory()->create();
+    $parish = Parish::factory()->for($user->tree)->create();
+
+    $this->actingAs($user)->post(route('sources.store'), [
         'kind' => 'metrical_record',
         'file' => UploadedFile::fake()->image('akt.jpg'),
         'name' => 'Urodzenia Lipnica 1878',
         'record_type' => 'birth',
         'entry_number' => '47a',
         'year' => '1878',
-        'provenance' => 'Archiwum w Krakowie',
+        'parish_id' => $parish->id,
+        'archive' => 'Archiwum w Krakowie',
         'url' => 'https://example.com/akt',
         'note' => "Pierwszy akapit.\n\nDrugi akapit.",
     ])->assertSessionHasNoErrors();
@@ -512,14 +557,16 @@ test('storing with a full description persists every field', function () {
 
     expect($source->name)->toBe('Urodzenia Lipnica 1878');
     expect($source->record_type)->toBe(SourceRecordType::Birth);
-    expect($source->entry_number)->toBe('47a');
+    expect($source->entry_number)->toBeNull();
     expect($source->year)->toBe(1878);
-    expect($source->provenance)->toBe('Archiwum w Krakowie');
+    expect($source->parish_id)->toBe($parish->id);
+    expect($source->archive)->toBe('Archiwum w Krakowie');
+    expect($source->provenance)->toBeNull();
     expect($source->url)->toBe('https://example.com/akt');
     expect($source->note)->toBe("Pierwszy akapit.\n\nDrugi akapit.");
 });
 
-test('storing a gravestone ignores a submitted record type and entry number', function () {
+test('storing a gravestone ignores a submitted record type', function () {
     Storage::fake('local');
 
     $this->actingAs(User::factory()->create())->post(route('sources.store'), [
@@ -527,7 +574,6 @@ test('storing a gravestone ignores a submitted record type and entry number', fu
         'file' => UploadedFile::fake()->image('nagrobek.jpg'),
         'name' => 'Nagrobek',
         'record_type' => 'birth',
-        'entry_number' => '47',
     ])->assertSessionHasNoErrors();
 
     $source = Source::firstOrFail();
@@ -556,83 +602,124 @@ test('store rejects an invalid description with polish messages', function (arra
     'ftp link' => [['url' => 'ftp://example.com/akt'], 'url', 'link'],
     'unknown record type' => [['record_type' => 'baptism'], 'record_type', 'typ aktu'],
     'long name' => [['name' => str_repeat('a', 256)], 'name', 'nazwa'],
-    'long provenance' => [['provenance' => str_repeat('a', 256)], 'provenance', 'pochodzenie'],
-    'long entry number' => [['entry_number' => str_repeat('1', 51)], 'entry_number', 'numer wpisu'],
+    'long archive' => [['archive' => str_repeat('a', 256)], 'archive', 'archiwum'],
     'long note' => [['note' => str_repeat('a', 5001)], 'note', 'notatka'],
 ]);
 
-test('updating changes the kind and the description and redirects back with the toast', function () {
+test('updating changes the kind and the description, ignores a submitted entry number and redirects back with the toast', function () {
     $user = User::factory()->create();
-    $source = Source::factory()->for($user->tree)->create();
+    $source = Source::factory()->for($user->tree)->create(['entry_number' => '47']);
 
-    $this->actingAs($user)->from(route('sources.show', $source))->put(route('sources.update', $source), [
+    $this->actingAs($user)->from(route('sources.index', ['source' => $source->id]))->put(route('sources.update', $source), [
         'kind' => 'metrical_record',
         'name' => 'Nowa nazwa',
         'record_type' => 'death',
         'entry_number' => '12/1878',
         'year' => '1878',
-        'provenance' => 'Archiwum',
+        'archive' => 'Archiwum',
         'url' => 'https://example.com',
         'note' => 'Notatka',
     ])
-        ->assertRedirect(route('sources.show', $source))
+        ->assertRedirect(route('sources.index', ['source' => $source->id]))
         ->assertInertiaFlash('toast', ['type' => 'success', 'message' => 'Zapisano źródło']);
 
     $source->refresh();
 
     expect($source->name)->toBe('Nowa nazwa');
     expect($source->record_type)->toBe(SourceRecordType::Death);
-    expect($source->entry_number)->toBe('12/1878');
+    expect($source->entry_number)->toBe('47');
     expect($source->year)->toBe(1878);
     expect($source->note)->toBe('Notatka');
 });
 
-test('changing an akt with a stored record type or entry number to another kind without confirmation is rejected', function (array $stored) {
+test('changing an akt with a stored record type or parish to another kind without confirmation is rejected', function (string $stored) {
     $user = User::factory()->create();
-    $source = Source::factory()->for($user->tree)->create($stored);
+    $source = Source::factory()->for($user->tree)->create(['entry_number' => '47']);
+
+    if ($stored === 'record type') {
+        $source->update(['record_type' => SourceRecordType::Birth]);
+    } else {
+        $source->update(['parish_id' => Parish::factory()->for($user->tree)->create()->id]);
+    }
 
     $response = $this->actingAs($user)->put(route('sources.update', $source), ['kind' => 'gravestone']);
 
     $response->assertInvalid('kind');
-    expect($response->getSession()->get('errors')->getBag('default')->first('kind'))->toBe('Zmiana rodzaju usunie typ aktu i numer wpisu. Potwierdź zmianę.');
+    expect($response->getSession()->get('errors')->getBag('default')->first('kind'))->toBe('Zmiana rodzaju usunie pola opisu tego rodzaju. Potwierdź zmianę.');
 
     $source->refresh();
 
     expect($source->kind)->toBe(SourceKind::MetricalRecord);
-    expect($source->record_type ?? $source->entry_number)->not->toBeNull();
-})->with([
-    'record type only' => [['record_type' => SourceRecordType::Birth]],
-    'entry number only' => [['entry_number' => '47']],
-]);
+    expect($source->entry_number)->toBe('47');
+})->with(['record type', 'parish']);
 
-test('changing an akt to another kind with confirmation saves the kind and erases both fields', function () {
+test('changing an akt to another kind with confirmation erases type and parish but keeps the legacy entry number', function () {
     $user = User::factory()->create();
-    $source = Source::factory()->for($user->tree)->described()->create();
+    $parish = Parish::factory()->for($user->tree)->create();
+    $source = Source::factory()->for($user->tree)->described()->create(['parish_id' => $parish->id]);
 
     $this->actingAs($user)->put(route('sources.update', $source), [
         'kind' => 'gravestone',
         'discard_record_fields' => '1',
         'name' => 'Nagrobek',
         'record_type' => 'birth',
-        'entry_number' => '47',
+        'entry_number' => '99',
     ])->assertSessionHasNoErrors();
 
     $source->refresh();
 
     expect($source->kind)->toBe(SourceKind::Gravestone);
     expect($source->record_type)->toBeNull();
-    expect($source->entry_number)->toBeNull();
+    expect($source->parish_id)->toBeNull();
+    expect($source->entry_number)->toBe('47');
     expect($source->name)->toBe('Nagrobek');
 });
 
-test('changing an akt with an empty record type and entry number to another kind needs no confirmation', function () {
+test('changing an akt with only a legacy entry number to another kind needs no confirmation and keeps the number', function () {
     $user = User::factory()->create();
-    $source = Source::factory()->for($user->tree)->create();
+    $source = Source::factory()->for($user->tree)->create(['entry_number' => '47']);
 
     $this->actingAs($user)->put(route('sources.update', $source), ['kind' => 'other'])
         ->assertSessionHasNoErrors();
 
-    expect($source->refresh()->kind)->toBe(SourceKind::Other);
+    $source->refresh();
+
+    expect($source->kind)->toBe(SourceKind::Other);
+    expect($source->entry_number)->toBe('47');
+});
+
+test('saving a source without an entry number in the body keeps the legacy entry number', function () {
+    $user = User::factory()->create();
+    $source = Source::factory()->for($user->tree)->described()->create();
+
+    $this->actingAs($user)->put(route('sources.update', $source), ['kind' => 'metrical_record', 'name' => 'Inna nazwa'])
+        ->assertSessionHasNoErrors();
+
+    expect($source->refresh()->entry_number)->toBe('47');
+});
+
+test('clearing the legacy entry number empties only that value and toasts', function () {
+    $user = User::factory()->create();
+    $source = Source::factory()->for($user->tree)->described()->create();
+
+    $this->actingAs($user)->from(route('sources.index', ['source' => $source->id]))->delete(route('sources.legacy-entry-number.destroy', $source))
+        ->assertRedirect(route('sources.index', ['source' => $source->id]))
+        ->assertInertiaFlash('toast', ['type' => 'success', 'message' => 'Usunięto stary numer wpisu']);
+
+    $source->refresh();
+
+    expect($source->entry_number)->toBeNull();
+    expect($source->name)->toBe('Urodzenia Lipnica 1878 s. 12');
+    expect($source->record_type)->toBe(SourceRecordType::Birth);
+});
+
+test('clearing the legacy entry number of another user\'s source is a 404', function () {
+    $source = Source::factory()->for(User::factory()->create()->tree)->described()->create();
+
+    $this->actingAs(User::factory()->create())->delete(route('sources.legacy-entry-number.destroy', $source))
+        ->assertNotFound();
+
+    expect($source->refresh()->entry_number)->toBe('47');
 });
 
 test('changing the kind of a linked akt keeps its event links and the events stay confirmed', function () {
@@ -684,7 +771,7 @@ test('the source resource falls back to the file name when the name is empty', f
         ->where('sources.0.original_name', 'IMG_2034.jpg'));
 });
 
-test('the index and show pages expose the kind and record type options', function () {
+test('the index page and the source panel expose the kind and record type options', function () {
     $user = User::factory()->create();
     $source = Source::factory()->for($user->tree)->create();
 
@@ -692,7 +779,7 @@ test('the index and show pages expose the kind and record type options', functio
         ->where('kinds', SourceKind::options())
         ->where('recordTypes', SourceRecordType::options()));
 
-    $this->actingAs($user)->get(route('sources.show', $source))->assertInertia(fn ($page) => $page
+    $this->actingAs($user)->get(route('sources.index', ['source' => $source->id]))->assertInertia(fn ($page) => $page
         ->where('kinds', SourceKind::options())
         ->where('recordTypes', SourceRecordType::options()));
 });
@@ -741,14 +828,14 @@ test('a marriage event with two participants counts once', function () {
         ->where('sources.0.events_count', 1));
 });
 
-test('the show page and the picker payload carry no events count', function () {
+test('the source panel and the picker payload carry no events count', function () {
     $user = User::factory()->create();
     $source = Source::factory()->for($user->tree)->create();
     $source->events()->attach(Event::factory()->for($user->tree)->birth()->create());
 
-    $this->actingAs($user)->get(route('sources.show', $source))->assertInertia(fn ($page) => $page
-        ->has('source')
-        ->missing('source.events_count'));
+    $this->actingAs($user)->get(route('sources.index', ['source' => $source->id]))->assertInertia(fn ($page) => $page
+        ->has('sourcePanel.source')
+        ->missing('sourcePanel.source.events_count'));
 
     $version = $this->actingAs($user)->get(route('sources.index'), ['X-Inertia' => 'true'])->headers->get('X-Inertia-Version');
 
@@ -764,7 +851,153 @@ test('the show page and the picker payload carry no events count', function () {
 
 test('the index filters default to all kinds, the gallery and newest first', function () {
     $this->actingAs(User::factory()->create())->get(route('sources.index'))->assertInertia(fn ($page) => $page
-        ->where('filters', ['q' => '', 'kind' => 'wszystkie', 'view' => 'galeria', 'sort' => '-dodano']));
+        ->where('filters', [
+            'q' => '',
+            'kind' => 'wszystkie',
+            'view' => 'galeria',
+            'sort' => '-dodano',
+            'place' => '',
+            'year_from' => null,
+            'year_to' => null,
+            'archive' => '',
+        ]));
+});
+
+test('the index echoes a valid place', function (string $place) {
+    $this->actingAs(User::factory()->create())->get(route('sources.index', ['place' => $place]))->assertInertia(fn ($page) => $page
+        ->where('filters.place', $place));
+})->with(['locality' => ['miejscowosc-3'], 'parish' => ['parafia-5']]);
+
+test('the index echoes the year bounds and the archive', function () {
+    $this->actingAs(User::factory()->create())->get(route('sources.index', [
+        'year_from' => '1850',
+        'year_to' => '1900',
+        'archive' => 'Archiwum Diecezjalne w Tarnowie',
+    ]))->assertInertia(fn ($page) => $page
+        ->where('filters.year_from', 1850)
+        ->where('filters.year_to', 1900)
+        ->where('filters.archive', 'Archiwum Diecezjalne w Tarnowie'));
+});
+
+test('the index echoes a reversed year range without swapping its bounds', function () {
+    $this->actingAs(User::factory()->create())->get(route('sources.index', ['year_from' => '1900', 'year_to' => '1850']))
+        ->assertInertia(fn ($page) => $page
+            ->where('filters.year_from', 1900)
+            ->where('filters.year_to', 1850));
+});
+
+test('the index drops invalid place, year and archive parameters', function (array $query, string $key, mixed $expected) {
+    $this->actingAs(User::factory()->create())->get(route('sources.index', $query))->assertInertia(fn ($page) => $page
+        ->where("filters.{$key}", $expected));
+})->with([
+    'place with another prefix' => [['place' => 'osoba-3'], 'place', ''],
+    'place without an id' => [['place' => 'parafia-'], 'place', ''],
+    'place array' => [['place' => ['miejscowosc-3']], 'place', ''],
+    'year letters' => [['year_from' => 'abc'], 'year_from', null],
+    'year zero' => [['year_from' => '0'], 'year_from', null],
+    'year above 9999' => [['year_to' => '10000'], 'year_to', null],
+    'year array' => [['year_to' => ['1900']], 'year_to', null],
+    'archive of spaces' => [['archive' => '     '], 'archive', ''],
+    'archive array' => [['archive' => ['Archiwum A']], 'archive', ''],
+]);
+
+test('a partial reload of the filters with the new parameters runs no sources query', function () {
+    $user = User::factory()->create();
+    Source::factory()->for($user->tree)->create();
+
+    $version = $this->actingAs($user)->get(route('sources.index'), ['X-Inertia' => 'true'])->headers->get('X-Inertia-Version');
+
+    DB::enableQueryLog();
+
+    $response = $this->actingAs($user)->get(route('sources.index', [
+        'place' => 'miejscowosc-3',
+        'year_from' => '1850',
+        'year_to' => '1900',
+        'archive' => 'Archiwum A',
+    ]), [
+        'X-Inertia' => 'true',
+        'X-Inertia-Version' => $version,
+        'X-Inertia-Partial-Data' => 'filters',
+        'X-Inertia-Partial-Component' => 'sources/index',
+    ]);
+
+    $sourceQueries = collect(DB::getQueryLog())->filter(fn (array $log): bool => str_contains($log['query'], '"sources"'));
+
+    $response->assertOk();
+    expect($response->json('props.filters'))->toMatchArray([
+        'place' => 'miejscowosc-3',
+        'year_from' => 1850,
+        'year_to' => 1900,
+        'archive' => 'Archiwum A',
+    ]);
+    expect($response->json('props'))->not->toHaveKey('sources')->not->toHaveKey('placeOptions')->not->toHaveKey('archiveOptions');
+    expect($sourceQueries)->toBeEmpty();
+});
+
+test('the place options list the cemeteries of gravestones and the seats of act parishes of the tree only', function () {
+    $user = User::factory()->create();
+    $other = User::factory()->create();
+    $cemetery = Locality::factory()->for($user->tree)->create(['name' => 'Luboml']);
+    $seat = Locality::factory()->for($user->tree)->create(['name' => 'Tarnów']);
+    Locality::factory()->for($user->tree)->create(['name' => 'Nieużyta']);
+    $foreignLocality = Locality::factory()->for($other->tree)->create(['name' => 'Obca']);
+    $seated = Parish::factory()->for($user->tree)->seatedIn($seat)->create(['name' => 'Św. Jana']);
+    $seatless = Parish::factory()->for($user->tree)->create(['name' => 'Bez siedziby']);
+    Parish::factory()->for($user->tree)->seatedIn($cemetery)->create(['name' => 'Nieużywana']);
+
+    Source::factory()->for($user->tree)->gravestone()->create(['cemetery_locality_id' => $cemetery->id]);
+    Source::factory()->for($user->tree)->create(['parish_id' => $seated->id]);
+    Source::factory()->for($user->tree)->create(['parish_id' => $seatless->id]);
+    Source::factory()->for($other->tree)->gravestone()->create(['cemetery_locality_id' => $foreignLocality->id]);
+
+    $options = $this->actingAs($user)->get(route('sources.index'))->inertiaProps('placeOptions');
+
+    expect($options)->toEqual([
+        'localities' => [
+            ['id' => $cemetery->id, 'name' => 'Luboml'],
+            ['id' => $seat->id, 'name' => 'Tarnów'],
+        ],
+        'parishes' => [
+            ['id' => $seatless->id, 'label' => $seatless->label()],
+            ['id' => $seated->id, 'label' => $seated->label()],
+        ],
+    ]);
+});
+
+test('the archive options list the distinct non-blank archives of the tree only', function () {
+    $user = User::factory()->create();
+    $other = User::factory()->create();
+
+    Source::factory()->for($user->tree)->create(['archive' => 'Archiwum B']);
+    Source::factory()->for($user->tree)->create(['archive' => 'Archiwum A']);
+    Source::factory()->for($user->tree)->create(['archive' => 'Archiwum A']);
+    Source::factory()->for($user->tree)->create(['archive' => '   ']);
+    Source::factory()->for($user->tree)->create(['archive' => null]);
+    Source::factory()->for($other->tree)->create(['archive' => 'Cudze archiwum']);
+
+    $this->actingAs($user)->get(route('sources.index'))->assertInertia(fn ($page) => $page
+        ->where('archiveOptions', ['Archiwum A', 'Archiwum B']));
+});
+
+test('the source resource exposes the id of the parish seat, null without a seat or a parish', function () {
+    $user = User::factory()->create();
+    $locality = Locality::factory()->for($user->tree)->create();
+    $seated = Parish::factory()->for($user->tree)->seatedIn($locality)->create();
+    $seatless = Parish::factory()->for($user->tree)->create();
+
+    $withSeat = Source::factory()->for($user->tree)->create(['parish_id' => $seated->id]);
+    $withoutSeat = Source::factory()->for($user->tree)->create(['parish_id' => $seatless->id]);
+    $withoutParish = Source::factory()->for($user->tree)->create(['parish_id' => null]);
+
+    $sources = collect($this->actingAs($user)->get(route('sources.index'))->inertiaProps('sources'))
+        ->mapWithKeys(fn (array $source): array => [$source['id'] => $source['parish_locality_id']])
+        ->all();
+
+    expect($sources)->toEqual([
+        $withSeat->id => $locality->id,
+        $withoutSeat->id => null,
+        $withoutParish->id => null,
+    ]);
 });
 
 test('the index echoes each valid kind, the table view and each valid sort', function (array $query, string $key, string $expected) {
@@ -839,4 +1072,453 @@ test('a partial reload of the filters runs no sources query', function () {
     expect($response->json('props.filters.kind'))->toBe('akty');
     expect($response->json('props'))->not->toHaveKey('sources');
     expect($sourceQueries)->toBeEmpty();
+});
+
+test('a partial reload of the filters with a panel key computes neither the list nor the panel', function () {
+    $user = User::factory()->create();
+    $source = Source::factory()->for($user->tree)->create();
+
+    $version = $this->actingAs($user)->get(route('sources.index'), ['X-Inertia' => 'true'])->headers->get('X-Inertia-Version');
+
+    DB::enableQueryLog();
+
+    $response = $this->actingAs($user)->get(route('sources.index', ['source' => $source->id, 'kind' => 'akty']), [
+        'X-Inertia' => 'true',
+        'X-Inertia-Version' => $version,
+        'X-Inertia-Partial-Data' => 'filters',
+        'X-Inertia-Partial-Component' => 'sources/index',
+    ]);
+
+    $sourceQueries = collect(DB::getQueryLog())->filter(fn (array $log): bool => str_contains($log['query'], '"sources"'));
+
+    $response->assertOk();
+    expect($response->json('props.filters.kind'))->toBe('akty');
+    expect($response->json('props'))->not->toHaveKey('sources')->not->toHaveKey('sourcePanel');
+    expect($sourceQueries)->toBeEmpty();
+});
+
+test('storing keeps the list filters of the previous sources page and opens the new source', function () {
+    Storage::fake('local');
+
+    $user = User::factory()->create();
+
+    $response = $this->actingAs($user)
+        ->from('/sources?view=tabela&kind=akty&q=Kraków&sort=nazwa&source=new')
+        ->post(route('sources.store'), [
+            'kind' => 'metrical_record',
+            'name' => 'Akt Kraków 1890',
+            'file' => UploadedFile::fake()->image('akt.jpg', 400, 300),
+        ]);
+
+    $source = Source::sole();
+
+    $response->assertRedirect(route('sources.index', [
+        'q' => 'Kraków',
+        'kind' => 'akty',
+        'view' => 'tabela',
+        'sort' => 'nazwa',
+        'source' => $source->id,
+    ]));
+});
+
+test('storing drops the kind and search filters that would hide the new source', function () {
+    Storage::fake('local');
+
+    $user = User::factory()->create();
+
+    $response = $this->actingAs($user)
+        ->from('/sources?view=tabela&kind=akty&q=Kraków&sort=nazwa&source=new')
+        ->post(route('sources.store'), [
+            'kind' => 'gravestone',
+            'name' => 'Nagrobek Nowak',
+            'file' => UploadedFile::fake()->image('nagrobek.jpg', 400, 300),
+        ]);
+
+    $response->assertRedirect(route('sources.index', [
+        'view' => 'tabela',
+        'sort' => 'nazwa',
+        'source' => Source::sole()->id,
+    ]));
+});
+
+test('storing from a page other than the sources list carries no filters', function () {
+    Storage::fake('local');
+
+    $user = User::factory()->create();
+
+    $response = $this->actingAs($user)
+        ->from('/persons?q=Kraków&kind=akty')
+        ->post(route('sources.store'), [
+            'kind' => 'metrical_record',
+            'file' => UploadedFile::fake()->image('akt.jpg', 400, 300),
+        ]);
+
+    $response->assertRedirect(route('sources.index', ['source' => Source::sole()->id]));
+});
+
+test('storing without a referer carries no filters, even after a filtered list visit in the session', function () {
+    Storage::fake('local');
+
+    $user = User::factory()->create();
+
+    $this->actingAs($user)->get('/sources?kind=akty&view=tabela')->assertOk();
+
+    $response = $this->post(route('sources.store'), [
+        'kind' => 'metrical_record',
+        'file' => UploadedFile::fake()->image('akt.jpg', 400, 300),
+    ]);
+
+    $response->assertRedirect(route('sources.index', ['source' => Source::sole()->id]));
+});
+
+test('storing from a sources list on another host carries no filters', function () {
+    Storage::fake('local');
+
+    $user = User::factory()->create();
+
+    $response = $this->actingAs($user)
+        ->from('https://example.com/sources?kind=akty')
+        ->post(route('sources.store'), [
+            'kind' => 'metrical_record',
+            'file' => UploadedFile::fake()->image('akt.jpg', 400, 300),
+        ]);
+
+    $response->assertRedirect(route('sources.index', ['source' => Source::sole()->id]));
+});
+
+test('storing drops invalid, default and foreign list parameters', function () {
+    Storage::fake('local');
+
+    $user = User::factory()->create();
+
+    $response = $this->actingAs($user)
+        ->from('/sources?kind=zle&view=galeria&sort=nazwa&person=5&source=new')
+        ->post(route('sources.store'), [
+            'kind' => 'metrical_record',
+            'file' => UploadedFile::fake()->image('akt.jpg', 400, 300),
+        ]);
+
+    $response->assertRedirect(route('sources.index', ['source' => Source::sole()->id]));
+});
+
+test('destroying closes the panel and keeps the list filters of the previous page', function () {
+    Storage::fake('local');
+
+    $user = User::factory()->create();
+    $source = Source::factory()->for($user->tree)->create();
+
+    $this->actingAs($user)
+        ->from("/sources?view=tabela&source={$source->id}")
+        ->delete(route('sources.destroy', $source))
+        ->assertRedirect(route('sources.index', ['view' => 'tabela']));
+
+    expect(Source::find($source->id))->toBeNull();
+});
+
+test('storing keeps the place, year bounds and archive that fit the new source', function () {
+    Storage::fake('local');
+
+    $user = User::factory()->create();
+    $seat = Locality::factory()->for($user->tree)->create();
+    $parish = Parish::factory()->for($user->tree)->seatedIn($seat)->create();
+
+    $response = $this->actingAs($user)
+        ->from("/sources?place=miejscowosc-{$seat->id}&year_from=1850&year_to=1900&archive=Archiwum%20A&source=new")
+        ->post(route('sources.store'), [
+            'kind' => 'metrical_record',
+            'year' => 1880,
+            'archive' => 'Archiwum A',
+            'parish_id' => $parish->id,
+            'file' => UploadedFile::fake()->image('akt.jpg', 400, 300),
+        ]);
+
+    $response->assertRedirect(route('sources.index', [
+        'place' => "miejscowosc-{$seat->id}",
+        'year_from' => '1850',
+        'year_to' => '1900',
+        'archive' => 'Archiwum A',
+        'source' => Source::sole()->id,
+    ]));
+});
+
+test('storing an akt keeps a place that names its parish', function () {
+    Storage::fake('local');
+
+    $user = User::factory()->create();
+    $parish = Parish::factory()->for($user->tree)->create();
+
+    $this->actingAs($user)
+        ->from("/sources?place=parafia-{$parish->id}&source=new")
+        ->post(route('sources.store'), [
+            'kind' => 'metrical_record',
+            'parish_id' => $parish->id,
+            'file' => UploadedFile::fake()->image('akt.jpg', 400, 300),
+        ])
+        ->assertRedirect(route('sources.index', ['place' => "parafia-{$parish->id}", 'source' => Source::sole()->id]));
+});
+
+test('storing an akt drops a place that names another parish', function () {
+    Storage::fake('local');
+
+    $user = User::factory()->create();
+    $parish = Parish::factory()->for($user->tree)->create();
+    $otherParish = Parish::factory()->for($user->tree)->create();
+
+    $this->actingAs($user)
+        ->from("/sources?place=parafia-{$otherParish->id}&source=new")
+        ->post(route('sources.store'), [
+            'kind' => 'metrical_record',
+            'parish_id' => $parish->id,
+            'file' => UploadedFile::fake()->image('akt.jpg', 400, 300),
+        ])
+        ->assertRedirect(route('sources.index', ['source' => Source::sole()->id]));
+});
+
+test('storing drops the place, year bound and archive that would hide the new source', function () {
+    Storage::fake('local');
+
+    $user = User::factory()->create();
+    $seat = Locality::factory()->for($user->tree)->create();
+    $parish = Parish::factory()->for($user->tree)->seatedIn($seat)->create();
+
+    $response = $this->actingAs($user)
+        ->from('/sources?place=parafia-999&year_from=1850&year_to=1870&archive=Archiwum%20B&source=new')
+        ->post(route('sources.store'), [
+            'kind' => 'metrical_record',
+            'year' => 1880,
+            'archive' => 'Archiwum A',
+            'parish_id' => $parish->id,
+            'file' => UploadedFile::fake()->image('akt.jpg', 400, 300),
+        ]);
+
+    $response->assertRedirect(route('sources.index', [
+        'year_from' => '1850',
+        'source' => Source::sole()->id,
+    ]));
+});
+
+test('storing drops the year bounds when the new source has no year', function () {
+    Storage::fake('local');
+
+    $user = User::factory()->create();
+
+    $this->actingAs($user)
+        ->from('/sources?year_from=1850&year_to=1900&source=new')
+        ->post(route('sources.store'), [
+            'kind' => 'gravestone',
+            'file' => UploadedFile::fake()->image('nagrobek.jpg', 400, 300),
+        ])
+        ->assertRedirect(route('sources.index', ['source' => Source::sole()->id]));
+});
+
+test('storing drops invalid and blank new list parameters', function () {
+    Storage::fake('local');
+
+    $user = User::factory()->create();
+
+    $this->actingAs($user)
+        ->from('/sources?place=osoba-1&year_from=abc&year_to=0&archive=%20%20&source=new')
+        ->post(route('sources.store'), [
+            'kind' => 'metrical_record',
+            'file' => UploadedFile::fake()->image('akt.jpg', 400, 300),
+        ])
+        ->assertRedirect(route('sources.index', ['source' => Source::sole()->id]));
+});
+
+test('destroying keeps the place, year bounds and archive of the previous page', function () {
+    $user = User::factory()->create();
+    $source = Source::factory()->for($user->tree)->create();
+
+    $this->actingAs($user)
+        ->from("/sources?place=parafia-5&year_from=1850&year_to=1900&archive=Archiwum%20A&source={$source->id}")
+        ->delete(route('sources.destroy', $source))
+        ->assertRedirect(route('sources.index', [
+            'place' => 'parafia-5',
+            'year_from' => '1850',
+            'year_to' => '1900',
+            'archive' => 'Archiwum A',
+        ]));
+});
+
+test('storing an akt saves the parish and the archive', function () {
+    Storage::fake('local');
+
+    $user = User::factory()->create();
+    $parish = Parish::factory()->for($user->tree)->create();
+
+    $this->actingAs($user)->post(route('sources.store'), [
+        'kind' => 'metrical_record',
+        'file' => UploadedFile::fake()->image('akt.jpg'),
+        'parish_id' => $parish->id,
+        'archive' => 'Archiwum Diecezjalne w Tarnowie',
+    ])->assertSessionHasNoErrors();
+
+    $source = Source::with('parish')->firstOrFail();
+
+    expect($source->parish?->is($parish))->toBeTrue()
+        ->and($source->archive)->toBe('Archiwum Diecezjalne w Tarnowie');
+});
+
+test('storing a gravestone saves the archive and ignores a submitted parish', function () {
+    Storage::fake('local');
+
+    $user = User::factory()->create();
+    $parish = Parish::factory()->for($user->tree)->create();
+
+    $this->actingAs($user)->post(route('sources.store'), [
+        'kind' => 'gravestone',
+        'file' => UploadedFile::fake()->image('nagrobek.jpg'),
+        'parish_id' => $parish->id,
+        'archive' => 'Archiwum cmentarne',
+    ])->assertSessionHasNoErrors();
+
+    $source = Source::firstOrFail();
+
+    expect($source->parish_id)->toBeNull()
+        ->and($source->archive)->toBe('Archiwum cmentarne');
+});
+
+test('another tree parish is rejected on store and update without saving', function () {
+    Storage::fake('local');
+
+    $user = User::factory()->create();
+    $foreignParish = Parish::factory()->for(User::factory()->create()->tree)->create();
+
+    $this->actingAs($user)->post(route('sources.store'), [
+        'kind' => 'metrical_record',
+        'file' => UploadedFile::fake()->image('akt.jpg'),
+        'parish_id' => $foreignParish->id,
+    ])->assertInvalid('parish_id');
+
+    expect(Source::count())->toBe(0);
+
+    $source = Source::factory()->for($user->tree)->create();
+
+    $this->actingAs($user)->put(route('sources.update', $source), [
+        'kind' => 'metrical_record',
+        'parish_id' => $foreignParish->id,
+    ])->assertInvalid('parish_id');
+
+    expect($source->refresh()->parish_id)->toBeNull();
+});
+
+test('updating a source never changes the stored provenance', function () {
+    $user = User::factory()->create();
+    $source = Source::factory()->for($user->tree)->create();
+    DB::table('sources')->where('id', $source->id)->update(['provenance' => 'Stare pochodzenie']);
+
+    $this->actingAs($user)->put(route('sources.update', $source), [
+        'kind' => 'metrical_record',
+        'archive' => 'Nowe archiwum',
+        'provenance' => 'Podmienione',
+    ])->assertSessionHasNoErrors();
+
+    expect(DB::table('sources')->where('id', $source->id)->value('provenance'))->toBe('Stare pochodzenie')
+        ->and($source->refresh()->archive)->toBe('Nowe archiwum');
+});
+
+test('changing an akt with a parish to another kind needs confirmation and then clears the parish', function () {
+    $user = User::factory()->create();
+    $parish = Parish::factory()->for($user->tree)->create();
+    $source = Source::factory()->for($user->tree)->create(['parish_id' => $parish->id, 'archive' => 'Archiwum']);
+
+    $response = $this->actingAs($user)->put(route('sources.update', $source), ['kind' => 'gravestone', 'archive' => 'Archiwum']);
+
+    $response->assertInvalid('kind');
+    expect($source->refresh()->parish_id)->toBe($parish->id);
+
+    $this->actingAs($user)->put(route('sources.update', $source), [
+        'kind' => 'gravestone',
+        'discard_record_fields' => '1',
+        'archive' => 'Archiwum',
+    ])->assertSessionHasNoErrors();
+
+    $source->refresh();
+
+    expect($source->kind)->toBe(SourceKind::Gravestone)
+        ->and($source->parish_id)->toBeNull()
+        ->and($source->archive)->toBe('Archiwum');
+});
+
+test('the source resource exposes the parish id and label', function () {
+    $user = User::factory()->create();
+    $parish = Parish::factory()->for($user->tree)->withReligion(Religion::RomanCatholic)->create(['name' => 'Św. Jana']);
+    Source::factory()->for($user->tree)->create(['parish_id' => $parish->id]);
+
+    $this->actingAs($user)->get(route('sources.index'))->assertInertia(fn ($page) => $page
+        ->where('sources.0.parish_id', $parish->id)
+        ->where('sources.0.parish_label', 'Św. Jana (rzymskokatolickie)'));
+});
+
+test('the source panel carries the parishes, localities and distinct archives of the tree only', function () {
+    $user = User::factory()->create();
+    $other = User::factory()->create();
+    $locality = Locality::factory()->for($user->tree)->create(['name' => 'Tarnów']);
+    Locality::factory()->for($other->tree)->create();
+    $parish = Parish::factory()->for($user->tree)->seatedIn($locality)->create();
+    Parish::factory()->for($other->tree)->create();
+
+    Source::factory()->for($user->tree)->create(['archive' => 'Archiwum A']);
+    Source::factory()->for($user->tree)->create(['archive' => 'Archiwum A']);
+    Source::factory()->for($user->tree)->create(['archive' => 'Archiwum B']);
+    Source::factory()->for($user->tree)->create(['archive' => '   ']);
+    Source::factory()->for($user->tree)->create(['archive' => null]);
+    Source::factory()->for($other->tree)->create(['archive' => 'Cudze archiwum']);
+    $open = Source::factory()->for($user->tree)->create();
+
+    foreach (['new', $open->id] as $key) {
+        $this->actingAs($user)->get(route('sources.index', ['source' => $key]))->assertInertia(fn ($page) => $page
+            ->has('sourcePanel.parishes', 1)
+            ->where('sourcePanel.parishes.0.id', $parish->id)
+            ->where('sourcePanel.parishes.0.locality_name', 'Tarnów')
+            ->where('sourcePanel.localities', [['id' => $locality->id, 'name' => 'Tarnów']])
+            ->where('sourcePanel.archives', ['Archiwum A', 'Archiwum B'])
+            ->where('sourcePanel.religions', Religion::options()));
+    }
+});
+
+test('the sources payload carries the parish name and the seat locality name, null without a seat', function () {
+    $user = User::factory()->create();
+    $locality = Locality::factory()->for($user->tree)->create(['name' => 'Luboml']);
+    $seated = Parish::factory()->seatedIn($locality)->create(['name' => 'Parafia św. Jana']);
+    $seatless = Parish::factory()->for($user->tree)->create(['name' => 'Parafia bez siedziby']);
+
+    $withSeat = Source::factory()->for($user->tree)->create(['parish_id' => $seated->id]);
+    $withoutSeat = Source::factory()->for($user->tree)->create(['parish_id' => $seatless->id]);
+    $withoutParish = Source::factory()->for($user->tree)->create(['parish_id' => null]);
+
+    $sources = $this->actingAs($user)->get(route('sources.index'))->inertiaProps('sources');
+
+    expect(collect($sources)->mapWithKeys(fn (array $source): array => [
+        $source['id'] => [$source['parish_name'], $source['locality_name']],
+    ])->all())->toEqual([
+        $withSeat->id => ['Parafia św. Jana', 'Luboml'],
+        $withoutSeat->id => ['Parafia bez siedziby', null],
+        $withoutParish->id => [null, null],
+    ]);
+});
+
+test('a gravestone carries its cemetery as the locality name and the panel lists the buried people', function () {
+    $user = User::factory()->create();
+    $cemetery = Locality::factory()->for($user->tree)->create(['name' => 'Luboml']);
+    $first = Person::factory()->for($user->tree)->create(['first_name' => 'Jan', 'last_name' => 'Kowalski']);
+    $second = Person::factory()->for($user->tree)->create(['first_name' => 'Maria', 'last_name' => 'Kowalska']);
+    $gravestone = Source::factory()->for($user->tree)->gravestone()->create(['cemetery_locality_id' => $cemetery->id]);
+    $gravestone->buriedPeople()->attach([$second->id, $first->id]);
+
+    $response = $this->actingAs($user)->get(route('sources.index', ['source' => $gravestone->id]));
+
+    $response->assertInertia(fn ($page) => $page
+        ->where('sources.0.locality_name', 'Luboml')
+        ->where('sources.0.cemetery_name', 'Luboml')
+        ->where('sources.0.cemetery_locality_id', $cemetery->id)
+        ->missing('sources.0.buried_people')
+        ->where('sourcePanel.source.cemetery_name', 'Luboml')
+        ->where('sourcePanel.source.buried_people', [
+            ['id' => $second->id, 'display_name' => $second->displayName()],
+            ['id' => $first->id, 'display_name' => $first->displayName()],
+        ]));
+
+    $this->actingAs($user)->get(route('persons.index'))->assertInertia(fn ($page) => $page
+        ->missing('availableSources'));
 });

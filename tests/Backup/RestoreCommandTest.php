@@ -107,3 +107,18 @@ test('a fresh backup dump carries no ownership statements', function () {
     expect($dump)->toContain('CREATE TABLE')
         ->and($dump)->not->toContain('OWNER TO');
 });
+
+test('person photo files count as data of an occupied instance', function () {
+    $this->arrangeBackupData();
+    $archive = $this->runBackup();
+
+    $this->switchToCleanInstance();
+    Storage::disk('local')->put('persons/1/thumbnails/zdjecie.jpg', 'miniatura');
+
+    $this->artisan('backup:restore', ['archive' => $archive])
+        ->expectsOutputToContain('pliki zdjęć osób: 1')
+        ->expectsOutputToContain('--force')
+        ->assertFailed();
+
+    expect(Storage::disk('local')->allFiles('persons'))->toBe(['persons/1/thumbnails/zdjecie.jpg']);
+});

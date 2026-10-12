@@ -1,13 +1,19 @@
 import { Link } from '@inertiajs/react';
 import { Eye } from 'lucide-react';
 import { PersonPreviewLink } from '@/components/persons/person-preview-link';
+import { usePersonPreview } from '@/components/persons/person-preview-provider';
 import { Button } from '@/components/ui/button';
 import {
     cardFocus,
     cardInteractive,
-    cardSurface,
+    personCardSurface,
 } from '@/components/tree/card-styles';
+import { useInitials } from '@/hooks/use-initials';
+import { useMarriagePanel } from '@/hooks/use-marriage-panel';
+import { useVisiblePhoto } from '@/hooks/use-visible-photo';
+import { formatAge } from '@/lib/age';
 import { genderCard } from '@/lib/gender-styles';
+import { personPhotoUrl } from '@/lib/person-photo';
 import { cn } from '@/lib/utils';
 import { show as treeShow } from '@/routes/tree';
 import type { SheetPerson } from '@/types';
@@ -19,30 +25,107 @@ type Props = {
     isFocus?: boolean;
 };
 
-function CardBody({ person }: { person: SheetPerson }) {
+/** Strip fill without a photo: the gender colour at full strength, unlike the lighter card fill. */
+const stripGender = {
+    male: 'bg-gender-male',
+    female: 'bg-gender-female',
+    unknown: 'bg-gender-unknown',
+} as const;
+
+/** Photo strip on the left edge of a person card: the photo, or the initials on the gender colour. */
+function PhotoStrip({ person }: { person: SheetPerson }) {
+    const getInitials = useInitials();
+    const photoUrl = personPhotoUrl(person.id, person.photo_version);
+    const { visiblePhotoUrl, onError } = useVisiblePhoto(photoUrl);
+
     return (
-        <>
-            <span className="text-card-foreground text-sm leading-tight font-semibold [overflow-wrap:anywhere] break-words">
-                {person.gender === 'male' && (
-                    <span className="sr-only">mężczyzna</span>
-                )}
-                {person.gender === 'female' && (
-                    <span className="sr-only">kobieta</span>
-                )}
-                {person.display_name}
-            </span>
-            {person.lifespan && (
-                <span className="text-tree-meta mt-1 block text-xs">
-                    {person.lifespan}
+        <span
+            className={cn(
+                'relative w-18 shrink-0 overflow-hidden',
+                stripGender[person.gender ?? 'unknown'],
+            )}
+        >
+            {visiblePhotoUrl !== null ? (
+                <span className="absolute inset-x-0 top-0 bottom-1 overflow-hidden">
+                    <img
+                        src={visiblePhotoUrl}
+                        alt=""
+                        loading="lazy"
+                        onError={onError}
+                        className="size-full object-cover object-center"
+                    />
+                </span>
+            ) : (
+                <span
+                    aria-hidden="true"
+                    className="text-background absolute inset-0 flex items-center justify-center text-lg font-semibold"
+                >
+                    {getInitials(person.display_name)}
                 </span>
             )}
+        </span>
+    );
+}
+
+/**
+ * Photo strip and data column of a person card. The data column stacks the
+ * name, the dates and the age, aligned to the top left; `children` adds lines
+ * below them. `reserveActionSpace` leaves room for the eye button in the first
+ * line of the name.
+ */
+export function CardBody({
+    person,
+    children,
+    reserveActionSpace = false,
+}: {
+    person: SheetPerson;
+    children?: React.ReactNode;
+    reserveActionSpace?: boolean;
+}) {
+    return (
+        <>
+            <PhotoStrip person={person} />
+            <span className="flex min-w-0 flex-1 flex-col items-start justify-start px-3 py-3.5">
+                <span className="font-display text-card-foreground text-base leading-tight font-semibold [overflow-wrap:anywhere] break-words hyphens-auto">
+                    {reserveActionSpace && (
+                        <span
+                            aria-hidden="true"
+                            className="float-right size-7"
+                        />
+                    )}
+                    {person.gender === 'male' && (
+                        <span className="sr-only">mężczyzna</span>
+                    )}
+                    {person.gender === 'female' && (
+                        <span className="sr-only">kobieta</span>
+                    )}
+                    {person.display_name}
+                </span>
+                {person.lifespan && (
+                    <span className="text-tree-meta mt-1 block text-sm">
+                        {person.lifespan}
+                    </span>
+                )}
+                {person.lifespan && person.age && (
+                    <span className="text-tree-meta block text-sm whitespace-nowrap">
+                        {`(${formatAge(person.age)})`}
+                    </span>
+                )}
+                {children}
+            </span>
         </>
     );
 }
 
+/**
+ * A person on the tree. The card re-centres the tree on the person (an open
+ * panel stays open); the eye button opens the person's panel beside the tree.
+ */
 export function SheetPersonCard({ person, spouse, isFocus = false }: Props) {
+    const { currentId } = usePersonPreview();
+    const { currentId: currentMarriageId } = useMarriagePanel();
     const body = cn(
-        cardSurface,
+        personCardSurface,
         'text-card-foreground shadow-xs',
         genderCard[person.gender ?? 'unknown'],
     );
@@ -50,17 +133,25 @@ export function SheetPersonCard({ person, spouse, isFocus = false }: Props) {
     return (
         <div className="relative h-full">
             {isFocus ? (
-                <div className={cn(body, cardFocus)}>
-                    <CardBody person={person} />
+                <div aria-current="true" className={cn(body, cardFocus)}>
+                    <CardBody person={person} reserveActionSpace />
                 </div>
             ) : (
                 <Link
                     href={treeShow(person.id, {
-                        query: spouse === undefined ? undefined : { spouse },
+                        query: {
+                            ...(spouse === undefined ? {} : { spouse }),
+                            ...(currentId === null
+                                ? {}
+                                : { person: currentId }),
+                            ...(currentMarriageId === null
+                                ? {}
+                                : { marriage: currentMarriageId }),
+                        },
                     })}
                     className={cn(body, cardInteractive)}
                 >
-                    <CardBody person={person} />
+                    <CardBody person={person} reserveActionSpace />
                 </Link>
             )}
 

@@ -46,7 +46,7 @@ test('auth-gate-roundtrip: signed-out visit to /persons redirects to /login, sig
 
     await expect(page).toHaveURL(/\/persons$/);
     await expect(
-        page.getByRole('heading', { name: 'Osoby', level: 2, exact: true }),
+        page.getByRole('heading', { name: 'Osoby', level: 1, exact: true }),
     ).toBeVisible();
 
     // No cleanup: the test creates no data. It does not sign out — the saved

@@ -1,5 +1,8 @@
 <?php
 
+use App\Models\Locality;
+use App\Models\Person;
+use App\Models\Residence;
 use App\Models\User;
 use Illuminate\Support\Facades\Storage;
 
@@ -261,32 +264,34 @@ test('editing a person in the preview changes only that person and the birth fac
     $scene = familyScene($user);
     extract($scene);
 
-    $form = readInertiaProp($this, $user, personPreviewUrl($focus), 'personPreview')['personForm'];
-
     $event = fn (?array $fact, array $overrides = []): array => $fact === null ? [] : [
-        ...array_intersect_key($fact, array_flip(['year', 'month', 'day', 'is_approximate', 'place'])),
+        ...array_intersect_key($fact, array_flip(['year', 'month', 'day', 'is_approximate'])),
+        'locality_id' => $fact['locality']['id'] ?? null,
         ...$overrides,
     ];
+
+    $village = Locality::factory()->for($user->tree)->create();
+    Residence::factory()->for($focus)->create(['tree_id' => $user->tree->id, 'locality_id' => $village->id, 'year_from' => 1900]);
+    Residence::factory()->for($focus)->create(['tree_id' => $user->tree->id, 'locality_id' => $village->id]);
+
+    $form = readInertiaProp($this, $user, personPreviewUrl($focus), 'personPreview')['personForm'];
 
     $before = databaseRows();
 
     $this->actingAs($user)->put(route('persons.update', $focus), [
-        ...array_intersect_key($form, array_flip(['first_name', 'last_name', 'gender', 'residence', 'religion', 'is_deceased'])),
-        'residence' => 'Nowe Miasto',
+        ...array_intersect_key($form, array_flip(['first_name', 'last_name', 'maiden_name', 'gender', 'religion', 'is_deceased'])),
         'birth' => $event($form['birth'], ['year' => 1851]),
         'death' => $event($form['death']),
+        'residences' => array_map(fn (array $row): array => [
+            'locality_id' => $row['locality']['id'],
+            'year_from' => $row['year_from'],
+            'year_to' => $row['year_to'],
+        ], $form['residences']),
     ])->assertSessionHasNoErrors()->assertRedirect();
 
     $diff = rowDiff($before, databaseRows());
 
-    expect(array_keys($diff['tables']))->toBe(['events', 'people']);
-
-    expect(array_column(array_column($diff['tables']['people']['changed'], 'after'), 'id'))->toBe([$focus->id]);
-    expect($diff['tables']['people']['changed'][0]['after']['residence'])->toBe('Nowe Miasto');
-    expect(array_values(array_diff(
-        array_keys(array_diff_assoc($diff['tables']['people']['changed'][0]['after'], $diff['tables']['people']['changed'][0]['before'])),
-        ['updated_at'],
-    )))->toBe(['residence']);
+    expect(array_keys($diff['tables']))->toBe(['events']);
 
     expect(array_column(array_column($diff['tables']['events']['changed'], 'after'), 'id'))->toBe([$focusBirth->id]);
     expect($diff['tables']['events']['changed'][0]['before']['date_year'])->toBe(1850);
@@ -298,6 +303,70 @@ test('editing a person in the preview changes only that person and the birth fac
     }
 
     expect($diff['files'])->toBe(['removed' => [], 'added' => []]);
+});
+
+test('saving a note from the preview changes only that person people row', function () {
+    Storage::fake('local');
+
+    $user = User::factory()->create();
+    $person = Person::factory()->for($user->tree)->create(['note' => 'Stara notatka']);
+    Person::factory()->for($user->tree)->create(['note' => 'Cudza notatka']);
+
+    $before = databaseRows();
+
+    $this->actingAs($user)->put(route('persons.note.update', $person), ['note' => "Nowy akapit.\n\nDrugi."])
+        ->assertSessionHasNoErrors()
+        ->assertRedirect();
+
+    $diff = rowDiff($before, databaseRows());
+
+    expect(array_keys($diff['tables']))->toBe(['people']);
+    expect($diff['tables']['people']['added'])->toBe([]);
+    expect($diff['tables']['people']['removed'])->toBe([]);
+    expect($diff['tables']['people']['changed'])->toHaveCount(1);
+
+    $change = $diff['tables']['people']['changed'][0];
+
+    expect($change['before']['id'])->toBe($person->id);
+    expect($change['after']['note'])->toBe("Nowy akapit.\n\nDrugi.");
+    // updated_at is bumped but may land in the same second as the previous write.
+    $changedColumns = array_keys(array_diff_assoc($change['after'], $change['before']));
+    expect($changedColumns)->toContain('note');
+    expect(array_diff($changedColumns, ['note', 'updated_at']))->toBe([]);
+    expect($diff['files'])->toBe(['removed' => [], 'added' => []]);
+});
+
+test('replacing a person residence list changes only that person residence rows', function () {
+    Storage::fake('local');
+
+    $user = User::factory()->create();
+    $scene = familyScene($user);
+    extract($scene);
+
+    $village = Locality::factory()->for($user->tree)->create();
+    $town = Locality::factory()->for($user->tree)->create();
+    $focusResidence = Residence::factory()->for($focus)->create(['tree_id' => $user->tree->id, 'locality_id' => $village->id]);
+    $otherResidence = Residence::factory()->for($focusFather)->create(['tree_id' => $user->tree->id, 'locality_id' => $village->id]);
+
+    $form = readInertiaProp($this, $user, personPreviewUrl($focus), 'personPreview')['personForm'];
+
+    $before = databaseRows();
+
+    $this->actingAs($user)->put(route('persons.update', $focus), [
+        ...array_intersect_key($form, array_flip(['first_name', 'last_name', 'maiden_name', 'gender', 'religion', 'is_deceased'])),
+        'birth' => ['year' => $form['birth']['year'], 'month' => $form['birth']['month'], 'day' => $form['birth']['day'], 'locality_id' => null],
+        'death' => ['year' => $form['death']['year'], 'locality_id' => null],
+        'residences' => [['locality_id' => $town->id, 'year_from' => 1900, 'year_to' => null]],
+    ])->assertSessionHasNoErrors()->assertRedirect();
+
+    $diff = rowDiff($before, databaseRows());
+
+    expect(array_keys($diff['tables']))->toBe(['residences']);
+    expect(array_column($diff['tables']['residences']['removed'], 'id'))->toBe([$focusResidence->id]);
+    expect($diff['tables']['residences']['added'])->toHaveCount(1);
+    expect($diff['tables']['residences']['added'][0]['person_id'])->toBe($focus->id);
+    expect($diff['tables']['residences']['changed'])->toBe([]);
+    expect(Residence::query()->whereKey($otherResidence->id)->exists())->toBeTrue();
 });
 
 test('editing a marriage from the preview changes only that marriage event and keeps its source links', function () {
@@ -313,7 +382,7 @@ test('editing a marriage from the preview changes only that marriage event and k
     $before = databaseRows();
 
     $this->actingAs($user)->put(route('marriages.update', $marriage['id']), [
-        'marriage' => [...$marriage['date_parts'], 'year' => 1881, 'place' => $marriage['place']],
+        'marriage' => [...$marriage['date_parts'], 'year' => 1881, 'locality_id' => $marriage['locality_id']],
     ])->assertSessionHasNoErrors()->assertRedirect();
 
     $diff = rowDiff($before, databaseRows());
@@ -376,5 +445,114 @@ test('unlinking a source from a marriage removes only that link and keeps the ot
     expect($diff['tables']['event_source']['changed'])->toBe([]);
     expect(array_map(fn (array $row): string => $row['event_id'].':'.$row['source_id'], $diff['tables']['event_source']['removed']))
         ->toBe(["{$marriageA->id}:{$sourceShared->id}"]);
+    expect($diff['files'])->toBe(['removed' => [], 'added' => []]);
+});
+
+test('setting an entry number on a link changes only that one event_source row', function () {
+    Storage::fake('local');
+
+    $user = User::factory()->create();
+    $scene = familyScene($user);
+    extract($scene);
+
+    $preview = readInertiaProp($this, $user, personPreviewUrl($focus), 'personPreview');
+    $marriage = collect($preview['person']['marriages'])->firstWhere('spouse.id', $wifeA->id);
+    $source = collect($marriage['sources'])->firstWhere('id', $sourceShared->id);
+
+    $before = databaseRows();
+
+    $this->actingAs($user)->patch(route('events.sources.update', [$marriage['id'], $source['id']]), ['entry_number' => '95'])
+        ->assertSessionHasNoErrors()
+        ->assertRedirect();
+
+    $diff = rowDiff($before, databaseRows());
+
+    expect(array_keys($diff['tables']))->toBe(['event_source']);
+    expect($diff['tables']['event_source']['added'])->toBe([]);
+    expect($diff['tables']['event_source']['removed'])->toBe([]);
+    expect($diff['tables']['event_source']['changed'])->toHaveCount(1);
+
+    $change = $diff['tables']['event_source']['changed'][0];
+
+    expect($change['before']['event_id'])->toBe($marriageA->id);
+    expect($change['before']['source_id'])->toBe($sourceShared->id);
+    // updated_at is bumped by withTimestamps but may land in the same second as creation.
+    $changedColumns = array_keys(array_diff_assoc($change['after'], $change['before']));
+    expect($changedColumns)->toContain('entry_number');
+    expect(array_diff($changedColumns, ['entry_number', 'updated_at']))->toBe([]);
+    expect($change['after']['entry_number'])->toBe('95');
+    expect($diff['files'])->toBe(['removed' => [], 'added' => []]);
+});
+
+test('clearing the legacy entry number of a source changes only that one sources.entry_number value', function () {
+    Storage::fake('local');
+
+    $user = User::factory()->create();
+    $scene = familyScene($user);
+    extract($scene);
+
+    $sourceShared->update(['entry_number' => '47']);
+
+    $before = databaseRows();
+
+    $this->actingAs($user)->delete(route('sources.legacy-entry-number.destroy', $sourceShared))
+        ->assertSessionHasNoErrors()
+        ->assertRedirect();
+
+    $diff = rowDiff($before, databaseRows());
+
+    expect(array_keys($diff['tables']))->toBe(['sources']);
+    expect($diff['tables']['sources']['added'])->toBe([]);
+    expect($diff['tables']['sources']['removed'])->toBe([]);
+    expect($diff['tables']['sources']['changed'])->toHaveCount(1);
+
+    $change = $diff['tables']['sources']['changed'][0];
+
+    expect($change['before']['id'])->toBe($sourceShared->id);
+    expect($change['before']['entry_number'])->toBe('47');
+    expect($change['after']['entry_number'])->toBeNull();
+    expect(array_diff(array_keys(array_diff_assoc($change['after'], $change['before'])), ['entry_number', 'updated_at']))->toBe([]);
+    expect($diff['files'])->toBe(['removed' => [], 'added' => []]);
+});
+
+test('saving a gravestone touches only its source row, its buried list and the burial it fills in', function () {
+    Storage::fake('local');
+
+    $user = User::factory()->create();
+    $scene = familyScene($user);
+    extract($scene);
+
+    $cemetery = Locality::factory()->for($user->tree)->create();
+
+    $before = databaseRows();
+
+    $this->actingAs($user)->put(route('sources.update', $sourceOther), [
+        'kind' => 'gravestone',
+        'cemetery_locality_id' => $cemetery->id,
+        'buried_person_ids' => [$focus->id, $loneMan->id],
+    ])->assertSessionHasNoErrors()->assertRedirect();
+
+    $diff = rowDiff($before, databaseRows());
+
+    expect(array_keys($diff['tables']))->toEqualCanonicalizing(['sources', 'buried_people', 'events', 'event_participants']);
+
+    expect(array_column($diff['tables']['sources']['changed'], 'after'))->toHaveCount(1);
+    expect($diff['tables']['sources']['changed'][0]['after']['id'])->toBe($sourceOther->id);
+    expect($diff['tables']['sources']['changed'][0]['after']['cemetery_locality_id'])->toBe($cemetery->id);
+
+    expect(writeSortedKeys(array_map(fn (array $row): string => $row['source_id'].':'.$row['person_id'], $diff['tables']['buried_people']['added'])))
+        ->toBe(writeSortedKeys(["{$sourceOther->id}:{$focus->id}", "{$sourceOther->id}:{$loneMan->id}"]));
+
+    expect(array_column($diff['tables']['events']['added'], 'type'))->toBe(['burial']);
+    expect($diff['tables']['events']['added'][0]['locality_id'])->toBe($cemetery->id);
+    expect(array_column($diff['tables']['event_participants']['added'], 'person_id'))->toBe([$focus->id]);
+
+    foreach ($diff['tables'] as $table) {
+        expect($table['removed'])->toBe([]);
+    }
+
+    expect($diff['tables']['events']['changed'])->toBe([]);
+    expect($diff['tables']['event_participants']['changed'])->toBe([]);
+    expect($diff['tables']['buried_people']['changed'])->toBe([]);
     expect($diff['files'])->toBe(['removed' => [], 'added' => []]);
 });

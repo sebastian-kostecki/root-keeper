@@ -24,6 +24,7 @@ class TreeController extends Controller
 
         return Inertia::render('tree/show', [
             'sheet' => $proband === null ? null : $buildFamilySheet->handle($proband, $this->spouseParameter($request)),
+            'hasPeople' => $tree->people()->exists(),
             'rootPersonId' => $tree->root_person_id,
             'personCandidates' => Inertia::optional(fn (): array => $listPersonCandidates->handle($tree)),
             'genders' => Gender::options(),

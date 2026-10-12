@@ -1,14 +1,23 @@
+import { router } from '@inertiajs/react';
 import {
     createContext,
     useCallback,
     useContext,
+    useEffect,
     useRef,
     useState,
 } from 'react';
 import type { MouseEvent, ReactNode } from 'react';
 import { Button } from '@/components/ui/button';
+import type { PanelKey } from '@/lib/side-panel-url';
 
-export type SectionId = 'personal' | 'birth' | 'death' | `marriage-${number}`;
+export type SectionId =
+    | 'personal'
+    | 'birth'
+    | 'death'
+    | 'residences'
+    | 'note'
+    | `marriage-${number}`;
 
 /** Hints how an edit starts, e.g. "Oznacz zgon" opens Zgon with the checkbox on. */
 export type SectionIntent = 'mark-deceased';
@@ -47,12 +56,20 @@ function labelFor(id: SectionId | null): string {
         return 'danych osobowych';
     }
 
+    if (id === 'residences') {
+        return 'zamieszkaniach';
+    }
+
     if (id === 'birth') {
         return 'urodzeniu';
     }
 
     if (id === 'death') {
         return 'zgonie';
+    }
+
+    if (id === 'note') {
+        return 'notatce';
     }
 
     return 'małżeństwie';
@@ -64,28 +81,91 @@ type PendingExit = { action: () => void };
 
 /**
  * Owns "which section is editing, is it dirty, what exit is waiting for the
- * user's decision" for the person modal. Resets when another person is shown.
+ * user's decision" for the side panels that edit records: the person panel and
+ * the marriage panel, and (nested) the add-person panel, whose id is the value
+ * of its key (e.g. `father:987`). Hosted by the layout, so it also wraps the
+ * page beside the panel; `record` is null while no panel is open. Resets
+ * whenever the shown record changes (`${key}:${id}`), including to and from null.
  */
 export function SectionEditorProvider({
-    personId,
+    record,
     children,
 }: {
-    personId: number;
+    record: { key: PanelKey; id: number | string } | null;
     children: ReactNode;
 }) {
-    const [shownPersonId, setShownPersonId] = useState(personId);
+    const recordParam = record === null ? null : record.key;
+    const recordId = record === null ? null : record.id;
+    const recordKey = record === null ? null : `${record.key}:${record.id}`;
+    const [shownRecordKey, setShownRecordKey] = useState(recordKey);
     const [edit, setEdit] = useState<EditState | null>(null);
     const [isDirty, setIsDirty] = useState(false);
     const [pending, setPending] = useState<PendingExit | null>(null);
     const [isSaving, setIsSaving] = useState(false);
     const submitRef = useRef<(() => Promise<boolean>) | null>(null);
+    /** True while an exit the user already let through runs; its visits pass the page guard. */
+    const isLeavingRef = useRef(false);
 
-    if (shownPersonId !== personId) {
-        setShownPersonId(personId);
+    if (shownRecordKey !== recordKey) {
+        setShownRecordKey(recordKey);
         setEdit(null);
         setIsDirty(false);
         setPending(null);
     }
+
+    /**
+     * A visit started beside the panel (sidebar, breadcrumbs, another record's
+     * panel from a list) drops the panel's query key and the unsaved section
+     * with it, so while a section is dirty it waits on the guard bar. Saves,
+     * prefetches and visits that keep the shown record open pass.
+     */
+    useEffect(() => {
+        if (!isDirty || recordParam === null || recordId === null) {
+            return;
+        }
+
+        return router.on('before', (event) => {
+            const { visit } = event.detail;
+            const keepsRecord =
+                visit.url.searchParams.get(recordParam) === String(recordId);
+
+            if (
+                isLeavingRef.current ||
+                visit.prefetch ||
+                visit.method !== 'get' ||
+                keepsRecord
+            ) {
+                return;
+            }
+
+            if (!isSaving) {
+                // The state of this visit stays behind; the retry gets its own.
+                const {
+                    url,
+                    id: _id,
+                    cancelled: _cancelled,
+                    completed: _completed,
+                    interrupted: _interrupted,
+                    ...options
+                } = visit;
+
+                setPending({ action: () => router.visit(url, options) });
+            }
+
+            return false;
+        });
+    }, [isDirty, isSaving, recordParam, recordId]);
+
+    /** Runs an exit the user let through, so the page guard lets its visit pass. */
+    const leave = (action: () => void) => {
+        isLeavingRef.current = true;
+
+        try {
+            action();
+        } finally {
+            isLeavingRef.current = false;
+        }
+    };
 
     const cancel = () => {
         setEdit(null);
@@ -102,6 +182,10 @@ export function SectionEditorProvider({
     }, []);
 
     const requestExit = (action: () => void) => {
+        if (isSaving) {
+            return;
+        }
+
         if (!isDirty) {
             setEdit(null);
             action();
@@ -113,7 +197,7 @@ export function SectionEditorProvider({
     };
 
     const start = (id: SectionId, intent?: SectionIntent) => {
-        if (edit?.id === id) {
+        if (edit?.id === id || isSaving) {
             return;
         }
 
@@ -143,7 +227,7 @@ export function SectionEditorProvider({
         const { action } = pending;
 
         cancel();
-        action();
+        leave(action);
     };
 
     const saveAndExit = () => {
@@ -166,7 +250,7 @@ export function SectionEditorProvider({
                 setPending(null);
 
                 if (isSaved) {
-                    action();
+                    leave(action);
                 }
             });
     };
@@ -206,7 +290,7 @@ export function useSectionEditor(): SectionEditorContextValue {
     return context;
 }
 
-/** Same as `useSectionEditor`, but null outside the modal (tree, sources, lists). */
+/** Same as `useSectionEditor`, but null outside `AppLayout`. */
 export function useOptionalSectionEditor(): SectionEditorContextValue | null {
     return useContext(SectionEditorContext);
 }
@@ -249,7 +333,7 @@ export function useGuardedClick(): (
     };
 }
 
-/** Bar shown over the modal when an exit is waiting on unsaved changes. */
+/** Bar shown over the panel when an exit is waiting on unsaved changes. */
 export function UnsavedChangesBar() {
     const {
         hasPendingExit,
@@ -266,7 +350,7 @@ export function UnsavedChangesBar() {
     return (
         <div
             role="alert"
-            className="bg-background absolute inset-x-0 bottom-0 z-30 flex flex-col gap-3 border-t px-6 py-4 shadow-lg sm:flex-row sm:items-center sm:justify-between"
+            className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
         >
             <p className="text-sm font-medium">
                 Masz niezapisane zmiany w {dirtyLabel}.

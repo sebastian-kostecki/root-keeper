@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Models\Event;
 use Illuminate\Auth\Access\Response;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
@@ -15,7 +16,13 @@ class EventSourceStoreRequest extends FormRequest
      */
     public function authorize(): Response
     {
-        return Gate::inspect('update', $this->route('event'));
+        $event = $this->route('event');
+
+        if ($event instanceof Event && ! $event->type->acceptsSources()) {
+            return Response::denyAsNotFound();
+        }
+
+        return Gate::inspect('update', $event);
     }
 
     /**
@@ -32,6 +39,7 @@ class EventSourceStoreRequest extends FormRequest
                 'integer',
                 Rule::exists('sources', 'id')->where('tree_id', $this->user()->tree->id),
             ],
+            'entry_number' => ['nullable', 'string', 'max:50'],
         ];
     }
 
@@ -44,6 +52,7 @@ class EventSourceStoreRequest extends FormRequest
     {
         return [
             'source_id' => 'źródło',
+            'entry_number' => 'numer wpisu',
         ];
     }
 }

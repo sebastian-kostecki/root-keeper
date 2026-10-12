@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import InputError from '@/components/input-error';
+import { LocalityPicker } from '@/components/localities/locality-picker';
 import { PartialDateInput } from '@/components/persons/partial-date-input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
@@ -78,6 +79,17 @@ export function PersonalFields({
                     />
                     <InputError message={errors.last_name} />
                 </div>
+
+                <div className="grid gap-2">
+                    <Label htmlFor="maiden_name">Nazwisko rodowe</Label>
+                    <Input
+                        id="maiden_name"
+                        name="maiden_name"
+                        maxLength={255}
+                        defaultValue={person?.maiden_name ?? undefined}
+                    />
+                    <InputError message={errors.maiden_name} />
+                </div>
             </div>
 
             <div className="grid gap-2">
@@ -135,17 +147,6 @@ export function PersonalFields({
                 <input type="hidden" name="religion" value={religion} />
                 <InputError message={errors.religion} />
             </div>
-
-            <div className="grid gap-2">
-                <Label htmlFor="residence">Miejsce zamieszkania</Label>
-                <Input
-                    id="residence"
-                    name="residence"
-                    maxLength={255}
-                    defaultValue={person?.residence ?? undefined}
-                />
-                <InputError message={errors.residence} />
-            </div>
         </>
     );
 }
@@ -174,18 +175,24 @@ export function BirthFields({
     );
 }
 
-/** "Osoba nie żyje" switch row; the death date and place appear when checked. */
+/** "Osoba nie żyje" switch row; the death date, place and burial place appear when checked. */
 export function DeathFields({
     errors,
     death,
+    burial,
     isDeceased,
+    burialSuggestion,
 }: {
     errors: Errors;
     death: PersonFormEvent | null;
+    burial: PersonFormData['burial'];
+    /** Cemetery of the person's gravestone; preselects an empty burial place. */
+    burialSuggestion?: PersonFormData['burial_suggestion'];
     /** Whether the checkbox starts checked. */
     isDeceased: boolean;
 }) {
     const [checked, setChecked] = useState(isDeceased);
+    const suggested = burial?.locality ? null : (burialSuggestion ?? null);
 
     return (
         <div className="space-y-4">
@@ -214,6 +221,18 @@ export function DeathFields({
                         errors={errors}
                         defaultValue={death ?? undefined}
                     />
+                    <LocalityPicker
+                        id="burial-locality"
+                        name="burial.locality_id"
+                        label="Miejsce pochowania"
+                        value={burial?.locality ?? suggested}
+                        errors={errors}
+                    />
+                    {suggested && (
+                        <p className="text-muted-foreground -mt-2 text-sm">
+                            Podpowiedź z nagrobka
+                        </p>
+                    )}
                 </>
             )}
         </div>

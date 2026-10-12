@@ -54,3 +54,18 @@ test('an encrypted backup archive opens only with the backup password', function
     expect($dump)->not->toBeNull()
         ->and($dump)->toContain($parent->last_name);
 });
+
+test('the backup archive contains the photo and thumbnail of a person', function () {
+    $parent = $this->arrangeBackupData();
+
+    $photo = "persons/{$parent->tree_id}/zdjecie.jpg";
+    $thumbnail = "persons/{$parent->tree_id}/thumbnails/zdjecie.jpg";
+    Storage::disk('local')->put($photo, 'zdjecie-osoby');
+    Storage::disk('local')->put($thumbnail, 'miniatura-osoby');
+    $parent->update(['photo_path' => $photo, 'photo_thumbnail_path' => $thumbnail]);
+
+    $archive = $this->runBackup();
+
+    expect($this->readArchiveEntry($archive, "private/{$photo}"))->toBe('zdjecie-osoby')
+        ->and($this->readArchiveEntry($archive, "private/{$thumbnail}"))->toBe('miniatura-osoby');
+});

@@ -51,15 +51,15 @@ Każdy wiersz to osobna faza wdrożenia, która otwiera własny folder zmiany pr
 | 1 | Kopia i odtworzenie | Udowodnić, że kopia obejmuje bazę i wszystkie pliki źródeł, a odtworzenie na czystej instancji przywraca kompletne dane (kolejność: decyzja autora, wywiad P1/P4) | #2 | integration + manual smoke (drill odtworzenia) | complete | `context/archive/2026-10-01-testing-backup-restore/` (zarchiwizowana) |
 | 2 | Zapis i usuwanie trafiają we właściwe dane | Udowodnić, że akcje z drzewa i modala zmieniają dokładnie wskazaną osobę lub parę, a usunięcia kasują dokładnie to, co pokazało potwierdzenie | #1, #3 | integration + unit | complete | `context/archive/2026-10-02-testing-write-delete-targets/` (zarchiwizowana) |
 | 3 | Granice własności i reguły relacji | Udowodnić, że cudze id (w adresie i w treści) daje 404 bez zapisu, a reguły relacji egzekwuje serwer na każdej ścieżce | #4, #5 | integration | complete | `context/archive/2026-10-02-testing-ownership-boundaries/`, `context/archive/2026-10-02-testing-relation-rules/` (zarchiwizowane) |
-| 4 | Przepływy drzewa i modala w przeglądarce | 1–2 krytyczne przepływy (np. v4 US-01: istniejący ojciec z pustego slotu) z asercją na danych, nie na wyglądzie — tylko jeśli badanie fazy 2 pokaże, że tańsze warstwy nie łapią pomyłki osoby w UI | #1 (połowa UI) | e2e | not started | — |
+| 4 | Przepływy drzewa i modala w przeglądarce | Ochrona przed przebudową (`prd.md:209`): fakt potwierdzony źródłem prowadzi do tego samego źródła i skanu, a rodzic, dziecko i małżonek dodani z pustych slotów drzewa są powiązani z obu stron — z asercją na danych, nie na wyglądzie; Pest łapie błędne id w żądaniu, e2e łapie ścieżkę UI, która po przebudowie przestaje istnieć lub trafia gdzie indziej | #1 (połowa UI) | e2e | complete | `context/changes/critical-flows-e2e-guard/` |
 
 ## 4. Stack
 
 | Layer | Tool | Version | Notes |
 |---|---|---|---|
-| backend integration + unit | Pest (PHPUnit) + pest-plugin-laravel | 5.2 / 13.3 | ~23 pliki, ~330 przypadków, głównie `tests/Feature`; w CI na PostgreSQL 18 |
-| frontend unit | Vitest przez `vp test` (vite-plus) | 0.3 | 7 plików, ~95 przypadków, wyłącznie czysta logika w `resources/js/lib` i `resources/js/hooks` |
-| e2e | none yet — see Phase 4 | — | kandydat: `pestphp/pest-plugin-browser` + Playwright (checked: 2026-09-30); nie jest zależnością projektu |
+| backend integration + unit | Pest (PHPUnit) + pest-plugin-laravel | 5.3 / 13.3 | ~23 pliki, ~330 przypadków, głównie `tests/Feature`; w CI na PostgreSQL 18 |
+| frontend unit | Vitest przez `vp test` (vite-plus) | Vitest 5.0 / vite-plus 1.0 | 7 plików, ~95 przypadków, wyłącznie czysta logika w `resources/js/lib` i `resources/js/hooks` |
+| e2e | Playwright Test (`@playwright/test`) | 1.63 | skonfigurowany 2026-10-02 (`playwright.config.ts`, szczegóły w `test-stack.md`); 4 specyfikacje przepływów (`fact-source-scan`, `tree-slot-parent`, `tree-slot-child`, `tree-slot-spouse`) obok seed bramki logowania, moduł pomocniczy `tests/e2e/support/`; lokalnie, poza CI |
 | mutation testing (backend) | `pestphp/pest-plugin-mutate` (`pest --mutate`) | v5.0.2 (`composer.lock`) | ad hoc, zawężone `--class`; pokrycie `pcov`; Stryker tylko dla JS/TS — nieużywany, bo brak testów Vitest w fazach ryzyka |
 | backup / restore | spatie backup + `tests/Backup` + drill odtworzenia (§6.3) | — | zawartość kopii i odtworzenie zrzutu sprawdza `tests/Backup`; drill na serwerze według §6.3 |
 | (optional) AI-native | eksploracyjny przebieg agenta po drzewie w przeglądarce (checked: 2026-09-30) | n/a | When NOT to use: jako bramka regresji ani do oceny wyglądu (§7); tylko rekonesans przed napisaniem testu fazy 4 |
@@ -83,11 +83,11 @@ Profil bazy testów: `meaningful` — konfiguracja Pest i Vitest, ~30 plików te
 | weryfikacja zawartości kopii | CI (`tests`, `tests/Backup`) | required | kopia bez plików źródeł lub bez danych |
 | drill odtworzenia na czystej instancji | ręcznie, na serwerze | required — kwartalnie i po zmianach (§6.3) | kopia, której nie da się odtworzyć |
 | testowanie mutacyjne (`pest --mutate`) | lokalnie, po fazie ryzyka | ad hoc (nie wymagane w CI) | testy, które przechodzą mimo zepsutej linii |
-| e2e na krytycznych przepływach drzewa i modala | CI on PR | required after §3 Phase 4 | UI wysyła akcję do niewłaściwej osoby |
+| e2e na krytycznych przepływach drzewa i modala | lokalnie przed S-04 – S-06, CI w osobnej zmianie | required przed S-04 – S-06 | UI wysyła akcję do niewłaściwej osoby; ścieżka fakt → źródło → skan przestaje prowadzić do tego samego pliku |
 
 ## 6. Cookbook Patterns
 
-Jak dodać nowy test w tym projekcie. Każda podsekcja wypełnia się po zakończeniu odpowiedniej fazy wdrożenia (§6.6 czeka na fazę 4); §6.7 opisuje selektywną bramkę mutacyjną używaną po fazach ryzyka.
+Jak dodać nowy test w tym projekcie. Każda podsekcja wypełnia się po zakończeniu odpowiedniej fazy wdrożenia (§6.6 wypełniony po fazie 4); §6.7 opisuje selektywną bramkę mutacyjną używaną po fazach ryzyka.
 
 ### 6.1 Test nowego endpointu (backend)
 
@@ -195,9 +195,24 @@ Krok 1 działa, bo sterownik trybu serwisowego to `file` (`APP_MAINTENANCE_DRIVE
 
 ### 6.6 Test przepływu w przeglądarce
 
-- TBD — see §3 Phase 4 (wzorzec: przepływ drzewa lub modala z asercją na danych, nie na wyglądzie).
+- **Location**: `tests/e2e/<ryzyko>.spec.ts` (4 przepływy: `fact-source-scan`, `tree-slot-parent`, `tree-slot-child`, `tree-slot-spouse`); wspólny moduł `tests/e2e/support/api.ts` (dane przez trasy aplikacji, sprzątanie) i `tests/e2e/support/navigation.ts` (wszystko, co zmienią S-02, S-05 i S-06: wejście do drzewa, do dialogu osoby, do sekcji `Rodzina`). Serwer: `scripts/e2e-server.sh` (osobna baza `e2e`, port 8100, wolumin plików źródeł).
+- **Reference test**: `tests/e2e/tree-slot-child.spec.ts` (dziecko w drugim związku: przełączenie związku, oba wejścia dialogu, relacja z obu stron) i `tests/e2e/fact-source-scan.spec.ts` (fakt → źródło → skan, sha256); nagłówek z ryzykiem i szablon według `tests/e2e/seed.spec.ts`.
+- **Run locally**: `npx playwright test` (jeden plik: `npx playwright test tests/e2e/<plik>.spec.ts`; stabilność: `--repeat-each=2`). Serwer E2E startuje sam (`webServer`). Przy działającym `npm run dev` serwer E2E używa zasobów Vite dev (`public/hot` przechodzi przez bind mount), więc zmiany TSX są widoczne od razu; restart jest potrzebny tylko bez dev serwera, bo wtedy działa build zrobiony przy starcie. `public/hot` pozostawiony przez padnięty dev serwer psuje strony E2E — usuń go.
+- **Wzorzec testu** (kolejno):
+  1. **Przygotowanie przez `tests/e2e/support/`** z unikalnym sufiksem (`uniqueSuffix(testInfo)`: prefiks `e2etest`, timestamp, worker, repeat, retry): `createPerson`, `createSpouse`, `createSource`, `linkSource` wołają trasy aplikacji przez `page.request` z nagłówkiem `X-XSRF-TOKEN`, bez dostępu do bazy. Sufiks trafia do `last_name` osoby i nazwy źródła, bo tylko po nim da się sprzątać.
+  2. **Ścieżka w UI zawężona do dialogu osoby**: `page.getByRole('dialog', { name: display_name })`, wejście przez `?person={id}`; lokatory rolami i etykietami. Chroniona ścieżka (slot → dialog, fakt → źródło → skan) zostaje w UI. Bez `Podgląd`, `Wstecz`, kliknięcia karty i przycisku zamknięcia, bo S-05 i S-06 je zmieniają.
+  3. **Asercja relacji z obu stron albo sha256**: dziecko widzi rodzica i rodzic widzi dziecko (podgląd `?person=`, zakładka `Rodzina`); dla pliku sha256 odpowiedzi `/sources/{id}/file` równy sha256 wgranej fikstury (oryginał jest serwowany bajt w bajt, miniatura nie nadaje się do porównania).
+  4. **Sprzątanie w teardownie fixture `suffix`** (`tests/e2e/support/fixtures.ts`; spec importuje `test` i `expect` stamtąd i dostaje `suffix` jako fixture): `cleanupBySuffix` usuwa najpierw źródła (utworzone przez API po id, pozostałe po nazwie z sufiksem), potem osoby z sufiksem testu, każde żądanie z `toBeOK`. Teardown działa po czerwonej asercji i po timeoucie (własny limit 30 s, najpierw `about:blank`, żeby porzucone kroki UI nie zapisały nic po przeszukaniu), a jego błąd nie zasłania błędu testu. Guard odrzuca sufiks bez prefiksu `e2etest-`. Osoby utworzone w UI nie mają znanego id, więc wyszukuje się je po sufiksie.
+  5. **Celowe uszkodzenie**: test musi dać czerwony wynik na asercji ryzyka po zepsuciu kodu produkcyjnego, które potem cofasz. Wykonane: rodzic (zamiana `parent_id` i `child_id`), dziecko (`other_parent_id: null`), małżonek (`spouse_id: focus.id`), fakt → źródło → skan (plik serwuje miniaturę, więc sha256 czerwony). Uszkodzenie „dołącz do wybranej osoby” w małżonku jest symetryczne i zostaje zielone — relacja z obu stron go nie odróżnia. Bez działającego `npm run dev` zmiany w TSX wymagają restartu serwera E2E, żeby przebudował bundle, przed czerwonym przebiegiem i po cofnięciu; z dev serwerem są widoczne od razu.
+  6. **Wolumin plików E2E i jego czyszczenie**: pliki źródeł z E2E trafiają do woluminu `root-keeper-e2e-sources` zamiast do `storage/app/private/sources/` (drzewo E2E i deweloperskie mają id 1). Wolumin żyje tak długo jak baza `e2e`: odtwarzając bazę, usuń go razem z nią (`docker volume rm root-keeper-e2e-sources`), żeby nie zostawały pliki bez rekordów.
+- **Wyrocznia**: dane, nie wygląd — relacja widoczna z obu stron w podglądzie osoby albo sha256 pliku; po zielonym przebiegu w bazie `e2e` zero osób i źródeł z prefiksem `e2etest`.
+- **Pułapki**: jedyny lokator strukturalny to `familySection` w `support/navigation.ts` (`section` znaleziona przez nagłówek `h3`, bo `<section>` nie ma nazwy dostępności) i mieszka w jednym miejscu; zawsze zawężaj do dialogu osoby, bo po przejściu na panel (S-06) nagłówki drzewa staną się widoczne obok niego; wspólny użytkownik i drzewo (`fullyParallel`) wymagają sufiksu w każdym imieniu i nazwie źródła oraz wejścia przez `/tree/{własneId}` bez ustawiania probanta; nie ma asercji na toasty — flash data żyje w jednej sesji wspólnej dla wszystkich równoległych testów (`storageState`), więc cudze wywołanie zużywało lub nadpisywało toast; gotowość to zamknięcie dialogu i relacja asercjonowana z obu stron.
+- **Znany limit**: przywrócenie asercji na toasty wymagałoby sesji na workera (osobny użytkownik i `storageState`) albo zmiany w aplikacji.
+- **Nowy test przepływu**: przygotowanie w `support/api.ts` (dopisz operację, jeśli brakuje trasy), nawigację w `support/navigation.ts`, asercję na danych z obu stron, sprzątanie przez fixture `suffix`, celowe uszkodzenie i `--repeat-each=2`. Job CI jest osobną, późniejszą zmianą.
 
 **Werdykt fazy 2 (2026-10-02)**: id w żądaniach zapisu pochodzą z propsów Inertia (`sheet`, `personPreview`), a parę wybiera serwer z `?spouse=`; kontrakt „prop → żądanie → baza” pokrywa Pest (`tests/Feature/WriteTargetsTest.php`), więc tańsza warstwa łapie pomyłkę osoby. e2e uruchomić dopiero, gdy pojawi się stan id po stronie klienta albo gdy okno po `choose()` (stary `sheet` do końca wizyty) da potwierdzony błąd. Status fazy 4 w §3 bez zmian.
+
+**Dopisek z fazy 4 (2026-10-05) — sonda okna `choose()`**: przebieg — wizytę `?spouse=` opóźniono o 12 s (`page.route`), po przełączeniu na drugi związek kliknięto `Dodaj dziecko` w trakcie opóźnienia; slot i tytuł dialogu nadal pokazywały pierwszą parę („Jan i Anna”), a zapis nowej osoby w opóźnieniu dał dziecku dokładnie tę parę, którą pokazywał dialog („Jan i Anna”). Wynik: NIEPOTWIERDZONE jako błąd danych — klik w trakcie opóźnionej wizyty trafia w poprzednią parę, ale slot i tytuł dialogu to mówią, więc zapisane dane zgadzają się z tym, co widział użytkownik; traktujemy to jako problem UX (krótko nieaktualny widok po wyborze związku), nie błąd danych; opóźniona wizyta zostawia tylko krótko nieaktualny widok (przy krótszym opóźnieniu dialog zamknął się, gdy wizyta wylądowała). Nowej zmiany nie proponujemy. Status fazy 4 zmienił się z innego powodu: ochrona przed przebudową (`prd.md:209`), patrz §3.
 
 ### 6.7 Testowanie mutacyjne (bramka selektywna)
 
@@ -217,12 +232,12 @@ Wykluczenia uzgodnione w wywiadzie (P5). Obowiązują, dopóki nie zmieni się z
 
 - **Wygląd — kolory, odstępy, tryb ciemny** — autor ocenia to sam przy każdej przebudowie UI. Ponownie rozważyć, gdy aplikacja zyska innych użytkowników. (Source: Phase 2 interview Q5.)
 - **Same widoki i układ stron** — autor widzi je sam; testy UI sprawdzają tylko skutek w danych (§3 Phase 4), nie układ. Ponownie rozważyć, gdy błąd widoku ukryje lub zafałszuje dane. (Source: Phase 2 interview Q5.)
-- **Eksport danych** — funkcja nie istnieje (FR-018 odłożony); ochronę przed utratą dostępu daje odtworzenie z kopii (§2 #2). Ponownie rozważyć, gdy eksport wejdzie do zakresu. (Source: roadmap `## Parked`, interview Q2.)
+- **Eksport danych** — funkcja nie istnieje; ochronę przed utratą dostępu daje odtworzenie z kopii (§2 #2). Ponownie rozważyć, gdy eksport wejdzie do zakresu. (Source: roadmap `## Parked`, interview Q2.)
 
 ## 8. Freshness Ledger
 
-- Strategy (§1–§5) last reviewed: 2026-09-30
-- Stack versions last verified: 2026-09-30
+- Strategy (§1–§5) last reviewed: 2026-10-05
+- Stack versions last verified: 2026-10-04
 - AI-native tool references last verified: 2026-09-30
 
 Refresh (`/10x-test-plan --refresh`) when:

@@ -8,7 +8,14 @@ import {
     sourceKindText,
 } from './source-description';
 
-const empty = { record_type_label: null, year: null, provenance: null };
+const empty = {
+    kind: 'other' as const,
+    cemetery_name: null,
+    record_type_label: null,
+    year: null,
+    archive: null,
+    parish_label: null,
+};
 
 describe('formatSourceMeta', () => {
     it('joins type and year', () => {
@@ -31,24 +38,55 @@ describe('formatSourceMeta', () => {
         ).toBe('urodzenia');
     });
 
-    it('returns nothing when both are empty', () => {
+    it('appends the parish', () => {
+        expect(
+            formatSourceMeta({
+                ...empty,
+                record_type_label: 'urodzenia',
+                year: 1878,
+                parish_label: 'Św. Jana (rzymskokatolickie)',
+            }),
+        ).toBe('urodzenia · 1878 · Św. Jana (rzymskokatolickie)');
+    });
+
+    it('returns nothing when all are empty', () => {
         expect(formatSourceMeta(empty)).toBeNull();
+    });
+
+    it('shows the cemetery of a gravestone in place of the parish', () => {
+        expect(
+            formatSourceMeta({
+                ...empty,
+                kind: 'gravestone',
+                year: 1950,
+                cemetery_name: 'Luboml',
+            }),
+        ).toBe('1950 · cmentarz Luboml');
+    });
+
+    it('shows no place for a gravestone without a cemetery', () => {
+        expect(
+            formatSourceMeta({
+                ...empty,
+                kind: 'gravestone',
+                year: 1950,
+                parish_label: 'Św. Jana',
+            }),
+        ).toBe('1950');
     });
 });
 
 describe('showsUploadDate', () => {
-    it('shows the date when typ, rok and pochodzenie are all empty', () => {
+    it('shows the date when typ, rok and archiwum are all empty', () => {
         expect(showsUploadDate(empty)).toBe(true);
     });
 
-    it('hides the date when any of the three is set', () => {
+    it('hides the date when any of them is set', () => {
         expect(showsUploadDate({ ...empty, year: 1878 })).toBe(false);
         expect(showsUploadDate({ ...empty, record_type_label: 'zgonu' })).toBe(
             false,
         );
-        expect(showsUploadDate({ ...empty, provenance: 'Archiwum' })).toBe(
-            false,
-        );
+        expect(showsUploadDate({ ...empty, archive: 'Archiwum' })).toBe(false);
     });
 });
 
@@ -56,15 +94,20 @@ const akt = {
     kind: 'metrical_record' as const,
     record_type: null,
     record_type_label: null,
-    entry_number: null,
+    parish_id: null,
+    parish_label: null,
+    cemetery_locality_id: null,
+    cemetery_name: null,
 };
 
+const gravestone = { ...akt, kind: 'gravestone' as const };
+
 describe('erasedRecordFields', () => {
-    it('lists nothing when typ and numer wpisu are both empty', () => {
+    it('lists nothing when typ and parafia are both empty', () => {
         expect(
             erasedRecordFields(akt, 'gravestone', {
                 record_type: '',
-                entry_number: '',
+                parish_id: '',
             }),
         ).toEqual([]);
     });
@@ -78,54 +121,173 @@ describe('erasedRecordFields', () => {
                     record_type_label: 'urodzenia',
                 },
                 'gravestone',
-                { record_type: 'birth', entry_number: '' },
+                { record_type: 'birth', parish_id: '' },
             ),
         ).toEqual([
             { field: 'record_type', label: 'Typ aktu', value: 'urodzenia' },
         ]);
     });
 
-    it('lists a typed numer wpisu', () => {
+    it('lists a stored parish by its label', () => {
         expect(
-            erasedRecordFields(akt, 'other', {
-                record_type: '',
-                entry_number: '12/1878',
-            }),
+            erasedRecordFields(
+                { ...akt, parish_id: 7, parish_label: 'Św. Jana' },
+                'gravestone',
+                { parish_id: '7' },
+            ),
         ).toEqual([
-            { field: 'entry_number', label: 'Numer wpisu', value: '12/1878' },
+            { field: 'parish_id', label: 'Parafia', value: 'Św. Jana' },
         ]);
     });
 
-    it('still lists a stored value cleared in the form', () => {
+    it('lists a stored parish cleared in the form', () => {
         expect(
-            erasedRecordFields({ ...akt, entry_number: '5' }, 'other', {
-                record_type: '',
-                entry_number: '',
-            }),
+            erasedRecordFields(
+                { ...akt, parish_id: 7, parish_label: 'Św. Jana' },
+                'other',
+                { parish_id: '' },
+            ),
         ).toEqual([
-            { field: 'entry_number', label: 'Numer wpisu', value: '5' },
+            { field: 'parish_id', label: 'Parafia', value: 'Św. Jana' },
+        ]);
+    });
+
+    it('lists a parish chosen in the form by its option label', () => {
+        expect(
+            erasedRecordFields(
+                akt,
+                'other',
+                { parish_id: '9' },
+                [],
+                [{ id: 9, label: 'Św. Anny' }],
+            ),
+        ).toEqual([
+            { field: 'parish_id', label: 'Parafia', value: 'Św. Anny' },
         ]);
     });
 
     it('lists nothing when the kind is unchanged', () => {
         expect(
             erasedRecordFields(
-                { ...akt, entry_number: '5' },
+                { ...akt, parish_id: 7, parish_label: 'Św. Jana' },
                 'metrical_record',
-                {
-                    entry_number: '5',
-                },
+                { parish_id: '7' },
             ),
         ).toEqual([]);
     });
 
-    it('lists nothing for a source that was never an akt', () => {
+    it('lists nothing for a source that is neither an akt nor a gravestone', () => {
         expect(
-            erasedRecordFields({ ...akt, kind: 'gravestone' }, 'other', {
+            erasedRecordFields({ ...akt, kind: 'other' }, 'gravestone', {
                 record_type: 'birth',
-                entry_number: '5',
+                parish_id: '7',
             }),
         ).toEqual([]);
+    });
+
+    it('lists nothing for a gravestone without a cemetery and buried people', () => {
+        expect(
+            erasedRecordFields(gravestone, 'other', {
+                cemetery_locality_id: '',
+                buried_person_ids: [],
+            }),
+        ).toEqual([]);
+    });
+
+    it('lists the cemetery and the number of buried people of a gravestone', () => {
+        expect(
+            erasedRecordFields(
+                {
+                    ...gravestone,
+                    cemetery_locality_id: 4,
+                    cemetery_name: 'Luboml',
+                    buried_people: [
+                        { id: 1, display_name: 'Jan Kowalski' },
+                        { id: 2, display_name: 'Maria Kowalska' },
+                    ],
+                },
+                'other',
+                { cemetery_locality_id: '4', buried_person_ids: ['1', '2'] },
+            ),
+        ).toEqual([
+            {
+                field: 'cemetery_locality_id',
+                label: 'Cmentarz',
+                value: 'Luboml',
+            },
+            {
+                field: 'buried_person_ids',
+                label: 'Osoby pochowane',
+                value: '2',
+            },
+        ]);
+    });
+
+    it('lists a stored cemetery and list cleared in the form', () => {
+        expect(
+            erasedRecordFields(
+                {
+                    ...gravestone,
+                    cemetery_locality_id: 4,
+                    cemetery_name: 'Luboml',
+                    buried_people: [{ id: 1, display_name: 'Jan Kowalski' }],
+                },
+                'metrical_record',
+                { cemetery_locality_id: '' },
+            ),
+        ).toEqual([
+            {
+                field: 'cemetery_locality_id',
+                label: 'Cmentarz',
+                value: 'Luboml',
+            },
+            {
+                field: 'buried_person_ids',
+                label: 'Osoby pochowane',
+                value: '1',
+            },
+        ]);
+    });
+
+    it('counts the union of the stored and the added buried people', () => {
+        expect(
+            erasedRecordFields(
+                {
+                    ...gravestone,
+                    buried_people: [
+                        { id: 1, display_name: 'Jan Kowalski' },
+                        { id: 2, display_name: 'Maria Kowalska' },
+                    ],
+                },
+                'other',
+                { buried_person_ids: ['2', '3'] },
+            ),
+        ).toEqual([
+            {
+                field: 'buried_person_ids',
+                label: 'Osoby pochowane',
+                value: '3',
+            },
+        ]);
+    });
+
+    it('names a cemetery chosen in the form by its option name', () => {
+        expect(
+            erasedRecordFields(
+                gravestone,
+                'other',
+                { cemetery_locality_id: '9' },
+                [],
+                [],
+                [{ id: 9, name: 'Chełm' }],
+            ),
+        ).toEqual([
+            {
+                field: 'cemetery_locality_id',
+                label: 'Cmentarz',
+                value: 'Chełm',
+            },
+        ]);
     });
 });
 
@@ -133,19 +295,29 @@ describe('isUndescribed', () => {
     const none = {
         name: null,
         record_type: null,
-        entry_number: null,
         year: null,
-        provenance: null,
+        archive: null,
+        parish_id: null,
         url: null,
         note: null,
     };
 
-    it('is true when all seven columns are null', () => {
+    it('is true when all columns are null', () => {
         expect(isUndescribed(none)).toBe(true);
     });
 
     it('is false with only a name', () => {
         expect(isUndescribed({ ...none, name: 'Akt chrztu' })).toBe(false);
+    });
+
+    it('is false with only an archive', () => {
+        expect(isUndescribed({ ...none, archive: 'Archiwum w Tarnowie' })).toBe(
+            false,
+        );
+    });
+
+    it('is false with only a parish', () => {
+        expect(isUndescribed({ ...none, parish_id: 3 })).toBe(false);
     });
 
     it('is false with only a note', () => {
@@ -156,12 +328,13 @@ describe('isUndescribed', () => {
 });
 
 const summarySource = {
+    cemetery_name: null,
     kind: 'other' as const,
     kind_short_label: 'inne',
     record_type_label: null,
-    entry_number: null,
     year: null,
-    provenance: null,
+    archive: null,
+    parish_label: null,
     uploaded_at: '2026-09-24T12:00:00+00:00',
 };
 
@@ -199,14 +372,14 @@ describe('sourceKindText', () => {
 });
 
 describe('formatSourceSummary', () => {
-    it('joins kind, year and entry number', () => {
+    it('joins kind, year and parish', () => {
         expect(
             formatSourceSummary({
                 ...birthAkt,
                 year: 1878,
-                entry_number: '47',
+                parish_label: 'Św. Jana',
             }),
-        ).toBe('akt urodzenia · 1878 · nr 47');
+        ).toBe('akt urodzenia · 1878 · Św. Jana');
     });
 
     it('omits what is not set', () => {
@@ -233,12 +406,34 @@ describe('formatSourceSummary', () => {
         ).toBe('akt metrykalny · dodano 24.09.2026');
     });
 
-    it('has no date when pochodzenie is set', () => {
+    it('has no date when archiwum is set', () => {
         expect(
             formatSourceSummary({
                 ...summarySource,
-                provenance: 'Archiwum w Nowym Sączu',
+                archive: 'Archiwum w Nowym Sączu',
             }),
         ).toBe('inne');
+    });
+
+    it('ends with the cemetery of a gravestone', () => {
+        expect(
+            formatSourceSummary({
+                ...summarySource,
+                kind: 'gravestone',
+                kind_short_label: 'nagrobek',
+                year: 1950,
+                cemetery_name: 'Luboml',
+            }),
+        ).toBe('nagrobek · 1950 · cmentarz Luboml');
+    });
+
+    it('ends with the parish', () => {
+        expect(
+            formatSourceSummary({
+                ...birthAkt,
+                year: 1878,
+                parish_label: 'Św. Jana',
+            }),
+        ).toBe('akt urodzenia · 1878 · Św. Jana');
     });
 });

@@ -1,5 +1,6 @@
-import { EllipsisIcon } from 'lucide-react';
-import { useState } from 'react';
+import { EllipsisIcon, HeartHandshake } from 'lucide-react';
+import { useId, useState } from 'react';
+import { MarriagePanelLink } from '@/components/marriages/marriage-panel-link';
 import { EventSourceStatus } from '@/components/persons/event-source-status';
 import { PersonPreviewLink } from '@/components/persons/person-preview-link';
 import { RemoveMarriageDialog } from '@/components/persons/remove-marriage-dialog';
@@ -12,6 +13,7 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useInitials } from '@/hooks/use-initials';
+import { focusRing } from '@/lib/focus-ring';
 import { genderCard } from '@/lib/gender-styles';
 import { formatLifespan } from '@/lib/lifespan';
 import { cn } from '@/lib/utils';
@@ -108,10 +110,12 @@ function PersonRowBody({
 
 function PersonRow({
     person,
+    action,
     menu,
     extra,
 }: {
     person: PersonLike;
+    action?: React.ReactNode;
     menu: React.ReactNode;
     extra?: React.ReactNode;
 }) {
@@ -124,10 +128,14 @@ function PersonRow({
         >
             <PersonPreviewLink
                 personId={person.id}
-                className="focus-visible:ring-ring flex min-w-0 flex-1 items-center gap-3 rounded-xl px-3 py-2.5 focus-visible:ring-[3px] focus-visible:outline-none"
+                className={cn(
+                    'flex min-w-0 flex-1 items-center gap-3 rounded-xl px-3 py-2.5',
+                    focusRing,
+                )}
             >
                 <PersonRowBody person={person} extra={extra} />
             </PersonPreviewLink>
+            {action}
             {menu}
         </li>
     );
@@ -144,9 +152,14 @@ function Section({
     isEmpty: boolean;
     children: React.ReactNode;
 }) {
+    const headingId = useId();
+
     return (
-        <section className="space-y-3">
-            <h3 className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
+        <section aria-labelledby={headingId} className="space-y-3">
+            <h3
+                id={headingId}
+                className="text-muted-foreground text-xs font-semibold tracking-wide uppercase"
+            >
                 {title}
             </h3>
             {isEmpty ? (
@@ -249,7 +262,27 @@ function MarriageRow({
         );
     }
 
-    return <PersonRow person={marriage.spouse} menu={menu} extra={extra} />;
+    // The marriage link sits beside the spouse link, not inside it: nested links are invalid HTML.
+    const action = (
+        <Button variant="ghost" size="icon" className="size-8 shrink-0" asChild>
+            <MarriagePanelLink
+                marriageId={marriage.id}
+                aria-label={`Szczegóły małżeństwa z ${spouseName}`}
+                title="Szczegóły małżeństwa"
+            >
+                <HeartHandshake aria-hidden="true" />
+            </MarriagePanelLink>
+        </Button>
+    );
+
+    return (
+        <PersonRow
+            person={marriage.spouse}
+            action={action}
+            menu={menu}
+            extra={extra}
+        />
+    );
 }
 
 export function FamilyTab({ person }: Props) {

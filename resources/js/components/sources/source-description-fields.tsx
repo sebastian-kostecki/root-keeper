@@ -1,6 +1,10 @@
 import { useState } from 'react';
-import type { ReactNode } from 'react';
+import type { MouseEvent, ReactNode } from 'react';
 import InputError from '@/components/input-error';
+import { LocalityPicker } from '@/components/localities/locality-picker';
+import { NewParishDialog } from '@/components/parishes/new-parish-dialog';
+import { BuriedPeopleField } from '@/components/sources/buried-people-field';
+import { SuggestField } from '@/components/suggest-field';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -12,17 +16,32 @@ import {
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
-import type { Source, SourceKind, SourceRecordType } from '@/types';
+import type {
+    LocalityOption,
+    Parish,
+    ReligionOption,
+    Source,
+    SourceKind,
+    SourceRecordType,
+} from '@/types';
 
 type Props = {
     kind: SourceKind | '';
     recordTypes: { value: SourceRecordType; label: string }[];
+    parishes: Parish[];
+    archives: string[];
+    localities: LocalityOption[];
+    religions: ReligionOption[];
     errors: Partial<Record<string, string>>;
     defaults?: Source;
     /** File name shown as the „Nazwa” placeholder. */
     fileName?: string;
     /** Shown in place of the akt-only fields; those stay mounted (hidden) and still submit. */
     notice?: ReactNode;
+    /** A click on a buried person's link; the page decides whether it may leave the form. */
+    onPersonLinkClick?: (event: MouseEvent, personId: number) => void;
+    /** Called with a locality added in the panel, so the caller can name it later. */
+    onLocalityCreated?: (locality: LocalityOption) => void;
 };
 
 /** Radix Select does not allow an empty item value. */
@@ -32,15 +51,56 @@ const NONE = 'none';
 export function SourceDescriptionFields({
     kind,
     recordTypes,
+    parishes,
+    archives,
+    localities,
+    religions,
     errors,
     defaults,
     fileName,
     notice,
+    onPersonLinkClick,
+    onLocalityCreated,
 }: Props) {
     const [recordType, setRecordType] = useState<string>(
         defaults?.record_type ?? '',
     );
+    const [parishId, setParishId] = useState<number | null>(
+        defaults?.parish_id ?? null,
+    );
+    const [createdParishes, setCreatedParishes] = useState<Parish[]>([]);
+    const [createdLocalities, setCreatedLocalities] = useState<
+        LocalityOption[]
+    >([]);
+    /** Name typed in the parish field while „Nowa parafia” is open; null when it is closed. */
+    const [newParishName, setNewParishName] = useState<string | null>(null);
     const isRecord = kind === 'metrical_record';
+    const isGravestone = kind === 'gravestone';
+
+    const cemeteryId = defaults?.cemetery_locality_id ?? null;
+    const cemetery: LocalityOption | null =
+        cemeteryId === null
+            ? null
+            : { id: cemeteryId, name: defaults?.cemetery_name ?? '' };
+
+    const addCreatedLocality = (locality: LocalityOption) => {
+        setCreatedLocalities((current) => [...current, locality]);
+        onLocalityCreated?.(locality);
+    };
+
+    // Parishes and localities added here live in state until the panel props are reloaded.
+    const parishOptions = [
+        ...parishes,
+        ...createdParishes.filter(
+            (created) => !parishes.some((known) => known.id === created.id),
+        ),
+    ];
+    const localityOptions = [
+        ...localities,
+        ...createdLocalities.filter(
+            (created) => !localities.some((known) => known.id === created.id),
+        ),
+    ];
 
     return (
         <>
@@ -82,13 +142,43 @@ export function SourceDescriptionFields({
             </div>
 
             <div className={cn('grid gap-2', !isRecord && 'hidden')}>
-                <Label htmlFor="entry_number">Numer wpisu</Label>
-                <Input
-                    id="entry_number"
-                    name="entry_number"
-                    defaultValue={defaults?.entry_number ?? ''}
+                <Label htmlFor="parish_id">Parafia</Label>
+                <SuggestField
+                    mode="record"
+                    id="parish_id"
+                    label="Parafia"
+                    name="parish_id"
+                    options={parishOptions}
+                    labelOf={(option) => option.label}
+                    value={parishId}
+                    onChange={setParishId}
+                    onCreate={setNewParishName}
+                    offerCreate="always"
+                    createLabel={(query) => `Dodaj parafię „${query}”`}
+                    placeholder="Wpisz nazwę parafii"
+                    aria-invalid={errors.parish_id ? true : undefined}
                 />
-                <InputError message={errors.entry_number} />
+                <InputError message={errors.parish_id} />
+            </div>
+
+            <div className={cn(!isGravestone && 'hidden')}>
+                <LocalityPicker
+                    id="cemetery_locality_id"
+                    name="cemetery_locality_id"
+                    label="Cmentarz"
+                    value={cemetery}
+                    options={localityOptions}
+                    errors={errors}
+                    onCreated={addCreatedLocality}
+                />
+            </div>
+
+            <div className={cn(!isGravestone && 'hidden')}>
+                <BuriedPeopleField
+                    defaults={defaults?.buried_people}
+                    errors={errors}
+                    onPersonLinkClick={onPersonLinkClick}
+                />
             </div>
 
             <div className="grid gap-2">
@@ -103,16 +193,21 @@ export function SourceDescriptionFields({
             </div>
 
             <div className="grid gap-2">
-                <Label htmlFor="provenance">Pochodzenie</Label>
-                <Input
-                    id="provenance"
-                    name="provenance"
-                    defaultValue={defaults?.provenance ?? ''}
+                <Label htmlFor="archive">Archiwum</Label>
+                <SuggestField
+                    mode="text"
+                    id="archive"
+                    label="Archiwum"
+                    name="archive"
+                    options={archives}
+                    labelOf={(option) => option}
+                    defaultValue={defaults?.archive ?? ''}
+                    aria-invalid={errors.archive ? true : undefined}
                 />
                 <p className="text-muted-foreground text-sm">
-                    Parafia, archiwum, sygnatura
+                    Np. Archiwum Diecezjalne w Tarnowie, sygnatura
                 </p>
-                <InputError message={errors.provenance} />
+                <InputError message={errors.archive} />
             </div>
 
             <div className="grid gap-2">
@@ -141,6 +236,20 @@ export function SourceDescriptionFields({
                 </p>
                 <InputError message={errors.note} />
             </div>
+
+            {newParishName !== null && (
+                <NewParishDialog
+                    initialName={newParishName}
+                    religions={religions}
+                    localities={localityOptions}
+                    onCreated={(parish) => {
+                        setCreatedParishes((current) => [...current, parish]);
+                        setParishId(parish.id);
+                    }}
+                    onLocalityCreated={addCreatedLocality}
+                    onClose={() => setNewParishName(null)}
+                />
+            )}
         </>
     );
 }

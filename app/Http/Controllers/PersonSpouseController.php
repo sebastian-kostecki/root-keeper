@@ -25,7 +25,7 @@ class PersonSpouseController extends Controller
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Dodano małżonka')]);
 
-        return to_route('tree.show', ['person' => $person, 'spouse' => $spouse->id]);
+        return $this->showNewUnion($person, $spouse);
     }
 
     /**
@@ -38,6 +38,18 @@ class PersonSpouseController extends Controller
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Dodano małżonka')]);
 
-        return to_route('tree.show', ['person' => $person, 'spouse' => $spouse->id]);
+        return $this->showNewUnion($person, $spouse);
+    }
+
+    /**
+     * Redirect to the tree centred on the given person, on the union with the new
+     * spouse, with the spouse's panel open. Does not read the Referer.
+     */
+    private function showNewUnion(Person $person, Person $spouse): RedirectResponse
+    {
+        return redirect()->to(route('tree.show', $person).'?'.http_build_query([
+            'spouse' => $spouse->id,
+            'person' => $spouse->id,
+        ]));
     }
 }

@@ -1,6 +1,9 @@
 import { Link } from '@inertiajs/react';
+import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
+import { focusRing } from '@/lib/focus-ring';
+import { cn } from '@/lib/utils';
 import { index as personsIndex } from '@/routes/persons';
 
 type CandidateRow = {
@@ -23,6 +26,8 @@ type Props<T extends CandidateRow> = {
     emptyState?: React.ReactNode;
     /** Rendered under the list, also when the list is empty. */
     footer?: React.ReactNode;
+    /** Offers "Spróbuj ponownie" when the list failed to load. */
+    onRetry?: () => void;
 };
 
 function matchesFilter(displayName: string, filter: string): boolean {
@@ -48,6 +53,7 @@ export function PersonCandidateList<T extends CandidateRow>({
     processingId,
     emptyState,
     footer,
+    onRetry,
 }: Props<T>) {
     if (loading) {
         return (
@@ -61,9 +67,21 @@ export function PersonCandidateList<T extends CandidateRow>({
 
     if (!loaded || list === undefined) {
         return (
-            <p className="text-muted-foreground text-sm">
-                Nie udało się wczytać osób. Zamknij okno i spróbuj ponownie.
-            </p>
+            <div className="flex flex-col items-start gap-3">
+                <p className="text-muted-foreground text-sm">
+                    Nie udało się wczytać osób.
+                </p>
+                {onRetry && (
+                    <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={onRetry}
+                    >
+                        Spróbuj ponownie
+                    </Button>
+                )}
+            </div>
         );
     }
 
@@ -113,7 +131,10 @@ export function PersonCandidateList<T extends CandidateRow>({
                                 blockedReason !== null || processingId !== null
                             }
                             onClick={() => onSelect(candidate.id)}
-                            className="hover:bg-accent flex w-full items-center justify-between rounded-md px-3 py-2 text-left text-sm disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-transparent"
+                            className={cn(
+                                'hover:bg-accent flex w-full items-center justify-between rounded-md px-3 py-2 text-left text-sm disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-transparent',
+                                focusRing,
+                            )}
                         >
                             <span>
                                 {candidate.display_name}

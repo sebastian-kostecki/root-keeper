@@ -564,8 +564,8 @@ During the Phase 5 gate `resources/js/hooks/use-initials.tsx` was changed: words
 
 #### Manual
 
-- [ ] 5.5 The human compares `after/` with the six A boards and accepts or lists differences
-- [ ] 5.6 Text contrast holds in both themes: counters, e-mail line, parent link, tooltip
-- [ ] 5.7 `/sources/{id}` with the viewer is acceptable with 64 px less chrome above it
-- [ ] 5.8 The human runs the whole suite: `vendor/bin/sail artisan test --compact`
-- [ ] 5.9 `/10x-impl-review app-shell-sidebar` is run and its UI findings are triaged
+- [x] 5.5 The human compares `after/` with the six A boards and accepts or lists differences
+- [x] 5.6 Text contrast holds in both themes: counters, e-mail line, parent link, tooltip
+- [x] 5.7 `/sources/{id}` with the viewer is acceptable with 64 px less chrome above it
+- [x] 5.8 The human runs the whole suite: `vendor/bin/sail artisan test --compact`
+- [x] 5.9 `/10x-impl-review app-shell-sidebar` is run and its UI findings are triaged

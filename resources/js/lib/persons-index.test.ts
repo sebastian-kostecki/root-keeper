@@ -5,6 +5,7 @@ import {
     formatEventMeta,
     groupBySurnameInitial,
     sortPersons,
+    withPersonsQuery,
 } from './persons-index';
 
 function event(
@@ -18,6 +19,7 @@ function event(
         type: 'birth',
         date: year === null ? null : String(year),
         place,
+        locality_id: null,
         date_parts: { year, month, day, is_approximate: false },
         is_confirmed: false,
     };
@@ -33,12 +35,15 @@ function person(
         id,
         first_name,
         last_name,
+        maiden_name: null,
         display_name: [first_name, last_name].filter(Boolean).join(' '),
         gender: null,
-        residence: null,
         religion: null,
+        burial_place: null,
         birth: null,
         death: null,
+        age: null,
+        photo_version: null,
         ...overrides,
     };
 }
@@ -69,6 +74,51 @@ describe('buildPersonsQuery', () => {
         expect(
             buildPersonsQuery({ q: 'Kow', view: 'lista', sort: '-zgon' }),
         ).toEqual({ q: 'Kow' });
+    });
+});
+
+describe('withPersonsQuery', () => {
+    const lista = { q: '', view: 'lista', sort: 'nazwisko' } as const;
+
+    it('keeps the panel keys and other parameters of the address', () => {
+        expect(
+            withPersonsQuery('/persons?add=person&q=Kow&view=lista', {
+                ...lista,
+                q: 'Kow',
+            }),
+        ).toBe('/persons?add=person&q=Kow');
+        expect(
+            withPersonsQuery('/persons?person=7&foo=bar#x', {
+                ...lista,
+                q: 'Kow',
+            }),
+        ).toBe('/persons?person=7&foo=bar&q=Kow#x');
+    });
+
+    it('removes an empty search and keeps the panel key', () => {
+        expect(
+            withPersonsQuery('/persons?q=Kow&add=person', {
+                ...lista,
+                q: '  ',
+            }),
+        ).toBe('/persons?add=person');
+    });
+
+    it('sets the view and sort only for the table', () => {
+        expect(
+            withPersonsQuery('/persons?add=person', {
+                q: '',
+                view: 'tabela',
+                sort: '-zgon',
+            }),
+        ).toBe('/persons?add=person&view=tabela&sort=-zgon');
+        expect(
+            withPersonsQuery('/persons?view=tabela&sort=-zgon', {
+                ...lista,
+                view: 'lista',
+                sort: '-zgon',
+            }),
+        ).toBe('/persons');
     });
 });
 
@@ -206,10 +256,10 @@ describe('formatEventMeta', () => {
 
     it('marks a death without a date', () => {
         expect(formatEventMeta('zm.', { date: null, place: null })).toBe(
-            'zm. (data nieznana)',
+            'zm. data nieznana',
         );
         expect(formatEventMeta('zm.', { date: null, place: 'Tarnów' })).toBe(
-            'zm. (data nieznana), Tarnów',
+            'zm. data nieznana, Tarnów',
         );
     });
 

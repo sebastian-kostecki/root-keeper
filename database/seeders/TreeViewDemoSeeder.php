@@ -11,7 +11,10 @@ use App\Enums\ParticipantRole;
 use App\Enums\Religion;
 use App\Enums\SourceRecordType;
 use App\Models\Event;
+use App\Models\Locality;
+use App\Models\Parish;
 use App\Models\Person;
+use App\Models\Residence;
 use App\Models\Source;
 use App\Models\Tree;
 use App\Models\User;
@@ -134,7 +137,7 @@ class TreeViewDemoSeeder extends Seeder
         // Co-parent without a marriage; no known parents.
         $marta = $this->person('Marta', 'Lewandowska', 'female', 1982);
 
-        $janAnnaMarriage = $this->marry($jan, $anna, ['year' => 2001, 'month' => 6, 'day' => 15, 'place' => 'Kraków']);
+        $janAnnaMarriage = $this->marry($jan, $anna, ['year' => 2001, 'month' => 6, 'day' => 15, 'locality_id' => $this->localityId('Kraków')]);
         $this->marry($jan, $ewa, []);
 
         // Children: one per union, one with a very long name, one with only the proband as parent.
@@ -208,8 +211,49 @@ class TreeViewDemoSeeder extends Seeder
         $this->confirmationStates($wiktor, $helena, $janAnnaMarriage);
         $this->matchingStates($jan);
         $this->imageStates();
+        $this->largeFamilies();
+
+        // Ancestor couples, appended last so the earlier event ids stay put: a dated marriage (year node), an
+        // approximate one ("ok. …") and an undated one (rings only). Anna's parents stay unmarried.
+        $this->marry($adam, $maria, ['year' => 1970]);
+        $this->marry($jozef, $helena, ['year' => 1945, 'is_approximate' => true]);
+        $this->marry($stanislaw, $zofia, []);
 
         (new SetTreeRootPerson)->handle($this->tree, $jan);
+    }
+
+    /**
+     * Tree-fits-screen gate: married couples with 8 children (children row as wide as the grandparent row),
+     * 10 children (wider row), 4 and 6 children (first sizes with the add-child slot under the row) and 0 children
+     * (married, empty children row). Appended
+     * after every other person, in this order, so the id offsets from the proband stay intact.
+     */
+    private function largeFamilies(): void
+    {
+        $families = [
+            ['Dariusz', 'Ósmy', 'Beata', 'Ósma', 8],
+            ['Zbigniew', 'Dziesiąty', 'Halina', 'Dziesiąta', 10],
+            ['Czesław', 'Czwarty', 'Irena', 'Czwarta', 4],
+            ['Szymon', 'Szósty', 'Teresa', 'Szósta', 6],
+            ['Leszek', 'Zerowy', 'Olga', 'Zerowa', 0],
+        ];
+        $childNames = [
+            ['Adam', 'male'], ['Basia', 'female'], ['Cezary', 'male'], ['Dorota', 'female'], ['Emil', 'male'],
+            ['Franciszka', 'female'], ['Grzegorz', 'male'], ['Hanna', 'female'], ['Ignacy', 'male'], ['Judyta', 'female'],
+        ];
+
+        foreach ($families as [$fatherName, $fatherSurname, $motherName, $motherSurname, $count]) {
+            $father = $this->person($fatherName, $fatherSurname, 'male', 1965);
+            $mother = $this->person($motherName, $motherSurname, 'female', 1967);
+            $this->marry($father, $mother, ['year' => 1990]);
+
+            foreach (array_slice($childNames, 0, $count) as $index => [$firstName, $gender]) {
+                $this->parents(
+                    $this->person($firstName, $fatherSurname, $gender, 1991 + $index * 2),
+                    [$father, $mother],
+                );
+            }
+        }
     }
 
     /**
@@ -221,8 +265,18 @@ class TreeViewDemoSeeder extends Seeder
             'first_name' => 'Genowefa',
             'last_name' => 'Pełnodanowska',
             'gender' => 'female',
-            'residence' => 'Zakopane',
             'religion' => Religion::RomanCatholic,
+        ]);
+
+        Residence::factory()->for($person)->create([
+            'tree_id' => $this->tree->id,
+            'locality_id' => $this->localityId('Nowy Targ'),
+            'year_from' => 1920,
+            'year_to' => 1935,
+        ]);
+        Residence::factory()->for($person)->create([
+            'tree_id' => $this->tree->id,
+            'locality_id' => $this->localityId('Zakopane'),
         ]);
 
         $birth = Event::factory()->for($this->tree)->birth()->create([
@@ -230,7 +284,7 @@ class TreeViewDemoSeeder extends Seeder
             'date_month' => 3,
             'date_day' => 14,
             'date_is_approximate' => false,
-            'place' => 'Nowy Targ',
+            'locality_id' => $this->localityId('Nowy Targ'),
         ]);
         $birth->participants()->attach($person, ['role' => ParticipantRole::Subject]);
         $this->attachSource($birth, 'akt-urodzenia-genowefa.jpg');
@@ -240,9 +294,14 @@ class TreeViewDemoSeeder extends Seeder
             'date_month' => 11,
             'date_day' => 2,
             'date_is_approximate' => false,
-            'place' => 'Kraków',
+            'locality_id' => $this->localityId('Kraków'),
         ]);
         $death->participants()->attach($person, ['role' => ParticipantRole::Subject]);
+
+        $burial = Event::factory()->for($this->tree)->burial()->create([
+            'locality_id' => $this->localityId('Nowy Targ'),
+        ]);
+        $burial->participants()->attach($person, ['role' => ParticipantRole::Subject]);
     }
 
     /**
@@ -254,7 +313,6 @@ class TreeViewDemoSeeder extends Seeder
             'first_name' => 'Bezimienna',
             'last_name' => null,
             'gender' => null,
-            'residence' => null,
             'religion' => null,
         ]);
     }
@@ -268,7 +326,6 @@ class TreeViewDemoSeeder extends Seeder
             'first_name' => $firstName,
             'last_name' => $lastName,
             'gender' => $gender,
-            'residence' => null,
         ]);
     }
 
@@ -285,6 +342,14 @@ class TreeViewDemoSeeder extends Seeder
      */
     private function sourceStates(Person $jan, Person $kacper): void
     {
+        $parish = Parish::factory()
+            ->for($this->tree)
+            ->withReligion(Religion::RomanCatholic)
+            ->create([
+                'name' => 'Parafia rzymskokatolicka w Tarnowie',
+                'locality_id' => Locality::factory()->for($this->tree)->create(['name' => 'Tarnów'])->id,
+            ]);
+
         Source::factory()->for($this->tree)->gravestone()->create(['original_name' => 'nagrobek-kowalskich.jpg']);
         Source::factory()->for($this->tree)->other()->create(['original_name' => 'list-rodzinny.jpg']);
 
@@ -294,7 +359,8 @@ class TreeViewDemoSeeder extends Seeder
 
         Source::factory()->for($this->tree)->described()->create([
             'original_name' => 'opisany-akt-lipnica-1878.jpg',
-            'provenance' => 'Archiwum Akt Dawnych w Warszawie',
+            'archive' => 'Archiwum Akt Dawnych w Warszawie',
+            'parish_id' => $parish->id,
             'note' => "Wpis po prawej stronie rozkładówki, zapisany po łacinie.\n\nNazwisko matki odczytane z trudem, do sprawdzenia w księdze zgonów.",
             'url' => 'https://www.szukajwarchiwach.gov.pl/',
         ]);
@@ -308,7 +374,8 @@ class TreeViewDemoSeeder extends Seeder
         Source::factory()->for($this->tree)->create([
             'original_name' => 'akt-z-dlugim-opisem.jpg',
             'name' => 'Akt urodzenia z parafii Świętego Jana Chrzciciela w Lipnicy Murowanej, księga urodzeń z lat 1875-1885',
-            'provenance' => 'Archiwum Diecezjalne w Tarnowie, zespół akt parafialnych, sygnatura 1234/56/78',
+            'archive' => 'Archiwum Diecezjalne w Tarnowie, zespół akt parafialnych, sygnatura 1234/56/78',
+            'parish_id' => $parish->id,
         ]);
     }
 
@@ -474,25 +541,27 @@ class TreeViewDemoSeeder extends Seeder
             'first_name' => $firstName,
             'last_name' => $lastName,
             'gender' => $gender,
-            'residence' => null,
         ]);
 
         $birth = Event::factory()->for($this->tree)->birth()->withoutDate()->create([
             'date_year' => $birthYear,
             'date_is_approximate' => $approximate,
-            'place' => null,
         ]);
         $birth->participants()->attach($person, ['role' => ParticipantRole::Subject]);
 
         if ($deceased !== false) {
             $death = Event::factory()->for($this->tree)->death()->withoutDate()->create([
                 'date_year' => is_int($deceased) ? $deceased : null,
-                'place' => null,
             ]);
             $death->participants()->attach($person, ['role' => ParticipantRole::Subject]);
         }
 
         return $person;
+    }
+
+    private function localityId(string $name): int
+    {
+        return Locality::query()->firstOrCreate(['tree_id' => $this->tree->id, 'name' => $name])->id;
     }
 
     /**
@@ -506,7 +575,7 @@ class TreeViewDemoSeeder extends Seeder
     }
 
     /**
-     * @param  array{year?: int, month?: int, day?: int, place?: string}  $date
+     * @param  array{year?: int, month?: int, day?: int, locality_id?: int, is_approximate?: bool}  $date
      */
     private function marry(Person $person, Person $spouse, array $date): Event
     {

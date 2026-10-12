@@ -2,8 +2,10 @@
 
 namespace App\Support;
 
+use App\Enums\Gender;
 use App\Models\Event;
 use App\Models\Person;
+use App\Models\Residence;
 use Illuminate\Support\Collection;
 
 /**
@@ -28,6 +30,31 @@ final class PersonOrdering
     }
 
     /**
+     * Order the parents of a person: relatives order, then men first, unknown sex in the middle, women last.
+     *
+     * @param  Collection<int, Person>  $parents
+     * @return Collection<int, Person>
+     */
+    public static function parents(Collection $parents): Collection
+    {
+        return self::relatives($parents)
+            ->sortBy(fn (Person $parent): int => self::parentRank($parent))
+            ->values();
+    }
+
+    /**
+     * The position of a parent within a pair: men 0, unknown sex 1, women 2.
+     */
+    public static function parentRank(Person $parent): int
+    {
+        return match ($parent->gender) {
+            Gender::Male => 0,
+            null => 1,
+            Gender::Female => 2,
+        };
+    }
+
+    /**
      * Order marriages by date (known year first, then year/month/day
      * ascending with a missing month/day sorting before a known one within
      * the same year), then by id.
@@ -40,6 +67,44 @@ final class PersonOrdering
         return $marriages->sort(
             fn (Event $a, Event $b): int => self::marriageSortKey($a) <=> self::marriageSortKey($b)
         )->values();
+    }
+
+    /**
+     * Order the two spouses of a marriage: a man before a woman, otherwise by
+     * birth date (known before unknown, then year/month/day ascending), then id.
+     *
+     * @param  Collection<int, Person>  $spouses
+     * @return Collection<int, Person>
+     */
+    public static function spouses(Collection $spouses): Collection
+    {
+        return $spouses->sort(function (Person $a, Person $b): int {
+            if ($a->gender === Gender::Male && $b->gender === Gender::Female) {
+                return -1;
+            }
+
+            if ($a->gender === Gender::Female && $b->gender === Gender::Male) {
+                return 1;
+            }
+
+            return self::spouseSortKey($a) <=> self::spouseSortKey($b);
+        })->values();
+    }
+
+    /**
+     * Order residences by year (year_from, else year_to) ascending, entries
+     * without any year last, ties by id (order of adding).
+     *
+     * @param  Collection<int, Residence>  $residences
+     * @return Collection<int, Residence>
+     */
+    public static function residences(Collection $residences): Collection
+    {
+        return $residences->sortBy(function (Residence $residence): array {
+            $year = $residence->year_from ?? $residence->year_to;
+
+            return [$year === null ? 1 : 0, $year ?? 0, $residence->id];
+        })->values();
     }
 
     /**
@@ -57,6 +122,22 @@ final class PersonOrdering
             $person->last_name === null ? 1 : 0,
             $person->last_name ?? '',
             $person->first_name ?? '',
+            $person->id,
+        ];
+    }
+
+    /**
+     * @return array{0: int, 1: int, 2: int, 3: int, 4: int}
+     */
+    private static function spouseSortKey(Person $person): array
+    {
+        $date = $person->birth()?->date;
+
+        return [
+            $date?->year === null ? 1 : 0,
+            $date->year ?? 0,
+            $date->month ?? 0,
+            $date->day ?? 0,
             $person->id,
         ];
     }

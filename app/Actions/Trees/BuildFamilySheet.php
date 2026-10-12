@@ -16,13 +16,14 @@ use Illuminate\Support\Facades\DB;
  * Assembles the fixed-shape family sheet of a focus person: four rows of
  * slots for one selected union, using a constant number of queries.
  *
- * @phpstan-type SheetPerson array{id: int, display_name: string, gender: 'male'|'female'|null, lifespan: string|null, is_deceased: bool}
+ * @phpstan-type SheetPerson array{id: int, display_name: string, gender: 'male'|'female'|null, lifespan: string|null, is_deceased: bool, age: array{unit: 'years'|'months'|'days'|'under_year', value: int|null}|null, photo_version: string|null}
  * @phpstan-type ParentOf array{id: int, display_name: string, last_name: string|null, role: 'father'|'mother'|'parent', excluded_ids: list<int>}
  * @phpstan-type Slot array{kind: 'person', person: SheetPerson}|array{kind: 'unknown', label: string, parent_of?: ParentOf}|array{kind: 'empty'}
  * @phpstan-type AddChild array{parents: list<array{id: int, display_name: string}>, default_last_name: string|null, excluded_ids: list<int>, blocked_ids: list<int>}
  * @phpstan-type AddSpouse array{excluded_ids: list<int>}
  * @phpstan-type UnmarriedParents array{focus: bool, partner: bool}
- * @phpstan-type Union array{key: string, partner_id: int|null, partner_name: string|null, is_marriage: bool, marriage_year: string|null, children_count: int}
+ * @phpstan-type Union array{key: string, partner_id: int|null, partner_name: string|null, is_marriage: bool, marriage_id: int|null, marriage_year: string|null, children_count: int}
+ * @phpstan-type PairMarriage array{year: string|null}
  */
 class BuildFamilySheet
 {
@@ -44,6 +45,8 @@ class BuildFamilySheet
      *     focus_side: 'left'|'right',
      *     parents: array{focus: list<Slot>, partner: list<Slot>},
      *     grandparents: array{focus: list<Slot>, partner: list<Slot>},
+     *     parent_marriages: array{focus: PairMarriage|null, partner: PairMarriage|null},
+     *     grandparent_marriages: array{focus: list<PairMarriage|null>, partner: list<PairMarriage|null>},
      *     children: list<SheetPerson>,
      *     add_child: AddChild,
      *     add_spouse: AddSpouse,
@@ -108,6 +111,7 @@ class BuildFamilySheet
                 'partner_id' => $partnerId,
                 'partner_name' => $partner->displayName(),
                 'is_marriage' => $marriage !== null,
+                'marriage_id' => $marriage?->id,
                 'marriage_year' => $marriageYear,
                 'children_count' => count($childrenByOtherParent[$partnerId] ?? []),
             ];
@@ -119,6 +123,7 @@ class BuildFamilySheet
                 'partner_id' => null,
                 'partner_name' => null,
                 'is_marriage' => false,
+                'marriage_id' => null,
                 'marriage_year' => null,
                 'children_count' => count($childrenByOtherParent[0]),
             ];
@@ -140,17 +145,32 @@ class BuildFamilySheet
             'focus' => $this->parentSlots($focusPerson),
             'partner' => $this->parentSlots($partnerPerson),
         ];
+        $grandparentSlots = [
+            'focus' => $this->grandparentSlots($focusPerson),
+            'partner' => $this->grandparentSlots($partnerPerson),
+        ];
 
         return [
             'focus' => $this->render($focusPerson),
             'unions' => $unions,
             'selected_union' => $selected['key'] ?? null,
             'partner' => $partner,
-            'focus_side' => $partnerPerson !== null && $this->rank($partnerPerson) < $this->rank($focusPerson) ? 'right' : 'left',
+            'focus_side' => $partnerPerson !== null && PersonOrdering::parentRank($partnerPerson) < PersonOrdering::parentRank($focusPerson) ? 'right' : 'left',
             'parents' => $parentSlots,
-            'grandparents' => [
-                'focus' => $this->grandparentSlots($focusPerson),
-                'partner' => $this->grandparentSlots($partnerPerson),
+            'grandparents' => $grandparentSlots,
+            'parent_marriages' => [
+                'focus' => $this->pairMarriage($parentSlots['focus']),
+                'partner' => $this->pairMarriage($parentSlots['partner']),
+            ],
+            'grandparent_marriages' => [
+                'focus' => [
+                    $this->pairMarriage(array_slice($grandparentSlots['focus'], 0, 2)),
+                    $this->pairMarriage(array_slice($grandparentSlots['focus'], 2, 2)),
+                ],
+                'partner' => [
+                    $this->pairMarriage(array_slice($grandparentSlots['partner'], 0, 2)),
+                    $this->pairMarriage(array_slice($grandparentSlots['partner'], 2, 2)),
+                ],
             ],
             'children' => array_map(
                 fn (Person $child) => $this->render($child),
@@ -342,6 +362,35 @@ class BuildFamilySheet
     }
 
     /**
+     * The marriage year of a shown pair: only two known people, joined by a
+     * marriage among the loaded events; the earliest one wins.
+     *
+     * @param  list<Slot>  $pair
+     * @return PairMarriage|null
+     */
+    private function pairMarriage(array $pair): ?array
+    {
+        if (count($pair) !== 2 || $pair[0]['kind'] !== 'person' || $pair[1]['kind'] !== 'person') {
+            return null;
+        }
+
+        $firstPerson = $this->people->get($pair[0]['person']['id']);
+        $secondPerson = $this->people->get($pair[1]['person']['id']);
+
+        if ($firstPerson === null || $secondPerson === null) {
+            return null;
+        }
+
+        $sharedMarriages = $firstPerson->events
+            ->filter(fn (Event $event): bool => $event->type === EventType::Marriage
+                && $secondPerson->events->contains('id', $event->id));
+
+        $marriage = PersonOrdering::marriages($sharedMarriages)->first();
+
+        return $marriage === null ? null : ['year' => $marriage->date->formatYear()];
+    }
+
+    /**
      * @param  list<Union>  $unions
      * @return Union|null
      */
@@ -393,11 +442,11 @@ class BuildFamilySheet
             return [['kind' => 'empty'], ['kind' => 'empty']];
         }
 
-        $known = PersonOrdering::relatives(
+        $known = PersonOrdering::parents(
             (new Collection($this->graph->parentsOf($person->id)))
                 ->map(fn (int $id): ?Person => $this->people->get($id))
                 ->filter()
-        )->sortBy(fn (Person $parent): int => $this->rank($parent))->values();
+        );
 
         if ($known->count() >= 2) {
             return [$this->personSlot($known[0]), $this->personSlot($known[1])];
@@ -470,15 +519,6 @@ class BuildFamilySheet
                 ])),
             ],
         ];
-    }
-
-    private function rank(Person $person): int
-    {
-        return match ($person->gender) {
-            Gender::Male => 0,
-            null => 1,
-            Gender::Female => 2,
-        };
     }
 
     /**

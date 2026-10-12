@@ -1,5 +1,6 @@
 import { ArrowDownIcon, ArrowUpIcon, ChevronsUpDownIcon } from 'lucide-react';
 import { TableHead } from '@/components/ui/table';
+import { focusRing } from '@/lib/focus-ring';
 import { columnOf, nextSort } from '@/lib/table-sort';
 import type { SortKey } from '@/lib/table-sort';
 import { cn } from '@/lib/utils';
@@ -41,7 +42,10 @@ export function SortableHead<C extends string>({
             <button
                 type="button"
                 onClick={() => onSortChange(nextSort(sort, column))}
-                className="hover:bg-accent focus-visible:ring-ring/50 -mx-2 inline-flex h-8 items-center gap-1.5 rounded-md px-2 transition-colors outline-none focus-visible:ring-[3px]"
+                className={cn(
+                    focusRing,
+                    'hover:bg-accent -mx-2 inline-flex h-8 items-center gap-1.5 rounded-md px-2 transition-colors',
+                )}
             >
                 {label}
                 <Icon

@@ -21,7 +21,7 @@ test('adding a relation creates the row with the tree id, redirects back and fla
         ->actingAs($user)
         ->post(route('parent-child-relations.store'), ['parent_id' => $parent->id, 'child_id' => $child->id, 'role' => 'parent']);
 
-    $response->assertRedirect(route('persons.index'));
+    $response->assertRedirect(route('persons.index').'?person='.$parent->id);
     $response->assertSessionHas('inertia.flash_data.toast', ['type' => 'success', 'message' => 'Dodano relację']);
 
     $this->assertDatabaseHas('parent_child_relations', [
@@ -347,8 +347,43 @@ test('linking from a tree slot redirects back to the tree with its union preserv
         ->actingAs($user)
         ->post(route('parent-child-relations.store'), ['parent_id' => $father->id, 'child_id' => $child->id, 'role' => 'father']);
 
-    $response->assertRedirect($treeUrl);
+    $response->assertRedirect($treeUrl.'&person='.$father->id);
     $response->assertSessionHas('inertia.flash_data.toast', ['type' => 'success', 'message' => 'Dodano relację']);
+});
+
+test('linking from a tree slot drops the open add panel and opens the parent', function () {
+    $user = User::factory()->create();
+    $father = Person::factory()->for($user->tree)->male()->create();
+    $child = Person::factory()->for($user->tree)->create();
+    $spouse = Person::factory()->for($user->tree)->female()->create();
+    $other = Person::factory()->for($user->tree)->create();
+    $referer = route('tree.show', ['person' => $child->id, 'spouse' => $spouse->id]).'&add=father%3A'.$child->id.'&person='.$other->id;
+
+    $this->withHeader('referer', $referer)
+        ->actingAs($user)
+        ->post(route('parent-child-relations.store'), ['parent_id' => $father->id, 'child_id' => $child->id, 'role' => 'father'])
+        ->assertRedirect(route('tree.show', ['person' => $child->id, 'spouse' => $spouse->id]).'&person='.$father->id);
+});
+
+test('linking without a referer falls back to the child tree with the parent open', function () {
+    $user = User::factory()->create();
+    $father = Person::factory()->for($user->tree)->male()->create();
+    $child = Person::factory()->for($user->tree)->create();
+
+    $this->actingAs($user)
+        ->post(route('parent-child-relations.store'), ['parent_id' => $father->id, 'child_id' => $child->id, 'role' => 'father'])
+        ->assertRedirect(route('tree.show', $child).'?person='.$father->id);
+});
+
+test('linking with a referer from a foreign host falls back to the child tree with the parent open', function () {
+    $user = User::factory()->create();
+    $father = Person::factory()->for($user->tree)->male()->create();
+    $child = Person::factory()->for($user->tree)->create();
+
+    $this->withHeader('referer', 'https://evil.example/tree/'.$child->id.'?spouse=1')
+        ->actingAs($user)
+        ->post(route('parent-child-relations.store'), ['parent_id' => $father->id, 'child_id' => $child->id, 'role' => 'father'])
+        ->assertRedirect(route('tree.show', $child).'?person='.$father->id);
 });
 
 test('guests are redirected to the login page from the create-parent route', function () {
@@ -373,7 +408,7 @@ test('creating a parent from a slot stores the person with a birth event and the
             'birth' => ['year' => 1900],
         ]);
 
-    $response->assertRedirect($treeUrl);
+    $response->assertRedirect($treeUrl.'&person='.Person::where('first_name', 'Józef')->value('id'));
     $response->assertSessionHas('inertia.flash_data.toast', ['type' => 'success', 'message' => 'Dodano rodzica']);
 
     $father = Person::where('first_name', 'Józef')->firstOrFail();
@@ -467,7 +502,7 @@ test('attaching a child to a pair links both parents, redirects back to the unio
         ->actingAs($user)
         ->post(route('persons.children.attach', $focus), ['child_id' => $child->id, 'other_parent_id' => $partner->id]);
 
-    $response->assertRedirect($treeUrl);
+    $response->assertRedirect($treeUrl.'&person='.$child->id);
     $response->assertSessionHas('inertia.flash_data.toast', ['type' => 'success', 'message' => 'Dodano dziecko']);
     $this->assertDatabaseCount('parent_child_relations', 2);
     $this->assertDatabaseHas('parent_child_relations', ['parent_id' => $focus->id, 'child_id' => $child->id, 'tree_id' => $user->tree->id]);
@@ -655,7 +690,7 @@ test('creating a child for a pair stores the person with a birth event and both 
             'other_parent_id' => $partner->id,
         ]);
 
-    $response->assertRedirect($treeUrl);
+    $response->assertRedirect($treeUrl.'&person='.Person::where('first_name', 'Marta')->value('id'));
     $response->assertSessionHas('inertia.flash_data.toast', ['type' => 'success', 'message' => 'Dodano dziecko']);
 
     $child = Person::where('first_name', 'Marta')->firstOrFail();

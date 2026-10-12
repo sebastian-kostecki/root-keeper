@@ -1,5 +1,5 @@
 import { Link, usePage } from '@inertiajs/react';
-import { Network, ScrollText, Users, X } from 'lucide-react';
+import { MapPin, Network, ScrollText, Users, X } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
@@ -15,6 +15,7 @@ import {
     SidebarTrigger,
     useSidebar,
 } from '@/components/ui/sidebar';
+import { index as placesIndex } from '@/routes/places';
 import { index as personsIndex } from '@/routes/persons';
 import { index as sourcesIndex } from '@/routes/sources';
 import { index as treeIndex } from '@/routes/tree';
@@ -42,6 +43,14 @@ export function AppSidebar() {
             icon: ScrollText,
             count: navCounts?.sources,
         },
+        {
+            title: 'Miejsca',
+            href: placesIndex(),
+            icon: MapPin,
+            count: navCounts
+                ? navCounts.localities + navCounts.parishes
+                : undefined,
+        },
     ];
 
     return (
@@ -67,14 +76,14 @@ export function AppSidebar() {
                             <Button
                                 variant="ghost"
                                 size="icon"
-                                className="focus-visible:ring-sidebar-ring size-11 shrink-0 focus-visible:ring-2"
+                                className="hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-sidebar-ring size-11 shrink-0 focus-visible:ring-3"
                                 onClick={() => setOpenMobile(false)}
                             >
                                 <X />
                                 <span className="sr-only">Zamknij menu</span>
                             </Button>
                         ) : (
-                            <SidebarTrigger className="focus-visible:ring-sidebar-ring shrink-0 group-data-[collapsible=icon]:size-8 focus-visible:ring-2" />
+                            <SidebarTrigger className="hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-sidebar-ring shrink-0 group-data-[collapsible=icon]:size-8 focus-visible:ring-3" />
                         )}
                     </SidebarMenuItem>
                 </SidebarMenu>

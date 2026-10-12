@@ -1,213 +1,336 @@
 ---
 project: "root-keeper"
 context_type: brownfield
-created: 2026-09-28
-updated: 2026-09-28
+created: 2026-10-04
+updated: 2026-10-04
 product_type: web-app
 target_scale:
   users: small
 timeline_budget:
-  delivery_weeks: 2
+  delivery_weeks: 4
   hard_deadline: 2026-11-04
   after_hours_only: true
 checkpoint:
   current_phase: 8
   phases_completed: [1, 2, 3, 4, 5, 6, 7]
   gray_areas_resolved:
-    - topic: "pain"
-      decision: "losing tree context when going to a separate preview page; inconsistency — add/edit already in a modal"
-    - topic: "tree responsibility for relations"
-      decision: "all relation editing (parent, child, spouse; new AND existing person) only on the tree; preview shows relations read-only"
-    - topic: "preview page"
-      decision: "preview is a modal everywhere; /persons/{id} page removed"
-    - topic: "must preserve (phase 1)"
-      decision: "facts and confirmations (incl. opening scan preview), relation rules, tree navigation (re-centre, probant)"
-    - topic: "person delete"
-      decision: "stays in the preview modal, with the current confirmation"
-    - topic: "navigation inside modal"
-      decision: "clicking a relative swaps modal content; page underneath stays; scan preview links open the modal too"
-    - topic: "after adding a person"
-      decision: "preview modal of the new person opens — superseded in Socrates round (FR-003): tree centred on new person"
-    - topic: "marriage"
-      decision: "adding/removing spouse on the tree; marriage date, place, confirmation in the preview modal"
+    - topic: "trigger"
+      decision: "entering the author's real tree exposed UX gaps and source-description ambiguity"
+    - topic: "change category"
+      decision: "four parts: source description (major feature), tree look + side panel (UX), places gazetteer (new module, revives parked S-12–S-15), all-ancestors view (new view)"
+    - topic: "biggest pain"
+      decision: "ambiguous metrical-act (and gravestone) description; tree appearance"
+    - topic: "insight"
+      decision: "parish != archive; description depends on source kind; sources are recognised by year + parish; one scan holds several entries/persons"
     - topic: "primary persona"
       decision: "unchanged — the author"
-    - topic: "auth / roles"
-      decision: "no change — own tree only, other user's record is 404 (modal and tree actions too)"
-    - topic: "relation to S-21–S-23"
-      decision: "absorbs and extends them — tree slots offer existing OR new person; S-21–S-23 to be replanned"
-    - topic: "timeline"
-      decision: "inside 2026-11-04 deadline; gazetteer S-12–S-15 slips first"
-    - topic: "old /persons/{id} URLs"
-      decision: "may stop working — no redirects"
-    - topic: "scope vs budget"
-      decision: "scoped down to stages: (1) preview modal, relation editing temporarily stays in preview; (2) relations on tree, then preview read-only and page removed; 2 weeks"
-    - topic: "secondary criterion"
-      decision: "linking an existing parent from the tree takes fewer steps than today from the preview"
-    - topic: "guardrails"
-      decision: "facts+confirmations+scan preview, relation rules, tree navigation, no gap in relation editing, person delete with confirmation"
-    - topic: "FR list"
-      decision: "13 FRs as drafted from phase 1-3 decisions, all must-have"
-    - topic: "tree edit range"
-      decision: "around the centre: parent slots of any visible person, child of shown pair, spouse only at centre, removal on centre's relations"
-    - topic: "US-01"
-      decision: "Jan's modal -> close -> link existing Józef in father slot, stays on tree"
-    - topic: "Socrates round"
-      decision: "FR-001 full-screen on narrow; FR-002 Back button; FR-003 after add -> tree centred on new person (overrides phase 1); FR-004 gender filter in father/mother slot; FR-005 kept, rules block with reason; FR-006 'connect as marriage' between shown parents; FR-007 marriage removal lists lost data; FR-008 'show on tree' link; FR-009 kept; FR-010 scan opens full page, leaves modal; FR-011 picker hides rule-breaking people; FR-012 probant action in modal, kept; FR-013 deleting centre -> tree back to probant"
-    - topic: "business logic"
-      decision: "no domain rule change — navigation/view-responsibility change; slot filters and back-to-probant apply existing rules"
-    - topic: "order vs sources"
-      decision: "preview modal (stage 1) before S-17/S-18; sources built into the modal"
-    - topic: "data migration"
-      decision: "none"
+    - topic: "access model"
+      decision: "no change — own tree only, other user's record is 404"
+    - topic: "gazetteer ownership"
+      decision: "private per tree (as in prd-v2)"
+    - topic: "scope"
+      decision: "all four parts by 2026-11-04 (4 weeks); user accepted sustained-effort cost; person photos on cards drop first if time runs out"
+    - topic: "free-text places migration"
+      decision: "user accepts that moving free-text places to the gazetteer may disturb existing data and will fix by hand"
+    - topic: "parish"
+      decision: "separate parish list: name, denomination, seat locality from the gazetteer"
+    - topic: "archive"
+      decision: "archive is free text with suggestions of previously entered values (Socrates FR-009: a managed list is overkill); set per source"
+    - topic: "entry -> person"
+      decision: "entry number given when linking a source to a fact; visible at the fact and at the source"
+    - topic: "gravestone description"
+      decision: "cemetery (locality from gazetteer) + persons buried"
+    - topic: "maiden name"
+      decision: "optional birth-surname field; shown 'z d.'; search by both"
+    - topic: "family events tab"
+      decision: "own events + children's births/deaths + spouse's marriage/death"
+    - topic: "burial"
+      decision: "burial place only (no date)"
+    - topic: "marriage panel"
+      decision: "date, place, source (editable) + the couple's children"
+    - topic: "ancestors view"
+      decision: "all ancestors of a person; option: number of generations"
+    - topic: "side panel scope"
+      decision: "person, source, marriage, locality open in a right side panel; delete confirmations and small pickers stay modals"
+    - topic: "residence"
+      decision: "list of localities with optional from-to years"
+    - topic: "core domain rule"
+      decision: "one source of truth for localities: each locality exists once per tree; parishes, cemeteries, facts and residences reference it; merging a duplicate moves all references"
+    - topic: "migration: provenance"
+      decision: "existing 'Pochodzenie' values move to the archive field"
+    - topic: "migration: residence"
+      decision: "existing single residence text becomes the first residence entry (no years), via the gazetteer"
     - topic: "NFR"
-      decision: "no new NFRs"
-    - topic: "product framing"
-      decision: "no change — web-app, small; hard deadline 2026-11-04, after hours"
-    - topic: "non-goals"
-      decision: "no drag-and-drop on tree; no modal URL / no /persons redirects; no duplicate merging"
-  frs_drafted: 13
+      decision: "usable on 1366–2560 px screens; backups cover new data (RPO 24 h); 'no third parties' not re-confirmed -> Open Questions"
+    - topic: "framing"
+      decision: "no change — web-app, small scale, deadline 2026-11-04, after hours"
+    - topic: "existing-system constraints"
+      decision: "CI must pass; E2E (Playwright) protects critical paths (fact-source, relations from slots)"
+  frs_drafted: 29
   quality_check_status: accepted
 ---
 
-# root-keeper — shape notes (brownfield)
+# root-keeper — shape notes (zmiana brownfield, po M-1 v4)
 
-Poprzednie sesje: MVP `context/foundation/archive/shape-notes-2026-09-28-0612.md`, prd-v2 (opisy skanów + spis miejscowości) `context/foundation/archive/shape-notes-2026-09-28-1130.md`, prd-v3 (źródła + drzewo edytowalne + modal osoby) `context/foundation/archive/shape-notes-2026-09-28-1315.md`.
+Poprzednia sesja: `context/foundation/archive/shape-notes-2026-10-04-2039.md` (prd-v4).
 
 ## Seed idea
 
-> edycja i dodawanie osoby jest w modalu; tak samo w modalu chcialbym miec widok osoby; widok drzewa powinien byc bardziej odpowiedzialny za relacje, choc na widoku osoby to też musi byc widoczne;
+Dosłownie od użytkownika:
+
+```
+- widok drzewa:
+    - większe karty osób (całe drzewo źle wygląda na dużym ekranie, gdzie zajmuje tylko górną część ekranu)
+    - możliwość zdjęcia osób na kartach
+    - lepsze rysowanie linii (zwłaszcza do dzieci)
+    - button podgląd chyba nie jest potrzebny
+    - modal/panel na małżeństwo; widoczne więcej info o samym małżeństwie
+- edycja osoby
+    - nazwisko panieńskie (zastanowić się jak to lepiej zrobić)
+    - może cały model zrobić w panelu bocznym? zeby wysuwał się panel boczny, a nie modal
+    - zakładka z listą eventów danej osoby (swoje, rodzinne)
+    - data i miejsce pogrzebu?
+    - miejsce na notatki (nowa zakładka?)
+    - widok lat danej osoby (ile ma, albo ile przeżyla)
+- lista źródeł
+    - mniejsze karty na grid
+    - inaczej dane per źródło - tak aby bardziej opisać
+        - typ
+    - akt metrykalny:
+        - więcej samym skanie: czego dotyczy (jaka parafia), skąd (jakie archiwum)
+    - notatki - jak tam pisze jaki numer skanu kogo dotyczy (może inaczej)
+    - sama edycja może zamiast modalu bardziej panel boczny
+    - podczas wybierania źródeł trzeba pokazać rok i skąd (chodzi o parafie)
+- nowe:
+    - dodać widok całego drzewa danej osoby - czyli chcę widziec daną osobę i wszystkich jej przodków (może dodatkowo jakies opcje)
+    - miejscowości jako tabela z opisem, itd. - wykorzystanie tych miejscowosc przy urodzeniu, śmierci, itp; możliwość ustawienia kilku miejsowosci jako zamieszkanie
+    - zamiast modalu osoby moze jednak wysuwany panel z prawej strony?
+- ogolnie moze zamiast modali wysuwany panel boczny
+```
 
 ## Current System
 
-root-keeper — prywatne drzewo genealogiczne (Laravel 13 + Inertia v3/React 19 z TypeScript, shadcn/ui, PostgreSQL, samodzielny hosting w Dockerze), jedno drzewo na konto, każdy widzi tylko swoje dane. Kamień milowy M-1 otwarty; z prd-v3 zrobione S-20 (osoba dodawana i poprawiana w modalu); S-16 – S-19 (źródła) i S-21 – S-23 (nowy rodzic / dziecko / małżonek z drzewa) jeszcze nie rozpoczęte.
-
-Stan istotny dla tej zmiany:
-- **Podgląd osoby** to osobna strona `/persons/{id}`: nagłówek (probant, „Drzewo”, „Edytuj” → modal, „Usuń”), dane podstawowe, karty rodziców i dzieci (dodawanie przez wybór istniejącej osoby, usuwanie relacji), urodzenie, małżeństwa (dodawanie/usuwanie w oknie dialogowym), zgon — z potwierdzającymi skanami.
-- **Widok drzewa** `/tree/{id}` to arkusz rodziny; karta osoby ma dwie akcje: wyśrodkuj drzewo i przejdź do podglądu. Relacji na drzewie się nie edytuje (S-21 – S-23 dopiero dodadzą tworzenie nowych osób z pustych slotów).
-- **Do strony podglądu prowadzi** 7 miejsc: lista osób, nagłówek i karty drzewa, krewni i małżonek na podglądzie, podgląd skanu (osoby, których fakty skan potwierdza) oraz przekierowanie po dodaniu osoby.
-
-Użytkownicy: autor (genealog pracujący na własnych materiałach).
+- **Produkt:** root-keeper to prywatne, samodzielnie hostowane drzewo genealogiczne. Każde konto ma jedno drzewo i widzi tylko swoje dane.
+- **Stack:** monolit Laravel 13 + Inertia v3 / React 19, shadcn/ui, PostgreSQL, Docker (self-hosted).
+- **Użytkownicy:** autor, genealog wprowadzający własne prawdziwe drzewo z własnych materiałów; skala mała.
+- **Funkcje dziś (M-1, S-01 – S-29 zrobione):**
+  - Drzewo to arkusz rodziny: centrum, rodzice, dziadkowie, małżonek, dzieci. Relacje (rodzic, dziecko, małżonek) dodaje się z pustych slotów, wybierając istniejącą albo nową osobę.
+  - Podgląd i formularz osoby działają w modalach. Podgląd pokazuje relacje tylko do odczytu, usuwanie relacji i małżeństwa jest w podglądzie.
+  - Źródła mają rodzaj (akt metrykalny / zdjęcie nagrobka / inne) i jeden płaski opis, wspólny dla wszystkich rodzajów: Nazwa, Typ aktu, Numer wpisu, Rok, Pochodzenie (wolny tekst), Link, Notatka.
+  - Fakty urodzenia, małżeństwa i zgonu potwierdza się źródłem każdego rodzaju. Przy wyborze źródła pasujące akty są pokazywane najpierw.
+  - Miejsca (zamieszkanie, miejsca faktów) są wolnym tekstem. Spis miejscowości z prd-v2 (S-12 – S-15) odłożono 2026-09-30.
 
 ## Vision & Problem Statement
 
-Po przeniesieniu dodawania i edycji osoby do modala (S-20) zostały dwie luki:
+Przy wprowadzaniu prawdziwego drzewa autor nie ma gdzie rzetelnie opisać aktu metrykalnego. Akt powstał w parafii (np. Luboml), a przechowuje go archiwum (np. Archiwum Główne Akt Dawnych w Warszawie). Obie informacje trafiają dziś do jednego pola „Pochodzenie” albo do notatki. Nagrobki nie mają przemyślanego opisu, a to, który wpis na skanie dotyczy której osoby, zapisuje się w notatce. W efekcie przy wyborze źródła do faktu nie widać roku ani parafii, a opisy są niespójne. Do tego drzewo źle wygląda: małe karty zajmują tylko górę dużego ekranu, linie do dzieci są nieczytelne, nie ma zdjęć, a przycisk „Podgląd” jest zbędny. Nie ma też widoku wszystkich przodków osoby, a miejsca pozostają wolnym tekstem.
 
-1. **Utrata kontekstu drzewa.** Oglądanie osoby to przejście z drzewa na osobną stronę i powrót — autor gubi miejsce, w którym pracował.
-2. **Niespójność.** Dodawanie i edycja są w modalu, a podgląd osoby nadal jest osobną stroną.
+Wgląd: parafia i archiwum to dwie różne informacje, bo jedno archiwum trzyma księgi wielu parafii. Opis źródła zależy od jego rodzaju (akt, nagrobek, inne). Genealog rozpoznaje źródło po roku i parafii, nie po nazwie pliku. Jeden skan strony księgi zawiera kilka wpisów dotyczących różnych osób. Zmiana porządkuje opis źródeł, dopracowuje wygląd drzewa i nawigację (panel boczny zamiast modali), dodaje widok przodków i spis miejscowości — bez psucia powiązań fakt–źródło i dodawania relacji z drzewa.
 
-Zmiana: podgląd osoby staje się modalem otwieranym z każdego miejsca (drzewo, lista, podgląd skanu), a strona `/persons/{id}` znika. Drzewo przejmuje całą edycję relacji — dodawanie i usuwanie rodzica, dziecka i małżonka, zarówno nowej, jak i istniejącej osoby. Podgląd nadal pokazuje relacje, ale tylko do odczytu.
+Najbardziej bolą: (1) niejasny opis aktów i nagrobków, (2) wygląd drzewa.
 
-Kategoria zmiany: znacząca funkcja (zmiana nawigacji i odpowiedzialności widoków).
+Do rozstrzygnięcia w fazie 4/5: czy parafia jest miejscowością ze spisu, czy osobnym bytem (a archiwum?).
 
 ## User & Persona
 
-Bez zmian: jedynym realnym użytkownikiem jest autor aplikacji, genealog prowadzący badania na własnych materiałach. Zmiana dotyczy chwil, gdy pracuje na drzewie i zagląda w szczegóły osób oraz gdy łączy osoby relacjami.
+Bez zmian: **autor**, genealog wprowadzający własne prawdziwe drzewo z aktów metrykalnych, zdjęć nagrobków i notatek. Sięga po aplikację, gdy siedzi nad skanem aktu i chce go opisać, podpiąć pod fakt i zobaczyć osobę na drzewie.
 
 ## Access Control
 
-No changes planned — current model preserved: otwarta rejestracja, jedno drzewo na konto, każdy zalogowany użytkownik ma pełny dostęp wyłącznie do własnego drzewa. Modal podglądu i akcje relacji na drzewie podlegają tej samej regule — cudza osoba to 404.
+Bez zmian — obecny model zostaje: jedno drzewo na konto, otwarta rejestracja, każdy widzi i edytuje tylko swoje dane, a cudzy rekord to 404 (także w panelach, widoku przodków i spisie miejscowości). Spis miejscowości (oraz ewentualnie parafii/archiwów) jest prywatny dla drzewa, jak w prd-v2.
 
 ## Success Criteria
 
-Zmiana etapowa (bez okna, w którym jakiejś relacji nie da się edytować):
-1. **Etap 1 — podgląd w modalu:** kliknięcie osoby na drzewie, liście lub podglądzie skanu otwiera modal podglądu nad bieżącą stroną; kliknięcie krewnego podmienia treść modala; zamknięcie zostawia stronę pod spodem bez zmian. Edycja relacji tymczasowo zostaje w modalu podglądu.
-2. **Etap 2 — relacje na drzewie:** z drzewa dodaje się (istniejącą lub nową osobę) i usuwa rodzica, dziecko i małżonka. Dopiero wtedy relacje w podglądzie stają się tylko do odczytu, a strona `/persons/{id}` znika.
-
 ### Primary
-Autor klika osobę na drzewie, ogląda jej dane, fakty z potwierdzeniami i relacje w modalu, przechodzi w modalu do rodzica, zamyka modal i jest dokładnie w tym samym miejscu drzewa; brakującego ojca podłącza z pustego slotu na drzewie (istniejąca osoba albo nowa), a zbędną relację usuwa z drzewa.
+- Autor wgrywa skan strony księgi (Luboml, 1908, z AGAD) i opisuje go osobno: czego dotyczy (Luboml), rok (1908), typ (urodzenie), skąd (AGAD), a w notatce „nr 95 dotyczy X” (albo więcej). Zapisany akt jest źródłem. Przy dodawaniu źródła do faktu osoby autor znajduje ten akt, szukając po miejscu (Luboml) i roku (1908).
+
+Przepływ zmiany:
+1. Wgrywam skan strony księgi: Luboml, 1908 (z AGAD).
+2. Opisuję go: czego dotyczy (Luboml), rok, typ aktu (urodzenie), skąd (AGAD); notatka „nr 95 dotyczy X”.
+3. Zapisuję — akt jest źródłem.
+4. Przy dodawaniu źródła do faktu osoby szukam po miejscu i roku i trafiam w ten akt.
 
 ### Secondary
-Podłączenie istniejącego rodzica z drzewa wymaga mniej kroków niż dziś z podglądu osoby.
+- Drzewo wypełnia duży ekran: większe karty, czytelne linie do dzieci.
+- Autor widzi wszystkich przodków wybranej osoby w jednym widoku.
+- Osobę i źródło ogląda i edytuje w wysuwanym panelu bocznym zamiast modala.
+- Miejscowość istnieje raz w spisie i jest używana w faktach, zamieszkaniu i źródle.
 
 ### Guardrails
-- Fakty i potwierdzenia: urodzenie, małżeństwo i zgon z potwierdzającymi skanami/źródłami widoczne w modalu; podgląd skanu (powiększenie) nadal otwiera się z faktu.
-- Reguły relacji: maks. dwoje rodziców, nikt nie jest własnym przodkiem — także przy dodawaniu z drzewa.
-- Nawigacja drzewa: wyśrodkowanie drzewa na osobie i ustawianie probanta działają jak dziś.
-- Brak luki w edycji relacji: w każdym momencie wdrażania każdą relację da się dodać i usunąć z jakiegoś miejsca.
-- Usuwanie osoby z modala pokazuje te same skutki i wymaga jawnego potwierdzenia.
+- Powiązania fakt–źródło: każdy istniejący fakt potwierdzony źródłem nadal prowadzi do tego samego źródła i skanu.
+- Dodawanie relacji z drzewa (rodzic, dziecko, małżonek — istniejąca lub nowa osoba) działa jak dziś, także po przebudowie drzewa.
+
+Świadomie poza guardrails: przejście miejsc z wolnego tekstu na spis miejscowości (oraz ewentualnie starego opisu źródła na nowy) może zakłócić istniejące dane — autor dopuszcza ręczne poprawki.
+
+## Timeline acknowledgment
+
+Acknowledged on 2026-10-04: 4-week change (all four parts: source description, tree look + side panel, all-ancestors view, places gazetteer; hard deadline 2026-11-04, after hours) requires sustained dedication; user accepted. If time runs out, person photos on tree cards drop first.
 
 ## Functional Requirements
 
-### Podgląd osoby w modalu
-- FR-001: Użytkownik otwiera podgląd osoby w modalu z drzewa, listy osób i podglądu skanu; zamknięcie modala zostawia stronę pod spodem bez zmian; na wąskich ekranach modal zajmuje cały ekran. Priority: must-have. Change: new
-  > Socrates: Counter-argument considered: "dane, relacje, trzy fakty i małżeństwa to za dużo treści na modal, zwłaszcza na telefonie." Resolution: changed — na wąskich ekranach modal pełnoekranowy (jak formularz osoby w S-20).
-- FR-002: Użytkownik w modalu podglądu klika krewnego (rodzic, dziecko, małżonek) i modal podmienia treść na tę osobę; przycisk „Wstecz” w modalu wraca do poprzednio oglądanej osoby. Priority: must-have. Change: new
-  > Socrates: Counter-argument considered: "po trzech przeskokach (ojciec → dziadek → wujek) nie wiadomo, jak wrócić." Resolution: changed — przycisk „Wstecz” w modalu.
-- FR-003: Po dodaniu osoby z listy użytkownik trafia na drzewo wyśrodkowane na nowej osobie (dziś: przekierowanie na stronę podglądu). Priority: must-have. Change: modified
-  > Socrates: Counter-argument considered: "drzewo jest miejscem relacji — nowa osoba bez relacji wymaga podłączenia, nie oglądania." Resolution: changed — zamiast modala podglądu przejście na drzewo wyśrodkowane na nowej osobie (zmienia decyzję z fazy 1).
-- FR-008: Podgląd osoby pokazuje relacje (rodzice, dzieci, małżonkowie) tylko do odczytu, z odnośnikiem „Pokaż na drzewie” przy relacjach; data, miejsce i potwierdzenie małżeństwa nadal edytuje się w podglądzie. Priority: must-have. Change: modified
-  > Socrates: Counter-argument considered: "oglądając osobę z listy lub skanu i widząc błąd w relacji, trzeba jakoś trafić na drzewo." Resolution: changed — odnośnik „Pokaż na drzewie” przy relacjach (drzewo wyśrodkowane na tej osobie).
-- FR-009: Strona `/persons/{id}` znika; stare adresy mogą przestać działać. Priority: must-have. Change: modified
-  > Socrates: Counter-argument considered: "bez adresu nie da się zapisać ani wysłać linku do konkretnej osoby." Resolution: kept; jedynym użytkownikiem jest autor, drzewo z centrum wystarcza jako adres.
+Wszystkie FR są `must-have` (zakres: całość do 2026-11-04). Jeśli zabraknie czasu, pierwsze do odcięcia jest FR-015.
 
-### Relacje na drzewie
-Zakres: sloty rodziców każdej widocznej osoby (także dziadków), dziecko pokazanej pary, małżonek tylko przy osobie w centrum, połączenie pokazanych rodziców w małżeństwo, usuwanie relacji osoby w centrum; dla pozostałych — wyśrodkowanie drzewa na nich.
-- FR-004: Użytkownik z pustego slotu rodzica na drzewie podłącza istniejącą osobę albo tworzy nową (S-21: tylko nowa); w slocie ojca/matki wybór pokazuje tylko osoby pasującej płci. Priority: must-have. Change: modified
-  > Socrates: Counter-argument considered: "do slotu »ojciec« można wybrać kobietę." Resolution: changed — w slocie ojca/matki wybór filtruje po płci (nowa osoba — płeć ustawiona i zablokowana jak w prd-v3).
-- FR-005: Użytkownik dodaje z drzewa dziecko pokazanej pary — istniejącą osobę albo nową (S-22: tylko nowa). Priority: must-have. Change: modified
-  > Socrates: Counter-argument considered: "istniejące dziecko ma już jednego rodzica spoza pary — podłączenie dałoby mu troje rodziców." Resolution: kept; reguły relacji blokują, a komunikat mówi dlaczego.
-- FR-006: Użytkownik z pustego slotu małżonka przy osobie w centrum podłącza istniejącą osobę albo tworzy nowego małżonka (S-23: tylko nowy); gdy pokazani na arkuszu ojciec i matka nie mają małżeństwa, drzewo oferuje „Połącz jako małżeństwo” między nimi. Priority: must-have. Change: modified
-  > Socrates: Counter-argument considered: "rodzice na arkuszu często nie są w danych małżeństwem — trzeba wyśrodkować na ojcu, żeby ich połączyć." Resolution: changed — akcja „Połącz jako małżeństwo” między pokazanymi rodzicami; pusty slot małżonka nadal tylko przy centrum.
-- FR-007: Użytkownik usuwa z drzewa relację rodzic–dziecko i małżeństwo po potwierdzeniu (dziś: z podglądu osoby); potwierdzenie usunięcia małżeństwa wymienia, co zginie (data, miejsce, potwierdzenia). Priority: must-have. Change: modified
-  > Socrates: Counter-argument considered: "małżeństwo to więcej niż relacja — usunięcie kasuje datę, miejsce i potwierdzenia." Resolution: changed — potwierdzenie wymienia tracone dane.
+### Opis źródła
+- FR-001: Autor can opisać akt metrykalny osobnymi danymi: parafia (ze spisu parafii, z możliwością dopisania nowej w locie), rok, typ aktu, archiwum (tekst z podpowiedziami wcześniej wpisanych archiwów). Priority: must-have. Change: modified
+  > Socrates: Counter-argument considered: "brak parafii w spisie blokuje opis aktu — wprowadzanie się rwie."
+  > Resolution: kept; parafię dopisuje się w locie przy opisie aktu, bez wychodzenia z panelu źródła (jak archiwum).
+- FR-002: Autor can opisać zdjęcie nagrobka: cmentarz (miejscowość ze spisu) i osoby pochowane; miejsce pochowania osoby z listy pochowanych podpowiada się cmentarzem nagrobka (można zmienić). Priority: must-have. Change: modified
+  > Socrates: Counter-argument considered: "cmentarz na nagrobku dubluje miejsce pochowania osoby (FR-022) — dwa miejsca prawdy."
+  > Resolution: kept; miejsce pochowania podpowiada się z nagrobka, ale pozostaje edytowalne przy osobie.
+- FR-003: Autor can podać numer wpisu przy powiązaniu źródła z faktem; numer jest widoczny przy fakcie i przy źródle. Priority: must-have. Change: modified
+  > Socrates: Counter-argument considered: "dubluje dzisiejsze pole „Numer wpisu” na źródle."
+  > Resolution: kept; pole „Numer wpisu” znika ze źródła, a dotychczasowe wartości zostają widoczne do ręcznego przeniesienia.
+- FR-004: Autor can przy wyborze źródła do faktu szukać po miejscu (miejscowość parafii lub cmentarza) i roku i widzi przy każdym źródle rok i parafię lub cmentarz. Priority: must-have. Change: modified
+  > Socrates: Counter-argument considered: "nagrobki nie mają parafii — szukanie po parafii ich nie obejmie."
+  > Resolution: kept; szukanie po miejscu obejmuje miejscowość parafii i cmentarza (rozstrzygnięcie przyjęte przez facylitatora — do potwierdzenia w PRD).
+- FR-005: Autor can przeglądać listę źródeł jako siatkę mniejszych kart z rodzajem, typem, parafią lub cmentarzem, rokiem i archiwum oraz filtrować ją po rodzaju, parafii/miejscu, roku i archiwum. Priority: must-have. Change: modified
+  > Socrates: Counter-argument considered: "przy setkach źródeł sama siatka nie wystarczy."
+  > Resolution: kept and extended; lista dostaje filtry po rodzaju, parafii/miejscu, roku i archiwum.
+- FR-006: Autor can dodawać, oglądać i edytować źródło w szerokim wysuwanym panelu bocznym (skan obok opisu) zamiast modala. Priority: must-have. Change: modified
+  > Socrates: Counter-argument considered: "panel boczny jest za wąski, żeby opisywać akt patrząc na skan."
+  > Resolution: kept; panel źródła jest szerszy niż panel osoby, skan i formularz stoją obok siebie, powiększenie skanu jak dziś.
+
+### Spisy: miejscowości, parafie, archiwa
+- FR-007: Autor can prowadzić spis miejscowości z opisem; spis startuje z istniejących tekstowych miejsc (identyczne teksty → jedna miejscowość), a literówki autor poprawia i scala ręcznie. Priority: must-have. Change: new
+  > Socrates: Counter-argument considered: "przeniesienie wolnego tekstu na spis zjada czas."
+  > Resolution: kept; spis wstaje automatycznie z istniejących wartości, autor tylko poprawia i scala.
+- FR-008: Autor can prowadzić spis parafii: nazwa, wyznanie, miejscowość siedziby ze spisu. Priority: must-have. Change: new
+  > Socrates: Counter-argument considered: "trzy spisy (miejscowości, parafie, archiwa) przy jednym akcie to dużo klikania."
+  > Resolution: kept; każde pole spisu podpowiada po kilku literach i pozwala dopisać nowy wpis bez wychodzenia z panelu.
+- FR-009: Autor can wpisać archiwum jako tekst, który podpowiada wcześniej wpisane archiwa. Priority: must-have. Change: new
+  > Socrates: Counter-argument considered: "zarządzana lista archiwów to przesada — kilka archiwów na całe drzewo."
+  > Resolution: changed; zamiast listy archiwów pole tekstowe z podpowiedziami wcześniej wpisanych wartości.
+- FR-010: Autor can wybrać miejsce urodzenia, ślubu, zgonu i pochowania ze spisu miejscowości. Priority: must-have. Change: modified
+  > Socrates: Counter-argument considered: "miejsce bywa niepewne („okolice Lubomla”) i nie pasuje do spisu."
+  > Resolution: kept; miejsce zawsze ze spisu dla spójności, niepewność autor opisuje w notatce.
+- FR-011: Autor can ustawić osobie kilka miejscowości zamieszkania z opcjonalnymi latami od–do. Priority: must-have. Change: modified
+  > Socrates: Counter-argument considered: "zamieszkanie bez źródła to domysł."
+  > Resolution: kept; zamieszkania nie potwierdza się źródłem w tej wersji — to notatka badawcza.
+- FR-012: Autor can scalić zduplikowaną miejscowość lub parafię z właściwym wpisem (powiązania przechodzą na właściwy) i usunąć wpis, który nie jest nigdzie używany. Priority: must-have. Change: new
+  > Socrates: Counter-argument considered: "usuwanie wpisów spisu z listą powiązań jest rzadko potrzebne."
+  > Resolution: changed; zamiast usuwania z listą powiązań — scalanie duplikatów (ważne po automatycznej migracji) i usuwanie tylko nieużywanych wpisów.
+
+### Drzewo
+- FR-013: Autor can oglądać drzewo z większymi kartami, które dopasowuje się do ekranu (wypełnia duży), z przybliżaniem i oddalaniem. Priority: must-have. Change: modified
+  > Socrates: Counter-argument considered: "większe karty nie zmieszczą się na laptopie."
+  > Resolution: kept and extended; drzewo dopasowuje się do ekranu i ma przybliżanie/oddalanie.
+- FR-014: Autor can czytelnie odróżnić linie łączące; linia do dziecka wychodzi od właściwej pary (małżeństwa), więc widać, z którego związku jest dziecko. Priority: must-have. Change: modified
+  > Socrates: Counter-argument considered: "dzieci z różnych małżeństw — „czytelne linie” nie mówią, z którego związku."
+  > Resolution: kept and sharpened; linia do dziecka wychodzi od właściwej pary.
+- FR-015: Autor can dodać zdjęcie osoby i widzi je na karcie drzewa; karta bez zdjęcia pokazuje inicjały lub sylwetkę (pierwsze do odcięcia). Priority: must-have. Change: new
+  > Socrates: Counter-argument considered: "większość przodków nie ma zdjęć — drzewo wyglądałoby nierówno."
+  > Resolution: kept; karta bez zdjęcia pokazuje zastępczy znak (inicjały/sylwetka).
+- FR-016: Autor can otworzyć panel osoby kliknięciem karty; przycisk „Podgląd” znika, a ustawienie osoby w centrum drzewa jest akcją w panelu. Priority: must-have. Change: modified
+  > Socrates: Counter-argument considered: "kliknięcie karty dziś przecentrowuje drzewo — zmiana zabiera szybką nawigację."
+  > Resolution: kept; kliknięcie = panel osoby, przecentrowanie przenosi się do przycisku w panelu.
+- FR-017: Autor can otworzyć panel małżeństwa: data, miejsce, źródło (z edycją) i dzieci pary. Priority: must-have. Change: new
+  > Socrates: Counter-argument considered: "panel małżeństwa dubluje sekcję małżeństwa w panelu osoby."
+  > Resolution: kept; oba miejsca pozwalają edytować małżeństwo — wygoda ważniejsza niż jedno miejsce edycji.
+- FR-018: Autor can zobaczyć wybraną osobę i wszystkich jej przodków w jednym widoku z wyborem liczby pokoleń, z dopasowaniem do ekranu i przybliżaniem jak w drzewie. Priority: must-have. Change: new
+  > Socrates: Counter-argument considered: "przy 6+ pokoleniach widok przodków robi się nieczytelny."
+  > Resolution: kept; ten sam mechanizm dopasowania i przybliżania co FR-013.
+
+### Osoba
+- FR-019: Autor can oglądać i edytować osobę w wysuwanym panelu z prawej zamiast modala; otwarty panel nie zasłania drzewa — drzewo zwęża się obok niego. Priority: must-have. Change: modified
+  > Socrates: Counter-argument considered: "panel zasłania prawą część drzewa."
+  > Resolution: kept; drzewo przesuwa się i zwęża obok otwartego panelu.
+- FR-020: Autor can zapisać nazwisko rodowe; osoba wyświetla się „z d. …” i jest wyszukiwana po obu nazwiskach. Priority: must-have. Change: new
+  > Socrates: Counter-argument considered: "kobieta bez znanego męża ma tylko nazwisko rodowe."
+  > Resolution: kept; gdy znane jest jedno nazwisko, wpisuje się je w główne pole, a „z d.” pojawia się tylko, gdy znane są oba.
+- FR-021: Autor can zobaczyć zakładkę wydarzeń osoby: własne oraz urodzenia i zgony dzieci, ślub i zgon małżonka, uporządkowane po roku, z wydarzeniami bez daty na końcu. Priority: must-have. Change: new
+  > Socrates: Counter-argument considered: "daty częściowe (sam rok, brak daty) psują kolejność osi czasu."
+  > Resolution: kept; sortowanie po roku, wydarzenia bez daty na końcu.
+- FR-022: Autor can zapisać miejsce pochowania osoby. Priority: must-have. Change: new
+  > Socrates: Counter-argument considered: "brak — rozważane razem z FR-023."
+  > Resolution: kept as written (przypomnienie: podpowiada się z nagrobka — FR-002).
+- FR-023: Autor can prowadzić notatkę o osobie — jedno pole tekstowe w osobnej zakładce. Priority: must-have. Change: new
+  > Socrates: Counter-argument considered: "notatki jako lista wpisów z datą (dziennik badań)?"
+  > Resolution: kept simple; jedna notatka tekstowa wystarczy.
+- FR-024: Autor can zobaczyć wiek osoby — ile przeżyła (gdy zna datę zgonu) albo ile ma (tylko gdy wynik jest poniżej ok. 110 lat; inaczej wiek nie jest pokazywany). Priority: must-have. Change: new
+  > Socrates: Counter-argument considered: "brak daty zgonu nie znaczy, że osoba żyje — ur. 1850 nie „ma 176 lat”."
+  > Resolution: kept; „ile ma” tylko poniżej progu ok. 110 lat.
 
 ### Zachowane
-- FR-010: Fakty (urodzenie, małżeństwo, zgon) z potwierdzeniami działają w modalu; otwarcie skanu z faktu opuszcza modal i prowadzi na pełną stronę podglądu skanu. Priority: must-have. Change: preserved
-  > Socrates: Counter-argument considered: "modal na modalu: podgląd → wiązanie źródła → powiększenie skanu; powiększenie potrzebuje całego ekranu." Resolution: changed — otwarcie skanu wychodzi z modala na pełną stronę skanu.
-- FR-011: Reguły relacji (maks. dwoje rodziców, nikt nie jest własnym przodkiem) obowiązują przy każdej edycji z drzewa; wybór osoby ukrywa osoby, których podłączenie złamałoby regułę. Priority: must-have. Change: preserved
-  > Socrates: Counter-argument considered: "wybór pokazuje osoby zakazane i błąd pojawia się dopiero po wyborze." Resolution: changed — wybór ukrywa osoby tworzące cykl lub trzeciego rodzica.
-- FR-012: Wyśrodkowanie drzewa na osobie działa jak dziś; „Ustaw jako probanta” przenosi się do modala podglądu. Priority: must-have. Change: preserved
-  > Socrates: Counter-argument considered: "ustawienie probanta z modala otwartego z listy lub skanu zmienia drzewo, którego w tej chwili nie widać." Resolution: kept; akcja rzadka, akceptowalne.
-- FR-013: Usunięcie osoby z modala pokazuje te same skutki i wymaga jawnego potwierdzenia; po usunięciu osoby z centrum drzewo wraca do probanta (usunięcie probanta — jak dziś, drzewo bez probanta). Priority: must-have. Change: preserved
-  > Socrates: Counter-argument considered: "usunięcie osoby z centrum zostawia drzewo bez centrum." Resolution: changed — drzewo wraca do probanta; usunięcie samego probanta zachowuje dzisiejsze zachowanie.
+- FR-025: Autor can potwierdzić urodzenie, małżeństwo i zgon źródłem każdego rodzaju i przejść z faktu do skanu. Priority: must-have. Change: preserved
+  > Socrates: Counter-argument considered: "czy to zachowanie może się zmienić przy przejściu na panele i przebudowie drzewa?"
+  > Resolution: kept; zachowane bez zmian (guardrail).
+- FR-026: Autor can dodać rodzica, dziecko i małżonka (istniejącego lub nowego) z pustych slotów drzewa. Priority: must-have. Change: preserved
+  > Socrates: Counter-argument considered: "czy to zachowanie może się zmienić przy przejściu na panele i przebudowie drzewa?"
+  > Resolution: kept; zachowane bez zmian (guardrail).
+- FR-027: Autor can usunąć źródło po zobaczeniu listy faktów, które stracą potwierdzenie. Priority: must-have. Change: preserved
+  > Socrates: Counter-argument considered: "czy to zachowanie może się zmienić przy przejściu na panele i przebudowie drzewa?"
+  > Resolution: kept; zachowane bez zmian (guardrail).
+- FR-028: Autor can w panelu osoby przechodzić do krewnych i po zamknięciu panelu być w tym samym miejscu; historia „Wstecz” między krewnymi nie jest wymagana. Priority: must-have. Change: modified
+  > Socrates: Counter-argument considered: "czy historia „Wstecz” między krewnymi musi przetrwać przejście na panel?"
+  > Resolution: changed; przejście do krewnego i powrót na to samo miejsce po zamknięciu zostają, historia „Wstecz” może zniknąć.
+- FR-029: Autor can widzieć tylko swoje dane; cudzy rekord (także w panelach, spisach i widoku przodków) to 404. Priority: must-have. Change: preserved
+  > Socrates: Counter-argument considered: "czy to zachowanie może się zmienić przy przejściu na panele i przebudowie drzewa?"
+  > Resolution: kept; zachowane bez zmian (guardrail).
 
 ## User Stories
 
-### US-01: Autor ogląda osobę i podłącza brakującego ojca bez wychodzenia z drzewa
+### US-01: Akt z Lubomla opisany parafią i archiwum, odnaleziony po miejscu i roku
 
-Given drzewo wyśrodkowane na Janie, z pustym slotem „nieznany ojciec”, a Józef istnieje już w drzewie jako osoba bez relacji z Janem
-When autor klika kartę Jana, ogląda w modalu jego fakty i relacje, zamyka modal, a następnie w slocie ojca wybiera istniejącego Józefa
-Then drzewo, bez opuszczania go, pokazuje Józefa jako ojca Jana, a modal podglądu Jana pokazuje Józefa w sekcji „Rodzice” tylko do odczytu
-
-Wcześniej: podgląd był osobną stroną, a ojca podłączało się z podglądu osoby, nie z drzewa.
+- **Given** autor wgrał skan strony księgi jako źródło: parafia Luboml, rok 1908, typ aktu „urodzenie”, archiwum AGAD
+- **When** podpina źródło do urodzenia osoby, szuka „Luboml” i 1908 i podaje wpis nr 95
+- **Then** widzi ten akt na liście wyboru (z rokiem i parafią), a przy fakcie urodzenia — źródło z numerem wpisu 95
 
 #### Acceptance Criteria
-- Zamknięcie modala zostawia drzewo w tym samym miejscu (ta sama osoba w centrum, ta sama para).
-- Podłączenie Józefa podlega regułom relacji (maks. dwoje rodziców, brak cyklu).
-- W modalu podglądu nie ma akcji dodawania ani usuwania rodzica.
+- Parafię, której nie ma w spisie, autor dopisuje w trakcie opisu aktu, bez wychodzenia z panelu źródła.
+- Archiwum podpowiada się z wcześniej wpisanych wartości.
+- Przed zmianą: parafia i archiwum lądowały w jednym polu „Pochodzenie” albo w notatce, a numer wpisu był polem źródła, nie powiązania.
+- Istniejące powiązania fakt–źródło prowadzą do tych samych źródeł co przed zmianą.
 
 ## Business Logic
 
-No domain logic change. This is a navigation and view-responsibility change.
+Każda miejscowość istnieje w drzewie raz, a parafie, cmentarze nagrobków, miejsca faktów (urodzenie, ślub, zgon, pochowanie) i zamieszkania osób odwołują się do niej. Scalenie duplikatu przenosi wszystkie te odwołania na właściwy wpis.
 
-Obecne reguły pozostają bez zmian: fakt osoby jest „potwierdzony”, gdy jest powiązany z co najmniej jednym źródłem (skanem); osoba ma maks. dwoje rodziców; nikt nie jest własnym przodkiem; małżeństwo jest jednym wydarzeniem obojga małżonków. Zmienia się tylko miejsce edycji relacji (drzewo zamiast podglądu osoby). Filtry wyboru w slotach (płeć w slocie ojca/matki, ukrywanie osób łamiących reguły) oraz powrót drzewa do probanta po usunięciu osoby z centrum tylko stosują istniejące reguły w interfejsie.
+Reguła dziś: miejsca to wolny tekst przy osobie (zamieszkanie) i wydarzeniu (miejsce), więc „Luboml” i „Lubomla” to dwa różne miejsca, a nic ich nie łączy. Zmiana: autor wybiera miejsce ze spisu (z podpowiedziami i dopisywaniem w locie), a spis startuje z istniejących tekstów (identyczne teksty → jedna miejscowość). Literówki autor scala ręcznie, a wpis nieużywany może usunąć.
+
+Reguły pomocnicze:
+- **Wybór źródła (modyfikacja S-19):** dziś przy wiązaniu źródła z wydarzeniem najpierw pokazywane są akty o pasującym typie. Po zmianie autor może dodatkowo zawęzić źródła po miejscu (miejscowość parafii aktu lub cmentarza nagrobka) i roku; pierwszeństwo pasującego typu zostaje.
+- **Opis zależy od rodzaju źródła:** akt metrykalny — parafia, rok, typ aktu, archiwum; nagrobek — cmentarz i osoby pochowane. Miejsce pochowania osoby z listy pochowanych podpowiada się cmentarzem nagrobka (można zmienić).
+- **Numer wpisu należy do powiązania źródła z faktem,** nie do źródła — jeden skan, wiele wpisów, wiele osób.
+- **Wiek:** ile przeżyła, gdy znana jest data zgonu; ile ma tylko wtedy, gdy wynik jest poniżej ok. 110 lat — inaczej wiek nie jest pokazywany.
 
 ## Constraints & Preserved Behavior
 
-- **Migracja danych:** brak — osoby, relacje, małżeństwa i potwierdzenia bez zmian; zmienia się wyłącznie miejsce oglądania i edycji.
-- **Kompatybilność wsteczna:** strona `/persons/{id}` znika, stare adresy mogą przestać działać (jedynym użytkownikiem jest autor; bez przekierowań). 7 miejsc prowadzących dziś do podglądu (lista, nagłówek i karty drzewa, krewni i małżonek w podglądzie, podgląd skanu, przekierowanie po dodaniu osoby) dostaje nowy cel.
-- **Etapowanie:** etap 1 (podgląd w modalu, edycja relacji tymczasowo w modalu) przed etapem 2 (relacje na drzewie, podgląd tylko do odczytu) — w żadnym momencie nie może zabraknąć miejsca do dodania lub usunięcia którejś relacji.
-- **Kolejność względem źródeł (prd-v3):** modal podglądu (etap 1) idzie przed S-17/S-18, żeby rodzaj źródła przy fakcie i modale źródeł powstały od razu w modalu podglądu.
-- **S-21 – S-23 (prd-v3):** wchłonięte i rozszerzone (istniejąca albo nowa osoba, usuwanie, połączenie rodziców) — do przeplanowania.
-- **Zachowane:** fakty z potwierdzeniami i otwieranie podglądu skanu; reguły relacji; wyśrodkowanie drzewa i probant; usuwanie osoby z listą skutków i jawnym potwierdzeniem; prywatność drzewa (cudzy rekord = 404).
+- **Zachowane bez zmian:** powiązania fakt–źródło (każdy istniejący fakt prowadzi do tego samego źródła i skanu); dodawanie rodzica, dziecka i małżonka ze slotów drzewa; usuwanie źródła z listą faktów tracących potwierdzenie; pierwszeństwo pasującego typu aktu przy wyborze źródła; własność danych (cudzy rekord = 404).
+- **Zmienione świadomie:** historia „Wstecz” między krewnymi w podglądzie osoby może zniknąć przy przejściu na panel; kliknięcie karty drzewa otwiera panel zamiast przecentrowywać.
+- **Migracje danych (autor dopuszcza ręczne poprawki):**
+  - Miejsca wydarzeń i zamieszkanie (wolny tekst) → spis miejscowości tworzony automatycznie z istniejących wartości (identyczne teksty → jedna miejscowość).
+  - Jedno pole „Zamieszkanie” → pierwsza pozycja listy zamieszkań, bez lat.
+  - „Pochodzenie” źródła → pole archiwum.
+  - „Numer wpisu” źródła → znika jako pole źródła; dotychczasowe wartości pozostają widoczne do ręcznego przeniesienia na powiązania z faktami.
+- **Ograniczenia istniejącego systemu:** CI musi przechodzić jak dziś (lint/format bez ostrzeżeń, analiza statyczna, testy na PostgreSQL); ścieżki krytyczne z guardrails (fakt–źródło, relacje ze slotów drzewa) są chronione testami E2E.
+- **Kopie zapasowe** muszą objąć nowe dane (spisy, zdjęcia osób, notatki) — jak dotychczasowe backupy bazy i `storage/app`.
 
 ## Non-Functional Requirements
 
-Brak nowych NFR — istniejące (prywatność danych drzewa, czytelność powiększenia skanu) obejmują modal podglądu i akcje relacji na drzewie.
+- Drzewo, widok przodków i panele są użyteczne na ekranach od 1366 px do 2560 px szerokości; na dużym ekranie drzewo wypełnia dostępną przestrzeń.
+- Nowe dane (spisy miejscowości i parafii, zdjęcia osób, notatki, zamieszkania) są objęte kopią zapasową z utratą najwyżej 24 h danych (RPO 24 h), jak dotychczasowe dane.
 
 ## Product framing
 
-- Typ produktu: bez zmian — aplikacja webowa (`web-app`).
-- Skala: bez zmian — autor, mała (`small`).
-- Termin: twardo 2026-11-04 (wspólny z prd-v3), praca po godzinach; ta zmiana 2 tygodnie. Przy braku czasu spis miejscowości (S-12 – S-15) przesuwa się jako pierwszy.
+- `product_type`: web-app — bez zmian (istniejąca aplikacja webowa).
+- `target_scale.users`: small — bez zmian (autor).
+- `timeline_budget`: delivery_weeks 4, hard_deadline 2026-11-04, after_hours_only true.
 
 ## Non-Goals
 
-- **Brak przeciągania kart na drzewie** — relacje łączy się przez sloty i wybór osoby, nie przez drag-and-drop.
-- **Brak adresu modala** — modal podglądu nie ma własnego adresu (deep linku); brak przekierowań ze starych `/persons/{id}` (FR-009).
-- **Brak scalania duplikatów osób** — wybór „istniejąca osoba” w slocie zmniejsza ryzyko duplikatów, ale już zdublowanych osób się nie scala; poprawiane ręcznie.
+- **Brak udostępniania drzewa rodzinie** — nadal jeden użytkownik na drzewo; model dostępu bez zmian.
+- **Brak dodawania osób i relacji z widoku przodków** — widok przodków służy do oglądania; relacje dodaje się na drzewie-arkuszu.
+- **Brak importu/eksportu GEDCOM** — dane wchodzą ręcznie, jak dotąd.
+- **Brak nazw historycznych i zmian granic miejscowości** — takie informacje trafiają do opisu miejscowości.
+- **Brak świadków ślubu** — panel małżeństwa pokazuje datę, miejsce, źródło i dzieci pary.
+- **Brak wielu nazwisk po kolejnych mężach** — osoba ma nazwisko i nazwisko rodowe; reszta w notatce.
+- **Brak daty pogrzebu i potwierdzania zamieszkania źródłem** — pogrzeb to samo miejsce pochowania; zamieszkanie to notatka badawcza bez źródła.
 
 ## Quality cross-check
 
-Wszystkie elementy obecne (Access Control, Business Logic, artefakty, koszt czasu — 2 tygodnie etapami, Non-Goals, Preserved behavior). Brak luk.
+Run 2026-10-04 — all six items present (Access Control, Business Logic, project artifacts, timeline-cost acknowledgment, Non-Goals, preserved behavior). User accepted.
+
+Open items for `/10x-prd` `## Open Questions` (not gate gaps):
+1. **NFR „dane nie trafiają do podmiotów trzecich”** (z poprzednich PRD) nie zostało ponownie potwierdzone w tej sesji — dotyczy zwłaszcza zdjęć osób. Owner: autor.
+2. **FR-004** — rozstrzygnięcie „szukanie źródła po miejscu obejmuje miejscowość parafii i cmentarza” przyjął facylitator; do potwierdzenia przez autora.
+
+Scope note: 29 FR w 4 tygodnie (3 nowe spisy/listy, 4 migracje danych, panele boczne w czterech miejscach) — koszt zaakceptowany; pierwsze do odcięcia FR-015 (zdjęcia). Rdzeń bólu: opis źródła (FR-001 – FR-006) i spis miejscowości (FR-007 – FR-012).
