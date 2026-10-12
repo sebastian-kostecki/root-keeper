@@ -1,10 +1,10 @@
 ---
 change_id: sources-filter-bar
 title: Pasek filtrów z pigułkami i okienkami na /sources
-status: impl_reviewed
+status: archived
 created: 2026-10-12
 updated: 2026-10-12
-archived_at: null
+archived_at: 2026-10-12T15:21:25Z
 ---
 
 ## Notes
