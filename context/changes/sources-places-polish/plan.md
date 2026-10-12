@@ -309,6 +309,12 @@ Tytuły i warianty pustych stanów, etykieta przełącznika spisu, polskie nagł
 - Wzorzec panelu: `resources/js/components/sources/source-panel.tsx:85-161`
 - Wzorzec reportera: `resources/js/components/dirty-reporter.tsx`
 
+## Addendum (przegląd implementacji, 2026-10-12)
+
+- Faza 2, pkt 2–3: przycisk usuwania w nagłówku paneli ma etykietę z rzeczownikiem — „Usuń miejscowość” / „Usuń parafię” (nie „Usuń”), zgodnie z celem fazy i bramką grep.
+- Faza 2, pkt 2–3: „Scal z…” przeniesione z nagłówka do stopki, obok „Zapisz …” (`outline`, bez `sm`) — w nagłówku mieści się tylko „Usuń …”, bo przy 24 rem etykieta „Scal z…” była ucięta (`screenshots/verdict.md`). Podpowiedź „Zapisz zmiany, aby scalić lub usunąć.” zostaje w stopce.
+- Flagi otwarcia okien scalania i usuwania zerują się przy zmianie rekordu (stan okien żyje w panelu, który nie jest keyowany). Bez `key` na oknach: unmount otwartego okna Radix zostawia je w stanie „Loading”.
+
 ## Progress
 
 > Convention: `- [ ]` pending, `- [x]` done. Append ` — <commit sha>` when a step lands. Do not rename step titles. See `references/progress-format.md`.

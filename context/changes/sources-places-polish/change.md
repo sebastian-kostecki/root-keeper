@@ -1,7 +1,7 @@
 ---
 change_id: sources-places-polish
 title: Design system Root Keeper na /sources i /places oraz polskie ustawienia
-status: implemented
+status: impl_reviewed
 created: 2026-10-12
 updated: 2026-10-12
 archived_at: null

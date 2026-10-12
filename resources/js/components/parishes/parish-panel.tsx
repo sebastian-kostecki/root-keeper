@@ -51,6 +51,15 @@ export function ParishPanel({
     const formId = 'parish-form';
     const [mergeOpen, setMergeOpen] = useState(false);
     const [deleteOpen, setDeleteOpen] = useState(false);
+
+    // The dialogs act on the open record; a different record must not inherit an open one.
+    const recordId = parish?.id ?? null;
+    const [dialogRecordId, setDialogRecordId] = useState(recordId);
+    if (dialogRecordId !== recordId) {
+        setDialogRecordId(recordId);
+        setMergeOpen(false);
+        setDeleteOpen(false);
+    }
     const [isDirty, setIsDirty] = useState(false);
     const [processing, setProcessing] = useState(false);
 
@@ -73,29 +82,17 @@ export function ParishPanel({
             onRequestClose={onRequestClose}
             actions={
                 parish !== null && (
-                    <>
-                        <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            disabled={isDirty}
-                            aria-describedby={actionHintId}
-                            onClick={() => setMergeOpen(true)}
-                        >
-                            Scal z…
-                        </Button>
-                        <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            className="text-destructive-foreground hover:text-destructive-foreground"
-                            disabled={isDirty}
-                            aria-describedby={actionHintId}
-                            onClick={() => setDeleteOpen(true)}
-                        >
-                            Usuń parafię
-                        </Button>
-                    </>
+                    <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="text-destructive-foreground hover:text-destructive-foreground"
+                        disabled={isDirty}
+                        aria-describedby={actionHintId}
+                        onClick={() => setDeleteOpen(true)}
+                    >
+                        Usuń parafię
+                    </Button>
                 )
             }
             footer={
@@ -104,6 +101,17 @@ export function ParishPanel({
                         {processing && <Spinner />}
                         Zapisz parafię
                     </Button>
+                    {parish !== null && (
+                        <Button
+                            type="button"
+                            variant="outline"
+                            disabled={isDirty}
+                            aria-describedby={actionHintId}
+                            onClick={() => setMergeOpen(true)}
+                        >
+                            Scal z…
+                        </Button>
+                    )}
                     {isDirty && parish !== null && (
                         <p
                             id="panel-actions-hint"
@@ -117,6 +125,7 @@ export function ParishPanel({
         >
             <ParishForm
                 key={parish?.id ?? 'new'}
+                formId={formId}
                 parish={parish}
                 religions={religions}
                 localities={localities}
@@ -149,6 +158,7 @@ export function ParishPanel({
 }
 
 type ParishFormProps = {
+    formId: string;
     parish: Parish | null;
     religions: ReligionOption[];
     localities: LocalityOption[];
@@ -159,6 +169,7 @@ type ParishFormProps = {
 
 /** The fields and the form itself; the buttons live in the panel's header and footer. */
 function ParishForm({
+    formId,
     parish,
     religions,
     localities,
@@ -173,7 +184,7 @@ function ParishForm({
 
     return (
         <Form
-            id="parish-form"
+            id={formId}
             {...(parish === null
                 ? ParishController.store.form()
                 : ParishController.update.form(parish.id))}

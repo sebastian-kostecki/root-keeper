@@ -34,6 +34,15 @@ export function LocalityPanel({
     const formId = 'locality-form';
     const [mergeOpen, setMergeOpen] = useState(false);
     const [deleteOpen, setDeleteOpen] = useState(false);
+
+    // The dialogs act on the open record; a different record must not inherit an open one.
+    const recordId = locality?.id ?? null;
+    const [dialogRecordId, setDialogRecordId] = useState(recordId);
+    if (dialogRecordId !== recordId) {
+        setDialogRecordId(recordId);
+        setMergeOpen(false);
+        setDeleteOpen(false);
+    }
     const [isDirty, setIsDirty] = useState(false);
     const [processing, setProcessing] = useState(false);
 
@@ -56,29 +65,17 @@ export function LocalityPanel({
             onRequestClose={onRequestClose}
             actions={
                 locality !== null && (
-                    <>
-                        <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            disabled={isDirty}
-                            aria-describedby={actionHintId}
-                            onClick={() => setMergeOpen(true)}
-                        >
-                            Scal z…
-                        </Button>
-                        <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            className="text-destructive-foreground hover:text-destructive-foreground"
-                            disabled={isDirty}
-                            aria-describedby={actionHintId}
-                            onClick={() => setDeleteOpen(true)}
-                        >
-                            Usuń miejscowość
-                        </Button>
-                    </>
+                    <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="text-destructive-foreground hover:text-destructive-foreground"
+                        disabled={isDirty}
+                        aria-describedby={actionHintId}
+                        onClick={() => setDeleteOpen(true)}
+                    >
+                        Usuń miejscowość
+                    </Button>
                 )
             }
             footer={
@@ -87,6 +84,17 @@ export function LocalityPanel({
                         {processing && <Spinner />}
                         Zapisz miejscowość
                     </Button>
+                    {locality !== null && (
+                        <Button
+                            type="button"
+                            variant="outline"
+                            disabled={isDirty}
+                            aria-describedby={actionHintId}
+                            onClick={() => setMergeOpen(true)}
+                        >
+                            Scal z…
+                        </Button>
+                    )}
                     {isDirty && locality !== null && (
                         <p
                             id="panel-actions-hint"

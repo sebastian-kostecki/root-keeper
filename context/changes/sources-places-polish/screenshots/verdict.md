@@ -32,3 +32,14 @@ Motywy: jasny i ciemny. Ocena wizualna wykonana na zrzutach jasnych. Zrzuty ciem
 
 - Zrzuty „po” wygenerowane i przejrzane: TAK.
 - Werdykt zaakceptowany przez człowieka: NIE — czeka na decyzję (punkt 1) i potwierdzenie.
+
+## Przegląd motywu ciemnego (impl-review, 2026-10-12)
+
+Obejrzane wizualnie: `11-sources-dark`, `14-persons-dark`, `15-settings-profile-dark`, `18-sources-empty-dark`, `19-places-empty-dark`, `28-places-no-results-dark`, `30-sources-focus-card-dark`, `32-person-panel-dark`.
+
+- Galeria źródeł: miniatura bez podglądu na bursztynowej powierzchni z `ImageOff` w bursztynie, wyraźna na tle; stopka „potwierdza N wydarzeń” bursztynowa, „bez powiązań” szara. F3 zamknięty także wizualnie.
+- Fokus karty (`30`): pierścień z widocznym odstępem od krawędzi karty, odróżnialny od zaznaczenia.
+- Puste stany: tytuły „Brak źródeł” / „Brak miejscowości”, jedyny `default` to przycisk dodawania.
+- Panel osoby (`32`): chip „Bez źródła” szary z przerywanym kółkiem.
+- Ustawienia (`15`): nagłówki po polsku, formularz nadal po angielsku (poza zakresem planu).
+- Nieobejrzane: `12`, `13`, `16`, `17`, `20`, `25`–`27`, `31`. Panele `25`–`27` są sprzed przeniesienia „Scal z…” do stopki (impl-review F1) — do ponownego wygenerowania.
