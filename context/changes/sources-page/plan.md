@@ -473,33 +473,33 @@ Scenariusze:
 
 #### Automated
 
-- [x] 1.1 Testy JS przechodzą: `vendor/bin/sail npm run test:js`
-- [x] 1.2 Typy, lint i build przechodzą
-- [x] 1.3 Brak ręcznego pierścienia w plikach `/sources`
-- [x] 1.4 Specy list przechodzą (`sources-grid-with-filters`, `seed`)
+- [x] 1.1 Testy JS przechodzą: `vendor/bin/sail npm run test:js` — 410ae5f
+- [x] 1.2 Typy, lint i build przechodzą — 410ae5f
+- [x] 1.3 Brak ręcznego pierścienia w plikach `/sources` — 410ae5f
+- [x] 1.4 Specy list przechodzą (`sources-grid-with-filters`, `seed`) — 410ae5f
 
 #### Manual
 
-- [x] 1.5 Zrzuty `before/01–10` zapisane; C1, C2, C4, miniatura i D9 odnotowane w `verdict.md`
-- [x] 1.6 Fokus widoczny na otwartej karcie; bez fokusu wygląd jak przed zmianą (oba motywy)
-- [x] 1.7 Lepka komórka przy 375 px: to samo tło co wiersz (otwarty, hover), nieprzezroczysta
-- [x] 1.8 `/persons` w tabeli przy 375 px bez regresji
+- [x] 1.5 Zrzuty `before/01–10` zapisane; C1, C2, C4, miniatura i D9 odnotowane w `verdict.md` — 410ae5f
+- [x] 1.6 Fokus widoczny na otwartej karcie; bez fokusu wygląd jak przed zmianą (oba motywy) — 410ae5f
+- [x] 1.7 Lepka komórka przy 375 px: to samo tło co wiersz (otwarty, hover), nieprzezroczysta — 410ae5f
+- [x] 1.8 `/persons` w tabeli przy 375 px bez regresji — 410ae5f
 
 ### Phase 2: Filtry zwinięte na telefonie
 
 #### Automated
 
-- [ ] 2.1 Testy JS przechodzą (`hiddenFilterCount`)
-- [ ] 2.2 Typy, lint i build przechodzą
-- [ ] 2.3 Specy filtrów (desktop) przechodzą bez zmian w lokatorach
+- [x] 2.1 Testy JS przechodzą (`hiddenFilterCount`)
+- [x] 2.2 Typy, lint i build przechodzą
+- [x] 2.3 Specy filtrów (desktop) przechodzą bez zmian w lokatorach
 
 #### Manual
 
-- [ ] 2.4 375 px bez filtrów: pierwsza karta na pierwszym ekranie
-- [ ] 2.5 375 px: rozwinięcie, „Filtry (2)” dla zakresu lat, „Wyczyść filtry” w tym samym wierszu, zwinięcie zachowuje licznik
-- [ ] 2.6 375 px: wejście z `place=…` → blok zwinięty, „Filtry (1)”
-- [ ] 2.7 1440 px i 640 px: pasek jak `before/01`, bez przycisku „Filtry”
-- [ ] 2.8 Klawiatura na 375 px: Tab → „Filtry” → Enter → Tab trafia w „Parafia / miejsce”
+- [x] 2.4 375 px bez filtrów: pierwsza karta na pierwszym ekranie
+- [x] 2.5 375 px: rozwinięcie, „Filtry (2)” dla zakresu lat, „Wyczyść filtry” w tym samym wierszu, zwinięcie zachowuje licznik
+- [x] 2.6 375 px: wejście z `place=…` → blok zwinięty, „Filtry (1)”
+- [x] 2.7 1440 px i 640 px: pasek jak `before/01`, bez przycisku „Filtry”
+- [x] 2.8 Klawiatura na 375 px: Tab → „Filtry” → Enter → Tab trafia w „Parafia / miejsce”
 
 ### Phase 3: Stany — błąd, ładowanie, pusty, wyłączony
 

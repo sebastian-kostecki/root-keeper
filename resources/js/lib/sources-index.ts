@@ -189,6 +189,16 @@ export function isFiltering(filters: SourcesFilters): boolean {
     );
 }
 
+/** How many of the fields hidden below `sm` (place, years, archive) are set: the count on „Filtry (N)”. */
+export function hiddenFilterCount(filters: SourcesFilters): number {
+    return [
+        filters.place !== '',
+        filters.year_from !== null,
+        filters.year_to !== null,
+        filters.archive !== '',
+    ].filter(Boolean).length;
+}
+
 function matchesSearch(source: IndexSource, words: string[]): boolean {
     const name = source.display_name.toLocaleLowerCase('pl');
 

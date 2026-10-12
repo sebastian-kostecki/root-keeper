@@ -4,6 +4,7 @@ import {
     buildSourcesQuery,
     eventsLabel,
     filterSources,
+    hiddenFilterCount,
     isFiltering,
     resolveFilters,
     sortSources,
@@ -221,6 +222,35 @@ describe('isFiltering', () => {
         expect(isFiltering(filtersOf({ place: 'parafia-1' }))).toBe(true);
         expect(isFiltering(filtersOf({ year_to: 1900 }))).toBe(true);
         expect(isFiltering(filtersOf({ archive: 'AP' }))).toBe(true);
+    });
+});
+
+describe('hiddenFilterCount', () => {
+    it('counts the set fields among place, years and archive', () => {
+        expect(
+            hiddenFilterCount(filtersOf({ year_from: 1850, year_to: 1900 })),
+        ).toBe(2);
+    });
+
+    it('is 0 for the defaults', () => {
+        expect(hiddenFilterCount(filtersOf())).toBe(0);
+    });
+
+    it('is 4 when all four are set', () => {
+        expect(
+            hiddenFilterCount(
+                filtersOf({
+                    place: 'parafia-1',
+                    year_from: 1850,
+                    year_to: 1900,
+                    archive: 'AP Poznań',
+                }),
+            ),
+        ).toBe(4);
+    });
+
+    it('does not count the kind', () => {
+        expect(hiddenFilterCount(filtersOf({ kind: 'akty' }))).toBe(0);
     });
 });
 

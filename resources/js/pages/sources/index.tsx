@@ -24,6 +24,7 @@ import { pluralPhrase } from '@/lib/plural';
 import { panelVisitOptions } from '@/lib/side-panel-url';
 import {
     filterSources,
+    hiddenFilterCount,
     isFiltering,
     parseYearInput,
     resolveFilters,
@@ -434,6 +435,7 @@ export default function Index({
                             archiveOptions={archiveOptions}
                             yearFrom={yearFrom}
                             yearTo={yearTo}
+                            activeCount={hiddenFilterCount(filters)}
                             showClear={
                                 isFiltering(filters) && !emptyStateClears
                             }
