@@ -52,7 +52,7 @@ export function LegacyEntryNumber({ source }: Props) {
                 <Dialog open={open} onOpenChange={setOpen}>
                     <DialogTrigger asChild>
                         <Button type="button" variant="outline" size="sm">
-                            Usuń
+                            Usuń stary numer
                         </Button>
                     </DialogTrigger>
                     <DialogContent>
@@ -73,7 +73,7 @@ export function LegacyEntryNumber({ source }: Props) {
                                 disabled={processing}
                                 onClick={handleConfirm}
                             >
-                                Usuń
+                                Usuń stary numer
                             </Button>
                         </DialogFooter>
                     </DialogContent>

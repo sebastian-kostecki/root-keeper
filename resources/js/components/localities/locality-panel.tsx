@@ -1,10 +1,11 @@
 import { Form } from '@inertiajs/react';
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import LocalityController from '@/actions/App/Http/Controllers/LocalityController';
 import { DeleteLocalityDialog } from '@/components/localities/delete-locality-dialog';
 import { MergeLocalityDialog } from '@/components/localities/merge-locality-dialog';
 import { DirtyReporter } from '@/components/dirty-reporter';
 import InputError from '@/components/input-error';
+import { ProcessingReporter } from '@/components/processing-reporter';
 import { SidePanel } from '@/components/side-panel';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -33,12 +34,69 @@ export function LocalityPanel({
     const formId = 'locality-form';
     const [mergeOpen, setMergeOpen] = useState(false);
     const [deleteOpen, setDeleteOpen] = useState(false);
+    const [isDirty, setIsDirty] = useState(false);
+    const [processing, setProcessing] = useState(false);
+
+    // Stable identity: DirtyReporter calls it again whenever its own identity changes.
+    const reportDirty = useCallback(
+        (next: boolean) => {
+            setIsDirty(next);
+            onDirtyChange(next);
+        },
+        [onDirtyChange],
+    );
+
+    const actionHintId =
+        isDirty && locality !== null ? 'panel-actions-hint' : undefined;
 
     return (
         <SidePanel
             title={locality?.name ?? 'Nowa miejscowość'}
             contentKey={locality?.id ?? 'new'}
             onRequestClose={onRequestClose}
+            actions={
+                locality !== null && (
+                    <>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            disabled={isDirty}
+                            aria-describedby={actionHintId}
+                            onClick={() => setMergeOpen(true)}
+                        >
+                            Scal z…
+                        </Button>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className="text-destructive-foreground hover:text-destructive-foreground"
+                            disabled={isDirty}
+                            aria-describedby={actionHintId}
+                            onClick={() => setDeleteOpen(true)}
+                        >
+                            Usuń miejscowość
+                        </Button>
+                    </>
+                )
+            }
+            footer={
+                <div className="flex flex-wrap items-center gap-3">
+                    <Button type="submit" form={formId} disabled={processing}>
+                        {processing && <Spinner />}
+                        Zapisz miejscowość
+                    </Button>
+                    {isDirty && locality !== null && (
+                        <p
+                            id="panel-actions-hint"
+                            className="text-muted-foreground text-sm"
+                        >
+                            Zapisz zmiany, aby scalić lub usunąć.
+                        </p>
+                    )}
+                </div>
+            }
         >
             <Form
                 key={locality?.id ?? 'new'}
@@ -50,11 +108,19 @@ export function LocalityPanel({
                 setDefaultsOnSuccess
                 className="space-y-4"
             >
-                {({ errors, processing, isDirty }) => (
+                {({
+                    errors,
+                    isDirty: formIsDirty,
+                    processing: formProcessing,
+                }) => (
                     <>
                         <DirtyReporter
-                            isDirty={isDirty}
-                            onDirtyChange={onDirtyChange}
+                            isDirty={formIsDirty}
+                            onDirtyChange={reportDirty}
+                        />
+                        <ProcessingReporter
+                            processing={formProcessing}
+                            onChange={setProcessing}
                         />
 
                         <div className="space-y-2">
@@ -84,54 +150,6 @@ export function LocalityPanel({
                             />
                             <InputError message={errors.description} />
                         </div>
-
-                        <div className="flex flex-wrap items-center gap-2">
-                            <Button type="submit" disabled={processing}>
-                                {processing && <Spinner />}
-                                Zapisz
-                            </Button>
-
-                            {locality !== null && (
-                                <>
-                                    <Button
-                                        type="button"
-                                        variant="outline"
-                                        disabled={isDirty}
-                                        aria-describedby={
-                                            isDirty
-                                                ? 'panel-actions-hint'
-                                                : undefined
-                                        }
-                                        onClick={() => setMergeOpen(true)}
-                                    >
-                                        Scal z…
-                                    </Button>
-                                    <Button
-                                        type="button"
-                                        variant="ghost"
-                                        className="text-destructive-foreground hover:text-destructive-foreground"
-                                        disabled={isDirty}
-                                        aria-describedby={
-                                            isDirty
-                                                ? 'panel-actions-hint'
-                                                : undefined
-                                        }
-                                        onClick={() => setDeleteOpen(true)}
-                                    >
-                                        Usuń
-                                    </Button>
-                                </>
-                            )}
-                        </div>
-
-                        {isDirty && (
-                            <p
-                                id="panel-actions-hint"
-                                className="text-muted-foreground text-sm"
-                            >
-                                Zapisz zmiany, aby scalić lub usunąć.
-                            </p>
-                        )}
                     </>
                 )}
             </Form>

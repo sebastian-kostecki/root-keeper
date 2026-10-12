@@ -41,7 +41,9 @@ test('places-merge-and-delete: a duplicate merged from its panel opens the kept 
         .getByRole('combobox', { name: 'Właściwa miejscowość' })
         .fill(keptName);
     await page.getByRole('option', { name: keptName, exact: true }).click();
-    await merge.getByRole('button', { name: 'Scal', exact: true }).click();
+    await merge
+        .getByRole('button', { name: 'Scal miejscowości', exact: true })
+        .click();
 
     // 3. The risk: the panel that opens is the kept locality's, and the
     // duplicate has left the register.

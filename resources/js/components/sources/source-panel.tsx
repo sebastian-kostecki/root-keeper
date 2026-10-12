@@ -6,6 +6,7 @@ import SourceController from '@/actions/App/Http/Controllers/SourceController';
 import { DirtyReporter } from '@/components/dirty-reporter';
 import InputError from '@/components/input-error';
 import { PersonPreviewLink } from '@/components/persons/person-preview-link';
+import { ProcessingReporter } from '@/components/processing-reporter';
 import { DeleteSourceDialog } from '@/components/sources/delete-source-dialog';
 import { LegacyEntryNumber } from '@/components/sources/legacy-entry-number';
 import { SourceDescriptionFields } from '@/components/sources/source-description-fields';
@@ -82,23 +83,6 @@ const formLayout =
     'flex flex-col gap-6 @xl:grid @xl:h-full @xl:grid-cols-[minmax(0,1fr)_20rem] @xl:grid-rows-[minmax(0,1fr)]';
 const formColumn = 'space-y-4 @xl:min-h-0 @xl:overflow-y-auto @xl:pr-1';
 
-/** Bridges the `processing` flag of the `<Form>` out to the footer button. */
-function ProcessingReporter({
-    processing,
-    onChange,
-}: {
-    processing: boolean;
-    onChange: (processing: boolean) => void;
-}) {
-    useEffect(() => {
-        onChange(processing);
-    }, [processing, onChange]);
-
-    useEffect(() => () => onChange(false), [onChange]);
-
-    return null;
-}
-
 function ErasedFieldList({ erased }: { erased: ErasedField[] }) {
     return (
         <ul className="list-disc space-y-1 pl-5 text-sm">
@@ -146,7 +130,7 @@ export function SourcePanel({
                                 size="sm"
                                 className="text-destructive-foreground hover:text-destructive-foreground"
                             >
-                                Usuń
+                                Usuń źródło
                             </Button>
                         }
                     />
@@ -155,7 +139,7 @@ export function SourcePanel({
             footer={
                 <Button type="submit" form={FORM_ID} disabled={processing}>
                     {processing && <Spinner />}
-                    Zapisz
+                    Zapisz źródło
                 </Button>
             }
         >
@@ -352,9 +336,9 @@ function NewSourceForm({
                                 onValueChange={setKind}
                             />
 
-                            <p className="text-sm font-medium">
+                            <h3 className="text-base font-medium">
                                 Opis (opcjonalnie)
-                            </p>
+                            </h3>
 
                             <SourceDescriptionFields
                                 kind={kind}
@@ -490,7 +474,7 @@ function EditSourceForm({
                                 }}
                             />
 
-                            <p className="text-sm font-medium">Opis</p>
+                            <h3 className="text-base font-medium">Opis</h3>
 
                             <SourceDescriptionFields
                                 kind={kind}
@@ -525,9 +509,9 @@ function EditSourceForm({
 
                             <Card>
                                 <CardContent className="space-y-2">
-                                    <p className="text-muted-foreground text-sm">
+                                    <h3 className="text-base font-medium">
                                         Potwierdza
-                                    </p>
+                                    </h3>
                                     {confirms.length === 0 ? (
                                         <p className="text-sm">
                                             To źródło nie potwierdza jeszcze

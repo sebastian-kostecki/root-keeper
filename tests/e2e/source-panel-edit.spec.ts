@@ -1,6 +1,6 @@
 // Risk: S-02 source-side-panel — a source opened from the list in the wide side
 // panel can be edited without losing work: closing the panel with unsaved
-// changes asks first and keeps the typed value on "Wróć do edycji", and "Zapisz"
+// changes asks first and keeps the typed value on "Wróć do edycji", and "Zapisz źródło"
 // persists the change (the panel title and the data after a fresh request show
 // it). Pest sees the props contract; only the browser sees the panel, the
 // guard dialog and the form together. Data through support/api.ts; the new
@@ -43,7 +43,7 @@ test('source-panel-edit: unsaved changes are guarded on close and a save persist
     await expect(panel.getByLabel('Nazwa')).toHaveValue(newName);
 
     // 3. Save: the panel is titled with the new name.
-    await panel.getByRole('button', { name: 'Zapisz' }).click();
+    await panel.getByRole('button', { name: 'Zapisz źródło' }).click();
     await expect(sourcePanel(page, newName)).toBeVisible();
 
     // 4. Oracle on data: a fresh request shows the saved name in the title and the field.

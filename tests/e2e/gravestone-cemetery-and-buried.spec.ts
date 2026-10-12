@@ -64,11 +64,11 @@ test('gravestone-cemetery-and-buried: a person added to a gravestone is buried a
     await picker.getByRole('button', { name: new RegExp(displayName) }).click();
     await expect(picker).toBeHidden();
     await expect(
-        panel.getByRole('button', { name: `Usuń ${displayName}` }),
+        panel.getByRole('button', { name: `Usuń z listy: ${displayName}` }),
     ).toBeVisible();
 
     // 3. Save: the list and the cemetery go with the form.
-    await panel.getByRole('button', { name: 'Zapisz' }).click();
+    await panel.getByRole('button', { name: 'Zapisz źródło' }).click();
     await expect(
         page.getByText('Nikt nie jest jeszcze na liście.'),
     ).toBeHidden();

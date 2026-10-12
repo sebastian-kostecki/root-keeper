@@ -48,6 +48,8 @@ const VIEW_FILES = [
     'components/side-panel.tsx',
     'components/persons/person-modal.tsx',
     'components/sources/source-panel.tsx',
+    'components/localities/locality-panel.tsx',
+    'components/parishes/parish-panel.tsx',
     'components/marriages/marriage-panel.tsx',
 ];
 

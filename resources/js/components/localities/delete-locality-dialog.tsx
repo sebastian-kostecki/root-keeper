@@ -101,7 +101,7 @@ export function DeleteLocalityDialog({
                             onClick={handleConfirm}
                         >
                             {processing && <Spinner />}
-                            Usuń
+                            Usuń miejscowość
                         </Button>
                     )}
                 </DialogFooter>

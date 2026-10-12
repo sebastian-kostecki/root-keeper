@@ -84,7 +84,7 @@ export function EntryNumberDialog({ eventId, source, trigger }: Props) {
                             </Button>
                         </DialogClose>
                         <Button type="submit" disabled={processing}>
-                            Zapisz
+                            Zapisz numer wpisu
                         </Button>
                     </DialogFooter>
                 </form>

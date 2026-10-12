@@ -116,7 +116,7 @@ export function MergeLocalityDialog({
                         onClick={handleConfirm}
                     >
                         {processing && <Spinner />}
-                        Scal
+                        Scal miejscowości
                     </Button>
                 </DialogFooter>
             </DialogContent>

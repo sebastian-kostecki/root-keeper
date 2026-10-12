@@ -115,7 +115,7 @@ export function MergeParishDialog({
                         onClick={handleConfirm}
                     >
                         {processing && <Spinner />}
-                        Scal
+                        Scal parafie
                     </Button>
                 </DialogFooter>
             </DialogContent>

@@ -317,36 +317,36 @@ Tytuły i warianty pustych stanów, etykieta przełącznika spisu, polskie nagł
 
 #### Automated
 
-- [x] 1.1 Zrzuty „przed” zapisane w `screenshots/before/` przed pierwszą edycją widoku
-- [x] 1.2 Format i lint przechodzą: `vendor/bin/sail npm run check`
-- [x] 1.3 Typy przechodzą: `vendor/bin/sail npm run types:check`
-- [x] 1.4 Testy JS (z `event-source-status.tsx` w `VIEW_FILES`) przechodzą: `vendor/bin/sail npm run test:js`
-- [x] 1.5 Spec potwierdzenia przechodzi: `npx playwright test tests/e2e/fact-source-scan.spec.ts`
+- [x] 1.1 Zrzuty „przed” zapisane w `screenshots/before/` przed pierwszą edycją widoku — a150e15
+- [x] 1.2 Format i lint przechodzą: `vendor/bin/sail npm run check` — a150e15
+- [x] 1.3 Typy przechodzą: `vendor/bin/sail npm run types:check` — a150e15
+- [x] 1.4 Testy JS (z `event-source-status.tsx` w `VIEW_FILES`) przechodzą: `vendor/bin/sail npm run test:js` — a150e15
+- [x] 1.5 Spec potwierdzenia przechodzi: `npx playwright test tests/e2e/fact-source-scan.spec.ts` — a150e15
 
 #### Manual
 
-- [x] 1.6 Chip potwierdzenia jest bursztynowy z ikoną dokumentu, „Bez źródła” szary z przerywanym kółkiem — w podglądzie osoby i panelu małżeństwa, w obu motywach
-- [x] 1.7 Czytnik ekranu (lub drzewo dostępności) czyta „Potwierdzone: …” przed rodzajami
-- [x] 1.8 Fokus klawiatury na karcie galerii ma pierścień z odstępem, odróżnialny od zaznaczenia otwartej karty
-- [x] 1.9 Miniatura bez podglądu i stopka karty są bursztynowe, czytelne w ciemnym motywie
+- [x] 1.6 Chip potwierdzenia jest bursztynowy z ikoną dokumentu, „Bez źródła” szary z przerywanym kółkiem — w podglądzie osoby i panelu małżeństwa, w obu motywach — a150e15
+- [x] 1.7 Czytnik ekranu (lub drzewo dostępności) czyta „Potwierdzone: …” przed rodzajami — a150e15
+- [x] 1.8 Fokus klawiatury na karcie galerii ma pierścień z odstępem, odróżnialny od zaznaczenia otwartej karty — a150e15
+- [x] 1.9 Miniatura bez podglądu i stopka karty są bursztynowe, czytelne w ciemnym motywie — a150e15
 
 ### Phase 2: Panele i etykiety
 
 #### Automated
 
-- [ ] 2.1 Format i lint przechodzą: `vendor/bin/sail npm run check`
-- [ ] 2.2 Typy przechodzą: `vendor/bin/sail npm run types:check`
-- [ ] 2.3 Testy JS (z panelami w `VIEW_FILES`) przechodzą: `vendor/bin/sail npm run test:js`
-- [ ] 2.4 Specy paneli przechodzą: `npx playwright test tests/e2e/places-merge-and-delete.spec.ts tests/e2e/places-page.spec.ts tests/e2e/source-panel-edit.spec.ts tests/e2e/source-panel-parish.spec.ts tests/e2e/gravestone-cemetery-and-buried.spec.ts`
-- [ ] 2.5 W zakresie nie zostało gołe „Zapisz”/„Usuń”/„Scal” jako etykieta przycisku
+- [x] 2.1 Format i lint przechodzą: `vendor/bin/sail npm run check`
+- [x] 2.2 Typy przechodzą: `vendor/bin/sail npm run types:check`
+- [x] 2.3 Testy JS (z panelami w `VIEW_FILES`) przechodzą: `vendor/bin/sail npm run test:js`
+- [x] 2.4 Specy paneli przechodzą: `npx playwright test tests/e2e/places-merge-and-delete.spec.ts tests/e2e/places-page.spec.ts tests/e2e/source-panel-edit.spec.ts tests/e2e/source-panel-parish.spec.ts tests/e2e/gravestone-cemetery-and-buried.spec.ts`
+- [x] 2.5 W zakresie nie zostało gołe „Zapisz”/„Usuń”/„Scal” jako etykieta przycisku
 
 #### Manual
 
-- [ ] 2.6 Panel miejscowości i parafii: „Zapisz …” w przypiętej stopce, „Scal z…” i „Usuń” w nagłówku; nowy rekord bez przycisków w nagłówku
-- [ ] 2.7 Po zmianie pola „Scal z…” i „Usuń” są wyłączone, podpowiedź w stopce; po zapisie wracają
-- [ ] 2.8 Strażnik niezapisanych zmian na `/places` nadal pyta przed zamknięciem panelu ze zmianami
-- [ ] 2.9 Okna scalania i usuwania otwierają się z nagłówka i działają jak wcześniej
-- [ ] 2.10 W panelu źródła „Opis” i „Potwierdza” są nagłówkami h3
+- [x] 2.6 Panel miejscowości i parafii: „Zapisz …” w przypiętej stopce, „Scal z…” i „Usuń” w nagłówku; nowy rekord bez przycisków w nagłówku
+- [x] 2.7 Po zmianie pola „Scal z…” i „Usuń” są wyłączone, podpowiedź w stopce; po zapisie wracają
+- [x] 2.8 Strażnik niezapisanych zmian na `/places` nadal pyta przed zamknięciem panelu ze zmianami
+- [x] 2.9 Okna scalania i usuwania otwierają się z nagłówka i działają jak wcześniej
+- [x] 2.10 W panelu źródła „Opis” i „Potwierdza” są nagłówkami h3
 
 ### Phase 3: Puste stany, /places, ustawienia i bramka
 

@@ -113,7 +113,7 @@ export function DeleteSourceDialog({ source, confirms, trigger }: Props) {
                         disabled={processing}
                         onClick={handleConfirm}
                     >
-                        Usuń
+                        Usuń źródło
                     </Button>
                 </DialogFooter>
             </DialogContent>

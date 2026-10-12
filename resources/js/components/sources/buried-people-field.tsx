@@ -87,7 +87,7 @@ export function BuriedPeopleField({
                                     type="button"
                                     variant="ghost"
                                     size="sm"
-                                    aria-label={`Usuń ${person.display_name}`}
+                                    aria-label={`Usuń z listy: ${person.display_name}`}
                                     onClick={() =>
                                         setPeople((current) =>
                                             current.filter(
@@ -97,7 +97,7 @@ export function BuriedPeopleField({
                                         )
                                     }
                                 >
-                                    Usuń
+                                    Usuń z listy
                                 </Button>
                             </li>
                         ))}

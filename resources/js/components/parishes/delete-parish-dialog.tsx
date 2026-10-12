@@ -100,7 +100,7 @@ export function DeleteParishDialog({
                             onClick={handleConfirm}
                         >
                             {processing && <Spinner />}
-                            Usuń
+                            Usuń parafię
                         </Button>
                     )}
                 </DialogFooter>

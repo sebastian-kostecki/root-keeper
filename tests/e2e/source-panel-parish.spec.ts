@@ -65,7 +65,7 @@ test('source-panel-parish: a parish added with a new seat keeps the typed act fi
 
     // 6. Archive, save the source.
     await panel.getByLabel('Archiwum').fill(archive);
-    await panel.getByRole('button', { name: 'Zapisz' }).click();
+    await panel.getByRole('button', { name: 'Zapisz źródło' }).click();
 
     // 7. Oracle on data: a fresh request of the saved act shows parish and archive.
     const saved = page.getByRole('dialog', { name: sourceName });
