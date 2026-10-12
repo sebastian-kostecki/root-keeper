@@ -1,11 +1,11 @@
-// Risk: S-10 sources-grid-with-filters — the filter fields of the /sources bar
-// write the address and the grid follows them: the place (a locality, which
-// takes the acts of its parish) and the year range narrow the cards, the
-// address rebuilds the same fields and cards after a reload, and "Wyczyść
+// Risk: S-10 sources-grid-with-filters — the filter pills of the /sources bar
+// write the address and the grid follows them: the place pill (a locality, which
+// takes the acts of its parish) and the years pill narrow the cards, the
+// address rebuilds the same pills and cards after a reload, and "Wyczyść
 // filtry" brings every card back. Vitest sees the filter rules; only the
-// browser sees the fields, the address and the grid together. Data through
-// support/api.ts; every record name carries the test suffix, so the fixture's
-// cleanup sweep removes the sources, the parish and the locality.
+// browser sees the pills, the popovers, the address and the grid together.
+// Data through support/api.ts; every record name carries the test suffix, so
+// the fixture's cleanup sweep removes the sources, the parish and the locality.
 import { expect, test } from './support/fixtures';
 import { createLocality, createParish, createSource } from './support/api';
 
@@ -58,45 +58,62 @@ test('sources-grid-with-filters: place and year range narrow the grid, survive a
         page.getByRole('link', { name: withoutParishName }),
     ).toBeVisible();
 
-    // 3. Place = the locality: the address takes it, the grid keeps only the parish's acts.
-    await page.getByLabel('Parafia / miejsce').click();
-    await page.getByRole('option', { name: localityName, exact: true }).click();
+    // 3. Place pill → the locality option: the address takes it, the grid keeps only the parish's acts.
+    await page.getByRole('button', { name: 'Miejsce', exact: true }).click();
+    await page
+        .getByRole('option', { name: new RegExp('^' + localityName) })
+        .click();
     await expect(page).toHaveURL(/[?&]place=miejscowosc-\d+/);
     await expect(
         page.getByRole('link', { name: withoutParishName }),
     ).toBeHidden();
 
-    // 4. Year range 1890–1895 (inclusive): only the 1892 act of the parish remains.
-    await page.getByLabel('Rok od').fill('1890');
-    await page.getByLabel('Rok do').fill('1895');
+    // 4. Years pill → the dialog "Lata": range 1890–1895 (inclusive), only the 1892 act of the parish remains.
+    await page.getByRole('button', { name: 'Lata', exact: true }).click();
+    const yearsDialog = page.getByRole('dialog', { name: 'Lata' });
+    await yearsDialog.getByLabel('Rok od').fill('1890');
+    await yearsDialog.getByLabel('Rok do').fill('1895');
     await expect(page).toHaveURL(/[?&]year_from=1890/);
     await expect(page).toHaveURL(/[?&]year_to=1895/);
     await expect(page.getByRole('link', { name: inRangeName })).toBeVisible();
     await expect(page.getByRole('link', { name: outOfRangeName })).toBeHidden();
     await expect(
-        page.getByText('Znaleziono: 1 źródło', { exact: true }),
+        page.getByRole('status').filter({ hasText: /^1 z \d+ źród(ła|eł)$/ }),
     ).toBeVisible();
 
-    // 5. Reload: the address rebuilds the fields and the same single card.
+    // 5. Reload: the address rebuilds the pills and the same single card.
     await page.reload();
-    await expect(page.getByLabel('Parafia / miejsce')).toHaveText(localityName);
-    await expect(page.getByLabel('Rok od')).toHaveValue('1890');
-    await expect(page.getByLabel('Rok do')).toHaveValue('1895');
+    await expect(
+        page.getByRole('button', { name: `Miejsce: ${localityName}` }),
+    ).toBeVisible();
+    await expect(
+        page.getByRole('button', { name: 'Lata: 1890 – 1895' }),
+    ).toBeVisible();
+    await page.getByRole('button', { name: 'Lata: 1890 – 1895' }).click();
+    await expect(
+        page.getByRole('dialog', { name: 'Lata' }).getByLabel('Rok od'),
+    ).toHaveValue('1890');
+    await expect(
+        page.getByRole('dialog', { name: 'Lata' }).getByLabel('Rok do'),
+    ).toHaveValue('1895');
     await expect(page.getByRole('link', { name: inRangeName })).toBeVisible();
     await expect(page.getByRole('link', { name: outOfRangeName })).toBeHidden();
     await expect(
         page.getByRole('link', { name: withoutParishName }),
     ).toBeHidden();
     await expect(
-        page.getByText('Znaleziono: 1 źródło', { exact: true }),
+        page.getByRole('status').filter({ hasText: /^1 z \d+ źród(ła|eł)$/ }),
     ).toBeVisible();
 
-    // 6. "Wyczyść filtry": the fields are empty again and all three cards are back.
+    // 6. "Wyczyść filtry": the pills are back to "Miejsce" and "Lata", and all three cards are back.
     await page.getByRole('button', { name: 'Wyczyść filtry' }).click();
     await expect(page).not.toHaveURL(/[?&](place|year_from|year_to)=/);
-    await expect(page.getByLabel('Rok od')).toHaveValue('');
-    await expect(page.getByLabel('Rok do')).toHaveValue('');
-    await expect(page.getByLabel('Parafia / miejsce')).toHaveText('Wszystkie');
+    await expect(
+        page.getByRole('button', { name: 'Miejsce', exact: true }),
+    ).toBeVisible();
+    await expect(
+        page.getByRole('button', { name: 'Lata', exact: true }),
+    ).toBeVisible();
     await expect(page.getByRole('link', { name: inRangeName })).toBeVisible();
     await expect(
         page.getByRole('link', { name: outOfRangeName }),

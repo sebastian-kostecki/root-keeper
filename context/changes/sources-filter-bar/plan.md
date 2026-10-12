@@ -384,30 +384,30 @@ Nie dotyczy. Brak zmian danych i adresów. Stare adresy z `place`, `year_*` i `a
 
 #### Automated
 
-- [x] 2.1 Testy Vitest (w tym `view-tokens.test.ts`) przechodzą: `vendor/bin/sail npm run test:js`
-- [x] 2.2 Typy przechodzą: `vendor/bin/sail npm run types:check`
-- [x] 2.3 Format i lint przechodzą: `vendor/bin/sail npm run check`
-- [x] 2.4 Build przechodzi: `vendor/bin/sail npm run build`
-- [x] 2.5 `package.json` ma jedną nową zależność `@radix-ui/react-popover` i nie ma `radix-ui`
+- [x] 2.1 Testy Vitest (w tym `view-tokens.test.ts`) przechodzą: `vendor/bin/sail npm run test:js` — 111aefe
+- [x] 2.2 Typy przechodzą: `vendor/bin/sail npm run types:check` — 111aefe
+- [x] 2.3 Format i lint przechodzą: `vendor/bin/sail npm run check` — 111aefe
+- [x] 2.4 Build przechodzi: `vendor/bin/sail npm run build` — 111aefe
+- [x] 2.5 `package.json` ma jedną nową zależność `@radix-ui/react-popover` i nie ma `radix-ui` — 111aefe
 
 #### Manual
 
-- [x] 2.6 Wybór miejsca, archiwum i wpisanie lat filtrują listę i zmieniają adres tak samo jak przed zmianą; przeładowanie odtwarza pigułki z wartościami
-- [x] 2.7 Liczby przy pozycjach zgadzają się z liczbą kart po wybraniu pozycji; pozycje z 0 są wyszarzone i pomijane strzałkami
-- [x] 2.8 Klawiatura: Tab do pigułki, Enter otwiera, strzałki/Enter wybierają, Escape zamyka i wraca na pigułkę; ✕ zostawia fokus na pigułce
-- [x] 2.9 Błąd zakresu lat w okienku działa jak dziś (komunikat po 300 ms, `aria-invalid` na obu polach)
-- [x] 2.10 Status pokazuje „N z M źródeł” przy filtrach i „M źródła/źródeł” bez nich; czytnik ogłasza go raz na pauzę w pisaniu
+- [x] 2.6 Wybór miejsca, archiwum i wpisanie lat filtrują listę i zmieniają adres tak samo jak przed zmianą; przeładowanie odtwarza pigułki z wartościami — 111aefe
+- [x] 2.7 Liczby przy pozycjach zgadzają się z liczbą kart po wybraniu pozycji; pozycje z 0 są wyszarzone i pomijane strzałkami — 111aefe
+- [x] 2.8 Klawiatura: Tab do pigułki, Enter otwiera, strzałki/Enter wybierają, Escape zamyka i wraca na pigułkę; ✕ zostawia fokus na pigułce — 111aefe
+- [x] 2.9 Błąd zakresu lat w okienku działa jak dziś (komunikat po 300 ms, `aria-invalid` na obu polach) — 111aefe
+- [x] 2.10 Status pokazuje „N z M źródeł” przy filtrach i „M źródła/źródeł” bez nich; czytnik ogłasza go raz na pauzę w pisaniu — 111aefe
 - [ ] 2.11 Zrzuty jasny/ciemny/telefon zapisane w `context/changes/sources-filter-bar/screenshots/` i zgodne z makietą
 
 ### Phase 3: E2E na role pigułek i okienek
 
 #### Automated
 
-- [ ] 3.1 Zmienione specy przechodzą: `npx playwright test tests/e2e/sources-grid-with-filters.spec.ts tests/e2e/sources-page-states.spec.ts tests/e2e/source-panel-edit.spec.ts`
-- [ ] 3.2 W `tests/e2e` nie zostało żadne `getByLabel('Parafia / miejsce')` ani `Znaleziono: 1 źródło`
-- [ ] 3.3 Cały pakiet E2E przechodzi: `npx playwright test`
+- [x] 3.1 Zmienione specy przechodzą: `npx playwright test tests/e2e/sources-grid-with-filters.spec.ts tests/e2e/sources-page-states.spec.ts tests/e2e/source-panel-edit.spec.ts`
+- [x] 3.2 W `tests/e2e` nie zostało żadne `getByLabel('Parafia / miejsce')` ani `Znaleziono: 1 źródło`
+- [x] 3.3 Cały pakiet E2E przechodzi: `npx playwright test`
 
 #### Manual
 
-- [ ] 3.4 Przegląd diffu speców: zmieniły się tylko lokatory, oczekiwany tekst statusu i komentarze; żadna asercja o kartach ani o adresie nie została osłabiona ani usunięta
-- [ ] 3.5 Weryfikacja przez celowe wprowadzenie błędu: chwilowe zepsucie `onPlaceChange` daje czerwony `sources-grid-with-filters`
+- [x] 3.4 Przegląd diffu speców: zmieniły się tylko lokatory, oczekiwany tekst statusu i komentarze; żadna asercja o kartach ani o adresie nie została osłabiona ani usunięta
+- [x] 3.5 Weryfikacja przez celowe wprowadzenie błędu: chwilowe zepsucie `onPlaceChange` daje czerwony `sources-grid-with-filters`

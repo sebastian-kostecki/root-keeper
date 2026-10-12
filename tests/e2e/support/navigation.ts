@@ -126,8 +126,9 @@ export async function openSourceFromList(
         .getByRole('searchbox', { name: 'Szukaj źródła' })
         .fill(sourceName);
     // The list is filtered after a debounce; a click before it lands is dropped.
+    // The filter bar's status reads "1 z M źródeł" while filtering (M = all sources, other tests may add more).
     await expect(
-        page.getByText('Znaleziono: 1 źródło', { exact: true }),
+        page.getByRole('status').filter({ hasText: /^1 z \d+ źród(ła|eł)$/ }),
     ).toBeVisible();
     await page.getByRole('link', { name: sourceName }).click();
     const panel = sourcePanel(page, sourceName);

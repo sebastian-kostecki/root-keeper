@@ -30,8 +30,11 @@ test('sources-page-states: a reversed year range explains itself beside both fie
     });
 
     await page.goto('/sources');
-    const yearFrom = page.getByLabel('Rok od');
-    const yearTo = page.getByLabel('Rok do');
+    // The year fields live in the "Lata" popover: open its pill first, then find the fields in that dialog.
+    await page.getByRole('button', { name: 'Lata', exact: true }).click();
+    const yearsDialog = page.getByRole('dialog', { name: 'Lata' });
+    const yearFrom = yearsDialog.getByLabel('Rok od');
+    const yearTo = yearsDialog.getByLabel('Rok do');
     await expect(yearFrom).toBeVisible();
 
     // 1. A reversed range (1900 > 1850) is named by the message, both fields are marked, the values stay.
@@ -106,15 +109,22 @@ test.describe('phone width', () => {
         await page.goto('/sources');
         await expect(page.getByRole('searchbox')).toBeVisible();
 
-        // 1. Collapsed by default: the year field is out of reach.
-        await expect(page.getByLabel('Rok od')).toBeHidden();
+        // 1. Collapsed by default: the "Lata" pill, and so its year fields, is out of reach.
+        await expect(
+            page.getByRole('button', { name: 'Lata', exact: true }),
+        ).toBeHidden();
 
-        // 2. "Filtry" opens the block with the year fields.
+        // 2. "Filtry" opens the block: the "Lata" pill shows; its popover holds the year fields.
         await page.getByRole('button', { name: 'Filtry', exact: true }).click();
-        await expect(page.getByLabel('Rok od')).toBeVisible();
+        await expect(
+            page.getByRole('button', { name: 'Lata', exact: true }),
+        ).toBeVisible();
+        await page.getByRole('button', { name: 'Lata', exact: true }).click();
+        const yearsDialog = page.getByRole('dialog', { name: 'Lata' });
+        await expect(yearsDialog.getByLabel('Rok od')).toBeVisible();
 
         // 3. A typed year is counted on the trigger once the visit applies it.
-        await page.getByLabel('Rok od').fill('1890');
+        await yearsDialog.getByLabel('Rok od').fill('1890');
         await expect(
             page.getByRole('button', { name: 'Filtry (1)', exact: true }),
         ).toBeVisible();
