@@ -334,35 +334,35 @@ Brak migracji. Nowe pola tylko dochodzą do propsa `sheet`, nic nie jest usuwane
 
 #### Automated
 
-- [x] 2.1 Strażnik tokenów i testy JS: `vendor/bin/sail npm run test:js`
-- [x] 2.2 Format i lint: `vendor/bin/sail npm run check`
-- [x] 2.3 Typy TS: `vendor/bin/sail npm run types:check`
-- [x] 2.4 Build: `vendor/bin/sail npm run build`
-- [x] 2.5 Brak `[1.5px]` i `[2px]` w widokach drzewa (`resources/js/components/tree`)
+- [x] 2.1 Strażnik tokenów i testy JS: `vendor/bin/sail npm run test:js` — 51b98df
+- [x] 2.2 Format i lint: `vendor/bin/sail npm run check` — 51b98df
+- [x] 2.3 Typy TS: `vendor/bin/sail npm run types:check` — 51b98df
+- [x] 2.4 Build: `vendor/bin/sail npm run build` — 51b98df
+- [x] 2.5 Brak `[1.5px]` i `[2px]` w widokach drzewa (`resources/js/components/tree`) — 51b98df
 
 #### Manual
 
-- [x] 2.6 Pigułka na `/tree` we wszystkich stanach, także osoba bez związków
-- [x] 2.7 Karta ze zdjęciem pokazuje listwę 4 px w kolorze płci pod zdjęciem
+- [x] 2.6 Pigułka na `/tree` we wszystkich stanach, także osoba bez związków — 51b98df
+- [x] 2.7 Karta ze zdjęciem pokazuje listwę 4 px w kolorze płci pod zdjęciem — 51b98df
 
 ### Phase 3: Linie arkusza
 
 #### Automated
 
-- [ ] 3.1 Strażnik tokenów z `family-sheet.tsx` i testy JS: `vendor/bin/sail npm run test:js`
-- [ ] 3.2 Format i lint: `vendor/bin/sail npm run check`
-- [ ] 3.3 Typy TS: `vendor/bin/sail npm run types:check`
-- [ ] 3.4 Build: `vendor/bin/sail npm run build`
-- [ ] 3.5 Testy arkusza nadal zielone: `vendor/bin/sail artisan test --compact tests/Feature/TreeTest.php`
-- [ ] 3.6 Brak linii jako wypełnień w arkuszu
-- [ ] 3.7 Zrzuty i werdykt istnieją
+- [x] 3.1 Strażnik tokenów z `family-sheet.tsx` i testy JS: `vendor/bin/sail npm run test:js`
+- [x] 3.2 Format i lint: `vendor/bin/sail npm run check`
+- [x] 3.3 Typy TS: `vendor/bin/sail npm run types:check`
+- [x] 3.4 Build: `vendor/bin/sail npm run build`
+- [x] 3.5 Testy arkusza nadal zielone: `vendor/bin/sail artisan test --compact tests/Feature/TreeTest.php`
+- [x] 3.6 Brak linii jako wypełnień w arkuszu
+- [x] 3.7 Zrzuty i werdykt istnieją
 
 #### Manual
 
-- [ ] 3.8 Linia przodków probanda 2 px w `primary`, rodzina partnera i dzieci w `tree-line`
-- [ ] 3.9 Ramię i pień do zaślepek przerywane i w `tree-line`
-- [ ] 3.10 Węzły rodziców: rok, „ok. …”, same obrączki, brak węzła dla pary bez ślubu i niepełnej
-- [ ] 3.11 Linia pary: ciągła, przerywana przy „bez ślubu”, połówka partnera przerywana przy braku partnera
-- [ ] 3.12 Belka dzieci przy 0, 1, 2, 3 i ≥4 dzieciach
-- [ ] 3.13 Linie dochodzą do środka krawędzi kart w obu motywach
-- [ ] 3.14 `verdict.md` i zrzuty jasny/ciemny zaakceptowane przez użytkownika
+- [x] 3.8 Linia przodków probanda 2 px w `primary`, rodzina partnera i dzieci w `tree-line`
+- [x] 3.9 Ramię i pień do zaślepek przerywane i w `tree-line`
+- [x] 3.10 Węzły rodziców: rok, „ok. …”, same obrączki, brak węzła dla pary bez ślubu i niepełnej
+- [x] 3.11 Linia pary: ciągła, przerywana przy „bez ślubu”, połówka partnera przerywana przy braku partnera
+- [x] 3.12 Belka dzieci przy 0, 1, 2, 3 i ≥4 dzieciach
+- [x] 3.13 Linie dochodzą do środka krawędzi kart w obu motywach
+- [x] 3.14 `verdict.md` i zrzuty jasny/ciemny zaakceptowane przez użytkownika

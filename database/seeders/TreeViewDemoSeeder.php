@@ -213,6 +213,12 @@ class TreeViewDemoSeeder extends Seeder
         $this->imageStates();
         $this->largeFamilies();
 
+        // Ancestor couples, appended last so the earlier event ids stay put: a dated marriage (year node), an
+        // approximate one ("ok. …") and an undated one (rings only). Anna's parents stay unmarried.
+        $this->marry($adam, $maria, ['year' => 1970]);
+        $this->marry($jozef, $helena, ['year' => 1945, 'is_approximate' => true]);
+        $this->marry($stanislaw, $zofia, []);
+
         (new SetTreeRootPerson)->handle($this->tree, $jan);
     }
 
@@ -569,7 +575,7 @@ class TreeViewDemoSeeder extends Seeder
     }
 
     /**
-     * @param  array{year?: int, month?: int, day?: int, locality_id?: int}  $date
+     * @param  array{year?: int, month?: int, day?: int, locality_id?: int, is_approximate?: bool}  $date
      */
     private function marry(Person $person, Person $spouse, array $date): Event
     {

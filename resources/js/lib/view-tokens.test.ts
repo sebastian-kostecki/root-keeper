@@ -14,8 +14,9 @@ const jsRoot = resolve(here, '..');
 
 /**
  * The files that render the /persons, /sources and /places list views, the /tree cards and panels,
- * relative to resources/js. Omitted on purpose: family-sheet.tsx and ancestor-chart.tsx, whose
- * geometry (tree lines) is computed at runtime and so cannot be a token.
+ * relative to resources/js. Omitted on purpose: ancestor-chart.tsx, whose geometry (tree lines) is
+ * computed at runtime and so cannot be a token. family-sheet.tsx is listed; its column geometry is
+ * the one exception (see EXCEPTIONS).
  */
 const VIEW_FILES = [
     'pages/persons/index.tsx',
@@ -37,6 +38,7 @@ const VIEW_FILES = [
     'components/localities/localities-table.tsx',
     'components/parishes/parishes-table.tsx',
     'components/tree/ancestor-card.tsx',
+    'components/tree/family-sheet.tsx',
     'components/tree/sheet-person-card.tsx',
     'components/tree/unknown-person-card.tsx',
     'components/tree/union-node.tsx',
@@ -108,6 +110,11 @@ const EXCEPTIONS: { file: string; token: string; reason: string }[] = [
         file: 'components/sources/source-panel.tsx',
         token: 'style={',
         reason: "szerokość paska postępu wysyłania pliku liczona w runtime (procent); odroczone: pasek przez zmienną CSS lub <progress> w osobnej zmianie (plan.md, What We're NOT Doing)",
+    },
+    {
+        file: 'components/tree/family-sheet.tsx',
+        token: 'style={',
+        reason: 'geometria kolumn i komórek arkusza liczona w runtime (rem z COLUMN_REM / liczby dzieci, położenie ramion łącznika); kolory i grubości linii idą przez tokeny',
     },
 ];
 

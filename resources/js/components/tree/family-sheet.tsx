@@ -1,7 +1,9 @@
 import type { RefObject } from 'react';
 import { useRef, useState } from 'react';
+import { clsx } from 'clsx';
 import { useOptionalSectionEditor } from '@/components/persons/section-editor';
 import { addTriggerLabels } from '@/components/tree/add-person-config';
+import { MarriageRingsIcon } from '@/components/tree/marriage-rings-icon';
 import { MarryCoupleDialog } from '@/components/tree/marry-couple-dialog';
 import { SheetPersonCard } from '@/components/tree/sheet-person-card';
 import { UnionNode } from '@/components/tree/union-node';
@@ -11,7 +13,11 @@ import { useSidePanelNavigation } from '@/hooks/use-side-panel-navigation';
 import { centreHints } from '@/lib/centre-hints';
 import { addValueFor } from '@/lib/add-person-target';
 import type { AddTarget } from '@/lib/add-person-target';
-import type { FamilySheet as FamilySheetData, SheetSlot } from '@/types';
+import type {
+    FamilySheet as FamilySheetData,
+    PairMarriage,
+    SheetSlot,
+} from '@/types';
 
 type BlockKey = 'focus' | 'partner';
 
@@ -36,6 +42,29 @@ const CELL_PADDING_STYLE = { paddingInline: `${COLUMN_GAP_REM / 2}rem` };
 
 /** Children cards are two columns wide up to this many children, one column beyond. */
 const WIDE_CHILDREN_MAX = 4;
+
+/** Line tokens of the ordinary tree line (1.5 px) and of the ancestor line (2 px, primary). */
+const LINE = {
+    colour: 'border-tree-line',
+    text: 'text-tree-line',
+    frame: 'border-line',
+    top: 'border-t-line',
+    right: 'border-r-line',
+    bottom: 'border-b-line',
+    left: 'border-l-line',
+};
+
+const LINEAGE = {
+    colour: 'border-primary',
+    text: 'text-primary',
+    frame: 'border-lineage',
+    top: 'border-t-lineage',
+    right: 'border-r-lineage',
+    bottom: 'border-b-lineage',
+    left: 'border-l-lineage',
+};
+
+type LineTone = typeof LINE;
 
 /**
  * The open add panel sheet-wide: its `add` value, and the ref that the trigger
@@ -120,38 +149,144 @@ function RowLabel({ children }: { children: string }) {
     return <h3 className="sr-only">{children}</h3>;
 }
 
-/** Bracket joining a pair of cards to the person below them. */
+/**
+ * One arm of a pair connector: from the centre of its card to the junction,
+ * with the outer corner rounded. A slot that is not a person is a placeholder,
+ * so its arm is dashed in the ordinary line.
+ */
+function Arm({
+    side,
+    slot,
+    lineage,
+    edgeRem,
+}: {
+    side: 'left' | 'right';
+    slot: SheetSlot;
+    lineage: boolean;
+    /** Distance from the connector's outer edge to the centre of the card, in rem. */
+    edgeRem: number;
+}) {
+    const isPerson = slot.kind === 'person';
+    const tone = isPerson && lineage ? LINEAGE : LINE;
+    const isLeft = side === 'left';
+    const edge = `${edgeRem}rem`;
+
+    return (
+        <div
+            aria-hidden="true"
+            className={clsx(
+                'absolute top-0 h-4',
+                isLeft ? 'rounded-bl-xl' : 'rounded-br-xl',
+                tone.colour,
+                tone.bottom,
+                isLeft ? tone.left : tone.right,
+                !isPerson && 'border-dashed',
+            )}
+            style={
+                isLeft
+                    ? { left: edge, right: '50%' }
+                    : { left: '50%', right: edge }
+            }
+        />
+    );
+}
+
+/**
+ * Bracket joining a pair of cards to the person below them: two arms meet at
+ * the junction in the middle, and a stem drops from it. The marriage node, or
+ * the "Połącz jako małżeństwo" action, sits on the junction.
+ */
 function PairConnector({
     slots,
     className,
     action,
+    lineage,
+    marriage,
+    cardCentreRem,
 }: {
     slots: SheetSlot[];
     className: string;
     action?: React.ReactNode;
+    /** The line leads to the focus person, so it is drawn as the ancestor line. */
+    lineage: boolean;
+    marriage: PairMarriage | null;
+    /** Distance from the connector's outer edge to the centre of its first card, in rem. */
+    cardCentreRem: number;
 }) {
     const visible = slots.some((slot) => slot.kind !== 'empty');
+    const stemSolid = slots.some((slot) => slot.kind === 'person');
+    const stemTone = stemSolid && lineage ? LINEAGE : LINE;
 
     return (
-        <div className={`relative ${action ? 'h-12' : 'h-6'} ${className}`}>
+        <div className={clsx('relative', action ? 'h-12' : 'h-11', className)}>
             {visible && (
                 <>
-                    <div
-                        className="border-tree-line absolute inset-x-[25%] top-0 h-3 rounded-b-md border-x border-b"
-                        aria-hidden="true"
+                    <Arm
+                        side="left"
+                        slot={slots[0] ?? { kind: 'empty' }}
+                        lineage={lineage}
+                        edgeRem={cardCentreRem}
+                    />
+                    <Arm
+                        side="right"
+                        slot={slots[1] ?? { kind: 'empty' }}
+                        lineage={lineage}
+                        edgeRem={cardCentreRem}
                     />
                     <div
-                        className="bg-tree-line absolute top-3 bottom-0 left-1/2 w-px"
+                        className={clsx(
+                            'absolute top-4 bottom-0 left-1/2',
+                            stemTone.colour,
+                            stemTone.left,
+                            !stemSolid && 'border-dashed',
+                        )}
                         aria-hidden="true"
                     />
                 </>
             )}
-            {action && (
-                <div className="bg-background absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-md">
-                    {action}
-                </div>
+            {marriage !== null ? (
+                <MarriageNode
+                    marriage={marriage}
+                    tone={lineage ? LINEAGE : LINE}
+                />
+            ) : (
+                action && (
+                    <div className="bg-background absolute top-4 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-md">
+                        {action}
+                    </div>
+                )
             )}
         </div>
+    );
+}
+
+/**
+ * The marriage node on the junction of a pair: the rings with the year, or the
+ * rings alone in a circle when the marriage has no year.
+ */
+function MarriageNode({
+    marriage,
+    tone,
+}: {
+    marriage: PairMarriage;
+    tone: LineTone;
+}) {
+    return (
+        <span
+            aria-hidden="true"
+            className={clsx(
+                'bg-background absolute top-4 left-1/2 flex -translate-x-1/2 -translate-y-1/2 items-center justify-center gap-1 rounded-full',
+                tone.frame,
+                marriage.year ? 'h-5.5 px-2' : 'size-6',
+            )}
+        >
+            <MarriageRingsIcon className={tone.text} />
+            {marriage.year && (
+                <span className="text-foreground text-xs font-medium tabular-nums">
+                    {marriage.year}
+                </span>
+            )}
+        </span>
     );
 }
 
@@ -214,14 +349,101 @@ function childrenRowLayout(count: number): ChildrenRowLayout {
     };
 }
 
-/** Empty-state of the children row: a note and the add-child slot under the couple. */
+/** Empty-state of the children row: the add-child slot under the couple, with the note for screen readers only. */
 function NoChildren({ addChild }: { addChild: React.ReactNode }) {
     return (
         <>
-            <p className="text-muted-foreground col-span-8 text-center text-sm">
-                Brak dzieci w tym związku.
-            </p>
+            <p className="sr-only">Brak dzieci w tym związku.</p>
             <div className="col-span-2 col-start-4">{addChild}</div>
+        </>
+    );
+}
+
+/**
+ * The branch of one child cell under the children bar. The first of two or more
+ * children curves from the centre to the right; the last one curves from the
+ * left to the centre when the add-child slot stands under the row. The others
+ * run the full width of the bar. A single child takes the drop and the right
+ * half of the bar, which reaches the slot standing beside it.
+ */
+function ChildBranch({
+    index,
+    count,
+    slotBeside,
+}: {
+    index: number;
+    count: number;
+    slotBeside: boolean;
+}) {
+    if (count === 1) {
+        return (
+            <>
+                <div
+                    className={clsx(
+                        'absolute top-0 left-1/2 h-4',
+                        LINE.colour,
+                        LINE.left,
+                    )}
+                    aria-hidden="true"
+                />
+                <div
+                    className={clsx(
+                        'absolute top-0 right-0 left-1/2',
+                        LINE.colour,
+                        LINE.top,
+                    )}
+                    aria-hidden="true"
+                />
+            </>
+        );
+    }
+
+    if (index === 0) {
+        return (
+            <div
+                className={clsx(
+                    'absolute top-0 right-0 left-1/2 h-4 rounded-tl-xl',
+                    LINE.colour,
+                    LINE.top,
+                    LINE.left,
+                )}
+                aria-hidden="true"
+            />
+        );
+    }
+
+    if (index === count - 1 && !slotBeside) {
+        return (
+            <div
+                className={clsx(
+                    'absolute top-0 right-1/2 left-0 h-4 rounded-tr-xl',
+                    LINE.colour,
+                    LINE.top,
+                    LINE.right,
+                )}
+                aria-hidden="true"
+            />
+        );
+    }
+
+    return (
+        <>
+            <div
+                className={clsx(
+                    'absolute inset-x-0 top-0',
+                    LINE.colour,
+                    LINE.top,
+                )}
+                aria-hidden="true"
+            />
+            <div
+                className={clsx(
+                    'absolute top-0 left-1/2 h-4',
+                    LINE.colour,
+                    LINE.left,
+                )}
+                aria-hidden="true"
+            />
         </>
     );
 }
@@ -252,34 +474,32 @@ function ChildrenRow({
                 {children.map((child, i) => (
                     <div
                         key={child.id}
-                        className="relative pt-3 pb-2"
+                        className="relative pt-4 pb-2"
                         style={cellStyle}
                     >
-                        <div
-                            className="bg-tree-line absolute top-0 left-1/2 h-3 w-px"
-                            aria-hidden="true"
+                        <ChildBranch
+                            index={i}
+                            count={children.length}
+                            slotBeside={layout.slotBeside}
                         />
-                        {i > 0 && (
-                            <div
-                                className="bg-tree-line absolute top-0 left-0 h-px w-1/2"
-                                aria-hidden="true"
-                            />
-                        )}
-                        {i < children.length - 1 && (
-                            <div
-                                className="bg-tree-line absolute top-0 right-0 h-px w-1/2"
-                                aria-hidden="true"
-                            />
-                        )}
                         <SheetPersonCard person={child} />
                     </div>
                 ))}
             </div>
             {layout.slotBeside ? (
                 <div
-                    className="absolute top-0 left-full pt-3 pb-2"
+                    className="absolute top-0 left-full pt-4 pb-2"
                     style={slotStyle}
                 >
+                    <div
+                        className={clsx(
+                            'absolute top-0 right-1/2 left-0 h-4 rounded-tr-xl border-dashed',
+                            LINE.colour,
+                            LINE.top,
+                            LINE.right,
+                        )}
+                        aria-hidden="true"
+                    />
                     {addChild}
                 </div>
             ) : (
@@ -316,6 +536,12 @@ export function FamilySheet({
             />
         ) : null;
 
+    /** A pair that is known and unmarried is dashed; a partner who is not a person is dashed too. */
+    const unmarriedPair =
+        sheet.partner.kind === 'person' && selectedUnion?.is_marriage === false;
+    const partnerLineDashed = unmarriedPair || sheet.partner.kind !== 'person';
+    const stemDashed = sheet.children.length === 0;
+
     const focusCoupleRef = useRef<HTMLDivElement>(null);
     const partnerCoupleRef = useRef<HTMLDivElement>(null);
     const [coupleRefs] = useState(() => [focusCoupleRef, partnerCoupleRef]);
@@ -348,7 +574,7 @@ export function FamilySheet({
                     paddingRight: `calc(0.5rem + ${slotOverflowRem}rem)`,
                 }}
             >
-                <div className="grid gap-y-1" style={GRID_STYLE}>
+                <div className="grid" style={GRID_STYLE}>
                     <RowLabel>Dziadkowie</RowLabel>
                     {order.map((block) =>
                         sheet.grandparents[block].map((slot, i) => (
@@ -374,6 +600,13 @@ export function FamilySheet({
                                     start + 2,
                                 )}
                                 className="col-span-2"
+                                lineage={block === 'focus'}
+                                marriage={
+                                    sheet.grandparent_marriages[block][
+                                        start / 2
+                                    ]
+                                }
+                                cardCentreRem={COLUMN_REM / 2}
                             />
                         )),
                     )}
@@ -400,6 +633,9 @@ export function FamilySheet({
                             slots={sheet.parents[block]}
                             className="col-span-4"
                             action={parentPairAction(sheet, block)}
+                            lineage={block === 'focus'}
+                            marriage={sheet.parent_marriages[block]}
+                            cardCentreRem={COLUMN_REM + COLUMN_GAP_REM / 2}
                         />
                     ))}
 
@@ -408,12 +644,30 @@ export function FamilySheet({
                         className="relative col-span-8 grid"
                         style={GRID_STYLE}
                     >
-                        {sheet.partner.kind !== 'empty' && (
+                        {order.map((block, index) => (
                             <div
-                                className="bg-tree-line absolute top-1/2 right-[25%] left-[25%] h-px"
+                                key={`${block}-couple-line`}
+                                className={clsx(
+                                    'border-t-line border-tree-line absolute top-1/2',
+                                    index === 0
+                                        ? 'right-1/2 left-1/4'
+                                        : 'right-1/4 left-1/2',
+                                    (block === 'focus'
+                                        ? unmarriedPair
+                                        : partnerLineDashed) && 'border-dashed',
+                                )}
                                 aria-hidden="true"
                             />
-                        )}
+                        ))}
+                        <div
+                            className={clsx(
+                                'absolute top-1/2 bottom-0 left-1/2',
+                                LINE.colour,
+                                LINE.left,
+                                stemDashed && 'border-dashed',
+                            )}
+                            aria-hidden="true"
+                        />
                         {order.map((block) => (
                             <div
                                 key={`${block}-couple`}
@@ -467,7 +721,12 @@ export function FamilySheet({
                         className={`relative col-span-8 ${marryCentreCouple ? 'h-12' : 'h-7.5'}`}
                     >
                         <div
-                            className="bg-tree-line absolute inset-y-0 left-1/2 w-px"
+                            className={clsx(
+                                'absolute inset-y-0 left-1/2',
+                                LINE.colour,
+                                LINE.left,
+                                stemDashed && 'border-dashed',
+                            )}
                             aria-hidden="true"
                         />
                         {marryCentreCouple && (
