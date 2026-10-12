@@ -15,6 +15,7 @@ import type {
 const focus: SheetPerson = {
     id: 1,
     display_name: 'Jan Kowalski',
+    card_name: 'Jan Kowalski',
     gender: 'male',
     lifespan: null,
     is_deceased: false,

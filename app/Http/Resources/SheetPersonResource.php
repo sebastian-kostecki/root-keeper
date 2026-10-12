@@ -21,6 +21,7 @@ class SheetPersonResource extends JsonResource
      * @return array{
      *     id: int,
      *     display_name: string,
+     *     card_name: string,
      *     gender: 'male'|'female'|null,
      *     lifespan: string|null,
      *     is_deceased: bool,
@@ -42,6 +43,7 @@ class SheetPersonResource extends JsonResource
         return [
             'id' => $this->id,
             'display_name' => $this->displayName(),
+            'card_name' => $this->cardName(),
             'gender' => $this->gender?->value,
             'lifespan' => $lifespan,
             'is_deceased' => $death !== null,

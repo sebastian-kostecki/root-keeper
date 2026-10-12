@@ -60,7 +60,7 @@ function PhotoStrip({ person }: { person: SheetPerson }) {
                     aria-hidden="true"
                     className="text-background absolute inset-0 flex items-center justify-center text-lg font-semibold"
                 >
-                    {getInitials(person.display_name)}
+                    {getInitials(person.card_name)}
                 </span>
             )}
         </span>
@@ -99,7 +99,7 @@ export function CardBody({
                     {person.gender === 'female' && (
                         <span className="sr-only">kobieta</span>
                     )}
-                    {person.display_name}
+                    {person.card_name}
                 </span>
                 {person.lifespan && (
                     <span className="text-tree-meta mt-1 block text-sm">

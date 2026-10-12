@@ -155,4 +155,14 @@ class Person extends Model
 
         return $showsMaidenName ? $name.' z d. '.$this->maiden_name : $name;
     }
+
+    /**
+     * The name printed on a tree card: the first name and the birth surname.
+     */
+    public function cardName(): string
+    {
+        $surname = filled($this->maiden_name) ? $this->maiden_name : ($this->last_name ?? 'NN');
+
+        return trim(($this->first_name ?? 'NN').' '.$surname);
+    }
 }

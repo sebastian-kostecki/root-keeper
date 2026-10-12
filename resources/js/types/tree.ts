@@ -3,6 +3,7 @@ import type { PersonAge } from './person';
 export type SheetPerson = {
     id: number;
     display_name: string;
+    card_name: string;
     gender: 'male' | 'female' | null;
     lifespan: string | null;
     is_deceased: boolean;
