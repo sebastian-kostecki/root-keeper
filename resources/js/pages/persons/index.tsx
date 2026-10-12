@@ -218,7 +218,7 @@ export default function Index({
                     <Heading
                         variant="page"
                         title="Osoby"
-                        description="Osoby zapisane w Twoim drzewie genealogicznym"
+                        description="Osoby zapisane w drzewie genealogicznym"
                     />
 
                     {createLink}

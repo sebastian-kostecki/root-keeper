@@ -358,7 +358,7 @@ export default function Index({
                     <Heading
                         variant="page"
                         title="Miejsca"
-                        description="Spis miejscowości i parafii Twojego drzewa"
+                        description="Miejscowości i parafie zapisane w drzewie genealogicznym"
                     />
 
                     {addButton}

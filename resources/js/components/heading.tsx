@@ -18,7 +18,7 @@ export default function Heading({
             }
         >
             {variant === 'page' ? (
-                <h1 className="text-xl font-semibold tracking-tight">
+                <h1 className="font-display text-xl font-semibold tracking-tight">
                     {title}
                 </h1>
             ) : (

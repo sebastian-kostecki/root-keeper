@@ -346,32 +346,32 @@ Rozszerzenie `view-tokens.test.ts` o drzewo i panele, pełne bramki z sekcji 4 i
 
 #### Automated
 
-- [x] 2.1 `grep -rn "ring-ring/50" resources/js` nic nie zwraca
-- [x] 2.2 `grep -rnE "text-destructive([^-]|$)" resources/js` nic nie zwraca
-- [x] 2.3 `vendor/bin/sail npm run check` przechodzi
-- [x] 2.4 `vendor/bin/sail npm run types:check` przechodzi
-- [x] 2.5 `vendor/bin/sail npm run test:js` przechodzi
+- [x] 2.1 `grep -rn "ring-ring/50" resources/js` nic nie zwraca — 7c399be
+- [x] 2.2 `grep -rnE "text-destructive([^-]|$)" resources/js` nic nie zwraca — 7c399be
+- [x] 2.3 `vendor/bin/sail npm run check` przechodzi — 7c399be
+- [x] 2.4 `vendor/bin/sail npm run types:check` przechodzi — 7c399be
+- [x] 2.5 `vendor/bin/sail npm run test:js` przechodzi — 7c399be
 
 #### Manual
 
-- [x] 2.6 Tab po `/persons`, panelu osoby i menu: pierścień pełny, 3 px, w jasnym i ciemnym motywie
-- [x] 2.7 Przycisk „Usuń” w dialogu usuwania ma biały tekst na czerwieni w obu motywach; tekst błędu w ciemnym motywie jest jasnoczerwony
-- [x] 2.8 Toast po zapisie pokazuje zieloną ikonę
+- [x] 2.6 Tab po `/persons`, panelu osoby i menu: pierścień pełny, 3 px, w jasnym i ciemnym motywie — 7c399be
+- [x] 2.7 Przycisk „Usuń” w dialogu usuwania ma biały tekst na czerwieni w obu motywach; tekst błędu w ciemnym motywie jest jasnoczerwony — 7c399be
+- [x] 2.8 Toast po zapisie pokazuje zieloną ikonę — 7c399be
 
 ### Phase 3: Typografia i teksty
 
 #### Automated
 
-- [ ] 3.1 `grep -rn "Twoim\|Twojego\|(data nieznana)" resources/js` i `grep -rn "Password updated\|Profile updated" app lang` nic nie zwracają
-- [ ] 3.2 `vendor/bin/sail npm run test:js` przechodzi (w tym `persons-index.test.ts`)
-- [ ] 3.3 `vendor/bin/sail artisan test --compact tests/Feature/Settings` przechodzi
-- [ ] 3.4 `vendor/bin/sail bin pint --dirty --format agent` bez zmian do zrobienia
-- [ ] 3.5 `vendor/bin/sail npm run check` i `vendor/bin/sail npm run types:check` przechodzą
+- [x] 3.1 `grep -rn "Twoim\|Twojego\|(data nieznana)" resources/js` i `grep -rn "Password updated\|Profile updated" app lang` nic nie zwracają
+- [x] 3.2 `vendor/bin/sail npm run test:js` przechodzi (w tym `persons-index.test.ts`)
+- [x] 3.3 `vendor/bin/sail artisan test --compact tests/Feature/Settings` przechodzi
+- [x] 3.4 `vendor/bin/sail bin pint --dirty --format agent` bez zmian do zrobienia
+- [x] 3.5 `vendor/bin/sail npm run check` i `vendor/bin/sail npm run types:check` przechodzą
 
 #### Manual
 
-- [ ] 3.6 Tytuły stron list, panelu, okna, pustego stanu, nazwa w logo i imię na karcie drzewa są szeryfowe; przyciski, etykiety i tabele zostają bezszeryfowe
-- [ ] 3.7 Zmiana hasła i profilu pokazuje polski toast
+- [x] 3.6 Tytuły stron list, panelu, okna, pustego stanu, nazwa w logo i imię na karcie drzewa są szeryfowe; przyciski, etykiety i tabele zostają bezszeryfowe
+- [x] 3.7 Zmiana hasła i profilu pokazuje polski toast
 
 ### Phase 4: Strażnik i bramka wizualna
 

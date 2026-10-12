@@ -394,7 +394,7 @@ export default function Index({
                     <Heading
                         variant="page"
                         title="Źródła"
-                        description="Akty, zdjęcia nagrobków i inne dokumenty Twojego drzewa"
+                        description="Akty, zdjęcia nagrobków i inne dokumenty zapisane w drzewie genealogicznym"
                     />
 
                     {addButton}

@@ -256,10 +256,10 @@ describe('formatEventMeta', () => {
 
     it('marks a death without a date', () => {
         expect(formatEventMeta('zm.', { date: null, place: null })).toBe(
-            'zm. (data nieznana)',
+            'zm. data nieznana',
         );
         expect(formatEventMeta('zm.', { date: null, place: 'Tarnów' })).toBe(
-            'zm. (data nieznana), Tarnów',
+            'zm. data nieznana, Tarnów',
         );
     });
 

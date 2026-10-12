@@ -218,7 +218,7 @@ export function formatEventMeta(
         return null;
     }
 
-    const date = event.date || (prefix === 'zm.' ? '(data nieznana)' : null);
+    const date = event.date || (prefix === 'zm.' ? 'data nieznana' : null);
     const label = [date, event.place].filter(Boolean).join(', ');
 
     return label === '' ? null : `${prefix} ${label}`;

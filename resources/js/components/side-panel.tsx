@@ -221,7 +221,7 @@ function SidePanelView({
                         id={titleId}
                         ref={headingRef}
                         tabIndex={-1}
-                        className="truncate text-lg font-semibold outline-hidden"
+                        className="font-display truncate text-lg font-semibold outline-hidden"
                     >
                         {title}
                     </h2>

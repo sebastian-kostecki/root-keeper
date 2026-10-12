@@ -20,7 +20,7 @@ export function EmptyState({
                 {icon}
             </span>
             <div className="max-w-full space-y-1">
-                <h2 className="font-semibold">{title}</h2>
+                <h2 className="font-display font-semibold">{title}</h2>
                 <p className="text-muted-foreground text-sm break-words">
                     {description}
                 </p>
