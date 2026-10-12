@@ -23,6 +23,8 @@ import type {
     PersonsView,
 } from '@/lib/persons-index';
 import { panelVisitOptions } from '@/lib/side-panel-url';
+import { failureHandlers } from '@/lib/visit-failure';
+import type { VisitError } from '@/lib/visit-failure';
 import { index as personsIndex } from '@/routes/persons';
 import type { BreadcrumbItem, Gender, Person, Religion } from '@/types';
 
@@ -44,29 +46,6 @@ const breadcrumbs: BreadcrumbItem[] = [
 const SEARCH_ERROR =
     'Nie udało się wyszukać — pokazane wyniki mogą być nieaktualne.';
 const VIEW_ERROR = 'Nie udało się zmienić widoku.';
-
-type VisitError = {
-    message: string;
-    retry: () => void;
-};
-
-/** A failed visit keeps the user on the page (no error page) and offers a retry; `isCurrent` lets only the latest visit report. */
-function failureHandlers(
-    message: string,
-    retry: () => void,
-    setVisitError: (error: VisitError | null) => void,
-    isCurrent: () => boolean = () => true,
-) {
-    const fail = () => {
-        if (isCurrent()) {
-            setVisitError({ message, retry });
-        }
-
-        return false;
-    };
-
-    return { onHttpException: fail, onNetworkError: fail };
-}
 
 export default function Index({
     persons,

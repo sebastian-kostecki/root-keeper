@@ -70,31 +70,49 @@ export function SourcesFilteredNoResults({
     );
 }
 
-/** The chosen kind has no match while other kinds have. */
+/**
+ * The chosen kind has no match while other kinds have. With a place, year or archive filter active the
+ * kind may be empty only because of that filter, so the text says so and „Wyczyść filtry” is offered too.
+ */
 export function SourcesEmptyKind({
     kind,
     query,
+    hasOtherFilters,
     onShowAll,
+    onClearFilters,
 }: {
     kind: Exclude<SourcesKindFilter, 'wszystkie'>;
     query: string;
+    hasOtherFilters: boolean;
     onShowAll: () => void;
+    onClearFilters: () => void;
 }) {
     const noun = kindNouns[kind];
+
+    const description = hasOtherFilters
+        ? query === ''
+            ? `Wśród ${noun} nic nie pasuje do wybranych filtrów.`
+            : `Wśród ${noun} nic nie pasuje do „${query}” i wybranych filtrów.`
+        : query === ''
+          ? `Nie masz jeszcze ${noun}.`
+          : `Wśród ${noun} nic nie pasuje do „${query}”.`;
 
     return (
         <EmptyState
             icon={<SearchXIcon />}
             title="Brak wyników"
-            description={
-                query === ''
-                    ? `Nie masz jeszcze ${noun}.`
-                    : `Wśród ${noun} nic nie pasuje do „${query}”.`
-            }
+            description={description}
             action={
-                <Button variant="outline" onClick={onShowAll}>
-                    Pokaż wszystkie rodzaje
-                </Button>
+                <div className="flex flex-wrap justify-center gap-3">
+                    <Button variant="outline" onClick={onShowAll}>
+                        Pokaż wszystkie rodzaje
+                    </Button>
+                    {hasOtherFilters && (
+                        <Button variant="outline" onClick={onClearFilters}>
+                            Wyczyść filtry
+                        </Button>
+                    )}
+                </div>
             }
         />
     );

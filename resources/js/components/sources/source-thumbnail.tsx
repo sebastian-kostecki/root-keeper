@@ -1,4 +1,5 @@
 import { ImageOff } from 'lucide-react';
+import { useState } from 'react';
 import SourceController from '@/actions/App/Http/Controllers/SourceController';
 import { cn } from '@/lib/utils';
 import type { LinkedSource } from '@/types';
@@ -17,6 +18,10 @@ export function SourceThumbnail({
     iconClassName = 'size-10',
     decorative = false,
 }: Props) {
+    /** The source whose image failed to load; a failed image shows the same icon as a source without one. */
+    const [failedSourceId, setFailedSourceId] = useState<number | null>(null);
+    const showImage = source.has_thumbnail && failedSourceId !== source.id;
+
     return (
         <div
             className={cn(
@@ -24,12 +29,13 @@ export function SourceThumbnail({
                 className,
             )}
         >
-            {source.has_thumbnail ? (
+            {showImage ? (
                 <img
                     src={SourceController.thumbnail.url(source.id)}
                     alt={decorative ? '' : source.display_name}
                     loading="lazy"
                     className="h-full w-full object-cover"
+                    onError={() => setFailedSourceId(source.id)}
                 />
             ) : (
                 <ImageOff

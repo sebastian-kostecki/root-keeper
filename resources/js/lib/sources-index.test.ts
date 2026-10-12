@@ -9,6 +9,7 @@ import {
     resolveFilters,
     sortSources,
     withSourcesQuery,
+    yearFieldsError,
 } from './sources-index';
 import type { SourcesFilters } from './sources-index';
 
@@ -222,6 +223,54 @@ describe('isFiltering', () => {
         expect(isFiltering(filtersOf({ place: 'parafia-1' }))).toBe(true);
         expect(isFiltering(filtersOf({ year_to: 1900 }))).toBe(true);
         expect(isFiltering(filtersOf({ archive: 'AP' }))).toBe(true);
+    });
+});
+
+describe('yearFieldsError', () => {
+    const rangeMessage = '„Rok od” nie może być późniejszy niż „Rok do”.';
+    const yearMessage = 'Rok musi być liczbą od 1 do 9999.';
+
+    it('flags a year outside 1 to 9999 on its own field', () => {
+        expect(yearFieldsError('12345', '')).toEqual({
+            from: true,
+            to: false,
+            message: yearMessage,
+        });
+        expect(yearFieldsError('0', '')).toEqual({
+            from: true,
+            to: false,
+            message: yearMessage,
+        });
+        expect(yearFieldsError('', '-5')).toEqual({
+            from: false,
+            to: true,
+            message: yearMessage,
+        });
+    });
+
+    it('flags both fields when the range is reversed', () => {
+        expect(yearFieldsError('1900', '1850')).toEqual({
+            from: true,
+            to: true,
+            message: rangeMessage,
+        });
+    });
+
+    it('accepts equal years and a valid range', () => {
+        expect(yearFieldsError('1850', '1850')).toBeNull();
+        expect(yearFieldsError('1850', '1900')).toBeNull();
+    });
+
+    it('treats blank fields as no error', () => {
+        expect(yearFieldsError('', '')).toBeNull();
+    });
+
+    it('reports a field that does not parse before a reversed range', () => {
+        expect(yearFieldsError('12345', '1850')).toEqual({
+            from: true,
+            to: false,
+            message: yearMessage,
+        });
     });
 });
 

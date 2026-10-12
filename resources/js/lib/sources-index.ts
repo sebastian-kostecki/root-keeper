@@ -177,6 +177,42 @@ export function parseYearInput(value: string): number | null {
     return year >= 1 && year <= 9999 ? year : null;
 }
 
+export type YearFieldsError = { from: boolean; to: boolean; message: string };
+
+/**
+ * Which year field is wrong and why, by the same rules as `parseYearInput`. A blank field is not an error;
+ * a field that does not parse wins over a reversed range.
+ */
+export function yearFieldsError(
+    fromText: string,
+    toText: string,
+): YearFieldsError | null {
+    const fromBlank = fromText.trim() === '';
+    const toBlank = toText.trim() === '';
+    const fromYear = parseYearInput(fromText);
+    const toYear = parseYearInput(toText);
+    const fromInvalid = !fromBlank && fromYear === null;
+    const toInvalid = !toBlank && toYear === null;
+
+    if (fromInvalid || toInvalid) {
+        return {
+            from: fromInvalid,
+            to: toInvalid,
+            message: 'Rok musi być liczbą od 1 do 9999.',
+        };
+    }
+
+    if (fromYear !== null && toYear !== null && fromYear > toYear) {
+        return {
+            from: true,
+            to: true,
+            message: '„Rok od” nie może być późniejszy niż „Rok do”.',
+        };
+    }
+
+    return null;
+}
+
 /** Whether anything beyond the view and the sort differs from the defaults. */
 export function isFiltering(filters: SourcesFilters): boolean {
     return (

@@ -489,35 +489,35 @@ Scenariusze:
 
 #### Automated
 
-- [x] 2.1 Testy JS przechodzą (`hiddenFilterCount`)
-- [x] 2.2 Typy, lint i build przechodzą
-- [x] 2.3 Specy filtrów (desktop) przechodzą bez zmian w lokatorach
+- [x] 2.1 Testy JS przechodzą (`hiddenFilterCount`) — 48d99ce
+- [x] 2.2 Typy, lint i build przechodzą — 48d99ce
+- [x] 2.3 Specy filtrów (desktop) przechodzą bez zmian w lokatorach — 48d99ce
 
 #### Manual
 
-- [x] 2.4 375 px bez filtrów: pierwsza karta na pierwszym ekranie
-- [x] 2.5 375 px: rozwinięcie, „Filtry (2)” dla zakresu lat, „Wyczyść filtry” w tym samym wierszu, zwinięcie zachowuje licznik
-- [x] 2.6 375 px: wejście z `place=…` → blok zwinięty, „Filtry (1)”
-- [x] 2.7 1440 px i 640 px: pasek jak `before/01`, bez przycisku „Filtry”
-- [x] 2.8 Klawiatura na 375 px: Tab → „Filtry” → Enter → Tab trafia w „Parafia / miejsce”
+- [x] 2.4 375 px bez filtrów: pierwsza karta na pierwszym ekranie — 48d99ce
+- [x] 2.5 375 px: rozwinięcie, „Filtry (2)” dla zakresu lat, „Wyczyść filtry” w tym samym wierszu, zwinięcie zachowuje licznik — 48d99ce
+- [x] 2.6 375 px: wejście z `place=…` → blok zwinięty, „Filtry (1)” — 48d99ce
+- [x] 2.7 1440 px i 640 px: pasek jak `before/01`, bez przycisku „Filtry” — 48d99ce
+- [x] 2.8 Klawiatura na 375 px: Tab → „Filtry” → Enter → Tab trafia w „Parafia / miejsce” — 48d99ce
 
 ### Phase 3: Stany — błąd, ładowanie, pusty, wyłączony
 
 #### Automated
 
-- [ ] 3.1 Testy JS przechodzą (`yearFieldsError`)
-- [ ] 3.2 Typy, lint i build przechodzą
-- [ ] 3.3 Specy list przechodzą (`sources-grid-with-filters`, `source-found-by-place-and-year`, `persons-add-person-panel`)
+- [x] 3.1 Testy JS przechodzą (`yearFieldsError`)
+- [x] 3.2 Typy, lint i build przechodzą
+- [x] 3.3 Specy list przechodzą (`sources-grid-with-filters`, `source-found-by-place-and-year`, `persons-add-person-panel`)
 
 #### Manual
 
-- [ ] 3.4 Pola roku: 7 stanów, w tym oba komunikaty błędu, wartości niezamienione
-- [ ] 3.5 Selecty: stany, wyłączony select z przygaszoną etykietą
-- [ ] 3.6 Przełącznik rodzaju: stany, komunikat błędu i ponowienie po odcięciu sieci
-- [ ] 3.7 Przełącznik Galeria/Tabela i sortowanie: stany i błąd
-- [ ] 3.8 Karta i wiersz: stany, `aria-busy`, puste stany z nowym tekstem `SourcesEmptyKind` i jednym „Wyczyść filtry”
-- [ ] 3.9 Miniatura: z plikiem / bez pliku / uszkodzona → `ImageOff` bez skoku
-- [ ] 3.10 „Filtry (N)” na 375 px: default / hover / focus-visible / N = 0, 1, 2
+- [x] 3.4 Pola roku: 7 stanów, w tym oba komunikaty błędu, wartości niezamienione
+- [x] 3.5 Selecty: stany, wyłączony select z przygaszoną etykietą
+- [x] 3.6 Przełącznik rodzaju: stany, komunikat błędu i ponowienie po odcięciu sieci
+- [x] 3.7 Przełącznik Galeria/Tabela i sortowanie: stany i błąd
+- [x] 3.8 Karta i wiersz: stany, `aria-busy`, puste stany z nowym tekstem `SourcesEmptyKind` i jednym „Wyczyść filtry”
+- [x] 3.9 Miniatura: z plikiem / bez pliku / uszkodzona → `ImageOff` bez skoku
+- [x] 3.10 „Filtry (N)” na 375 px: default / hover / focus-visible / N = 0, 1, 2
 
 ### Phase 4: Utrwal to i bramka wizualna
 

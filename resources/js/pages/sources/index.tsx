@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { MouseEvent } from 'react';
 import { DiscardChangesDialog } from '@/components/discard-changes-dialog';
 import Heading from '@/components/heading';
+import InputError from '@/components/input-error';
 import { isPlainClick } from '@/components/persons/section-editor';
 import { SearchField } from '@/components/search-field';
 import { SegmentedToggle } from '@/components/segmented-toggle';
@@ -29,6 +30,7 @@ import {
     parseYearInput,
     resolveFilters,
     withSourcesQuery,
+    yearFieldsError,
 } from '@/lib/sources-index';
 import type {
     SourcesFilters,
@@ -37,7 +39,10 @@ import type {
     SourcesPlaceOptions,
     SourcesSort,
     SourcesView,
+    YearFieldsError,
 } from '@/lib/sources-index';
+import { failureHandlers } from '@/lib/visit-failure';
+import type { VisitError } from '@/lib/visit-failure';
 import { index as sourcesIndex } from '@/routes/sources';
 import type {
     BreadcrumbItem,
@@ -63,6 +68,8 @@ const breadcrumbs: BreadcrumbItem[] = [
         href: sourcesIndex(),
     },
 ];
+
+const VISIT_ERROR = 'Nie udało się zastosować filtrów.';
 
 const missingNouns: Record<SourcesMissingCriterion, string> = {
     year: 'roku',
@@ -108,11 +115,17 @@ export default function Index({
     /** The year fields hold text while typing; the committed years are in `filters`. */
     const [yearFrom, setYearFrom] = useState(yearText(filters.year_from));
     const [yearTo, setYearTo] = useState(yearText(filters.year_to));
+    /** Shown year error: worked out from the typed text, appears 300 ms after the last keystroke. */
+    const [yearError, setYearError] = useState<YearFieldsError | null>(null);
+    const [visitError, setVisitError] = useState<VisitError | null>(null);
+    const [isVisiting, setIsVisiting] = useState(false);
     const lastVisitedQuery = useRef(filters.q);
     const lastVisitedYears = useRef({
         year_from: filters.year_from,
         year_to: filters.year_to,
     });
+    /** Numbers every visit of this page; only the latest one owns the spinner and the error. */
+    const latestVisit = useRef(0);
     /** The debounced visit still waiting to fire, if any. */
     const pendingSearch = useRef<ReturnType<typeof setTimeout> | null>(null);
     const trimmedSearch = search.trim();
@@ -149,6 +162,7 @@ export default function Index({
 
         // From the live address, not a render-time copy: the debounced visit may fire after a panel opened.
         const { pathname, search: liveSearch, hash } = window.location;
+        const visitId = ++latestVisit.current;
 
         router.get(
             withSourcesQuery(`${pathname}${liveSearch}${hash}`, merged),
@@ -158,6 +172,21 @@ export default function Index({
                 preserveScroll: true,
                 replace,
                 only: ['filters'],
+                onStart: () => {
+                    setIsVisiting(true);
+                    setVisitError(null);
+                },
+                onFinish: () => {
+                    if (visitId === latestVisit.current) {
+                        setIsVisiting(false);
+                    }
+                },
+                ...failureHandlers(
+                    VISIT_ERROR,
+                    () => visit(next, replace),
+                    setVisitError,
+                    () => visitId === latestVisit.current,
+                ),
             },
         );
     };
@@ -184,6 +213,21 @@ export default function Index({
             setYearTo(yearText(filters.year_to));
         }
     }, [filters.year_from, filters.year_to]);
+
+    // Read from the typed text, not from a visit: „Wyczyść filtry” and history change the years too.
+    useEffect(() => {
+        const error = yearFieldsError(yearFrom, yearTo);
+
+        if (error === null) {
+            setYearError(null);
+
+            return;
+        }
+
+        const timeoutId = setTimeout(() => setYearError(error), 300);
+
+        return () => clearTimeout(timeoutId);
+    }, [yearFrom, yearTo]);
 
     // Search and the year fields share one debounce, so the address gets one visit per pause.
     useEffect(() => {
@@ -322,12 +366,12 @@ export default function Index({
         visible.length === 0 &&
         counts.wszystkie > 0 &&
         filters.kind !== 'wszystkie';
+    const hasOtherFilters = hiddenFilterCount(filters) > 0;
     // The empty state carries its own „Wyczyść filtry”, so the bar's would be a duplicate.
     const emptyStateClears =
         sources.length > 0 &&
         visible.length === 0 &&
-        !isEmptyKind &&
-        hasFilterBeyondSearch;
+        (isEmptyKind ? hasOtherFilters : hasFilterBeyondSearch);
 
     const addButton = (
         <Button asChild>
@@ -366,6 +410,8 @@ export default function Index({
                             onChange={setSearch}
                             placeholder="Szukaj po nazwie"
                             ariaLabel="Szukaj źródła"
+                            busy={isVisiting}
+                            busyLabel="Wczytywanie"
                             maxLength={100}
                             className="order-1 min-w-0 basis-0"
                         />
@@ -439,12 +485,26 @@ export default function Index({
                             showClear={
                                 isFiltering(filters) && !emptyStateClears
                             }
+                            yearError={yearError}
                             onPlaceChange={(place) => visit({ place })}
                             onArchiveChange={(archive) => visit({ archive })}
                             onYearFromChange={setYearFrom}
                             onYearToChange={setYearTo}
                             onClear={clearFilters}
                         />
+                    </div>
+                )}
+
+                {visitError !== null && (
+                    <div className="flex flex-wrap items-center gap-3">
+                        <InputError role="alert" message={visitError.message} />
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => visitError.retry()}
+                        >
+                            Spróbuj ponownie
+                        </Button>
                     </div>
                 )}
 
@@ -460,40 +520,51 @@ export default function Index({
 
                 {sources.length === 0 ? (
                     <SourcesEmptyTree action={addButton} />
-                ) : visible.length === 0 ? (
-                    counts.wszystkie > 0 && filters.kind !== 'wszystkie' ? (
-                        <SourcesEmptyKind
-                            kind={filters.kind}
-                            query={trimmedSearch}
-                            onShowAll={() => visit({ kind: 'wszystkie' })}
-                        />
-                    ) : hasFilterBeyondSearch ? (
-                        <SourcesFilteredNoResults
-                            query={trimmedSearch}
-                            onClearFilters={clearFilters}
-                        />
-                    ) : (
-                        <SourcesNoResults
-                            query={trimmedSearch}
-                            onClear={clearSearch}
-                        />
-                    )
-                ) : filters.view === 'tabela' ? (
-                    <SourcesTable
-                        sources={visible}
-                        sort={filters.sort}
-                        onSortChange={(sort: SourcesSort) => visit({ sort })}
-                        openId={openId}
-                        hrefFor={hrefFor}
-                        onOpen={openFromList}
-                    />
                 ) : (
-                    <SourcesGallery
-                        sources={visible}
-                        openId={openId}
-                        hrefFor={hrefFor}
-                        onOpen={openFromList}
-                    />
+                    <div aria-busy={isVisiting}>
+                        {visible.length === 0 ? (
+                            counts.wszystkie > 0 &&
+                            filters.kind !== 'wszystkie' ? (
+                                <SourcesEmptyKind
+                                    kind={filters.kind}
+                                    query={trimmedSearch}
+                                    hasOtherFilters={hasOtherFilters}
+                                    onShowAll={() =>
+                                        visit({ kind: 'wszystkie' })
+                                    }
+                                    onClearFilters={clearFilters}
+                                />
+                            ) : hasFilterBeyondSearch ? (
+                                <SourcesFilteredNoResults
+                                    query={trimmedSearch}
+                                    onClearFilters={clearFilters}
+                                />
+                            ) : (
+                                <SourcesNoResults
+                                    query={trimmedSearch}
+                                    onClear={clearSearch}
+                                />
+                            )
+                        ) : filters.view === 'tabela' ? (
+                            <SourcesTable
+                                sources={visible}
+                                sort={filters.sort}
+                                onSortChange={(sort: SourcesSort) =>
+                                    visit({ sort })
+                                }
+                                openId={openId}
+                                hrefFor={hrefFor}
+                                onOpen={openFromList}
+                            />
+                        ) : (
+                            <SourcesGallery
+                                sources={visible}
+                                openId={openId}
+                                hrefFor={hrefFor}
+                                onOpen={openFromList}
+                            />
+                        )}
+                    </div>
                 )}
             </div>
 
