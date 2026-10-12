@@ -15,9 +15,11 @@ export default defineConfig({
             fonts: [
                 bunny('Instrument Sans', {
                     weights: [400, 500, 600],
+                    subsets: ['latin', 'latin-ext'],
                 }),
                 bunny('Newsreader', {
                     weights: [600],
+                    subsets: ['latin', 'latin-ext'],
                 }),
             ],
         }),
