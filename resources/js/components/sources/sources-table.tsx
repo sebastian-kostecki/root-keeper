@@ -19,6 +19,7 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
+import { focusRing } from '@/lib/focus-ring';
 import { sourceKindText, sourcePlaceLabel } from '@/lib/source-description';
 import { eventsLabel, sortSources } from '@/lib/sources-index';
 import type { SourcesSort, SourcesSortColumn } from '@/lib/sources-index';
@@ -142,7 +143,10 @@ export function SourcesTable({
                                         onClick={(event) =>
                                             onOpen(event, source.id)
                                         }
-                                        className="focus-visible:ring-ring/50 -m-1 flex items-center gap-3 rounded-md p-1 outline-none focus-visible:ring-[3px]"
+                                        className={cn(
+                                            focusRing,
+                                            '-m-1 flex items-center gap-3 rounded-md p-1',
+                                        )}
                                     >
                                         <SourceThumbnail
                                             source={source}

@@ -2,6 +2,8 @@ import { Link } from '@inertiajs/react';
 import { LinkIcon } from 'lucide-react';
 import type { MouseEvent } from 'react';
 import { SourceThumbnail } from '@/components/sources/source-thumbnail';
+import { focusRing } from '@/lib/focus-ring';
+import { selectedListItem } from '@/lib/list-item-styles';
 import { formatSourceSummary } from '@/lib/source-description';
 import { eventsLabel } from '@/lib/sources-index';
 import { panelVisitOptions } from '@/lib/side-panel-url';
@@ -42,8 +44,9 @@ export function SourcesGallery({
                                 }
                                 onClick={(event) => onOpen(event, source.id)}
                                 className={cn(
-                                    'bg-card hover:bg-accent/50 focus-visible:ring-ring/50 flex h-full min-w-0 flex-col overflow-hidden rounded-lg border shadow-sm transition-colors outline-none focus-visible:ring-[3px]',
-                                    'data-[state=selected]:border-primary data-[state=selected]:bg-accent data-[state=selected]:ring-primary data-[state=selected]:ring-2',
+                                    focusRing,
+                                    'bg-card hover:bg-accent/50 flex h-full min-w-0 flex-col overflow-hidden rounded-lg border shadow-sm transition-colors',
+                                    selectedListItem,
                                 )}
                             >
                                 <SourceThumbnail
