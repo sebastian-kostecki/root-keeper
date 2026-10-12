@@ -458,14 +458,14 @@ Test przeglądarkowy nowego zachowania, kontrola zakodowanych wartości, reguła
 
 #### Automated
 
-- [x] 5.1 Spec `persons-add-person-panel.spec.ts` przechodzi
-- [x] 5.2 Scenariusz strażnika czerwienieje po wyłączeniu `markDirty` i zielenieje po przywróceniu
-- [x] 5.3 Test skanu przechodzi i czerwienieje po wstawieniu klasy palety
-- [x] 5.4 Pełny zestaw E2E przechodzi: `npx playwright test`
-- [x] 5.5 `CLAUDE.md` zawiera regułę UI i `add=person`, blok 10x-cli nietknięty
-- [x] 5.6 Lint i format przechodzą: `vendor/bin/sail npm run check`
+- [x] 5.1 Spec `persons-add-person-panel.spec.ts` przechodzi — 857a874
+- [x] 5.2 Scenariusz strażnika czerwienieje po wyłączeniu `markDirty` i zielenieje po przywróceniu — 857a874
+- [x] 5.3 Test skanu przechodzi i czerwienieje po wstawieniu klasy palety — 857a874
+- [x] 5.4 Pełny zestaw E2E przechodzi: `npx playwright test` — 857a874
+- [x] 5.5 `CLAUDE.md` zawiera regułę UI i `add=person`, blok 10x-cli nietknięty — 857a874
+- [x] 5.6 Lint i format przechodzą: `vendor/bin/sail npm run check` — 857a874
 
 #### Manual
 
-- [x] 5.7 Zrzuty `after/01–10` porównane z `before/` w `verdict.md`
-- [x] 5.8 Pełny zestaw Pest uruchomiony przez użytkownika: `vendor/bin/sail artisan test --compact`
+- [x] 5.7 Zrzuty `after/01–10` porównane z `before/` w `verdict.md` — 857a874
+- [x] 5.8 Pełny zestaw Pest uruchomiony przez użytkownika: `vendor/bin/sail artisan test --compact` — 857a874

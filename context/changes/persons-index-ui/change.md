@@ -1,7 +1,7 @@
 ---
 change_id: persons-index-ui
 title: Persons index ui
-status: implementing
+status: implemented
 created: 2026-10-11
 updated: 2026-10-12
 archived_at: null
