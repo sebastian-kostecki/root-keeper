@@ -420,39 +420,39 @@ Test przeglądarkowy nowego zachowania, kontrola zakodowanych wartości, reguła
 
 #### Automated
 
-- [x] 3.1 Testy Pest przechodzą (`PersonsTest`, `OwnershipBoundariesTest`, `WriteTargetsTest`) — 6fccebc
-- [x] 3.2 Formatowanie PHP i Larastan — 6fccebc
-- [x] 3.3 Testy JS przechodzą (`add-person-target`, `persons-index`) — 6fccebc
-- [x] 3.4 Typy, lint i build przechodzą — 6fccebc
-- [x] 3.5 Specy drzewa nadal przechodzą — 6fccebc
-- [x] 3.6 Brak odwołań do modala — 6fccebc
+- [x] 3.1 Testy Pest przechodzą (`PersonsTest`, `OwnershipBoundariesTest`, `WriteTargetsTest`) — bef5cff
+- [x] 3.2 Formatowanie PHP i Larastan — bef5cff
+- [x] 3.3 Testy JS przechodzą (`add-person-target`, `persons-index`) — bef5cff
+- [x] 3.4 Typy, lint i build przechodzą — bef5cff
+- [x] 3.5 Specy drzewa nadal przechodzą — bef5cff
+- [x] 3.6 Brak odwołań do modala — bef5cff
 
 #### Manual
 
-- [x] 3.7 Zapis przy `?q=Kowal` otwiera podgląd nowej osoby, lista z filtrami zostaje — 6fccebc
-- [x] 3.8 Strażnik: pasek przy kliknięciu osoby / X / Escape; Porzuć i Zapisz działają — 6fccebc
-- [x] 3.9 Wyszukiwanie i przełączenie widoku nie zamykają panelu tworzenia ani danych — 6fccebc
-- [x] 3.10 Wyszukiwanie nie zamyka podglądu osoby — 6fccebc
-- [x] 3.11 Pusty `/persons`: „Dodaj osobę” otwiera ten sam panel — 6fccebc
-- [x] 3.12 375 px: panel pełnoekranowy, zamknięcie wraca do listy — 6fccebc
-- [x] 3.13 `/tree/<id>?add=person` nie otwiera panelu i nie wywala strony — 6fccebc
+- [x] 3.7 Zapis przy `?q=Kowal` otwiera podgląd nowej osoby, lista z filtrami zostaje — bef5cff
+- [x] 3.8 Strażnik: pasek przy kliknięciu osoby / X / Escape; Porzuć i Zapisz działają — bef5cff
+- [x] 3.9 Wyszukiwanie i przełączenie widoku nie zamykają panelu tworzenia ani danych — bef5cff
+- [x] 3.10 Wyszukiwanie nie zamyka podglądu osoby — bef5cff
+- [x] 3.11 Pusty `/persons`: „Dodaj osobę” otwiera ten sam panel — bef5cff
+- [x] 3.12 375 px: panel pełnoekranowy, zamknięcie wraca do listy — bef5cff
+- [x] 3.13 `/tree/<id>?add=person` nie otwiera panelu i nie wywala strony — bef5cff
 
 ### Phase 4: Stany wyszukiwania
 
 #### Automated
 
-- [ ] 4.1 Typy, lint i build przechodzą
-- [ ] 4.2 Testy JS przechodzą
+- [x] 4.1 Typy, lint i build przechodzą
+- [x] 4.2 Testy JS przechodzą
 
 #### Manual
 
-- [ ] 4.3 Pole wyszukiwania: 7 stanów, w tym błąd i ponowienie po odcięciu sieci
-- [ ] 4.4 Przełącznik Lista/Tabela: stany i komunikat błędu
-- [ ] 4.5 Nagłówki sortowania: stany i błąd
-- [ ] 4.6 Skoki do litery: default / hover / focus-visible
-- [ ] 4.7 Wiersz osoby: stany, przygaszenie także przy „brak wyników”
-- [ ] 4.8 „Dodaj osobę”: stany, w tym błędy walidacji i spinner zapisu w panelu
-- [ ] 4.9 Menu akcji w tabeli: default / hover / focus-visible
+- [x] 4.3 Pole wyszukiwania: 7 stanów, w tym błąd i ponowienie po odcięciu sieci
+- [x] 4.4 Przełącznik Lista/Tabela: stany i komunikat błędu
+- [x] 4.5 Nagłówki sortowania: stany i błąd
+- [x] 4.6 Skoki do litery: default / hover / focus-visible
+- [x] 4.7 Wiersz osoby: stany, przygaszenie także przy „brak wyników”
+- [x] 4.8 „Dodaj osobę”: stany, w tym błędy walidacji i spinner zapisu w panelu
+- [x] 4.9 Menu akcji w tabeli: default / hover / focus-visible
 
 ### Phase 5: Utrwal to i bramka wizualna
 

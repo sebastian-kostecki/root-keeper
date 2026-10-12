@@ -3,6 +3,7 @@ import { LayoutListIcon, TableIcon } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import type { MouseEvent } from 'react';
 import Heading from '@/components/heading';
+import InputError from '@/components/input-error';
 import {
     PersonsEmptyTree,
     PersonsNoResults,
@@ -40,6 +41,33 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
+const SEARCH_ERROR =
+    'Nie udało się wyszukać — pokazane wyniki mogą być nieaktualne.';
+const VIEW_ERROR = 'Nie udało się zmienić widoku.';
+
+type VisitError = {
+    message: string;
+    retry: () => void;
+};
+
+/** A failed visit keeps the user on the page (no error page) and offers a retry; `isCurrent` lets only the latest visit report. */
+function failureHandlers(
+    message: string,
+    retry: () => void,
+    setVisitError: (error: VisitError | null) => void,
+    isCurrent: () => boolean = () => true,
+) {
+    const fail = () => {
+        if (isCurrent()) {
+            setVisitError({ message, retry });
+        }
+
+        return false;
+    };
+
+    return { onHttpException: fail, onNetworkError: fail };
+}
+
 export default function Index({
     persons,
     genders,
@@ -52,6 +80,7 @@ export default function Index({
     const { hrefFor } = useSidePanelNavigation('add');
     const [search, setSearch] = useState(filters.q);
     const [isSearching, setIsSearching] = useState(false);
+    const [visitError, setVisitError] = useState<VisitError | null>(null);
     const lastVisitedQuery = useRef(filters.q);
     const latestSearchVisit = useRef(0);
     /** The debounced search visit still waiting to fire, if any. */
@@ -78,7 +107,10 @@ export default function Index({
                 preserveState: true,
                 preserveScroll: true,
                 replace: true,
-                onStart: () => setIsSearching(true),
+                onStart: () => {
+                    setIsSearching(true);
+                    setVisitError(null);
+                },
                 // A cancelled visit must not be treated as done: let the effect re-issue it.
                 onCancel: () => {
                     if (visitId === latestSearchVisit.current) {
@@ -91,6 +123,12 @@ export default function Index({
                         setIsSearching(false);
                     }
                 },
+                ...failureHandlers(
+                    SEARCH_ERROR,
+                    () => visitSearch(next),
+                    setVisitError,
+                    () => visitId === latestSearchVisit.current,
+                ),
             },
         );
     };
@@ -104,6 +142,12 @@ export default function Index({
                 preserveState: true,
                 preserveScroll: true,
                 only: ['filters'],
+                onStart: () => setVisitError(null),
+                ...failureHandlers(
+                    VIEW_ERROR,
+                    () => visitDisplay(next),
+                    setVisitError,
+                ),
             },
         );
     };
@@ -238,6 +282,19 @@ export default function Index({
                     </div>
                 )}
 
+                {visitError !== null && (
+                    <div className="flex flex-wrap items-center gap-3">
+                        <InputError role="alert" message={visitError.message} />
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => visitError.retry()}
+                        >
+                            Spróbuj ponownie
+                        </Button>
+                    </div>
+                )}
+
                 <p className="sr-only" role="status" aria-live="polite">
                     {filters.q === ''
                         ? ''
@@ -248,8 +305,6 @@ export default function Index({
 
                 {persons.length === 0 && filters.q === '' ? (
                     <PersonsEmptyTree action={createLink} />
-                ) : persons.length === 0 ? (
-                    <PersonsNoResults query={filters.q} onClear={clearSearch} />
                 ) : (
                     <div
                         aria-busy={isSearching}
@@ -259,7 +314,12 @@ export default function Index({
                                 : 'transition-opacity'
                         }
                     >
-                        {filters.view === 'tabela' ? (
+                        {persons.length === 0 ? (
+                            <PersonsNoResults
+                                query={filters.q}
+                                onClear={clearSearch}
+                            />
+                        ) : filters.view === 'tabela' ? (
                             <PersonsTable
                                 persons={persons}
                                 rootPersonId={rootPersonId}
