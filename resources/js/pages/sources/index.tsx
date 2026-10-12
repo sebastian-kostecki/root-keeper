@@ -352,7 +352,8 @@ export default function Index({
     // The result count follows the committed query, so it is announced once per pause, not per keystroke.
     const committedCount = filterSources(sources, filters).visible.length;
 
-    // The counts next to the popover options follow the search typed so far, as the list does.
+    // The counts next to the popover options follow the search and years typed so far, as the list does.
+    // They can briefly differ from the committed status line until the debounce commits; that is intended.
     const searchFilters = { ...filters, q: trimmedSearch };
     const placeValues = [
         '',
@@ -519,6 +520,11 @@ export default function Index({
                             onArchiveChange={(archive) => visit({ archive })}
                             onYearFromChange={setYearFrom}
                             onYearToChange={setYearTo}
+                            onYearsClear={() => {
+                                setYearFrom('');
+                                setYearTo('');
+                                visit({ year_from: null, year_to: null });
+                            }}
                             onClear={clearFilters}
                         />
                     </div>

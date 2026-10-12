@@ -125,3 +125,20 @@ Note: the reviewers were read-only and did not re-run gates. Gates were run per 
 ## Findings
 
 Sortowane wg wagi: WARNING (F1–F5), potem OBSERVATION (F6–F10).
+
+## Triage
+
+| ID | Decision | Outcome |
+|----|----------|---------|
+| F1 | FIXED | Home/End obsługiwane tylko na opcjach; w polu „Szukaj” zostają w kursorze (`sources-filters.tsx`, `moveOptionFocus`). |
+| F2 | FIXED | Usunięty `aria-haspopup` (popup to dialog); etykieta „Miejsce”/„Archiwum” zostaje na listbox, dialog bez zdublowanej nazwy. Lata zachowuje `aria-label="Lata"` (testy). |
+| F3 | FIXED (wariant A) | Spinner w `SearchField` ma `aria-hidden="true"`; jedyny region `role="status"` to licznik wyników. Wspólny komponent — sprawdzone pełnym Playwright (36/36). |
+| F4 | FIXED | ✕ Lata i „Wyczyść lata” wołają `onYearsClear` → `visit({ year_from: null, year_to: null })` od razu, tak jak miejsce i archiwum. |
+| F5 | FIXED | `focusListOnOpen` na popoverach Miejsce i Archiwum: fokus na polu wyszukiwania, a gdy go nie ma — na wybranej pozycji. |
+| F6 | DOCUMENTED | Komentarz w `pages/sources/index.tsx` mówi, że liczby mogą chwilowo różnić się od statusu do końca debounce — zamierzone. |
+| F7 | FIXED | Dodany zrzut `desktop-dark-years-error.png`. Zrzuty odświeżone po poprawkach. Pozycja 2.11 nadal otwarta: brak porównania z makietą. |
+| F8 | CONFIRMED | `sm:ml-auto` zamierzone dla układu mobilnego; plan nie zmieniany. |
+| F9 | FIXED (odstępstwo) | `export` usunięty z `SourcesCounts` i `SourcesResult`. Regex w E2E zostaje zakotwiczony, ale nazwa jest escapowana (`escapeRegExp`). Zamiast `{ name: localityName }`: etykieta parafii zawiera nazwę miejscowości, więc zwykły substring dałby dwa dopasowania. |
+| F10 | FIXED | Dodana asercja `resultCountText(1, 2, true)` → „1 z 2 źródeł”. |
+
+Gates po poprawkach: test:js 329/329, types:check, check, build — przechodzą. Playwright pełny: 36/36.

@@ -11,6 +11,11 @@ import { createLocality, createParish, createSource } from './support/api';
 
 const FIXTURE = 'tests/Fixtures/portrait-small.jpg';
 
+/** Escapes a name for use inside a RegExp, so a name with metacharacters matches literally. */
+function escapeRegExp(text: string): string {
+    return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 test('sources-grid-with-filters: place and year range narrow the grid, survive a reload and clear together', async ({
     page,
     suffix,
@@ -61,7 +66,9 @@ test('sources-grid-with-filters: place and year range narrow the grid, survive a
     // 3. Place pill → the locality option: the address takes it, the grid keeps only the parish's acts.
     await page.getByRole('button', { name: 'Miejsce', exact: true }).click();
     await page
-        .getByRole('option', { name: new RegExp('^' + localityName) })
+        .getByRole('option', {
+            name: new RegExp('^' + escapeRegExp(localityName)),
+        })
         .click();
     await expect(page).toHaveURL(/[?&]place=miejscowosc-\d+/);
     await expect(

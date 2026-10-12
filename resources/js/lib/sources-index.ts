@@ -31,11 +31,11 @@ export type SourcesPlaceOptions = {
     parishes: { id: number; label: string }[];
 };
 
-export type SourcesCounts = Record<SourcesKindFilter, number>;
+type SourcesCounts = Record<SourcesKindFilter, number>;
 
 export type SourcesMissingCriterion = 'year' | 'place' | 'archive';
 
-export type SourcesResult = {
+type SourcesResult = {
     visible: IndexSource[];
     counts: SourcesCounts;
     hidden: { count: number; missing: SourcesMissingCriterion[] };

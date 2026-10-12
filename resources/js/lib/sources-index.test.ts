@@ -439,6 +439,7 @@ describe('resultCountText', () => {
         expect(resultCountText(12, 64, true)).toBe('12 z 64 źródeł');
         expect(resultCountText(1, 1, true)).toBe('1 z 1 źródła');
         expect(resultCountText(0, 64, true)).toBe('0 z 64 źródeł');
+        expect(resultCountText(1, 2, true)).toBe('1 z 2 źródeł');
     });
 });
 

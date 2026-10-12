@@ -58,6 +58,14 @@ function moveOptionFocus(event: KeyboardEvent<HTMLDivElement>) {
         return;
     }
 
+    // Home and End belong to the caret while the search field has focus; arrows still enter the list.
+    const onOption =
+        (event.target as HTMLElement).getAttribute('role') === 'option';
+
+    if (!onOption && (event.key === 'Home' || event.key === 'End')) {
+        return;
+    }
+
     const options = Array.from(
         event.currentTarget.querySelectorAll<HTMLElement>(
             '[role="option"]:not([aria-disabled="true"])',
@@ -83,6 +91,19 @@ function moveOptionFocus(event: KeyboardEvent<HTMLDivElement>) {
 
     event.preventDefault();
     options[next].focus();
+}
+
+/** On open, a list focuses its search field, or else the selected option (plan: Critical Implementation Details). */
+function focusListOnOpen(event: Event) {
+    const content = event.currentTarget as HTMLElement;
+    const target =
+        content.querySelector<HTMLElement>('input[type="search"]') ??
+        content.querySelector<HTMLElement>('[aria-selected="true"]');
+
+    if (target) {
+        event.preventDefault();
+        target.focus();
+    }
 }
 
 /** The body of the Miejsce and Archiwum popovers: a search field when the list is long, then the options. */
@@ -218,7 +239,6 @@ function FilterPill({
     name,
     value,
     activeIcon: ActiveIcon,
-    ariaHasPopup,
     removeLabel,
     onClear,
     disabledReason,
@@ -227,7 +247,6 @@ function FilterPill({
     name: string;
     value: string | null;
     activeIcon: LucideIcon;
-    ariaHasPopup: 'listbox' | 'dialog';
     removeLabel: string;
     onClear: () => void;
     disabledReason?: string;
@@ -274,11 +293,7 @@ function FilterPill({
     return (
         <Popover open={isOpen} onOpenChange={setIsOpen}>
             <div className="inline-flex items-center gap-1 max-sm:w-full">
-                <PopoverTrigger
-                    ref={triggerRef}
-                    aria-haspopup={ariaHasPopup}
-                    className={triggerClass}
-                >
+                <PopoverTrigger ref={triggerRef} className={triggerClass}>
                     <Icon className="size-3.5 shrink-0" />
                     {isActive ? (
                         <span>
@@ -336,6 +351,7 @@ export function SourcesFilterBar({
     onArchiveChange,
     onYearFromChange,
     onYearToChange,
+    onYearsClear,
     onClear,
 }: {
     place: string;
@@ -356,6 +372,7 @@ export function SourcesFilterBar({
     onArchiveChange: (archive: string) => void;
     onYearFromChange: (year: string) => void;
     onYearToChange: (year: string) => void;
+    onYearsClear: () => void;
     onClear: () => void;
 }) {
     const [isMobileOpen, setIsMobileOpen] = useState(false);
@@ -429,7 +446,6 @@ export function SourcesFilterBar({
                         name="Miejsce"
                         value={place === '' ? null : placeLabel}
                         activeIcon={MapPin}
-                        ariaHasPopup="listbox"
                         removeLabel={`miejsce ${placeLabel}`}
                         onClear={() => onPlaceChange('')}
                         disabledReason={
@@ -440,9 +456,9 @@ export function SourcesFilterBar({
                     >
                         {(close) => (
                             <PopoverContent
-                                aria-label="Miejsce"
                                 align="start"
                                 className="w-80 rounded-lg p-2"
+                                onOpenAutoFocus={focusListOnOpen}
                             >
                                 <FilterList
                                     name="Miejsce"
@@ -462,12 +478,8 @@ export function SourcesFilterBar({
                         name="Lata"
                         value={hasYears ? yearsLabel : null}
                         activeIcon={CalendarDays}
-                        ariaHasPopup="dialog"
                         removeLabel={`lata ${yearsLabel}`}
-                        onClear={() => {
-                            onYearFromChange('');
-                            onYearToChange('');
-                        }}
+                        onClear={onYearsClear}
                     >
                         {() => (
                             <PopoverContent
@@ -565,10 +577,7 @@ export function SourcesFilterBar({
                                         <Button
                                             variant="ghost"
                                             size="sm"
-                                            onClick={() => {
-                                                onYearFromChange('');
-                                                onYearToChange('');
-                                            }}
+                                            onClick={onYearsClear}
                                         >
                                             Wyczyść lata
                                         </Button>
@@ -582,7 +591,6 @@ export function SourcesFilterBar({
                         name="Archiwum"
                         value={archive === '' ? null : archive}
                         activeIcon={Landmark}
-                        ariaHasPopup="listbox"
                         removeLabel={`archiwum ${archive}`}
                         onClear={() => onArchiveChange('')}
                         disabledReason={
@@ -593,9 +601,9 @@ export function SourcesFilterBar({
                     >
                         {(close) => (
                             <PopoverContent
-                                aria-label="Archiwum"
                                 align="start"
                                 className="w-80 rounded-lg p-2"
+                                onOpenAutoFocus={focusListOnOpen}
                             >
                                 <FilterList
                                     name="Archiwum"
