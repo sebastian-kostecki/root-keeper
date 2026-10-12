@@ -5,6 +5,7 @@ import {
 } from '@/components/persons/person-list-parts';
 import { PersonAvatar } from '@/components/persons/person-avatar';
 import { PersonPreviewLink } from '@/components/persons/person-preview-link';
+import { Button } from '@/components/ui/button';
 import { focusRing } from '@/lib/focus-ring';
 import { personPhotoUrl } from '@/lib/person-photo';
 import {
@@ -107,13 +108,15 @@ export function PersonsList({ persons, rootPersonId }: Props) {
                 className="flex flex-wrap gap-1.5"
             >
                 {groups.map((group) => (
-                    <a
+                    <Button
                         key={group.key}
-                        href={`#grupa-${group.key}`}
-                        className="text-muted-foreground hover:bg-accent hover:text-accent-foreground focus-visible:ring-ring/50 inline-flex h-8 min-w-8 items-center justify-center rounded-md border px-2 text-sm font-medium transition-colors outline-none focus-visible:ring-[3px]"
+                        variant="outline"
+                        size="sm"
+                        className="min-w-8"
+                        asChild
                     >
-                        {group.title}
-                    </a>
+                        <a href={`#grupa-${group.key}`}>{group.title}</a>
+                    </Button>
                 ))}
             </nav>
 

@@ -391,30 +391,30 @@ Test przeglądarkowy nowego zachowania, kontrola zakodowanych wartości, reguła
 
 #### Automated
 
-- [x] 1.1 Testy JS przechodzą: `vendor/bin/sail npm run test:js`
-- [x] 1.2 Typy, lint i build przechodzą
-- [x] 1.3 Brak ręcznego pierścienia w plikach fazy (poza skokiem do litery)
-- [x] 1.4 Brak klas palety w polu daty
+- [x] 1.1 Testy JS przechodzą: `vendor/bin/sail npm run test:js` — c8eec4c
+- [x] 1.2 Typy, lint i build przechodzą — c8eec4c
+- [x] 1.3 Brak ręcznego pierścienia w plikach fazy (poza skokiem do litery) — c8eec4c
+- [x] 1.4 Brak klas palety w polu daty — c8eec4c
 
 #### Manual
 
-- [x] 1.5 Zrzuty `before/01–09` zapisane; `mb-8` i waga D6 odnotowane w `verdict.md`
-- [x] 1.6 Pierścień fokusu listy, tabeli i sortowania (także „Źródła”) bez zmian
-- [x] 1.7 Błąd daty w kolorze błędu w obu motywach
+- [x] 1.5 Zrzuty `before/01–09` zapisane; `mb-8` i waga D6 odnotowane w `verdict.md` — c8eec4c
+- [x] 1.6 Pierścień fokusu listy, tabeli i sortowania (także „Źródła”) bez zmian — c8eec4c
+- [x] 1.7 Błąd daty w kolorze błędu w obu motywach — c8eec4c
 
 ### Phase 2: Widok listy — nagłówek, wyszukiwarka, skoki do litery
 
 #### Automated
 
-- [ ] 2.1 Typy, lint i build przechodzą
-- [ ] 2.2 Specy listy przechodzą (`seed`, `person-side-panel`, `person-panel-page-navigation-guard`)
-- [ ] 2.3 Brak ręcznego pierścienia w widoku
+- [x] 2.1 Typy, lint i build przechodzą
+- [x] 2.2 Specy listy przechodzą (`seed`, `person-side-panel`, `person-panel-page-navigation-guard`)
+- [x] 2.3 Brak ręcznego pierścienia w widoku
 
 #### Manual
 
-- [ ] 2.4 1440 px: „Dodaj osobę” w linii tytułu; `<h1>` i landmark `search`
-- [ ] 2.5 375 px: przełącznik z samymi ikonami, wiersz wyszukiwania mieści się
-- [ ] 2.6 Skoki do litery: hover i fokus jak przycisk obrysowany; klik przewija do grupy
+- [x] 2.4 1440 px: „Dodaj osobę” w linii tytułu; `<h1>` i landmark `search`
+- [x] 2.5 375 px: przełącznik z samymi ikonami, wiersz wyszukiwania mieści się
+- [x] 2.6 Skoki do litery: hover i fokus jak przycisk obrysowany; klik przewija do grupy
 
 ### Phase 3: Panel tworzenia osoby
 

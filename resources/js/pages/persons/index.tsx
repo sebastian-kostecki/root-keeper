@@ -131,6 +131,7 @@ export default function Index({
             <div className="space-y-6">
                 <div className="flex items-center justify-between gap-4">
                     <Heading
+                        variant="page"
                         title="Osoby"
                         description="Osoby zapisane w Twoim drzewie genealogicznym"
                     />
@@ -142,7 +143,10 @@ export default function Index({
                 </div>
 
                 {(persons.length > 0 || filters.q !== '') && (
-                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                    <div
+                        role="search"
+                        className="flex flex-col gap-3 sm:flex-row sm:items-center"
+                    >
                         <SearchField
                             value={search}
                             onChange={setSearch}
@@ -157,6 +161,7 @@ export default function Index({
                             value={filters.view}
                             onValueChange={(view) => visitDisplay({ view })}
                             ariaLabel="Widok listy osób"
+                            iconOnlyBelowSm
                             className="self-start"
                             items={[
                                 {
