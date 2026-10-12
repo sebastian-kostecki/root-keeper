@@ -1,10 +1,10 @@
 ---
 change_id: places-page
 title: Places page
-status: implementing
+status: archived
 created: 2026-10-12
 updated: 2026-10-12
-archived_at: null
+archived_at: 2026-10-12T08:44:42Z
 ---
 
 ## Notes
