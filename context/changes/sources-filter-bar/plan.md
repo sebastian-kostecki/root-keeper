@@ -397,7 +397,7 @@ Nie dotyczy. Brak zmian danych i adresów. Stare adresy z `place`, `year_*` i `a
 - [x] 2.8 Klawiatura: Tab do pigułki, Enter otwiera, strzałki/Enter wybierają, Escape zamyka i wraca na pigułkę; ✕ zostawia fokus na pigułce — 111aefe
 - [x] 2.9 Błąd zakresu lat w okienku działa jak dziś (komunikat po 300 ms, `aria-invalid` na obu polach) — 111aefe
 - [x] 2.10 Status pokazuje „N z M źródeł” przy filtrach i „M źródła/źródeł” bez nich; czytnik ogłasza go raz na pauzę w pisaniu — 111aefe
-- [x] 2.11 Zrzuty jasny/ciemny/telefon zapisane w `context/changes/sources-filter-bar/screenshots/` i zgodne z makietą
+- [x] 2.11 Zrzuty jasny/ciemny/telefon zapisane w `context/changes/sources-filter-bar/screenshots/` i zgodne z makietą — e0d98b0
 
 ### Phase 3: E2E na role pigułek i okienek
 
