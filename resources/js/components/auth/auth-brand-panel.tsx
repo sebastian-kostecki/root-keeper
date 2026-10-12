@@ -35,7 +35,7 @@ export default function AuthBrandPanel() {
         <div className="bg-sidebar text-sidebar-foreground border-sidebar-border hidden flex-col justify-between border-r px-10 py-8 lg:flex">
             <Link
                 href={home()}
-                className="focus-visible:ring-sidebar-ring flex w-fit items-center rounded-md outline-none focus-visible:ring-2"
+                className="focus-visible:ring-sidebar-ring flex w-fit items-center rounded-md outline-none focus-visible:ring-3"
             >
                 <AppLogo />
             </Link>

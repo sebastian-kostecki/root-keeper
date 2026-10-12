@@ -3,6 +3,8 @@ import { Menu } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import { Button } from '@/components/ui/button';
 import { useSidebar } from '@/components/ui/sidebar';
+import { focusRing } from '@/lib/focus-ring';
+import { cn } from '@/lib/utils';
 import { index as treeIndex } from '@/routes/tree';
 
 export function AppMobileHeader() {
@@ -13,7 +15,7 @@ export function AppMobileHeader() {
             <Button
                 variant="ghost"
                 size="icon"
-                className="focus-visible:ring-sidebar-ring size-11 focus-visible:ring-2"
+                className="size-11"
                 onClick={toggleSidebar}
             >
                 <Menu />
@@ -21,7 +23,7 @@ export function AppMobileHeader() {
             </Button>
             <Link
                 href={treeIndex()}
-                className="focus-visible:ring-sidebar-ring flex items-center gap-2 rounded-md outline-hidden focus-visible:ring-2"
+                className={cn('flex items-center gap-2 rounded-md', focusRing)}
             >
                 <AppLogo />
             </Link>

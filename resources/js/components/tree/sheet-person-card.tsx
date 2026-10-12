@@ -84,7 +84,7 @@ export function CardBody({
         <>
             <PhotoStrip person={person} />
             <span className="flex min-w-0 flex-1 flex-col items-start justify-start px-3 py-3.5">
-                <span className="font-display text-card-foreground text-base leading-tight font-semibold [overflow-wrap:anywhere] break-words">
+                <span className="font-display text-card-foreground text-base leading-tight font-semibold [overflow-wrap:anywhere] break-words hyphens-auto">
                     {reserveActionSpace && (
                         <span
                             aria-hidden="true"
