@@ -1,5 +1,15 @@
-import { FilterIcon } from 'lucide-react';
-import { useId, useState } from 'react';
+import {
+    CalendarDays,
+    CheckIcon,
+    FilterIcon,
+    Landmark,
+    MapPin,
+    Plus,
+    XIcon,
+} from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
+import type { KeyboardEvent, ReactNode } from 'react';
+import { useId, useRef, useState } from 'react';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import {
@@ -10,33 +20,318 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
-    Select,
-    SelectContent,
-    SelectGroup,
-    SelectItem,
-    SelectLabel,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select';
-import type { SourcesPlaceOptions, YearFieldsError } from '@/lib/sources-index';
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
+} from '@/components/ui/popover';
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipTrigger,
+} from '@/components/ui/tooltip';
+import { focusRing, focusRingOffset } from '@/lib/focus-ring';
+import { pluralPhrase } from '@/lib/plural';
+import {
+    formatYearsFilter,
+    type SourcesPlaceOptions,
+    type YearFieldsError,
+} from '@/lib/sources-index';
+import { cn } from '@/lib/utils';
 
-/** Radix Select rejects an empty value, so „Wszystkie” uses this sentinel and maps to ''. */
-const ALL_VALUE = '__all__';
+type ListOption = { value: string; label: string };
+
+/** A group of the list; `heading` is null for a list without groups (Archiwum). */
+type ListGroup = { heading: string | null; options: ListOption[] };
+
+/** A list with more options than this (without „Wszystkie …”) gets a search field. */
+const SEARCH_THRESHOLD = 7;
+
+function sourcesCountText(count: number): string {
+    return `${count} ${pluralPhrase(count, 'źródło', 'źródła', 'źródeł')}`;
+}
+
+/** Keyboard for the list: arrows and Home/End move between the enabled options, Enter and Space pick. */
+function moveOptionFocus(event: KeyboardEvent<HTMLDivElement>) {
+    const moves = ['ArrowDown', 'ArrowUp', 'Home', 'End'];
+
+    if (!moves.includes(event.key)) {
+        return;
+    }
+
+    const options = Array.from(
+        event.currentTarget.querySelectorAll<HTMLElement>(
+            '[role="option"]:not([aria-disabled="true"])',
+        ),
+    );
+
+    if (options.length === 0) {
+        return;
+    }
+
+    const current = options.indexOf(event.target as HTMLElement);
+    const last = options.length - 1;
+    const next =
+        event.key === 'Home'
+            ? 0
+            : event.key === 'End'
+              ? last
+              : event.key === 'ArrowDown'
+                ? (current + 1) % options.length
+                : current <= 0
+                  ? last
+                  : current - 1;
+
+    event.preventDefault();
+    options[next].focus();
+}
+
+/** The body of the Miejsce and Archiwum popovers: a search field when the list is long, then the options. */
+function FilterList({
+    name,
+    allLabel,
+    searchLabel,
+    groups,
+    selected,
+    counts,
+    onSelect,
+    onDone,
+}: {
+    name: string;
+    allLabel: string;
+    searchLabel: string;
+    groups: ListGroup[];
+    selected: string;
+    counts: Record<string, number>;
+    onSelect: (value: string) => void;
+    onDone: () => void;
+}) {
+    const [query, setQuery] = useState('');
+    const headingIdPrefix = useId();
+    const optionTotal = groups.reduce(
+        (total, group) => total + group.options.length,
+        0,
+    );
+    const needle = query.trim().toLocaleLowerCase('pl');
+    const shownGroups = groups
+        .map((group) => ({
+            ...group,
+            options: group.options.filter((option) =>
+                option.label.toLocaleLowerCase('pl').includes(needle),
+            ),
+        }))
+        .filter((group) => group.options.length > 0);
+
+    const renderOption = (option: ListOption) => {
+        const count = counts[option.value] ?? 0;
+        const isSelected = option.value === selected;
+        const isDisabled = option.value !== '' && !isSelected && count === 0;
+
+        return (
+            <button
+                key={option.value}
+                type="button"
+                role="option"
+                aria-selected={isSelected}
+                aria-disabled={isDisabled ? 'true' : undefined}
+                onClick={() => {
+                    if (!isDisabled) {
+                        onSelect(option.value);
+                        onDone();
+                    }
+                }}
+                className={cn(
+                    'hover:bg-accent focus:bg-accent flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm',
+                    focusRing,
+                    isSelected && 'bg-accent',
+                    isDisabled &&
+                        'text-muted-foreground pointer-events-none opacity-50',
+                )}
+            >
+                {isSelected ? (
+                    <CheckIcon className="text-primary size-4 shrink-0" />
+                ) : (
+                    <span className="size-4 shrink-0" />
+                )}
+                <span className="min-w-0 flex-1 truncate">{option.label}</span>
+                <span
+                    aria-hidden="true"
+                    className="text-muted-foreground text-xs tabular-nums"
+                >
+                    {count}
+                </span>
+                <span className="sr-only">, {sourcesCountText(count)}</span>
+            </button>
+        );
+    };
+
+    return (
+        <div className="flex flex-col gap-2" onKeyDown={moveOptionFocus}>
+            {optionTotal > SEARCH_THRESHOLD && (
+                <Input
+                    type="search"
+                    aria-label={searchLabel}
+                    placeholder="Szukaj"
+                    value={query}
+                    onChange={(event) => setQuery(event.target.value)}
+                    className="h-8"
+                />
+            )}
+
+            <div
+                role="listbox"
+                aria-label={name}
+                className="flex max-h-72 flex-col gap-0.5 overflow-y-auto"
+            >
+                {renderOption({ value: '', label: allLabel })}
+
+                {shownGroups.map((group, index) =>
+                    group.heading === null ? (
+                        group.options.map(renderOption)
+                    ) : (
+                        <div
+                            key={group.heading}
+                            role="group"
+                            aria-labelledby={`${headingIdPrefix}-${index}`}
+                            className="flex flex-col gap-0.5"
+                        >
+                            <div
+                                id={`${headingIdPrefix}-${index}`}
+                                className="text-muted-foreground px-2 pt-2 pb-1 text-xs"
+                            >
+                                {group.heading}
+                            </div>
+                            {group.options.map(renderOption)}
+                        </div>
+                    ),
+                )}
+            </div>
+        </div>
+    );
+}
 
 /**
- * The fields of the search bar beside the search and the kind switcher. Below `sm` they sit in a block
- * collapsed behind „Filtry (N)”; from `sm` the block is `display: contents` and the fields stand in the bar.
+ * One filter pill: the value when active (with an ✕ to clear it), or a dashed „+ name” when not. It opens
+ * `children`, a popover. Without data (`disabledReason`) it is disabled and the reason is a tooltip and
+ * a description for screen readers.
  */
-export function SourcesFilterFields({
+function FilterPill({
+    name,
+    value,
+    activeIcon: ActiveIcon,
+    ariaHasPopup,
+    removeLabel,
+    onClear,
+    disabledReason,
+    children,
+}: {
+    name: string;
+    value: string | null;
+    activeIcon: LucideIcon;
+    ariaHasPopup: 'listbox' | 'dialog';
+    removeLabel: string;
+    onClear: () => void;
+    disabledReason?: string;
+    children?: (close: () => void) => ReactNode;
+}) {
+    const [isOpen, setIsOpen] = useState(false);
+    const triggerRef = useRef<HTMLButtonElement>(null);
+    const reasonId = useId();
+    const isActive = value !== null;
+    const Icon = isActive ? ActiveIcon : Plus;
+
+    const triggerClass = cn(
+        'data-[state=open]:border-primary inline-flex h-8 items-center gap-1.5 rounded-md px-2.5 text-sm font-medium whitespace-nowrap transition-colors disabled:pointer-events-none disabled:opacity-50 max-sm:h-11 max-sm:min-w-0 max-sm:flex-1',
+        focusRingOffset,
+        isActive
+            ? 'border-primary/35 bg-accent text-accent-foreground border'
+            : 'border-input text-muted-foreground hover:bg-accent hover:text-accent-foreground border border-dashed',
+    );
+
+    if (disabledReason !== undefined) {
+        return (
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <span className="inline-flex max-sm:w-full">
+                        <button
+                            type="button"
+                            disabled
+                            aria-describedby={reasonId}
+                            className={cn(triggerClass, 'max-sm:w-full')}
+                        >
+                            <Icon className="size-3.5 shrink-0" />
+                            {name}
+                        </button>
+                        <span id={reasonId} className="sr-only">
+                            {disabledReason}
+                        </span>
+                    </span>
+                </TooltipTrigger>
+                <TooltipContent>{disabledReason}</TooltipContent>
+            </Tooltip>
+        );
+    }
+
+    return (
+        <Popover open={isOpen} onOpenChange={setIsOpen}>
+            <div className="inline-flex items-center gap-1 max-sm:w-full">
+                <PopoverTrigger
+                    ref={triggerRef}
+                    aria-haspopup={ariaHasPopup}
+                    className={triggerClass}
+                >
+                    <Icon className="size-3.5 shrink-0" />
+                    {isActive ? (
+                        <span>
+                            {`${name}: `}
+                            <span className="font-semibold">{value}</span>
+                        </span>
+                    ) : (
+                        name
+                    )}
+                </PopoverTrigger>
+
+                {isActive && (
+                    <button
+                        type="button"
+                        aria-label={`Usuń filtr: ${removeLabel}`}
+                        onClick={() => {
+                            onClear();
+                            triggerRef.current?.focus();
+                        }}
+                        className={cn(
+                            'border-primary/35 bg-accent text-accent-foreground inline-flex size-8 items-center justify-center rounded-md border max-sm:h-11 max-sm:w-11',
+                            focusRing,
+                        )}
+                    >
+                        <XIcon className="size-3.5" />
+                    </button>
+                )}
+            </div>
+
+            {children?.(() => setIsOpen(false))}
+        </Popover>
+    );
+}
+
+/**
+ * The filter row of /sources: three pills (Miejsce, Lata, Archiwum), „Wyczyść filtry” and the result count.
+ * Below `sm` the pills sit in a block behind „Filtry (N)”; from `sm` the block is `display: contents`.
+ */
+export function SourcesFilterBar({
     place,
     placeOptions,
     archive,
     archiveOptions,
+    committedYears,
     yearFrom,
     yearTo,
+    yearError,
     activeCount,
     showClear,
-    yearError,
+    placeCounts,
+    archiveCounts,
+    yearPresets,
+    resultText,
     onPlaceChange,
     onArchiveChange,
     onYearFromChange,
@@ -47,171 +342,290 @@ export function SourcesFilterFields({
     placeOptions: SourcesPlaceOptions;
     archive: string;
     archiveOptions: string[];
+    committedYears: { from: number | null; to: number | null };
     yearFrom: string;
     yearTo: string;
+    yearError: YearFieldsError | null;
     activeCount: number;
     showClear: boolean;
-    yearError: YearFieldsError | null;
+    placeCounts: Record<string, number>;
+    archiveCounts: Record<string, number>;
+    yearPresets: { from: number; to: number }[];
+    resultText: string;
     onPlaceChange: (place: string) => void;
     onArchiveChange: (archive: string) => void;
     onYearFromChange: (year: string) => void;
     onYearToChange: (year: string) => void;
     onClear: () => void;
 }) {
-    const placeId = useId();
+    const [isMobileOpen, setIsMobileOpen] = useState(false);
     const yearFromId = useId();
     const yearToId = useId();
     const yearErrorId = useId();
-    const archiveId = useId();
-    const hasPlaces =
-        placeOptions.localities.length > 0 || placeOptions.parishes.length > 0;
+
+    const placeGroups: ListGroup[] = [
+        {
+            heading: 'Miejscowości',
+            options: placeOptions.localities.map((locality) => ({
+                value: `miejscowosc-${locality.id}`,
+                label: locality.name,
+            })),
+        },
+        {
+            heading: 'Parafie',
+            options: placeOptions.parishes.map((parish) => ({
+                value: `parafia-${parish.id}`,
+                label: parish.label,
+            })),
+        },
+    ].filter((group) => group.options.length > 0);
+    const archiveGroups: ListGroup[] = [
+        {
+            heading: null,
+            options: archiveOptions.map((option) => ({
+                value: option,
+                label: option,
+            })),
+        },
+    ];
+    const hasPlaces = placeGroups.length > 0;
     const hasArchives = archiveOptions.length > 0;
-    const [isOpen, setIsOpen] = useState(false);
+    const placeLabel =
+        placeGroups
+            .flatMap((group) => group.options)
+            .find((option) => option.value === place)?.label ?? place;
+    const yearsLabel = formatYearsFilter(
+        committedYears.from,
+        committedYears.to,
+    );
+    const hasYears = yearsLabel !== '';
 
     return (
-        <Collapsible
-            open={isOpen}
-            onOpenChange={setIsOpen}
-            className="contents"
+        <div
+            role="group"
+            aria-label="Filtry"
+            className="flex flex-wrap items-center gap-3"
         >
-            <CollapsibleTrigger asChild>
-                <Button variant="outline" className="order-4 sm:hidden">
-                    <FilterIcon />
-                    {activeCount > 0 ? `Filtry (${activeCount})` : 'Filtry'}
-                </Button>
-            </CollapsibleTrigger>
-
-            {showClear && (
-                <Button
-                    variant="outline"
-                    onClick={onClear}
-                    className="order-4 sm:order-8"
-                >
-                    Wyczyść filtry
-                </Button>
-            )}
-
-            <CollapsibleContent
-                forceMount
-                className="order-5 flex w-full flex-wrap gap-3 max-sm:data-[state=closed]:hidden sm:contents"
+            <Collapsible
+                open={isMobileOpen}
+                onOpenChange={setIsMobileOpen}
+                className="contents"
             >
-                <div
-                    className="group order-4 flex w-full min-w-0 flex-col gap-1.5 sm:w-64"
-                    data-disabled={String(!hasPlaces)}
-                >
-                    <Label htmlFor={placeId}>Parafia / miejsce</Label>
-                    <Select
-                        value={place === '' ? ALL_VALUE : place}
-                        onValueChange={(value) =>
-                            onPlaceChange(value === ALL_VALUE ? '' : value)
-                        }
-                        disabled={!hasPlaces}
+                <CollapsibleTrigger asChild>
+                    <Button
+                        variant="outline"
+                        className="order-1 h-11 sm:hidden"
                     >
-                        <SelectTrigger id={placeId} className="w-full">
-                            <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value={ALL_VALUE}>Wszystkie</SelectItem>
-                            {placeOptions.localities.length > 0 && (
-                                <SelectGroup>
-                                    <SelectLabel>Miejscowości</SelectLabel>
-                                    {placeOptions.localities.map((locality) => (
-                                        <SelectItem
-                                            key={`miejscowosc-${locality.id}`}
-                                            value={`miejscowosc-${locality.id}`}
-                                        >
-                                            {locality.name}
-                                        </SelectItem>
-                                    ))}
-                                </SelectGroup>
-                            )}
-                            {placeOptions.parishes.length > 0 && (
-                                <SelectGroup>
-                                    <SelectLabel>Parafie</SelectLabel>
-                                    {placeOptions.parishes.map((parish) => (
-                                        <SelectItem
-                                            key={`parafia-${parish.id}`}
-                                            value={`parafia-${parish.id}`}
-                                        >
-                                            {parish.label}
-                                        </SelectItem>
-                                    ))}
-                                </SelectGroup>
-                            )}
-                        </SelectContent>
-                    </Select>
-                </div>
+                        <FilterIcon />
+                        {activeCount > 0 ? `Filtry (${activeCount})` : 'Filtry'}
+                    </Button>
+                </CollapsibleTrigger>
 
-                <div className="order-5 flex flex-col gap-1.5">
-                    <Label htmlFor={yearFromId}>Rok od</Label>
-                    <Input
-                        id={yearFromId}
-                        type="number"
-                        inputMode="numeric"
-                        min={1}
-                        max={9999}
-                        value={yearFrom}
-                        onChange={(event) =>
-                            onYearFromChange(event.target.value)
-                        }
-                        aria-invalid={yearError?.from ?? false}
-                        aria-describedby={
-                            yearError?.from ? yearErrorId : undefined
-                        }
-                        className="w-28"
-                    />
-                </div>
-
-                <div className="order-6 flex flex-col gap-1.5">
-                    <Label htmlFor={yearToId}>Rok do</Label>
-                    <Input
-                        id={yearToId}
-                        type="number"
-                        inputMode="numeric"
-                        min={1}
-                        max={9999}
-                        value={yearTo}
-                        onChange={(event) => onYearToChange(event.target.value)}
-                        aria-invalid={yearError?.to ?? false}
-                        aria-describedby={
-                            yearError?.to ? yearErrorId : undefined
-                        }
-                        className="w-28"
-                    />
-                </div>
-
-                <InputError
-                    id={yearErrorId}
-                    message={yearError?.message}
-                    className="order-6 basis-full sm:order-9"
-                />
-
-                <div
-                    className="group order-7 flex w-full min-w-0 flex-col gap-1.5 sm:w-56"
-                    data-disabled={String(!hasArchives)}
+                <CollapsibleContent
+                    forceMount
+                    className="bg-muted order-2 flex w-full flex-col gap-2 rounded-lg p-3 max-sm:data-[state=closed]:hidden sm:contents"
                 >
-                    <Label htmlFor={archiveId}>Archiwum</Label>
-                    <Select
-                        value={archive === '' ? ALL_VALUE : archive}
-                        onValueChange={(value) =>
-                            onArchiveChange(value === ALL_VALUE ? '' : value)
+                    <FilterPill
+                        name="Miejsce"
+                        value={place === '' ? null : placeLabel}
+                        activeIcon={MapPin}
+                        ariaHasPopup="listbox"
+                        removeLabel={`miejsce ${placeLabel}`}
+                        onClear={() => onPlaceChange('')}
+                        disabledReason={
+                            hasPlaces
+                                ? undefined
+                                : 'Żadne źródło nie ma jeszcze miejsca'
                         }
-                        disabled={!hasArchives}
                     >
-                        <SelectTrigger id={archiveId} className="w-full">
-                            <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value={ALL_VALUE}>Wszystkie</SelectItem>
-                            {archiveOptions.map((option) => (
-                                <SelectItem key={option} value={option}>
-                                    {option}
-                                </SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-                </div>
-            </CollapsibleContent>
-        </Collapsible>
+                        {(close) => (
+                            <PopoverContent
+                                aria-label="Miejsce"
+                                align="start"
+                                className="w-80 rounded-lg p-2"
+                            >
+                                <FilterList
+                                    name="Miejsce"
+                                    allLabel="Wszystkie miejsca"
+                                    searchLabel="Szukaj miejsca"
+                                    groups={placeGroups}
+                                    selected={place}
+                                    counts={placeCounts}
+                                    onSelect={onPlaceChange}
+                                    onDone={close}
+                                />
+                            </PopoverContent>
+                        )}
+                    </FilterPill>
+
+                    <FilterPill
+                        name="Lata"
+                        value={hasYears ? yearsLabel : null}
+                        activeIcon={CalendarDays}
+                        ariaHasPopup="dialog"
+                        removeLabel={`lata ${yearsLabel}`}
+                        onClear={() => {
+                            onYearFromChange('');
+                            onYearToChange('');
+                        }}
+                    >
+                        {() => (
+                            <PopoverContent
+                                aria-label="Lata"
+                                align="start"
+                                className="w-80 rounded-lg p-4"
+                            >
+                                <div className="flex flex-col gap-3">
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <div className="flex flex-col gap-1.5">
+                                            <Label htmlFor={yearFromId}>
+                                                Rok od
+                                            </Label>
+                                            <Input
+                                                id={yearFromId}
+                                                type="text"
+                                                inputMode="numeric"
+                                                value={yearFrom}
+                                                onChange={(event) =>
+                                                    onYearFromChange(
+                                                        event.target.value,
+                                                    )
+                                                }
+                                                aria-invalid={
+                                                    yearError?.from ?? false
+                                                }
+                                                aria-describedby={
+                                                    yearError?.from
+                                                        ? yearErrorId
+                                                        : undefined
+                                                }
+                                            />
+                                        </div>
+                                        <div className="flex flex-col gap-1.5">
+                                            <Label htmlFor={yearToId}>
+                                                Rok do
+                                            </Label>
+                                            <Input
+                                                id={yearToId}
+                                                type="text"
+                                                inputMode="numeric"
+                                                value={yearTo}
+                                                onChange={(event) =>
+                                                    onYearToChange(
+                                                        event.target.value,
+                                                    )
+                                                }
+                                                aria-invalid={
+                                                    yearError?.to ?? false
+                                                }
+                                                aria-describedby={
+                                                    yearError?.to
+                                                        ? yearErrorId
+                                                        : undefined
+                                                }
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <InputError
+                                        id={yearErrorId}
+                                        message={yearError?.message}
+                                    />
+
+                                    {yearPresets.length > 0 && (
+                                        <div
+                                            role="group"
+                                            aria-label="Szybki wybór"
+                                            className="flex flex-wrap gap-2"
+                                        >
+                                            {yearPresets.map((preset) => (
+                                                <Button
+                                                    key={preset.from}
+                                                    variant="outline"
+                                                    size="sm"
+                                                    onClick={() => {
+                                                        onYearFromChange(
+                                                            String(preset.from),
+                                                        );
+                                                        onYearToChange(
+                                                            String(preset.to),
+                                                        );
+                                                    }}
+                                                >
+                                                    {`${preset.from} – ${preset.to}`}
+                                                </Button>
+                                            ))}
+                                        </div>
+                                    )}
+
+                                    <div className="flex items-center justify-between gap-2 border-t pt-3">
+                                        <p className="text-muted-foreground text-xs">
+                                            Lista odświeża się po wpisaniu roku
+                                        </p>
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={() => {
+                                                onYearFromChange('');
+                                                onYearToChange('');
+                                            }}
+                                        >
+                                            Wyczyść lata
+                                        </Button>
+                                    </div>
+                                </div>
+                            </PopoverContent>
+                        )}
+                    </FilterPill>
+
+                    <FilterPill
+                        name="Archiwum"
+                        value={archive === '' ? null : archive}
+                        activeIcon={Landmark}
+                        ariaHasPopup="listbox"
+                        removeLabel={`archiwum ${archive}`}
+                        onClear={() => onArchiveChange('')}
+                        disabledReason={
+                            hasArchives
+                                ? undefined
+                                : 'Żadne źródło nie ma jeszcze archiwum'
+                        }
+                    >
+                        {(close) => (
+                            <PopoverContent
+                                aria-label="Archiwum"
+                                align="start"
+                                className="w-80 rounded-lg p-2"
+                            >
+                                <FilterList
+                                    name="Archiwum"
+                                    allLabel="Wszystkie archiwa"
+                                    searchLabel="Szukaj archiwum"
+                                    groups={archiveGroups}
+                                    selected={archive}
+                                    counts={archiveCounts}
+                                    onSelect={onArchiveChange}
+                                    onDone={close}
+                                />
+                            </PopoverContent>
+                        )}
+                    </FilterPill>
+
+                    {showClear && (
+                        <Button variant="ghost" size="sm" onClick={onClear}>
+                            Wyczyść filtry
+                        </Button>
+                    )}
+                </CollapsibleContent>
+            </Collapsible>
+
+            <p
+                role="status"
+                aria-live="polite"
+                className="text-muted-foreground order-1 ml-auto text-sm tabular-nums sm:order-last"
+            >
+                {resultText}
+            </p>
+        </div>
     );
 }

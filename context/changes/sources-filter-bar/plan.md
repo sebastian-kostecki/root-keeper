@@ -372,31 +372,31 @@ Nie dotyczy. Brak zmian danych i adresów. Stare adresy z `place`, `year_*` i `a
 
 #### Automated
 
-- [x] 1.1 Testy Vitest przechodzą: `vendor/bin/sail npm run test:js`
-- [x] 1.2 Typy przechodzą: `vendor/bin/sail npm run types:check`
-- [x] 1.3 Format i lint przechodzą: `vendor/bin/sail npm run check`
+- [x] 1.1 Testy Vitest przechodzą: `vendor/bin/sail npm run test:js` — 0cd384a
+- [x] 1.2 Typy przechodzą: `vendor/bin/sail npm run types:check` — 0cd384a
+- [x] 1.3 Format i lint przechodzą: `vendor/bin/sail npm run check` — 0cd384a
 
 #### Manual
 
-- [x] 1.4 Na telefonie (375 px) zakres lat od–do daje „Filtry (1)”, a nie „Filtry (2)”
+- [x] 1.4 Na telefonie (375 px) zakres lat od–do daje „Filtry (1)”, a nie „Filtry (2)” — 0cd384a
 
 ### Phase 2: Popover i pasek pigułek (UI)
 
 #### Automated
 
-- [ ] 2.1 Testy Vitest (w tym `view-tokens.test.ts`) przechodzą: `vendor/bin/sail npm run test:js`
-- [ ] 2.2 Typy przechodzą: `vendor/bin/sail npm run types:check`
-- [ ] 2.3 Format i lint przechodzą: `vendor/bin/sail npm run check`
-- [ ] 2.4 Build przechodzi: `vendor/bin/sail npm run build`
-- [ ] 2.5 `package.json` ma jedną nową zależność `@radix-ui/react-popover` i nie ma `radix-ui`
+- [x] 2.1 Testy Vitest (w tym `view-tokens.test.ts`) przechodzą: `vendor/bin/sail npm run test:js`
+- [x] 2.2 Typy przechodzą: `vendor/bin/sail npm run types:check`
+- [x] 2.3 Format i lint przechodzą: `vendor/bin/sail npm run check`
+- [x] 2.4 Build przechodzi: `vendor/bin/sail npm run build`
+- [x] 2.5 `package.json` ma jedną nową zależność `@radix-ui/react-popover` i nie ma `radix-ui`
 
 #### Manual
 
-- [ ] 2.6 Wybór miejsca, archiwum i wpisanie lat filtrują listę i zmieniają adres tak samo jak przed zmianą; przeładowanie odtwarza pigułki z wartościami
-- [ ] 2.7 Liczby przy pozycjach zgadzają się z liczbą kart po wybraniu pozycji; pozycje z 0 są wyszarzone i pomijane strzałkami
-- [ ] 2.8 Klawiatura: Tab do pigułki, Enter otwiera, strzałki/Enter wybierają, Escape zamyka i wraca na pigułkę; ✕ zostawia fokus na pigułce
-- [ ] 2.9 Błąd zakresu lat w okienku działa jak dziś (komunikat po 300 ms, `aria-invalid` na obu polach)
-- [ ] 2.10 Status pokazuje „N z M źródeł” przy filtrach i „M źródła/źródeł” bez nich; czytnik ogłasza go raz na pauzę w pisaniu
+- [x] 2.6 Wybór miejsca, archiwum i wpisanie lat filtrują listę i zmieniają adres tak samo jak przed zmianą; przeładowanie odtwarza pigułki z wartościami
+- [x] 2.7 Liczby przy pozycjach zgadzają się z liczbą kart po wybraniu pozycji; pozycje z 0 są wyszarzone i pomijane strzałkami
+- [x] 2.8 Klawiatura: Tab do pigułki, Enter otwiera, strzałki/Enter wybierają, Escape zamyka i wraca na pigułkę; ✕ zostawia fokus na pigułce
+- [x] 2.9 Błąd zakresu lat w okienku działa jak dziś (komunikat po 300 ms, `aria-invalid` na obu polach)
+- [x] 2.10 Status pokazuje „N z M źródeł” przy filtrach i „M źródła/źródeł” bez nich; czytnik ogłasza go raz na pauzę w pisaniu
 - [ ] 2.11 Zrzuty jasny/ciemny/telefon zapisane w `context/changes/sources-filter-bar/screenshots/` i zgodne z makietą
 
 ### Phase 3: E2E na role pigułek i okienek

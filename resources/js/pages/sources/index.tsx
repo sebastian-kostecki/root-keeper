@@ -15,7 +15,7 @@ import {
     SourcesFilteredNoResults,
     SourcesNoResults,
 } from '@/components/sources/sources-empty-state';
-import { SourcesFilterFields } from '@/components/sources/sources-filters';
+import { SourcesFilterBar } from '@/components/sources/sources-filters';
 import { SourcesGallery } from '@/components/sources/sources-gallery';
 import { SourcesTable } from '@/components/sources/sources-table';
 import { Button } from '@/components/ui/button';
@@ -24,11 +24,14 @@ import { useUnsavedChangesGuard } from '@/hooks/use-unsaved-changes-guard';
 import { pluralPhrase } from '@/lib/plural';
 import { panelVisitOptions } from '@/lib/side-panel-url';
 import {
+    filterOptionCounts,
     filterSources,
+    halfCenturyPresets,
     hiddenFilterCount,
     isFiltering,
     parseYearInput,
     resolveFilters,
+    resultCountText,
     withSourcesQuery,
     yearFieldsError,
 } from '@/lib/sources-index';
@@ -346,14 +349,19 @@ export default function Index({
         });
     };
 
-    // The status follows the committed query, so it is announced once per pause, not per keystroke.
+    // The result count follows the committed query, so it is announced once per pause, not per keystroke.
     const committedCount = filterSources(sources, filters).visible.length;
 
-    const statusText = !isFiltering(filters)
-        ? ''
-        : committedCount === 0
-          ? 'Brak wyników'
-          : `Znaleziono: ${committedCount} ${pluralPhrase(committedCount, 'źródło', 'źródła', 'źródeł')}`;
+    // The counts next to the popover options follow the search typed so far, as the list does.
+    const searchFilters = { ...filters, q: trimmedSearch };
+    const placeValues = [
+        '',
+        ...placeOptions.localities.map(
+            (locality) => `miejscowosc-${locality.id}`,
+        ),
+        ...placeOptions.parishes.map((parish) => `parafia-${parish.id}`),
+    ];
+    const archiveValues = ['', ...archiveOptions];
 
     const hasFilterBeyondSearch =
         filters.kind !== 'wszystkie' ||
@@ -401,84 +409,87 @@ export default function Index({
                 </div>
 
                 {sources.length > 0 && (
-                    <div
-                        role="search"
-                        className="flex flex-wrap items-center gap-3"
-                    >
-                        <SearchField
-                            value={search}
-                            onChange={setSearch}
-                            placeholder="Szukaj po nazwie"
-                            ariaLabel="Szukaj źródła"
-                            busy={isVisiting}
-                            busyLabel="Wczytywanie"
-                            maxLength={100}
-                            className="order-1 min-w-0 basis-0"
-                        />
+                    <div role="search" className="flex flex-col gap-3">
+                        <div className="flex flex-wrap items-center gap-3">
+                            <SearchField
+                                value={search}
+                                onChange={setSearch}
+                                placeholder="Szukaj po nazwie"
+                                ariaLabel="Szukaj źródła"
+                                busy={isVisiting}
+                                busyLabel="Wczytywanie"
+                                maxLength={100}
+                                className="order-1 min-w-0 basis-0"
+                            />
 
-                        <SegmentedToggle<SourcesKindFilter>
-                            value={filters.kind}
-                            onValueChange={(kind) => visit({ kind })}
-                            ariaLabel="Rodzaj źródła"
-                            className="order-3 w-full sm:order-2 sm:w-auto"
-                            items={[
-                                {
-                                    value: 'wszystkie',
-                                    label: 'Wszystkie',
-                                    count: counts.wszystkie,
-                                },
-                                {
-                                    value: 'akty',
-                                    label: 'Akty',
-                                    count: counts.akty,
-                                    disabled:
-                                        counts.akty === 0 &&
-                                        filters.kind !== 'akty',
-                                },
-                                {
-                                    value: 'nagrobki',
-                                    label: 'Nagrobki',
-                                    count: counts.nagrobki,
-                                    disabled:
-                                        counts.nagrobki === 0 &&
-                                        filters.kind !== 'nagrobki',
-                                },
-                                {
-                                    value: 'inne',
-                                    label: 'Inne',
-                                    count: counts.inne,
-                                    disabled:
-                                        counts.inne === 0 &&
-                                        filters.kind !== 'inne',
-                                },
-                            ]}
-                        />
+                            <SegmentedToggle<SourcesKindFilter>
+                                value={filters.kind}
+                                onValueChange={(kind) => visit({ kind })}
+                                ariaLabel="Rodzaj źródła"
+                                className="order-3 w-full sm:order-2 sm:w-auto"
+                                items={[
+                                    {
+                                        value: 'wszystkie',
+                                        label: 'Wszystkie',
+                                        count: counts.wszystkie,
+                                    },
+                                    {
+                                        value: 'akty',
+                                        label: 'Akty',
+                                        count: counts.akty,
+                                        disabled:
+                                            counts.akty === 0 &&
+                                            filters.kind !== 'akty',
+                                    },
+                                    {
+                                        value: 'nagrobki',
+                                        label: 'Nagrobki',
+                                        count: counts.nagrobki,
+                                        disabled:
+                                            counts.nagrobki === 0 &&
+                                            filters.kind !== 'nagrobki',
+                                    },
+                                    {
+                                        value: 'inne',
+                                        label: 'Inne',
+                                        count: counts.inne,
+                                        disabled:
+                                            counts.inne === 0 &&
+                                            filters.kind !== 'inne',
+                                    },
+                                ]}
+                            />
 
-                        <SegmentedToggle<SourcesView>
-                            value={filters.view}
-                            onValueChange={(view) => visit({ view })}
-                            ariaLabel="Widok listy źródeł"
-                            iconOnlyBelowSm
-                            className="order-2 sm:order-3"
-                            items={[
-                                {
-                                    value: 'galeria',
-                                    label: 'Galeria',
-                                    icon: <LayoutGridIcon />,
-                                },
-                                {
-                                    value: 'tabela',
-                                    label: 'Tabela',
-                                    icon: <TableIcon />,
-                                },
-                            ]}
-                        />
+                            <SegmentedToggle<SourcesView>
+                                value={filters.view}
+                                onValueChange={(view) => visit({ view })}
+                                ariaLabel="Widok listy źródeł"
+                                iconOnlyBelowSm
+                                className="order-2 sm:order-3 sm:ml-auto"
+                                items={[
+                                    {
+                                        value: 'galeria',
+                                        label: 'Galeria',
+                                        icon: <LayoutGridIcon />,
+                                    },
+                                    {
+                                        value: 'tabela',
+                                        label: 'Tabela',
+                                        icon: <TableIcon />,
+                                    },
+                                ]}
+                            />
+                        </div>
 
-                        <SourcesFilterFields
+                        <SourcesFilterBar
                             place={filters.place}
                             placeOptions={placeOptions}
                             archive={filters.archive}
                             archiveOptions={archiveOptions}
+                            committedYears={{
+                                from: filters.year_from,
+                                to: filters.year_to,
+                            }}
                             yearFrom={yearFrom}
                             yearTo={yearTo}
                             activeCount={hiddenFilterCount(filters)}
@@ -486,6 +497,24 @@ export default function Index({
                                 isFiltering(filters) && !emptyStateClears
                             }
                             yearError={yearError}
+                            placeCounts={filterOptionCounts(
+                                sources,
+                                searchFilters,
+                                'place',
+                                placeValues,
+                            )}
+                            archiveCounts={filterOptionCounts(
+                                sources,
+                                searchFilters,
+                                'archive',
+                                archiveValues,
+                            )}
+                            yearPresets={halfCenturyPresets(sources)}
+                            resultText={resultCountText(
+                                committedCount,
+                                sources.length,
+                                isFiltering(filters),
+                            )}
                             onPlaceChange={(place) => visit({ place })}
                             onArchiveChange={(archive) => visit({ archive })}
                             onYearFromChange={setYearFrom}
@@ -507,10 +536,6 @@ export default function Index({
                         </Button>
                     </div>
                 )}
-
-                <p className="sr-only" role="status" aria-live="polite">
-                    {statusText}
-                </p>
 
                 {hidden.count > 0 && (
                     <p className="text-muted-foreground text-sm">
