@@ -1,7 +1,7 @@
 ---
 change_id: design-tokens
 title: Wdrożenie tokenów z design systemu Root Keeper
-status: implementing
+status: implemented
 created: 2026-10-12
 updated: 2026-10-12
 archived_at: null
