@@ -403,11 +403,11 @@ Nie dotyczy. Brak zmian danych i adresów. Stare adresy z `place`, `year_*` i `a
 
 #### Automated
 
-- [x] 3.1 Zmienione specy przechodzą: `npx playwright test tests/e2e/sources-grid-with-filters.spec.ts tests/e2e/sources-page-states.spec.ts tests/e2e/source-panel-edit.spec.ts`
-- [x] 3.2 W `tests/e2e` nie zostało żadne `getByLabel('Parafia / miejsce')` ani `Znaleziono: 1 źródło`
-- [x] 3.3 Cały pakiet E2E przechodzi: `npx playwright test`
+- [x] 3.1 Zmienione specy przechodzą: `npx playwright test tests/e2e/sources-grid-with-filters.spec.ts tests/e2e/sources-page-states.spec.ts tests/e2e/source-panel-edit.spec.ts` — 01e03bc
+- [x] 3.2 W `tests/e2e` nie zostało żadne `getByLabel('Parafia / miejsce')` ani `Znaleziono: 1 źródło` — 01e03bc
+- [x] 3.3 Cały pakiet E2E przechodzi: `npx playwright test` — 01e03bc
 
 #### Manual
 
-- [x] 3.4 Przegląd diffu speców: zmieniły się tylko lokatory, oczekiwany tekst statusu i komentarze; żadna asercja o kartach ani o adresie nie została osłabiona ani usunięta
-- [x] 3.5 Weryfikacja przez celowe wprowadzenie błędu: chwilowe zepsucie `onPlaceChange` daje czerwony `sources-grid-with-filters`
+- [x] 3.4 Przegląd diffu speców: zmieniły się tylko lokatory, oczekiwany tekst statusu i komentarze; żadna asercja o kartach ani o adresie nie została osłabiona ani usunięta — 01e03bc
+- [x] 3.5 Weryfikacja przez celowe wprowadzenie błędu: chwilowe zepsucie `onPlaceChange` daje czerwony `sources-grid-with-filters` — 01e03bc
