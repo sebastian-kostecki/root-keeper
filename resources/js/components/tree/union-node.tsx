@@ -72,7 +72,7 @@ export function UnionNode({
     const showPosition = unions.length > 1 && selectedUnion !== null;
     const isMarriage =
         selectedUnion !== null && status !== '' && selectedUnion.is_marriage;
-    const isBezSlubu =
+    const isUnmarried =
         selectedUnion !== null && status !== '' && !selectedUnion.is_marriage;
 
     const choose = (key: string) => {
@@ -112,7 +112,7 @@ export function UnionNode({
                         aria-label={ariaLabel}
                         className={cn(
                             'bg-background hover:bg-accent data-[state=open]:border-primary border-line border-tree-line inline-flex h-8 items-center gap-1.5 rounded-full px-3 text-xs font-semibold whitespace-nowrap tabular-nums shadow-xs',
-                            isBezSlubu && 'border-dashed',
+                            isUnmarried && 'border-dashed',
                             cardInteractive,
                             ZOOM_NO_PAN_CLASS,
                             addActive && triggerActive,

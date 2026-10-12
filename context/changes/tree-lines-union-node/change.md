@@ -1,7 +1,7 @@
 ---
 change_id: tree-lines-union-node
 title: Linie drzewa i węzeł związku z design systemu Root Keeper
-status: implemented
+status: impl_reviewed
 created: 2026-10-12
 updated: 2026-10-12
 archived_at: null

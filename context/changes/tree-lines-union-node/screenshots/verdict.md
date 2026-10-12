@@ -1,6 +1,6 @@
 # Werdykt zrzutów: linie arkusza (Faza 3)
 
-Zrzuty z `shots.mjs` na buildzie po zmianach (DPR 2). Ocena wykonana przez agenta; akceptacja użytkownika jeszcze nie nastąpiła.
+Zrzuty z `shots.mjs` na buildzie po zmianach (DPR 2). Ocena wykonana przez agenta; zrzuty zaakceptowane przez użytkownika (2026-10-12, przy przeglądzie implementacji).
 
 - 01-proband-anna-light: Jan i Anna z pigułką „1 z 4 · ślub 2001”, węzły rodziców „ok. 1945”, same obrączki i „1970”, linia przodków w `primary` od obu par dziadków, belka dzieci z zaokrąglonymi końcami i przerywanym odgałęzieniem do „Dodaj dziecko”.
 - 02-proband-anna-dark: ten sam widok w ciemnym motywie, linia przodków w jasnym `primary` i węzły czytelne na ciemnym tle.

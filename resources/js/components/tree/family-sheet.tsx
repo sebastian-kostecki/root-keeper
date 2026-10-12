@@ -1,5 +1,6 @@
 import type { RefObject } from 'react';
 import { useRef, useState } from 'react';
+// clsx, not cn: tailwind-merge reads the width utilities `border-line` / `border-lineage` as colours and drops the real colour class.
 import { clsx } from 'clsx';
 import { useOptionalSectionEditor } from '@/components/persons/section-editor';
 import { addTriggerLabels } from '@/components/tree/add-person-config';
