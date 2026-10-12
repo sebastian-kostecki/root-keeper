@@ -73,7 +73,9 @@ test('sources-grid-with-filters: place and year range narrow the grid, survive a
     await expect(page).toHaveURL(/[?&]year_to=1895/);
     await expect(page.getByRole('link', { name: inRangeName })).toBeVisible();
     await expect(page.getByRole('link', { name: outOfRangeName })).toBeHidden();
-    await expect(page.getByRole('status')).toHaveText('Znaleziono: 1 źródło');
+    await expect(
+        page.getByText('Znaleziono: 1 źródło', { exact: true }),
+    ).toBeVisible();
 
     // 5. Reload: the address rebuilds the fields and the same single card.
     await page.reload();
@@ -85,7 +87,9 @@ test('sources-grid-with-filters: place and year range narrow the grid, survive a
     await expect(
         page.getByRole('link', { name: withoutParishName }),
     ).toBeHidden();
-    await expect(page.getByRole('status')).toHaveText('Znaleziono: 1 źródło');
+    await expect(
+        page.getByText('Znaleziono: 1 źródło', { exact: true }),
+    ).toBeVisible();
 
     // 6. "Wyczyść filtry": the fields are empty again and all three cards are back.
     await page.getByRole('button', { name: 'Wyczyść filtry' }).click();

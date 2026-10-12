@@ -199,4 +199,24 @@ await run(MOBILE, async (page) => {
     await snap(page, '10-kind-toggle-mobile');
 });
 
+// 11: filters expanded on mobile ("Filtry (N)" opens the block with the four fields).
+await run(MOBILE, async (page) => {
+    await visit(page, '?year_from=1850&year_to=1900');
+    await page.getByRole('button', { name: 'Filtry (2)', exact: true }).click();
+    await page.getByLabel('Rok od').waitFor({ state: 'visible' });
+    await snap(page, '11-filters-expanded-mobile', true);
+});
+
+// 12: a kind visit cut by the network on desktop (the error and "Spróbuj ponownie" beside the bar).
+await run(DESKTOP, async (page) => {
+    await page.route(
+        (url) => url.pathname === '/sources' && url.searchParams.has('kind'),
+        (route) => (route.request().headers()['x-inertia'] ? route.abort() : route.continue()),
+    );
+    await visit(page);
+    await page.getByRole('radio', { name: /^Akty/ }).click();
+    await page.getByRole('alert').waitFor({ state: 'visible' });
+    await snap(page, '12-visit-error-desktop');
+});
+
 await browser.close();

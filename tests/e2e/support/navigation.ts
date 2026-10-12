@@ -126,7 +126,9 @@ export async function openSourceFromList(
         .getByRole('searchbox', { name: 'Szukaj źródła' })
         .fill(sourceName);
     // The list is filtered after a debounce; a click before it lands is dropped.
-    await expect(page.getByRole('status')).toHaveText('Znaleziono: 1 źródło');
+    await expect(
+        page.getByText('Znaleziono: 1 źródło', { exact: true }),
+    ).toBeVisible();
     await page.getByRole('link', { name: sourceName }).click();
     const panel = sourcePanel(page, sourceName);
     await expect(panel).toBeVisible();

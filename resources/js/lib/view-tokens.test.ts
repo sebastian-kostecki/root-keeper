@@ -4,14 +4,14 @@ import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vite-plus/test';
 
-// Control for the design-token contract of the /persons view: the colours,
+// Control for the design-token contract of the /persons and /sources list views: the colours,
 // spacing and focus rings of these files come from tokens (resources/css/app.css)
 // and shared constants (lib/focus-ring.ts), never from literals written in the view.
 
 const here = dirname(fileURLToPath(import.meta.url));
 const jsRoot = resolve(here, '..');
 
-/** The files that render the /persons view, relative to resources/js. */
+/** The files that render the /persons and /sources list views, relative to resources/js. */
 const VIEW_FILES = [
     'pages/persons/index.tsx',
     'components/persons/persons-list.tsx',
@@ -20,6 +20,12 @@ const VIEW_FILES = [
     'components/persons/person-list-parts.tsx',
     'components/persons/partial-date-input.tsx',
     'components/table-parts.tsx',
+    'pages/sources/index.tsx',
+    'components/sources/sources-filters.tsx',
+    'components/sources/sources-gallery.tsx',
+    'components/sources/sources-table.tsx',
+    'components/sources/sources-empty-state.tsx',
+    'components/sources/source-thumbnail.tsx',
 ];
 
 const PALETTE_COLOURS =
@@ -121,7 +127,7 @@ function describeViolations(violations: Violation[]): string {
         .join('\n');
 }
 
-describe('persons view uses tokens, not literals', () => {
+describe('persons and sources list views use tokens, not literals', () => {
     it('has no hex, palette, arbitrary pixel or inline style values in the view files', () => {
         const violations = VIEW_FILES.flatMap(scanFile);
 

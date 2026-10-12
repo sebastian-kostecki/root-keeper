@@ -56,8 +56,8 @@ PHP 8.5 · Laravel 13 · Inertia v3 (inertia-laravel 3.5, @inertiajs/react 3.8) 
 
 - Tokens live in `resources/css/app.css` (`:root` / `.dark` mapped into `@theme`). Use role classes (`text-destructive-foreground`, `bg-accent`, `text-muted-foreground`). In views: no Tailwind palette classes (`text-red-600`), no hex, `rgb()` or `oklch()`, no arbitrary pixel values (`ring-[3px]`) and no inline `style=`.
 - Before creating a component, check `resources/js/components/ui/` and the shared `components/{heading,search-field,segmented-toggle,empty-state,side-panel,table-parts}.tsx`. A missing shadcn component comes from `npx shadcn add <name>` (new dependencies need approval).
-- Focus ring for elements outside `components/ui/`: `focusRing` from `resources/js/lib/focus-ring.ts`. List pages: `Heading variant="page"` and the search row with `role="search"`.
-- Controls: `resources/js/lib/persons-view-tokens.test.ts` scans the `/persons` view files (runs in `npm run test:js`). Visual gate: screenshots in `context/changes/<id>/screenshots/`.
+- Focus ring for elements outside `components/ui/`: `focusRing` from `resources/js/lib/focus-ring.ts`. The open record on list cards is `selectedListItem` from `resources/js/lib/list-item-styles.ts` (focus wins over the selection ring). Sticky table columns come from `resources/js/lib/table-styles.ts`. List pages: `Heading variant="page"` and the search row with `role="search"`.
+- Controls: `resources/js/lib/view-tokens.test.ts` scans the `/persons` and `/sources` view files (runs in `npm run test:js`). Visual gate: screenshots in `context/changes/<id>/screenshots/`.
 
 ## Side panels vs modals
 

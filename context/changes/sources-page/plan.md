@@ -505,32 +505,32 @@ Scenariusze:
 
 #### Automated
 
-- [x] 3.1 Testy JS przechodzą (`yearFieldsError`)
-- [x] 3.2 Typy, lint i build przechodzą
-- [x] 3.3 Specy list przechodzą (`sources-grid-with-filters`, `source-found-by-place-and-year`, `persons-add-person-panel`)
+- [x] 3.1 Testy JS przechodzą (`yearFieldsError`) — 45d1881
+- [x] 3.2 Typy, lint i build przechodzą — 45d1881
+- [x] 3.3 Specy list przechodzą (`sources-grid-with-filters`, `source-found-by-place-and-year`, `persons-add-person-panel`) — 45d1881
 
 #### Manual
 
-- [x] 3.4 Pola roku: 7 stanów, w tym oba komunikaty błędu, wartości niezamienione
-- [x] 3.5 Selecty: stany, wyłączony select z przygaszoną etykietą
-- [x] 3.6 Przełącznik rodzaju: stany, komunikat błędu i ponowienie po odcięciu sieci
-- [x] 3.7 Przełącznik Galeria/Tabela i sortowanie: stany i błąd
-- [x] 3.8 Karta i wiersz: stany, `aria-busy`, puste stany z nowym tekstem `SourcesEmptyKind` i jednym „Wyczyść filtry”
-- [x] 3.9 Miniatura: z plikiem / bez pliku / uszkodzona → `ImageOff` bez skoku
-- [x] 3.10 „Filtry (N)” na 375 px: default / hover / focus-visible / N = 0, 1, 2
+- [x] 3.4 Pola roku: 7 stanów, w tym oba komunikaty błędu, wartości niezamienione — 45d1881
+- [x] 3.5 Selecty: stany, wyłączony select z przygaszoną etykietą — 45d1881
+- [x] 3.6 Przełącznik rodzaju: stany, komunikat błędu i ponowienie po odcięciu sieci — 45d1881
+- [x] 3.7 Przełącznik Galeria/Tabela i sortowanie: stany i błąd — 45d1881
+- [x] 3.8 Karta i wiersz: stany, `aria-busy`, puste stany z nowym tekstem `SourcesEmptyKind` i jednym „Wyczyść filtry” — 45d1881
+- [x] 3.9 Miniatura: z plikiem / bez pliku / uszkodzona → `ImageOff` bez skoku — 45d1881
+- [x] 3.10 „Filtry (N)” na 375 px: default / hover / focus-visible / N = 0, 1, 2 — 45d1881
 
 ### Phase 4: Utrwal to i bramka wizualna
 
 #### Automated
 
-- [ ] 4.1 Spec `sources-page-states.spec.ts` przechodzi
-- [ ] 4.2 Scenariusze 1 i 3 czerwienieją po wprowadzonym błędzie i zielenieją po przywróceniu
-- [ ] 4.3 Skan przechodzi i czerwienieje po wstawieniu klasy palety do `sources-gallery.tsx`
-- [ ] 4.4 Pełny zestaw E2E przechodzi: `npx playwright test`
-- [ ] 4.5 `CLAUDE.md` wskazuje `list-item-styles.ts` i `view-tokens.test.ts`, blok 10x-cli nietknięty, brak odwołań do `persons-view-tokens`
-- [ ] 4.6 Lint i format przechodzą: `vendor/bin/sail npm run check`
+- [x] 4.1 Spec `sources-page-states.spec.ts` przechodzi
+- [x] 4.2 Scenariusze 1 i 3 czerwienieją po wprowadzonym błędzie i zielenieją po przywróceniu
+- [x] 4.3 Skan przechodzi i czerwienieje po wstawieniu klasy palety do `sources-gallery.tsx`
+- [x] 4.4 Pełny zestaw E2E przechodzi: `npx playwright test`
+- [x] 4.5 `CLAUDE.md` wskazuje `list-item-styles.ts` i `view-tokens.test.ts`, blok 10x-cli nietknięty, brak odwołań do `persons-view-tokens`
+- [x] 4.6 Lint i format przechodzą: `vendor/bin/sail npm run check`
 
 #### Manual
 
-- [ ] 4.7 Zrzuty `after/01–12` porównane z `before/` w `verdict.md`
-- [ ] 4.8 Pełny zestaw Pest uruchomiony przez użytkownika: `vendor/bin/sail artisan test --compact`
+- [x] 4.7 Zrzuty `after/01–12` porównane z `before/` w `verdict.md`
+- [x] 4.8 Pełny zestaw Pest uruchomiony przez użytkownika: `vendor/bin/sail artisan test --compact`
