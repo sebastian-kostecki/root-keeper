@@ -320,15 +320,15 @@ Brak zmian w bazie. `card_name` jest nowym polem w ładunku; stare klienty go ni
 
 #### Automated
 
-- [x] 1.1 Testy Pest drzewa i przodków przechodzą
-- [x] 1.2 Larastan przechodzi
-- [x] 1.3 Typy TS przechodzą
-- [x] 1.4 Testy Vitest przechodzą
-- [x] 1.5 Pint bez zmian po formatowaniu
+- [x] 1.1 Testy Pest drzewa i przodków przechodzą — 36f2087
+- [x] 1.2 Larastan przechodzi — 36f2087
+- [x] 1.3 Typy TS przechodzą — 36f2087
+- [x] 1.4 Testy Vitest przechodzą — 36f2087
+- [x] 1.5 Pint bez zmian po formatowaniu — 36f2087
 
 #### Manual
 
-- [x] 1.6 Karta pokazuje nazwisko rodowe, nagłówek dalej „z d.”
+- [x] 1.6 Karta pokazuje nazwisko rodowe, nagłówek dalej „z d.” — 36f2087
 
 ### Phase 2: Układ nazwy i paska na karcie
 
