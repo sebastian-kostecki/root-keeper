@@ -122,6 +122,16 @@ test('the panel resolver answers 404 for a missing id', function () {
     $this->actingAs($user)->get(route('places.index', ['locality' => 999999]))->assertNotFound();
 });
 
+test('the parish panel resolver returns null for a non-numeric key and answers 404 for a missing id', function () {
+    $user = User::factory()->create();
+
+    $this->actingAs($user)->get(route('places.index', ['kind' => 'parafie', 'parish' => 'abc']))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page->where('parishPanel', null));
+
+    $this->actingAs($user)->get(route('places.index', ['kind' => 'parafie', 'parish' => 999999]))->assertNotFound();
+});
+
 test('the index search query is trimmed, cut to 100 characters and empty for a non-string', function (array $query, string $expected) {
     $this->actingAs(User::factory()->create())->get(route('places.index', $query))->assertInertia(fn ($page) => $page
         ->where('filters.q', $expected));

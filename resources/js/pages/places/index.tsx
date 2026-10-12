@@ -310,7 +310,7 @@ export default function Index({
 
     const clearSearch = () => {
         setSearch('');
-        visit('');
+        visit('', true);
     };
 
     const listContent = isParishTab ? (
@@ -415,7 +415,7 @@ export default function Index({
                 />
             )}
 
-            {parishPanel !== null && (
+            {localityPanel === null && parishPanel !== null && (
                 <ParishPanel
                     parish={parishPanel.parish}
                     parishes={parishes}
