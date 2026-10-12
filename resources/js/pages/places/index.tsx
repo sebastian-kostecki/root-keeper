@@ -3,18 +3,14 @@ import { useEffect, useRef, useState } from 'react';
 import type { MouseEvent } from 'react';
 import { DiscardChangesDialog } from '@/components/discard-changes-dialog';
 import Heading from '@/components/heading';
-import {
-    LocalitiesEmptyTree,
-    LocalitiesNoResults,
-} from '@/components/localities/localities-empty-state';
 import { LocalitiesTable } from '@/components/localities/localities-table';
 import { LocalityPanel } from '@/components/localities/locality-panel';
-import {
-    ParishesEmptyTree,
-    ParishesNoResults,
-} from '@/components/parishes/parishes-empty-state';
 import { ParishesTable } from '@/components/parishes/parishes-table';
 import { ParishPanel } from '@/components/parishes/parish-panel';
+import {
+    PlacesEmptyTree,
+    PlacesNoResults,
+} from '@/components/places/places-empty-state';
 import { SearchField } from '@/components/search-field';
 import { SegmentedToggle } from '@/components/segmented-toggle';
 import type { SegmentedToggleItem } from '@/components/segmented-toggle';
@@ -261,9 +257,13 @@ export default function Index({
 
     const listContent = isParishTab ? (
         parishes.length === 0 ? (
-            <ParishesEmptyTree action={addButton} />
+            <PlacesEmptyTree kind="parafie" action={addButton} />
         ) : visibleParishes.length === 0 ? (
-            <ParishesNoResults query={trimmedSearch} onClear={clearSearch} />
+            <PlacesNoResults
+                kind="parafie"
+                query={trimmedSearch}
+                onClear={clearSearch}
+            />
         ) : (
             <ParishesTable
                 parishes={visibleParishes}
@@ -273,9 +273,13 @@ export default function Index({
             />
         )
     ) : localities.length === 0 ? (
-        <LocalitiesEmptyTree action={addButton} />
+        <PlacesEmptyTree kind="miejscowosci" action={addButton} />
     ) : visibleLocalities.length === 0 ? (
-        <LocalitiesNoResults query={trimmedSearch} onClear={clearSearch} />
+        <PlacesNoResults
+            kind="miejscowosci"
+            query={trimmedSearch}
+            onClear={clearSearch}
+        />
     ) : (
         <LocalitiesTable
             localities={visibleLocalities}

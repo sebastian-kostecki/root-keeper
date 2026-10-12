@@ -10,7 +10,9 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
+import { focusRing } from '@/lib/focus-ring';
 import { panelVisitOptions } from '@/lib/side-panel-url';
+import { stickyCell, stickyHeadCell } from '@/lib/table-styles';
 import { cn } from '@/lib/utils';
 import type { Locality } from '@/types';
 
@@ -36,7 +38,9 @@ export function LocalitiesTable({
                 </TableCaption>
                 <TableHeader>
                     <TableRow className="hover:bg-transparent">
-                        <TableHead className="px-4">Nazwa</TableHead>
+                        <TableHead className={cn(stickyHeadCell, 'px-4')}>
+                            Nazwa
+                        </TableHead>
                         <TableHead>Opis</TableHead>
                         <TableHead className="px-4 text-right">
                             Użycia
@@ -47,11 +51,12 @@ export function LocalitiesTable({
                     {localities.map((locality) => (
                         <TableRow
                             key={locality.id}
+                            className="group"
                             data-state={
                                 locality.id === openId ? 'selected' : undefined
                             }
                         >
-                            <TableCell className="px-4 py-3">
+                            <TableCell className={cn(stickyCell, 'px-4 py-3')}>
                                 <Link
                                     href={hrefFor(locality.id)}
                                     {...panelVisitOptions}
@@ -64,7 +69,8 @@ export function LocalitiesTable({
                                         onRowClick(event, locality.id)
                                     }
                                     className={cn(
-                                        'focus-visible:ring-ring/50 -m-1 block rounded-md p-1 font-medium outline-none focus-visible:ring-[3px]',
+                                        focusRing,
+                                        '-m-1 block rounded-md p-1 font-medium',
                                         locality.id === openId && 'underline',
                                     )}
                                 >

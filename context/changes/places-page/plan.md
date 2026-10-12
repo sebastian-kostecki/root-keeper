@@ -433,24 +433,24 @@ Bez migracji danych. Stare adresy działają przez 302. Wayfinder po dodaniu tra
 
 #### Automated
 
-- [x] 1.1 Testy Pest przechodzą: `vendor/bin/sail artisan test --compact tests/Feature/PlacesTest.php tests/Feature/LocalitiesTest.php tests/Feature/ParishesTest.php tests/Feature/OwnershipBoundariesTest.php tests/Feature/AppShellTest.php`
-- [x] 1.2 Vitest przechodzi: `vendor/bin/sail npm run test:js`
-- [x] 1.3 Typy i lint frontu przechodzą: `vendor/bin/sail npm run types:check` i `vendor/bin/sail npm run check`
-- [x] 1.4 Pint i Larastan czyste: `vendor/bin/sail bin pint --dirty --format agent` i `vendor/bin/sail composer types:check`
-- [x] 1.5 Spec scalania przechodzi na nowym adresie: `npx playwright test tests/e2e/places-merge-and-delete.spec.ts`
+- [x] 1.1 Testy Pest przechodzą: `vendor/bin/sail artisan test --compact tests/Feature/PlacesTest.php tests/Feature/LocalitiesTest.php tests/Feature/ParishesTest.php tests/Feature/OwnershipBoundariesTest.php tests/Feature/AppShellTest.php` — 3a6e9ba
+- [x] 1.2 Vitest przechodzi: `vendor/bin/sail npm run test:js` — 3a6e9ba
+- [x] 1.3 Typy i lint frontu przechodzą: `vendor/bin/sail npm run types:check` i `vendor/bin/sail npm run check` — 3a6e9ba
+- [x] 1.4 Pint i Larastan czyste: `vendor/bin/sail bin pint --dirty --format agent` i `vendor/bin/sail composer types:check` — 3a6e9ba
+- [x] 1.5 Spec scalania przechodzi na nowym adresie: `npx playwright test tests/e2e/places-merge-and-delete.spec.ts` — 3a6e9ba
 
 #### Manual
 
-- [x] 1.6 Menu ma jeden wpis „Miejsca” z sumą; `/localities?locality=<id>` i `/parishes?parish=<id>&q=<x>` lądują na `/places` z otwartym panelem, właściwą zakładką i wypełnioną wyszukiwarką
-- [x] 1.7 Przełączenie zakładki zmienia tabelę, przycisk „Dodaj …” i adres (`?kind=parafie`), a „Wstecz” wraca do poprzedniej zakładki
-- [x] 1.8 Przy niezapisanych zmianach w panelu miejscowości kliknięcie parafii pyta o porzucenie zmian, a kliknięcie otwartego rekordu nie robi nic
+- [x] 1.6 Menu ma jeden wpis „Miejsca” z sumą; `/localities?locality=<id>` i `/parishes?parish=<id>&q=<x>` lądują na `/places` z otwartym panelem, właściwą zakładką i wypełnioną wyszukiwarką — 3a6e9ba
+- [x] 1.7 Przełączenie zakładki zmienia tabelę, przycisk „Dodaj …” i adres (`?kind=parafie`), a „Wstecz” wraca do poprzedniej zakładki — 3a6e9ba
+- [x] 1.8 Przy niezapisanych zmianach w panelu miejscowości kliknięcie parafii pyta o porzucenie zmian, a kliknięcie otwartego rekordu nie robi nic — 3a6e9ba
 
 ### Phase 2: Tabele i stałe
 
 #### Automated
 
-- [ ] 2.1 Vitest, typy i lint przechodzą: `vendor/bin/sail npm run test:js`, `vendor/bin/sail npm run types:check`, `vendor/bin/sail npm run check`
-- [ ] 2.2 W plikach widoku nie ma literału pierścienia: `grep -rn "ring-\[3px\]" resources/js/components/localities/localities-table.tsx resources/js/components/parishes/parishes-table.tsx resources/js/pages/places` nic nie zwraca
+- [x] 2.1 Vitest, typy i lint przechodzą: `vendor/bin/sail npm run test:js`, `vendor/bin/sail npm run types:check`, `vendor/bin/sail npm run check`
+- [x] 2.2 W plikach widoku nie ma literału pierścienia: `grep -rn "ring-\[3px\]" resources/js/components/localities/localities-table.tsx resources/js/components/parishes/parishes-table.tsx resources/js/pages/places` nic nie zwraca
 
 #### Manual
 

@@ -10,7 +10,9 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
+import { focusRing } from '@/lib/focus-ring';
 import { panelVisitOptions } from '@/lib/side-panel-url';
+import { stickyCell, stickyHeadCell } from '@/lib/table-styles';
 import { cn } from '@/lib/utils';
 import type { Parish } from '@/types';
 
@@ -36,11 +38,13 @@ export function ParishesTable({
                 </TableCaption>
                 <TableHeader>
                     <TableRow className="hover:bg-transparent">
-                        <TableHead className="px-4">Nazwa</TableHead>
+                        <TableHead className={cn(stickyHeadCell, 'px-4')}>
+                            Nazwa
+                        </TableHead>
                         <TableHead>Wyznanie</TableHead>
                         <TableHead>Siedziba</TableHead>
                         <TableHead className="px-4 text-right">
-                            Użycia
+                            Źródła
                         </TableHead>
                     </TableRow>
                 </TableHeader>
@@ -48,11 +52,12 @@ export function ParishesTable({
                     {parishes.map((parish) => (
                         <TableRow
                             key={parish.id}
+                            className="group"
                             data-state={
                                 parish.id === openId ? 'selected' : undefined
                             }
                         >
-                            <TableCell className="px-4 py-3">
+                            <TableCell className={cn(stickyCell, 'px-4 py-3')}>
                                 <Link
                                     href={hrefFor(parish.id)}
                                     {...panelVisitOptions}
@@ -65,7 +70,8 @@ export function ParishesTable({
                                         onRowClick(event, parish.id)
                                     }
                                     className={cn(
-                                        'focus-visible:ring-ring/50 -m-1 block rounded-md p-1 font-medium outline-none focus-visible:ring-[3px]',
+                                        focusRing,
+                                        '-m-1 block rounded-md p-1 font-medium',
                                         parish.id === openId && 'underline',
                                     )}
                                 >
