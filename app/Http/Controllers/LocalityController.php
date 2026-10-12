@@ -7,60 +7,23 @@ use App\Actions\Localities\StoreLocality;
 use App\Actions\Localities\UpdateLocality;
 use App\Http\Requests\LocalityStoreRequest;
 use App\Http\Requests\LocalityUpdateRequest;
-use App\Http\Resources\LocalityResource;
 use App\Models\Locality;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
-use Inertia\Response;
 
 class LocalityController extends Controller
 {
     /**
-     * Display the tree's gazetteer, with the side panel named by `?locality=` resolved lazily.
+     * Redirect the old gazetteer address to the places page, keeping the search and the panel key.
      */
-    public function index(Request $request): Response
+    public function index(Request $request): RedirectResponse
     {
-        $tree = $request->user()->tree;
-
-        return Inertia::render('localities/index', [
-            'localities' => fn (): array => LocalityResource::collection(
-                $tree->localities()->withCount(['events', 'parishes', 'residences', 'cemeterySources'])->orderBy('name')->get()
-            )->resolve(),
-            'filters' => ['q' => $this->normalizeSearchQuery($request->query('q'))],
-            'localityPanel' => function () use ($request): ?array {
-                $key = $request->query('locality');
-
-                if ($key === 'new') {
-                    return ['locality' => null];
-                }
-
-                if (! is_string($key) || ! ctype_digit($key)) {
-                    return null;
-                }
-
-                $locality = $request->user()->tree->localities()
-                    ->withCount(['events', 'parishes', 'residences', 'cemeterySources'])
-                    ->findOrFail((int) $key);
-
-                Gate::authorize('view', $locality);
-
-                return ['locality' => LocalityResource::make($locality)->resolve()];
-            },
-        ]);
-    }
-
-    /**
-     * Normalize the raw `q` query parameter into a trimmed, length-capped search string.
-     */
-    private function normalizeSearchQuery(mixed $q): string
-    {
-        if (! is_string($q)) {
-            return '';
-        }
-
-        return rtrim(mb_substr(trim($q), 0, 100));
+        return to_route('places.index', array_filter(
+            $request->only(['locality', 'q']),
+            fn (mixed $value): bool => is_string($value) && $value !== '',
+        ));
     }
 
     /**
@@ -76,7 +39,7 @@ class LocalityController extends Controller
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Dodano miejscowość')]);
 
-        return to_route('localities.index', ['locality' => $locality->id]);
+        return to_route('places.index', ['locality' => $locality->id]);
     }
 
     /**
@@ -106,6 +69,6 @@ class LocalityController extends Controller
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Usunięto miejscowość')]);
 
-        return to_route('localities.index');
+        return to_route('places.index');
     }
 }

@@ -1,11 +1,6 @@
 import { describe, expect, it } from 'vite-plus/test';
 import type { Parish } from '@/types';
-import {
-    buildParishesQuery,
-    filterParishes,
-    sortParishes,
-    withParishesSearch,
-} from './parishes-index';
+import { filterParishes, sortParishes } from './parishes-index';
 
 function parish(id: number, name: string, locality: string | null): Parish {
     return {
@@ -50,26 +45,5 @@ describe('sortParishes', () => {
         ];
 
         expect(sortParishes(list).map((item) => item.id)).toEqual([1, 2, 3]);
-    });
-});
-
-describe('buildParishesQuery', () => {
-    it('omits a blank search and trims the rest', () => {
-        expect(buildParishesQuery({ q: '  ' })).toEqual({});
-        expect(buildParishesQuery({ q: ' jan ' })).toEqual({ q: 'jan' });
-    });
-});
-
-describe('withParishesSearch', () => {
-    it('keeps the open panel when the search changes', () => {
-        expect(withParishesSearch('/parishes?parish=3', ' jan ')).toBe(
-            '/parishes?parish=3&q=jan',
-        );
-    });
-
-    it('removes only the search when it is blank', () => {
-        expect(withParishesSearch('/parishes?q=x&parish=new', '  ')).toBe(
-            '/parishes?parish=new',
-        );
     });
 });

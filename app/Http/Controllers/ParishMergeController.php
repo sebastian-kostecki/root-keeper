@@ -24,6 +24,6 @@ class ParishMergeController extends Controller
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Scalono z parafią „:name”', ['name' => $target->label()])]);
 
-        return to_route('parishes.index', ['parish' => $target->id]);
+        return to_route('places.index', ['kind' => 'parafie', 'parish' => $target->id]);
     }
 }

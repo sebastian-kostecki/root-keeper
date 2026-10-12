@@ -24,6 +24,6 @@ class LocalityMergeController extends Controller
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Scalono z miejscowością „:name”', ['name' => $target->name])]);
 
-        return to_route('localities.index', ['locality' => $target->id]);
+        return to_route('places.index', ['locality' => $target->id]);
     }
 }

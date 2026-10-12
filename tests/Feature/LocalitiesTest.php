@@ -9,7 +9,6 @@ use App\Models\Person;
 use App\Models\Residence;
 use App\Models\Source;
 use App\Models\User;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 test('guests are redirected to the login page from localities routes', function () {
@@ -22,23 +21,6 @@ test('guests are redirected to the login page from localities routes', function 
     $this->post(route('localities.merge', $locality), [])->assertRedirect(route('login'));
 });
 
-test('the index lists only the user own localities alphabetically', function () {
-    $user = User::factory()->create();
-    Locality::factory()->for($user->tree)->create(['name' => 'Lwów']);
-    Locality::factory()->for($user->tree)->create(['name' => 'Kraków']);
-    Locality::factory()->for(User::factory()->create()->tree)->create(['name' => 'Cudza']);
-
-    $this->actingAs($user)->get(route('localities.index'))
-        ->assertOk()
-        ->assertInertia(fn ($page) => $page
-            ->component('localities/index')
-            ->has('localities', 2)
-            ->where('localities.0.name', 'Kraków')
-            ->where('localities.1.name', 'Lwów')
-            ->has('localities.0', fn ($locality) => $locality->hasAll(['id', 'name', 'description', 'usage']))
-            ->where('filters.q', ''));
-});
-
 test('storing creates a locality in the user tree and redirects to its panel with the toast', function () {
     $user = User::factory()->create();
 
@@ -47,7 +29,7 @@ test('storing creates a locality in the user tree and redirects to its panel wit
     $locality = $user->tree->localities()->firstOrFail();
 
     $response
-        ->assertRedirect(route('localities.index', ['locality' => $locality->id]))
+        ->assertRedirect(route('places.index', ['locality' => $locality->id]))
         ->assertInertiaFlash('toast', ['type' => 'success', 'message' => 'Dodano miejscowość']);
 
     expect($locality->name)->toBe('Kraków');
@@ -58,9 +40,9 @@ test('updating changes the name and description, redirects back with the toast a
     $user = User::factory()->create();
     $locality = Locality::factory()->for($user->tree)->create(['name' => 'Krakow', 'description' => 'Stary opis']);
 
-    $this->actingAs($user)->from(route('localities.index', ['locality' => $locality->id]))
+    $this->actingAs($user)->from(route('places.index', ['locality' => $locality->id]))
         ->put(route('localities.update', $locality), ['name' => 'Kraków', 'description' => ''])
-        ->assertRedirect(route('localities.index', ['locality' => $locality->id]))
+        ->assertRedirect(route('places.index', ['locality' => $locality->id]))
         ->assertInertiaFlash('toast', ['type' => 'success', 'message' => 'Zapisano miejscowość']);
 
     $locality->refresh();
@@ -138,37 +120,12 @@ test('a duplicate name that slipped past validation is a name error, not a serve
     expect($user->tree->localities()->orderBy('name')->pluck('name')->all())->toBe(['Kraków', 'Lwów']);
 });
 
-test('the list and the panel carry the usage counts of every kind of reference', function () {
-    $user = User::factory()->create();
-    $locality = Locality::factory()->for($user->tree)->create();
-    $person = Person::factory()->for($user->tree)->create();
-
-    Event::factory()->for($user->tree)->birth()->create(['locality_id' => $locality->id]);
-    Parish::factory()->for($user->tree)->seatedIn($locality)->create();
-    Residence::factory()->for($person)->create(['tree_id' => $user->tree->id, 'locality_id' => $locality->id]);
-    Source::factory()->for($user->tree)->gravestone()->create(['cemetery_locality_id' => $locality->id]);
-
-    $this->actingAs($user)->get(route('localities.index'))->assertInertia(fn ($page) => $page
-        ->where('localities.0.usage.facts', 1)
-        ->where('localities.0.usage.parishes', 1)
-        ->where('localities.0.usage.residences', 1)
-        ->where('localities.0.usage.gravestones', 1)
-        ->where('localities.0.usage.total', 4));
-
-    $this->actingAs($user)->get(route('localities.index', ['locality' => $locality->id]))->assertInertia(fn ($page) => $page
-        ->where('localityPanel.locality.usage.facts', 1)
-        ->where('localityPanel.locality.usage.parishes', 1)
-        ->where('localityPanel.locality.usage.residences', 1)
-        ->where('localityPanel.locality.usage.gravestones', 1)
-        ->where('localityPanel.locality.usage.total', 4));
-});
-
 test('an unused locality can be deleted and the user goes back to the list with the toast', function () {
     $user = User::factory()->create();
     $locality = Locality::factory()->for($user->tree)->create();
 
     $this->actingAs($user)->delete(route('localities.destroy', $locality))
-        ->assertRedirect(route('localities.index'))
+        ->assertRedirect(route('places.index'))
         ->assertInertiaFlash('toast', ['type' => 'success', 'message' => 'Usunięto miejscowość']);
 
     expect(Locality::find($locality->id))->toBeNull();
@@ -215,7 +172,7 @@ test('merging moves every kind of reference of the duplicate to the target and d
     $foreignEvent = Event::factory()->for(User::factory()->create()->tree)->birth()->create(['locality_id' => $foreign->id]);
 
     $this->actingAs($user)->post(route('localities.merge', $duplicate), ['target_id' => $target->id])
-        ->assertRedirect(route('localities.index', ['locality' => $target->id]))
+        ->assertRedirect(route('places.index', ['locality' => $target->id]))
         ->assertInertiaFlash('toast', ['type' => 'success', 'message' => 'Scalono z miejscowością „Kraków”']);
 
     expect(Locality::find($duplicate->id))->toBeNull();
@@ -334,71 +291,6 @@ test('merging refuses a target that is foreign, missing or the duplicate itself 
     expect($parish->refresh()->locality_id)->toBe($duplicate->id);
     expect($user->tree->localities()->count())->toBe(1);
 })->with(['foreign', 'missing', 'duplicate itself', 'empty']);
-
-test('the panel resolver returns null without a key or with a non-numeric one', function (string $query) {
-    $user = User::factory()->create();
-
-    $this->actingAs($user)->get(route('localities.index').$query)
-        ->assertOk()
-        ->assertInertia(fn ($page) => $page->where('localityPanel', null));
-})->with([
-    'no key' => [''],
-    'letters' => ['?locality=abc'],
-]);
-
-test('the panel resolver returns an empty panel for new and the locality data for an own id', function () {
-    $user = User::factory()->create();
-    $locality = Locality::factory()->for($user->tree)->create(['name' => 'Lipnica', 'description' => 'Opis']);
-
-    $this->actingAs($user)->get(route('localities.index', ['locality' => 'new']))
-        ->assertOk()
-        ->assertInertia(fn ($page) => $page->where('localityPanel.locality', null));
-
-    $this->actingAs($user)->get(route('localities.index', ['locality' => $locality->id]))
-        ->assertOk()
-        ->assertInertia(fn ($page) => $page
-            ->where('localityPanel.locality.id', $locality->id)
-            ->where('localityPanel.locality.name', 'Lipnica')
-            ->where('localityPanel.locality.description', 'Opis'));
-});
-
-test('the panel resolver answers 404 for a missing id', function () {
-    $user = User::factory()->create();
-
-    $this->actingAs($user)->get(route('localities.index', ['locality' => 999999]))->assertNotFound();
-});
-
-test('the index search query is trimmed, cut to 100 characters and empty for a non-string', function (array $query, string $expected) {
-    $this->actingAs(User::factory()->create())->get(route('localities.index', $query))->assertInertia(fn ($page) => $page
-        ->where('filters.q', $expected));
-})->with([
-    'trimmed' => [['q' => '  łódź  '], 'łódź'],
-    'cut' => [['q' => str_repeat('a', 120)], str_repeat('a', 100)],
-    'array' => [['q' => ['łódź']], ''],
-]);
-
-test('a partial reload of the filters with an open panel runs no localities query', function () {
-    $user = User::factory()->create();
-    $locality = Locality::factory()->for($user->tree)->create();
-
-    $version = $this->actingAs($user)->get(route('localities.index'), ['X-Inertia' => 'true'])->headers->get('X-Inertia-Version');
-
-    DB::enableQueryLog();
-
-    $response = $this->actingAs($user)->get(route('localities.index', ['locality' => $locality->id, 'q' => 'łódź']), [
-        'X-Inertia' => 'true',
-        'X-Inertia-Version' => $version,
-        'X-Inertia-Partial-Data' => 'filters',
-        'X-Inertia-Partial-Component' => 'localities/index',
-    ]);
-
-    $localityQueries = collect(DB::getQueryLog())->filter(fn (array $log): bool => str_contains($log['query'], '"localities"'));
-
-    $response->assertOk();
-    expect($response->json('props.filters.q'))->toBe('łódź');
-    expect($response->json('props'))->not->toHaveKey('localities')->not->toHaveKey('localityPanel');
-    expect($localityQueries)->toBeEmpty();
-});
 
 test('the inline store returns the locality as 201 JSON and a duplicate in another letter case returns the existing one as 200', function () {
     $user = User::factory()->create();

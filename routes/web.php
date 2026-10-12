@@ -15,6 +15,7 @@ use App\Http\Controllers\PersonNoteController;
 use App\Http\Controllers\PersonParentController;
 use App\Http\Controllers\PersonPhotoController;
 use App\Http\Controllers\PersonSpouseController;
+use App\Http\Controllers\PlaceController;
 use App\Http\Controllers\SidePanelDemoController;
 use App\Http\Controllers\SourceController;
 use App\Http\Controllers\SourceLegacyEntryNumberController;
@@ -40,6 +41,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('sources/{source}/file', [SourceController::class, 'file'])->name('sources.file');
     Route::delete('sources/{source}/legacy-entry-number', SourceLegacyEntryNumberController::class)->name('sources.legacy-entry-number.destroy');
     Route::get('sources/{source}/thumbnail', [SourceController::class, 'thumbnail'])->name('sources.thumbnail');
+
+    Route::get('places', [PlaceController::class, 'index'])->name('places.index');
 
     Route::post('localities/inline', [InlineLocalityController::class, 'store'])->name('localities.inline.store');
     Route::resource('localities', LocalityController::class)->only(['index', 'store', 'update', 'destroy']);

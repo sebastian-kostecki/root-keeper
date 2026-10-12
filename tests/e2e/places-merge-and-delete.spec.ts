@@ -25,7 +25,7 @@ test('places-merge-and-delete: a duplicate merged from its panel opens the kept 
     });
 
     // 2. Open the duplicate's panel from the register and choose the kept place.
-    await page.goto(`/localities?locality=${duplicateId}`);
+    await page.goto(`/places?locality=${duplicateId}`);
     const panel = page.getByRole('dialog', {
         name: duplicateName,
         exact: true,
@@ -58,7 +58,7 @@ test('places-merge-and-delete: a duplicate merged from its panel opens the kept 
     ).toBeHidden();
 
     // 4. Oracle on data: a fresh visit to the parish shows the kept place as its seat.
-    await page.goto(`/parishes?parish=${parishId}`);
+    await page.goto(`/places?kind=parafie&parish=${parishId}`);
     const parish = page.getByRole('dialog', { name: parishName, exact: true });
     await expect(parish).toBeVisible();
     await expect(

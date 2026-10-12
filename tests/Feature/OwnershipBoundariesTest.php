@@ -207,7 +207,7 @@ it('answers 404 and writes nothing when ?person= names another tree\'s person on
     'tree.show (własna osoba w adresie)' => ['tree.show', fn (array $r): array => ['person' => $r['ownPerson']->id]],
     'tree.ancestors (własna osoba w adresie)' => ['tree.ancestors', fn (array $r): array => ['person' => $r['ownPerson']->id]],
     'sources.index' => ['sources.index', fn (array $r): array => []],
-    'localities.index' => ['localities.index', fn (array $r): array => []],
+    'places.index' => ['places.index', fn (array $r): array => []],
     'sources.index (otwarty panel własnego źródła)' => ['sources.index', fn (array $r): array => ['source' => $r['ownSource']->id]],
 ]);
 
@@ -221,7 +221,7 @@ it('answers 404 and writes nothing when ?locality= names another tree\'s localit
     $before = ownershipSnapshot();
 
     $this->actingAs($attacker)
-        ->get(route('localities.index', ['locality' => $records['victimLocality']->id]))
+        ->get(route('places.index', ['locality' => $records['victimLocality']->id]))
         ->assertNotFound();
 
     expect(ownershipSnapshot())->toBe($before);
@@ -237,7 +237,7 @@ it('answers 404 and writes nothing when ?parish= names another tree\'s parish', 
     $before = ownershipSnapshot();
 
     $this->actingAs($attacker)
-        ->get(route('parishes.index', ['parish' => $records['victimParish']->id]))
+        ->get(route('places.index', ['kind' => 'parafie', 'parish' => $records['victimParish']->id]))
         ->assertNotFound();
 
     expect(ownershipSnapshot())->toBe($before);

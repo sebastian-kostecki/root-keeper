@@ -443,10 +443,9 @@ export async function cleanupBySuffix(
         await deleteRecord(page, headers, `/persons/${person.id}`);
     }
 
+    const places = await pageProps(page, '/places');
     const parishes =
-        ((await pageProps(page, '/parishes')).parishes as
-            | { id: number; name: string }[]
-            | undefined) ?? [];
+        (places.parishes as { id: number; name: string }[] | undefined) ?? [];
     for (const parish of parishes) {
         if (parish.name.includes(suffix)) {
             await deleteRecord(page, headers, `/parishes/${parish.id}`);
@@ -454,9 +453,7 @@ export async function cleanupBySuffix(
     }
 
     const localities =
-        ((await pageProps(page, '/localities')).localities as
-            | { id: number; name: string }[]
-            | undefined) ?? [];
+        (places.localities as { id: number; name: string }[] | undefined) ?? [];
     for (const locality of localities) {
         if (locality.name.includes(suffix)) {
             await deleteRecord(page, headers, `/localities/${locality.id}`);

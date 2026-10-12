@@ -16,42 +16,6 @@ test('guests are redirected to the login page from parishes routes', function ()
     $this->postJson(route('parishes.inline.store'), [])->assertUnauthorized();
 });
 
-test('the index lists only the user own parishes alphabetically', function () {
-    $user = User::factory()->create();
-    $seat = Locality::factory()->for($user->tree)->create(['name' => 'Tarnów']);
-    Parish::factory()->for($user->tree)->create(['name' => 'Św. Jana']);
-    Parish::factory()->for($user->tree)->withReligion(Religion::RomanCatholic)->seatedIn($seat)->create(['name' => 'Katedralna']);
-    Parish::factory()->for(User::factory()->create()->tree)->create(['name' => 'Cudza']);
-
-    $this->actingAs($user)->get(route('parishes.index'))
-        ->assertOk()
-        ->assertInertia(fn ($page) => $page
-            ->component('parishes/index')
-            ->has('parishes', 2)
-            ->where('parishes.0.name', 'Katedralna')
-            ->where('parishes.0.label', 'Katedralna (rzymskokatolickie)')
-            ->where('parishes.0.locality_name', 'Tarnów')
-            ->where('parishes.1.label', 'Św. Jana')
-            ->has('religions', count(Religion::cases()))
-            ->has('localities', 1)
-            ->where('localities.0.name', 'Tarnów')
-            ->where('filters.q', '')
-            ->where('parishPanel', null));
-});
-
-test('the panel opens for a new parish and for an existing one', function () {
-    $user = User::factory()->create();
-    $parish = Parish::factory()->for($user->tree)->create();
-
-    $this->actingAs($user)->get(route('parishes.index', ['parish' => 'new']))
-        ->assertInertia(fn ($page) => $page->where('parishPanel.parish', null));
-
-    $this->actingAs($user)->get(route('parishes.index', ['parish' => $parish->id]))
-        ->assertInertia(fn ($page) => $page
-            ->where('parishPanel.parish.id', $parish->id)
-            ->where('parishPanel.parish.name', $parish->name));
-});
-
 test('storing creates a parish with religion and seat and redirects to its panel with the toast', function () {
     $user = User::factory()->create();
     $seat = Locality::factory()->for($user->tree)->create();
@@ -65,7 +29,7 @@ test('storing creates a parish with religion and seat and redirects to its panel
     $parish = $user->tree->parishes()->firstOrFail();
 
     $response
-        ->assertRedirect(route('parishes.index', ['parish' => $parish->id]))
+        ->assertRedirect(route('places.index', ['kind' => 'parafie', 'parish' => $parish->id]))
         ->assertInertiaFlash('toast', ['type' => 'success', 'message' => 'Dodano parafię']);
 
     expect($parish->name)->toBe('Św. Jana');
@@ -78,9 +42,9 @@ test('updating changes the fields, redirects back with the toast and clears reli
     $seat = Locality::factory()->for($user->tree)->create();
     $parish = Parish::factory()->for($user->tree)->withReligion(Religion::Orthodox)->seatedIn($seat)->create(['name' => 'Jana']);
 
-    $this->actingAs($user)->from(route('parishes.index', ['parish' => $parish->id]))
+    $this->actingAs($user)->from(route('places.index', ['kind' => 'parafie', 'parish' => $parish->id]))
         ->put(route('parishes.update', $parish), ['name' => 'Św. Jana', 'religion' => '', 'locality_id' => ''])
-        ->assertRedirect(route('parishes.index', ['parish' => $parish->id]))
+        ->assertRedirect(route('places.index', ['kind' => 'parafie', 'parish' => $parish->id]))
         ->assertInertiaFlash('toast', ['type' => 'success', 'message' => 'Zapisano parafię']);
 
     $parish->refresh();
@@ -201,25 +165,12 @@ test('guests are redirected to the login page from parish delete and merge', fun
     $this->post(route('parishes.merge', $parish), [])->assertRedirect(route('login'));
 });
 
-test('the list and the panel carry the number of acts that name the parish', function () {
-    $user = User::factory()->create();
-    $parish = Parish::factory()->for($user->tree)->create(['name' => 'Luboml']);
-    Source::factory()->for($user->tree)->create(['parish_id' => $parish->id]);
-    Source::factory()->for($user->tree)->create(['parish_id' => $parish->id]);
-
-    $this->actingAs($user)->get(route('parishes.index'))
-        ->assertInertia(fn ($page) => $page->where('parishes.0.sources_count', 2));
-
-    $this->actingAs($user)->get(route('parishes.index', ['parish' => $parish->id]))
-        ->assertInertia(fn ($page) => $page->where('parishPanel.parish.sources_count', 2));
-});
-
 test('an unused parish can be deleted and the user goes back to the list with the toast', function () {
     $user = User::factory()->create();
     $parish = Parish::factory()->for($user->tree)->create();
 
     $this->actingAs($user)->delete(route('parishes.destroy', $parish))
-        ->assertRedirect(route('parishes.index'))
+        ->assertRedirect(route('places.index', ['kind' => 'parafie']))
         ->assertInertiaFlash('toast', ['type' => 'success', 'message' => 'Usunięto parafię']);
 
     expect(Parish::find($parish->id))->toBeNull();
@@ -250,7 +201,7 @@ test('merging moves every act of the duplicate to the target and deletes the dup
     $otherAct = Source::factory()->for($user->tree)->create(['parish_id' => $other->id]);
 
     $this->actingAs($user)->post(route('parishes.merge', $duplicate), ['target_id' => $target->id])
-        ->assertRedirect(route('parishes.index', ['parish' => $target->id]))
+        ->assertRedirect(route('places.index', ['kind' => 'parafie', 'parish' => $target->id]))
         ->assertInertiaFlash('toast', ['type' => 'success', 'message' => 'Scalono z parafią „Luboml”']);
 
     expect(Parish::find($duplicate->id))->toBeNull();
