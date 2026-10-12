@@ -4,14 +4,19 @@ import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vite-plus/test';
 
-// Control for the design-token contract of the /persons, /sources and /places views: the colours,
-// spacing and focus rings of these files come from tokens (resources/css/app.css)
-// and shared constants (lib/focus-ring.ts), never from literals written in the view.
+// Control for the design-token contract of the /persons, /sources and /places list views, the /tree
+// cards and panels: the colours, spacing and focus rings of these files come from tokens
+// (resources/css/app.css) and shared constants (lib/focus-ring.ts, tree/card-styles.ts),
+// never from literals written in the view.
 
 const here = dirname(fileURLToPath(import.meta.url));
 const jsRoot = resolve(here, '..');
 
-/** The files that render the /persons, /sources and /places list views, relative to resources/js. */
+/**
+ * The files that render the /persons, /sources and /places list views, the /tree cards and panels,
+ * relative to resources/js. Omitted on purpose: family-sheet.tsx and ancestor-chart.tsx, whose
+ * geometry (tree lines) is computed at runtime and so cannot be a token.
+ */
 const VIEW_FILES = [
     'pages/persons/index.tsx',
     'components/persons/persons-list.tsx',
@@ -30,6 +35,19 @@ const VIEW_FILES = [
     'components/places/places-empty-state.tsx',
     'components/localities/localities-table.tsx',
     'components/parishes/parishes-table.tsx',
+    'components/tree/ancestor-card.tsx',
+    'components/tree/sheet-person-card.tsx',
+    'components/tree/unknown-person-card.tsx',
+    'components/tree/union-node.tsx',
+    'components/tree/add-person-panel.tsx',
+    'components/tree/marry-couple-dialog.tsx',
+    'components/tree/set-root-person-button.tsx',
+    'components/tree/card-styles.ts',
+    'components/tree/add-person-config.ts',
+    'components/side-panel.tsx',
+    'components/persons/person-modal.tsx',
+    'components/sources/source-panel.tsx',
+    'components/marriages/marriage-panel.tsx',
 ];
 
 const PALETTE_COLOURS =
@@ -82,6 +100,11 @@ const EXCEPTIONS: { file: string; token: string; reason: string }[] = [
         token: 'align-[-2px]',
         reason: 'D7: optical alignment of the list icon, no token yet (research.md, deferred D7)',
     },
+    {
+        file: 'components/sources/source-panel.tsx',
+        token: 'style={',
+        reason: "szerokość paska postępu wysyłania pliku liczona w runtime (procent); odroczone: pasek przez zmienną CSS lub <progress> w osobnej zmianie (plan.md, What We're NOT Doing)",
+    },
 ];
 
 type Violation = {
@@ -131,7 +154,7 @@ function describeViolations(violations: Violation[]): string {
         .join('\n');
 }
 
-describe('persons, sources and places list views use tokens, not literals', () => {
+describe('list views, tree cards and panels use tokens, not literals', () => {
     it('has no hex, palette, arbitrary pixel or inline style values in the view files', () => {
         const violations = VIEW_FILES.flatMap(scanFile);
 

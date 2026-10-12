@@ -377,12 +377,12 @@ Rozszerzenie `view-tokens.test.ts` o drzewo i panele, pełne bramki z sekcji 4 i
 
 #### Automated
 
-- [ ] 4.1 `vendor/bin/sail npm run test:js` przechodzi z rozszerzonym `VIEW_FILES`
-- [ ] 4.2 `vendor/bin/sail npm run check` przechodzi
-- [ ] 4.3 `vendor/bin/sail npm run types:check` przechodzi
-- [ ] 4.4 `vendor/bin/sail npm run build` przechodzi
-- [ ] 4.5 `screenshots/after/` zawiera 8 zrzutów tras i 2 zrzuty fokusu, a log fokusu pokazuje kolor `ring` bez przezroczystości i 3 px
+- [x] 4.1 `vendor/bin/sail npm run test:js` przechodzi z rozszerzonym `VIEW_FILES`
+- [x] 4.2 `vendor/bin/sail npm run check` przechodzi
+- [x] 4.3 `vendor/bin/sail npm run types:check` przechodzi
+- [x] 4.4 `vendor/bin/sail npm run build` przechodzi
+- [x] 4.5 `screenshots/after/` zawiera 8 zrzutów tras i 2 zrzuty fokusu, a log fokusu pokazuje kolor `ring` bez przezroczystości i 3 px
 
 #### Manual
 
-- [ ] 4.6 `verdict.md` i zrzuty jasny/ciemny `/tree`, `/persons`, `/sources`, `/places` zaakceptowane przez użytkownika
+- [x] 4.6 `verdict.md` i zrzuty jasny/ciemny `/tree`, `/persons`, `/sources`, `/places` zaakceptowane przez użytkownika
