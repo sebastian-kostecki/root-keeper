@@ -334,32 +334,32 @@ Brak zmian w bazie. `card_name` jest nowym polem w ładunku; stare klienty go ni
 
 #### Automated
 
-- [x] 2.1 Format i lint przechodzą
-- [x] 2.2 Typy TS przechodzą
-- [x] 2.3 Brak wartości arbitralnych na plikach kart
-- [x] 2.4 Istniejące E2E kart przechodzą
+- [x] 2.1 Format i lint przechodzą — c0776d6
+- [x] 2.2 Typy TS przechodzą — c0776d6
+- [x] 2.3 Brak wartości arbitralnych na plikach kart — c0776d6
+- [x] 2.4 Istniejące E2E kart przechodzą — c0776d6
 
 #### Manual
 
-- [x] 2.5 Przy 1366 pasek 3rem/4,5rem, długa nazwa w 2 liniach z wielokropkiem, nic pod okiem
-- [x] 2.6 Podpowiedź z pełną nazwą, karta przodka bez zmian w układzie
+- [x] 2.5 Przy 1366 pasek 3rem/4,5rem, długa nazwa w 2 liniach z wielokropkiem, nic pod okiem — c0776d6
+- [x] 2.6 Podpowiedź z pełną nazwą, karta przodka bez zmian w układzie — c0776d6
 
 ### Phase 3: Kolumna z szerokości obszaru
 
 #### Automated
 
-- [ ] 3.1 Testy Vitest (w tym fitColumnRem) przechodzą
-- [ ] 3.2 Typy TS przechodzą
-- [ ] 3.3 Format i lint przechodzą
-- [ ] 3.4 COLUMN_REM = 12 nie występuje już w komponentach
-- [ ] 3.5 E2E drzewa i przodków przechodzą
+- [x] 3.1 Testy Vitest (w tym fitColumnRem) przechodzą
+- [x] 3.2 Typy TS przechodzą
+- [x] 3.3 Format i lint przechodzą
+- [x] 3.4 COLUMN_REM = 12 nie występuje już w komponentach
+- [x] 3.5 E2E drzewa i przodków przechodzą
 
 #### Manual
 
-- [ ] 3.6 Przy 2560 kolumna ok. 17rem, skala ok. 1, bez mignięcia przy starcie
-- [ ] 3.7 Przy 1366 i 1920 geometria jak po fazie 2 (też mały wykres przodków)
-- [ ] 3.8 Panel przy 2560: zwężenie bez skoku, powrót po zamknięciu, brak zmiany po ręcznym ruchu
-- [ ] 3.9 Linie, belki, węzły i wiersz dzieci trzymają się środków kart przy 2560
+- [x] 3.6 Przy 2560 kolumna ok. 17rem, skala ok. 1, bez mignięcia przy starcie
+- [x] 3.7 Przy 1366 i 1920 geometria jak po fazie 2 (też mały wykres przodków)
+- [x] 3.8 Panel przy 2560: zwężenie bez skoku, powrót po zamknięciu, brak zmiany po ręcznym ruchu
+- [x] 3.9 Linie, belki, węzły i wiersz dzieci trzymają się środków kart przy 2560
 
 ### Phase 4: E2E, bramka wizualna i system projektowy
 

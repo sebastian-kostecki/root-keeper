@@ -6,6 +6,8 @@ import { Button } from '@/components/ui/button';
 import {
     chooseAnchor,
     chooseFitView,
+    COLUMN_MIN_REM,
+    fitColumnRem,
     TREE_FIT_FLOOR,
     TREE_FIT_MAX,
 } from '@/lib/fit-view';
@@ -22,7 +24,12 @@ const DRAG_THRESHOLD = 5;
 const EDGE_MARGIN = 16;
 
 type Props = {
-    children: ReactNode;
+    /** Content; a function gets the card column in rem, fitted to the area when `columns` is set. */
+    children: ReactNode | ((columnRem: number) => ReactNode);
+    /** Cards in one row at the fitted column; without it the column stays at its minimum. */
+    columns?: number;
+    /** Padding around the content, in rem, that the fitted column leaves out. */
+    paddingRem?: number;
     /**
      * Element(s) the start view centres on when the whole content does not fit
      * at the floor scale. Several refs centre on the box that holds them all.
@@ -74,9 +81,13 @@ function revealOffset(
  * Starts fitted (whole content, or anchored when that would be too small) and
  * fits again on resize until the author pans or zooms the view. "Dopasuj"
  * fits again. Remount it with a `key` to fit from scratch.
+ * With `columns`, the card column is part of the fit: it is computed from the
+ * area width at each fit, so the cards fill the area at scale about 1.
  */
 export function ZoomCanvas({
     children,
+    columns,
+    paddingRem = 0,
     anchorRef,
     fallbackAnchorRef,
     revealRef,
@@ -90,12 +101,14 @@ export function ZoomCanvas({
     const containerRef = useRef<HTMLDivElement>(null);
     const movedRef = useRef(false);
     const fittedRef = useRef(false);
-    const fitRef = useRef<(() => void) | null>(null);
+    const fitRef = useRef<(() => boolean) | null>(null);
     const scheduleRef = useRef<(() => void) | null>(null);
     const pendingRevealRef = useRef(false);
     const revealRefLatest = useRef(revealRef);
     const dragRef = useRef({ x: 0, y: 0, down: false, dragged: false });
     const [ready, setReady] = useState(false);
+    const [columnRem, setColumnRem] = useState(COLUMN_MIN_REM);
+    const columnRemRef = useRef(COLUMN_MIN_REM);
 
     useEffect(() => {
         revealRefLatest.current = revealRef;
@@ -132,6 +145,34 @@ export function ZoomCanvas({
             const bottom = Math.max(...boxes.map((box) => box.bottom));
 
             return new DOMRect(left, top, right - left, bottom - top);
+        };
+
+        /**
+         * Brings the column in line with the area width. Returns false when the
+         * column changed: the content resize then runs the fit on a later pass.
+         */
+        const settleColumn = (): boolean => {
+            if (columns === undefined) {
+                return true;
+            }
+
+            const next = fitColumnRem({
+                areaWidth: wrapper.clientWidth,
+                rootFontSize: parseFloat(
+                    getComputedStyle(document.documentElement).fontSize,
+                ),
+                columns,
+                paddingRem,
+            });
+
+            if (next === columnRemRef.current) {
+                return true;
+            }
+
+            columnRemRef.current = next;
+            setColumnRem(next);
+
+            return false;
         };
 
         const fit = () => {
@@ -238,7 +279,18 @@ export function ZoomCanvas({
             }
         };
 
-        fitRef.current = fit;
+        /** Column first, then the fit: a pass that changes the column leaves the fit to the next one. */
+        const refit = (): boolean => {
+            if (!settleColumn()) {
+                return false;
+            }
+
+            fit();
+
+            return true;
+        };
+
+        fitRef.current = refit;
 
         let frame = 0;
         const schedule = () => {
@@ -246,8 +298,8 @@ export function ZoomCanvas({
             // After the library has aligned to its bounds on resize. A pending
             // reveal runs after the fit of the same pass, so the fit cannot undo it.
             frame = requestAnimationFrame(() => {
-                if (!fittedRef.current || !movedRef.current) {
-                    fit();
+                if ((!fittedRef.current || !movedRef.current) && !refit()) {
+                    return;
                 }
 
                 const target = revealRefLatest.current?.current;
@@ -299,7 +351,7 @@ export function ZoomCanvas({
             fitRef.current = null;
             scheduleRef.current = null;
         };
-    }, [anchorRef, fallbackAnchorRef, floor, max]);
+    }, [anchorRef, fallbackAnchorRef, floor, max, columns, paddingRem]);
 
     // Separate effect: a change of the revealed slot must not detach the observer above.
     useEffect(() => {
@@ -496,7 +548,9 @@ export function ZoomCanvas({
                     wrapperStyle={{ width: '100%', height: '100%' }}
                     contentStyle={{ visibility: ready ? 'visible' : 'hidden' }}
                 >
-                    {children}
+                    {typeof children === 'function'
+                        ? children(columnRem)
+                        : children}
                 </TransformComponent>
             </TransformWrapper>
         </div>
