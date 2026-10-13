@@ -365,11 +365,11 @@ Brak zmian w bazie. `card_name` jest nowym polem w ładunku; stare klienty go ni
 
 #### Automated
 
-- [x] 4.1 Nowy spec przechodzi
-- [x] 4.2 Spec czerwienieje przy celowo zepsutym limicie linii
-- [x] 4.3 Zrzuty after-* istnieją
+- [x] 4.1 Nowy spec przechodzi — f8e665f
+- [x] 4.2 Spec czerwienieje przy celowo zepsutym limicie linii — f8e665f
+- [x] 4.3 Zrzuty after-* istnieją — f8e665f
 
 #### Manual
 
-- [x] 4.4 Zrzuty after-* zestawione z before-* spełniają cel
-- [ ] 4.5 DS PersonCard opisuje nazwę rodową, łamanie i pasek
+- [x] 4.4 Zrzuty after-* zestawione z before-* spełniają cel — f8e665f
+- [x] 4.5 DS PersonCard opisuje nazwę rodową, łamanie i pasek
