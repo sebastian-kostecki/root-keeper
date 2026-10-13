@@ -2,11 +2,59 @@ import { describe, expect, it } from 'vite-plus/test';
 import {
     chooseAnchor,
     chooseFitView,
+    COLUMN_MAX_REM,
+    COLUMN_MIN_REM,
+    COLUMN_STEP_ROUND_REM,
+    fitColumnRem,
     TREE_FIT_FLOOR,
     TREE_FIT_MAX,
 } from './fit-view';
 
 const options = { floor: TREE_FIT_FLOOR, max: TREE_FIT_MAX };
+
+describe('fitColumnRem', () => {
+    const fit = (areaWidth: number, columns = 8) =>
+        fitColumnRem({
+            areaWidth,
+            rootFontSize: 16,
+            columns,
+            paddingRem: 1,
+        });
+
+    it('keeps the minimum column on a 1366 screen', () => {
+        expect(fit(1070)).toBe(12);
+    });
+
+    it('raises a column of 11.9 rem to the minimum', () => {
+        expect(fit(1624)).toBe(12);
+    });
+
+    it('rounds the column down to a step of 0.25 rem', () => {
+        expect(fit(2264)).toBe(16.75);
+    });
+
+    it('caps the column at the maximum on a 2560 screen', () => {
+        expect(fit(3544)).toBe(COLUMN_MAX_REM);
+    });
+
+    it('gives the minimum for an empty area', () => {
+        expect(fit(0)).toBe(COLUMN_MIN_REM);
+    });
+
+    it('fills a row of two columns to the maximum', () => {
+        expect(fit(2264, 2)).toBe(18);
+    });
+
+    it('is always a step inside the range', () => {
+        for (let areaWidth = 0; areaWidth <= 4000; areaWidth += 37) {
+            const column = fit(areaWidth);
+
+            expect(column).toBeGreaterThanOrEqual(COLUMN_MIN_REM);
+            expect(column).toBeLessThanOrEqual(COLUMN_MAX_REM);
+            expect(column % COLUMN_STEP_ROUND_REM).toBe(0);
+        }
+    });
+});
 
 describe('chooseAnchor', () => {
     it('anchors on the pair when it fits with the margin on both sides', () => {

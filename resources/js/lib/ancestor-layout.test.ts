@@ -6,6 +6,7 @@ function sheetPerson(id: number): SheetPerson {
     return {
         id,
         display_name: `Osoba ${id}`,
+        card_name: `Osoba ${id}`,
         gender: null,
         lifespan: null,
         is_deceased: false,

@@ -41,7 +41,7 @@ function PhotoStrip({ person }: { person: SheetPerson }) {
     return (
         <span
             className={cn(
-                'relative w-18 shrink-0 overflow-hidden',
+                'relative w-12 shrink-0 overflow-hidden @xs:w-18',
                 stripGender[person.gender ?? 'unknown'],
             )}
         >
@@ -60,7 +60,7 @@ function PhotoStrip({ person }: { person: SheetPerson }) {
                     aria-hidden="true"
                     className="text-background absolute inset-0 flex items-center justify-center text-lg font-semibold"
                 >
-                    {getInitials(person.display_name)}
+                    {getInitials(person.card_name)}
                 </span>
             )}
         </span>
@@ -71,7 +71,9 @@ function PhotoStrip({ person }: { person: SheetPerson }) {
  * Photo strip and data column of a person card. The data column stacks the
  * name, the dates and the age, aligned to the top left; `children` adds lines
  * below them. `reserveActionSpace` leaves room for the eye button in the first
- * line of the name.
+ * line of the name. The name breaks between words only, to two lines with an
+ * ellipsis; the photo strip is 3rem on cards narrower than 20rem and 4.5rem on
+ * wider ones (the card is the size container, see `personCardSurface`).
  */
 export function CardBody({
     person,
@@ -86,11 +88,14 @@ export function CardBody({
         <>
             <PhotoStrip person={person} />
             <span className="flex min-w-0 flex-1 flex-col items-start justify-start px-3 py-3.5">
-                <span className="font-display text-card-foreground text-base leading-tight font-semibold [overflow-wrap:anywhere] break-words hyphens-auto">
+                <span
+                    title={person.card_name}
+                    className="font-display text-card-foreground line-clamp-2 w-full text-base leading-tight font-semibold text-ellipsis"
+                >
                     {reserveActionSpace && (
                         <span
                             aria-hidden="true"
-                            className="float-right size-7"
+                            className="float-right size-5"
                         />
                     )}
                     {person.gender === 'male' && (
@@ -99,7 +104,7 @@ export function CardBody({
                     {person.gender === 'female' && (
                         <span className="sr-only">kobieta</span>
                     )}
-                    {person.display_name}
+                    {person.card_name}
                 </span>
                 {person.lifespan && (
                     <span className="text-tree-meta mt-1 block text-sm">

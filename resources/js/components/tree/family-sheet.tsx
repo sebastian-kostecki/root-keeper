@@ -14,6 +14,7 @@ import { useSidePanelNavigation } from '@/hooks/use-side-panel-navigation';
 import { centreHints } from '@/lib/centre-hints';
 import { addValueFor } from '@/lib/add-person-target';
 import type { AddTarget } from '@/lib/add-person-target';
+import { COLUMN_GAP_REM } from '@/lib/fit-view';
 import type {
     FamilySheet as FamilySheetData,
     PairMarriage,
@@ -22,21 +23,29 @@ import type {
 
 type BlockKey = 'focus' | 'partner';
 
-/** One sheet column and the gap between columns, in rem (a column is a grandparent card). */
-const COLUMN_REM = 12;
-const COLUMN_GAP_REM = 0.75;
+/** Cards in one row of the sheet grid, the width of the grandparent row. */
+const SHEET_COLUMNS = 8;
 
-/** Width of the eight-column grandparent row: the base width of the sheet. */
-const GRID_REM = 8 * COLUMN_REM + 7 * COLUMN_GAP_REM;
+/** Padding around the sheet in rem (`p-2`), left out of the fitted column. */
+const SHEET_PADDING_REM = 1;
+
+/** Width of the eight-column grandparent row for a card column: the base width of the sheet. */
+function gridRem(column: number): number {
+    return SHEET_COLUMNS * column + (SHEET_COLUMNS - 1) * COLUMN_GAP_REM;
+}
 
 /** A couple card is as wide as a parent card: two columns and the gap between them. */
-const COUPLE_CARD_REM = 2 * COLUMN_REM + COLUMN_GAP_REM;
+function coupleCardRem(column: number): number {
+    return 2 * column + COLUMN_GAP_REM;
+}
 
 /** The eight fixed columns, shared by the sheet grid and the couple row inside it. */
-const GRID_STYLE = {
-    gridTemplateColumns: `repeat(8, ${COLUMN_REM}rem)`,
-    columnGap: `${COLUMN_GAP_REM}rem`,
-};
+function gridStyle(column: number) {
+    return {
+        gridTemplateColumns: `repeat(${SHEET_COLUMNS}, ${column}rem)`,
+        columnGap: `${COLUMN_GAP_REM}rem`,
+    };
+}
 
 /** Children-row cells carry the column gap as padding, so their bar segments touch. */
 const CELL_PADDING_STYLE = { paddingInline: `${COLUMN_GAP_REM / 2}rem` };
@@ -310,16 +319,16 @@ function parentPairAction(
 }
 
 /** Width in rem of a child cell: its card plus the gap, which sits inside the cell. */
-function childCellRem(count: number): number {
+function childCellRem(count: number, column: number): number {
     const columns = count <= WIDE_CHILDREN_MAX ? 2 : 1;
 
-    return (
-        columns * COLUMN_REM + (columns - 1) * COLUMN_GAP_REM + COLUMN_GAP_REM
-    );
+    return columns * column + (columns - 1) * COLUMN_GAP_REM + COLUMN_GAP_REM;
 }
 
 /** The add-child slot is one column wide, whatever the width of the children cards. */
-const SLOT_CELL_REM = COLUMN_REM + COLUMN_GAP_REM;
+function slotCellRem(column: number): number {
+    return column + COLUMN_GAP_REM;
+}
 
 /** Up to this many children the add-child slot stands right of the row; from one more it stands under the last child. */
 const SLOT_BESIDE_MAX_CHILDREN = 3;
@@ -336,16 +345,18 @@ function slotStandsBeside(count: number): boolean {
 type ChildrenRowLayout = {
     cellRem: number;
     rowRem: number;
+    slotRem: number;
     slotBeside: boolean;
 };
 
 /** Geometry of the children row, computed once for the row and for the sheet padding. */
-function childrenRowLayout(count: number): ChildrenRowLayout {
-    const cellRem = childCellRem(count);
+function childrenRowLayout(count: number, column: number): ChildrenRowLayout {
+    const cellRem = childCellRem(count, column);
 
     return {
         cellRem,
         rowRem: count * cellRem,
+        slotRem: slotCellRem(column),
         slotBeside: slotStandsBeside(count),
     };
 }
@@ -466,7 +477,7 @@ function ChildrenRow({
     addChild: React.ReactNode;
 }) {
     const cellStyle = { ...CELL_PADDING_STYLE, width: `${layout.cellRem}rem` };
-    const slotStyle = { ...CELL_PADDING_STYLE, width: `${SLOT_CELL_REM}rem` };
+    const slotStyle = { ...CELL_PADDING_STYLE, width: `${layout.slotRem}rem` };
 
     return (
         <div className="relative flex w-max flex-col">
@@ -555,12 +566,6 @@ export function FamilySheet({
             active={active}
         />
     );
-    const childrenRow = childrenRowLayout(sheet.children.length);
-    const sheetRem = Math.max(GRID_REM, childrenRow.rowRem);
-    const slotOverflowRem = childrenRow.slotBeside
-        ? Math.max(0, childrenRow.rowRem / 2 + SLOT_CELL_REM - sheetRem / 2)
-        : 0;
-
     return (
         <ZoomCanvas
             key={`${sheet.focus.id}:${sheet.selected_union ?? ''}`}
@@ -568,190 +573,218 @@ export function FamilySheet({
             fallbackAnchorRef={focusCoupleRef}
             revealRef={activeSlotRef}
             revealKey={activeAdd}
+            columns={SHEET_COLUMNS}
+            paddingRem={SHEET_PADDING_REM}
         >
-            <div
-                className="flex w-max flex-col items-center p-2"
-                style={{
-                    paddingRight: `calc(0.5rem + ${slotOverflowRem}rem)`,
-                }}
-            >
-                <div className="grid" style={GRID_STYLE}>
-                    <RowLabel>Dziadkowie</RowLabel>
-                    {order.map((block) =>
-                        sheet.grandparents[block].map((slot, i) => (
-                            <div
-                                key={`${block}-grandparent-${i}`}
-                                className="col-span-1"
-                            >
-                                <Slot
-                                    slot={slot}
-                                    spouses={spouses}
-                                    active={active}
-                                />
-                            </div>
-                        )),
-                    )}
+            {(columnRem) => {
+                const childrenRow = childrenRowLayout(
+                    sheet.children.length,
+                    columnRem,
+                );
+                const sheetRem = Math.max(
+                    gridRem(columnRem),
+                    childrenRow.rowRem,
+                );
+                const slotOverflowRem = childrenRow.slotBeside
+                    ? Math.max(
+                          0,
+                          childrenRow.rowRem / 2 +
+                              childrenRow.slotRem -
+                              sheetRem / 2,
+                      )
+                    : 0;
 
-                    {order.map((block) =>
-                        [0, 2].map((start) => (
-                            <PairConnector
-                                key={`${block}-gp-connector-${start}`}
-                                slots={sheet.grandparents[block].slice(
-                                    start,
-                                    start + 2,
-                                )}
-                                className="col-span-2"
-                                lineage={block === 'focus'}
-                                marriage={
-                                    sheet.grandparent_marriages[block][
-                                        start / 2
-                                    ]
-                                }
-                                cardCentreRem={COLUMN_REM / 2}
-                            />
-                        )),
-                    )}
-
-                    <RowLabel>Rodzice</RowLabel>
-                    {order.map((block) =>
-                        sheet.parents[block].map((slot, i) => (
-                            <div
-                                key={`${block}-parent-${i}`}
-                                className="col-span-2"
-                            >
-                                <Slot
-                                    slot={slot}
-                                    spouses={spouses}
-                                    active={active}
-                                />
-                            </div>
-                        )),
-                    )}
-
-                    {order.map((block) => (
-                        <PairConnector
-                            key={`${block}-parent-connector`}
-                            slots={sheet.parents[block]}
-                            className="col-span-4"
-                            action={parentPairAction(sheet, block)}
-                            lineage={block === 'focus'}
-                            marriage={sheet.parent_marriages[block]}
-                            cardCentreRem={COLUMN_REM + COLUMN_GAP_REM / 2}
-                        />
-                    ))}
-
-                    <RowLabel>Związek</RowLabel>
+                return (
                     <div
-                        className="relative col-span-8 grid"
-                        style={GRID_STYLE}
+                        className="flex w-max flex-col items-center p-2"
+                        style={{
+                            paddingRight: `calc(0.5rem + ${slotOverflowRem}rem)`,
+                        }}
                     >
-                        {order.map((block, index) => (
-                            <div
-                                key={`${block}-couple-line`}
-                                className={clsx(
-                                    'border-t-line border-tree-line absolute top-1/2',
-                                    index === 0
-                                        ? 'right-1/2 left-1/4'
-                                        : 'right-1/4 left-1/2',
-                                    (block === 'focus'
-                                        ? unmarriedPair
-                                        : partnerLineDashed) && 'border-dashed',
-                                )}
-                                aria-hidden="true"
-                            />
-                        ))}
-                        <div
-                            className={clsx(
-                                'absolute top-1/2 bottom-0 left-1/2',
-                                LINE.colour,
-                                LINE.left,
-                                stemDashed && 'border-dashed',
+                        <div className="grid" style={gridStyle(columnRem)}>
+                            <RowLabel>Dziadkowie</RowLabel>
+                            {order.map((block) =>
+                                sheet.grandparents[block].map((slot, i) => (
+                                    <div
+                                        key={`${block}-grandparent-${i}`}
+                                        className="col-span-1"
+                                    >
+                                        <Slot
+                                            slot={slot}
+                                            spouses={spouses}
+                                            active={active}
+                                        />
+                                    </div>
+                                )),
                             )}
-                            aria-hidden="true"
-                        />
-                        {order.map((block) => (
-                            <div
-                                key={`${block}-couple`}
-                                ref={
-                                    block === 'focus'
-                                        ? focusCoupleRef
-                                        : partnerCoupleRef
-                                }
-                                className="relative col-span-4 mx-auto w-full"
-                                style={{ maxWidth: `${COUPLE_CARD_REM}rem` }}
-                            >
-                                {block === 'focus' ? (
-                                    <SheetPersonCard
-                                        person={sheet.focus}
-                                        isFocus
+
+                            {order.map((block) =>
+                                [0, 2].map((start) => (
+                                    <PairConnector
+                                        key={`${block}-gp-connector-${start}`}
+                                        slots={sheet.grandparents[block].slice(
+                                            start,
+                                            start + 2,
+                                        )}
+                                        className="col-span-2"
+                                        lineage={block === 'focus'}
+                                        marriage={
+                                            sheet.grandparent_marriages[block][
+                                                start / 2
+                                            ]
+                                        }
+                                        cardCentreRem={columnRem / 2}
                                     />
-                                ) : sheet.partner.kind === 'empty' ? (
-                                    <AddPersonSlot
-                                        target={{
-                                            kind: 'spouse',
-                                            focus: sheet.focus,
-                                            target: sheet.add_spouse,
+                                )),
+                            )}
+
+                            <RowLabel>Rodzice</RowLabel>
+                            {order.map((block) =>
+                                sheet.parents[block].map((slot, i) => (
+                                    <div
+                                        key={`${block}-parent-${i}`}
+                                        className="col-span-2"
+                                    >
+                                        <Slot
+                                            slot={slot}
+                                            spouses={spouses}
+                                            active={active}
+                                        />
+                                    </div>
+                                )),
+                            )}
+
+                            {order.map((block) => (
+                                <PairConnector
+                                    key={`${block}-parent-connector`}
+                                    slots={sheet.parents[block]}
+                                    className="col-span-4"
+                                    action={parentPairAction(sheet, block)}
+                                    lineage={block === 'focus'}
+                                    marriage={sheet.parent_marriages[block]}
+                                    cardCentreRem={
+                                        columnRem + COLUMN_GAP_REM / 2
+                                    }
+                                />
+                            ))}
+
+                            <RowLabel>Związek</RowLabel>
+                            <div
+                                className="relative col-span-8 grid"
+                                style={gridStyle(columnRem)}
+                            >
+                                {order.map((block, index) => (
+                                    <div
+                                        key={`${block}-couple-line`}
+                                        className={clsx(
+                                            'border-t-line border-tree-line absolute top-1/2',
+                                            index === 0
+                                                ? 'right-1/2 left-1/4'
+                                                : 'right-1/4 left-1/2',
+                                            (block === 'focus'
+                                                ? unmarriedPair
+                                                : partnerLineDashed) &&
+                                                'border-dashed',
+                                        )}
+                                        aria-hidden="true"
+                                    />
+                                ))}
+                                <div
+                                    className={clsx(
+                                        'absolute top-1/2 bottom-0 left-1/2',
+                                        LINE.colour,
+                                        LINE.left,
+                                        stemDashed && 'border-dashed',
+                                    )}
+                                    aria-hidden="true"
+                                />
+                                {order.map((block) => (
+                                    <div
+                                        key={`${block}-couple`}
+                                        ref={
+                                            block === 'focus'
+                                                ? focusCoupleRef
+                                                : partnerCoupleRef
+                                        }
+                                        className="relative col-span-4 mx-auto w-full"
+                                        style={{
+                                            maxWidth: `${coupleCardRem(columnRem)}rem`,
                                         }}
-                                        active={active}
+                                    >
+                                        {block === 'focus' ? (
+                                            <SheetPersonCard
+                                                person={sheet.focus}
+                                                isFocus
+                                            />
+                                        ) : sheet.partner.kind === 'empty' ? (
+                                            <AddPersonSlot
+                                                target={{
+                                                    kind: 'spouse',
+                                                    focus: sheet.focus,
+                                                    target: sheet.add_spouse,
+                                                }}
+                                                active={active}
+                                            />
+                                        ) : (
+                                            <Slot
+                                                slot={sheet.partner}
+                                                spouses={spouses}
+                                                active={active}
+                                            />
+                                        )}
+                                    </div>
+                                ))}
+                                <div className="absolute top-1/2 left-1/2 z-10 -translate-x-1/2 -translate-y-1/2">
+                                    <UnionNode
+                                        focus={sheet.focus}
+                                        unions={sheet.unions}
+                                        selected={sheet.selected_union}
+                                        addSpouse={sheet.add_spouse}
+                                        addActive={
+                                            sheet.partner.kind !== 'empty' &&
+                                            activeAdd === 'spouse'
+                                        }
+                                        revealRef={activeSlotRef}
                                     />
-                                ) : (
-                                    <Slot
-                                        slot={sheet.partner}
-                                        spouses={spouses}
-                                        active={active}
-                                    />
+                                </div>
+                            </div>
+
+                            <div
+                                className={`relative col-span-8 ${marryCentreCouple ? 'h-12' : 'h-7.5'}`}
+                            >
+                                <div
+                                    className={clsx(
+                                        'absolute inset-y-0 left-1/2',
+                                        LINE.colour,
+                                        LINE.left,
+                                        stemDashed && 'border-dashed',
+                                    )}
+                                    aria-hidden="true"
+                                />
+                                {marryCentreCouple && (
+                                    <div className="bg-background absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-md">
+                                        {marryCentreCouple}
+                                    </div>
                                 )}
                             </div>
-                        ))}
-                        <div className="absolute top-1/2 left-1/2 z-10 -translate-x-1/2 -translate-y-1/2">
-                            <UnionNode
-                                focus={sheet.focus}
-                                unions={sheet.unions}
-                                selected={sheet.selected_union}
-                                addSpouse={sheet.add_spouse}
-                                addActive={
-                                    sheet.partner.kind !== 'empty' &&
-                                    activeAdd === 'spouse'
-                                }
-                                revealRef={activeSlotRef}
-                            />
-                        </div>
-                    </div>
 
-                    <div
-                        className={`relative col-span-8 ${marryCentreCouple ? 'h-12' : 'h-7.5'}`}
-                    >
-                        <div
-                            className={clsx(
-                                'absolute inset-y-0 left-1/2',
-                                LINE.colour,
-                                LINE.left,
-                                stemDashed && 'border-dashed',
+                            {sheet.children.length === 0 && (
+                                <>
+                                    <RowLabel>Dzieci</RowLabel>
+                                    <NoChildren addChild={addChild} />
+                                </>
                             )}
-                            aria-hidden="true"
-                        />
-                        {marryCentreCouple && (
-                            <div className="bg-background absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-md">
-                                {marryCentreCouple}
-                            </div>
+                        </div>
+                        {sheet.children.length > 0 && (
+                            <ChildrenRow
+                                children={sheet.children}
+                                layout={childrenRow}
+                                addChild={addChild}
+                            />
                         )}
                     </div>
-
-                    {sheet.children.length === 0 && (
-                        <>
-                            <RowLabel>Dzieci</RowLabel>
-                            <NoChildren addChild={addChild} />
-                        </>
-                    )}
-                </div>
-                {sheet.children.length > 0 && (
-                    <ChildrenRow
-                        children={sheet.children}
-                        layout={childrenRow}
-                        addChild={addChild}
-                    />
-                )}
-            </div>
+                );
+            }}
         </ZoomCanvas>
     );
 }
