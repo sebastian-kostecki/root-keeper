@@ -1,10 +1,10 @@
 ---
 change_id: tree-card-name-one-line
 title: Tree card name one line
-status: implemented
+status: archived
 created: 2026-10-12
 updated: 2026-10-13
-archived_at: null
+archived_at: 2026-10-13T07:15:00Z
 ---
 
 ## Notes
