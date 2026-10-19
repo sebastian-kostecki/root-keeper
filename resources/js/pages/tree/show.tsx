@@ -1,5 +1,5 @@
-import { Head, setLayoutProps, usePage } from '@inertiajs/react';
-import { UsersIcon } from 'lucide-react';
+import { Head, Link, setLayoutProps, usePage } from '@inertiajs/react';
+import { NetworkIcon, UsersIcon } from 'lucide-react';
 import { EmptyState } from '@/components/empty-state';
 import Heading from '@/components/heading';
 import { AddPersonPanel } from '@/components/tree/add-person-panel';
@@ -7,7 +7,11 @@ import { FamilySheet } from '@/components/tree/family-sheet';
 import { Button } from '@/components/ui/button';
 import { useSidePanelNavigation } from '@/hooks/use-side-panel-navigation';
 import { resolveAddTarget } from '@/lib/add-person-target';
-import { index as treeIndex, show as treeShow } from '@/routes/tree';
+import {
+    ancestors as treeAncestors,
+    index as treeIndex,
+    show as treeShow,
+} from '@/routes/tree';
 import type {
     FamilySheet as FamilySheetData,
     Gender,
@@ -76,8 +80,15 @@ export default function Show({
             <Head title={`Drzewo: ${sheet.focus.display_name}`} />
 
             <div className="flex min-h-0 flex-1 flex-col">
-                <div className="mb-3">
+                <div className="mb-3 flex flex-wrap items-center justify-between gap-4">
                     <Heading variant="page" title={sheet.focus.display_name} />
+
+                    <Button variant="outline" size="sm" className="h-7" asChild>
+                        <Link href={treeAncestors(sheet.focus.id)}>
+                            <NetworkIcon />
+                            Przodkowie
+                        </Link>
+                    </Button>
                 </div>
 
                 <FamilySheet sheet={sheet} activeAdd={addValue} />

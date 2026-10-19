@@ -456,36 +456,36 @@ Brak migracji i zmian danych. Pętla w danych dev (C8) zostaje, a wykres jest na
 
 #### Automated
 
-- [x] 2.1 Vitest przechodzi, w tym nowe przypadki `chooseFitView`: `vendor/bin/sail npm run test:js`
-- [x] 2.2 Typy przechodzą: `vendor/bin/sail npm run types:check`
-- [x] 2.3 Format i lint przechodzą: `vendor/bin/sail npm run check`
-- [x] 2.4 Build przechodzi: `vendor/bin/sail npm run build`
-- [x] 2.5 Istniejące E2E przodków przechodzą: `npx playwright test tests/e2e/ancestors-view.spec.ts`
+- [x] 2.1 Vitest przechodzi, w tym nowe przypadki `chooseFitView`: `vendor/bin/sail npm run test:js` — ed1bece
+- [x] 2.2 Typy przechodzą: `vendor/bin/sail npm run types:check` — ed1bece
+- [x] 2.3 Format i lint przechodzą: `vendor/bin/sail npm run check` — ed1bece
+- [x] 2.4 Build przechodzi: `vendor/bin/sail npm run build` — ed1bece
+- [x] 2.5 Istniejące E2E przodków przechodzą: `npx playwright test tests/e2e/ancestors-view.spec.ts` — ed1bece
 
 #### Manual
 
-- [x] 2.6 Na widoku przodków samo kółko myszy przybliża do kursora małym krokiem; szczypanie touchpada działa; na `/tree` kółko nadal nie zoomuje
-- [x] 2.7 Osoba z 4 pokoleniami: przełącznik 2…N, start w całości jak przed zmianą
-- [x] 2.8 Najgłębsza osoba drzewa 1 (N = 10): przełącznik 2…10 bez poziomego przewijania strony przy 1366 px i 390 px; przy 10 start zakotwiczony na osobie w czytelnej skali; kółkiem lub „Pomniejsz” da się oddalić do całości; „Dopasuj” wraca na osobę
-- [x] 2.9 Osoba bez rodziców i osoba z samymi rodzicami: brak przełącznika, wykres z rodzicami/placeholderami
-- [x] 2.10 Przewijanie i przeciąganie głębokiego wykresu (kilkaset kart) jest płynne
+- [x] 2.6 Na widoku przodków samo kółko myszy przybliża do kursora małym krokiem; szczypanie touchpada działa; na `/tree` kółko nadal nie zoomuje — ed1bece
+- [x] 2.7 Osoba z 4 pokoleniami: przełącznik 2…N, start w całości jak przed zmianą — ed1bece
+- [x] 2.8 Najgłębsza osoba drzewa 1 (N = 10): przełącznik 2…10 bez poziomego przewijania strony przy 1366 px i 390 px; przy 10 start zakotwiczony na osobie w czytelnej skali; kółkiem lub „Pomniejsz” da się oddalić do całości; „Dopasuj” wraca na osobę — ed1bece
+- [x] 2.9 Osoba bez rodziców i osoba z samymi rodzicami: brak przełącznika, wykres z rodzicami/placeholderami — ed1bece
+- [x] 2.10 Przewijanie i przeciąganie głębokiego wykresu (kilkaset kart) jest płynne — ed1bece
 
 ### Phase 3: Karta przodka i wejście z drzewa
 
 #### Automated
 
-- [ ] 3.1 Vitest przechodzi (w tym niezmieniony `view-tokens.test.ts`): `vendor/bin/sail npm run test:js`
-- [ ] 3.2 Typy przechodzą: `vendor/bin/sail npm run types:check`
-- [ ] 3.3 Format i lint przechodzą: `vendor/bin/sail npm run check`
-- [ ] 3.4 Build przechodzi: `vendor/bin/sail npm run build`
-- [ ] 3.5 E2E drzewa i przodków przechodzą: `npx playwright test tests/e2e/tree-fill-window.spec.ts tests/e2e/ancestors-view.spec.ts`
-- [ ] 3.6 Skan zakodowanych wartości na plikach widoku daje 0 trafień (poza 7× `style=` w `ancestor-chart.tsx`)
+- [x] 3.1 Vitest przechodzi (w tym niezmieniony `view-tokens.test.ts`): `vendor/bin/sail npm run test:js`
+- [x] 3.2 Typy przechodzą: `vendor/bin/sail npm run types:check`
+- [x] 3.3 Format i lint przechodzą: `vendor/bin/sail npm run check` (global check padł na nieśledzonym `storage/gen-tree-import/`, poza zakresem; check na plikach fazy przeszedł)
+- [x] 3.4 Build przechodzi: `vendor/bin/sail npm run build`
+- [x] 3.5 E2E drzewa i przodków przechodzą: `npx playwright test tests/e2e/tree-fill-window.spec.ts tests/e2e/ancestors-view.spec.ts`
+- [x] 3.6 Skan zakodowanych wartości na plikach widoku daje 0 trafień (poza 7× `style=` w `ancestor-chart.tsx`)
 
 #### Manual
 
-- [ ] 3.7 Karta przodka nie ma wieku, avatar jest wyraźnie większy niż przed zmianą (porównanie z `screenshots/before-focus-card.png`), imię obok avatara nie zachodzi na niego przy kolumnie 12rem
-- [ ] 3.8 Karty drzewa (`/tree`) wyglądają jak przed zmianą: wiek jest, avatar `size-10`/`size-14`, karta pary `size-16`
-- [ ] 3.9 Przycisk „Przodkowie” na `/tree` otwiera widok przodków osoby w centrum z domyślną głębokością; rząd tytułu nie jest wyższy
+- [x] 3.7 Karta przodka nie ma wieku, avatar jest wyraźnie większy niż przed zmianą (porównanie z `screenshots/before-focus-card.png`), imię obok avatara nie zachodzi na niego przy kolumnie 12rem
+- [x] 3.8 Karty drzewa (`/tree`) wyglądają jak przed zmianą: wiek jest, avatar `size-10`/`size-14`, karta pary `size-16`
+- [x] 3.9 Przycisk „Przodkowie” na `/tree` otwiera widok przodków osoby w centrum z domyślną głębokością; rząd tytułu nie jest wyższy
 
 ### Phase 4: E2E, bramka wizualna i zabezpieczenie
 
