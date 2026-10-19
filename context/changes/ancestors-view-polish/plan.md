@@ -441,34 +441,34 @@ Brak migracji i zmian danych. Pętla w danych dev (C8) zostaje, a wykres jest na
 
 #### Automated
 
-- [x] 1.1 Testy widoku przodków przechodzą: `vendor/bin/sail artisan test --compact tests/Feature/AncestorsTest.php`
-- [x] 1.2 Testy panelu osoby przechodzą: `vendor/bin/sail artisan test --compact tests/Feature/PersonsTest.php`
-- [x] 1.3 Larastan przechodzi: `vendor/bin/sail bin phpstan analyse`
-- [x] 1.4 Typy przechodzą: `vendor/bin/sail npm run types:check`
-- [x] 1.5 Pint bez zmian: `vendor/bin/sail bin pint --dirty --format agent`
+- [x] 1.1 Testy widoku przodków przechodzą: `vendor/bin/sail artisan test --compact tests/Feature/AncestorsTest.php` — c74c578
+- [x] 1.2 Testy panelu osoby przechodzą: `vendor/bin/sail artisan test --compact tests/Feature/PersonsTest.php` — c74c578
+- [x] 1.3 Larastan przechodzi: `vendor/bin/sail bin phpstan analyse` — c74c578
+- [x] 1.4 Typy przechodzą: `vendor/bin/sail npm run types:check` — c74c578
+- [x] 1.5 Pint bez zmian: `vendor/bin/sail bin pint --dirty --format agent` — c74c578
 
 #### Manual
 
-- [x] 1.6 W bazie dev `/tree/560/ancestors?generations=20` (osoba w pętli) odpowiada szybko i pokazuje powtórzoną kartę zamiast pętli do sufitu
-- [x] 1.7 W bazie dev wykres najgłębszej osoby drzewa 1 przy pełnej głębokości ładuje się bez odczuwalnego opóźnienia serwera
+- [x] 1.6 W bazie dev `/tree/560/ancestors?generations=20` (osoba w pętli) odpowiada szybko i pokazuje powtórzoną kartę zamiast pętli do sufitu — c74c578
+- [x] 1.7 W bazie dev wykres najgłębszej osoby drzewa 1 przy pełnej głębokości ładuje się bez odczuwalnego opóźnienia serwera — c74c578
 
 ### Phase 2: Widok przodków — przełącznik, kółko, start głębokiego wykresu
 
 #### Automated
 
-- [ ] 2.1 Vitest przechodzi, w tym nowe przypadki `chooseFitView`: `vendor/bin/sail npm run test:js`
-- [ ] 2.2 Typy przechodzą: `vendor/bin/sail npm run types:check`
-- [ ] 2.3 Format i lint przechodzą: `vendor/bin/sail npm run check`
-- [ ] 2.4 Build przechodzi: `vendor/bin/sail npm run build`
-- [ ] 2.5 Istniejące E2E przodków przechodzą: `npx playwright test tests/e2e/ancestors-view.spec.ts`
+- [x] 2.1 Vitest przechodzi, w tym nowe przypadki `chooseFitView`: `vendor/bin/sail npm run test:js`
+- [x] 2.2 Typy przechodzą: `vendor/bin/sail npm run types:check`
+- [x] 2.3 Format i lint przechodzą: `vendor/bin/sail npm run check`
+- [x] 2.4 Build przechodzi: `vendor/bin/sail npm run build`
+- [x] 2.5 Istniejące E2E przodków przechodzą: `npx playwright test tests/e2e/ancestors-view.spec.ts`
 
 #### Manual
 
-- [ ] 2.6 Na widoku przodków samo kółko myszy przybliża do kursora małym krokiem; szczypanie touchpada działa; na `/tree` kółko nadal nie zoomuje
-- [ ] 2.7 Osoba z 4 pokoleniami: przełącznik 2…N, start w całości jak przed zmianą
-- [ ] 2.8 Najgłębsza osoba drzewa 1 (N = 10): przełącznik 2…10 bez poziomego przewijania strony przy 1366 px i 390 px; przy 10 start zakotwiczony na osobie w czytelnej skali; kółkiem lub „Pomniejsz” da się oddalić do całości; „Dopasuj” wraca na osobę
-- [ ] 2.9 Osoba bez rodziców i osoba z samymi rodzicami: brak przełącznika, wykres z rodzicami/placeholderami
-- [ ] 2.10 Przewijanie i przeciąganie głębokiego wykresu (kilkaset kart) jest płynne
+- [x] 2.6 Na widoku przodków samo kółko myszy przybliża do kursora małym krokiem; szczypanie touchpada działa; na `/tree` kółko nadal nie zoomuje
+- [x] 2.7 Osoba z 4 pokoleniami: przełącznik 2…N, start w całości jak przed zmianą
+- [x] 2.8 Najgłębsza osoba drzewa 1 (N = 10): przełącznik 2…10 bez poziomego przewijania strony przy 1366 px i 390 px; przy 10 start zakotwiczony na osobie w czytelnej skali; kółkiem lub „Pomniejsz” da się oddalić do całości; „Dopasuj” wraca na osobę
+- [x] 2.9 Osoba bez rodziców i osoba z samymi rodzicami: brak przełącznika, wykres z rodzicami/placeholderami
+- [x] 2.10 Przewijanie i przeciąganie głębokiego wykresu (kilkaset kart) jest płynne
 
 ### Phase 3: Karta przodka i wejście z drzewa
 

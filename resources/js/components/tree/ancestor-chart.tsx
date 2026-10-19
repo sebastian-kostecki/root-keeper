@@ -4,6 +4,7 @@ import { ZoomCanvas } from '@/components/zoom-canvas';
 import type { AncestorLink } from '@/lib/ancestor-layout';
 import { layoutAncestorChart } from '@/lib/ancestor-layout';
 import {
+    ANCESTORS_ANCHOR_SCALE,
     ANCESTORS_FIT_FLOOR,
     ANCESTORS_ZOOM_MAX,
     COLUMN_GAP_REM,
@@ -98,6 +99,7 @@ export function AncestorChart({ chart }: { chart: AncestorChartData }) {
             key={`${chart.focus.id}:${chart.generations}`}
             anchorRef={anchorRef}
             floor={ANCESTORS_FIT_FLOOR}
+            anchorScale={ANCESTORS_ANCHOR_SCALE}
             max={ANCESTORS_ZOOM_MAX}
             columns={Math.max(columns, WIDE_CHART_COLUMNS)}
             paddingRem={1}

@@ -13,11 +13,8 @@ type Props = {
     ancestorChart: AncestorChartData;
 };
 
-/** Generation counts the switch offers; the server accepts the same range. */
-const GENERATION_ITEMS = ['2', '3', '4', '5', '6'].map((value) => ({
-    value,
-    label: value,
-}));
+/** Smallest generation count the switch offers; the server accepts the same. */
+const MIN_GENERATIONS = 2;
 
 export default function Ancestors({ ancestorChart: chart }: Props) {
     setLayoutProps({
@@ -33,6 +30,21 @@ export default function Ancestors({ ancestorChart: chart }: Props) {
         ],
         fillHeight: true,
     });
+
+    /** Counts from 2 up to what the data allows; the range comes from the server (`available_generations`). */
+    const generationItems = Array.from(
+        {
+            length: Math.max(
+                0,
+                chart.available_generations - MIN_GENERATIONS + 1,
+            ),
+        },
+        (_, index) => {
+            const value = String(MIN_GENERATIONS + index);
+
+            return { value, label: value };
+        },
+    );
 
     /** Keeps the open panel and any other query of the address, only the generations change. */
     const changeGenerations = (generations: string) => {
@@ -55,15 +67,22 @@ export default function Ancestors({ ancestorChart: chart }: Props) {
                 <div className="flex flex-wrap items-center justify-between gap-4">
                     <Heading title={chart.focus.display_name} variant="page" />
 
-                    <div className="flex items-center gap-2 text-sm">
-                        <span className="text-muted-foreground">Pokolenia</span>
-                        <SegmentedToggle
-                            value={String(chart.generations)}
-                            onValueChange={changeGenerations}
-                            ariaLabel="Pokolenia"
-                            items={GENERATION_ITEMS}
-                        />
-                    </div>
+                    {generationItems.length > 1 && (
+                        <div className="flex max-w-full min-w-0 items-center gap-2 text-sm">
+                            <span className="text-muted-foreground">
+                                Pokolenia
+                            </span>
+                            {/* Up to 19 options: a narrow screen scrolls the switch, not the page; the padding keeps the focus ring inside. */}
+                            <div className="-m-1 min-w-0 overflow-x-auto p-1">
+                                <SegmentedToggle
+                                    value={String(chart.generations)}
+                                    onValueChange={changeGenerations}
+                                    ariaLabel="Pokolenia"
+                                    items={generationItems}
+                                />
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 <AncestorChart chart={chart} />

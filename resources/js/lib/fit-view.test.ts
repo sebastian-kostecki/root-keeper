@@ -200,6 +200,28 @@ describe('chooseFitView', () => {
         ).toEqual({ kind: 'anchor', scale: TREE_FIT_FLOOR });
     });
 
+    it('anchors at the given scale when the whole would be below the floor', () => {
+        expect(
+            chooseFitView({
+                viewport: { width: 700, height: 700 },
+                content: { width: 1000, height: 600 },
+                ...options,
+                anchorScale: 0.9,
+            }),
+        ).toEqual({ kind: 'anchor', scale: 0.9 });
+    });
+
+    it('ignores the anchor scale when the whole fits at the floor or more', () => {
+        expect(
+            chooseFitView({
+                viewport: { width: 1000, height: 800 },
+                content: { width: 1000, height: 1000 },
+                ...options,
+                anchorScale: 0.9,
+            }),
+        ).toEqual({ kind: 'whole', scale: 0.8 });
+    });
+
     it('shows the whole content at exactly the floor', () => {
         expect(
             chooseFitView({

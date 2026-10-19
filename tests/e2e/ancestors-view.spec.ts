@@ -56,7 +56,8 @@ test('ancestors-view: entry from the person panel and recentring keep the right 
     await expect(childPanel).toBeVisible();
 
     // 2. The chart shows the known ancestors and the placeholders for the
-    // missing parents, with the default four generations.
+    // missing parents. The default is min(4, available generations): this line
+    // has three, so the grandfather's row has no placeholders above it.
     await expect(
         page.getByRole('link', {
             name: `mężczyzna ${fatherName}`,
@@ -73,11 +74,11 @@ test('ancestors-view: entry from the person panel and recentring keep the right 
         }),
     ).toBeVisible();
     await expect(page.getByText('Nieznana matka', { exact: true })).toHaveCount(
-        3,
+        2,
     );
     await expect(
         page.getByText('Nieznany ojciec', { exact: true }),
-    ).toHaveCount(2);
+    ).toHaveCount(1);
 
     // 3. Two generations hide the grandfather and every placeholder; the
     // parents stay.
