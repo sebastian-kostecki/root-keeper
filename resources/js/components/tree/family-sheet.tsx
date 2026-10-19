@@ -7,6 +7,7 @@ import { addTriggerLabels } from '@/components/tree/add-person-config';
 import { MarriageRingsIcon } from '@/components/tree/marriage-rings-icon';
 import { MarryCoupleDialog } from '@/components/tree/marry-couple-dialog';
 import { SheetPersonCard } from '@/components/tree/sheet-person-card';
+import type { SheetCardVariant } from '@/components/tree/sheet-person-card';
 import { UnionNode } from '@/components/tree/union-node';
 import { UnknownPersonCard } from '@/components/tree/unknown-person-card';
 import { ZoomCanvas } from '@/components/zoom-canvas';
@@ -14,7 +15,11 @@ import { useSidePanelNavigation } from '@/hooks/use-side-panel-navigation';
 import { centreHints } from '@/lib/centre-hints';
 import { addValueFor } from '@/lib/add-person-target';
 import type { AddTarget } from '@/lib/add-person-target';
-import { COLUMN_GAP_REM } from '@/lib/fit-view';
+import {
+    COLUMN_GAP_REM,
+    distributeRows,
+    SHEET_COLUMN_MIN_REM,
+} from '@/lib/fit-view';
 import type {
     FamilySheet as FamilySheetData,
     PairMarriage,
@@ -34,9 +39,97 @@ function gridRem(column: number): number {
     return SHEET_COLUMNS * column + (SHEET_COLUMNS - 1) * COLUMN_GAP_REM;
 }
 
-/** A couple card is as wide as a parent card: two columns and the gap between them. */
+/** The couple card is at most this wide, however wide the column grows. */
+const PAIR_CARD_MAX_REM = 28;
+
+/** The couple card is three columns wide and the gaps between them, capped at `PAIR_CARD_MAX_REM`. */
 function coupleCardRem(column: number): number {
-    return 2 * column + COLUMN_GAP_REM;
+    return Math.min(3 * column + 2 * COLUMN_GAP_REM, PAIR_CARD_MAX_REM);
+}
+
+/** Limits of the row heights in rem; the surplus of the area goes to the rows by weight. */
+const SHEET_ROW_BOUNDS = {
+    grandparents: { min: 5, max: 7, weight: 1 },
+    parents: { min: 6, max: 9, weight: 1.25 },
+    pair: { min: 10, max: 16, weight: 2 },
+    children: { min: 6, max: 10, weight: 1.25 },
+};
+
+/** Heights in rem of the connectors between rows (`h-11`, `h-12` with an action, `h-7.5`). */
+const CONNECTOR_REM = 2.75;
+const CONNECTOR_ACTION_REM = 3;
+const TRUNK_REM = 1.875;
+const TRUNK_ACTION_REM = 3;
+
+/** Child cell padding in rem above (`pt-4`) and below (`pb-2`) the card. */
+const CHILD_CELL_TOP_REM = 1;
+const CHILD_CELL_BOTTOM_REM = 0.5;
+const CHILD_CELL_PADDING_REM = CHILD_CELL_TOP_REM + CHILD_CELL_BOTTOM_REM;
+
+/** Height in rem of the visible "Dzieci (N)" label (`text-xs`, line height 1 rem). */
+const CHILDREN_LABEL_REM = 1;
+
+/** Gap in rem between the label and the add-child slot of an empty children row (`gap-1`). */
+const NO_CHILDREN_GAP_REM = 0.25;
+
+/** Vertical space in rem of the sheet that does not stretch with the rows. */
+function sheetFixedRem({
+    parentsAction,
+    marryCentre,
+    childCount,
+}: {
+    parentsAction: boolean;
+    marryCentre: boolean;
+    childCount: number;
+}): number {
+    const childrenExtra =
+        childCount === 0
+            ? NO_CHILDREN_GAP_REM
+            : CHILD_CELL_PADDING_REM +
+              (slotStandsBeside(childCount) ? 0 : CHILD_CELL_BOTTOM_REM);
+
+    return (
+        2 * SHEET_PADDING_REM +
+        CONNECTOR_REM +
+        (parentsAction ? CONNECTOR_ACTION_REM : CONNECTOR_REM) +
+        (marryCentre ? TRUNK_ACTION_REM : TRUNK_REM) +
+        CHILDREN_LABEL_REM +
+        childrenExtra
+    );
+}
+
+/** Heights in rem of the four rows for a budget; the minimums when the budget is 0. */
+function sheetRowHeights(
+    budgetRem: number,
+    childCount: number,
+): Record<keyof typeof SHEET_ROW_BOUNDS, number> {
+    // A row of four or more children has the add-child slot under it, so it counts twice.
+    const childFactor = childCount > 0 && !slotStandsBeside(childCount) ? 2 : 1;
+    const { grandparents, parents, pair, children } = SHEET_ROW_BOUNDS;
+    const [gp, pa, co, ch] = distributeRows({
+        budgetRem,
+        rows: [
+            grandparents,
+            parents,
+            pair,
+            {
+                min: children.min * childFactor,
+                max: children.max * childFactor,
+                weight: children.weight * childFactor,
+            },
+        ],
+    });
+
+    return {
+        grandparents: gp,
+        parents: pa,
+        pair: co,
+        children: ch / childFactor,
+    };
+}
+
+function rowStyle(minHeightRem: number) {
+    return { minHeight: `${minHeightRem}rem` };
 }
 
 /** The eight fixed columns, shared by the sheet grid and the couple row inside it. */
@@ -93,9 +186,11 @@ export type ActiveAdd = {
 function AddPersonSlot({
     target,
     active,
+    compact = false,
 }: {
     target: AddTarget;
     active: ActiveAdd;
+    compact?: boolean;
 }) {
     const { open } = useSidePanelNavigation('add');
     const editor = useOptionalSectionEditor();
@@ -109,6 +204,7 @@ function AddPersonSlot({
             label={label}
             addLabel={addLabel}
             active={isActive}
+            compact={compact}
             onClick={() => {
                 if (editor === null) {
                     open(value);
@@ -126,28 +222,34 @@ function Slot({
     slot,
     spouses,
     active,
+    variant = 'standard',
 }: {
     slot: SheetSlot;
     /** Union to preselect per person id when re-centring on a card. */
     spouses: Record<number, string>;
     active: ActiveAdd;
+    variant?: SheetCardVariant;
 }) {
     if (slot.kind === 'person') {
         return (
             <SheetPersonCard
                 person={slot.person}
                 spouse={spouses[slot.person.id]}
+                variant={variant}
             />
         );
     }
 
+    const compact = variant === 'compact';
+
     if (slot.kind === 'unknown') {
         return slot.parent_of === undefined ? (
-            <UnknownPersonCard label={slot.label} />
+            <UnknownPersonCard label={slot.label} compact={compact} />
         ) : (
             <AddPersonSlot
                 target={{ kind: 'parent', slot: slot.parent_of }}
                 active={active}
+                compact={compact}
             />
         );
     }
@@ -155,8 +257,18 @@ function Slot({
     return null;
 }
 
-function RowLabel({ children }: { children: string }) {
-    return <h3 className="sr-only">{children}</h3>;
+function RowLabel({
+    children,
+    visible = false,
+}: {
+    children: string;
+    visible?: boolean;
+}) {
+    return (
+        <h3 className={visible ? 'text-tree-meta text-xs' : 'sr-only'}>
+            {children}
+        </h3>
+    );
 }
 
 /**
@@ -228,7 +340,12 @@ function PairConnector({
     const stemTone = stemSolid && lineage ? LINEAGE : LINE;
 
     return (
-        <div className={clsx('relative', action ? 'h-12' : 'h-11', className)}>
+        <div
+            className={clsx('relative', className)}
+            style={{
+                height: `${action ? CONNECTOR_ACTION_REM : CONNECTOR_REM}rem`,
+            }}
+        >
             {visible && (
                 <>
                     <Arm
@@ -361,12 +478,23 @@ function childrenRowLayout(count: number, column: number): ChildrenRowLayout {
     };
 }
 
-/** Empty-state of the children row: the add-child slot under the couple, with the note for screen readers only. */
-function NoChildren({ addChild }: { addChild: React.ReactNode }) {
+/** Empty-state of the children row: the add-child slot under the couple, labelled "Dzieci (0)", with the note for screen readers. */
+function NoChildren({
+    addChild,
+    heightRem,
+}: {
+    addChild: React.ReactNode;
+    heightRem: number;
+}) {
     return (
         <>
             <p className="sr-only">Brak dzieci w tym związku.</p>
-            <div className="col-span-2 col-start-4">{addChild}</div>
+            <div className="col-span-2 col-start-4 flex flex-col items-center gap-1">
+                <RowLabel visible>Dzieci (0)</RowLabel>
+                <div className="w-full" style={rowStyle(heightRem)}>
+                    {addChild}
+                </div>
+            </div>
         </>
     );
 }
@@ -472,49 +600,63 @@ function ChildrenRow({
     children,
     layout,
     addChild,
+    cardHeightRem,
 }: Pick<FamilySheetData, 'children'> & {
     layout: ChildrenRowLayout;
+    /** Minimum height in rem of the child cards. */
+    cardHeightRem: number;
     addChild: React.ReactNode;
 }) {
-    const cellStyle = { ...CELL_PADDING_STYLE, width: `${layout.cellRem}rem` };
+    const compact = children.length > WIDE_CHILDREN_MAX;
+    const cellStyle = {
+        ...CELL_PADDING_STYLE,
+        width: `${layout.cellRem}rem`,
+        paddingTop: `${CHILD_CELL_TOP_REM}rem`,
+        paddingBottom: `${CHILD_CELL_BOTTOM_REM}rem`,
+        ...rowStyle(cardHeightRem + CHILD_CELL_PADDING_REM),
+    };
     const slotStyle = { ...CELL_PADDING_STYLE, width: `${layout.slotRem}rem` };
 
     return (
         <div className="relative flex w-max flex-col">
-            <RowLabel>Dzieci</RowLabel>
-            <div className="flex">
+            <div className="grid grid-cols-2">
+                <div className="col-start-2">
+                    <RowLabel visible>{`Dzieci (${children.length})`}</RowLabel>
+                </div>
+            </div>
+            <div className="relative flex">
                 {children.map((child, i) => (
-                    <div
-                        key={child.id}
-                        className="relative pt-4 pb-2"
-                        style={cellStyle}
-                    >
+                    <div key={child.id} className="relative" style={cellStyle}>
                         <ChildBranch
                             index={i}
                             count={children.length}
                             slotBeside={layout.slotBeside}
                         />
-                        <SheetPersonCard person={child} />
+                        <SheetPersonCard
+                            person={child}
+                            variant={compact ? 'compact' : 'standard'}
+                        />
                     </div>
                 ))}
-            </div>
-            {layout.slotBeside ? (
-                <div
-                    className="absolute top-0 left-full pt-4 pb-2"
-                    style={slotStyle}
-                >
+                {layout.slotBeside && (
                     <div
-                        className={clsx(
-                            'absolute top-0 right-1/2 left-0 h-4 rounded-tr-xl border-dashed',
-                            LINE.colour,
-                            LINE.top,
-                            LINE.right,
-                        )}
-                        aria-hidden="true"
-                    />
-                    {addChild}
-                </div>
-            ) : (
+                        className="absolute top-0 left-full pt-4 pb-2"
+                        style={slotStyle}
+                    >
+                        <div
+                            className={clsx(
+                                'absolute top-0 right-1/2 left-0 h-4 rounded-tr-xl border-dashed',
+                                LINE.colour,
+                                LINE.top,
+                                LINE.right,
+                            )}
+                            aria-hidden="true"
+                        />
+                        {addChild}
+                    </div>
+                )}
+            </div>
+            {!layout.slotBeside && (
                 <div className="self-end pb-2" style={slotStyle}>
                     {addChild}
                 </div>
@@ -575,8 +717,10 @@ export function FamilySheet({
             revealKey={activeAdd}
             columns={SHEET_COLUMNS}
             paddingRem={SHEET_PADDING_REM}
+            columnMinRem={SHEET_COLUMN_MIN_REM}
+            fillHeight
         >
-            {(columnRem) => {
+            {(columnRem, fillRem) => {
                 const childrenRow = childrenRowLayout(
                     sheet.children.length,
                     columnRem,
@@ -584,6 +728,21 @@ export function FamilySheet({
                 const sheetRem = Math.max(
                     gridRem(columnRem),
                     childrenRow.rowRem,
+                );
+                const parentsAction =
+                    parentPairAction(sheet, 'focus') !== undefined ||
+                    parentPairAction(sheet, 'partner') !== undefined;
+                const rowHeights = sheetRowHeights(
+                    Math.max(
+                        0,
+                        fillRem -
+                            sheetFixedRem({
+                                parentsAction,
+                                marryCentre: marryCentreCouple !== null,
+                                childCount: sheet.children.length,
+                            }),
+                    ),
+                    sheet.children.length,
                 );
                 const slotOverflowRem = childrenRow.slotBeside
                     ? Math.max(
@@ -608,11 +767,15 @@ export function FamilySheet({
                                     <div
                                         key={`${block}-grandparent-${i}`}
                                         className="col-span-1"
+                                        style={rowStyle(
+                                            rowHeights.grandparents,
+                                        )}
                                     >
                                         <Slot
                                             slot={slot}
                                             spouses={spouses}
                                             active={active}
+                                            variant="compact"
                                         />
                                     </div>
                                 )),
@@ -644,6 +807,7 @@ export function FamilySheet({
                                     <div
                                         key={`${block}-parent-${i}`}
                                         className="col-span-2"
+                                        style={rowStyle(rowHeights.parents)}
                                     >
                                         <Slot
                                             slot={slot}
@@ -709,12 +873,14 @@ export function FamilySheet({
                                         className="relative col-span-4 mx-auto w-full"
                                         style={{
                                             maxWidth: `${coupleCardRem(columnRem)}rem`,
+                                            ...rowStyle(rowHeights.pair),
                                         }}
                                     >
                                         {block === 'focus' ? (
                                             <SheetPersonCard
                                                 person={sheet.focus}
                                                 isFocus
+                                                variant="pair"
                                             />
                                         ) : sheet.partner.kind === 'empty' ? (
                                             <AddPersonSlot
@@ -730,6 +896,7 @@ export function FamilySheet({
                                                 slot={sheet.partner}
                                                 spouses={spouses}
                                                 active={active}
+                                                variant="pair"
                                             />
                                         )}
                                     </div>
@@ -750,7 +917,10 @@ export function FamilySheet({
                             </div>
 
                             <div
-                                className={`relative col-span-8 ${marryCentreCouple ? 'h-12' : 'h-7.5'}`}
+                                className="relative col-span-8"
+                                style={{
+                                    height: `${marryCentreCouple ? TRUNK_ACTION_REM : TRUNK_REM}rem`,
+                                }}
                             >
                                 <div
                                     className={clsx(
@@ -769,16 +939,17 @@ export function FamilySheet({
                             </div>
 
                             {sheet.children.length === 0 && (
-                                <>
-                                    <RowLabel>Dzieci</RowLabel>
-                                    <NoChildren addChild={addChild} />
-                                </>
+                                <NoChildren
+                                    addChild={addChild}
+                                    heightRem={rowHeights.children}
+                                />
                             )}
                         </div>
                         {sheet.children.length > 0 && (
                             <ChildrenRow
                                 children={sheet.children}
                                 layout={childrenRow}
+                                cardHeightRem={rowHeights.children}
                                 addChild={addChild}
                             />
                         )}

@@ -3,17 +3,17 @@ import { Eye } from 'lucide-react';
 import { PersonPreviewLink } from '@/components/persons/person-preview-link';
 import { usePersonPreview } from '@/components/persons/person-preview-provider';
 import { Button } from '@/components/ui/button';
+import { CardAvatar } from '@/components/tree/card-avatar';
 import {
     cardFocus,
     cardInteractive,
+    compactCardSurface,
     personCardSurface,
 } from '@/components/tree/card-styles';
-import { useInitials } from '@/hooks/use-initials';
 import { useMarriagePanel } from '@/hooks/use-marriage-panel';
-import { useVisiblePhoto } from '@/hooks/use-visible-photo';
 import { formatAge } from '@/lib/age';
 import { genderCard } from '@/lib/gender-styles';
-import { personPhotoUrl } from '@/lib/person-photo';
+import { pairDetailLines } from '@/lib/pair-details';
 import { cn } from '@/lib/utils';
 import { show as treeShow } from '@/routes/tree';
 import type { SheetPerson } from '@/types';
@@ -23,56 +23,18 @@ type Props = {
     /** Union to preselect after re-centring on this person; omitted for none. */
     spouse?: string;
     isFocus?: boolean;
+    /** `compact`: one column, no avatar, name on two lines. `pair`: wide, with the full details. */
+    variant?: SheetCardVariant;
 };
 
-/** Strip fill without a photo: the gender colour at full strength, unlike the lighter card fill. */
-const stripGender = {
-    male: 'bg-gender-male',
-    female: 'bg-gender-female',
-    unknown: 'bg-gender-unknown',
-} as const;
-
-/** Photo strip on the left edge of a person card: the photo, or the initials on the gender colour. */
-function PhotoStrip({ person }: { person: SheetPerson }) {
-    const getInitials = useInitials();
-    const photoUrl = personPhotoUrl(person.id, person.photo_version);
-    const { visiblePhotoUrl, onError } = useVisiblePhoto(photoUrl);
-
-    return (
-        <span
-            className={cn(
-                'relative w-12 shrink-0 overflow-hidden @xs:w-18',
-                stripGender[person.gender ?? 'unknown'],
-            )}
-        >
-            {visiblePhotoUrl !== null ? (
-                <span className="absolute inset-x-0 top-0 bottom-1 overflow-hidden">
-                    <img
-                        src={visiblePhotoUrl}
-                        alt=""
-                        loading="lazy"
-                        onError={onError}
-                        className="size-full object-cover object-center"
-                    />
-                </span>
-            ) : (
-                <span
-                    aria-hidden="true"
-                    className="text-background absolute inset-0 flex items-center justify-center text-lg font-semibold"
-                >
-                    {getInitials(person.card_name)}
-                </span>
-            )}
-        </span>
-    );
-}
+export type SheetCardVariant = 'standard' | 'compact' | 'pair';
 
 /**
- * Photo strip and data column of a person card. The data column stacks the
+ * Avatar and data column of a person card. The data column stacks the
  * name, the dates and the age, aligned to the top left; `children` adds lines
  * below them. `reserveActionSpace` leaves room for the eye button in the first
  * line of the name. The name breaks between words only, to two lines with an
- * ellipsis; the photo strip is 3rem on cards narrower than 20rem and 4.5rem on
+ * ellipsis; the avatar is 2.5rem on cards narrower than 20rem and 3.5rem on
  * wider ones (the card is the size container, see `personCardSurface`).
  */
 export function CardBody({
@@ -86,7 +48,7 @@ export function CardBody({
 }) {
     return (
         <>
-            <PhotoStrip person={person} />
+            <CardAvatar person={person} />
             <span className="flex min-w-0 flex-1 flex-col items-start justify-start px-3 py-3.5">
                 <span
                     title={person.card_name}
@@ -122,15 +84,116 @@ export function CardBody({
     );
 }
 
+/** The gender word read before the name, for screen readers only. */
+function GenderWord({ gender }: { gender: SheetPerson['gender'] }) {
+    if (gender === 'male') {
+        return <span className="sr-only">mężczyzna</span>;
+    }
+
+    return gender === 'female' ? (
+        <span className="sr-only">kobieta</span>
+    ) : null;
+}
+
+/**
+ * Compact card content: given name and surname on two lines (each one line
+ * with an ellipsis), the lifespan below. The visible lines are `aria-hidden`
+ * and the full name is read from the `sr-only` text, so the accessible name
+ * keeps the space between the parts.
+ */
+function CompactBody({ person }: { person: SheetPerson }) {
+    return (
+        <>
+            <span
+                title={person.card_name}
+                className="font-display text-card-foreground block w-full min-w-0 text-sm leading-tight font-semibold"
+            >
+                <GenderWord gender={person.gender} />
+                <span className="sr-only">{person.card_name}</span>
+                <span aria-hidden="true" className="block truncate pr-5">
+                    {person.card_given_name}
+                </span>
+                <span aria-hidden="true" className="block truncate">
+                    {person.card_surname}
+                </span>
+            </span>
+            {person.lifespan && (
+                <span className="text-tree-meta mt-0.5 block w-full truncate text-xs">
+                    {person.lifespan}
+                </span>
+            )}
+        </>
+    );
+}
+
+/**
+ * Pair card content: a large avatar, the name, the detail lines (born,
+ * died, buried) and the age. Without detail lines the lifespan stands in.
+ */
+function PairBody({ person }: { person: SheetPerson }) {
+    const lines =
+        person.details === undefined
+            ? []
+            : pairDetailLines(person.details, person.is_deceased);
+
+    return (
+        <>
+            <CardAvatar person={person} large />
+            <span className="flex min-w-0 flex-1 flex-col items-start justify-start px-3 py-3.5">
+                <span
+                    title={person.card_name}
+                    className="font-display text-card-foreground line-clamp-2 w-full text-base leading-tight font-semibold text-ellipsis"
+                >
+                    <span aria-hidden="true" className="float-right size-5" />
+                    <GenderWord gender={person.gender} />
+                    {person.card_name}
+                </span>
+                {lines.length > 0
+                    ? lines.map((line) => (
+                          <span
+                              key={line}
+                              className="text-tree-meta mt-0.5 block text-sm"
+                          >
+                              {line}
+                          </span>
+                      ))
+                    : person.lifespan && (
+                          <span className="text-tree-meta mt-1 block text-sm">
+                              {person.lifespan}
+                          </span>
+                      )}
+                {person.age && (
+                    <span className="text-tree-meta mt-0.5 block text-sm whitespace-nowrap">
+                        {`(${formatAge(person.age)})`}
+                    </span>
+                )}
+            </span>
+        </>
+    );
+}
+
 /**
  * A person on the tree. The card re-centres the tree on the person (an open
  * panel stays open); the eye button opens the person's panel beside the tree.
  */
-export function SheetPersonCard({ person, spouse, isFocus = false }: Props) {
+export function SheetPersonCard({
+    person,
+    spouse,
+    isFocus = false,
+    variant = 'standard',
+}: Props) {
     const { currentId } = usePersonPreview();
     const { currentId: currentMarriageId } = useMarriagePanel();
+    const content =
+        variant === 'compact' ? (
+            <CompactBody person={person} />
+        ) : variant === 'pair' ? (
+            <PairBody person={person} />
+        ) : (
+            <CardBody person={person} reserveActionSpace />
+        );
     const body = cn(
-        personCardSurface,
+        variant === 'compact' ? compactCardSurface : personCardSurface,
         'text-card-foreground shadow-xs',
         genderCard[person.gender ?? 'unknown'],
     );
@@ -139,7 +202,7 @@ export function SheetPersonCard({ person, spouse, isFocus = false }: Props) {
         <div className="relative h-full">
             {isFocus ? (
                 <div aria-current="true" className={cn(body, cardFocus)}>
-                    <CardBody person={person} reserveActionSpace />
+                    {content}
                 </div>
             ) : (
                 <Link
@@ -156,7 +219,7 @@ export function SheetPersonCard({ person, spouse, isFocus = false }: Props) {
                     })}
                     className={cn(body, cardInteractive)}
                 >
-                    <CardBody person={person} reserveActionSpace />
+                    {content}
                 </Link>
             )}
 

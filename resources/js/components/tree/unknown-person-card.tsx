@@ -2,6 +2,7 @@ import { Plus } from 'lucide-react';
 import type * as React from 'react';
 import {
     cardSurface,
+    compactPlaceholderSurface,
     placeholderAction,
     placeholderStatic,
     triggerActive,
@@ -15,6 +16,8 @@ type Props = Omit<React.ComponentProps<'button'>, 'children'> & {
     addLabel?: string;
     /** The add panel of this card is open: the card is marked expanded and filled. */
     active?: boolean;
+    /** One-column cell: tighter padding and smaller text. */
+    compact?: boolean;
 };
 
 /**
@@ -26,11 +29,20 @@ export function UnknownPersonCard({
     label,
     addLabel,
     active = false,
+    compact = false,
     ...props
 }: Props) {
+    const surface = compact ? compactPlaceholderSurface : cardSurface;
+
     if (addLabel === undefined) {
         return (
-            <div className={cn(cardSurface, placeholderStatic, 'text-base')}>
+            <div
+                className={cn(
+                    surface,
+                    placeholderStatic,
+                    !compact && 'text-base',
+                )}
+            >
                 {label}
             </div>
         );
@@ -43,10 +55,11 @@ export function UnknownPersonCard({
             aria-expanded={active ? true : undefined}
             {...props}
             className={cn(
-                cardSurface,
+                surface,
                 placeholderAction,
                 active && triggerActive,
-                'w-full cursor-pointer flex-row gap-1 text-base',
+                'w-full cursor-pointer flex-row gap-1',
+                !compact && 'text-base',
             )}
         >
             <Plus className="size-4 shrink-0" aria-hidden="true" />

@@ -16,6 +16,20 @@ export const personCardSurface =
     '@container flex h-full min-h-24 flex-row items-stretch overflow-hidden rounded-xl border text-left';
 
 /**
+ * Geometry of the compact person card (one column, no photo strip): its height
+ * comes from the grid cell, not from a minimum, so it has no `min-h-*`.
+ */
+export const compactCardSurface =
+    'flex h-full flex-col items-start justify-center overflow-hidden rounded-xl border px-2 py-1.5 text-left';
+
+/**
+ * Geometry of a placeholder in a one-column cell: tighter padding, no room
+ * reserved for the eye button, height from the grid cell.
+ */
+export const compactPlaceholderSurface =
+    'flex h-full flex-col items-center justify-center rounded-xl border px-1.5 py-1.5 text-center text-sm';
+
+/**
  * Keyboard focus for a card that acts as a link or button.
  *
  * Hover never touches a person card's fill; it only darkens the border (see

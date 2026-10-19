@@ -7,6 +7,7 @@ import {
     chooseAnchor,
     chooseFitView,
     COLUMN_MIN_REM,
+    fillHeightRem,
     fitColumnRem,
     TREE_FIT_FLOOR,
     TREE_FIT_MAX,
@@ -24,12 +25,22 @@ const DRAG_THRESHOLD = 5;
 const EDGE_MARGIN = 16;
 
 type Props = {
-    /** Content; a function gets the card column in rem, fitted to the area when `columns` is set. */
-    children: ReactNode | ((columnRem: number) => ReactNode);
+    /**
+     * Content; a function gets the card column in rem, fitted to the area when
+     * `columns` is set, and the height in rem to fill at the start scale (0
+     * without `fillHeight`, and until the first measure).
+     */
+    children:
+        | ReactNode
+        | ((columnRem: number, fillHeightRem: number) => ReactNode);
     /** Cards in one row at the fitted column; without it the column stays at its minimum. */
     columns?: number;
     /** Padding around the content, in rem, that the fitted column leaves out. */
     paddingRem?: number;
+    /** Smallest card column in rem; the default is the column of the other views. */
+    columnMinRem?: number;
+    /** Gives the content the height to fill at the start scale, so it fills the area. Off by default. */
+    fillHeight?: boolean;
     /**
      * Element(s) the start view centres on when the whole content does not fit
      * at the floor scale. Several refs centre on the box that holds them all.
@@ -83,11 +94,14 @@ function revealOffset(
  * fits again. Remount it with a `key` to fit from scratch.
  * With `columns`, the card column is part of the fit: it is computed from the
  * area width at each fit, so the cards fill the area at scale about 1.
+ * With `fillHeight`, the content also gets the height to fill at that scale.
  */
 export function ZoomCanvas({
     children,
     columns,
     paddingRem = 0,
+    columnMinRem,
+    fillHeight = false,
     anchorRef,
     fallbackAnchorRef,
     revealRef,
@@ -109,6 +123,8 @@ export function ZoomCanvas({
     const [ready, setReady] = useState(false);
     const [columnRem, setColumnRem] = useState(COLUMN_MIN_REM);
     const columnRemRef = useRef(COLUMN_MIN_REM);
+    const [fillRem, setFillRem] = useState(0);
+    const fillRemRef = useRef(0);
 
     useEffect(() => {
         revealRefLatest.current = revealRef;
@@ -163,6 +179,7 @@ export function ZoomCanvas({
                 ),
                 columns,
                 paddingRem,
+                minRem: columnMinRem,
             });
 
             if (next === columnRemRef.current) {
@@ -171,6 +188,37 @@ export function ZoomCanvas({
 
             columnRemRef.current = next;
             setColumnRem(next);
+
+            return false;
+        };
+
+        /**
+         * Brings the height to fill in line with the area and the laid-out
+         * content width. Returns false when it changed: the content resize then
+         * runs the fit on a later pass.
+         */
+        const settleHeight = (): boolean => {
+            if (!fillHeight) {
+                return true;
+            }
+
+            const next = fillHeightRem({
+                areaWidth: wrapper.clientWidth,
+                areaHeight: wrapper.clientHeight,
+                contentWidth: content.offsetWidth,
+                rootFontSize: parseFloat(
+                    getComputedStyle(document.documentElement).fontSize,
+                ),
+                floor,
+                max,
+            });
+
+            if (next === fillRemRef.current) {
+                return true;
+            }
+
+            fillRemRef.current = next;
+            setFillRem(next);
 
             return false;
         };
@@ -279,9 +327,13 @@ export function ZoomCanvas({
             }
         };
 
-        /** Column first, then the fit: a pass that changes the column leaves the fit to the next one. */
+        /**
+         * Column, then height (which needs the laid-out content width), then the
+         * fit: a pass that changes the column or the height leaves the rest to
+         * the next one.
+         */
         const refit = (): boolean => {
-            if (!settleColumn()) {
+            if (!settleColumn() || !settleHeight()) {
                 return false;
             }
 
@@ -351,7 +403,16 @@ export function ZoomCanvas({
             fitRef.current = null;
             scheduleRef.current = null;
         };
-    }, [anchorRef, fallbackAnchorRef, floor, max, columns, paddingRem]);
+    }, [
+        anchorRef,
+        fallbackAnchorRef,
+        floor,
+        max,
+        columns,
+        paddingRem,
+        columnMinRem,
+        fillHeight,
+    ]);
 
     // Separate effect: a change of the revealed slot must not detach the observer above.
     useEffect(() => {
@@ -549,7 +610,7 @@ export function ZoomCanvas({
                     contentStyle={{ visibility: ready ? 'visible' : 'hidden' }}
                 >
                     {typeof children === 'function'
-                        ? children(columnRem)
+                        ? children(columnRem, fillHeight ? fillRem : 0)
                         : children}
                 </TransformComponent>
             </TransformWrapper>

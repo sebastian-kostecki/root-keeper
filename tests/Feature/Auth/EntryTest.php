@@ -9,13 +9,13 @@ test('a guest on the home route is redirected to the login screen', function () 
 test('a signed-in user opening the login screen is redirected into the app', function () {
     $this->actingAs(User::factory()->create())
         ->get('/login')
-        ->assertRedirect('/persons');
+        ->assertRedirect('/tree');
 });
 
-test('a signed-in user on the home route ends up on the people list', function () {
+test('a signed-in user on the home route ends up on the tree', function () {
     $this->actingAs(User::factory()->create())
         ->followingRedirects()
         ->get('/')
         ->assertOk()
-        ->assertInertia(fn ($page) => $page->component('persons/index'));
+        ->assertInertia(fn ($page) => $page->component('tree/show'));
 });

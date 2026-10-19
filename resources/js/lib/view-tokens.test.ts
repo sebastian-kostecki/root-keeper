@@ -45,7 +45,6 @@ const VIEW_FILES = [
     'components/tree/marriage-rings-icon.tsx',
     'components/tree/add-person-panel.tsx',
     'components/tree/marry-couple-dialog.tsx',
-    'components/tree/set-root-person-button.tsx',
     'components/tree/card-styles.ts',
     'components/tree/add-person-config.ts',
     'components/side-panel.tsx',
