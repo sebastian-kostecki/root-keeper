@@ -110,6 +110,71 @@ final class ParentChildGraph
         return $ids;
     }
 
+    /**
+     * The number of generations of the longest line of ancestors above the person, counting the person
+     * (1 for a person without parents) and capped at `$ceiling`. A parent already on the line being walked
+     * closes a cycle: it counts as one more generation (the chart shows it once more, without parents)
+     * and is not followed. Results that do not depend on the line walked are remembered per person, so
+     * merging lines (pedigree collapse) does not multiply the work.
+     */
+    public function ancestorGenerations(int $personId, int $ceiling): int
+    {
+        $memo = [];
+        $onLine = [];
+        $isFinal = true;
+
+        return min($ceiling, $this->generationsAbove($personId, 1, $ceiling, $memo, $onLine, $isFinal));
+    }
+
+    /**
+     * @param  array<int, int>  $memo
+     * @param  array<int, true>  $onLine
+     * @param  bool  $isFinal  set to false when the result was cut short (ceiling or cycle), so it is not reusable
+     */
+    private function generationsAbove(int $personId, int $level, int $ceiling, array &$memo, array &$onLine, bool &$isFinal): int
+    {
+        if (isset($memo[$personId])) {
+            return $memo[$personId];
+        }
+
+        if ($level >= $ceiling) {
+            $isFinal = false;
+
+            return 1;
+        }
+
+        $onLine[$personId] = true;
+        $height = 1;
+        $isFinalHere = true;
+
+        foreach ($this->parentsOf($personId) as $parentId) {
+            if (isset($onLine[$parentId])) {
+                $isFinalHere = false;
+                $height = max($height, 2);
+
+                continue;
+            }
+
+            $height = max($height, 1 + $this->generationsAbove($parentId, $level + 1, $ceiling, $memo, $onLine, $isFinalHere));
+
+            if ($level + $height - 1 >= $ceiling) {
+                $isFinalHere = false;
+
+                break;
+            }
+        }
+
+        unset($onLine[$personId]);
+
+        if ($isFinalHere) {
+            $memo[$personId] = $height;
+        } else {
+            $isFinal = false;
+        }
+
+        return $height;
+    }
+
     public function hasRelation(int $parentId, int $childId): bool
     {
         return in_array($parentId, $this->parentsByChild[$childId] ?? [], true);

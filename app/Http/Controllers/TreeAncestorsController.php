@@ -13,12 +13,8 @@ class TreeAncestorsController extends Controller
 {
     private const MIN_GENERATIONS = 2;
 
-    private const DEFAULT_GENERATIONS = 4;
-
-    private const MAX_GENERATIONS = 6;
-
     /**
-     * Display the given person and their ancestors, up to the requested number of generations.
+     * Display the given person and their ancestors, up to the requested number of generations (default 4, at most the available depth).
      */
     public function __invoke(Request $request, Person $person, BuildAncestorChart $buildAncestorChart): Response
     {
@@ -30,14 +26,13 @@ class TreeAncestorsController extends Controller
     }
 
     /**
-     * Anything outside the supported range falls back to the default.
+     * A missing, non-numeric or too small value means "the default depth" (null); the action caps larger
+     * values at the depth the person's ancestors actually have.
      */
-    private function generationsParameter(Request $request): int
+    private function generationsParameter(Request $request): ?int
     {
-        $generations = $request->integer('generations', self::DEFAULT_GENERATIONS);
+        $generations = $request->integer('generations');
 
-        return $generations >= self::MIN_GENERATIONS && $generations <= self::MAX_GENERATIONS
-            ? $generations
-            : self::DEFAULT_GENERATIONS;
+        return $generations >= self::MIN_GENERATIONS ? $generations : null;
     }
 }
