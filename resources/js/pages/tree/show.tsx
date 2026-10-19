@@ -1,11 +1,9 @@
-import { Head, Link, setLayoutProps, usePage } from '@inertiajs/react';
+import { Head, setLayoutProps, usePage } from '@inertiajs/react';
 import { UsersIcon } from 'lucide-react';
 import { EmptyState } from '@/components/empty-state';
 import Heading from '@/components/heading';
 import { AddPersonPanel } from '@/components/tree/add-person-panel';
 import { FamilySheet } from '@/components/tree/family-sheet';
-import { SetRootPersonButton } from '@/components/tree/set-root-person-button';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useSidePanelNavigation } from '@/hooks/use-side-panel-navigation';
 import { resolveAddTarget } from '@/lib/add-person-target';
@@ -20,7 +18,6 @@ import type {
 type Props = {
     sheet: FamilySheetData | null;
     hasPeople?: boolean;
-    rootPersonId: number | null;
     personCandidates?: PersonCandidate[];
     genders: Gender[];
     religions: Religion[];
@@ -29,7 +26,6 @@ type Props = {
 export default function Show({
     sheet,
     hasPeople = false,
-    rootPersonId,
     personCandidates,
     genders,
     religions,
@@ -75,36 +71,12 @@ export default function Show({
         );
     }
 
-    const isProband = sheet.focus.id === rootPersonId;
-
     return (
         <>
             <Head title={`Drzewo: ${sheet.focus.display_name}`} />
 
-            <div className="flex min-h-0 flex-1 flex-col gap-6">
-                <div className="flex flex-wrap items-center justify-between gap-4">
-                    <Heading title={sheet.focus.display_name} variant="page" />
-
-                    <div className="flex flex-wrap items-center gap-2">
-                        {isProband ? (
-                            <Badge variant="secondary">Probant</Badge>
-                        ) : (
-                            <>
-                                {rootPersonId !== null && (
-                                    <Button variant="outline" size="sm" asChild>
-                                        <Link href={treeIndex()}>
-                                            Wróć do probanta
-                                        </Link>
-                                    </Button>
-                                )}
-
-                                <SetRootPersonButton
-                                    personId={sheet.focus.id}
-                                />
-                            </>
-                        )}
-                    </div>
-                </div>
+            <div className="flex min-h-0 flex-1 flex-col">
+                <h1 className="sr-only">{sheet.focus.display_name}</h1>
 
                 <FamilySheet sheet={sheet} activeAdd={addValue} />
 

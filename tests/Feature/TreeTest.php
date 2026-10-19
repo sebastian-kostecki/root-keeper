@@ -118,7 +118,7 @@ test('the tree index has no sheet without a proband', function () {
             ->component('tree/show')
             ->where('sheet', null)
             ->where('hasPeople', false)
-            ->where('rootPersonId', null));
+        );
 });
 
 test('the tree index without a proband but with people has no sheet and reports people', function () {
@@ -130,7 +130,7 @@ test('the tree index without a proband but with people has no sheet and reports 
             ->component('tree/show')
             ->where('sheet', null)
             ->where('hasPeople', true)
-            ->where('rootPersonId', null));
+        );
 });
 
 test('the tree index centres the sheet on the proband', function () {
@@ -141,7 +141,6 @@ test('the tree index centres the sheet on the proband', function () {
     $this->actingAs($user)->get(route('tree.index'))
         ->assertInertia(fn ($page) => $page
             ->component('tree/show')
-            ->where('rootPersonId', $proband->id)
             ->where('sheet.focus.id', $proband->id));
 });
 
