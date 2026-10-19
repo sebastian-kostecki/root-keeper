@@ -529,29 +529,29 @@ Bez migracji danych. Zmiana `fortify.home` działa od wdrożenia. Ewentualne zap
 
 #### Automated
 
-- [x] 2.1 Testy drzewa przechodzą
-- [x] 2.2 Testy widoku przodków przechodzą
-- [x] 2.3 Larastan przechodzi
-- [x] 2.4 Typy przechodzą
-- [x] 2.5 Pint bez zmian
+- [x] 2.1 Testy drzewa przechodzą — a1d3ef3
+- [x] 2.2 Testy widoku przodków przechodzą — a1d3ef3
+- [x] 2.3 Larastan przechodzi — a1d3ef3
+- [x] 2.4 Typy przechodzą — a1d3ef3
+- [x] 2.5 Pint bez zmian — a1d3ef3
 
 ### Phase 3: Warianty kart arkusza
 
 #### Automated
 
-- [ ] 3.1 Vitest przechodzi, w tym pair-details i view-tokens
-- [ ] 3.2 Typy przechodzą
-- [ ] 3.3 Format i lint przechodzą
-- [ ] 3.4 Build przechodzi
+- [x] 3.1 Vitest przechodzi, w tym pair-details i view-tokens
+- [x] 3.2 Typy przechodzą
+- [x] 3.3 Format i lint przechodzą
+- [x] 3.4 Build przechodzi
 
 #### Manual
 
-- [ ] 3.5 Karta kompaktowa dziadków i puste sloty czytelne
-- [ ] 3.6 Karta pary z danymi i wiekiem
-- [ ] 3.7 Kompaktowe dzieci przy 5+
-- [ ] 3.8 Etykieta Dzieci (N) widoczna
-- [ ] 3.9 Widok przodków bez zmian
-- [ ] 3.10 Tryb ciemny bez utraty kontrastu
+- [x] 3.5 Karta kompaktowa dziadków i puste sloty czytelne
+- [x] 3.6 Karta pary z danymi i wiekiem
+- [x] 3.7 Kompaktowe dzieci przy 5+
+- [x] 3.8 Etykieta Dzieci (N) widoczna
+- [x] 3.9 Widok przodków bez zmian
+- [x] 3.10 Tryb ciemny bez utraty kontrastu
 
 ### Phase 4: Geometria wypełnienia okna
 

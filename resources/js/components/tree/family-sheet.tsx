@@ -7,6 +7,7 @@ import { addTriggerLabels } from '@/components/tree/add-person-config';
 import { MarriageRingsIcon } from '@/components/tree/marriage-rings-icon';
 import { MarryCoupleDialog } from '@/components/tree/marry-couple-dialog';
 import { SheetPersonCard } from '@/components/tree/sheet-person-card';
+import type { SheetCardVariant } from '@/components/tree/sheet-person-card';
 import { UnionNode } from '@/components/tree/union-node';
 import { UnknownPersonCard } from '@/components/tree/unknown-person-card';
 import { ZoomCanvas } from '@/components/zoom-canvas';
@@ -34,9 +35,28 @@ function gridRem(column: number): number {
     return SHEET_COLUMNS * column + (SHEET_COLUMNS - 1) * COLUMN_GAP_REM;
 }
 
-/** A couple card is as wide as a parent card: two columns and the gap between them. */
+/** The couple card is at most this wide, however wide the column grows. */
+const PAIR_CARD_MAX_REM = 28;
+
+/** The couple card is three columns wide and the gaps between them, capped at `PAIR_CARD_MAX_REM`. */
 function coupleCardRem(column: number): number {
-    return 2 * column + COLUMN_GAP_REM;
+    return Math.min(3 * column + 2 * COLUMN_GAP_REM, PAIR_CARD_MAX_REM);
+}
+
+/** Minimum height in rem of each row's cells (`min-h-24` is 6 rem); the compact children row is lower. */
+const SHEET_ROW_DEFAULT_REM = {
+    grandparents: 5,
+    parents: 6,
+    pair: 6,
+    children: 6,
+    childrenCompact: 5,
+};
+
+/** Vertical padding of a child cell (`pt-4 pb-2`) in rem, added to the card height. */
+const CHILD_CELL_PADDING_REM = 1.5;
+
+function rowStyle(minHeightRem: number) {
+    return { minHeight: `${minHeightRem}rem` };
 }
 
 /** The eight fixed columns, shared by the sheet grid and the couple row inside it. */
@@ -93,9 +113,11 @@ export type ActiveAdd = {
 function AddPersonSlot({
     target,
     active,
+    compact = false,
 }: {
     target: AddTarget;
     active: ActiveAdd;
+    compact?: boolean;
 }) {
     const { open } = useSidePanelNavigation('add');
     const editor = useOptionalSectionEditor();
@@ -109,6 +131,7 @@ function AddPersonSlot({
             label={label}
             addLabel={addLabel}
             active={isActive}
+            compact={compact}
             onClick={() => {
                 if (editor === null) {
                     open(value);
@@ -126,28 +149,34 @@ function Slot({
     slot,
     spouses,
     active,
+    variant = 'standard',
 }: {
     slot: SheetSlot;
     /** Union to preselect per person id when re-centring on a card. */
     spouses: Record<number, string>;
     active: ActiveAdd;
+    variant?: SheetCardVariant;
 }) {
     if (slot.kind === 'person') {
         return (
             <SheetPersonCard
                 person={slot.person}
                 spouse={spouses[slot.person.id]}
+                variant={variant}
             />
         );
     }
 
+    const compact = variant === 'compact';
+
     if (slot.kind === 'unknown') {
         return slot.parent_of === undefined ? (
-            <UnknownPersonCard label={slot.label} />
+            <UnknownPersonCard label={slot.label} compact={compact} />
         ) : (
             <AddPersonSlot
                 target={{ kind: 'parent', slot: slot.parent_of }}
                 active={active}
+                compact={compact}
             />
         );
     }
@@ -155,8 +184,18 @@ function Slot({
     return null;
 }
 
-function RowLabel({ children }: { children: string }) {
-    return <h3 className="sr-only">{children}</h3>;
+function RowLabel({
+    children,
+    visible = false,
+}: {
+    children: string;
+    visible?: boolean;
+}) {
+    return (
+        <h3 className={visible ? 'text-tree-meta text-xs' : 'sr-only'}>
+            {children}
+        </h3>
+    );
 }
 
 /**
@@ -361,12 +400,15 @@ function childrenRowLayout(count: number, column: number): ChildrenRowLayout {
     };
 }
 
-/** Empty-state of the children row: the add-child slot under the couple, with the note for screen readers only. */
+/** Empty-state of the children row: the add-child slot under the couple, labelled "Dzieci (0)", with the note for screen readers. */
 function NoChildren({ addChild }: { addChild: React.ReactNode }) {
     return (
         <>
             <p className="sr-only">Brak dzieci w tym związku.</p>
-            <div className="col-span-2 col-start-4">{addChild}</div>
+            <div className="col-span-2 col-start-4 flex flex-col items-center gap-1">
+                <RowLabel visible>Dzieci (0)</RowLabel>
+                <div className="w-full">{addChild}</div>
+            </div>
         </>
     );
 }
@@ -476,12 +518,27 @@ function ChildrenRow({
     layout: ChildrenRowLayout;
     addChild: React.ReactNode;
 }) {
-    const cellStyle = { ...CELL_PADDING_STYLE, width: `${layout.cellRem}rem` };
+    const compact = children.length > WIDE_CHILDREN_MAX;
+    const cellStyle = {
+        ...CELL_PADDING_STYLE,
+        width: `${layout.cellRem}rem`,
+        ...rowStyle(
+            (compact
+                ? SHEET_ROW_DEFAULT_REM.childrenCompact
+                : SHEET_ROW_DEFAULT_REM.children) + CHILD_CELL_PADDING_REM,
+        ),
+    };
     const slotStyle = { ...CELL_PADDING_STYLE, width: `${layout.slotRem}rem` };
 
     return (
         <div className="relative flex w-max flex-col">
-            <RowLabel>Dzieci</RowLabel>
+            <div className="grid grid-cols-2">
+                <div
+                    className={clsx('h-full', LINE.colour, LINE.left)}
+                    aria-hidden="true"
+                />
+                <RowLabel visible>{`Dzieci (${children.length})`}</RowLabel>
+            </div>
             <div className="flex">
                 {children.map((child, i) => (
                     <div
@@ -494,7 +551,10 @@ function ChildrenRow({
                             count={children.length}
                             slotBeside={layout.slotBeside}
                         />
-                        <SheetPersonCard person={child} />
+                        <SheetPersonCard
+                            person={child}
+                            variant={compact ? 'compact' : 'standard'}
+                        />
                     </div>
                 ))}
             </div>
@@ -608,11 +668,15 @@ export function FamilySheet({
                                     <div
                                         key={`${block}-grandparent-${i}`}
                                         className="col-span-1"
+                                        style={rowStyle(
+                                            SHEET_ROW_DEFAULT_REM.grandparents,
+                                        )}
                                     >
                                         <Slot
                                             slot={slot}
                                             spouses={spouses}
                                             active={active}
+                                            variant="compact"
                                         />
                                     </div>
                                 )),
@@ -644,6 +708,9 @@ export function FamilySheet({
                                     <div
                                         key={`${block}-parent-${i}`}
                                         className="col-span-2"
+                                        style={rowStyle(
+                                            SHEET_ROW_DEFAULT_REM.parents,
+                                        )}
                                     >
                                         <Slot
                                             slot={slot}
@@ -709,12 +776,16 @@ export function FamilySheet({
                                         className="relative col-span-4 mx-auto w-full"
                                         style={{
                                             maxWidth: `${coupleCardRem(columnRem)}rem`,
+                                            ...rowStyle(
+                                                SHEET_ROW_DEFAULT_REM.pair,
+                                            ),
                                         }}
                                     >
                                         {block === 'focus' ? (
                                             <SheetPersonCard
                                                 person={sheet.focus}
                                                 isFocus
+                                                variant="pair"
                                             />
                                         ) : sheet.partner.kind === 'empty' ? (
                                             <AddPersonSlot
@@ -730,6 +801,7 @@ export function FamilySheet({
                                                 slot={sheet.partner}
                                                 spouses={spouses}
                                                 active={active}
+                                                variant="pair"
                                             />
                                         )}
                                     </div>
@@ -769,10 +841,7 @@ export function FamilySheet({
                             </div>
 
                             {sheet.children.length === 0 && (
-                                <>
-                                    <RowLabel>Dzieci</RowLabel>
-                                    <NoChildren addChild={addChild} />
-                                </>
+                                <NoChildren addChild={addChild} />
                             )}
                         </div>
                         {sheet.children.length > 0 && (
