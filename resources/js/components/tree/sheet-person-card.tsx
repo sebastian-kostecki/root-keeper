@@ -3,19 +3,17 @@ import { Eye } from 'lucide-react';
 import { PersonPreviewLink } from '@/components/persons/person-preview-link';
 import { usePersonPreview } from '@/components/persons/person-preview-provider';
 import { Button } from '@/components/ui/button';
+import { CardAvatar } from '@/components/tree/card-avatar';
 import {
     cardFocus,
     cardInteractive,
     compactCardSurface,
     personCardSurface,
 } from '@/components/tree/card-styles';
-import { useInitials } from '@/hooks/use-initials';
 import { useMarriagePanel } from '@/hooks/use-marriage-panel';
-import { useVisiblePhoto } from '@/hooks/use-visible-photo';
 import { formatAge } from '@/lib/age';
 import { genderCard } from '@/lib/gender-styles';
 import { pairDetailLines } from '@/lib/pair-details';
-import { personPhotoUrl } from '@/lib/person-photo';
 import { cn } from '@/lib/utils';
 import { show as treeShow } from '@/routes/tree';
 import type { SheetPerson } from '@/types';
@@ -25,60 +23,18 @@ type Props = {
     /** Union to preselect after re-centring on this person; omitted for none. */
     spouse?: string;
     isFocus?: boolean;
-    /** `compact`: one column, no photo, name on two lines. `pair`: wide, with the full details. */
+    /** `compact`: one column, no avatar, name on two lines. `pair`: wide, with the full details. */
     variant?: SheetCardVariant;
 };
 
 export type SheetCardVariant = 'standard' | 'compact' | 'pair';
 
-/** Strip fill without a photo: the gender colour at full strength, unlike the lighter card fill. */
-const stripGender = {
-    male: 'bg-gender-male',
-    female: 'bg-gender-female',
-    unknown: 'bg-gender-unknown',
-} as const;
-
-/** Photo strip on the left edge of a person card: the photo, or the initials on the gender colour. */
-function PhotoStrip({ person }: { person: SheetPerson }) {
-    const getInitials = useInitials();
-    const photoUrl = personPhotoUrl(person.id, person.photo_version);
-    const { visiblePhotoUrl, onError } = useVisiblePhoto(photoUrl);
-
-    return (
-        <span
-            className={cn(
-                'relative w-12 shrink-0 overflow-hidden @xs:w-18',
-                stripGender[person.gender ?? 'unknown'],
-            )}
-        >
-            {visiblePhotoUrl !== null ? (
-                <span className="absolute inset-x-0 top-0 bottom-1 overflow-hidden">
-                    <img
-                        src={visiblePhotoUrl}
-                        alt=""
-                        loading="lazy"
-                        onError={onError}
-                        className="size-full object-cover object-center"
-                    />
-                </span>
-            ) : (
-                <span
-                    aria-hidden="true"
-                    className="text-background absolute inset-0 flex items-center justify-center text-lg font-semibold"
-                >
-                    {getInitials(person.card_name)}
-                </span>
-            )}
-        </span>
-    );
-}
-
 /**
- * Photo strip and data column of a person card. The data column stacks the
+ * Avatar and data column of a person card. The data column stacks the
  * name, the dates and the age, aligned to the top left; `children` adds lines
  * below them. `reserveActionSpace` leaves room for the eye button in the first
  * line of the name. The name breaks between words only, to two lines with an
- * ellipsis; the photo strip is 3rem on cards narrower than 20rem and 4.5rem on
+ * ellipsis; the avatar is 2.5rem on cards narrower than 20rem and 3.5rem on
  * wider ones (the card is the size container, see `personCardSurface`).
  */
 export function CardBody({
@@ -92,7 +48,7 @@ export function CardBody({
 }) {
     return (
         <>
-            <PhotoStrip person={person} />
+            <CardAvatar person={person} />
             <span className="flex min-w-0 flex-1 flex-col items-start justify-start px-3 py-3.5">
                 <span
                     title={person.card_name}
@@ -171,7 +127,7 @@ function CompactBody({ person }: { person: SheetPerson }) {
 }
 
 /**
- * Pair card content: a wide photo strip, the name, the detail lines (born,
+ * Pair card content: a large avatar, the name, the detail lines (born,
  * died, buried) and the age. Without detail lines the lifespan stands in.
  */
 function PairBody({ person }: { person: SheetPerson }) {
@@ -182,7 +138,7 @@ function PairBody({ person }: { person: SheetPerson }) {
 
     return (
         <>
-            <PhotoStrip person={person} />
+            <CardAvatar person={person} large />
             <span className="flex min-w-0 flex-1 flex-col items-start justify-start px-3 py-3.5">
                 <span
                     title={person.card_name}
