@@ -118,7 +118,6 @@ test('the timeline holds own events, children births and deaths and each spouse 
         ['Zgon żony', '1950', null, 'Ewa Zielińska'],
         ['Zgon', '1960', null, null],
         ['Pochowanie', null, 'Zakopane', null],
-        ['Zgon syna', '1990', null, 'Jan Nowak'],
     ]);
 });
 
@@ -244,7 +243,7 @@ test('rows without a year sort last in rank order', function () {
     ]);
 });
 
-test('the burial follows the dated death of the person and the child death comes after it', function () {
+test('the burial follows the dated death of the person and the child death after it is dropped', function () {
     $user = User::factory()->create();
     $person = Person::factory()->for($user->tree)->create();
     $son = Person::factory()->for($user->tree)->male()->create(['first_name' => 'Jan', 'last_name' => 'Nowak']);
@@ -256,7 +255,6 @@ test('the burial follows the dated death of the person and the child death comes
     expect(timelineRows($this, $user, $person))->toBe([
         ['Zgon', '1900', null, null],
         ['Pochowanie', null, null, null],
-        ['Zgon syna', '1950', null, 'Jan Nowak'],
     ]);
 });
 
@@ -352,7 +350,7 @@ test('the persons index carries no timeline', function () {
     expect($response->viewData('page')['props']['persons'][0])->not->toHaveKey('timeline');
 });
 
-test('each row carries the age of the viewed person at the event, and none for birth, burial and rows after the death', function () {
+test('each row carries the age of the viewed person at the event, and none for birth and burial, and rows after the death are dropped', function () {
     $user = User::factory()->create();
     $scene = timelineRangeScene($user);
 
@@ -365,11 +363,10 @@ test('each row carries the age of the viewed person at the event, and none for b
         ['Zgon żony', yearsOld(50)],
         ['Zgon', yearsOld(60)],
         ['Pochowanie', null],
-        ['Zgon syna', null],
     ]);
 });
 
-test('a child death in the death year has an age only when it sorts before the own death', function () {
+test('a child death in the death year stays only when it sorts before the own death', function () {
     $user = User::factory()->create();
     $person = Person::factory()->for($user->tree)->create();
     $late = Person::factory()->for($user->tree)->male()->create();
@@ -385,7 +382,6 @@ test('a child death in the death year has an age only when it sorts before the o
         ['Urodzenie', null],
         ['Zgon córki', yearsOld(60)],
         ['Zgon', yearsOld(60)],
-        ['Zgon syna', null],
     ]);
 });
 

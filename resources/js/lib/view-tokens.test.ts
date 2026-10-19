@@ -50,6 +50,8 @@ const VIEW_FILES = [
     'components/tree/add-person-config.ts',
     'components/side-panel.tsx',
     'components/persons/person-modal.tsx',
+    'components/persons/events-tab.tsx',
+    'components/timeline.tsx',
     'components/sources/source-panel.tsx',
     'components/localities/locality-panel.tsx',
     'components/parishes/parish-panel.tsx',

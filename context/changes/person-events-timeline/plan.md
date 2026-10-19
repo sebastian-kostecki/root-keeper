@@ -389,23 +389,23 @@ Brak zmian schematu i danych.
 
 #### Automated
 
-- [x] 2.1 Testy helpera przechodzą: `vendor/bin/sail npm run test:js`
-- [x] 2.2 Typy przechodzą: `vendor/bin/sail npm run types:check`
-- [x] 2.3 Lint i format przechodzą: `vendor/bin/sail npm run check`
+- [x] 2.1 Testy helpera przechodzą: `vendor/bin/sail npm run test:js` — cf76ad3
+- [x] 2.2 Typy przechodzą: `vendor/bin/sail npm run types:check` — cf76ad3
+- [x] 2.3 Lint i format przechodzą: `vendor/bin/sail npm run check` — cf76ad3
 
 ### Phase 3: Zakładka Wydarzenia na osi + utrwalenie + bramka wizualna
 
 #### Automated
 
-- [ ] 3.1 Testy JS (w tym `view-tokens`) przechodzą: `vendor/bin/sail npm run test:js`
-- [ ] 3.2 Typy przechodzą: `vendor/bin/sail npm run types:check`
-- [ ] 3.3 Lint i format przechodzą: `vendor/bin/sail npm run check`
-- [ ] 3.4 Build przechodzi: `vendor/bin/sail npm run build`
-- [ ] 3.5 Istniejący E2E zakładki przechodzi bez zmian: `npx playwright test tests/e2e/person-events-and-note-tabs.spec.ts`
+- [x] 3.1 Testy JS (w tym `view-tokens`) przechodzą: `vendor/bin/sail npm run test:js`
+- [x] 3.2 Typy przechodzą: `vendor/bin/sail npm run types:check`
+- [x] 3.3 Lint i format przechodzą: `vendor/bin/sail npm run check`
+- [x] 3.4 Build przechodzi: `vendor/bin/sail npm run build`
+- [x] 3.5 Istniejący E2E zakładki przechodzi bez zmian: `npx playwright test tests/e2e/person-events-and-note-tabs.spec.ts`
 
 #### Manual
 
-- [ ] 3.6 Zrzuty light/dark 1366×768 i 390×844 zapisane w `screenshots/` z `verdict.md` bez otwartych uwag
-- [ ] 3.7 Oś czyta się chronologicznie: rok i wiek po lewej, znaczniki własne vs krewni rozróżnialne w obu motywach
-- [ ] 3.8 Pochowanie i wpis bez daty mają pusty znacznik i przerywane odcinki; bez daty pokazuje „?”
-- [ ] 3.9 Link do krewnego ma hover i widoczny focus ring; kliknięcie podmienia panel jak dotąd
+- [x] 3.6 Zrzuty light/dark 1366×768 i 390×844 zapisane w `screenshots/` z `verdict.md` bez otwartych uwag
+- [x] 3.7 Oś czyta się chronologicznie: rok i wiek po lewej, znaczniki własne vs krewni rozróżnialne w obu motywach
+- [x] 3.8 Pochowanie i wpis bez daty mają pusty znacznik i przerywane odcinki; bez daty pokazuje „?”
+- [x] 3.9 Link do krewnego ma hover i widoczny focus ring; kliknięcie podmienia panel jak dotąd

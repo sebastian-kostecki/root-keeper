@@ -13,10 +13,10 @@ use App\Models\Person;
  * `events.locality`, `children.events.locality` and
  * `marriages.participants.events.locality`; otherwise every row lazy-loads its place.
  *
- * Each row carries the viewed person's age at the event. It is null for the
- * person's own birth, for every row after the row of the person's own death in
- * the sorted order (the death row itself keeps its age), and wherever Age cannot
- * compute it (no birth year, no event year, event before birth).
+ * Rows after the row of the person's own death in the sorted order are dropped,
+ * except the person's own burial. Each remaining row carries the viewed person's
+ * age at the event. It is null for the person's own birth, for the burial, and
+ * wherever Age cannot compute it (no birth year, no event year, event before birth).
  */
 final class PersonTimeline
 {
@@ -35,14 +35,14 @@ final class PersonTimeline
             ->sortBy(fn (TimelineEntry $entry): array => self::sortKey($entry, $person))
             ->all());
 
-        return self::withAges($sorted, $person);
+        return self::untilDeathWithAges($sorted, $person);
     }
 
     /**
      * @param  list<TimelineEntry>  $entries  Already sorted.
      * @return list<TimelineEntry>
      */
-    private static function withAges(array $entries, Person $person): array
+    private static function untilDeathWithAges(array $entries, Person $person): array
     {
         $birthDate = $person->birth()?->date;
         $afterDeath = false;
@@ -52,6 +52,11 @@ final class PersonTimeline
             $isSelf = $entry->role === 'self';
             $isOwnBirth = $isSelf && $entry->event->type === EventType::Birth;
             $isOwnDeath = $isSelf && $entry->event->type === EventType::Death;
+            $isOwnBurial = $isSelf && $entry->event->type === EventType::Burial;
+
+            if ($afterDeath && ! $isOwnBurial) {
+                continue;
+            }
 
             $age = $afterDeath || $isOwnBirth ? null : Age::at($birthDate, $entry->event->date);
 

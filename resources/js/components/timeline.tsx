@@ -34,9 +34,15 @@ export function TimelineItem({
     segmentBelow,
     children,
 }: TimelineItemProps) {
+    // The gap sits inside the columns, not on the <li>, so the line column spans the whole row
+    // and reaches the next marker.
+    const gap = segmentBelow !== null && 'pb-4';
+
     return (
-        <li className={clsx('flex gap-3', segmentBelow !== null && 'pb-4')}>
-            <div className="w-14 shrink-0 text-right tabular-nums">{aside}</div>
+        <li className="flex gap-3">
+            <div className={clsx('w-14 shrink-0 text-right tabular-nums', gap)}>
+                {aside}
+            </div>
             <div className="relative flex w-3 shrink-0 justify-center">
                 <span
                     aria-hidden
@@ -55,7 +61,9 @@ export function TimelineItem({
                     />
                 )}
             </div>
-            <div className="min-w-0 flex-1 space-y-0.5">{children}</div>
+            <div className={clsx('min-w-0 flex-1 space-y-0.5', gap)}>
+                {children}
+            </div>
         </li>
     );
 }
