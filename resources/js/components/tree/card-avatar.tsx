@@ -31,7 +31,7 @@ function Silhouette({ gender }: { gender: Gender }) {
             )}
             <circle
                 cx="12"
-                cy="9.5"
+                cy={gender === 'female' ? '9.5' : '10'}
                 r="3.8"
                 className={gender === 'female' ? 'opacity-80' : undefined}
             />
@@ -39,7 +39,7 @@ function Silhouette({ gender }: { gender: Gender }) {
                 d={
                     gender === 'female'
                         ? 'M5.5 24c0-4.6 2.9-7.2 6.5-7.2s6.5 2.6 6.5 7.2z'
-                        : 'M3.5 24c0-5 3.8-7.6 8.5-7.6s8.5 2.6 8.5 7.6z'
+                        : 'M3.5 24c0-5.6 3.8-10.2 8.5-10.2s8.5 4.6 8.5 10.2z'
                 }
             />
         </svg>
