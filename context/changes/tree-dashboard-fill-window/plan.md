@@ -539,37 +539,37 @@ Bez migracji danych. Zmiana `fortify.home` działa od wdrożenia. Ewentualne zap
 
 #### Automated
 
-- [x] 3.1 Vitest przechodzi, w tym pair-details i view-tokens
-- [x] 3.2 Typy przechodzą
-- [x] 3.3 Format i lint przechodzą
-- [x] 3.4 Build przechodzi
+- [x] 3.1 Vitest przechodzi, w tym pair-details i view-tokens — 993832c
+- [x] 3.2 Typy przechodzą — 993832c
+- [x] 3.3 Format i lint przechodzą — 993832c
+- [x] 3.4 Build przechodzi — 993832c
 
 #### Manual
 
-- [x] 3.5 Karta kompaktowa dziadków i puste sloty czytelne
-- [x] 3.6 Karta pary z danymi i wiekiem
-- [x] 3.7 Kompaktowe dzieci przy 5+
-- [x] 3.8 Etykieta Dzieci (N) widoczna
-- [x] 3.9 Widok przodków bez zmian
-- [x] 3.10 Tryb ciemny bez utraty kontrastu
+- [x] 3.5 Karta kompaktowa dziadków i puste sloty czytelne — 993832c
+- [x] 3.6 Karta pary z danymi i wiekiem — 993832c
+- [x] 3.7 Kompaktowe dzieci przy 5+ — 993832c
+- [x] 3.8 Etykieta Dzieci (N) widoczna — 993832c
+- [x] 3.9 Widok przodków bez zmian — 993832c
+- [x] 3.10 Tryb ciemny bez utraty kontrastu — 993832c
 
 ### Phase 4: Geometria wypełnienia okna
 
 #### Automated
 
-- [ ] 4.1 Vitest przechodzi z nowymi przypadkami geometrii
-- [ ] 4.2 Typy przechodzą
-- [ ] 4.3 Format i lint przechodzą
-- [ ] 4.4 Build przechodzi
+- [x] 4.1 Vitest przechodzi z nowymi przypadkami geometrii
+- [x] 4.2 Typy przechodzą
+- [x] 4.3 Format i lint przechodzą
+- [x] 4.4 Build przechodzi
 
 #### Manual
 
-- [ ] 4.5 1366 i 1440: cała rodzina bez kotwicy
-- [ ] 4.6 1920: arkusz wypełnia ok. 80% wysokości
-- [ ] 4.7 2560: limity i wyśrodkowanie
-- [ ] 4.8 Otwarty panel boczny: ponowne dopasowanie bez skakania
-- [ ] 4.9 Przesunięcie i zmiana związku jak dziś
-- [ ] 4.10 Widok przodków: dopasowanie i przybliżanie bez zmian
+- [x] 4.5 1366 i 1440: cała rodzina bez kotwicy
+- [x] 4.6 1920: arkusz wypełnia ok. 80% wysokości
+- [x] 4.7 2560: limity i wyśrodkowanie
+- [x] 4.8 Otwarty panel boczny: ponowne dopasowanie bez skakania
+- [x] 4.9 Przesunięcie i zmiana związku jak dziś
+- [x] 4.10 Widok przodków: dopasowanie i przybliżanie bez zmian
 
 ### Phase 5: E2E i bramka wizualna
 

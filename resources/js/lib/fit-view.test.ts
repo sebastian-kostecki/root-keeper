@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vite-plus/test';
 import {
     chooseAnchor,
     chooseFitView,
+    distributeRows,
+    fillHeightRem,
     COLUMN_MAX_REM,
     COLUMN_MIN_REM,
     COLUMN_STEP_ROUND_REM,
@@ -53,6 +55,102 @@ describe('fitColumnRem', () => {
             expect(column).toBeLessThanOrEqual(COLUMN_MAX_REM);
             expect(column % COLUMN_STEP_ROUND_REM).toBe(0);
         }
+    });
+});
+
+describe('fitColumnRem with minRem', () => {
+    const fit = (areaWidth: number, minRem?: number) =>
+        fitColumnRem({
+            areaWidth,
+            rootFontSize: 16,
+            columns: 8,
+            paddingRem: 1,
+            minRem,
+        });
+
+    it('goes down to a lower minimum on a 1366 screen', () => {
+        expect(fit(1070, 7.5)).toBe(7.5);
+    });
+
+    it('gives the given minimum for an empty area', () => {
+        expect(fit(0, 7.5)).toBe(7.5);
+    });
+
+    it('does not change a column above the minimum', () => {
+        expect(fit(2264, 7.5)).toBe(16.75);
+    });
+});
+
+describe('fillHeightRem', () => {
+    const fill = (overrides: Partial<Parameters<typeof fillHeightRem>[0]>) =>
+        fillHeightRem({
+            areaWidth: 1000,
+            areaHeight: 600,
+            contentWidth: 1000,
+            rootFontSize: 16,
+            ...options,
+            ...overrides,
+        });
+
+    it('divides the area height by the scale', () => {
+        expect(fill({ contentWidth: 800 })).toBe(30);
+    });
+
+    it('holds the scale at the floor for wide content', () => {
+        expect(fill({ contentWidth: 4000 })).toBe(50);
+    });
+
+    it('holds the scale at the max for narrow content', () => {
+        expect(fill({ contentWidth: 100 })).toBe(25);
+    });
+
+    it('rounds down to a step of 0.25 rem', () => {
+        expect(fill({ areaHeight: 601 })).toBe(37.5);
+    });
+
+    it('gives 0 while a size is not positive', () => {
+        expect(fill({ areaWidth: 0 })).toBe(0);
+        expect(fill({ areaHeight: 0 })).toBe(0);
+        expect(fill({ contentWidth: 0 })).toBe(0);
+    });
+});
+
+describe('distributeRows', () => {
+    const rows = [
+        { min: 5, max: 7, weight: 1 },
+        { min: 6, max: 9, weight: 2 },
+    ];
+
+    it('gives the minimums for a budget below their sum', () => {
+        expect(distributeRows({ budgetRem: 8, rows })).toEqual([5, 6]);
+    });
+
+    it('gives the minimums for a budget of 0', () => {
+        expect(distributeRows({ budgetRem: 0, rows })).toEqual([5, 6]);
+    });
+
+    it('shares the surplus in proportion to the weights', () => {
+        expect(distributeRows({ budgetRem: 14, rows })).toEqual([6, 8]);
+    });
+
+    it('drops a row that reaches its max and shares the rest', () => {
+        const [first, second] = distributeRows({ budgetRem: 16, rows });
+
+        expect(first).toBe(7);
+        expect(second).toBe(9);
+        expect(
+            distributeRows({
+                budgetRem: 14,
+                rows: [
+                    { min: 1, max: 2, weight: 1 },
+                    { min: 1, max: 20, weight: 1 },
+                ],
+            }),
+        ).toEqual([2, 12]);
+    });
+
+    it('leaves the surplus above the maximums undistributed', () => {
+        expect(distributeRows({ budgetRem: 100, rows })).toEqual([7, 9]);
     });
 });
 
