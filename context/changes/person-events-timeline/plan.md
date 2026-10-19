@@ -397,15 +397,15 @@ Brak zmian schematu i danych.
 
 #### Automated
 
-- [x] 3.1 Testy JS (w tym `view-tokens`) przechodzą: `vendor/bin/sail npm run test:js`
-- [x] 3.2 Typy przechodzą: `vendor/bin/sail npm run types:check`
-- [x] 3.3 Lint i format przechodzą: `vendor/bin/sail npm run check`
-- [x] 3.4 Build przechodzi: `vendor/bin/sail npm run build`
-- [x] 3.5 Istniejący E2E zakładki przechodzi bez zmian: `npx playwright test tests/e2e/person-events-and-note-tabs.spec.ts`
+- [x] 3.1 Testy JS (w tym `view-tokens`) przechodzą: `vendor/bin/sail npm run test:js` — 10e6b9c
+- [x] 3.2 Typy przechodzą: `vendor/bin/sail npm run types:check` — 10e6b9c
+- [x] 3.3 Lint i format przechodzą: `vendor/bin/sail npm run check` — 10e6b9c
+- [x] 3.4 Build przechodzi: `vendor/bin/sail npm run build` — 10e6b9c
+- [x] 3.5 Istniejący E2E zakładki przechodzi bez zmian: `npx playwright test tests/e2e/person-events-and-note-tabs.spec.ts` — 10e6b9c
 
 #### Manual
 
-- [x] 3.6 Zrzuty light/dark 1366×768 i 390×844 zapisane w `screenshots/` z `verdict.md` bez otwartych uwag
-- [x] 3.7 Oś czyta się chronologicznie: rok i wiek po lewej, znaczniki własne vs krewni rozróżnialne w obu motywach
-- [x] 3.8 Pochowanie i wpis bez daty mają pusty znacznik i przerywane odcinki; bez daty pokazuje „?”
-- [x] 3.9 Link do krewnego ma hover i widoczny focus ring; kliknięcie podmienia panel jak dotąd
+- [x] 3.6 Zrzuty light/dark 1366×768 i 390×844 zapisane w `screenshots/` z `verdict.md` bez otwartych uwag — 10e6b9c
+- [x] 3.7 Oś czyta się chronologicznie: rok i wiek po lewej, znaczniki własne vs krewni rozróżnialne w obu motywach — 10e6b9c
+- [x] 3.8 Pochowanie i wpis bez daty mają pusty znacznik i przerywane odcinki; bez daty pokazuje „?” — 10e6b9c
+- [x] 3.9 Link do krewnego ma hover i widoczny focus ring; kliknięcie podmienia panel jak dotąd — 10e6b9c

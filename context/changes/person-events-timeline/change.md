@@ -1,7 +1,7 @@
 ---
 change_id: person-events-timeline
 title: Oś czasu z wiekiem osoby w zakładce Wydarzenia panelu osoby
-status: implementing
+status: implemented
 created: 2026-10-19
 updated: 2026-10-19
 archived_at: null
