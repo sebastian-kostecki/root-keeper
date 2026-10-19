@@ -76,7 +76,9 @@ export default function Show({
             <Head title={`Drzewo: ${sheet.focus.display_name}`} />
 
             <div className="flex min-h-0 flex-1 flex-col">
-                <h1 className="sr-only">{sheet.focus.display_name}</h1>
+                <div className="mb-3">
+                    <Heading variant="page" title={sheet.focus.display_name} />
+                </div>
 
                 <FamilySheet sheet={sheet} activeAdd={addValue} />
 
