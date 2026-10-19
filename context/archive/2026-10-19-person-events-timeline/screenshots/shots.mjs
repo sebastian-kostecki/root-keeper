@@ -21,8 +21,8 @@ const authState = `${tmpDir}/person-events-timeline-auth.json`;
 const PERSON_ID = Number(process.env.SHOTS_PERSON ?? 173);
 const tag = process.env.SHOTS_TAG ? `${process.env.SHOTS_TAG}-` : "";
 const viewports = [
-    ['desktop', { width: 1366, height: 768 }],
-    ['phone', { width: 390, height: 844 }],
+    { name: 'desktop', size: { width: 1366, height: 768 } },
+    { name: 'phone', size: { width: 390, height: 844 } },
 ];
 const themes = ['light', 'dark'];
 
@@ -49,7 +49,7 @@ async function settle(page) {
 let counter = 0;
 const num = () => String(++counter).padStart(2, '0');
 
-for (const [vpName, viewport] of viewports) {
+for (const { name: vpName, size: viewport } of viewports) {
     for (const theme of themes) {
         const context = await browser.newContext({
             viewport,
