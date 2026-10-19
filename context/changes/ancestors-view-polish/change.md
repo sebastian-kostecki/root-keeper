@@ -1,7 +1,7 @@
 ---
 change_id: ancestors-view-polish
 title: Ancestors view polish
-status: implementing
+status: implemented
 created: 2026-10-19
 updated: 2026-10-19
 archived_at: null

@@ -491,15 +491,15 @@ Brak migracji i zmian danych. Pętla w danych dev (C8) zostaje, a wykres jest na
 
 #### Automated
 
-- [x] 4.1 Nowe i istniejące E2E przodków przechodzą: `npx playwright test tests/e2e/ancestors-view.spec.ts`
-- [x] 4.2 E2E drzewa przechodzą: `npx playwright test tests/e2e/tree-fill-window.spec.ts`
-- [x] 4.3 Vitest przechodzi z rozszerzonym `VIEW_FILES`: `vendor/bin/sail npm run test:js`
-- [x] 4.4 Format i lint przechodzą: `vendor/bin/sail npm run check` (global check pada na nieśledzonym `storage/gen-tree-import/`, poza zakresem; `vp check` na plikach fazy przeszedł)
-- [x] 4.5 Testy Pest przodków przechodzą: `vendor/bin/sail artisan test --compact tests/Feature/AncestorsTest.php`
+- [x] 4.1 Nowe i istniejące E2E przodków przechodzą: `npx playwright test tests/e2e/ancestors-view.spec.ts` — 545ccfe
+- [x] 4.2 E2E drzewa przechodzą: `npx playwright test tests/e2e/tree-fill-window.spec.ts` — 545ccfe
+- [x] 4.3 Vitest przechodzi z rozszerzonym `VIEW_FILES`: `vendor/bin/sail npm run test:js` — 545ccfe
+- [x] 4.4 Format i lint przechodzą: `vendor/bin/sail npm run check` (global check pada na nieśledzonym `storage/gen-tree-import/`, poza zakresem; `vp check` na plikach fazy przeszedł) — 545ccfe
+- [x] 4.5 Testy Pest przodków przechodzą: `vendor/bin/sail artisan test --compact tests/Feature/AncestorsTest.php` — 545ccfe
 
 #### Manual
 
-- [x] 4.6 Każde nowe ryzyko E2E (R1–R4) czerwienieje po celowym wprowadzeniu błędu i zielenieje po jego cofnięciu
-- [x] 4.7 Zrzuty „after” (desktop 1366×768 i 390×844) zapisane i porównane z „before”: wiek zniknął, avatar większy, przycisk na `/tree`, start głębokiego wykresu na osobie
-- [x] 4.8 Macierz 7 stanów: każda komórka pokazana na zrzucie albo N/A z powodem
-- [x] 4.9 Reguła w `CLAUDE.md` jest dopisana, a strażnik łamie się na celowo dodanej klasie palety w `card-avatar.tsx` (cofniętej)
+- [x] 4.6 Każde nowe ryzyko E2E (R1–R4) czerwienieje po celowym wprowadzeniu błędu i zielenieje po jego cofnięciu — 545ccfe
+- [x] 4.7 Zrzuty „after” (desktop 1366×768 i 390×844) zapisane i porównane z „before”: wiek zniknął, avatar większy, przycisk na `/tree`, start głębokiego wykresu na osobie — 545ccfe
+- [x] 4.8 Macierz 7 stanów: każda komórka pokazana na zrzucie albo N/A z powodem — 545ccfe
+- [x] 4.9 Reguła w `CLAUDE.md` jest dopisana, a strażnik łamie się na celowo dodanej klasie palety w `card-avatar.tsx` (cofniętej) — 545ccfe
