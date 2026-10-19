@@ -38,7 +38,7 @@ export function AncestorCard({ node, isFocus = false }: Props) {
                 isFocus && cardFocus,
             )}
         >
-            <CardBody person={person}>
+            <CardBody person={person} variant="ancestor">
                 {repeated && (
                     <span className="text-tree-meta mt-1 block text-sm">
                         Występuje kilka razy

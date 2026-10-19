@@ -34,21 +34,32 @@ export type SheetCardVariant = 'standard' | 'compact' | 'pair';
  * name, the dates and the age, aligned to the top left; `children` adds lines
  * below them. `reserveActionSpace` leaves room for the eye button in the first
  * line of the name. The name breaks between words only, to two lines with an
- * ellipsis; the avatar is 2.5rem on cards narrower than 20rem and 3.5rem on
- * wider ones (the card is the size container, see `personCardSurface`).
+ * ellipsis.
+ *
+ * `variant="tree"` (default) shows the age and an avatar of 2.5rem on cards
+ * narrower than 20rem and 3.5rem on wider ones (the card is the size
+ * container, see `personCardSurface`). `variant="ancestor"` hides the age and
+ * keeps the avatar at a fixed 3.5rem, for the ancestors chart's narrow column.
  */
 export function CardBody({
     person,
     children,
     reserveActionSpace = false,
+    variant = 'tree',
 }: {
     person: SheetPerson;
     children?: React.ReactNode;
     reserveActionSpace?: boolean;
+    variant?: 'tree' | 'ancestor';
 }) {
+    const isAncestor = variant === 'ancestor';
+
     return (
         <>
-            <CardAvatar person={person} />
+            <CardAvatar
+                person={person}
+                size={isAncestor ? 'ancestor' : 'card'}
+            />
             <span className="flex min-w-0 flex-1 flex-col items-start justify-start px-3 py-3.5">
                 <span
                     title={person.card_name}
@@ -73,7 +84,7 @@ export function CardBody({
                         {person.lifespan}
                     </span>
                 )}
-                {person.lifespan && person.age && (
+                {!isAncestor && person.lifespan && person.age && (
                     <span className="text-tree-meta block text-sm whitespace-nowrap">
                         {`(${formatAge(person.age)})`}
                     </span>
@@ -138,7 +149,7 @@ function PairBody({ person }: { person: SheetPerson }) {
 
     return (
         <>
-            <CardAvatar person={person} large />
+            <CardAvatar person={person} size="pair" />
             <span className="flex min-w-0 flex-1 flex-col items-start justify-start px-3 py-3.5">
                 <span
                     title={person.card_name}

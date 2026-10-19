@@ -8,15 +8,15 @@ export const cardSurface =
     'flex h-full min-h-24 flex-col items-center justify-center rounded-xl border px-7 py-3.5 text-center';
 
 /**
- * Geometry of person cards: a row with a photo strip on the left, no inner
- * padding, clipped to the rounded corners so the strip follows the border.
- * `@container` makes the card the size container for the strip's width.
+ * Geometry of person cards: a row with a round avatar on the left, clipped to
+ * the rounded corners. `@container` makes the card the size container for the
+ * avatar's size (see `CardAvatar`).
  */
 export const personCardSurface =
     '@container flex h-full min-h-24 flex-row items-stretch overflow-hidden rounded-xl border text-left';
 
 /**
- * Geometry of the compact person card (one column, no photo strip): its height
+ * Geometry of the compact person card (one column, no avatar): its height
  * comes from the grid cell, not from a minimum, so it has no `min-h-*`.
  */
 export const compactCardSurface =

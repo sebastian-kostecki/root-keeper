@@ -104,5 +104,7 @@ export type AncestorNode =
 export type AncestorChart = {
     focus: SheetPerson;
     generations: number;
+    min_generations: number;
+    available_generations: number;
     root: AncestorNode;
 };

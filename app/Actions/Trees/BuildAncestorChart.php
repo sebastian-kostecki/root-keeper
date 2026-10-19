@@ -13,6 +13,11 @@ use Illuminate\Support\Collection;
  * Assembles the ancestor chart of a focus person: a tree of person and unknown nodes going up from the
  * focus, using a constant number of queries (one for the graph, one for the people).
  *
+ * The chart goes as deep as the data allows (`available_generations`), up to a technical ceiling. A person who
+ * appears more than once (a shared ancestor or a cycle in the stored relations) has parents only at the first
+ * occurrence in their nearest generation; every other occurrence is shown without parents. The chart therefore
+ * grows with the number of people, not with the number of lines leading to them.
+ *
  * A node is either a person (`kind` 'person', with `person`, `repeated` and `parents`, at most two) or an
  * unknown placeholder (`kind` 'unknown', with `label`). PHPStan cannot express the recursive node shape,
  * so nodes are typed as arrays here and the client type `AncestorNode` (resources/js/types/tree.ts) is the contract.
@@ -21,6 +26,23 @@ use Illuminate\Support\Collection;
  */
 class BuildAncestorChart
 {
+    /**
+     * Safeguard against runaway data, not a product limit.
+     */
+    private const MAX_GENERATIONS = 20;
+
+    private const DEFAULT_GENERATIONS = 4;
+
+    /**
+     * The smallest chart: the person and a row of parents or placeholders.
+     */
+    public const MIN_GENERATIONS = 2;
+
+    /**
+     * The chart draws two parents; with more stored (not possible through the app), the lowest ids win.
+     */
+    private const PARENTS_PER_PERSON = 2;
+
     /**
      * @var Collection<int, Person>
      */
@@ -36,17 +58,40 @@ class BuildAncestorChart
     private array $occurrences = [];
 
     /**
-     * @return array{focus: SheetPerson, generations: int, root: array<string, mixed>}
+     * The shortest number of generations from the focus to each ancestor (the focus is 0).
+     *
+     * @var array<int, int>
      */
-    public function handle(Person $person, int $generations): array
+    private array $levels = [];
+
+    /**
+     * @var array<int, true>
+     */
+    private array $expanded = [];
+
+    /**
+     * @var array<int, SheetPerson>
+     */
+    private array $rendered = [];
+
+    /**
+     * @param  ?int  $generations  the requested depth (at least 2); null means the default. It is capped at the available depth.
+     * @return array{focus: SheetPerson, generations: int, min_generations: int, available_generations: int, root: array<string, mixed>}
+     */
+    public function handle(Person $person, ?int $generations): array
     {
         $this->graph = ParentChildGraph::forTree($person->tree);
-        $this->generations = $generations;
         $this->occurrences = [];
+        $this->expanded = [];
+        $this->rendered = [];
+        $this->levels = $this->graph->ancestorLevels($person->id, self::MAX_GENERATIONS - 1, self::PARENTS_PER_PERSON);
+
+        $available = $this->availableGenerations();
+        $this->generations = min($generations ?? self::DEFAULT_GENERATIONS, $available);
 
         $this->people = $person->tree->people()
             ->with('events')
-            ->whereIn('id', [$person->id, ...$this->graph->ancestorIdsWithin($person->id, $generations)])
+            ->whereIn('id', [$person->id, ...$this->graph->ancestorIdsWithin($person->id, $this->generations)])
             ->get()
             ->keyBy('id');
 
@@ -55,13 +100,35 @@ class BuildAncestorChart
 
         return [
             'focus' => $this->render($focusPerson),
-            'generations' => $generations,
+            'generations' => $this->generations,
+            'min_generations' => self::MIN_GENERATIONS,
+            'available_generations' => $available,
             'root' => $root,
         ];
     }
 
     /**
-     * A known person; the top generation has no parents, every other one gets two parent nodes.
+     * The number of rows of the full chart: the deepest generation holding a known person, at least two
+     * (a person without parents gets a row of placeholders) and at most the ceiling. A person is given
+     * parents in the generation after their nearest one, so their parents' row is their level plus two.
+     */
+    private function availableGenerations(): int
+    {
+        $available = self::MIN_GENERATIONS;
+
+        foreach ($this->levels as $personId => $level) {
+            if ($this->graph->parentsOf($personId) !== []) {
+                $available = max($available, $level + 2);
+            }
+        }
+
+        return min($available, self::MAX_GENERATIONS);
+    }
+
+    /**
+     * A known person; parents are given only below the top generation and only at the person's first
+     * occurrence in their nearest generation, every other occurrence (a shared ancestor seen again, or a
+     * cycle) has none.
      *
      * @return array<string, mixed>
      */
@@ -69,11 +136,19 @@ class BuildAncestorChart
     {
         $this->occurrences[$person->id] = ($this->occurrences[$person->id] ?? 0) + 1;
 
+        $withParents = $generation < $this->generations
+            && $generation === ($this->levels[$person->id] ?? -1) + 1
+            && ! isset($this->expanded[$person->id]);
+
+        if ($withParents) {
+            $this->expanded[$person->id] = true;
+        }
+
         return [
             'kind' => 'person',
             'person' => $this->render($person),
             'repeated' => false,
-            'parents' => $generation < $this->generations ? $this->parentNodes($person, $generation) : [],
+            'parents' => $withParents ? $this->parentNodes($person, $generation) : [],
         ];
     }
 
@@ -85,7 +160,7 @@ class BuildAncestorChart
     private function parentNodes(Person $person, int $generation): array
     {
         $known = PersonOrdering::parents(
-            (new Collection($this->graph->parentsOf($person->id)))
+            (new Collection($this->graph->firstParentsOf($person->id, self::PARENTS_PER_PERSON)))
                 ->map(fn (int $id): ?Person => $this->people->get($id))
                 ->filter()
         );
@@ -142,9 +217,12 @@ class BuildAncestorChart
      */
     private function render(Person $person): array
     {
-        /** @var SheetPerson $sheetPerson */
-        $sheetPerson = SheetPersonResource::make($person)->resolve();
+        if (! isset($this->rendered[$person->id])) {
+            /** @var SheetPerson $sheetPerson */
+            $sheetPerson = SheetPersonResource::make($person)->resolve();
+            $this->rendered[$person->id] = $sheetPerson;
+        }
 
-        return $sheetPerson;
+        return $this->rendered[$person->id];
     }
 }

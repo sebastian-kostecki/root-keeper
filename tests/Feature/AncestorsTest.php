@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\DB;
 
 /**
  * @param  array<string, mixed>  $query
- * @return array{focus: array<string, mixed>, generations: int, root: array<string, mixed>}
+ * @return array{focus: array<string, mixed>, generations: int, available_generations: int, root: array<string, mixed>}
  */
 function ancestorsChartFor($test, User $user, Person $person, array $query = []): array
 {
@@ -70,6 +70,24 @@ function ancestorsGrowTree(Tree $tree, Person $person, int $depth): void
     }
 }
 
+/**
+ * A straight line of fathers above the first person; returns the people from the youngest up.
+ *
+ * @return list<Person>
+ */
+function ancestorsGrowLine(Tree $tree, int $generations): array
+{
+    $people = [Person::factory()->for($tree)->create()];
+
+    for ($i = 1; $i < $generations; $i++) {
+        $father = Person::factory()->for($tree)->male()->create();
+        linkParent($father, end($people));
+        $people[] = $father;
+    }
+
+    return $people;
+}
+
 test('the chart shows four generations by default', function () {
     $user = User::factory()->create();
     $people = [Person::factory()->for($user->tree)->create()];
@@ -114,7 +132,7 @@ test('the chart shows the requested number of generations', function () {
     expect($chart['root']['parents'])->toHaveCount(2);
 });
 
-test('a generations value outside 2 to 6 or not a number falls back to four', function (string $value) {
+test('a generations value below 2 or not a number falls back to the default', function (string $value) {
     $user = User::factory()->create();
     $child = Person::factory()->for($user->tree)->create();
     ancestorsGrowTree($user->tree, $child, 6);
@@ -123,7 +141,159 @@ test('a generations value outside 2 to 6 or not a number falls back to four', fu
 
     expect($chart['generations'])->toBe(4);
     expect(ancestorsChartDepth($chart['root']))->toBe(4);
-})->with(['1', '7', 'abc']);
+})->with(['0', '1', '-3', 'abc', '']);
+
+test('a generations value above the available depth is capped at it', function () {
+    $user = User::factory()->create();
+    $line = ancestorsGrowLine($user->tree, 5);
+
+    $chart = ancestorsChartFor($this, $user, $line[0], ['generations' => 9]);
+
+    expect($chart['generations'])->toBe(5);
+    expect($chart['available_generations'])->toBe(5);
+    expect(ancestorsChartDepth($chart['root']))->toBe(5);
+});
+
+test('the chart is not limited to six generations', function () {
+    $user = User::factory()->create();
+    $line = ancestorsGrowLine($user->tree, 10);
+
+    $chart = ancestorsChartFor($this, $user, $line[0], ['generations' => 8]);
+
+    expect($chart['generations'])->toBe(8);
+    expect(ancestorsChartDepth($chart['root']))->toBe(8);
+});
+
+test('the available generations are those of the deepest known ancestor', function () {
+    $user = User::factory()->create();
+    $line = ancestorsGrowLine($user->tree, 7);
+
+    $chart = ancestorsChartFor($this, $user, $line[0], ['generations' => 7]);
+
+    expect($chart['available_generations'])->toBe(7);
+    expect(ancestorsChartPersonNodes($chart['root']))->toHaveCount(7);
+    expect(end($line)->id)->toBe(collect(ancestorsChartPersonNodes($chart['root']))->last()['person']['id']);
+});
+
+test('a person without parents or with parents only has two available generations', function (bool $withParents) {
+    $user = User::factory()->create();
+    $child = Person::factory()->for($user->tree)->create();
+
+    if ($withParents) {
+        ancestorsGrowTree($user->tree, $child, 1);
+    }
+
+    $chart = ancestorsChartFor($this, $user, $child);
+
+    expect($chart['available_generations'])->toBe(2);
+    expect($chart['min_generations'])->toBe(2);
+    expect($chart['generations'])->toBe(2);
+})->with([false, true]);
+
+test('a third stored parent is neither drawn nor counted in the available generations', function () {
+    $user = User::factory()->create();
+    $tree = $user->tree;
+    $child = Person::factory()->for($tree)->create();
+    $father = Person::factory()->for($tree)->male()->create();
+    $mother = Person::factory()->for($tree)->female()->create();
+    linkParent($father, $child);
+    linkParent($mother, $child);
+
+    // Not possible through the app (two parents at most), only through stored data.
+    $third = ancestorsGrowLine($tree, 4)[0];
+    linkParent($third, $child);
+
+    $chart = ancestorsChartFor($this, $user, $child, ['generations' => 20]);
+
+    expect($chart['available_generations'])->toBe(2);
+    expect(collect($chart['root']['parents'])->pluck('person.id')->all())->toBe([$father->id, $mother->id]);
+});
+
+test('the default depth is four or the available depth when that is smaller', function (int $line, int $expected) {
+    $user = User::factory()->create();
+    $people = ancestorsGrowLine($user->tree, $line);
+
+    $chart = ancestorsChartFor($this, $user, $people[0]);
+
+    expect($chart['generations'])->toBe($expected);
+})->with([
+    'three generations' => [3, 3],
+    'six generations' => [6, 4],
+]);
+
+test('a shared ancestor shows their line once, at the nearest occurrence', function () {
+    $user = User::factory()->create();
+    $tree = $user->tree;
+    $child = Person::factory()->for($tree)->create();
+    $father = Person::factory()->for($tree)->male()->create();
+    $mother = Person::factory()->for($tree)->female()->create();
+    $grandmother = Person::factory()->for($tree)->female()->create();
+    $shared = Person::factory()->for($tree)->male()->create();
+    linkParent($father, $child);
+    linkParent($mother, $child);
+    linkParent($grandmother, $mother);
+    linkParent($shared, $father);
+    linkParent($shared, $grandmother);
+
+    $older = $shared;
+    for ($i = 0; $i < 3; $i++) {
+        $parent = Person::factory()->for($tree)->male()->create();
+        linkParent($parent, $older);
+        $older = $parent;
+    }
+
+    // The shared ancestor is two generations up through the father and three through the mother; the line above is three more.
+    $chart = ancestorsChartFor($this, $user, $child, ['generations' => 20]);
+    $sharedViaFather = $chart['root']['parents'][0]['parents'][0];
+    $sharedViaMother = $chart['root']['parents'][1]['parents'][1]['parents'][0];
+
+    expect($chart['available_generations'])->toBe(6);
+    expect(ancestorsChartDepth($chart['root']))->toBe(6);
+    expect(collect(ancestorsChartPersonNodes($chart['root']))->pluck('person.id'))->toContain($older->id);
+    expect($sharedViaFather['person']['id'])->toBe($shared->id);
+    expect($sharedViaFather['parents'])->not->toBe([]);
+    expect($sharedViaMother['person']['id'])->toBe($shared->id);
+    expect($sharedViaMother['repeated'])->toBeTrue();
+    expect($sharedViaMother['parents'])->toBe([]);
+});
+
+test('merging lines in every generation keep the chart proportional to the number of people', function () {
+    $user = User::factory()->create();
+    $tree = $user->tree;
+    $child = Person::factory()->for($tree)->create();
+    $couple = [$child];
+
+    // Both people of every generation are the parents of both people of the generation below.
+    for ($generation = 2; $generation <= 20; $generation++) {
+        $father = Person::factory()->for($tree)->male()->create();
+        $mother = Person::factory()->for($tree)->female()->create();
+
+        foreach ($couple as $person) {
+            linkParent($father, $person);
+            linkParent($mother, $person);
+        }
+
+        $couple = [$father, $mother];
+    }
+
+    $chart = ancestorsChartFor($this, $user, $child, ['generations' => 20]);
+
+    // One focus, the first couple, then four nodes per generation (the couple with parents and once more without).
+    expect($chart['available_generations'])->toBe(20);
+    expect(ancestorsChartDepth($chart['root']))->toBe(20);
+    expect(ancestorsChartPersonNodes($chart['root']))->toHaveCount(1 + 2 + 4 * 18);
+});
+
+test('the available generations are capped at twenty', function () {
+    $user = User::factory()->create();
+    $line = ancestorsGrowLine($user->tree, 25);
+
+    $chart = ancestorsChartFor($this, $user, $line[0], ['generations' => 50]);
+
+    expect($chart['available_generations'])->toBe(20);
+    expect($chart['generations'])->toBe(20);
+    expect(ancestorsChartDepth($chart['root']))->toBe(20);
+});
 
 test('the father is shown on the left and the mother on the right, whatever the order of creation', function () {
     $user = User::factory()->create();
@@ -199,17 +369,46 @@ test('a common ancestor of two lines appears twice and only that person is marke
         ->not->toContain($commonAncestor->id);
 });
 
-test('a cycle in the stored relations does not hang the request', function () {
+test('a cycle in the stored relations shows the repeated person once more without parents', function () {
     $user = User::factory()->create();
     $child = Person::factory()->for($user->tree)->create();
     $parent = Person::factory()->for($user->tree)->create();
     linkParent($parent, $child);
     linkParent($child, $parent);
 
-    $nodes = ancestorsChartPersonNodes(ancestorsChartFor($this, $user, $child)['root']);
+    $chart = ancestorsChartFor($this, $user, $child, ['generations' => 20]);
+    $nodes = ancestorsChartPersonNodes($chart['root']);
 
-    expect(collect($nodes)->pluck('person.id')->all())->toBe([$child->id, $parent->id, $child->id, $parent->id]);
-    expect(collect($nodes)->pluck('repeated')->unique()->all())->toBe([true]);
+    expect($chart['available_generations'])->toBe(3);
+    expect(collect($nodes)->pluck('person.id')->all())->toBe([$child->id, $parent->id, $child->id]);
+    expect(collect($nodes)->pluck('repeated')->all())->toBe([true, false, true]);
+    expect($nodes[2]['parents'])->toBe([]);
+});
+
+test('a cycle stops at the repeated person even when another line goes deeper', function () {
+    $user = User::factory()->create();
+    $tree = $user->tree;
+    $child = Person::factory()->for($tree)->create();
+    $father = Person::factory()->for($tree)->male()->create();
+    $mother = Person::factory()->for($tree)->female()->create();
+    linkParent($father, $child);
+    linkParent($child, $father);
+    linkParent($mother, $child);
+
+    $line = [$mother];
+    for ($i = 0; $i < 4; $i++) {
+        $older = Person::factory()->for($tree)->female()->create();
+        linkParent($older, end($line));
+        $line[] = $older;
+    }
+
+    $chart = ancestorsChartFor($this, $user, $child, ['generations' => 20]);
+    $repeatedChild = ancestorsChartPersonNodes($chart['root']['parents'][0])[1];
+
+    expect($chart['available_generations'])->toBe(6);
+    expect($repeatedChild['person']['id'])->toBe($child->id);
+    expect($repeatedChild['repeated'])->toBeTrue();
+    expect($repeatedChild['parents'])->toBe([]);
 });
 
 test('the number of queries does not grow with the size of the tree', function () {
@@ -220,14 +419,14 @@ test('the number of queries does not grow with the size of the tree', function (
 
         DB::flushQueryLog();
         DB::enableQueryLog();
-        $this->actingAs($user)->get(route('tree.ancestors', ['person' => $child, 'generations' => 6]))->assertOk();
+        $this->actingAs($user)->get(route('tree.ancestors', ['person' => $child, 'generations' => 20]))->assertOk();
         $count = count(DB::getQueryLog());
         DB::disableQueryLog();
 
         return $count;
     };
 
-    expect($countQueries(5))->toBe($countQueries(0));
+    expect($countQueries(6))->toBe($countQueries(0));
 });
 
 test('another tree\'s person is a 404', function () {

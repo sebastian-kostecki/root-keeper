@@ -3,7 +3,7 @@ project: root-keeper
 version: 5
 status: draft
 created: 2026-10-04
-updated: 2026-10-11
+updated: 2026-10-19
 prd_version: 1
 main_goal: speed
 top_blocker: time
@@ -399,3 +399,4 @@ Rozstrzygnięte:
 - **S-14: autor widzi w panelu osoby zakładkę wydarzeń — własnych oraz urodzeń i zgonów dzieci, ślubu i zgonu małżonka — uporządkowanych po roku, z wydarzeniami bez daty na końcu, oraz zakładkę z jedną notatką tekstową o osobie.** — Archived 2026-10-10 → `context/archive/2026-10-10-person-events-and-note-tabs/`. Lesson: —.
 - **S-15: autor wybiera osobę i widzi ją oraz wszystkich jej przodków w jednym widoku z wyborem liczby pokoleń, dopasowanym do ekranu i z przybliżaniem w tym widoku (przyciski, Ctrl+kółko, szczypanie); widok służy do oglądania (bez dodawania osób i relacji); cudza osoba to 404.** — Archived 2026-10-10 → `context/archive/2026-10-10-ancestors-view/`. Lesson: —.
 - **S-16: autor dodaje zdjęcie osoby w panelu i widzi je na karcie drzewa; karta bez zdjęcia pokazuje inicjały lub sylwetkę.** — Archived 2026-10-11 → `context/archive/2026-10-11-person-photo-on-card/`. Lesson: —.
+- **S-15 (dopracowanie, poza kamieniem milowym): widok przodków otwiera przycisk „Przodkowie” na drzewie, samo kółko przybliża, przełącznik oferuje każdą liczbę pokoleń, jaką mają dane (sufit 20), karta przodka ma większy avatar i nie pokazuje wieku, a wspólny przodek pokazuje swoją linię raz.** — Archived 2026-10-19 → `context/archive/2026-10-19-ancestors-view-polish/`. Lesson: —.
