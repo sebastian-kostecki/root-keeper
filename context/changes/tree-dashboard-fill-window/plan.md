@@ -575,12 +575,12 @@ Bez migracji danych. Zmiana `fortify.home` działa od wdrożenia. Ewentualne zap
 
 #### Automated
 
-- [x] 5.1 Specyfikacje R1 i R2 przechodzą i czerwienieją po wprowadzeniu błędu
-- [x] 5.2 tree-card-name.spec.ts przechodzi z nowym oczekiwaniem
-- [x] 5.3 Cały zestaw E2E przechodzi
-- [x] 5.4 Zrzuty istnieją
+- [x] 5.1 Specyfikacje R1 i R2 przechodzą i czerwienieją po wprowadzeniu błędu — 4e49164
+- [x] 5.2 tree-card-name.spec.ts przechodzi z nowym oczekiwaniem — 4e49164
+- [x] 5.3 Cały zestaw E2E przechodzi — 4e49164
+- [x] 5.4 Zrzuty istnieją — 4e49164
 
 #### Manual
 
-- [ ] 5.5 Przegląd zrzutów
-- [ ] 5.6 Pełny zestaw Pest uruchomiony przez użytkownika
+- [x] 5.5 Przegląd zrzutów — 4e49164
+- [x] 5.6 Pełny zestaw Pest uruchomiony przez użytkownika — 4e49164

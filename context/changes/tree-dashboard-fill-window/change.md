@@ -1,7 +1,7 @@
 ---
 change_id: tree-dashboard-fill-window
 title: Tree as the default dashboard, filling the window
-status: implementing
+status: implemented
 created: 2026-10-19
 updated: 2026-10-19
 archived_at: null
