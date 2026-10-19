@@ -377,21 +377,21 @@ Brak zmian schematu i danych.
 
 #### Automated
 
-- [x] 1.1 Testy osi i wieku przechodzą: `vendor/bin/sail artisan test --compact tests/Feature/PersonTimelineTest.php tests/Unit/AgeTest.php`
-- [x] 1.2 Larastan bez błędów: `vendor/bin/sail bin phpstan analyse`
-- [x] 1.3 Pint czysty: `vendor/bin/sail bin pint --dirty --format agent`
+- [x] 1.1 Testy osi i wieku przechodzą: `vendor/bin/sail artisan test --compact tests/Feature/PersonTimelineTest.php tests/Unit/AgeTest.php` — 9747479
+- [x] 1.2 Larastan bez błędów: `vendor/bin/sail bin phpstan analyse` — 9747479
+- [x] 1.3 Pint czysty: `vendor/bin/sail bin pint --dirty --format agent` — 9747479
 
 #### Manual
 
-- [x] 1.4 Payload `personPreview.person.timeline` osoby z danymi zawiera `year`, `is_approximate`, `date_has_month`, `age` zgodnie z regułą
+- [x] 1.4 Payload `personPreview.person.timeline` osoby z danymi zawiera `year`, `is_approximate`, `date_has_month`, `age` zgodnie z regułą — 9747479
 
 ### Phase 2: Wspólny komponent osi + helper wiersza
 
 #### Automated
 
-- [ ] 2.1 Testy helpera przechodzą: `vendor/bin/sail npm run test:js`
-- [ ] 2.2 Typy przechodzą: `vendor/bin/sail npm run types:check`
-- [ ] 2.3 Lint i format przechodzą: `vendor/bin/sail npm run check`
+- [x] 2.1 Testy helpera przechodzą: `vendor/bin/sail npm run test:js`
+- [x] 2.2 Typy przechodzą: `vendor/bin/sail npm run types:check`
+- [x] 2.3 Lint i format przechodzą: `vendor/bin/sail npm run check`
 
 ### Phase 3: Zakładka Wydarzenia na osi + utrwalenie + bramka wizualna
 

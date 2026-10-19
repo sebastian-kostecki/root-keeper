@@ -118,6 +118,10 @@ export type TimelineEntry = {
     type: 'birth' | 'death' | 'marriage' | 'burial';
     label: string;
     date: string | null;
+    year: number | null;
+    is_approximate: boolean;
+    date_has_month: boolean;
+    age: PersonAge | null;
     place: string | null;
     relative: {
         id: number;
