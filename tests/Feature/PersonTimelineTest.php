@@ -50,6 +50,26 @@ function timelineRows(TestCase $test, User $user, Person $person): array
 }
 
 /**
+ * The timeline rows of the preview, reduced to label and age.
+ *
+ * @return list<array{0: string, 1: array{unit: string, value: int|null}|null}>
+ */
+function timelineAges(TestCase $test, User $user, Person $person): array
+{
+    $timeline = $test->actingAs($user)
+        ->get(personPreviewUrl($person))
+        ->assertOk()
+        ->viewData('page')['props']['personPreview']['person']['timeline'];
+
+    return array_map(fn (array $row): array => [$row['label'], $row['age']], $timeline);
+}
+
+function yearsOld(int $value): array
+{
+    return ['unit' => 'years', 'value' => $value];
+}
+
+/**
  * Build the scene of the range test: Adam Nowak with a birth, two marriages, a death,
  * a burial, a son (birth and death), a daughter (birth), and a spouse who died.
  *
@@ -98,7 +118,6 @@ test('the timeline holds own events, children births and deaths and each spouse 
         ['Zgon żony', '1950', null, 'Ewa Zielińska'],
         ['Zgon', '1960', null, null],
         ['Pochowanie', null, 'Zakopane', null],
-        ['Zgon syna', '1990', null, 'Jan Nowak'],
     ]);
 });
 
@@ -224,7 +243,7 @@ test('rows without a year sort last in rank order', function () {
     ]);
 });
 
-test('the burial follows the dated death of the person and the child death comes after it', function () {
+test('the burial follows the dated death of the person and the child death after it is dropped', function () {
     $user = User::factory()->create();
     $person = Person::factory()->for($user->tree)->create();
     $son = Person::factory()->for($user->tree)->male()->create(['first_name' => 'Jan', 'last_name' => 'Nowak']);
@@ -236,7 +255,6 @@ test('the burial follows the dated death of the person and the child death comes
     expect(timelineRows($this, $user, $person))->toBe([
         ['Zgon', '1900', null, null],
         ['Pochowanie', null, null, null],
-        ['Zgon syna', '1950', null, 'Jan Nowak'],
     ]);
 });
 
@@ -330,4 +348,103 @@ test('the persons index carries no timeline', function () {
 
     $response->assertOk();
     expect($response->viewData('page')['props']['persons'][0])->not->toHaveKey('timeline');
+});
+
+test('each row carries the age of the viewed person at the event, and none for birth and burial, and rows after the death are dropped', function () {
+    $user = User::factory()->create();
+    $scene = timelineRangeScene($user);
+
+    expect(timelineAges($this, $user, $scene['person']))->toBe([
+        ['Urodzenie', null],
+        ['Małżeństwo', yearsOld(20)],
+        ['Urodzenie syna', yearsOld(25)],
+        ['Urodzenie córki', yearsOld(28)],
+        ['Małżeństwo', yearsOld(30)],
+        ['Zgon żony', yearsOld(50)],
+        ['Zgon', yearsOld(60)],
+        ['Pochowanie', null],
+    ]);
+});
+
+test('a child death in the death year stays only when it sorts before the own death', function () {
+    $user = User::factory()->create();
+    $person = Person::factory()->for($user->tree)->create();
+    $late = Person::factory()->for($user->tree)->male()->create();
+    $early = Person::factory()->for($user->tree)->female()->create();
+    attachTimelineEvent($person, EventType::Birth, ['date_year' => 1900]);
+    attachTimelineEvent($person, EventType::Death, ['date_year' => 1960]);
+    attachTimelineEvent($late, EventType::Death, ['date_year' => 1960, 'date_month' => 5]);
+    attachTimelineEvent($early, EventType::Death, ['date_year' => 1960]);
+    linkParent($person, $late);
+    linkParent($person, $early);
+
+    expect(timelineAges($this, $user, $person))->toBe([
+        ['Urodzenie', null],
+        ['Zgon córki', yearsOld(60)],
+        ['Zgon', yearsOld(60)],
+    ]);
+});
+
+test('without a birth year every age is null', function () {
+    $user = User::factory()->create();
+    $person = Person::factory()->for($user->tree)->create();
+    $spouse = Person::factory()->for($user->tree)->create();
+    attachTimelineEvent($person, EventType::Birth, ['locality_id' => Locality::factory()->create(['tree_id' => $user->tree->id])->id]);
+    attachMarriage($person, $spouse, 1920);
+    attachTimelineEvent($person, EventType::Death, ['date_year' => 1960]);
+
+    expect(array_column(timelineAges($this, $user, $person), 1))->each->toBeNull();
+});
+
+test('an event without a year and an event before the birth have no age', function () {
+    $user = User::factory()->create();
+    $person = Person::factory()->for($user->tree)->create();
+    $spouse = Person::factory()->for($user->tree)->create();
+    attachTimelineEvent($person, EventType::Birth, ['date_year' => 1900]);
+    attachMarriage($person, $spouse, 1890);
+    attachMarriage($person, Person::factory()->for($user->tree)->create());
+
+    expect(array_column(timelineAges($this, $user, $person), 1))->each->toBeNull();
+});
+
+test('month precision lowers the age when the event month is before the birth month', function () {
+    $user = User::factory()->create();
+    $person = Person::factory()->for($user->tree)->create();
+    $spouse = Person::factory()->for($user->tree)->create();
+    attachTimelineEvent($person, EventType::Birth, ['date_year' => 1900, 'date_month' => 5]);
+    attachMarriage($person, $spouse, 1920, 3);
+
+    expect(timelineAges($this, $user, $person))->toBe([
+        ['Urodzenie', null],
+        ['Małżeństwo', yearsOld(19)],
+    ]);
+});
+
+test('an approximate date does not change the age', function () {
+    $user = User::factory()->create();
+    $person = Person::factory()->for($user->tree)->create();
+    $spouse = Person::factory()->for($user->tree)->create();
+    attachTimelineEvent($person, EventType::Birth, ['date_year' => 1900]);
+    attachMarriage($person, $spouse, 1920)->update(['date_is_approximate' => true]);
+
+    expect(timelineAges($this, $user, $person)[1])->toBe(['Małżeństwo', yearsOld(20)]);
+});
+
+test('the payload gives the year, the approximation flag and whether the date has a month', function () {
+    $user = User::factory()->create();
+    $person = Person::factory()->for($user->tree)->create();
+    attachTimelineEvent($person, EventType::Birth, ['date_year' => 1900, 'date_month' => 5, 'date_day' => 3]);
+    attachTimelineEvent($person, EventType::Death, ['date_year' => 1960]);
+    $spouse = Person::factory()->for($user->tree)->create();
+    attachMarriage($person, $spouse, 1920)->update(['date_is_approximate' => true]);
+
+    $timeline = $this->actingAs($user)
+        ->get(personPreviewUrl($person))
+        ->viewData('page')['props']['personPreview']['person']['timeline'];
+
+    expect(array_map(fn (array $row): array => [$row['year'], $row['is_approximate'], $row['date_has_month']], $timeline))->toBe([
+        [1900, false, true],
+        [1920, true, false],
+        [1960, false, false],
+    ]);
 });

@@ -20,6 +20,14 @@ final readonly class Age
     ) {}
 
     /**
+     * The age of a person born on `$birth` at the moment `$moment`.
+     */
+    public static function at(?PartialDate $birth, ?PartialDate $moment): ?self
+    {
+        return self::from($birth, $moment, true, CarbonImmutable::now());
+    }
+
+    /**
      * @param  bool  $isDeceased  Whether the person has a death event; without one the period ends today.
      */
     public static function from(?PartialDate $birth, ?PartialDate $death, bool $isDeceased, CarbonImmutable $today): ?self

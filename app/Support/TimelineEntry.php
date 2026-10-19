@@ -19,6 +19,7 @@ final readonly class TimelineEntry
         public Event $event,
         public string $role,
         public ?Person $relative,
+        public ?Age $age = null,
     ) {}
 
     /**

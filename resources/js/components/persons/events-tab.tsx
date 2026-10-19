@@ -1,38 +1,88 @@
 import { PersonPreviewLink } from '@/components/persons/person-preview-link';
-import type { PersonPreview, TimelineEntry } from '@/types';
+import { Timeline, TimelineItem } from '@/components/timeline';
+import { cn } from '@/lib/utils';
+import { focusRing } from '@/lib/focus-ring';
+import {
+    personTimelineRows,
+    type PersonTimelineMarker,
+    type PersonTimelineRow,
+} from '@/lib/person-timeline';
+import type { PersonPreview } from '@/types';
 
 type Props = {
     person: PersonPreview;
 };
 
-function EventRow({ entry }: { entry: TimelineEntry }) {
-    const showDate = entry.type !== 'burial';
+const MARKERS = {
+    own: 'primary',
+    relative: 'muted',
+    unknown: 'hollow',
+} as const satisfies Record<PersonTimelineMarker, string>;
+
+function YearColumn({ row }: { row: PersonTimelineRow }) {
+    return (
+        <>
+            {row.approximate && (
+                <span className="text-muted-foreground block text-xs leading-none">
+                    ok.
+                </span>
+            )}
+            {row.year !== null && (
+                <span className="block text-sm leading-5 font-medium">
+                    {row.year === '?' ? (
+                        <>
+                            <span aria-hidden>?</span>
+                            <span className="sr-only">data nieznana</span>
+                        </>
+                    ) : (
+                        row.year
+                    )}
+                </span>
+            )}
+            {row.age !== null && (
+                <span className="text-muted-foreground block text-xs">
+                    {row.age}
+                </span>
+            )}
+        </>
+    );
+}
+
+function EventRow({ row }: { row: PersonTimelineRow }) {
+    const { entry } = row;
+    const details = [row.date, entry.place].filter(
+        (part): part is string => part !== null,
+    );
 
     return (
-        <li className="space-y-0.5 py-2.5">
+        <TimelineItem
+            marker={MARKERS[row.marker]}
+            aside={<YearColumn row={row} />}
+            segmentBelow={row.segmentBelow}
+        >
             <p className="text-sm font-medium">
                 {entry.label}
                 {entry.relative !== null && (
                     <>
                         :{' '}
-                        <PersonPreviewLink personId={entry.relative.id}>
+                        <PersonPreviewLink
+                            personId={entry.relative.id}
+                            className={cn(
+                                'text-primary rounded-sm underline-offset-4 hover:underline',
+                                focusRing,
+                            )}
+                        >
                             {entry.relative.display_name}
                         </PersonPreviewLink>
                     </>
                 )}
             </p>
-            {(showDate || entry.place !== null) && (
+            {details.length > 0 && (
                 <p className="text-muted-foreground text-sm">
-                    {showDate && <span>{entry.date ?? 'data nieznana'}</span>}
-                    {entry.place !== null && (
-                        <span>
-                            {showDate && ' · '}
-                            {entry.place}
-                        </span>
-                    )}
+                    {details.join(' · ')}
                 </p>
             )}
-        </li>
+        </TimelineItem>
     );
 }
 
@@ -43,10 +93,10 @@ export function EventsTab({ person }: Props) {
     }
 
     return (
-        <ul className="divide-y">
-            {person.timeline.map((entry) => (
-                <EventRow key={`${entry.type}-${entry.id}`} entry={entry} />
+        <Timeline>
+            {personTimelineRows(person.timeline).map((row) => (
+                <EventRow key={`${row.entry.type}-${row.entry.id}`} row={row} />
             ))}
-        </ul>
+        </Timeline>
     );
 }

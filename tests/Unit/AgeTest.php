@@ -85,3 +85,11 @@ test('the approximate flag does not change the result', function () {
     expect(ageOf(ageDate(1850, null, null, true), ageDate(1922, 3, 15, true)))
         ->toBe(ageOf(ageDate(1850), ageDate(1922, 3, 15)));
 });
+
+test('Age::at gives the same result as from() for a deceased person', function () {
+    $birth = ageDate(1900, 5, 10);
+    $moment = ageDate(1920, 3, 1);
+
+    expect(Age::at($birth, $moment))->toEqual(Age::from($birth, $moment, true, CarbonImmutable::parse('2026-10-05')))
+        ->and(Age::at(null, $moment))->toBeNull();
+});
