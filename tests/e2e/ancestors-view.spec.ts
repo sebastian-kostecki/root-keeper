@@ -173,53 +173,37 @@ test('ancestors-view: a manual zoom survives a canvas resize until "Dopasuj"', a
     });
     await expect(fatherCard).toBeVisible();
 
-    // The zoom animates; wait until two samples agree before comparing.
-    const settledWidth = async (): Promise<number> => {
-        let previous = -1;
-        let width = 0;
-
-        await expect
-            .poll(async () => {
-                width = (await fatherCard.boundingBox())?.width ?? 0;
-                const settled = Math.abs(width - previous) < 0.5;
-                previous = width;
-
-                return settled;
-            })
-            .toBe(true);
-
-        return width;
-    };
-
-    const fitted = await settledWidth();
+    const fitted = await settledWidth(fatherCard);
 
     // 1. "Pomniejsz" shrinks the cards.
     await page.getByRole('button', { name: 'Pomniejsz', exact: true }).click();
     await expect
         .poll(async () => (await fatherCard.boundingBox())?.width ?? 0)
         .toBeLessThan(fitted);
-    const zoomedOut = await settledWidth();
+    const zoomedOut = await settledWidth(fatherCard);
 
     // 2. Opening a panel narrows the canvas; the manual zoom is kept.
     await page
         .getByRole('link', { name: `kobieta ${motherName}`, exact: true })
         .click();
     await expect(page.getByRole('dialog', { name: motherName })).toBeVisible();
-    expect(Math.abs((await settledWidth()) - zoomedOut)).toBeLessThan(1);
+    expect(Math.abs((await settledWidth(fatherCard)) - zoomedOut)).toBeLessThan(
+        1,
+    );
 
     // 3. "Dopasuj" brings the fitted view back.
     await page.getByRole('button', { name: 'Dopasuj', exact: true }).click();
     await expect
         .poll(async () => (await fatherCard.boundingBox())?.width ?? 0)
         .toBeGreaterThan(zoomedOut);
-    const refitted = await settledWidth();
+    const refitted = await settledWidth(fatherCard);
 
     // 4. "Powiększ" grows the cards again.
     await page.getByRole('button', { name: 'Pomniejsz', exact: true }).click();
     await expect
         .poll(async () => (await fatherCard.boundingBox())?.width ?? 0)
         .toBeLessThan(refitted);
-    const shrunk = await settledWidth();
+    const shrunk = await settledWidth(fatherCard);
     await page.getByRole('button', { name: 'Powiększ', exact: true }).click();
     await expect
         .poll(async () => (await fatherCard.boundingBox())?.width ?? 0)
@@ -251,7 +235,11 @@ async function settledWidth(card: Locator): Promise<number> {
     return width;
 }
 
-/** Two animation frames: whatever a wheel event would start has started by then. */
+/**
+ * Two animation frames: whatever a wheel event would start has started by then.
+ * Only for a negative check (the tree does not zoom): there is no state to wait
+ * for when nothing should change, so this is the one wait on frames, not time.
+ */
 async function afterFrames(page: Page): Promise<void> {
     await page.evaluate(
         () =>

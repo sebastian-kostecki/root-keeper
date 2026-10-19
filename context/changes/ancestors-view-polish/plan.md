@@ -433,6 +433,28 @@ Brak migracji i zmian danych. Pętla w danych dev (C8) zostaje, a wykres jest na
 - Wzorzec wyjątku `style={` w strażniku: `resources/js/lib/view-tokens.test.ts` (`family-sheet.tsx`)
 - Konfiguracja kółka w bibliotece: `node_modules/react-zoom-pan-pinch/dist/index.esm.js:2777-2779` (pusta lista `activationKeys`)
 
+## Addendum (impl-review 2026-10-19)
+
+Raport: `context/changes/ancestors-view-polish/reviews/impl-review.md`. Zastępuje zapisy planu tam, gdzie się z nimi nie zgadza.
+
+- **Reguła wykresu (F1):**
+  - Zmiana: osoba dostaje rodziców tylko przy pierwszym wystąpieniu w swoim najbliższym pokoleniu, czyli w najkrótszej odległości od osoby w centrum (przy remisie wygrywa pierwsze w kolejności ojciec → matka).
+  - Każde inne wystąpienie (wspólny przodek widziany znowu albo cykl) to karta „Występuje kilka razy” bez rodziców.
+  - Rozmiar wykresu rośnie więc z liczbą osób, a nie z liczbą linii. Wcześniej przy sufitu 20 i zawężeniu linii było to do ok. 1 mln węzłów.
+  - Zastępuje to „stop na ścieżce” i „N po dłuższej linii” z Desired End State, Key Discoveries i Fazy 1 (pkt 1–2).
+  - N to najgłębszy rząd ze znaną osobą według tej reguły (`max(poziom + 2)` po osobach z rodzicami, minimum 2, sufit 20).
+  - `ParentChildGraph::ancestorLevels` (BFS) zastępuje `ancestorGenerations`, a `render()` jest memoizowane per osoba.
+  - Test łączenia linii: N = 6 zamiast 7. Nowy test „drabiny” na 20 pokoleń daje 75 węzłów.
+- **Najwyżej dwoje rodziców (F5):** wykres i BFS idą po tych samych `ParentChildGraph::firstParentsOf($id, 2)` (najniższe id; więcej niż dwoje da się zapisać tylko poza aplikacją). `PersonOrdering::parents` decyduje tylko o lewo/prawo.
+- **Ładowanie osób:** zostaje `ancestorIdsWithin`. Najkrótsza odległość każdej narysowanej osoby jest mniejsza niż N, więc zbiór jest kompletny.
+- **Testy:**
+  - R3 używa pełnego drzewa 6 pokoleń przy 390×844 i progu ≥ 0.7 (tolerancja pomiaru) zamiast linii 8 pokoleń i ≥ 0.75. Linia 8 pokoleń mieści się w progu, więc nie startowałaby zakotwiczona.
+  - Test liczby zapytań porównuje głębokość 6 z 0, a nie 8 z 0.
+- **Zrzuty:**
+  - Głęboki start ma plik `after-ancestors-7gen-1366x768.png` (7 pełnych pokoleń wystarcza do zakotwiczenia przy 1366 px) zamiast `8gen`.
+  - Komórka „loading”: `after-states-loading-switched.png` i pomiar. Pozycje h1 i przełącznika są identyczne przed i po zmianie pokoleń.
+- **Zoom (F2):** `minScale` (skala całości) jest przeliczane przy zmianie rozmiaru także po ręcznym zoomie.
+
 ## Progress
 
 > Convention: `- [ ]` pending, `- [x]` done. Append ` — <commit sha>` when a step lands. Do not rename step titles. See `references/progress-format.md`.

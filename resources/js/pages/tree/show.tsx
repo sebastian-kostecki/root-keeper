@@ -83,7 +83,7 @@ export default function Show({
                 <div className="mb-3 flex flex-wrap items-center justify-between gap-4">
                     <Heading variant="page" title={sheet.focus.display_name} />
 
-                    <Button variant="outline" size="sm" className="h-7" asChild>
+                    <Button variant="outline" size="xs" asChild>
                         <Link href={treeAncestors(sheet.focus.id)}>
                             <NetworkIcon />
                             Przodkowie

@@ -11,8 +11,6 @@ use Inertia\Response;
 
 class TreeAncestorsController extends Controller
 {
-    private const MIN_GENERATIONS = 2;
-
     /**
      * Display the given person and their ancestors, up to the requested number of generations (default 4, at most the available depth).
      */
@@ -33,6 +31,6 @@ class TreeAncestorsController extends Controller
     {
         $generations = $request->integer('generations');
 
-        return $generations >= self::MIN_GENERATIONS ? $generations : null;
+        return $generations >= BuildAncestorChart::MIN_GENERATIONS ? $generations : null;
     }
 }

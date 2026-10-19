@@ -111,68 +111,49 @@ final class ParentChildGraph
     }
 
     /**
-     * The number of generations of the longest line of ancestors above the person, counting the person
-     * (1 for a person without parents) and capped at `$ceiling`. A parent already on the line being walked
-     * closes a cycle: it counts as one more generation (the chart shows it once more, without parents)
-     * and is not followed. Results that do not depend on the line walked are remembered per person, so
-     * merging lines (pedigree collapse) does not multiply the work.
+     * At most `$count` parents of the person, the lowest ids first: a stable choice that does not need the
+     * people loaded, for a view that draws a fixed number of parents.
+     *
+     * @return list<int>
      */
-    public function ancestorGenerations(int $personId, int $ceiling): int
+    public function firstParentsOf(int $personId, int $count): array
     {
-        $memo = [];
-        $onLine = [];
-        $isFinal = true;
+        $parentIds = $this->parentsOf($personId);
+        sort($parentIds);
 
-        return min($ceiling, $this->generationsAbove($personId, 1, $ceiling, $memo, $onLine, $isFinal));
+        return array_slice($parentIds, 0, $count);
     }
 
     /**
-     * @param  array<int, int>  $memo
-     * @param  array<int, true>  $onLine
-     * @param  bool  $isFinal  set to false when the result was cut short (ceiling or cycle), so it is not reusable
+     * The shortest number of generations from the person to each ancestor, the person included at 0,
+     * up to `$maxLevel` and following only `firstParentsOf(…, $parentsPerPerson)`; cycle-safe and linear
+     * in the size of the graph.
+     *
+     * @return array<int, int>
      */
-    private function generationsAbove(int $personId, int $level, int $ceiling, array &$memo, array &$onLine, bool &$isFinal): int
+    public function ancestorLevels(int $personId, int $maxLevel, int $parentsPerPerson): array
     {
-        if (isset($memo[$personId])) {
-            return $memo[$personId];
-        }
+        $levels = [$personId => 0];
+        $level = [$personId];
 
-        if ($level >= $ceiling) {
-            $isFinal = false;
+        for ($depth = 1; $depth <= $maxLevel && $level !== []; $depth++) {
+            $nextLevel = [];
 
-            return 1;
-        }
+            foreach ($level as $current) {
+                foreach ($this->firstParentsOf($current, $parentsPerPerson) as $parentId) {
+                    if (isset($levels[$parentId])) {
+                        continue;
+                    }
 
-        $onLine[$personId] = true;
-        $height = 1;
-        $isFinalHere = true;
-
-        foreach ($this->parentsOf($personId) as $parentId) {
-            if (isset($onLine[$parentId])) {
-                $isFinalHere = false;
-                $height = max($height, 2);
-
-                continue;
+                    $levels[$parentId] = $depth;
+                    $nextLevel[] = $parentId;
+                }
             }
 
-            $height = max($height, 1 + $this->generationsAbove($parentId, $level + 1, $ceiling, $memo, $onLine, $isFinalHere));
-
-            if ($level + $height - 1 >= $ceiling) {
-                $isFinalHere = false;
-
-                break;
-            }
+            $level = $nextLevel;
         }
 
-        unset($onLine[$personId]);
-
-        if ($isFinalHere) {
-            $memo[$personId] = $height;
-        } else {
-            $isFinal = false;
-        }
-
-        return $height;
+        return $levels;
     }
 
     public function hasRelation(int $parentId, int $childId): bool

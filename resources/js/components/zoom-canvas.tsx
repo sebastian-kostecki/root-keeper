@@ -228,6 +228,18 @@ export function ZoomCanvas({
             return false;
         };
 
+        /** Zoom out reaches the whole content even when the start is anchored. */
+        const measureWhole = () => {
+            if (content.offsetWidth > 0 && content.offsetHeight > 0) {
+                setWholeScale(
+                    Math.min(
+                        wrapper.clientWidth / content.offsetWidth,
+                        wrapper.clientHeight / content.offsetHeight,
+                    ),
+                );
+            }
+        };
+
         const fit = () => {
             const instance = controlsRef.current?.instance;
             const view = chooseFitView({
@@ -248,13 +260,7 @@ export function ZoomCanvas({
                 return;
             }
 
-            // Zoom out reaches the whole content even when the start is anchored.
-            setWholeScale(
-                Math.min(
-                    wrapper.clientWidth / content.offsetWidth,
-                    wrapper.clientHeight / content.offsetHeight,
-                ),
-            );
+            measureWhole();
 
             let x =
                 (wrapper.clientWidth - content.offsetWidth * view.scale) / 2;
@@ -364,7 +370,10 @@ export function ZoomCanvas({
             // After the library has aligned to its bounds on resize. A pending
             // reveal runs after the fit of the same pass, so the fit cannot undo it.
             frame = requestAnimationFrame(() => {
-                if ((!fittedRef.current || !movedRef.current) && !refit()) {
+                if (fittedRef.current && movedRef.current) {
+                    // The manual view stays, but zoom out still reaches the whole content at the new size.
+                    measureWhole();
+                } else if (!refit()) {
                     return;
                 }
 

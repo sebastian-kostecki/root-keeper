@@ -13,9 +13,6 @@ type Props = {
     ancestorChart: AncestorChartData;
 };
 
-/** Smallest generation count the switch offers; the server accepts the same. */
-const MIN_GENERATIONS = 2;
-
 export default function Ancestors({ ancestorChart: chart }: Props) {
     setLayoutProps({
         breadcrumbs: [
@@ -31,16 +28,16 @@ export default function Ancestors({ ancestorChart: chart }: Props) {
         fillHeight: true,
     });
 
-    /** Counts from 2 up to what the data allows; the range comes from the server (`available_generations`). */
+    /** The range comes from the server (`min_generations` up to `available_generations`, what the data allows). */
     const generationItems = Array.from(
         {
             length: Math.max(
                 0,
-                chart.available_generations - MIN_GENERATIONS + 1,
+                chart.available_generations - chart.min_generations + 1,
             ),
         },
         (_, index) => {
-            const value = String(MIN_GENERATIONS + index);
+            const value = String(chart.min_generations + index);
 
             return { value, label: value };
         },
