@@ -46,6 +46,19 @@ function Silhouette({ gender }: { gender: Gender }) {
     );
 }
 
+export type CardAvatarSize = 'card' | 'ancestor' | 'pair';
+
+/**
+ * Avatar diameter per card: the tree card is 2.5rem on cards narrower than
+ * 20rem and 3.5rem on wider ones (it needs the `@container` of the card), the
+ * ancestor card a fixed 3.5rem, the pair card a fixed 4rem.
+ */
+const avatarSize: Record<CardAvatarSize, string> = {
+    card: 'size-10 @xs:size-14',
+    ancestor: 'size-14',
+    pair: 'size-16',
+};
+
 /**
  * Round avatar at the top left of a person card: the photo, or the generic
  * portrait of the person's gender. Decorative: the gender and the name are read
@@ -53,11 +66,10 @@ function Silhouette({ gender }: { gender: Gender }) {
  */
 export function CardAvatar({
     person,
-    large = false,
+    size = 'card',
 }: {
     person: SheetPerson;
-    /** The pair card carries a larger avatar than the other cards. */
-    large?: boolean;
+    size?: CardAvatarSize;
 }) {
     const gender: Gender = person.gender ?? 'unknown';
     const photoUrl = personPhotoUrl(person.id, person.photo_version);
@@ -67,7 +79,7 @@ export function CardAvatar({
         <span
             className={cn(
                 'relative mt-3.5 ml-3 shrink-0 self-start overflow-hidden rounded-full border',
-                large ? 'size-16' : 'size-10 @xs:size-14',
+                avatarSize[size],
                 genderSurface[gender],
             )}
         >

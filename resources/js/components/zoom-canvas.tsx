@@ -4,6 +4,7 @@ import { TransformComponent, TransformWrapper } from 'react-zoom-pan-pinch';
 import type { ReactZoomPanPinchContentRef } from 'react-zoom-pan-pinch';
 import { Button } from '@/components/ui/button';
 import {
+    ANCESTORS_WHEEL_STEP,
     chooseAnchor,
     chooseFitView,
     COLUMN_MIN_REM,
@@ -54,9 +55,11 @@ type Props = {
     revealKey?: string | null;
     /** Lowest start scale before the view anchors instead of showing the whole content. */
     floor?: number;
+    /** Scale of the anchored start view; `floor` by default. */
+    anchorScale?: number;
     /** Highest start scale, so a small content does not blow up on a large screen. */
     max?: number;
-    /** Adds zoom buttons, Ctrl+wheel and pinch zoom, all within `[floor, max]`. Off by default. */
+    /** Adds zoom buttons, wheel and pinch zoom, from the whole content (or `floor`, if lower) to `max`. Off by default. */
     zoomControls?: boolean;
     className?: string;
 };
@@ -88,10 +91,10 @@ function revealOffset(
 /**
  * Pan area that fills its parent; give the parent a definite height. Without
  * `zoomControls` there is no manual zoom: the scale depends on the screen only.
- * With it, the buttons, Ctrl+wheel and pinch zoom within `[floor, max]`.
- * Starts fitted (whole content, or anchored when that would be too small) and
- * fits again on resize until the author pans or zooms the view. "Dopasuj"
- * fits again. Remount it with a `key` to fit from scratch.
+ * With it, the buttons, wheel and pinch zoom from the whole content (or `floor`,
+ * if lower) to `max`. Starts fitted (whole content, or anchored when that would
+ * be too small) and fits again on resize until the author pans or zooms the
+ * view. "Dopasuj" fits again. Remount it with a `key` to fit from scratch.
  * With `columns`, the card column is part of the fit: it is computed from the
  * area width at each fit, so the cards fill the area at scale about 1.
  * With `fillHeight`, the content also gets the height to fill at that scale.
@@ -107,6 +110,7 @@ export function ZoomCanvas({
     revealRef,
     revealKey,
     floor = TREE_FIT_FLOOR,
+    anchorScale = floor,
     max = TREE_FIT_MAX,
     zoomControls = false,
     className,
@@ -125,6 +129,7 @@ export function ZoomCanvas({
     const columnRemRef = useRef(COLUMN_MIN_REM);
     const [fillRem, setFillRem] = useState(0);
     const fillRemRef = useRef(0);
+    const [wholeScale, setWholeScale] = useState(floor);
 
     useEffect(() => {
         revealRefLatest.current = revealRef;
@@ -223,6 +228,18 @@ export function ZoomCanvas({
             return false;
         };
 
+        /** Zoom out reaches the whole content even when the start is anchored. */
+        const measureWhole = () => {
+            if (content.offsetWidth > 0 && content.offsetHeight > 0) {
+                setWholeScale(
+                    Math.min(
+                        wrapper.clientWidth / content.offsetWidth,
+                        wrapper.clientHeight / content.offsetHeight,
+                    ),
+                );
+            }
+        };
+
         const fit = () => {
             const instance = controlsRef.current?.instance;
             const view = chooseFitView({
@@ -236,11 +253,14 @@ export function ZoomCanvas({
                 },
                 floor,
                 max,
+                anchorScale,
             });
 
             if (!instance || !view) {
                 return;
             }
+
+            measureWhole();
 
             let x =
                 (wrapper.clientWidth - content.offsetWidth * view.scale) / 2;
@@ -350,7 +370,10 @@ export function ZoomCanvas({
             // After the library has aligned to its bounds on resize. A pending
             // reveal runs after the fit of the same pass, so the fit cannot undo it.
             frame = requestAnimationFrame(() => {
-                if ((!fittedRef.current || !movedRef.current) && !refit()) {
+                if (fittedRef.current && movedRef.current) {
+                    // The manual view stays, but zoom out still reaches the whole content at the new size.
+                    measureWhole();
+                } else if (!refit()) {
                     return;
                 }
 
@@ -407,6 +430,7 @@ export function ZoomCanvas({
         anchorRef,
         fallbackAnchorRef,
         floor,
+        anchorScale,
         max,
         columns,
         paddingRem,
@@ -589,11 +613,11 @@ export function ZoomCanvas({
             <TransformWrapper
                 ref={controlsRef}
                 initialScale={1}
-                minScale={floor}
+                minScale={zoomControls ? Math.min(floor, wholeScale) : floor}
                 maxScale={max}
                 wheel={
                     zoomControls
-                        ? { activationKeys: ['Control'] }
+                        ? { step: ANCESTORS_WHEEL_STEP }
                         : { disabled: true }
                 }
                 pinch={{ disabled: !zoomControls }}

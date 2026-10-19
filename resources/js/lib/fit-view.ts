@@ -5,13 +5,31 @@ export const TREE_FIT_FLOOR = 0.75;
 export const TREE_FIT_MAX = 1.5;
 
 /**
- * Lowest scale the ancestors view starts at. Six full generations are 32 cards
- * in the top row, about 6520 px at the minimum column of 12 rem per card and
- * 0.75 rem between them; that row fits a 1000 px screen at scale 0.15, so 0.1
- * keeps the whole row as the start view down to screens of about 650 px and
- * only anchors below that.
+ * Lowest scale at which the ancestors view still starts on the whole chart;
+ * below it the start anchors on the focus card instead. It is not a lower bound
+ * of the zoom: zooming out goes down to the whole chart, however deep. Six full
+ * generations are 32 cards in the top row, about 6520 px at the minimum column
+ * of 12 rem per card and 0.75 rem between them; that row fits a 1000 px screen
+ * at scale 0.15, so 0.1 keeps the whole row as the start view down to screens of
+ * about 650 px and only anchors below that.
  */
 export const ANCESTORS_FIT_FLOOR = 0.1;
+
+/**
+ * Scale of the anchored start of the ancestors view, held on the focus card
+ * when the whole chart is below `ANCESTORS_FIT_FLOOR`. The same as the tree
+ * floor: the name on the focus card stays readable on a 1366x768 screen.
+ */
+export const ANCESTORS_ANCHOR_SCALE = 0.75;
+
+/**
+ * Scale change of one wheel event per unit of `deltaY`. The library zooms
+ * additively and, with its default `smooth`, by `step * |deltaY|`: a mouse notch
+ * (`deltaY` 100) changes the scale by 0.1, which is under 25% from scale 0.4
+ * up, and a touchpad stream (`deltaY` of a few units per event) by about 0.005
+ * per event, so it never jumps to the ends of the range.
+ */
+export const ANCESTORS_WHEEL_STEP = 0.001;
 
 /** Highest zoom of the ancestors view, the same cap as the tree start view. */
 export const ANCESTORS_ZOOM_MAX = 1.5;
@@ -26,7 +44,7 @@ export const COLUMN_MIN_REM = 12;
  */
 export const SHEET_COLUMN_MIN_REM = 7.5;
 
-/** Largest card column, in rem. Must stay below 20rem, the threshold of the `@xs` strip. */
+/** Largest card column, in rem. Must stay below 20rem, the `@xs` container width at which the card avatar grows. */
 export const COLUMN_MAX_REM = 18;
 
 /** Gap between two card columns, in rem. */
@@ -88,19 +106,21 @@ export function chooseAnchor(
 
 /**
  * Picks the start view: the whole content when it fits at `floor` or more
- * (capped at `max`), otherwise an anchor view held at `floor`. Returns `null`
- * while the viewport or the content has no size yet.
+ * (capped at `max`), otherwise an anchor view held at `anchorScale` (`floor` by
+ * default). Returns `null` while the viewport or the content has no size yet.
  */
 export function chooseFitView({
     viewport,
     content,
     floor,
     max,
+    anchorScale = floor,
 }: {
     viewport: Size;
     content: Size;
     floor: number;
     max: number;
+    anchorScale?: number;
 }): FitView | null {
     if (
         viewport.width <= 0 ||
@@ -118,7 +138,7 @@ export function chooseFitView({
     );
 
     return scale < floor
-        ? { kind: 'anchor', scale: floor }
+        ? { kind: 'anchor', scale: anchorScale }
         : { kind: 'whole', scale };
 }
 

@@ -110,6 +110,52 @@ final class ParentChildGraph
         return $ids;
     }
 
+    /**
+     * At most `$count` parents of the person, the lowest ids first: a stable choice that does not need the
+     * people loaded, for a view that draws a fixed number of parents.
+     *
+     * @return list<int>
+     */
+    public function firstParentsOf(int $personId, int $count): array
+    {
+        $parentIds = $this->parentsOf($personId);
+        sort($parentIds);
+
+        return array_slice($parentIds, 0, $count);
+    }
+
+    /**
+     * The shortest number of generations from the person to each ancestor, the person included at 0,
+     * up to `$maxLevel` and following only `firstParentsOf(…, $parentsPerPerson)`; cycle-safe and linear
+     * in the size of the graph.
+     *
+     * @return array<int, int>
+     */
+    public function ancestorLevels(int $personId, int $maxLevel, int $parentsPerPerson): array
+    {
+        $levels = [$personId => 0];
+        $level = [$personId];
+
+        for ($depth = 1; $depth <= $maxLevel && $level !== []; $depth++) {
+            $nextLevel = [];
+
+            foreach ($level as $current) {
+                foreach ($this->firstParentsOf($current, $parentsPerPerson) as $parentId) {
+                    if (isset($levels[$parentId])) {
+                        continue;
+                    }
+
+                    $levels[$parentId] = $depth;
+                    $nextLevel[] = $parentId;
+                }
+            }
+
+            $level = $nextLevel;
+        }
+
+        return $levels;
+    }
+
     public function hasRelation(int $parentId, int $childId): bool
     {
         return in_array($parentId, $this->parentsByChild[$childId] ?? [], true);
