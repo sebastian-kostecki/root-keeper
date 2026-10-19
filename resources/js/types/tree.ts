@@ -1,14 +1,28 @@
-import type { PersonAge } from './person';
+import type { PersonAge, PersonEvent } from './person';
+
+export type SheetPersonEventDetails = {
+    date_parts: PersonEvent['date_parts'];
+    place: string | null;
+};
+
+export type SheetPersonDetails = {
+    birth: SheetPersonEventDetails | null;
+    death: SheetPersonEventDetails | null;
+    burial_place: string | null;
+};
 
 export type SheetPerson = {
     id: number;
     display_name: string;
     card_name: string;
+    card_given_name: string;
+    card_surname: string;
     gender: 'male' | 'female' | null;
     lifespan: string | null;
     is_deceased: boolean;
     age: PersonAge | null;
     photo_version: string | null;
+    details?: SheetPersonDetails;
 };
 
 export type ParentSlotRole = 'father' | 'mother' | 'parent';

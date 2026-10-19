@@ -161,8 +161,21 @@ class Person extends Model
      */
     public function cardName(): string
     {
-        $surname = filled($this->maiden_name) ? $this->maiden_name : ($this->last_name ?? 'NN');
+        ['given' => $given, 'surname' => $surname] = $this->cardNameParts();
 
-        return trim(($this->first_name ?? 'NN').' '.$surname);
+        return trim($given.' '.$surname);
+    }
+
+    /**
+     * The two parts of {@see cardName()}, for cards that print them on separate lines.
+     *
+     * @return array{given: string, surname: string}
+     */
+    public function cardNameParts(): array
+    {
+        return [
+            'given' => $this->first_name ?? 'NN',
+            'surname' => filled($this->maiden_name) ? $this->maiden_name : ($this->last_name ?? 'NN'),
+        ];
     }
 }

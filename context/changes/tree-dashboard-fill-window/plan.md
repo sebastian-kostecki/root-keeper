@@ -514,26 +514,26 @@ Bez migracji danych. Zmiana `fortify.home` działa od wdrożenia. Ewentualne zap
 
 #### Automated
 
-- [x] 1.1 Testy Auth i Tree przechodzą
-- [x] 1.2 Typy przechodzą
-- [x] 1.3 Format i lint przechodzą
-- [x] 1.4 Vitest przechodzi
-- [x] 1.5 Pint bez zmian
+- [x] 1.1 Testy Auth i Tree przechodzą — f3b9ae6
+- [x] 1.2 Typy przechodzą — f3b9ae6
+- [x] 1.3 Format i lint przechodzą — f3b9ae6
+- [x] 1.4 Vitest przechodzi — f3b9ae6
+- [x] 1.5 Pint bez zmian — f3b9ae6
 
 #### Manual
 
-- [x] 1.6 Logowanie hasłem kończy się na /tree
-- [x] 1.7 Brak nagłówka nad drzewem, h1 dostępny dla czytnika
+- [x] 1.6 Logowanie hasłem kończy się na /tree — f3b9ae6
+- [x] 1.7 Brak nagłówka nad drzewem, h1 dostępny dla czytnika — f3b9ae6
 
 ### Phase 2: Dane pary w payloadzie
 
 #### Automated
 
-- [ ] 2.1 Testy drzewa przechodzą
-- [ ] 2.2 Testy widoku przodków przechodzą
-- [ ] 2.3 Larastan przechodzi
-- [ ] 2.4 Typy przechodzą
-- [ ] 2.5 Pint bez zmian
+- [x] 2.1 Testy drzewa przechodzą
+- [x] 2.2 Testy widoku przodków przechodzą
+- [x] 2.3 Larastan przechodzi
+- [x] 2.4 Typy przechodzą
+- [x] 2.5 Pint bez zmian
 
 ### Phase 3: Warianty kart arkusza
 

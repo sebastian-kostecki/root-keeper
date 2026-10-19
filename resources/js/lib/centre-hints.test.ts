@@ -7,6 +7,8 @@ function person(id: number): SheetPerson {
         id,
         display_name: `Osoba ${id}`,
         card_name: `Osoba ${id}`,
+        card_given_name: `Osoba ${id}`,
+        card_surname: `Osoba ${id}`,
         gender: null,
         lifespan: null,
         is_deceased: false,

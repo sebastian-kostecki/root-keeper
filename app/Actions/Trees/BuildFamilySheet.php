@@ -16,7 +16,7 @@ use Illuminate\Support\Facades\DB;
  * Assembles the fixed-shape family sheet of a focus person: four rows of
  * slots for one selected union, using a constant number of queries.
  *
- * @phpstan-type SheetPerson array{id: int, display_name: string, card_name: string, gender: 'male'|'female'|null, lifespan: string|null, is_deceased: bool, age: array{unit: 'years'|'months'|'days'|'under_year', value: int|null}|null, photo_version: string|null}
+ * @phpstan-type SheetPerson array{id: int, display_name: string, card_name: string, card_given_name: string, card_surname: string, gender: 'male'|'female'|null, lifespan: string|null, is_deceased: bool, age: array{unit: 'years'|'months'|'days'|'under_year', value: int|null}|null, photo_version: string|null, details?: array{birth: array{date_parts: array{year: int|null, month: int|null, day: int|null, is_approximate: bool}, place: string|null}|null, death: array{date_parts: array{year: int|null, month: int|null, day: int|null, is_approximate: bool}, place: string|null}|null, burial_place: string|null}}
  * @phpstan-type ParentOf array{id: int, display_name: string, last_name: string|null, role: 'father'|'mother'|'parent', excluded_ids: list<int>}
  * @phpstan-type Slot array{kind: 'person', person: SheetPerson}|array{kind: 'unknown', label: string, parent_of?: ParentOf}|array{kind: 'empty'}
  * @phpstan-type AddChild array{parents: list<array{id: int, display_name: string}>, default_last_name: string|null, excluded_ids: list<int>, blocked_ids: list<int>}
@@ -151,7 +151,7 @@ class BuildFamilySheet
         ];
 
         return [
-            'focus' => $this->render($focusPerson),
+            'focus' => $this->render($focusPerson, withDetails: true),
             'unions' => $unions,
             'selected_union' => $selected['key'] ?? null,
             'partner' => $partner,
@@ -355,7 +355,7 @@ class BuildFamilySheet
         }
 
         $this->people = $focus->tree->people()
-            ->with('events')
+            ->with(['events.locality'])
             ->whereIn('id', array_values(array_unique($ids)))
             ->get()
             ->keyBy('id');
@@ -427,7 +427,7 @@ class BuildFamilySheet
             return ['kind' => 'unknown', 'label' => 'Nieznany partner'];
         }
 
-        return ['kind' => 'person', 'person' => $this->render($partner)];
+        return ['kind' => 'person', 'person' => $this->render($partner, withDetails: true)];
     }
 
     /**
@@ -524,10 +524,10 @@ class BuildFamilySheet
     /**
      * @return SheetPerson
      */
-    private function render(Person $person): array
+    private function render(Person $person, bool $withDetails = false): array
     {
         /** @var SheetPerson $sheetPerson */
-        $sheetPerson = SheetPersonResource::make($person)->resolve();
+        $sheetPerson = SheetPersonResource::make($person)->withDetails($withDetails)->resolve();
 
         return $sheetPerson;
     }
