@@ -57,7 +57,9 @@ PHP 8.5 · Laravel 13 · Inertia v3 (inertia-laravel 3.5, @inertiajs/react 3.8) 
 - Tokens live in `resources/css/app.css` (`:root` / `.dark` mapped into `@theme`). Use role classes (`text-destructive-foreground`, `bg-accent`, `text-muted-foreground`). In views: no Tailwind palette classes (`text-red-600`), no hex, `rgb()` or `oklch()`, no arbitrary pixel values (`ring-[3px]`) and no inline `style=`.
 - Before creating a component, check `resources/js/components/ui/` and the shared `components/{heading,search-field,segmented-toggle,empty-state,side-panel,table-parts}.tsx`. A missing shadcn component comes from `npx shadcn add <name>` (new dependencies need approval).
 - Focus ring for elements outside `components/ui/`: `focusRing` from `resources/js/lib/focus-ring.ts`. The open record on list cards is `selectedListItem` from `resources/js/lib/list-item-styles.ts` (focus wins over the selection ring). Sticky table columns come from `resources/js/lib/table-styles.ts`. List pages: `Heading variant="page"` and the search row with `role="search"`.
-- Controls: `resources/js/lib/view-tokens.test.ts` scans the `/persons`, `/sources` and `/places` view files (runs in `npm run test:js`). Visual gate: screenshots in `context/changes/<id>/screenshots/`.
+- Controls: `resources/js/lib/view-tokens.test.ts` scans the `/persons`, `/sources` and `/places` view files and the tree cards (incl. `ancestor-chart.tsx`, `card-avatar.tsx`) (runs in `npm run test:js`). Visual gate: screenshots in `context/changes/<id>/screenshots/`.
+- Karta przodka ma własny wariant na wspólnym `CardBody`: `variant="ancestor"` i `CardAvatar size="ancestor"` (bez wieku, avatar `size-14`). Zmiana karty drzewa nie zmienia karty przodka bez decyzji w planie.
+- Zoom ma tylko widok przodków (samo kółko, przyciski, szczypanie); drzewo (`family-sheet.tsx`) nie zoomuje. Zakres pokoleń przodków przychodzi z serwera (`available_generations`), nie z listy w kliencie.
 
 ## Side panels vs modals
 

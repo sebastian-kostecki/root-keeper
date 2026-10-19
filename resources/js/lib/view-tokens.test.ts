@@ -14,9 +14,8 @@ const jsRoot = resolve(here, '..');
 
 /**
  * The files that render the /persons, /sources and /places list views, the /tree cards and panels,
- * relative to resources/js. Omitted on purpose: ancestor-chart.tsx, whose geometry (tree lines) is
- * computed at runtime and so cannot be a token. family-sheet.tsx is listed; its column geometry is
- * the one exception (see EXCEPTIONS).
+ * relative to resources/js. family-sheet.tsx and ancestor-chart.tsx are listed; their geometry
+ * (column widths, tree lines) is computed at runtime, so `style={` is the one exception (see EXCEPTIONS).
  */
 const VIEW_FILES = [
     'pages/persons/index.tsx',
@@ -38,6 +37,8 @@ const VIEW_FILES = [
     'components/localities/localities-table.tsx',
     'components/parishes/parishes-table.tsx',
     'components/tree/ancestor-card.tsx',
+    'components/tree/ancestor-chart.tsx',
+    'components/tree/card-avatar.tsx',
     'components/tree/family-sheet.tsx',
     'components/tree/sheet-person-card.tsx',
     'components/tree/unknown-person-card.tsx',
@@ -109,6 +110,11 @@ const EXCEPTIONS: { file: string; token: string; reason: string }[] = [
         file: 'components/sources/source-panel.tsx',
         token: 'style={',
         reason: "szerokość paska postępu wysyłania pliku liczona w runtime (procent); odroczone: pasek przez zmienną CSS lub <progress> w osobnej zmianie (plan.md, What We're NOT Doing)",
+    },
+    {
+        file: 'components/tree/ancestor-chart.tsx',
+        token: 'style={',
+        reason: 'geometria wykresu przodków liczona w runtime (szerokość rzędu i kolumny w rem, położenie linii łączących); kolory linii idą przez tokeny',
     },
     {
         file: 'components/tree/family-sheet.tsx',

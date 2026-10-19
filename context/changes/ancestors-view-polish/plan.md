@@ -474,32 +474,32 @@ Brak migracji i zmian danych. Pętla w danych dev (C8) zostaje, a wykres jest na
 
 #### Automated
 
-- [x] 3.1 Vitest przechodzi (w tym niezmieniony `view-tokens.test.ts`): `vendor/bin/sail npm run test:js`
-- [x] 3.2 Typy przechodzą: `vendor/bin/sail npm run types:check`
-- [x] 3.3 Format i lint przechodzą: `vendor/bin/sail npm run check` (global check padł na nieśledzonym `storage/gen-tree-import/`, poza zakresem; check na plikach fazy przeszedł)
-- [x] 3.4 Build przechodzi: `vendor/bin/sail npm run build`
-- [x] 3.5 E2E drzewa i przodków przechodzą: `npx playwright test tests/e2e/tree-fill-window.spec.ts tests/e2e/ancestors-view.spec.ts`
-- [x] 3.6 Skan zakodowanych wartości na plikach widoku daje 0 trafień (poza 7× `style=` w `ancestor-chart.tsx`)
+- [x] 3.1 Vitest przechodzi (w tym niezmieniony `view-tokens.test.ts`): `vendor/bin/sail npm run test:js` — dcec54f
+- [x] 3.2 Typy przechodzą: `vendor/bin/sail npm run types:check` — dcec54f
+- [x] 3.3 Format i lint przechodzą: `vendor/bin/sail npm run check` (global check padł na nieśledzonym `storage/gen-tree-import/`, poza zakresem; check na plikach fazy przeszedł) — dcec54f
+- [x] 3.4 Build przechodzi: `vendor/bin/sail npm run build` — dcec54f
+- [x] 3.5 E2E drzewa i przodków przechodzą: `npx playwright test tests/e2e/tree-fill-window.spec.ts tests/e2e/ancestors-view.spec.ts` — dcec54f
+- [x] 3.6 Skan zakodowanych wartości na plikach widoku daje 0 trafień (poza 7× `style=` w `ancestor-chart.tsx`) — dcec54f
 
 #### Manual
 
-- [x] 3.7 Karta przodka nie ma wieku, avatar jest wyraźnie większy niż przed zmianą (porównanie z `screenshots/before-focus-card.png`), imię obok avatara nie zachodzi na niego przy kolumnie 12rem
-- [x] 3.8 Karty drzewa (`/tree`) wyglądają jak przed zmianą: wiek jest, avatar `size-10`/`size-14`, karta pary `size-16`
-- [x] 3.9 Przycisk „Przodkowie” na `/tree` otwiera widok przodków osoby w centrum z domyślną głębokością; rząd tytułu nie jest wyższy
+- [x] 3.7 Karta przodka nie ma wieku, avatar jest wyraźnie większy niż przed zmianą (porównanie z `screenshots/before-focus-card.png`), imię obok avatara nie zachodzi na niego przy kolumnie 12rem — dcec54f
+- [x] 3.8 Karty drzewa (`/tree`) wyglądają jak przed zmianą: wiek jest, avatar `size-10`/`size-14`, karta pary `size-16` — dcec54f
+- [x] 3.9 Przycisk „Przodkowie” na `/tree` otwiera widok przodków osoby w centrum z domyślną głębokością; rząd tytułu nie jest wyższy — dcec54f
 
 ### Phase 4: E2E, bramka wizualna i zabezpieczenie
 
 #### Automated
 
-- [ ] 4.1 Nowe i istniejące E2E przodków przechodzą: `npx playwright test tests/e2e/ancestors-view.spec.ts`
-- [ ] 4.2 E2E drzewa przechodzą: `npx playwright test tests/e2e/tree-fill-window.spec.ts`
-- [ ] 4.3 Vitest przechodzi z rozszerzonym `VIEW_FILES`: `vendor/bin/sail npm run test:js`
-- [ ] 4.4 Format i lint przechodzą: `vendor/bin/sail npm run check`
-- [ ] 4.5 Testy Pest przodków przechodzą: `vendor/bin/sail artisan test --compact tests/Feature/AncestorsTest.php`
+- [x] 4.1 Nowe i istniejące E2E przodków przechodzą: `npx playwright test tests/e2e/ancestors-view.spec.ts`
+- [x] 4.2 E2E drzewa przechodzą: `npx playwright test tests/e2e/tree-fill-window.spec.ts`
+- [x] 4.3 Vitest przechodzi z rozszerzonym `VIEW_FILES`: `vendor/bin/sail npm run test:js`
+- [x] 4.4 Format i lint przechodzą: `vendor/bin/sail npm run check` (global check pada na nieśledzonym `storage/gen-tree-import/`, poza zakresem; `vp check` na plikach fazy przeszedł)
+- [x] 4.5 Testy Pest przodków przechodzą: `vendor/bin/sail artisan test --compact tests/Feature/AncestorsTest.php`
 
 #### Manual
 
-- [ ] 4.6 Każde nowe ryzyko E2E (R1–R4) czerwienieje po celowym wprowadzeniu błędu i zielenieje po jego cofnięciu
-- [ ] 4.7 Zrzuty „after” (desktop 1366×768 i 390×844) zapisane i porównane z „before”: wiek zniknął, avatar większy, przycisk na `/tree`, start głębokiego wykresu na osobie
-- [ ] 4.8 Macierz 7 stanów: każda komórka pokazana na zrzucie albo N/A z powodem
-- [ ] 4.9 Reguła w `CLAUDE.md` jest dopisana, a strażnik łamie się na celowo dodanej klasie palety w `card-avatar.tsx` (cofniętej)
+- [x] 4.6 Każde nowe ryzyko E2E (R1–R4) czerwienieje po celowym wprowadzeniu błędu i zielenieje po jego cofnięciu
+- [x] 4.7 Zrzuty „after” (desktop 1366×768 i 390×844) zapisane i porównane z „before”: wiek zniknął, avatar większy, przycisk na `/tree`, start głębokiego wykresu na osobie
+- [x] 4.8 Macierz 7 stanów: każda komórka pokazana na zrzucie albo N/A z powodem
+- [x] 4.9 Reguła w `CLAUDE.md` jest dopisana, a strażnik łamie się na celowo dodanej klasie palety w `card-avatar.tsx` (cofniętej)
