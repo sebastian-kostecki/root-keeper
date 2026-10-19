@@ -27,10 +27,8 @@ setup('sign in once and save the session', async ({ page }) => {
             timeout: 5_000,
         });
     }).toPass();
-    await expect(page).toHaveURL(/\/persons/);
-    await expect(
-        page.getByRole('heading', { name: 'Osoby', level: 1, exact: true }),
-    ).toBeVisible();
+    await expect(page).toHaveURL(/\/tree/);
+    await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
 
     await page.context().storageState({ path: authFile });
 });

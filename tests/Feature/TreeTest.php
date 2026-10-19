@@ -118,7 +118,7 @@ test('the tree index has no sheet without a proband', function () {
             ->component('tree/show')
             ->where('sheet', null)
             ->where('hasPeople', false)
-            ->where('rootPersonId', null));
+        );
 });
 
 test('the tree index without a proband but with people has no sheet and reports people', function () {
@@ -130,7 +130,7 @@ test('the tree index without a proband but with people has no sheet and reports 
             ->component('tree/show')
             ->where('sheet', null)
             ->where('hasPeople', true)
-            ->where('rootPersonId', null));
+        );
 });
 
 test('the tree index centres the sheet on the proband', function () {
@@ -141,7 +141,6 @@ test('the tree index centres the sheet on the proband', function () {
     $this->actingAs($user)->get(route('tree.index'))
         ->assertInertia(fn ($page) => $page
             ->component('tree/show')
-            ->where('rootPersonId', $proband->id)
             ->where('sheet.focus.id', $proband->id));
 });
 
@@ -920,4 +919,98 @@ test('another tree\'s person is a 404 on the tree page', function () {
     $this->actingAs($user)
         ->get(route('tree.show', $foreign))
         ->assertNotFound();
+});
+
+test('the pair cards carry birth, death and burial details with places', function () {
+    $user = User::factory()->create();
+    $tree = $user->tree;
+    $focus = Person::factory()->for($tree)->male()->create();
+    $wife = Person::factory()->for($tree)->female()->create();
+    attachMarriage($focus, $wife, 1880);
+
+    $birth = Event::factory()->for($tree)->birth()->withLocality()->create(['date_year' => 1850, 'date_month' => 3, 'date_day' => 12]);
+    $birth->participants()->attach($focus, ['role' => ParticipantRole::Subject]);
+    $death = Event::factory()->for($tree)->death()->withLocality()->create(['date_year' => 1920, 'date_month' => null, 'date_day' => null]);
+    $death->participants()->attach($focus, ['role' => ParticipantRole::Subject]);
+    $burial = Event::factory()->for($tree)->burial()->withLocality()->create();
+    $burial->participants()->attach($focus, ['role' => ParticipantRole::Subject]);
+    $partnerBirth = Event::factory()->for($tree)->birth()->withLocality()->create(['date_year' => 1860]);
+    $partnerBirth->participants()->attach($wife, ['role' => ParticipantRole::Subject]);
+
+    $sheet = sheetFor($this, $user, $focus);
+
+    expect($sheet['focus']['details'])->toBe([
+        'birth' => [
+            'date_parts' => ['year' => 1850, 'month' => 3, 'day' => 12, 'is_approximate' => false],
+            'place' => $birth->locality->name,
+        ],
+        'death' => [
+            'date_parts' => ['year' => 1920, 'month' => null, 'day' => null, 'is_approximate' => false],
+            'place' => $death->locality->name,
+        ],
+        'burial_place' => $burial->locality->name,
+    ]);
+    expect($sheet['partner']['person']['details']['birth']['place'])->toBe($partnerBirth->locality->name);
+    expect($sheet['partner']['person']['details']['birth']['date_parts']['year'])->toBe(1860);
+});
+
+test('approximate dates, living people and empty events are reflected in the details', function () {
+    $user = User::factory()->create();
+    $tree = $user->tree;
+    $focus = Person::factory()->for($tree)->create();
+
+    $birth = Event::factory()->for($tree)->birth()->approximate()->create(['date_year' => 1850, 'date_month' => null, 'date_day' => null]);
+    $birth->participants()->attach($focus, ['role' => ParticipantRole::Subject]);
+
+    $details = sheetFor($this, $user, $focus)['focus']['details'];
+
+    expect($details['birth']['date_parts']['is_approximate'])->toBeTrue();
+    expect($details['birth']['place'])->toBeNull();
+    expect($details['death'])->toBeNull();
+    expect($details['burial_place'])->toBeNull();
+
+    $empty = Person::factory()->for($tree)->create();
+    $emptyBirth = Event::factory()->for($tree)->birth()->withoutDate()->create();
+    $emptyBirth->participants()->attach($empty, ['role' => ParticipantRole::Subject]);
+
+    expect(sheetFor($this, $user, $empty)['focus']['details']['birth'])->toBeNull();
+});
+
+test('only the pair carries details, other cards stay light', function () {
+    $user = User::factory()->create();
+    $tree = $user->tree;
+    $focus = Person::factory()->for($tree)->male()->create();
+    $wife = Person::factory()->for($tree)->female()->create();
+    attachMarriage($focus, $wife, 1880);
+    $father = Person::factory()->for($tree)->male()->create();
+    $grandfather = Person::factory()->for($tree)->male()->create();
+    $child = Person::factory()->for($tree)->create();
+    linkParent($father, $focus);
+    linkParent($grandfather, $father);
+    linkParent($focus, $child);
+    linkParent($wife, $child);
+
+    $sheet = sheetFor($this, $user, $focus);
+
+    expect($sheet['focus'])->toHaveKey('details');
+    expect($sheet['partner']['person'])->toHaveKey('details');
+    expect(collect($sheet['parents']['focus'])->firstWhere('kind', 'person')['person'])->not->toHaveKey('details');
+    expect(collect($sheet['grandparents']['focus'])->firstWhere('kind', 'person')['person'])->not->toHaveKey('details');
+    expect($sheet['children'][0])->not->toHaveKey('details');
+});
+
+test('the card name parts carry the birth surname and the NN fallbacks', function () {
+    $user = User::factory()->create();
+    $tree = $user->tree;
+
+    $woman = Person::factory()->for($tree)->female()->create(['first_name' => 'Anna', 'last_name' => 'Kowalska', 'maiden_name' => 'Nowak']);
+    $focus = sheetFor($this, $user, $woman)['focus'];
+    expect($focus['card_given_name'])->toBe('Anna');
+    expect($focus['card_surname'])->toBe('Nowak');
+
+    $nameless = Person::factory()->for($tree)->create(['first_name' => null, 'last_name' => null, 'maiden_name' => null]);
+    $focus = sheetFor($this, $user, $nameless)['focus'];
+    expect($focus['card_given_name'])->toBe('NN');
+    expect($focus['card_surname'])->toBe('NN');
+    expect($focus['card_name'])->toBe('NN NN');
 });

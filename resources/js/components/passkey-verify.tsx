@@ -6,7 +6,7 @@ import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Spinner } from '@/components/ui/spinner';
-import { index as personsIndex } from '@/routes/persons';
+import { index as treeIndex } from '@/routes/tree';
 
 type Props = {
     routes?: {
@@ -32,7 +32,7 @@ export default function PasskeyVerify({
             },
         }),
         onSuccess: (response) => {
-            router.visit(response.redirect ?? personsIndex().url);
+            router.visit(response.redirect ?? treeIndex().url);
         },
     });
 

@@ -1,5 +1,5 @@
 // Risk: "a photo added in the side panel shows on the tree card; after removing
-// it, the card falls back to initials" (context/changes/person-photo-on-card,
+// it, the card falls back to the generic portrait" (context/changes/person-photo-on-card,
 // phase 4). Pest does not see this: it joins the upload, the version in the photo
 // URL, the authorised serving and the card render.
 // Data is prepared through the app's routes (tests/e2e/support/api.ts); the photo
@@ -10,14 +10,11 @@ import { gotoTree } from './support/navigation';
 
 const FIXTURE = 'tests/Fixtures/portrait-small.jpg';
 
-test('person-photo-on-card: a photo added in the panel shows on the tree card, and removing it brings back the initials', async ({
+test('person-photo-on-card: a photo added in the panel shows on the tree card, and removing it brings back the generic portrait', async ({
     page,
     suffix,
 }) => {
     const parentName = `Ojciec ${suffix}`;
-    // Initials of the card: the first letters of "Ojciec" and of the last name
-    // (the unique suffix starts with "e2etest").
-    const initials = 'OE';
 
     const childId = await createPerson(page, {
         first_name: 'Dziecko',
@@ -42,8 +39,8 @@ test('person-photo-on-card: a photo added in the panel shows on the tree card, a
     const parentPanel = page.getByRole('dialog', { name: parentName });
     await expect(parentPanel).toBeVisible();
 
-    // Without a photo the card shows the initials.
-    await expect(card.getByText(initials, { exact: true })).toBeVisible();
+    // Without a photo the card shows the generic portrait.
+    await expect(card.getByTestId('card-avatar-placeholder')).toBeVisible();
 
     // 1. Add the photo from the panel's photo menu. The menu item opens the
     // file chooser of the hidden file input.
@@ -59,7 +56,7 @@ test('person-photo-on-card: a photo added in the panel shows on the tree card, a
     ).toBeVisible();
     await page.keyboard.press('Escape');
 
-    // 2. The card shows the photo, loaded, and no longer the initials.
+    // 2. The card shows the photo, loaded, and no longer the generic portrait.
     // The photo's <img> has alt="" (decorative), so it has no role and no name:
     // it is found by its empty alt text inside the card, not by a test id.
     const cardPhoto = card.getByAltText('', { exact: true });
@@ -69,9 +66,9 @@ test('person-photo-on-card: a photo added in the panel shows on the tree card, a
             cardPhoto.evaluate((image: HTMLImageElement) => image.naturalWidth),
         )
         .toBeGreaterThan(0);
-    await expect(card.getByText(initials, { exact: true })).toBeHidden();
+    await expect(card.getByTestId('card-avatar-placeholder')).toBeHidden();
 
-    // 3. Remove the photo: the confirm dialog, then the card falls back to initials.
+    // 3. Remove the photo: the confirm dialog, then the card falls back to the generic portrait.
     await parentPanel.getByRole('button', { name: 'Zdjęcie osoby' }).click();
     await page.getByRole('menuitem', { name: 'Usuń zdjęcie' }).click();
     const confirm = page.getByRole('dialog', {
@@ -82,7 +79,7 @@ test('person-photo-on-card: a photo added in the panel shows on the tree card, a
     await expect(confirm).toBeHidden();
 
     await expect(cardPhoto).toBeHidden();
-    await expect(card.getByText(initials, { exact: true })).toBeVisible();
+    await expect(card.getByTestId('card-avatar-placeholder')).toBeVisible();
 
     // No cleanup here: the `suffix` fixture deletes the person and its records
     // through the API after the test, also after a red assertion.
