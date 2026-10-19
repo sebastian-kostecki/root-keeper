@@ -10,25 +10,29 @@ import { createParent, createPerson, deletePerson } from './support/api';
 import { gotoTree } from './support/navigation';
 
 /**
- * Lines of text the name shows: the distinct line tops of its text inside the
- * element's box. Lines the clamp hides lie below the box and are not counted.
+ * Lines of text the name shows: the distinct line tops of its visible text
+ * (the `sr-only` copy of the name is not visible) inside the element's box.
+ * Lines the clamp hides lie below the box and are not counted. A compact card
+ * keeps the given name and the surname in two blocks, a standard card in one.
  */
 async function visibleNameLines(name: Locator): Promise<number> {
     return name.evaluate((element) => {
         const box = element.getBoundingClientRect();
-        const textNode = [...element.childNodes].find(
-            (node) =>
-                node.nodeType === Node.TEXT_NODE && node.textContent?.trim(),
-        );
-        if (!textNode) {
-            return 0;
-        }
-        const range = document.createRange();
-        range.selectNodeContents(textNode);
+        const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT);
         const tops = new Set<number>();
-        for (const rect of range.getClientRects()) {
-            if (rect.top < box.bottom - 1) {
-                tops.add(Math.round(rect.top));
+        for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+            if (
+                !node.textContent?.trim() ||
+                node.parentElement?.closest('.sr-only')
+            ) {
+                continue;
+            }
+            const range = document.createRange();
+            range.selectNodeContents(node);
+            for (const rect of range.getClientRects()) {
+                if (rect.top < box.bottom - 1) {
+                    tops.add(Math.round(rect.top));
+                }
             }
         }
 
@@ -36,7 +40,14 @@ async function visibleNameLines(name: Locator): Promise<number> {
     });
 }
 
-test('tree-card-name: at 2560 a grandparent name of reasonable length fits on one line of the card', async ({
+/** True when the element's text is not cut by an ellipsis. */
+function isNotTruncated(line: Locator): Promise<boolean> {
+    return line.evaluate(
+        (element) => element.scrollWidth <= element.clientWidth,
+    );
+}
+
+test('tree-card-name: at 2560 a grandparent card shows the given name and the surname on separate lines, each in full', async ({
     page,
     suffix,
 }) => {
@@ -64,8 +75,19 @@ test('tree-card-name: at 2560 a grandparent name of reasonable length fits on on
 
         const name = page.getByTitle('Jan Wróblewski', { exact: true });
         await expect(name).toBeVisible();
-        // One line of text.
-        expect(await visibleNameLines(name)).toBe(1);
+        // Two lines of text: the given name, then the surname below it, neither cut.
+        expect(await visibleNameLines(name)).toBe(2);
+        const givenName = name.getByText('Jan', { exact: true });
+        const surname = name.getByText('Wróblewski', { exact: true });
+        const givenBox = await givenName.boundingBox();
+        const surnameBox = await surname.boundingBox();
+        expect(givenBox).not.toBeNull();
+        expect(surnameBox).not.toBeNull();
+        expect(surnameBox!.y).toBeGreaterThanOrEqual(
+            givenBox!.y + givenBox!.height - 1,
+        );
+        expect(await isNotTruncated(givenName)).toBe(true);
+        expect(await isNotTruncated(surname)).toBe(true);
     } finally {
         await deletePerson(page, grandfatherId);
     }

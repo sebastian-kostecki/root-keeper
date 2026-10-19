@@ -557,28 +557,28 @@ Bez migracji danych. Zmiana `fortify.home` działa od wdrożenia. Ewentualne zap
 
 #### Automated
 
-- [x] 4.1 Vitest przechodzi z nowymi przypadkami geometrii
-- [x] 4.2 Typy przechodzą
-- [x] 4.3 Format i lint przechodzą
-- [x] 4.4 Build przechodzi
+- [x] 4.1 Vitest przechodzi z nowymi przypadkami geometrii — eb587fb
+- [x] 4.2 Typy przechodzą — eb587fb
+- [x] 4.3 Format i lint przechodzą — eb587fb
+- [x] 4.4 Build przechodzi — eb587fb
 
 #### Manual
 
-- [x] 4.5 1366 i 1440: cała rodzina bez kotwicy
-- [x] 4.6 1920: arkusz wypełnia ok. 80% wysokości
+- [x] 4.5 1366 i 1440: cała rodzina bez kotwicy — eb587fb
+- [x] 4.6 1920: arkusz wypełnia ok. 80% wysokości — eb587fb
 - [x] 4.7 2560: limity i wyśrodkowanie
 - [x] 4.8 Otwarty panel boczny: ponowne dopasowanie bez skakania
-- [x] 4.9 Przesunięcie i zmiana związku jak dziś
-- [x] 4.10 Widok przodków: dopasowanie i przybliżanie bez zmian
+- [x] 4.9 Przesunięcie i zmiana związku jak dziś — eb587fb
+- [x] 4.10 Widok przodków: dopasowanie i przybliżanie bez zmian — eb587fb
 
 ### Phase 5: E2E i bramka wizualna
 
 #### Automated
 
-- [ ] 5.1 Specyfikacje R1 i R2 przechodzą i czerwienieją po wprowadzeniu błędu
-- [ ] 5.2 tree-card-name.spec.ts przechodzi z nowym oczekiwaniem
-- [ ] 5.3 Cały zestaw E2E przechodzi
-- [ ] 5.4 Zrzuty istnieją
+- [x] 5.1 Specyfikacje R1 i R2 przechodzą i czerwienieją po wprowadzeniu błędu
+- [x] 5.2 tree-card-name.spec.ts przechodzi z nowym oczekiwaniem
+- [x] 5.3 Cały zestaw E2E przechodzi
+- [x] 5.4 Zrzuty istnieją
 
 #### Manual
 
