@@ -21,6 +21,10 @@ class TimelineEntryResource extends JsonResource
      *     type: string,
      *     label: string,
      *     date: string|null,
+     *     year: int|null,
+     *     is_approximate: bool,
+     *     date_has_month: bool,
+     *     age: array{unit: 'years'|'months'|'days'|'under_year', value: int|null}|null,
      *     place: string|null,
      *     relative: array{id: int, display_name: string}|null,
      * }
@@ -35,6 +39,10 @@ class TimelineEntryResource extends JsonResource
             'type' => $event->type->value,
             'label' => $this->label(),
             'date' => $event->date->format(),
+            'year' => $event->date_year,
+            'is_approximate' => $event->date_is_approximate,
+            'date_has_month' => $event->date_month !== null,
+            'age' => $this->resource->age?->toArray(),
             'place' => $event->locality?->name,
             'relative' => $relative === null ? null : [
                 'id' => $relative->id,

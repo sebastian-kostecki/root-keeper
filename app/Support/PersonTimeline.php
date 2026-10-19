@@ -12,6 +12,11 @@ use App\Models\Person;
  * loaded by BuildPersonPreview, so it issues no queries. The caller must preload
  * `events.locality`, `children.events.locality` and
  * `marriages.participants.events.locality`; otherwise every row lazy-loads its place.
+ *
+ * Each row carries the viewed person's age at the event. It is null for the
+ * person's own birth, for every row after the row of the person's own death in
+ * the sorted order (the death row itself keeps its age), and wherever Age cannot
+ * compute it (no birth year, no event year, event before birth).
  */
 final class PersonTimeline
 {
@@ -26,9 +31,38 @@ final class PersonTimeline
             ...self::spouseEntries($person),
         ];
 
-        return array_values(collect($entries)
+        $sorted = array_values(collect($entries)
             ->sortBy(fn (TimelineEntry $entry): array => self::sortKey($entry, $person))
             ->all());
+
+        return self::withAges($sorted, $person);
+    }
+
+    /**
+     * @param  list<TimelineEntry>  $entries  Already sorted.
+     * @return list<TimelineEntry>
+     */
+    private static function withAges(array $entries, Person $person): array
+    {
+        $birthDate = $person->birth()?->date;
+        $afterDeath = false;
+        $result = [];
+
+        foreach ($entries as $entry) {
+            $isSelf = $entry->role === 'self';
+            $isOwnBirth = $isSelf && $entry->event->type === EventType::Birth;
+            $isOwnDeath = $isSelf && $entry->event->type === EventType::Death;
+
+            $age = $afterDeath || $isOwnBirth ? null : Age::at($birthDate, $entry->event->date);
+
+            $result[] = new TimelineEntry($entry->event, $entry->role, $entry->relative, $age);
+
+            if ($isOwnDeath) {
+                $afterDeath = true;
+            }
+        }
+
+        return $result;
     }
 
     /**
