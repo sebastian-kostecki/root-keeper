@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\LocalityKind;
 use App\Enums\Religion;
 use App\Http\Resources\LocalityResource;
 use App\Http\Resources\ParishResource;
@@ -29,6 +30,7 @@ class PlaceController extends Controller
                 $tree->parishes()->with('locality')->withCount('sources')->orderBy('name')->get()
             )->resolve(),
             'religions' => Religion::options(),
+            'localityKinds' => LocalityKind::options(),
             'filters' => [
                 'q' => $this->normalizeSearchQuery($request->query('q')),
                 'kind' => $this->normalizeKind($request->query('kind')),

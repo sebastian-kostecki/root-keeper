@@ -11,7 +11,9 @@ class MergeLocality
 {
     /**
      * Move every reference of the duplicate to the target, drop the moved residences the target already has
-     * (same person and years), delete the duplicate and fill the target's description from it, atomically.
+     * (same person and years), delete the duplicate and fill the target's details from it, atomically.
+     * The target's own values win: its empty kind and coordinates (as a pair) are taken from the duplicate,
+     * descriptions and historical affiliations are joined, and the target is defunct if either one was.
      * Both localities must belong to the same tree.
      */
     public function handle(Locality $duplicate, Locality $target): Locality
@@ -47,11 +49,7 @@ class MergeLocality
 
             $lockedDuplicate->delete();
 
-            $description = $this->mergedDescription($lockedTarget->description, $lockedDuplicate->description);
-
-            if ($description !== $lockedTarget->description) {
-                $lockedTarget->update(['description' => $description]);
-            }
+            $this->fillTargetFromDuplicate($lockedTarget, $lockedDuplicate);
         });
 
         return $target->refresh();
@@ -85,19 +83,39 @@ class MergeLocality
     }
 
     /**
-     * The target's description, extended by the duplicate's one when the target has none or they differ.
+     * Update the target with what the duplicate adds, without overwriting what the target already has.
      */
-    private function mergedDescription(?string $targetDescription, ?string $duplicateDescription): ?string
+    private function fillTargetFromDuplicate(Locality $target, Locality $duplicate): void
     {
-        $targetText = trim((string) $targetDescription);
-        $duplicateText = trim((string) $duplicateDescription);
+        $isDefunct = $target->is_defunct || $duplicate->is_defunct;
+        $takesCoordinates = ($target->latitude === null || $target->longitude === null)
+            && $duplicate->latitude !== null && $duplicate->longitude !== null;
+
+        $target->update([
+            'description' => $this->mergedText($target->description, $duplicate->description),
+            'historical_affiliation' => $this->mergedText($target->historical_affiliation, $duplicate->historical_affiliation),
+            'kind' => $target->kind ?? $duplicate->kind,
+            'latitude' => $takesCoordinates ? $duplicate->latitude : $target->latitude,
+            'longitude' => $takesCoordinates ? $duplicate->longitude : $target->longitude,
+            'is_defunct' => $isDefunct,
+            'defunct_note' => $isDefunct ? ($target->defunct_note ?? $duplicate->defunct_note) : null,
+        ]);
+    }
+
+    /**
+     * The target's text, extended by the duplicate's one when the target has none or they differ.
+     */
+    private function mergedText(?string $targetValue, ?string $duplicateValue): ?string
+    {
+        $targetText = trim((string) $targetValue);
+        $duplicateText = trim((string) $duplicateValue);
 
         if ($duplicateText === '' || $targetText === $duplicateText) {
-            return $targetDescription;
+            return $targetValue;
         }
 
         if ($targetText === '') {
-            return $duplicateDescription;
+            return $duplicateValue;
         }
 
         return $targetText."\n\n".$duplicateText;

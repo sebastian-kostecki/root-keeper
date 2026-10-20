@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\LocalityKind;
 use Database\Factories\LocalityFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -14,15 +15,34 @@ use Illuminate\Support\Carbon;
  * @property int $id
  * @property int $tree_id
  * @property string $name
+ * @property LocalityKind|null $kind
+ * @property float|null $latitude
+ * @property float|null $longitude
+ * @property string|null $historical_affiliation
  * @property string|null $description
+ * @property bool $is_defunct
+ * @property string|null $defunct_note
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
-#[Fillable(['tree_id', 'name', 'description'])]
+#[Fillable(['tree_id', 'name', 'kind', 'latitude', 'longitude', 'historical_affiliation', 'description', 'is_defunct', 'defunct_note'])]
 class Locality extends Model
 {
     /** @use HasFactory<LocalityFactory> */
     use HasFactory;
+
+    /**
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return [
+            'kind' => LocalityKind::class,
+            'latitude' => 'float',
+            'longitude' => 'float',
+            'is_defunct' => 'boolean',
+        ];
+    }
 
     /**
      * @return BelongsTo<Tree, $this>

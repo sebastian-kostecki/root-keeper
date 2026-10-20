@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\LocalityKind;
 use App\Enums\Religion;
 use App\Models\Event;
 use App\Models\Locality;
@@ -60,8 +61,33 @@ test('the index lists only the user own localities alphabetically', function () 
             ->has('localities', 2)
             ->where('localities.0.name', 'Kraków')
             ->where('localities.1.name', 'Lwów')
-            ->has('localities.0', fn ($locality) => $locality->hasAll(['id', 'name', 'description', 'usage']))
+            ->has('localities.0', fn ($locality) => $locality->hasAll(['id', 'name', 'kind', 'kind_label', 'latitude', 'longitude', 'historical_affiliation', 'description', 'is_defunct', 'defunct_note', 'usage']))
             ->where('filters.q', ''));
+});
+
+test('the list, the panel and the page carry the locality details and the kind options', function () {
+    $user = User::factory()->create();
+    $locality = Locality::factory()->for($user->tree)->defunct('Zajęta pod zalew 1975')->create([
+        'kind' => LocalityKind::Village,
+        'latitude' => 50.0614,
+        'longitude' => 19.9366,
+        'historical_affiliation' => 'Galicja',
+    ]);
+
+    $expected = fn ($page, string $path) => $page
+        ->where("{$path}.kind", 'village')
+        ->where("{$path}.kind_label", 'wieś')
+        ->where("{$path}.latitude", 50.0614)
+        ->where("{$path}.longitude", 19.9366)
+        ->where("{$path}.historical_affiliation", 'Galicja')
+        ->where("{$path}.is_defunct", true)
+        ->where("{$path}.defunct_note", 'Zajęta pod zalew 1975');
+
+    $this->actingAs($user)->get(route('places.index'))->assertInertia(fn ($page) => $expected($page, 'localities.0')
+        ->where('localityKinds', LocalityKind::options()));
+
+    $this->actingAs($user)->get(route('places.index', ['locality' => $locality->id]))
+        ->assertInertia(fn ($page) => $expected($page, 'localityPanel.locality'));
 });
 
 test('the list and the panel carry the usage counts of every kind of reference', function () {

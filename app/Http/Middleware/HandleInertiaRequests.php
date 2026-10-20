@@ -69,8 +69,8 @@ class HandleInertiaRequests extends Middleware
             },
             'localityOptions' => Inertia::optional(fn (): array => $request->user() === null ? [] : $request->user()->tree->localities()
                 ->orderBy('name')
-                ->get(['id', 'name'])
-                ->map(fn (Locality $locality): array => ['id' => $locality->id, 'name' => $locality->name])
+                ->get(['id', 'name', 'is_defunct'])
+                ->map(fn (Locality $locality): array => ['id' => $locality->id, 'name' => $locality->name, 'is_defunct' => $locality->is_defunct])
                 ->all()),
             'availableSources' => Inertia::optional(fn (): array => $request->user() === null ? [] : SourceResource::collection(
                 $request->user()->tree->sources()->with(['parish.locality', 'cemetery'])->latest()->orderByDesc('id')->get()

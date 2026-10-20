@@ -1471,7 +1471,7 @@ test('the source panel carries the parishes, localities and distinct archives of
             ->has('sourcePanel.parishes', 1)
             ->where('sourcePanel.parishes.0.id', $parish->id)
             ->where('sourcePanel.parishes.0.locality_name', 'Tarnów')
-            ->where('sourcePanel.localities', [['id' => $locality->id, 'name' => 'Tarnów']])
+            ->where('sourcePanel.localities', [['id' => $locality->id, 'name' => 'Tarnów', 'is_defunct' => false]])
             ->where('sourcePanel.archives', ['Archiwum A', 'Archiwum B'])
             ->where('sourcePanel.religions', Religion::options()));
     }

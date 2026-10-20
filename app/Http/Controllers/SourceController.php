@@ -96,7 +96,7 @@ class SourceController extends Controller
     /**
      * The suggestion lists the source panel needs: the tree's parishes, localities and archives, and the religions.
      *
-     * @return array{parishes: array<int, array<string, mixed>>, localities: array<int, array{id: int, name: string}>, archives: array<int, string>, religions: array<int, array{value: string, label: string}>}
+     * @return array{parishes: array<int, array<string, mixed>>, localities: array<int, array{id: int, name: string, is_defunct: bool}>, archives: array<int, string>, religions: array<int, array{value: string, label: string}>}
      */
     private function panelOptions(Request $request): array
     {
@@ -104,8 +104,8 @@ class SourceController extends Controller
 
         return [
             'parishes' => ParishResource::collection($tree->parishes()->with('locality')->orderBy('name')->get())->resolve(),
-            'localities' => $tree->localities()->orderBy('name')->get(['id', 'name'])
-                ->map(fn (Locality $locality): array => ['id' => $locality->id, 'name' => $locality->name])
+            'localities' => $tree->localities()->orderBy('name')->get(['id', 'name', 'is_defunct'])
+                ->map(fn (Locality $locality): array => ['id' => $locality->id, 'name' => $locality->name, 'is_defunct' => $locality->is_defunct])
                 ->all(),
             'archives' => $this->distinctArchives($tree),
             'religions' => Religion::options(),

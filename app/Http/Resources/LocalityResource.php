@@ -16,14 +16,21 @@ class LocalityResource extends JsonResource
     /**
      * Transform the resource into an array. The `usage` counts are included only when all four were loaded with withCount().
      *
-     * @return array{id: int, name: string, description: string|null, usage?: array{facts: int, parishes: int, residences: int, gravestones: int, total: int}}
+     * @return array{id: int, name: string, kind: string|null, kind_label: string|null, latitude: float|null, longitude: float|null, historical_affiliation: string|null, description: string|null, is_defunct: bool, defunct_note: string|null, usage?: array{facts: int, parishes: int, residences: int, gravestones: int, total: int}}
      */
     public function toArray(Request $request): array
     {
         $data = [
             'id' => $this->id,
             'name' => $this->name,
+            'kind' => $this->kind?->value,
+            'kind_label' => $this->kind?->label(),
+            'latitude' => $this->latitude,
+            'longitude' => $this->longitude,
+            'historical_affiliation' => $this->historical_affiliation,
             'description' => $this->description,
+            'is_defunct' => $this->is_defunct,
+            'defunct_note' => $this->defunct_note,
         ];
 
         if ($this->hasUsageCounts()) {

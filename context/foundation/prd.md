@@ -112,7 +112,7 @@ Wszystkie FR są `must-have` (zakres: całość do 2026-11-04). Jeśli zabraknie
   > Resolution: kept; panel źródła jest szerszy niż panel osoby, skan i formularz stoją obok siebie, powiększenie skanu jak dziś.
 
 ### Spisy: miejscowości, parafie, archiwa
-- [new] FR-007: Autor can prowadzić spis miejscowości z opisem; spis startuje z istniejących tekstowych miejsc (identyczne teksty → jedna miejscowość), a literówki autor poprawia i scala ręcznie. Priority: must-have.
+- [new] FR-007: Autor can prowadzić spis miejscowości z opisem; spis startuje z istniejących tekstowych miejsc (identyczne teksty → jedna miejscowość), a literówki autor poprawia i scala ręcznie (rozszerzone 2026-10-20, `locality-details`: rodzaj, współrzędne, przynależność historyczna, „nie istnieje dziś”). Priority: must-have.
   > Socrates: Counter-argument considered: "przeniesienie wolnego tekstu na spis zjada czas."
   > Resolution: kept; spis wstaje automatycznie z istniejących wartości, autor tylko poprawia i scala.
 - [new] FR-008: Autor can prowadzić spis parafii: nazwa, wyznanie, miejscowość siedziby ze spisu. Priority: must-have.
@@ -235,7 +235,7 @@ No access control changes — current model preserved: jedno drzewo na konto, ot
 - **Brak udostępniania drzewa rodzinie** — nadal jeden użytkownik na drzewo; model dostępu bez zmian.
 - **Brak dodawania osób i relacji z widoku przodków** — widok przodków służy do oglądania; relacje dodaje się na drzewie-arkuszu.
 - **Brak importu/eksportu GEDCOM** — dane wchodzą ręcznie, jak dotąd.
-- **Brak nazw historycznych i zmian granic miejscowości** — takie informacje trafiają do opisu miejscowości.
+- **Brak nazw alternatywnych i datowanej hierarchii jednostek** — dawne nazwy trafiają do opisu; przynależność historyczna to jedno pole tekstowe miejscowości.
 - **Brak świadków ślubu** — panel małżeństwa pokazuje datę, miejsce, źródło i dzieci pary.
 - **Brak wielu nazwisk po kolejnych mężach** — osoba ma nazwisko i nazwisko rodowe; reszta w notatce.
 - **Brak daty pogrzebu i potwierdzania zamieszkania źródłem** — pogrzeb to samo miejsce pochowania; zamieszkanie to notatka badawcza bez źródła.

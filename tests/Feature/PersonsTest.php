@@ -1677,7 +1677,7 @@ test('the parent slot request inherits the locality rule', function () {
 test('the shared localityOptions prop lists only the own tree localities sorted by name', function () {
     $user = User::factory()->create();
     $person = Person::factory()->for($user->tree)->create();
-    $zator = Locality::factory()->for($user->tree)->create(['name' => 'Zator']);
+    $zator = Locality::factory()->for($user->tree)->defunct()->create(['name' => 'Zator']);
     $andrychow = Locality::factory()->for($user->tree)->create(['name' => 'Andrychów']);
     Locality::factory()->for(User::factory()->create()->tree)->create(['name' => 'Obca']);
     $url = personPreviewUrl($person);
@@ -1694,7 +1694,7 @@ test('the shared localityOptions prop lists only the own tree localities sorted 
     ]);
 
     expect($response->json('props.localityOptions'))->toBe([
-        ['id' => $andrychow->id, 'name' => 'Andrychów'],
-        ['id' => $zator->id, 'name' => 'Zator'],
+        ['id' => $andrychow->id, 'name' => 'Andrychów', 'is_defunct' => false],
+        ['id' => $zator->id, 'name' => 'Zator', 'is_defunct' => true],
     ]);
 });
