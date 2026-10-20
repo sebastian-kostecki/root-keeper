@@ -309,4 +309,4 @@ Tylko nowe kolumny nullable / z wartością domyślną; istniejące miejscowośc
 - [x] 2.6 Błędne współrzędne pokazują komunikat pod polem i nie gubią reszty formularza — d68ca89
 - [x] 2.7 Lista `/places` pokazuje kolumnę Rodzaj i plakietkę „nie istnieje”, także na wąskim ekranie — d68ca89
 - [x] 2.8 Podpowiedź miejsca faktu, zamieszkania, cmentarza, siedziby parafii i scalania pokazuje dopisek „nie istnieje”; wpisywanie „nie istnieje” nie dopasowuje miejscowości — d68ca89
-- [x] 2.9 Zrzuty ekranu zapisane w `context/changes/locality-details/screenshots/` — d68ca89
+- [x] 2.9 Zrzuty ekranu zapisane w `context/changes/locality-details/screenshots/` — d6e7495
