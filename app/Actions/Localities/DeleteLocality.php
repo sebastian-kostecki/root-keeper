@@ -22,8 +22,7 @@ class DeleteLocality
                 $references = $locked->parishes()->count()
                     + $locked->events()->count()
                     + $locked->residences()->count()
-                    + $locked->cemeteries()->count()
-                    + $locked->cemeterySources()->count();
+                    + $locked->cemeteries()->count();
 
                 if ($references > 0) {
                     throw $this->inUseException();

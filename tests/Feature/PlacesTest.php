@@ -100,24 +100,23 @@ test('the list and the panel carry the usage counts of every kind of reference',
     Event::factory()->for($user->tree)->birth()->create(['locality_id' => $locality->id]);
     Parish::factory()->for($user->tree)->seatedIn($locality)->create();
     Residence::factory()->for($person)->create(['tree_id' => $user->tree->id, 'locality_id' => $locality->id]);
-    Source::factory()->for($user->tree)->gravestone()->create(['cemetery_locality_id' => $locality->id]);
     Cemetery::factory()->in($locality)->create();
 
     $this->actingAs($user)->get(route('places.index'))->assertInertia(fn ($page) => $page
         ->where('localities.0.usage.facts', 1)
         ->where('localities.0.usage.parishes', 1)
         ->where('localities.0.usage.residences', 1)
-        ->where('localities.0.usage.gravestones', 1)
         ->where('localities.0.usage.cemeteries', 1)
-        ->where('localities.0.usage.total', 5));
+        ->where('localities.0.usage.total', 4)
+        ->missing('localities.0.usage.gravestones'));
 
     $this->actingAs($user)->get(route('places.index', ['locality' => $locality->id]))->assertInertia(fn ($page) => $page
         ->where('localityPanel.locality.usage.facts', 1)
         ->where('localityPanel.locality.usage.parishes', 1)
         ->where('localityPanel.locality.usage.residences', 1)
-        ->where('localityPanel.locality.usage.gravestones', 1)
         ->where('localityPanel.locality.usage.cemeteries', 1)
-        ->where('localityPanel.locality.usage.total', 5));
+        ->where('localityPanel.locality.usage.total', 4)
+        ->missing('localityPanel.locality.usage.gravestones'));
 });
 
 test('the panel resolver returns null without a key or with a non-numeric one', function (string $query) {

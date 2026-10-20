@@ -51,6 +51,21 @@ class Cemetery extends Model
     }
 
     /**
+     * The cemetery as offered in a suggestion list. Needs the locality relation loaded.
+     *
+     * @return array{id: int, label: string, locality_id: int, locality_name: string}
+     */
+    public function toOption(): array
+    {
+        return [
+            'id' => $this->id,
+            'label' => $this->label(),
+            'locality_id' => $this->locality_id,
+            'locality_name' => $this->locality->name,
+        ];
+    }
+
+    /**
      * @return BelongsTo<Tree, $this>
      */
     public function tree(): BelongsTo

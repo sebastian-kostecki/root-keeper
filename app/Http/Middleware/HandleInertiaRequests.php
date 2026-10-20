@@ -6,6 +6,7 @@ use App\Actions\Persons\BuildPersonPreview;
 use App\Actions\Relations\BuildMarriagePanel;
 use App\Enums\EventType;
 use App\Http\Resources\SourceResource;
+use App\Models\Cemetery;
 use App\Models\Event;
 use App\Models\Locality;
 use App\Models\Person;
@@ -73,8 +74,15 @@ class HandleInertiaRequests extends Middleware
                 ->get(['id', 'name', 'is_defunct'])
                 ->map(fn (Locality $locality): array => ['id' => $locality->id, 'name' => $locality->name, 'is_defunct' => $locality->is_defunct])
                 ->all()),
+            'cemeteryOptions' => Inertia::optional(fn (): array => $request->user() === null ? [] : $request->user()->tree->cemeteries()
+                ->with('locality')
+                ->get()
+                ->sortBy(fn (Cemetery $cemetery): string => mb_strtolower($cemetery->label()))
+                ->map(fn (Cemetery $cemetery): array => $cemetery->toOption())
+                ->values()
+                ->all()),
             'availableSources' => Inertia::optional(fn (): array => $request->user() === null ? [] : SourceResource::collection(
-                $request->user()->tree->sources()->with(['parish.locality', 'cemetery'])->latest()->orderByDesc('id')->get()
+                $request->user()->tree->sources()->with(['parish.locality', 'cemetery.locality'])->latest()->orderByDesc('id')->get()
             )->resolve()),
         ];
     }

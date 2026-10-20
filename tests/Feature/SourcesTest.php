@@ -5,6 +5,7 @@ use App\Enums\ParticipantRole;
 use App\Enums\Religion;
 use App\Enums\SourceKind;
 use App\Enums\SourceRecordType;
+use App\Models\Cemetery;
 use App\Models\Event;
 use App\Models\Locality;
 use App\Models\Parish;
@@ -48,7 +49,7 @@ test('sources index shows only the authenticated user own sources, newest first'
         ->component('sources/index')
         ->has('sources', 2)
         ->has('sources.0', fn ($source) => $source->hasAll([
-            'id', 'kind', 'kind_label', 'kind_short_label', 'name', 'display_name', 'record_type', 'record_type_label', 'legacy_entry_number', 'year', 'parish_id', 'parish_label', 'parish_name', 'parish_locality_id', 'locality_name', 'cemetery_locality_id', 'cemetery_name', 'archive', 'url', 'note', 'original_name', 'mime_type', 'size', 'width', 'height', 'has_thumbnail', 'uploaded_at', 'events_count',
+            'id', 'kind', 'kind_label', 'kind_short_label', 'name', 'display_name', 'record_type', 'record_type_label', 'legacy_entry_number', 'year', 'parish_id', 'parish_label', 'parish_name', 'parish_locality_id', 'locality_name', 'cemetery_id', 'cemetery_label', 'cemetery_locality_id', 'archive', 'url', 'note', 'original_name', 'mime_type', 'size', 'width', 'height', 'has_thumbnail', 'uploaded_at', 'events_count',
         ]))
         ->where('sources.0.id', $newer->id)
         ->where('sources.1.id', $older->id));
@@ -866,7 +867,7 @@ test('the index filters default to all kinds, the gallery and newest first', fun
 test('the index echoes a valid place', function (string $place) {
     $this->actingAs(User::factory()->create())->get(route('sources.index', ['place' => $place]))->assertInertia(fn ($page) => $page
         ->where('filters.place', $place));
-})->with(['locality' => ['miejscowosc-3'], 'parish' => ['parafia-5']]);
+})->with(['locality' => ['miejscowosc-3'], 'parish' => ['parafia-5'], 'cemetery' => ['cmentarz-7']]);
 
 test('the index echoes the year bounds and the archive', function () {
     $this->actingAs(User::factory()->create())->get(route('sources.index', [
@@ -937,29 +938,37 @@ test('a partial reload of the filters with the new parameters runs no sources qu
 test('the place options list the cemeteries of gravestones and the seats of act parishes of the tree only', function () {
     $user = User::factory()->create();
     $other = User::factory()->create();
-    $cemetery = Locality::factory()->for($user->tree)->create(['name' => 'Luboml']);
+    $cemeteryLocality = Locality::factory()->for($user->tree)->create(['name' => 'Luboml']);
+    $cemetery = Cemetery::factory()->in($cemeteryLocality)->unnamed()->create();
+    $namedCemetery = Cemetery::factory()->in($cemeteryLocality)->create(['name' => 'Parafialny']);
+    Cemetery::factory()->in($cemeteryLocality)->create(['name' => 'Nieużywany']);
     $seat = Locality::factory()->for($user->tree)->create(['name' => 'Tarnów']);
     Locality::factory()->for($user->tree)->create(['name' => 'Nieużyta']);
     $foreignLocality = Locality::factory()->for($other->tree)->create(['name' => 'Obca']);
     $seated = Parish::factory()->for($user->tree)->seatedIn($seat)->create(['name' => 'Św. Jana']);
     $seatless = Parish::factory()->for($user->tree)->create(['name' => 'Bez siedziby']);
-    Parish::factory()->for($user->tree)->seatedIn($cemetery)->create(['name' => 'Nieużywana']);
+    Parish::factory()->for($user->tree)->seatedIn($cemeteryLocality)->create(['name' => 'Nieużywana']);
 
-    Source::factory()->for($user->tree)->gravestone()->create(['cemetery_locality_id' => $cemetery->id]);
+    Source::factory()->for($user->tree)->gravestone()->create(['cemetery_id' => $cemetery->id]);
+    Source::factory()->for($user->tree)->gravestone()->create(['cemetery_id' => $namedCemetery->id]);
     Source::factory()->for($user->tree)->create(['parish_id' => $seated->id]);
     Source::factory()->for($user->tree)->create(['parish_id' => $seatless->id]);
-    Source::factory()->for($other->tree)->gravestone()->create(['cemetery_locality_id' => $foreignLocality->id]);
+    Source::factory()->for($other->tree)->gravestone()->create(['cemetery_id' => Cemetery::factory()->in($foreignLocality)->create()->id]);
 
     $options = $this->actingAs($user)->get(route('sources.index'))->inertiaProps('placeOptions');
 
     expect($options)->toEqual([
         'localities' => [
-            ['id' => $cemetery->id, 'name' => 'Luboml'],
+            ['id' => $cemeteryLocality->id, 'name' => 'Luboml'],
             ['id' => $seat->id, 'name' => 'Tarnów'],
         ],
         'parishes' => [
             ['id' => $seatless->id, 'label' => $seatless->label()],
             ['id' => $seated->id, 'label' => $seated->label()],
+        ],
+        'cemeteries' => [
+            ['id' => $cemetery->id, 'label' => 'cmentarz Luboml'],
+            ['id' => $namedCemetery->id, 'label' => 'Parafialny, Luboml'],
         ],
     ]);
 });
@@ -1257,6 +1266,61 @@ test('storing an akt keeps a place that names its parish', function () {
         ->assertRedirect(route('sources.index', ['place' => "parafia-{$parish->id}", 'source' => Source::sole()->id]));
 });
 
+test('storing a gravestone keeps a place that names its cemetery or the locality of that cemetery', function (string $placeType) {
+    Storage::fake('local');
+
+    $user = User::factory()->create();
+    $cemetery = Cemetery::factory()->for($user->tree)->unnamed()->create();
+    $place = $placeType === 'cmentarz' ? "cmentarz-{$cemetery->id}" : "miejscowosc-{$cemetery->locality_id}";
+
+    $this->actingAs($user)
+        ->from("/sources?place={$place}&source=new")
+        ->post(route('sources.store'), [
+            'kind' => 'gravestone',
+            'cemetery_id' => $cemetery->id,
+            'file' => UploadedFile::fake()->image('nagrobek.jpg', 400, 300),
+        ])
+        ->assertRedirect(route('sources.index', ['place' => $place, 'source' => Source::sole()->id]));
+})->with(['cemetery' => ['cmentarz'], 'locality of the cemetery' => ['miejscowosc']]);
+
+test('storing a gravestone drops a place that names another cemetery', function () {
+    Storage::fake('local');
+
+    $user = User::factory()->create();
+    $cemetery = Cemetery::factory()->for($user->tree)->create();
+    $otherCemetery = Cemetery::factory()->for($user->tree)->create();
+
+    $this->actingAs($user)
+        ->from("/sources?place=cmentarz-{$otherCemetery->id}&source=new")
+        ->post(route('sources.store'), [
+            'kind' => 'gravestone',
+            'cemetery_id' => $cemetery->id,
+            'file' => UploadedFile::fake()->image('nagrobek.jpg', 400, 300),
+        ])
+        ->assertRedirect(route('sources.index', ['source' => Source::sole()->id]));
+});
+
+test('the cemetery options are an optional shared prop of the own tree', function () {
+    $user = User::factory()->create();
+    $named = Cemetery::factory()->for($user->tree)->create(['name' => 'Parafialny']);
+    Cemetery::factory()->for(User::factory()->create()->tree)->create();
+
+    $this->actingAs($user)->get(route('sources.index'))->assertInertia(fn ($page) => $page->missing('cemeteryOptions'));
+
+    $version = $this->actingAs($user)->get(route('sources.index'), ['X-Inertia' => 'true'])->headers->get('X-Inertia-Version');
+
+    $response = $this->actingAs($user)->get(route('sources.index'), [
+        'X-Inertia' => 'true',
+        'X-Inertia-Version' => $version,
+        'X-Inertia-Partial-Data' => 'cemeteryOptions',
+        'X-Inertia-Partial-Component' => 'sources/index',
+    ]);
+
+    expect($response->json('props.cemeteryOptions'))->toBe([
+        ['id' => $named->id, 'label' => $named->label(), 'locality_id' => $named->locality_id, 'locality_name' => $named->locality->name],
+    ]);
+});
+
 test('storing an akt drops a place that names another parish', function () {
     Storage::fake('local');
 
@@ -1500,20 +1564,24 @@ test('the sources payload carries the parish name and the seat locality name, nu
 
 test('a gravestone carries its cemetery as the locality name and the panel lists the buried people', function () {
     $user = User::factory()->create();
-    $cemetery = Locality::factory()->for($user->tree)->create(['name' => 'Luboml']);
+    $locality = Locality::factory()->for($user->tree)->create(['name' => 'Luboml']);
+    $cemetery = Cemetery::factory()->in($locality)->create(['name' => 'Parafialny']);
     $first = Person::factory()->for($user->tree)->create(['first_name' => 'Jan', 'last_name' => 'Kowalski']);
     $second = Person::factory()->for($user->tree)->create(['first_name' => 'Maria', 'last_name' => 'Kowalska']);
-    $gravestone = Source::factory()->for($user->tree)->gravestone()->create(['cemetery_locality_id' => $cemetery->id]);
+    $gravestone = Source::factory()->for($user->tree)->gravestone()->create(['cemetery_id' => $cemetery->id]);
     $gravestone->buriedPeople()->attach([$second->id, $first->id]);
 
     $response = $this->actingAs($user)->get(route('sources.index', ['source' => $gravestone->id]));
 
     $response->assertInertia(fn ($page) => $page
         ->where('sources.0.locality_name', 'Luboml')
-        ->where('sources.0.cemetery_name', 'Luboml')
-        ->where('sources.0.cemetery_locality_id', $cemetery->id)
+        ->where('sources.0.cemetery_id', $cemetery->id)
+        ->where('sources.0.cemetery_label', 'Parafialny, Luboml')
+        ->where('sources.0.cemetery_locality_id', $locality->id)
         ->missing('sources.0.buried_people')
-        ->where('sourcePanel.source.cemetery_name', 'Luboml')
+        ->where('sourcePanel.source.cemetery_label', 'Parafialny, Luboml')
+        ->where('sourcePanel.cemeteries.0.id', $cemetery->id)
+        ->has('sourcePanel.cemeteryManagers')
         ->where('sourcePanel.source.buried_people', [
             ['id' => $second->id, 'display_name' => $second->displayName()],
             ['id' => $first->id, 'display_name' => $first->displayName()],

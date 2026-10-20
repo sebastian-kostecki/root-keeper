@@ -1,4 +1,4 @@
-import type { LocalityOption, Source, SourceKind } from '@/types';
+import type { CemeteryOption, Source, SourceKind } from '@/types';
 
 const present = (value: unknown): value is string =>
     typeof value === 'string' && value !== '';
@@ -10,17 +10,15 @@ type CardFields = Pick<
     | 'year'
     | 'archive'
     | 'parish_label'
-    | 'cemetery_name'
+    | 'cemetery_label'
 >;
 
-/** „cmentarz Luboml” for a gravestone, the parish label for an akt; null when not set. */
+/** „cmentarz Luboml” (or „Cmentarz parafialny, Luboml”) for a gravestone, the parish label for an akt; null when not set. */
 export function sourcePlaceLabel(
-    source: Pick<Source, 'kind' | 'parish_label' | 'cemetery_name'>,
+    source: Pick<Source, 'kind' | 'parish_label' | 'cemetery_label'>,
 ): string | null {
     if (source.kind === 'gravestone') {
-        return present(source.cemetery_name)
-            ? `cmentarz ${source.cemetery_name}`
-            : null;
+        return present(source.cemetery_label) ? source.cemetery_label : null;
     }
 
     return source.parish_label;
@@ -46,11 +44,7 @@ export function showsUploadDate(source: CardFields): boolean {
 }
 
 export type ErasedField = {
-    field:
-        | 'record_type'
-        | 'parish_id'
-        | 'cemetery_locality_id'
-        | 'buried_person_ids';
+    field: 'record_type' | 'parish_id' | 'cemetery_id' | 'buried_person_ids';
     label: string;
     value: string;
 };
@@ -62,8 +56,8 @@ type StoredRecord = Pick<
     | 'record_type_label'
     | 'parish_id'
     | 'parish_label'
-    | 'cemetery_locality_id'
-    | 'cemetery_name'
+    | 'cemetery_id'
+    | 'cemetery_label'
     | 'buried_people'
 >;
 
@@ -79,19 +73,19 @@ export function erasedRecordFields(
     formValues: {
         record_type?: unknown;
         parish_id?: unknown;
-        cemetery_locality_id?: unknown;
+        cemetery_id?: unknown;
         buried_person_ids?: unknown;
     },
     recordTypes: { value: string; label: string }[] = [],
     parishes: { id: number; label: string }[] = [],
-    localities: LocalityOption[] = [],
+    cemeteries: CemeteryOption[] = [],
 ): ErasedField[] {
     if (selectedKind === '' || selectedKind === source.kind) {
         return [];
     }
 
     if (source.kind === 'gravestone') {
-        return erasedGravestoneFields(source, formValues, localities);
+        return erasedGravestoneFields(source, formValues, cemeteries);
     }
 
     if (source.kind !== 'metrical_record') {
@@ -135,31 +129,29 @@ export function erasedRecordFields(
 function erasedGravestoneFields(
     source: StoredRecord,
     formValues: {
-        cemetery_locality_id?: unknown;
+        cemetery_id?: unknown;
         buried_person_ids?: unknown;
     },
-    localities: LocalityOption[],
+    cemeteries: CemeteryOption[],
 ): ErasedField[] {
     const erased: ErasedField[] = [];
-    const typed = formValues.cemetery_locality_id;
+    const typed = formValues.cemetery_id;
 
-    if (present(typed) || source.cemetery_locality_id !== null) {
+    if (present(typed) || source.cemetery_id !== null) {
         const chosen = present(typed)
-            ? localities.find((locality) => String(locality.id) === typed)
+            ? cemeteries.find((cemetery) => String(cemetery.id) === typed)
             : undefined;
         const storedId =
-            source.cemetery_locality_id === null
-                ? null
-                : String(source.cemetery_locality_id);
+            source.cemetery_id === null ? null : String(source.cemetery_id);
         const label =
-            chosen?.name ??
+            chosen?.label ??
             (!present(typed) || typed === storedId
-                ? source.cemetery_name
+                ? source.cemetery_label
                 : null) ??
             (present(typed) ? typed : '');
 
         erased.push({
-            field: 'cemetery_locality_id',
+            field: 'cemetery_id',
             label: 'Cmentarz',
             value: label,
         });

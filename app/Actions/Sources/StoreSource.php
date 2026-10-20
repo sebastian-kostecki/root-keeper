@@ -26,7 +26,7 @@ class StoreSource
      * original is written. A gravestone's buried people are linked and their empty
      * burial places filled in the same transaction as the row.
      *
-     * @param  array{name?: string|null, record_type?: string|null, parish_id?: int|null, cemetery_locality_id?: int|null, buried_person_ids?: list<int>|null, year?: int|null, archive?: string|null, url?: string|null, note?: string|null}  $description
+     * @param  array{name?: string|null, record_type?: string|null, parish_id?: int|null, cemetery_id?: int|null, buried_person_ids?: list<int>|null, year?: int|null, archive?: string|null, url?: string|null, note?: string|null}  $description
      */
     public function handle(Tree $tree, UploadedFile $file, SourceKind $kind, array $description = []): Source
     {

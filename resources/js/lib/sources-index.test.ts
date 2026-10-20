@@ -37,8 +37,9 @@ function source(id: number, overrides: Partial<IndexSource> = {}): IndexSource {
         parish_name: null,
         parish_locality_id: null,
         locality_name: null,
+        cemetery_id: null,
+        cemetery_label: null,
         cemetery_locality_id: null,
-        cemetery_name: null,
         url: null,
         note: null,
         original_name: `plik-${id}.jpg`,
@@ -183,6 +184,7 @@ describe('resolveFilters', () => {
     const placeOptions = {
         localities: [{ id: 10, name: 'Lipnica' }],
         parishes: [{ id: 1, label: 'Lipnica (Lipnica)' }],
+        cemeteries: [{ id: 100, label: 'cmentarz Lipnica' }],
     };
 
     it('keeps a place and an archive among the options', () => {
@@ -194,6 +196,23 @@ describe('resolveFilters', () => {
 
         expect(resolved.place).toBe('miejscowosc-10');
         expect(resolved.archive).toBe('AP Poznań');
+    });
+
+    it('keeps a cemetery among the options', () => {
+        expect(
+            resolveFilters(
+                filtersOf({ place: 'cmentarz-100' }),
+                placeOptions,
+                [],
+            ).place,
+        ).toBe('cmentarz-100');
+        expect(
+            resolveFilters(
+                filtersOf({ place: 'cmentarz-101' }),
+                placeOptions,
+                [],
+            ).place,
+        ).toBe('');
     });
 
     it('blanks a place or an archive outside the options', () => {
@@ -326,6 +345,7 @@ describe('filterOptionCounts', () => {
             name: 'Lipnica grób',
             year: 1890,
             archive: 'AP B',
+            cemetery_id: 200,
             cemetery_locality_id: 20,
         }),
         source(3, {
@@ -333,6 +353,7 @@ describe('filterOptionCounts', () => {
             name: 'Inne',
             year: 1950,
             archive: 'AP A',
+            cemetery_id: 100,
             cemetery_locality_id: 10,
         }),
     ];
@@ -504,7 +525,11 @@ describe('filterSources', () => {
                 parish_id: 1,
                 parish_locality_id: 10,
             }),
-            source(2, { kind: 'gravestone', cemetery_locality_id: 10 }),
+            source(2, {
+                kind: 'gravestone',
+                cemetery_id: 100,
+                cemetery_locality_id: 10,
+            }),
             source(3, {
                 kind: 'metrical_record',
                 parish_id: 2,
@@ -520,6 +545,39 @@ describe('filterSources', () => {
         ).toEqual([1, 2]);
     });
 
+    it('matches a cemetery only by the gravestones that point at it', () => {
+        const sources = [
+            source(1, {
+                kind: 'gravestone',
+                cemetery_id: 100,
+                cemetery_locality_id: 10,
+            }),
+            source(2, {
+                kind: 'gravestone',
+                cemetery_id: 101,
+                cemetery_locality_id: 10,
+            }),
+            source(3, {
+                kind: 'metrical_record',
+                parish_id: 1,
+                parish_locality_id: 10,
+            }),
+        ];
+
+        expect(
+            ids(
+                filterSources(sources, filtersOf({ place: 'cmentarz-100' }))
+                    .visible,
+            ),
+        ).toEqual([1]);
+        expect(
+            ids(
+                filterSources(sources, filtersOf({ place: 'miejscowosc-10' }))
+                    .visible,
+            ),
+        ).toEqual([1, 2, 3]);
+    });
+
     it('matches a parish only by its own sources, not a gravestone in the same locality', () => {
         const sources = [
             source(1, {
@@ -527,7 +585,11 @@ describe('filterSources', () => {
                 parish_id: 1,
                 parish_locality_id: 10,
             }),
-            source(2, { kind: 'gravestone', cemetery_locality_id: 10 }),
+            source(2, {
+                kind: 'gravestone',
+                cemetery_id: 100,
+                cemetery_locality_id: 10,
+            }),
             source(3, {
                 kind: 'metrical_record',
                 parish_id: 2,
@@ -594,7 +656,11 @@ describe('filterSources', () => {
     it('counts "brak miejsca" only for a source with no parish and no cemetery', () => {
         const sources = [
             source(1, { kind: 'other' }),
-            source(2, { kind: 'gravestone', cemetery_locality_id: 10 }),
+            source(2, {
+                kind: 'gravestone',
+                cemetery_id: 100,
+                cemetery_locality_id: 10,
+            }),
             source(3, { kind: 'metrical_record', parish_id: 2 }),
         ];
 
@@ -656,8 +722,16 @@ describe('filterSources', () => {
                 parish_id: 1,
                 parish_locality_id: 10,
             }),
-            source(2, { kind: 'gravestone', cemetery_locality_id: 10 }),
-            source(3, { kind: 'gravestone', cemetery_locality_id: 20 }),
+            source(2, {
+                kind: 'gravestone',
+                cemetery_id: 100,
+                cemetery_locality_id: 10,
+            }),
+            source(3, {
+                kind: 'gravestone',
+                cemetery_id: 200,
+                cemetery_locality_id: 20,
+            }),
         ];
         const { visible, counts } = filterSources(
             sources,

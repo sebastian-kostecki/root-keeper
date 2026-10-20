@@ -33,11 +33,11 @@ trait SourceDescriptionValidationRules
                 'integer',
                 Rule::exists('parishes', 'id')->where('tree_id', $this->user()->tree->id),
             ],
-            'cemetery_locality_id' => [
+            'cemetery_id' => [
                 Rule::excludeIf(fn (): bool => $this->input('kind') !== SourceKind::Gravestone->value),
                 'nullable',
                 'integer',
-                Rule::exists('localities', 'id')->where('tree_id', $this->user()->tree->id),
+                Rule::exists('cemeteries', 'id')->where('tree_id', $this->user()->tree->id),
             ],
             'buried_person_ids' => [
                 Rule::excludeIf(fn (): bool => $this->input('kind') !== SourceKind::Gravestone->value),
@@ -66,7 +66,7 @@ trait SourceDescriptionValidationRules
             'note' => 'notatka',
             'record_type' => 'typ aktu',
             'parish_id' => 'parafia',
-            'cemetery_locality_id' => 'cmentarz',
+            'cemetery_id' => 'cmentarz',
             'buried_person_ids' => 'osoby pochowane',
             'buried_person_ids.*' => 'osoby pochowane',
         ];

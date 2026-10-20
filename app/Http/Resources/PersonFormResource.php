@@ -57,19 +57,19 @@ class PersonFormResource extends JsonResource
     }
 
     /**
-     * The cemetery of the person's gravestones when they all share exactly one, otherwise null.
+     * The locality of the cemeteries of the person's gravestones when they all share exactly one, otherwise null.
      *
      * @return array{id: int, name: string}|null
      */
     private function burialSuggestion(): ?array
     {
-        $cemeteries = $this->gravestones->pluck('cemetery')->filter()->unique('id')->values();
+        $localities = $this->gravestones->pluck('cemetery.locality')->filter()->unique('id')->values();
 
-        if ($cemeteries->count() !== 1) {
+        if ($localities->count() !== 1) {
             return null;
         }
 
-        return ['id' => $cemeteries->first()->id, 'name' => $cemeteries->first()->name];
+        return ['id' => $localities->first()->id, 'name' => $localities->first()->name];
     }
 
     /**

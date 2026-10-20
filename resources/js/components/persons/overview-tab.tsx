@@ -217,8 +217,8 @@ function GravestoneLinks({ gravestones }: { gravestones: PersonGravestone[] }) {
                         )}
                     >
                         {gravestone.display_name}
-                        {gravestone.cemetery_name &&
-                            ` (cmentarz ${gravestone.cemetery_name})`}
+                        {gravestone.cemetery_label &&
+                            ` (${gravestone.cemetery_label})`}
                     </Link>
                 </li>
             ))}

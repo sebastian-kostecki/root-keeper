@@ -128,4 +128,34 @@ describe('filterSourcesByPlaceAndYear', () => {
 
         expect(visible.map((s) => s.id)).toEqual([6, 1, 5]);
     });
+
+    it('finds a gravestone by the name of its cemetery and by its locality', () => {
+        const named = {
+            ...source(8, 1950, null, 'Luboml'),
+            cemetery_label: 'Cmentarz parafialny, Luboml',
+        };
+        const unnamed = {
+            ...source(9, 1950, null, 'Chełm'),
+            cemetery_label: 'cmentarz Chełm',
+        };
+
+        expect(
+            filterSourcesByPlaceAndYear([named, unnamed], {
+                place: 'parafialny',
+                year: '',
+            }).visible,
+        ).toEqual([named]);
+        expect(
+            filterSourcesByPlaceAndYear([named, unnamed], {
+                place: 'luboml',
+                year: '',
+            }).visible,
+        ).toEqual([named]);
+        expect(
+            filterSourcesByPlaceAndYear([named, unnamed], {
+                place: 'cmentarz chełm',
+                year: '',
+            }).visible,
+        ).toEqual([unnamed]);
+    });
 });

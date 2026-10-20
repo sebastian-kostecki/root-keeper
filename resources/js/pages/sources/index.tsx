@@ -361,6 +361,7 @@ export default function Index({
             (locality) => `miejscowosc-${locality.id}`,
         ),
         ...placeOptions.parishes.map((parish) => `parafia-${parish.id}`),
+        ...placeOptions.cemeteries.map((cemetery) => `cmentarz-${cemetery.id}`),
     ];
     const archiveValues = ['', ...archiveOptions];
 
@@ -607,6 +608,8 @@ export default function Index({
                     recordTypes={recordTypes}
                     parishes={sourcePanel.parishes}
                     archives={sourcePanel.archives}
+                    cemeteries={sourcePanel.cemeteries}
+                    cemeteryManagers={sourcePanel.cemeteryManagers}
                     localities={sourcePanel.localities}
                     religions={sourcePanel.religions}
                     onRequestClose={() => guard(close)}

@@ -3,6 +3,7 @@
 namespace Tests;
 
 use App\Enums\EventType;
+use App\Models\Cemetery;
 use App\Models\Event;
 use App\Models\Locality;
 use App\Models\Parish;
@@ -169,11 +170,13 @@ abstract class BackupTestCase extends TestCase
         $this->post(route('cemeteries.store'), ['name' => 'Cmentarz parafialny', 'locality_id' => $seat->id])
             ->assertSessionHasNoErrors();
 
+        $cemetery = Cemetery::query()->where('tree_id', $tree->id)->firstOrFail();
+
         $gravestone = Source::query()->where('original_name', 'akt-2.jpg')->firstOrFail();
 
         $this->put(route('sources.update', $gravestone), [
             'kind' => 'gravestone',
-            'cemetery_locality_id' => $seat->id,
+            'cemetery_id' => $cemetery->id,
             'buried_person_ids' => [$parent->id],
         ])->assertSessionHasNoErrors();
 

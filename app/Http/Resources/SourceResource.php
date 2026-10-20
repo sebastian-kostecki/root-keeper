@@ -19,7 +19,7 @@ class SourceResource extends JsonResource
      * Transform the resource into an array.
      *
      * `locality_name` is the place of the source: the gravestone's cemetery, or the seat of an act's parish.
-     * `parish_locality_id` is the id of that seat. Callers eager-load `parish.locality` and `cemetery`; the panel also `buriedPeople`.
+     * `parish_locality_id` is the id of that seat. Callers eager-load `parish.locality` and `cemetery.locality`; the panel also `buriedPeople`.
      *
      * @return array{
      *     id: int,
@@ -37,8 +37,9 @@ class SourceResource extends JsonResource
      *     parish_name: string|null,
      *     parish_locality_id: int|null,
      *     locality_name: string|null,
+     *     cemetery_id: int|null,
+     *     cemetery_label: string|null,
      *     cemetery_locality_id: int|null,
-     *     cemetery_name: string|null,
      *     buried_people?: list<array{id: int, display_name: string}>,
      *     archive: string|null,
      *     url: string|null,
@@ -70,9 +71,10 @@ class SourceResource extends JsonResource
             'parish_label' => $this->parish?->label(),
             'parish_name' => $this->parish?->name,
             'parish_locality_id' => $this->parish?->locality_id,
-            'locality_name' => $this->kind === SourceKind::Gravestone ? $this->cemetery?->name : $this->parish?->locality?->name,
-            'cemetery_locality_id' => $this->cemetery_locality_id,
-            'cemetery_name' => $this->cemetery?->name,
+            'locality_name' => $this->kind === SourceKind::Gravestone ? $this->cemetery?->locality->name : $this->parish?->locality?->name,
+            'cemetery_id' => $this->cemetery_id,
+            'cemetery_label' => $this->cemetery?->label(),
+            'cemetery_locality_id' => $this->cemetery?->locality_id,
             'buried_people' => $this->whenLoaded('buriedPeople', fn (): array => $this->buriedPeople
                 ->map(fn (Person $person): array => ['id' => $person->id, 'display_name' => $person->displayName()])
                 ->values()

@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Cemetery;
 use App\Models\Locality;
 use App\Models\Person;
 use App\Models\Residence;
@@ -522,13 +523,13 @@ test('saving a gravestone touches only its source row, its buried list and the b
     $scene = familyScene($user);
     extract($scene);
 
-    $cemetery = Locality::factory()->for($user->tree)->create();
+    $cemetery = Cemetery::factory()->for($user->tree)->unnamed()->create();
 
     $before = databaseRows();
 
     $this->actingAs($user)->put(route('sources.update', $sourceOther), [
         'kind' => 'gravestone',
-        'cemetery_locality_id' => $cemetery->id,
+        'cemetery_id' => $cemetery->id,
         'buried_person_ids' => [$focus->id, $loneMan->id],
     ])->assertSessionHasNoErrors()->assertRedirect();
 
@@ -538,13 +539,14 @@ test('saving a gravestone touches only its source row, its buried list and the b
 
     expect(array_column($diff['tables']['sources']['changed'], 'after'))->toHaveCount(1);
     expect($diff['tables']['sources']['changed'][0]['after']['id'])->toBe($sourceOther->id);
-    expect($diff['tables']['sources']['changed'][0]['after']['cemetery_locality_id'])->toBe($cemetery->id);
+    expect($diff['tables']['sources']['changed'][0]['after']['cemetery_id'])->toBe($cemetery->id);
 
     expect(writeSortedKeys(array_map(fn (array $row): string => $row['source_id'].':'.$row['person_id'], $diff['tables']['buried_people']['added'])))
         ->toBe(writeSortedKeys(["{$sourceOther->id}:{$focus->id}", "{$sourceOther->id}:{$loneMan->id}"]));
 
     expect(array_column($diff['tables']['events']['added'], 'type'))->toBe(['burial']);
-    expect($diff['tables']['events']['added'][0]['locality_id'])->toBe($cemetery->id);
+    expect($diff['tables']['events']['added'][0]['locality_id'])->toBe($cemetery->locality_id);
+    expect($diff['tables']['events']['added'][0]['cemetery_id'])->toBe($cemetery->id);
     expect(array_column($diff['tables']['event_participants']['added'], 'person_id'))->toBe([$focus->id]);
 
     foreach ($diff['tables'] as $table) {

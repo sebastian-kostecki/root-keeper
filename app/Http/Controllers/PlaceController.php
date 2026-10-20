@@ -26,7 +26,7 @@ class PlaceController extends Controller
 
         return Inertia::render('places/index', [
             'localities' => fn (): array => LocalityResource::collection(
-                $tree->localities()->withCount(['events', 'parishes', 'residences', 'cemeteries', 'cemeterySources'])->orderBy('name')->get()
+                $tree->localities()->withCount(['events', 'parishes', 'residences', 'cemeteries'])->orderBy('name')->get()
             )->resolve(),
             'parishes' => fn (): array => ParishResource::collection(
                 $tree->parishes()->with('locality')->withCount('sources')->orderBy('name')->get()
@@ -53,7 +53,7 @@ class PlaceController extends Controller
                 }
 
                 $locality = $request->user()->tree->localities()
-                    ->withCount(['events', 'parishes', 'residences', 'cemeteries', 'cemeterySources'])
+                    ->withCount(['events', 'parishes', 'residences', 'cemeteries'])
                     ->findOrFail((int) $key);
 
                 Gate::authorize('view', $locality);

@@ -29,7 +29,7 @@ export type PersonPreview = {
         id: number;
         display_name: string;
         burial_place: string | null;
-        gravestones?: { id: number; cemetery_name: string | null }[];
+        gravestones?: { id: number; cemetery_label: string | null }[];
         birth: {
             id: number;
             sources?: { id: number; entry_number: string | null }[];
@@ -261,6 +261,26 @@ export async function createLocality(
     return ((await response.json()) as { id: number }).id;
 }
 
+/** `cemeteries.inline.store` in a locality; the sweep removes it through `cemeteries.destroy` once nothing uses it. */
+export async function createCemetery(
+    page: Page,
+    cemetery: { locality: number; name?: string },
+): Promise<number> {
+    const response = await page.request.post('/cemeteries/inline', {
+        headers: await writeHeaders(page),
+        form: {
+            locality_id: cemetery.locality,
+            ...(cemetery.name !== undefined && { name: cemetery.name }),
+        },
+    });
+    expect(
+        response.status(),
+        `${response.url()} answered ${response.status()}: ${await response.text()}`,
+    ).toBe(201);
+
+    return ((await response.json()) as { data: { id: number } }).data.id;
+}
+
 /** `parishes.inline.store` with a seat locality; the sweep removes it through `parishes.destroy`. */
 export async function createParish(
     page: Page,
@@ -415,11 +435,12 @@ export async function deletePerson(
 /**
  * Removes the sources this worker created through the API, every other source
  * whose name carries the suffix, then every person whose name carries it, then
- * parishes and localities whose name carries it. Runs as the `suffix` fixture's
- * teardown, so it must work after a red assertion; each DELETE is checked.
+ * parishes, cemeteries and localities whose name carries it. Runs as the `suffix`
+ * fixture's teardown, so it must work after a red assertion; each DELETE is checked.
  * Sources go first (`DeleteSource` removes links and files), then people
  * (`DeletePerson` removes marriages, events and parent-child relations), then
- * parishes (they reference localities), then localities.
+ * parishes and cemeteries (they reference localities; the sources and burials
+ * that pointed at a cemetery are gone by now), then localities.
  */
 export async function cleanupBySuffix(
     page: Page,
@@ -459,6 +480,20 @@ export async function cleanupBySuffix(
     for (const parish of parishes) {
         if (parish.name.includes(suffix)) {
             await deleteRecord(page, headers, `/parishes/${parish.id}`);
+        }
+    }
+
+    // A cemetery of the test has no name of its own, so it is found by the locality it lies in.
+    const cemeteries =
+        ((await pageProps(page, '/places?kind=cmentarze')).cemeteries as
+            | { id: number; name: string | null; locality_name: string }[]
+            | undefined) ?? [];
+    for (const cemetery of cemeteries) {
+        if (
+            cemetery.locality_name.includes(suffix) ||
+            cemetery.name?.includes(suffix)
+        ) {
+            await deleteRecord(page, headers, `/cemeteries/${cemetery.id}`);
         }
     }
 

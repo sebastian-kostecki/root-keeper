@@ -17,7 +17,7 @@ class FillBurialPlacesFromGravestone
      */
     public function handle(Source $gravestone): void
     {
-        if ($gravestone->kind !== SourceKind::Gravestone || $gravestone->cemetery_locality_id === null) {
+        if ($gravestone->kind !== SourceKind::Gravestone || $gravestone->cemetery === null) {
             return;
         }
 
@@ -29,7 +29,8 @@ class FillBurialPlacesFromGravestone
             $burial = $gravestone->tree->events()->create([
                 'type' => EventType::Burial,
                 'date_is_approximate' => false,
-                'locality_id' => $gravestone->cemetery_locality_id,
+                'cemetery_id' => $gravestone->cemetery->id,
+                'locality_id' => $gravestone->cemetery->locality_id,
             ]);
 
             $burial->participants()->attach($person, ['role' => ParticipantRole::Subject]);

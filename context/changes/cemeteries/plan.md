@@ -485,38 +485,38 @@ Listy cmentarzy i opcje filtra to jedno zapytanie z `withCount` i eager loadem m
 
 #### Automated
 
-- [x] 2.1 Testy JS przechodzą (helpery, rejestr paneli, kontrola tokenów): `vendor/bin/sail npm run test:js`
-- [x] 2.2 Format i lint przechodzą: `vendor/bin/sail npm run check`
-- [x] 2.3 Typy przechodzą: `vendor/bin/sail npm run types:check`
-- [x] 2.4 Build przechodzi: `vendor/bin/sail npm run build`
-- [x] 2.5 Istniejący spec strony miejsc przechodzi: `npx playwright test tests/e2e/places-page.spec.ts tests/e2e/places-merge-and-delete.spec.ts`
+- [x] 2.1 Testy JS przechodzą (helpery, rejestr paneli, kontrola tokenów): `vendor/bin/sail npm run test:js` — 05ca253
+- [x] 2.2 Format i lint przechodzą: `vendor/bin/sail npm run check` — 05ca253
+- [x] 2.3 Typy przechodzą: `vendor/bin/sail npm run types:check` — 05ca253
+- [x] 2.4 Build przechodzi: `vendor/bin/sail npm run build` — 05ca253
+- [x] 2.5 Istniejący spec strony miejsc przechodzi: `npx playwright test tests/e2e/places-page.spec.ts tests/e2e/places-merge-and-delete.spec.ts` — 05ca253
 
 #### Manual
 
-- [x] 2.6 Na `/places` zakładka Cmentarze dodaje cmentarz bez nazwy i z nazwą, a lista pokazuje „cmentarz Luboml” i „Cmentarz parafialny, Luboml”
-- [x] 2.7 Drugi cmentarz bez nazwy w tej samej miejscowości pokazuje komunikat pod polem Nazwa
-- [x] 2.8 Scalenie dwóch cmentarzy i próba usunięcia używanego działają jak przy parafii
-- [x] 2.9 Szukanie bez wyników w bieżącej zakładce podpowiada pozostałe zakładki z trafieniami
+- [x] 2.6 Na `/places` zakładka Cmentarze dodaje cmentarz bez nazwy i z nazwą, a lista pokazuje „cmentarz Luboml” i „Cmentarz parafialny, Luboml” — 05ca253
+- [x] 2.7 Drugi cmentarz bez nazwy w tej samej miejscowości pokazuje komunikat pod polem Nazwa — 05ca253
+- [x] 2.8 Scalenie dwóch cmentarzy i próba usunięcia używanego działają jak przy parafii — 05ca253
+- [x] 2.9 Szukanie bez wyników w bieżącej zakładce podpowiada pozostałe zakładki z trafieniami — 05ca253
 - [ ] 2.10 Zrzuty ekranu zapisane w `context/changes/cemeteries/screenshots/`
 
 ### Phase 3: Nagrobek wskazuje cmentarz
 
 #### Automated
 
-- [ ] 3.1 Migracja przechodzi w obie strony: `vendor/bin/sail artisan migrate`, `vendor/bin/sail artisan migrate:rollback --step=1`, `vendor/bin/sail artisan migrate`
-- [ ] 3.2 Test migracji nagrobków przechodzi: `vendor/bin/sail artisan test --compact tests/Feature/GravestoneCemeteryMigrationTest.php`
-- [ ] 3.3 Testy źródeł, nagrobków i miejsc przechodzą: `vendor/bin/sail artisan test --compact tests/Feature/GravestoneTest.php tests/Feature/SourcesTest.php tests/Feature/WriteTargetsTest.php tests/Feature/LocalitiesTest.php tests/Feature/PlacesTest.php tests/Feature/DeleteImpactTest.php`
-- [ ] 3.4 Testy kopii zapasowej przechodzą: `vendor/bin/sail artisan test --compact tests/Backup`
-- [ ] 3.5 Formatowanie PHP i Larastan: `vendor/bin/sail bin pint --dirty --format agent`, `vendor/bin/sail composer types:check`
-- [ ] 3.6 Testy JS, lint, typy, build: `vendor/bin/sail npm run test:js`, `vendor/bin/sail npm run check`, `vendor/bin/sail npm run types:check`, `vendor/bin/sail npm run build`
-- [ ] 3.7 Specy nagrobka i wyboru źródła przechodzą: `npx playwright test tests/e2e/gravestone-cemetery-and-buried.spec.ts tests/e2e/source-found-by-place-and-year.spec.ts tests/e2e/sources-grid-with-filters.spec.ts`
+- [x] 3.1 Migracja przechodzi w obie strony: `vendor/bin/sail artisan migrate`, `vendor/bin/sail artisan migrate:rollback --step=1`, `vendor/bin/sail artisan migrate`
+- [x] 3.2 Test migracji nagrobków przechodzi: `vendor/bin/sail artisan test --compact tests/Feature/GravestoneCemeteryMigrationTest.php`
+- [x] 3.3 Testy źródeł, nagrobków i miejsc przechodzą: `vendor/bin/sail artisan test --compact tests/Feature/GravestoneTest.php tests/Feature/SourcesTest.php tests/Feature/WriteTargetsTest.php tests/Feature/LocalitiesTest.php tests/Feature/PlacesTest.php tests/Feature/DeleteImpactTest.php`
+- [x] 3.4 Testy kopii zapasowej przechodzą: `vendor/bin/sail artisan test --compact tests/Backup`
+- [x] 3.5 Formatowanie PHP i Larastan: `vendor/bin/sail bin pint --dirty --format agent`, `vendor/bin/sail composer types:check`
+- [x] 3.6 Testy JS, lint, typy, build: `vendor/bin/sail npm run test:js`, `vendor/bin/sail npm run check`, `vendor/bin/sail npm run types:check`, `vendor/bin/sail npm run build`
+- [x] 3.7 Specy nagrobka i wyboru źródła przechodzą: `npx playwright test tests/e2e/gravestone-cemetery-and-buried.spec.ts tests/e2e/source-found-by-place-and-year.spec.ts tests/e2e/sources-grid-with-filters.spec.ts`
 
 #### Manual
 
-- [ ] 3.8 W panelu nagrobka „Cmentarz” wybiera cmentarz, a „Dodaj cmentarz” otwiera okno; nowy cmentarz jest od razu wybrany
-- [ ] 3.9 Karty i tabela `/sources` pokazują „cmentarz Luboml” dla migrowanych nagrobków i „Cmentarz parafialny, Luboml” dla nazwanych
-- [ ] 3.10 Filtr „Miejsce” ma grupę Cmentarze; wybór miejscowości dalej pokazuje jej nagrobki
-- [ ] 3.11 Na lokalnej bazie po migracji każdy nagrobek z cmentarzem ma `cemetery_id`, a liczba cmentarzy równa się liczbie różnych miejscowości nagrobków w drzewie
+- [x] 3.8 W panelu nagrobka „Cmentarz” wybiera cmentarz, a „Dodaj cmentarz” otwiera okno; nowy cmentarz jest od razu wybrany
+- [x] 3.9 Karty i tabela `/sources` pokazują „cmentarz Luboml” dla migrowanych nagrobków i „Cmentarz parafialny, Luboml” dla nazwanych
+- [x] 3.10 Filtr „Miejsce” ma grupę Cmentarze; wybór miejscowości dalej pokazuje jej nagrobki
+- [x] 3.11 Na lokalnej bazie po migracji każdy nagrobek z cmentarzem ma `cemetery_id`, a liczba cmentarzy równa się liczbie różnych miejscowości nagrobków w drzewie
 
 ### Phase 4: Pochowanie na cmentarzu
 

@@ -11,6 +11,7 @@ use App\Models\Person;
 use App\Models\Residence;
 use App\Models\Source;
 use App\Models\User;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 /**
@@ -283,7 +284,7 @@ test('a locality still referenced by any kind of record cannot be deleted', func
         'parish' => Parish::factory()->for($user->tree)->seatedIn($locality)->create(),
         'fact' => Event::factory()->for($user->tree)->birth()->create(['locality_id' => $locality->id]),
         'residence' => Residence::factory()->for($person)->create(['tree_id' => $user->tree->id, 'locality_id' => $locality->id]),
-        'gravestone' => Source::factory()->for($user->tree)->gravestone()->create(['cemetery_locality_id' => $locality->id]),
+        'gravestone' => Source::factory()->for($user->tree)->gravestone()->create(['cemetery_id' => Cemetery::factory()->in($locality)->create()->id]),
         'cemetery' => Cemetery::factory()->in($locality)->create(),
     };
 
@@ -303,14 +304,16 @@ test('merging moves every kind of reference of the duplicate to the target and d
     $spouse = Person::factory()->for($user->tree)->create();
 
     $parish = Parish::factory()->for($user->tree)->seatedIn($duplicate)->create();
-    $gravestone = Source::factory()->for($user->tree)->gravestone()->create(['cemetery_locality_id' => $duplicate->id]);
+    $cemetery = Cemetery::factory()->in($duplicate)->create();
+    $gravestone = Source::factory()->for($user->tree)->gravestone()->create(['cemetery_id' => $cemetery->id]);
     $birth = Event::factory()->for($user->tree)->birth()->create(['locality_id' => $duplicate->id]);
     $marriage = attachMarriage($person, $spouse, 1900, locality: $duplicate);
     $burial = Event::factory()->for($user->tree)->burial()->create(['locality_id' => $duplicate->id]);
     $residence = Residence::factory()->for($person)->create(['tree_id' => $user->tree->id, 'locality_id' => $duplicate->id, 'year_from' => 1900, 'year_to' => 1910]);
 
     $otherParish = Parish::factory()->for($user->tree)->seatedIn($other)->create();
-    $otherGravestone = Source::factory()->for($user->tree)->gravestone()->create(['cemetery_locality_id' => $other->id]);
+    $otherCemetery = Cemetery::factory()->in($other)->create();
+    $otherGravestone = Source::factory()->for($user->tree)->gravestone()->create(['cemetery_id' => $otherCemetery->id]);
     $otherEvent = Event::factory()->for($user->tree)->birth()->create(['locality_id' => $other->id]);
     $otherResidence = Residence::factory()->for($person)->create(['tree_id' => $user->tree->id, 'locality_id' => $other->id]);
     $foreignEvent = Event::factory()->for(User::factory()->create()->tree)->birth()->create(['locality_id' => $foreign->id]);
@@ -322,17 +325,34 @@ test('merging moves every kind of reference of the duplicate to the target and d
     expect(Locality::find($duplicate->id))->toBeNull();
     expect($target->refresh()->name)->toBe('Kraków');
     expect($parish->refresh()->locality_id)->toBe($target->id);
-    expect($gravestone->refresh()->cemetery_locality_id)->toBe($target->id);
+    expect($cemetery->refresh()->locality_id)->toBe($target->id);
+    expect($gravestone->refresh()->cemetery_id)->toBe($cemetery->id);
     expect($birth->refresh()->locality_id)->toBe($target->id);
     expect($marriage->refresh()->locality_id)->toBe($target->id);
     expect($burial->refresh()->locality_id)->toBe($target->id);
     expect($residence->refresh()->locality_id)->toBe($target->id);
 
     expect($otherParish->refresh()->locality_id)->toBe($other->id);
-    expect($otherGravestone->refresh()->cemetery_locality_id)->toBe($other->id);
+    expect($otherCemetery->refresh()->locality_id)->toBe($other->id);
+    expect($otherGravestone->refresh()->cemetery_id)->toBe($otherCemetery->id);
     expect($otherEvent->refresh()->locality_id)->toBe($other->id);
     expect($otherResidence->refresh()->locality_id)->toBe($other->id);
     expect($foreignEvent->refresh()->locality_id)->toBe($foreign->id);
+});
+
+test('merging works for a legacy gravestone whose old cemetery locality still names the duplicate', function () {
+    $user = User::factory()->create();
+    $duplicate = Locality::factory()->for($user->tree)->create();
+    $target = Locality::factory()->for($user->tree)->create();
+    $gravestone = Source::factory()->for($user->tree)->gravestone()->create();
+
+    DB::table('sources')->where('id', $gravestone->id)->update(['cemetery_locality_id' => $duplicate->id]);
+
+    $this->actingAs($user)->post(route('localities.merge', $duplicate), ['target_id' => $target->id])
+        ->assertSessionHasNoErrors();
+
+    expect(Locality::find($duplicate->id))->toBeNull();
+    expect(Source::find($gravestone->id))->not->toBeNull();
 });
 
 test('merging keeps one residence where the same person lived in the same years', function (?int $fromTarget, ?int $toTarget, ?int $fromDuplicate, ?int $toDuplicate, int $expectedRows) {

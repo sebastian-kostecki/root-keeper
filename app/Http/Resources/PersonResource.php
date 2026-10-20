@@ -36,7 +36,7 @@ class PersonResource extends JsonResource
      *     children?: list<array<string, mixed>>,
      *     marriages?: list<array<string, mixed>>,
      *     residences?: list<array{id: int, locality: array{id: int, name: string}, year_from: int|null, year_to: int|null}>,
-     *     gravestones?: list<array{id: int, display_name: string, cemetery_name: string|null}>,
+     *     gravestones?: list<array{id: int, display_name: string, cemetery_label: string|null}>,
      * }
      */
     public function toArray(Request $request): array
@@ -76,7 +76,7 @@ class PersonResource extends JsonResource
                 ->map(fn (Source $source): array => [
                     'id' => $source->id,
                     'display_name' => $source->displayName(),
-                    'cemetery_name' => $source->cemetery?->name,
+                    'cemetery_label' => $source->cemetery?->label(),
                 ])
                 ->values()
                 ->all()),

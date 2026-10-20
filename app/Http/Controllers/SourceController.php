@@ -6,6 +6,7 @@ use App\Actions\Sources\DeleteSource;
 use App\Actions\Sources\StoreSource;
 use App\Actions\Sources\UpdateSource;
 use App\Actions\Trees\ListPersonCandidates;
+use App\Enums\CemeteryManager;
 use App\Enums\Religion;
 use App\Enums\SourceKind;
 use App\Enums\SourceRecordType;
@@ -13,6 +14,7 @@ use App\Http\Requests\SourceStoreRequest;
 use App\Http\Requests\SourceUpdateRequest;
 use App\Http\Resources\ParishResource;
 use App\Http\Resources\SourceResource;
+use App\Models\Cemetery;
 use App\Models\Event;
 use App\Models\EventSource;
 use App\Models\Locality;
@@ -50,7 +52,7 @@ class SourceController extends Controller
 
         return Inertia::render('sources/index', [
             'sources' => fn (): array => SourceResource::collection(
-                $tree->sources()->with(['parish.locality', 'cemetery'])->withCount('events')->latest()->orderByDesc('id')->get()
+                $tree->sources()->with(['parish.locality', 'cemetery.locality'])->withCount('events')->latest()->orderByDesc('id')->get()
             )->resolve(),
             'personCandidates' => Inertia::optional(fn (): array => $listPersonCandidates->handle($tree)),
             'filters' => [
@@ -82,7 +84,7 @@ class SourceController extends Controller
 
                 Gate::authorize('view', $source);
 
-                $source->load(['parish.locality', 'cemetery', 'buriedPeople', 'events' => fn ($query) => $query->withCount('sources')->with('participants')]);
+                $source->load(['parish.locality', 'cemetery.locality', 'buriedPeople', 'events' => fn ($query) => $query->withCount('sources')->with('participants')]);
 
                 return [
                     'source' => SourceResource::make($source)->resolve(),
@@ -96,7 +98,7 @@ class SourceController extends Controller
     /**
      * The suggestion lists the source panel needs: the tree's parishes, localities and archives, and the religions.
      *
-     * @return array{parishes: array<int, array<string, mixed>>, localities: array<int, array{id: int, name: string, is_defunct: bool}>, archives: array<int, string>, religions: array<int, array{value: string, label: string}>}
+     * @return array{parishes: array<int, array<string, mixed>>, cemeteries: array<int, array{id: int, label: string, locality_id: int, locality_name: string}>, cemeteryManagers: array<int, array{value: string, label: string}>, localities: array<int, array{id: int, name: string, is_defunct: bool}>, archives: array<int, string>, religions: array<int, array{value: string, label: string}>}
      */
     private function panelOptions(Request $request): array
     {
@@ -104,6 +106,8 @@ class SourceController extends Controller
 
         return [
             'parishes' => ParishResource::collection($tree->parishes()->with('locality')->orderBy('name')->get())->resolve(),
+            'cemeteries' => $this->cemeteryOptions($tree),
+            'cemeteryManagers' => CemeteryManager::options(),
             'localities' => $tree->localities()->orderBy('name')->get(['id', 'name', 'is_defunct'])
                 ->map(fn (Locality $locality): array => ['id' => $locality->id, 'name' => $locality->name, 'is_defunct' => $locality->is_defunct])
                 ->all(),
@@ -113,17 +117,17 @@ class SourceController extends Controller
     }
 
     /**
-     * The places the list filter offers: localities that are a gravestone's cemetery or an act parish's seat,
-     * and the parishes an act uses; both by name.
+     * The places the list filter offers: localities that hold a gravestone's cemetery or an act parish's seat,
+     * the parishes an act uses and the cemeteries a gravestone uses; each by name.
      *
-     * @return array{localities: array<int, array{id: int, name: string}>, parishes: array<int, array{id: int, label: string}>}
+     * @return array{localities: array<int, array{id: int, name: string}>, parishes: array<int, array{id: int, label: string}>, cemeteries: array<int, array{id: int, label: string}>}
      */
     private function placeOptions(Tree $tree): array
     {
         return [
             'localities' => $tree->localities()
                 ->where(fn (Builder $query) => $query
-                    ->whereHas('cemeterySources')
+                    ->whereHas('cemeteries.sources')
                     ->orWhereHas('parishes.sources'))
                 ->orderBy('name')
                 ->get(['id', 'name'])
@@ -136,7 +140,31 @@ class SourceController extends Controller
                 ->map(fn (Parish $parish): array => ['id' => $parish->id, 'label' => $parish->label()])
                 ->values()
                 ->all(),
+            'cemeteries' => $tree->cemeteries()
+                ->whereHas('sources')
+                ->with('locality')
+                ->get()
+                ->sortBy(fn (Cemetery $cemetery): string => mb_strtolower($cemetery->label()))
+                ->map(fn (Cemetery $cemetery): array => ['id' => $cemetery->id, 'label' => $cemetery->label()])
+                ->values()
+                ->all(),
         ];
+    }
+
+    /**
+     * The tree's cemeteries as suggestion options, by label.
+     *
+     * @return array<int, array{id: int, label: string, locality_id: int, locality_name: string}>
+     */
+    private function cemeteryOptions(Tree $tree): array
+    {
+        return $tree->cemeteries()
+            ->with('locality')
+            ->get()
+            ->sortBy(fn (Cemetery $cemetery): string => mb_strtolower($cemetery->label()))
+            ->map(fn (Cemetery $cemetery): array => $cemetery->toOption())
+            ->values()
+            ->all();
     }
 
     /**
@@ -330,19 +358,23 @@ class SourceController extends Controller
             return $source->kind === SourceKind::MetricalRecord && $source->parish_id === $id;
         }
 
+        if ($type === 'cmentarz') {
+            return $source->kind === SourceKind::Gravestone && $source->cemetery_id === $id;
+        }
+
         return match ($source->kind) {
-            SourceKind::Gravestone => $source->cemetery_locality_id === $id,
+            SourceKind::Gravestone => $source->cemetery?->locality_id === $id,
             SourceKind::MetricalRecord => $source->parish?->locality_id === $id,
             SourceKind::Other => false,
         };
     }
 
     /**
-     * Normalize the raw `place` query parameter: `miejscowosc-{id}` or `parafia-{id}`, or '' when absent or malformed.
+     * Normalize the raw `place` query parameter: `miejscowosc-{id}`, `parafia-{id}` or `cmentarz-{id}`, or '' when absent or malformed.
      */
     private function normalizePlace(mixed $place): string
     {
-        return is_string($place) && preg_match('/^(miejscowosc|parafia)-\d+$/', $place) === 1 ? $place : '';
+        return is_string($place) && preg_match('/^(miejscowosc|parafia|cmentarz)-\d+$/', $place) === 1 ? $place : '';
     }
 
     /**

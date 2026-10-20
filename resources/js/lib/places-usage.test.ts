@@ -15,15 +15,13 @@ function usage(partial: Partial<LocalityUsage>): LocalityUsage {
     const parishes = partial.parishes ?? 0;
     const residences = partial.residences ?? 0;
     const cemeteries = partial.cemeteries ?? 0;
-    const gravestones = partial.gravestones ?? 0;
 
     return {
         facts,
         parishes,
         residences,
         cemeteries,
-        gravestones,
-        total: facts + parishes + residences + cemeteries + gravestones,
+        total: facts + parishes + residences + cemeteries,
     };
 }
 
@@ -32,7 +30,6 @@ const mixed = usage({
     parishes: 1,
     residences: 2,
     cemeteries: 2,
-    gravestones: 1,
 });
 
 describe('parishUsagePhrase', () => {
@@ -70,19 +67,17 @@ describe('localityUsagePhrase', () => {
         [{ residences: 1 }, '1 zamieszkaniu'],
         [{ cemeteries: 1 }, '1 cmentarzu'],
         [{ cemeteries: 5 }, '5 cmentarzach'],
-        [{ gravestones: 1 }, '1 nagrobku'],
         [{ facts: 5 }, '5 faktach'],
-        [{ gravestones: 22 }, '22 nagrobkach'],
     ])('odmienia %j w miejscowniku', (partial, expected) => {
         expect(localityUsagePhrase(usage(partial))).toBe(expected);
     });
 
     it('pomija zera i łączy pozycje przez „i” przed ostatnią', () => {
         expect(localityUsagePhrase(mixed)).toBe(
-            '3 faktach, 1 parafii, 2 zamieszkaniach, 2 cmentarzach i 1 nagrobku',
+            '3 faktach, 1 parafii, 2 zamieszkaniach i 2 cmentarzach',
         );
-        expect(localityUsagePhrase(usage({ facts: 3, gravestones: 2 }))).toBe(
-            '3 faktach i 2 nagrobkach',
+        expect(localityUsagePhrase(usage({ facts: 3, cemeteries: 2 }))).toBe(
+            '3 faktach i 2 cmentarzach',
         );
     });
 
@@ -98,7 +93,7 @@ describe('localityUsageNominative', () => {
 
     it('odmienia w mianowniku i łączy pozycje', () => {
         expect(localityUsageNominative(mixed)).toBe(
-            '3 fakty, 1 parafia, 2 zamieszkania, 2 cmentarze i 1 nagrobek',
+            '3 fakty, 1 parafia, 2 zamieszkania i 2 cmentarze',
         );
     });
 

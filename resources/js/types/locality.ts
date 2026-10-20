@@ -3,7 +3,6 @@ export type LocalityUsage = {
     parishes: number;
     residences: number;
     cemeteries: number;
-    gravestones: number;
     total: number;
 };
 

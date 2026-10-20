@@ -1,3 +1,4 @@
+import type { CemeteryManagerOption, CemeteryOption } from './cemetery';
 import type { LocalityOption, Parish, ReligionOption } from './parish';
 import type { PersonEvent } from './person';
 
@@ -24,8 +25,10 @@ export type Source = {
     parish_name: string | null;
     parish_locality_id: number | null;
     locality_name: string | null;
+    cemetery_id: number | null;
+    cemetery_label: string | null;
+    /** The locality of the gravestone's cemetery (the server derives it). */
     cemetery_locality_id: number | null;
-    cemetery_name: string | null;
     buried_people?: BuriedPerson[];
     url: string | null;
     note: string | null;
@@ -59,6 +62,8 @@ export type SourcePanelProps = {
     confirms: SourceConfirmation[];
     parishes: Parish[];
     localities: LocalityOption[];
+    cemeteries: CemeteryOption[];
+    cemeteryManagers: CemeteryManagerOption[];
     archives: string[];
     religions: ReligionOption[];
 } | null;

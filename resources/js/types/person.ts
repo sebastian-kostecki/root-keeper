@@ -83,7 +83,7 @@ export type PersonResidence = {
 export type PersonGravestone = {
     id: number;
     display_name: string;
-    cemetery_name: string | null;
+    cemetery_label: string | null;
 };
 
 export type Person = {

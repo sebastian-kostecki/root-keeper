@@ -10,7 +10,7 @@ import {
 
 const empty = {
     kind: 'other' as const,
-    cemetery_name: null,
+    cemetery_label: null,
     record_type_label: null,
     year: null,
     archive: null,
@@ -59,9 +59,19 @@ describe('formatSourceMeta', () => {
                 ...empty,
                 kind: 'gravestone',
                 year: 1950,
-                cemetery_name: 'Luboml',
+                cemetery_label: 'cmentarz Luboml',
             }),
         ).toBe('1950 · cmentarz Luboml');
+    });
+
+    it('shows the label of a named cemetery with its locality', () => {
+        expect(
+            formatSourceMeta({
+                ...empty,
+                kind: 'gravestone',
+                cemetery_label: 'Cmentarz parafialny, Luboml',
+            }),
+        ).toBe('Cmentarz parafialny, Luboml');
     });
 
     it('shows no place for a gravestone without a cemetery', () => {
@@ -96,8 +106,8 @@ const akt = {
     record_type_label: null,
     parish_id: null,
     parish_label: null,
-    cemetery_locality_id: null,
-    cemetery_name: null,
+    cemetery_id: null,
+    cemetery_label: null,
 };
 
 const gravestone = { ...akt, kind: 'gravestone' as const };
@@ -188,7 +198,7 @@ describe('erasedRecordFields', () => {
     it('lists nothing for a gravestone without a cemetery and buried people', () => {
         expect(
             erasedRecordFields(gravestone, 'other', {
-                cemetery_locality_id: '',
+                cemetery_id: '',
                 buried_person_ids: [],
             }),
         ).toEqual([]);
@@ -199,21 +209,21 @@ describe('erasedRecordFields', () => {
             erasedRecordFields(
                 {
                     ...gravestone,
-                    cemetery_locality_id: 4,
-                    cemetery_name: 'Luboml',
+                    cemetery_id: 4,
+                    cemetery_label: 'cmentarz Luboml',
                     buried_people: [
                         { id: 1, display_name: 'Jan Kowalski' },
                         { id: 2, display_name: 'Maria Kowalska' },
                     ],
                 },
                 'other',
-                { cemetery_locality_id: '4', buried_person_ids: ['1', '2'] },
+                { cemetery_id: '4', buried_person_ids: ['1', '2'] },
             ),
         ).toEqual([
             {
-                field: 'cemetery_locality_id',
+                field: 'cemetery_id',
                 label: 'Cmentarz',
-                value: 'Luboml',
+                value: 'cmentarz Luboml',
             },
             {
                 field: 'buried_person_ids',
@@ -228,18 +238,18 @@ describe('erasedRecordFields', () => {
             erasedRecordFields(
                 {
                     ...gravestone,
-                    cemetery_locality_id: 4,
-                    cemetery_name: 'Luboml',
+                    cemetery_id: 4,
+                    cemetery_label: 'cmentarz Luboml',
                     buried_people: [{ id: 1, display_name: 'Jan Kowalski' }],
                 },
                 'metrical_record',
-                { cemetery_locality_id: '' },
+                { cemetery_id: '' },
             ),
         ).toEqual([
             {
-                field: 'cemetery_locality_id',
+                field: 'cemetery_id',
                 label: 'Cmentarz',
-                value: 'Luboml',
+                value: 'cmentarz Luboml',
             },
             {
                 field: 'buried_person_ids',
@@ -271,21 +281,28 @@ describe('erasedRecordFields', () => {
         ]);
     });
 
-    it('names a cemetery chosen in the form by its option name', () => {
+    it('names a cemetery chosen in the form by its option label', () => {
         expect(
             erasedRecordFields(
                 gravestone,
                 'other',
-                { cemetery_locality_id: '9' },
+                { cemetery_id: '9' },
                 [],
                 [],
-                [{ id: 9, name: 'Chełm' }],
+                [
+                    {
+                        id: 9,
+                        label: 'Parafialny, Chełm',
+                        locality_id: 2,
+                        locality_name: 'Chełm',
+                    },
+                ],
             ),
         ).toEqual([
             {
-                field: 'cemetery_locality_id',
+                field: 'cemetery_id',
                 label: 'Cmentarz',
-                value: 'Chełm',
+                value: 'Parafialny, Chełm',
             },
         ]);
     });
@@ -328,7 +345,7 @@ describe('isUndescribed', () => {
 });
 
 const summarySource = {
-    cemetery_name: null,
+    cemetery_label: null,
     kind: 'other' as const,
     kind_short_label: 'inne',
     record_type_label: null,
@@ -422,7 +439,7 @@ describe('formatSourceSummary', () => {
                 kind: 'gravestone',
                 kind_short_label: 'nagrobek',
                 year: 1950,
-                cemetery_name: 'Luboml',
+                cemetery_label: 'cmentarz Luboml',
             }),
         ).toBe('nagrobek · 1950 · cmentarz Luboml');
     });

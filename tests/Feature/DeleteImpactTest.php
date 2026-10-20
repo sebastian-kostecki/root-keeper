@@ -61,7 +61,7 @@ test('merging a locality removes exactly the duplicate and its redundant residen
     $redundantResidence = Residence::factory()->for($person)->create(['tree_id' => $user->tree->id, 'locality_id' => $duplicate->id, 'year_from' => 1900, 'year_to' => 1910]);
     $movedResidence = Residence::factory()->for($movedPerson)->create(['tree_id' => $user->tree->id, 'locality_id' => $duplicate->id]);
     $parish = Parish::factory()->for($user->tree)->seatedIn($duplicate)->create();
-    $gravestone = Source::factory()->for($user->tree)->gravestone()->create(['cemetery_locality_id' => $duplicate->id]);
+    $cemetery = Cemetery::factory()->in($duplicate)->create();
     $event = Event::factory()->for($user->tree)->birth()->create(['locality_id' => $duplicate->id]);
 
     $before = databaseRows();
@@ -71,7 +71,7 @@ test('merging a locality removes exactly the duplicate and its redundant residen
 
     $diff = rowDiff($before, databaseRows());
 
-    expect(array_keys($diff['tables']))->toBe(['events', 'localities', 'parishes', 'residences', 'sources']);
+    expect(array_keys($diff['tables']))->toBe(['cemeteries', 'events', 'localities', 'parishes', 'residences']);
     expect(rowIds($diff['tables']['localities']['removed']))->toBe([$duplicate->id]);
     expect(collect($diff['tables']['localities']['changed'])->pluck('after.id')->all())->toBe([$target->id]);
     expect($diff['tables']['localities']['changed'][0]['after']['description'])->toBe('Opis duplikatu');
@@ -79,8 +79,8 @@ test('merging a locality removes exactly the duplicate and its redundant residen
     expect(collect($diff['tables']['residences']['changed'])->pluck('after.id')->all())->toBe([$movedResidence->id]);
     expect(collect($diff['tables']['events']['changed'])->pluck('after.id')->all())->toBe([$event->id]);
     expect(collect($diff['tables']['parishes']['changed'])->pluck('after.id')->all())->toBe([$parish->id]);
-    expect(collect($diff['tables']['sources']['changed'])->pluck('after.id')->all())->toBe([$gravestone->id]);
-    foreach (['events', 'localities', 'parishes', 'residences', 'sources'] as $table) {
+    expect(collect($diff['tables']['cemeteries']['changed'])->pluck('after.id')->all())->toBe([$cemetery->id]);
+    foreach (['cemeteries', 'events', 'localities', 'parishes', 'residences'] as $table) {
         expect($diff['tables'][$table]['added'])->toBe([]);
     }
     expect($diff['files'])->toBe(['removed' => [], 'added' => []]);

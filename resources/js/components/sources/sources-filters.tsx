@@ -385,6 +385,13 @@ export function SourcesFilterBar({
                 label: parish.label,
             })),
         },
+        {
+            heading: 'Cmentarze',
+            options: placeOptions.cemeteries.map((cemetery) => ({
+                value: `cmentarz-${cemetery.id}`,
+                label: cemetery.label,
+            })),
+        },
     ].filter((group) => group.options.length > 0);
     const archiveGroups: ListGroup[] = [
         {

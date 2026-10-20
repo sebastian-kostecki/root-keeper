@@ -7,7 +7,6 @@ export const noLocalityUsage: LocalityUsage = {
     parishes: 0,
     residences: 0,
     cemeteries: 0,
-    gravestones: 0,
     total: 0,
 };
 
@@ -69,12 +68,6 @@ export function localityUsagePhrase(usage: LocalityUsage): string {
         );
     }
 
-    if (usage.gravestones > 0) {
-        parts.push(
-            countOf(usage.gravestones, 'nagrobku', 'nagrobkach', 'nagrobkach'),
-        );
-    }
-
     return joinPolish(parts);
 }
 
@@ -106,12 +99,6 @@ export function localityUsageNominative(usage: LocalityUsage): string {
     if (usage.cemeteries > 0) {
         parts.push(
             countOf(usage.cemeteries, 'cmentarz', 'cmentarze', 'cmentarzy'),
-        );
-    }
-
-    if (usage.gravestones > 0) {
-        parts.push(
-            countOf(usage.gravestones, 'nagrobek', 'nagrobki', 'nagrobków'),
         );
     }
 

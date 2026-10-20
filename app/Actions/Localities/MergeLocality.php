@@ -50,7 +50,6 @@ class MergeLocality
             $lockedDuplicate->parishes()->update(['locality_id' => $lockedTarget->id]);
             $lockedDuplicate->events()->update(['locality_id' => $lockedTarget->id]);
             $lockedDuplicate->residences()->update(['locality_id' => $lockedTarget->id]);
-            $lockedDuplicate->cemeterySources()->update(['cemetery_locality_id' => $lockedTarget->id]);
 
             $this->dropMovedResidencesAlreadyAtTarget($lockedTarget, $movedResidenceIds);
 

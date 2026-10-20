@@ -75,6 +75,6 @@ class SourceUpdateRequest extends FormRequest
 
         return $source->kind === SourceKind::Gravestone
             && $submittedKind !== SourceKind::Gravestone->value
-            && ($source->cemetery_locality_id !== null || $source->buriedPeople()->exists());
+            && ($source->cemetery_id !== null || $source->buriedPeople()->exists());
     }
 }
