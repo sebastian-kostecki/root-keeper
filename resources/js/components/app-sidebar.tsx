@@ -48,7 +48,9 @@ export function AppSidebar() {
             href: placesIndex(),
             icon: MapPin,
             count: navCounts
-                ? navCounts.localities + navCounts.parishes
+                ? navCounts.localities +
+                  navCounts.parishes +
+                  navCounts.cemeteries
                 : undefined,
         },
     ];

@@ -23,6 +23,7 @@ declare module '@inertiajs/core' {
                 sources: number;
                 localities: number;
                 parishes: number;
+                cemeteries: number;
             } | null;
             personPreview: PersonPreviewPayload | null;
             marriagePanel: MarriagePanelPayload | null;

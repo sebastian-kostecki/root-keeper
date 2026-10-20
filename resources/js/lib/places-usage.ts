@@ -127,3 +127,38 @@ export function parishUsagePhrase(count: number): string {
 export function parishUsageNominative(count: number): string {
     return count === 0 ? 'brak' : countOf(count, 'akt', 'akty', 'aktów');
 }
+
+/** Locative list for a cemetery, e.g. „2 nagrobkach i 1 pochowaniu”. */
+export function cemeteryUsagePhrase(sources: number, burials: number): string {
+    const parts: string[] = [];
+
+    if (sources > 0) {
+        parts.push(countOf(sources, 'nagrobku', 'nagrobkach', 'nagrobkach'));
+    }
+
+    if (burials > 0) {
+        parts.push(
+            countOf(burials, 'pochowaniu', 'pochowaniach', 'pochowaniach'),
+        );
+    }
+
+    return joinPolish(parts);
+}
+
+/** Nominative list for the merge dialog, e.g. „2 nagrobki i 1 pochowanie”; „brak” when none. */
+export function cemeteryUsageNominative(
+    sources: number,
+    burials: number,
+): string {
+    const parts: string[] = [];
+
+    if (sources > 0) {
+        parts.push(countOf(sources, 'nagrobek', 'nagrobki', 'nagrobków'));
+    }
+
+    if (burials > 0) {
+        parts.push(countOf(burials, 'pochowanie', 'pochowania', 'pochowań'));
+    }
+
+    return parts.length === 0 ? 'brak' : joinPolish(parts);
+}

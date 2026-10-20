@@ -60,7 +60,7 @@ test('places-page: a parish name searched on the localities tab offers the paris
     // 2. Start on the localities tab (the default), and search the parish's name there.
     await page.goto('/places');
     const search = page.getByRole('searchbox', {
-        name: 'Szukaj miejscowości i parafii',
+        name: 'Szukaj miejscowości, parafii i cmentarzy',
     });
     await search.fill(parishName);
 
@@ -83,6 +83,8 @@ test('places-page: a parish name searched on the localities tab offers the paris
         page.getByRole('link', { name: parishName, exact: true }),
     ).toBeVisible();
     await expect(
-        page.getByRole('searchbox', { name: 'Szukaj miejscowości i parafii' }),
+        page.getByRole('searchbox', {
+            name: 'Szukaj miejscowości, parafii i cmentarzy',
+        }),
     ).toHaveValue(parishName);
 });

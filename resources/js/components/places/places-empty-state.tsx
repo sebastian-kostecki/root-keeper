@@ -1,10 +1,15 @@
-import { ChurchIcon, MapPinIcon, SearchXIcon } from 'lucide-react';
+import {
+    ChurchIcon,
+    LandmarkIcon,
+    MapPinIcon,
+    SearchXIcon,
+} from 'lucide-react';
 import type { ReactNode } from 'react';
 import { EmptyState } from '@/components/empty-state';
 import { Button } from '@/components/ui/button';
 import type { PlacesKind } from '@/lib/places-index';
 
-type OtherKindAction = {
+export type OtherKindAction = {
     label: string;
     count: number;
     onShow: () => void;
@@ -24,12 +29,19 @@ const emptyTreeCopy: Record<
         title: 'Brak parafii',
         description: 'Dodaj pierwszą parafię: nazwę, wyznanie i siedzibę.',
     },
+    cmentarze: {
+        icon: <LandmarkIcon />,
+        title: 'Brak cmentarzy',
+        description:
+            'Dodaj pierwszy cmentarz: miejscowość, a opcjonalnie nazwę i zarządcę.',
+    },
 };
 
 const noResultsDescription: Record<PlacesKind, (query: string) => string> = {
     miejscowosci: (query) =>
         `Nie znaleziono miejscowości pasujących do „${query}”.`,
     parafie: (query) => `Nie znaleziono parafii pasujących do „${query}”.`,
+    cmentarze: (query) => `Nie znaleziono cmentarzy pasujących do „${query}”.`,
 };
 
 /** The tree has no records of this kind yet; `action` is the „Dodaj …” button. */
@@ -51,19 +63,19 @@ export function PlacesEmptyTree({
 }
 
 /**
- * Nothing matches the search in this list. `other` offers the list where the search does hit,
+ * Nothing matches the search in this list. `others` offers each list where the search does hit,
  * shown first as „Pokaż w … (n)”.
  */
 export function PlacesNoResults({
     kind,
     query,
     onClear,
-    other,
+    others,
 }: {
     kind: PlacesKind;
     query: string;
     onClear: () => void;
-    other?: OtherKindAction;
+    others: OtherKindAction[];
 }) {
     return (
         <EmptyState
@@ -72,11 +84,15 @@ export function PlacesNoResults({
             description={noResultsDescription[kind](query)}
             action={
                 <div className="flex flex-wrap justify-center gap-2">
-                    {other !== undefined && (
-                        <Button variant="outline" onClick={other.onShow}>
+                    {others.map((other) => (
+                        <Button
+                            key={other.label}
+                            variant="outline"
+                            onClick={other.onShow}
+                        >
                             {other.label} ({other.count})
                         </Button>
-                    )}
+                    ))}
                     <Button variant="outline" onClick={onClear}>
                         Wyczyść wyszukiwanie
                     </Button>

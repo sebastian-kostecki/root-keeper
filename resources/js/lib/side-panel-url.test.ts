@@ -34,6 +34,15 @@ describe('withPanel', () => {
         );
     });
 
+    it('opens the cemetery panel and drops the key of another panel', () => {
+        expect(
+            withPanel('/places?kind=cmentarze&parish=3', 'cemetery', 4),
+        ).toBe('/places?kind=cmentarze&cemetery=4');
+        expect(withPanel('/places?cemetery=2', 'locality', 'new')).toBe(
+            '/places?locality=new',
+        );
+    });
+
     it('opens the marriage panel and drops the key of the person panel', () => {
         expect(withPanel('/tree?person=7', 'marriage', 4)).toBe(
             '/tree?marriage=4',
@@ -88,6 +97,7 @@ describe('withPanel', () => {
 describe('panelPropFor', () => {
     it('returns the server prop of a registered panel', () => {
         expect(panelPropFor('person')).toBe('personPreview');
+        expect(panelPropFor('cemetery')).toBe('cemeteryPanel');
     });
 
     it('returns null for the client-only add key', () => {

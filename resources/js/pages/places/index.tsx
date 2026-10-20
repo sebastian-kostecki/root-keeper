@@ -1,6 +1,8 @@
 import { Head, Link, router } from '@inertiajs/react';
 import { useEffect, useRef, useState } from 'react';
 import type { MouseEvent } from 'react';
+import { CemeteriesTable } from '@/components/cemeteries/cemeteries-table';
+import { CemeteryPanel } from '@/components/cemeteries/cemetery-panel';
 import { DiscardChangesDialog } from '@/components/discard-changes-dialog';
 import Heading from '@/components/heading';
 import InputError from '@/components/input-error';
@@ -8,6 +10,7 @@ import { LocalitiesTable } from '@/components/localities/localities-table';
 import { LocalityPanel } from '@/components/localities/locality-panel';
 import { ParishesTable } from '@/components/parishes/parishes-table';
 import { ParishPanel } from '@/components/parishes/parish-panel';
+import type { OtherKindAction } from '@/components/places/places-empty-state';
 import {
     PlacesEmptyTree,
     PlacesNoResults,
@@ -18,6 +21,7 @@ import type { SegmentedToggleItem } from '@/components/segmented-toggle';
 import { Button } from '@/components/ui/button';
 import { useSidePanelNavigation } from '@/hooks/use-side-panel-navigation';
 import { useUnsavedChangesGuard } from '@/hooks/use-unsaved-changes-guard';
+import { filterCemeteries, sortCemeteries } from '@/lib/cemeteries-index';
 import { filterLocalities, sortLocalities } from '@/lib/localities-index';
 import {
     otherKindHint,
@@ -33,6 +37,8 @@ import type { VisitError } from '@/lib/visit-failure';
 import { index as placesIndex } from '@/routes/places';
 import type {
     BreadcrumbItem,
+    Cemetery,
+    CemeteryManagerOption,
     Locality,
     LocalityKindOption,
     Parish,
@@ -42,11 +48,14 @@ import type {
 type Props = {
     localities: Locality[];
     parishes: Parish[];
+    cemeteries: Cemetery[];
+    cemeteryManagers: CemeteryManagerOption[];
     religions: ReligionOption[];
     localityKinds: LocalityKindOption[];
     filters: { q: string; kind: PlacesKind };
     localityPanel: { locality: Locality | null } | null;
     parishPanel: { parish: Parish | null } | null;
+    cemeteryPanel: { cemetery: Cemetery | null } | null;
 };
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -62,6 +71,7 @@ const VISIT_ERROR = 'Nie udało się wczytać listy.';
 const kindLocative: Record<PlacesKind, string> = {
     miejscowosci: 'miejscowościach',
     parafie: 'parafiach',
+    cmentarze: 'cmentarzach',
 };
 
 /** Splits a panel key such as `parish:3` into its panel and record id. */
@@ -69,6 +79,16 @@ function splitPanelKey(key: number | string): [string, string] {
     const [panel, id = ''] = String(key).split(':');
 
     return [panel, id];
+}
+
+/** The side-panel navigation of a panel key such as `parish`; the localities' for anything else. */
+function panelNavFor<T>(
+    navs: { locality: T; parish: T; cemetery: T },
+    panel: string,
+): T {
+    return panel === 'parish' || panel === 'cemetery'
+        ? navs[panel]
+        : navs.locality;
 }
 
 /** The address from the live `window.location`, with `q` and/or `kind` replaced. */
@@ -82,11 +102,14 @@ function liveUrl(filters: { q?: string; kind?: PlacesKind }): string {
 export default function Index({
     localities,
     parishes,
+    cemeteries,
+    cemeteryManagers,
     religions,
     localityKinds,
     filters,
     localityPanel,
     parishPanel,
+    cemeteryPanel,
 }: Props) {
     const [search, setSearch] = useState(filters.q);
     const [visitError, setVisitError] = useState<VisitError | null>(null);
@@ -99,26 +122,32 @@ export default function Index({
     const trimmedSearch = search.trim();
     const localityNav = useSidePanelNavigation('locality');
     const parishNav = useSidePanelNavigation('parish');
-    const isParishTab = filters.kind === 'parafie';
+    const cemeteryNav = useSidePanelNavigation('cemetery');
+    const navFor = {
+        locality: localityNav,
+        parish: parishNav,
+        cemetery: cemeteryNav,
+    };
 
     const openedLocalityId = localityPanel?.locality?.id ?? null;
     const openedParishId = parishPanel?.parish?.id ?? null;
+    const openedCemeteryId = cemeteryPanel?.cemetery?.id ?? null;
     /** Key of the record shown now (`locality:3`, `parish:new`), or null when no panel is open. */
     const openKey =
         localityPanel !== null
             ? `locality:${localityPanel.locality?.id ?? 'new'}`
             : parishPanel !== null
               ? `parish:${parishPanel.parish?.id ?? 'new'}`
-              : null;
+              : cemeteryPanel !== null
+                ? `cemetery:${cemeteryPanel.cemetery?.id ?? 'new'}`
+                : null;
+
+    const panelNav = (panel: string) => panelNavFor(navFor, panel);
 
     const openByKey = (key: number | string) => {
         const [panel, id] = splitPanelKey(key);
 
-        if (panel === 'parish') {
-            parishNav.open(id);
-        } else {
-            localityNav.open(id);
-        }
+        panelNav(panel).open(id);
     };
 
     const { setIsDirty, guard, guardLink, discardDialog } =
@@ -242,10 +271,7 @@ export default function Index({
         lastVisitedQuery.current = trimmedSearch;
 
         const [panel, id] = splitPanelKey(key);
-        const href =
-            panel === 'parish'
-                ? parishNav.hrefFor(id)
-                : localityNav.hrefFor(id);
+        const href = panelNav(panel).hrefFor(id);
 
         router.visit(withPlacesQuery(href, { q: trimmedSearch }), {
             ...panelVisitOptions,
@@ -259,46 +285,53 @@ export default function Index({
     const visibleParishes = sortParishes(
         filterParishes(parishes, trimmedSearch),
     );
+    const visibleCemeteries = sortCemeteries(
+        filterCemeteries(cemeteries, trimmedSearch),
+    );
 
     // Counts follow the live search, like the table; the status text follows the committed one, so it is read once per pause.
-    const counts = placesCounts(localities, parishes, trimmedSearch);
-    const hint = otherKindHint(filters.kind, counts, trimmedSearch);
-    const otherAction =
-        hint === null
-            ? undefined
-            : {
-                  label: `Pokaż w ${kindLocative[hint.kind]}`,
-                  count: hint.count,
-                  onShow: () => showInKind(hint.kind),
-              };
+    const counts = placesCounts(
+        localities,
+        parishes,
+        cemeteries,
+        trimmedSearch,
+    );
+    const otherActions: OtherKindAction[] = otherKindHint(
+        filters.kind,
+        counts,
+        trimmedSearch,
+    ).map((hint) => ({
+        label: `Pokaż w ${kindLocative[hint.kind]}`,
+        count: hint.count,
+        onShow: () => showInKind(hint.kind),
+    }));
 
-    const committed = placesCounts(localities, parishes, filters.q);
+    const committed = placesCounts(localities, parishes, cemeteries, filters.q);
 
     const statusText =
         filters.q.trim() === ''
             ? ''
-            : committed.miejscowosci === 0 && committed.parafie === 0
+            : committed.miejscowosci +
+                    committed.parafie +
+                    committed.cmentarze ===
+                0
               ? 'Brak wyników'
-              : `Znaleziono: ${committed.miejscowosci} ${pluralPhrase(committed.miejscowosci, 'miejscowość', 'miejscowości', 'miejscowości')}, ${committed.parafie} ${pluralPhrase(committed.parafie, 'parafia', 'parafie', 'parafii')}`;
+              : `Znaleziono: ${committed.miejscowosci} ${pluralPhrase(committed.miejscowosci, 'miejscowość', 'miejscowości', 'miejscowości')}, ${committed.parafie} ${pluralPhrase(committed.parafie, 'parafia', 'parafie', 'parafii')}, ${committed.cmentarze} ${pluralPhrase(committed.cmentarze, 'cmentarz', 'cmentarze', 'cmentarzy')}`;
 
-    const addButton = isParishTab ? (
+    const addCopy: Record<PlacesKind, { panel: string; label: string }> = {
+        miejscowosci: { panel: 'locality', label: 'Dodaj miejscowość' },
+        parafie: { panel: 'parish', label: 'Dodaj parafię' },
+        cmentarze: { panel: 'cemetery', label: 'Dodaj cmentarz' },
+    };
+    const add = addCopy[filters.kind];
+    const addButton = (
         <Button asChild>
             <Link
-                href={parishNav.hrefFor('new')}
+                href={panelNav(add.panel).hrefFor('new')}
                 {...panelVisitOptions}
-                onClick={(event) => openFromList(event, 'parish:new')}
+                onClick={(event) => openFromList(event, `${add.panel}:new`)}
             >
-                Dodaj parafię
-            </Link>
-        </Button>
-    ) : (
-        <Button asChild>
-            <Link
-                href={localityNav.hrefFor('new')}
-                {...panelVisitOptions}
-                onClick={(event) => openFromList(event, 'locality:new')}
-            >
-                Dodaj miejscowość
+                {add.label}
             </Link>
         </Button>
     );
@@ -314,6 +347,11 @@ export default function Index({
             label: 'Parafie',
             count: counts.parafie,
         },
+        {
+            value: 'cmentarze',
+            label: 'Cmentarze',
+            count: counts.cmentarze,
+        },
     ];
 
     const clearSearch = () => {
@@ -321,41 +359,66 @@ export default function Index({
         visit('', true);
     };
 
-    const listContent = isParishTab ? (
-        parishes.length === 0 ? (
-            <PlacesEmptyTree kind="parafie" action={addButton} />
-        ) : visibleParishes.length === 0 ? (
+    const listContent =
+        filters.kind === 'cmentarze' ? (
+            cemeteries.length === 0 ? (
+                <PlacesEmptyTree kind="cmentarze" action={addButton} />
+            ) : visibleCemeteries.length === 0 ? (
+                <PlacesNoResults
+                    kind="cmentarze"
+                    query={trimmedSearch}
+                    onClear={clearSearch}
+                    others={otherActions}
+                />
+            ) : (
+                <CemeteriesTable
+                    cemeteries={visibleCemeteries}
+                    openId={openedCemeteryId}
+                    hrefFor={(id) => cemeteryNav.hrefFor(id)}
+                    onRowClick={(event, id) =>
+                        openFromList(event, `cemetery:${id}`)
+                    }
+                />
+            )
+        ) : filters.kind === 'parafie' ? (
+            parishes.length === 0 ? (
+                <PlacesEmptyTree kind="parafie" action={addButton} />
+            ) : visibleParishes.length === 0 ? (
+                <PlacesNoResults
+                    kind="parafie"
+                    query={trimmedSearch}
+                    onClear={clearSearch}
+                    others={otherActions}
+                />
+            ) : (
+                <ParishesTable
+                    parishes={visibleParishes}
+                    openId={openedParishId}
+                    hrefFor={(id) => parishNav.hrefFor(id)}
+                    onRowClick={(event, id) =>
+                        openFromList(event, `parish:${id}`)
+                    }
+                />
+            )
+        ) : localities.length === 0 ? (
+            <PlacesEmptyTree kind="miejscowosci" action={addButton} />
+        ) : visibleLocalities.length === 0 ? (
             <PlacesNoResults
-                kind="parafie"
+                kind="miejscowosci"
                 query={trimmedSearch}
                 onClear={clearSearch}
-                other={otherAction}
+                others={otherActions}
             />
         ) : (
-            <ParishesTable
-                parishes={visibleParishes}
-                openId={openedParishId}
-                hrefFor={(id) => parishNav.hrefFor(id)}
-                onRowClick={(event, id) => openFromList(event, `parish:${id}`)}
+            <LocalitiesTable
+                localities={visibleLocalities}
+                openId={openedLocalityId}
+                hrefFor={(id) => localityNav.hrefFor(id)}
+                onRowClick={(event, id) =>
+                    openFromList(event, `locality:${id}`)
+                }
             />
-        )
-    ) : localities.length === 0 ? (
-        <PlacesEmptyTree kind="miejscowosci" action={addButton} />
-    ) : visibleLocalities.length === 0 ? (
-        <PlacesNoResults
-            kind="miejscowosci"
-            query={trimmedSearch}
-            onClear={clearSearch}
-            other={otherAction}
-        />
-    ) : (
-        <LocalitiesTable
-            localities={visibleLocalities}
-            openId={openedLocalityId}
-            hrefFor={(id) => localityNav.hrefFor(id)}
-            onRowClick={(event, id) => openFromList(event, `locality:${id}`)}
-        />
-    );
+        );
 
     return (
         <>
@@ -366,7 +429,7 @@ export default function Index({
                     <Heading
                         variant="page"
                         title="Miejsca"
-                        description="Miejscowości i parafie zapisane w drzewie genealogicznym"
+                        description="Miejscowości, parafie i cmentarze zapisane w drzewie genealogicznym"
                     />
 
                     {addButton}
@@ -380,13 +443,15 @@ export default function Index({
                     items={kindItems}
                 />
 
-                {(localities.length > 0 || parishes.length > 0) && (
+                {(localities.length > 0 ||
+                    parishes.length > 0 ||
+                    cemeteries.length > 0) && (
                     <div role="search">
                         <SearchField
                             value={search}
                             onChange={setSearch}
                             placeholder="Szukaj po nazwie"
-                            ariaLabel="Szukaj miejscowości i parafii"
+                            ariaLabel="Szukaj miejscowości, parafii i cmentarzy"
                             busy={isVisiting}
                             busyLabel="Wczytywanie"
                             maxLength={100}
@@ -437,6 +502,25 @@ export default function Index({
                     }
                 />
             )}
+
+            {localityPanel === null &&
+                parishPanel === null &&
+                cemeteryPanel !== null && (
+                    <CemeteryPanel
+                        cemetery={cemeteryPanel.cemetery}
+                        cemeteries={cemeteries}
+                        managers={cemeteryManagers}
+                        religions={religions}
+                        localities={localities}
+                        onRequestClose={() => guard(cemeteryNav.close)}
+                        onDirtyChange={setIsDirty}
+                        onLocalityCreated={() =>
+                            router.reload({
+                                only: ['localities', 'navCounts'],
+                            })
+                        }
+                    />
+                )}
 
             <DiscardChangesDialog {...discardDialog} />
         </>

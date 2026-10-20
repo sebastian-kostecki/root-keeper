@@ -469,34 +469,34 @@ Listy cmentarzy i opcje filtra to jedno zapytanie z `withCount` i eager loadem m
 
 #### Automated
 
-- [x] 1.1 Migracja przechodzi w obie strony: `vendor/bin/sail artisan migrate`, `vendor/bin/sail artisan migrate:rollback --step=1`, `vendor/bin/sail artisan migrate`
-- [x] 1.2 Testy cmentarzy, miejsc i miejscowości przechodzą: `vendor/bin/sail artisan test --compact tests/Feature/CemeteriesTest.php tests/Feature/PlacesTest.php tests/Feature/LocalitiesTest.php`
-- [x] 1.3 Testy granic własności, wpływu zapisu i powłoki przechodzą: `vendor/bin/sail artisan test --compact tests/Feature/OwnershipBoundariesTest.php tests/Feature/DeleteImpactTest.php tests/Feature/AppShellTest.php`
-- [x] 1.4 Testy kopii zapasowej przechodzą: `vendor/bin/sail artisan test --compact tests/Backup`
-- [x] 1.5 Formatowanie PHP: `vendor/bin/sail bin pint --dirty --format agent`
-- [x] 1.6 Larastan poziom 7 bez błędów: `vendor/bin/sail composer types:check`
-- [x] 1.7 Testy JS, lint i typy przechodzą: `vendor/bin/sail npm run test:js`, `vendor/bin/sail npm run check`, `vendor/bin/sail npm run types:check`
+- [x] 1.1 Migracja przechodzi w obie strony: `vendor/bin/sail artisan migrate`, `vendor/bin/sail artisan migrate:rollback --step=1`, `vendor/bin/sail artisan migrate` — 8f4e41a
+- [x] 1.2 Testy cmentarzy, miejsc i miejscowości przechodzą: `vendor/bin/sail artisan test --compact tests/Feature/CemeteriesTest.php tests/Feature/PlacesTest.php tests/Feature/LocalitiesTest.php` — 8f4e41a
+- [x] 1.3 Testy granic własności, wpływu zapisu i powłoki przechodzą: `vendor/bin/sail artisan test --compact tests/Feature/OwnershipBoundariesTest.php tests/Feature/DeleteImpactTest.php tests/Feature/AppShellTest.php` — 8f4e41a
+- [x] 1.4 Testy kopii zapasowej przechodzą: `vendor/bin/sail artisan test --compact tests/Backup` — 8f4e41a
+- [x] 1.5 Formatowanie PHP: `vendor/bin/sail bin pint --dirty --format agent` — 8f4e41a
+- [x] 1.6 Larastan poziom 7 bez błędów: `vendor/bin/sail composer types:check` — 8f4e41a
+- [x] 1.7 Testy JS, lint i typy przechodzą: `vendor/bin/sail npm run test:js`, `vendor/bin/sail npm run check`, `vendor/bin/sail npm run types:check` — 8f4e41a
 
 #### Manual
 
-- [x] 1.8 Okno usuwania miejscowości z cmentarzem mówi o cmentarzu i blokuje usunięcie
+- [x] 1.8 Okno usuwania miejscowości z cmentarzem mówi o cmentarzu i blokuje usunięcie — 8f4e41a
 
 ### Phase 2: Zakładka Cmentarze na `/places` (frontend)
 
 #### Automated
 
-- [ ] 2.1 Testy JS przechodzą (helpery, rejestr paneli, kontrola tokenów): `vendor/bin/sail npm run test:js`
-- [ ] 2.2 Format i lint przechodzą: `vendor/bin/sail npm run check`
-- [ ] 2.3 Typy przechodzą: `vendor/bin/sail npm run types:check`
-- [ ] 2.4 Build przechodzi: `vendor/bin/sail npm run build`
-- [ ] 2.5 Istniejący spec strony miejsc przechodzi: `npx playwright test tests/e2e/places-page.spec.ts tests/e2e/places-merge-and-delete.spec.ts`
+- [x] 2.1 Testy JS przechodzą (helpery, rejestr paneli, kontrola tokenów): `vendor/bin/sail npm run test:js`
+- [x] 2.2 Format i lint przechodzą: `vendor/bin/sail npm run check`
+- [x] 2.3 Typy przechodzą: `vendor/bin/sail npm run types:check`
+- [x] 2.4 Build przechodzi: `vendor/bin/sail npm run build`
+- [x] 2.5 Istniejący spec strony miejsc przechodzi: `npx playwright test tests/e2e/places-page.spec.ts tests/e2e/places-merge-and-delete.spec.ts`
 
 #### Manual
 
-- [ ] 2.6 Na `/places` zakładka Cmentarze dodaje cmentarz bez nazwy i z nazwą, a lista pokazuje „cmentarz Luboml” i „Cmentarz parafialny, Luboml”
-- [ ] 2.7 Drugi cmentarz bez nazwy w tej samej miejscowości pokazuje komunikat pod polem Nazwa
-- [ ] 2.8 Scalenie dwóch cmentarzy i próba usunięcia używanego działają jak przy parafii
-- [ ] 2.9 Szukanie bez wyników w bieżącej zakładce podpowiada pozostałe zakładki z trafieniami
+- [x] 2.6 Na `/places` zakładka Cmentarze dodaje cmentarz bez nazwy i z nazwą, a lista pokazuje „cmentarz Luboml” i „Cmentarz parafialny, Luboml”
+- [x] 2.7 Drugi cmentarz bez nazwy w tej samej miejscowości pokazuje komunikat pod polem Nazwa
+- [x] 2.8 Scalenie dwóch cmentarzy i próba usunięcia używanego działają jak przy parafii
+- [x] 2.9 Szukanie bez wyników w bieżącej zakładce podpowiada pozostałe zakładki z trafieniami
 - [ ] 2.10 Zrzuty ekranu zapisane w `context/changes/cemeteries/screenshots/`
 
 ### Phase 3: Nagrobek wskazuje cmentarz

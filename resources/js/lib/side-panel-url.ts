@@ -9,6 +9,7 @@ export const PANEL_PROPS = {
     demo: 'demoPanel',
     locality: 'localityPanel',
     parish: 'parishPanel',
+    cemetery: 'cemeteryPanel',
     source: 'sourcePanel',
 } as const;
 

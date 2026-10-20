@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vite-plus/test';
 import {
+    cemeteryUsageNominative,
+    cemeteryUsagePhrase,
     localityUsageNominative,
     localityUsagePhrase,
     noLocalityUsage,
@@ -108,5 +110,29 @@ describe('localityUsageNominative', () => {
         [{ cemeteries: 5 }, '5 cmentarzy'],
     ])('odmienia %j w mianowniku', (partial, expected) => {
         expect(localityUsageNominative(usage(partial))).toBe(expected);
+    });
+});
+
+describe('cemeteryUsagePhrase', () => {
+    it('odmienia nagrobki i pochowania w miejscowniku', () => {
+        expect(cemeteryUsagePhrase(2, 1)).toBe('2 nagrobkach i 1 pochowaniu');
+        expect(cemeteryUsagePhrase(1, 0)).toBe('1 nagrobku');
+        expect(cemeteryUsagePhrase(0, 5)).toBe('5 pochowaniach');
+    });
+
+    it('zwraca pusty tekst, gdy nic nie jest używane', () => {
+        expect(cemeteryUsagePhrase(0, 0)).toBe('');
+    });
+});
+
+describe('cemeteryUsageNominative', () => {
+    it('odmienia w mianowniku', () => {
+        expect(cemeteryUsageNominative(2, 1)).toBe('2 nagrobki i 1 pochowanie');
+        expect(cemeteryUsageNominative(5, 0)).toBe('5 nagrobków');
+        expect(cemeteryUsageNominative(0, 3)).toBe('3 pochowania');
+    });
+
+    it('zwraca „brak” dla zera', () => {
+        expect(cemeteryUsageNominative(0, 0)).toBe('brak');
     });
 });
