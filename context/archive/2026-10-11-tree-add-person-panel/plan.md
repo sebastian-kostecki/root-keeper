@@ -513,4 +513,4 @@ Brak migracji danych. Zakładki/linki z `?add=` po zmianie arkusza degradują si
 #### Manual
 
 - [x] 5.6 Zrzuty `after/01–08` porównane z `before/`
-- [ ] 5.7 Pełny zestaw Pest uruchomiony przez użytkownika: `vendor/bin/sail artisan test --compact`
+- [x] 5.7 Pełny zestaw Pest uruchomiony przez użytkownika: `vendor/bin/sail artisan test --compact`
