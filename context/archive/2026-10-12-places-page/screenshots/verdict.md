@@ -1,23 +1,16 @@
 # Werdykt wizualny — strona „Miejsca” (/places)
 
-Stan: zrzuty „przed” są (`before/`). Zrzutów „po” **nie wykonano** (`after/` nie istnieje). Powód: serwer dev na porcie 8000 działa, ale baza dev nie ma żadnego użytkownika (`users` puste), więc `shots.mjs` nie zaloguje się; serwer E2E na porcie 8100 nie działa, a jego baza `e2e` nie ma danych drzewa demo (miejscowości, parafii). Tryb `after` w `shots.mjs` jest gotowy, ale wymaga uruchomionego serwera z zasianym drzewem `tree-demo@example.com`. Werdykt poniżej opiera się więc na kodzie (Fazy 1–3, zweryfikowane czytaniem plików), a nie na zrzutach „po”.
+Stan: zrzuty „przed” w `before/`, „po” w `after/` (2026-10-20, serwer E2E `scripts/e2e-server.sh` na 127.0.0.1:8100, baza `e2e` zasiana `TreeViewDemoSeeder`, konto `tree-demo@example.com`; `node shots.mjs <abs>/after after`). 1440×900 i 375×812, motyw jasny.
 
 | Zarzut | Przed | Po | Status | Uzasadnienie |
 |---|---|---|---|---|
-| C1 — dwa wpisy w menu | `before/01-localities-desktop.png`, `before/05-parishes-desktop.png` | brak zrzutu | nie zweryfikowano | Kod: jeden wpis „Miejsca” z sumą (`app-sidebar.tsx`, Faza 1). Brak zrzutu menu „po”. |
-| C2 — duplikacja stron | `before/01`, `before/05` | brak zrzutu | nie zweryfikowano | Kod: jedna strona `pages/places/index.tsx`, stare `pages/{localities,parishes}/index.tsx` usunięte, stare trasy przekierowują (Faza 1). Test e2e `places-page.spec.ts` sprawdza przekierowanie i zakładkę (nie uruchomiony). |
-| C3 — ręczny pierścień fokusu | `before/04-localities-focus-row.png`, `before/08-parishes-focus-row.png` | brak zrzutu | nie zweryfikowano | Kod: link wiersza używa `focusRing`, bez `ring-[3px]` (Faza 2). Pomiar `box-shadow` po animacjach nie wykonany. |
-| C4 — „Użycia” o dwóch znaczeniach | `before/05-parishes-desktop.png`, `before/06-parishes-mobile.png` | brak zrzutu | nie zweryfikowano | Kod: u parafii nagłówek „Źródła” (`parishes-table.tsx`), miejscowości nadal „Użycia” (Faza 2). Zrzut nagłówka nie wykonany. |
-| C5 — tabela parafii na 375 px | `before/06-parishes-mobile.png` | brak zrzutu | nie zweryfikowano | Kod: pierwsza kolumna `stickyCell`/`stickyHeadCell` w obu tabelach (Faza 2). Przewinięcie w bok na 375 px nie zostało sprawdzone w przeglądarce. |
+| C1 — dwa wpisy w menu | `before/01-localities-desktop.png`, `before/05-parishes-desktop.png` | `after/01-places-miejscowosci-desktop.png`, `after/02-places-parafie-desktop.png` | zamknięty | Jeden wpis „Miejsca” z sumą 5 (4 miejscowości + 1 parafia) zamiast „Miejscowości” i „Parafie”. |
+| C2 — duplikacja stron | `before/01`, `before/05` | `after/01`, `after/02`, `after/11`, `after/12` | zamknięty | Jedna strona z przełącznikiem „Miejscowości 4 / Parafie 1”; wyszukiwanie liczy trafienia w obu zakładkach, „Pokaż w parafiach (1)” przechodzi na `?kind=parafie` z tym samym `q`. `places-page.spec.ts` przechodzi (3 passed). |
+| C3 — ręczny pierścień fokusu | `before/04-localities-focus-row.png`, `before/08-parishes-focus-row.png` | `after/08-places-miejscowosci-focus-row.png`, `after/10-places-parafie-focus-row.png` | zamknięty | Link wiersza ma `:focus-visible` i ten sam pierścień co przycisk „Dodaj …” (`0 0 0 3px rgb(44, 90, 67)`, pomiar po animacjach). |
+| C4 — „Użycia” o dwóch znaczeniach | `before/05-parishes-desktop.png`, `before/06-parishes-mobile.png` | `after/02-places-parafie-desktop.png`, `after/01-places-miejscowosci-desktop.png` | zamknięty | U parafii nagłówek „Źródła”, u miejscowości „Użycia”. |
+| C5 — tabela parafii na 375 px | `before/06-parishes-mobile.png` | `after/04-places-parafie-mobile.png`, `after/03-places-miejscowosci-mobile.png` | częściowo | Pierwsza kolumna jest `sticky` w obu tabelach, a nagłówek z „Dodaj …” mieści się w szerokości. **Nowa usterka:** długa nazwa parafii („Parafia rzymskokatolicka w Tarnowie”) wychodzi poza przyklejoną komórkę (szerokość 224 px, treść 272 px, `white-space: nowrap`, `overflow: visible`) i nakłada się na kolumnę „Wyznanie” już bez przewijania. Do osobnej zmiany: zawijanie lub ucinanie nazwy w przyklejonej komórce. |
 
 ## Czego nie sprawdzono
 
-- Zrzutów „po” na 1440×900 i 375×812 (oba spisy, panel z zaznaczonym wierszem, fokus na „Dodaj …” i na wierszu, liczniki wyszukiwania, „Pokaż w parafiach”).
-- Pustej zakładki: wymaga drzewa bez parafii lub bez miejscowości; dane demo tego nie dają, więc nie zrobiono zrzutu „Spis jest pusty”.
-- Wizualnego potwierdzenia, że przyklejona komórka ma to samo tło co otwarty wiersz (Faza 2, punkt ręczny 2.3).
-- Spec `tests/e2e/places-page.spec.ts` nie został uruchomiony w tej sesji.
-
-## Do zrobienia przed zamknięciem bramki
-
-1. Zasiać drzewo demo na serwerze E2E (lub w bazie dev, z decyzją użytkownika), uruchomić serwer i wykonać `SHOTS_BASE=<url> node context/changes/places-page/screenshots/shots.mjs <abs>/screenshots/after after`.
-2. Uzupełnić tabelę o ścieżki z `after/` i zmienić statusy na „zamknięty” lub „częściowo”.
+- Pustej zakładki „Spis jest pusty”: dane demo mają obie listy niepuste.
+- Tła przyklejonej komórki przy otwartym wierszu podczas przewijania w bok (punkt ręczny 2.3).

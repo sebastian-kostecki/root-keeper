@@ -478,11 +478,11 @@ Bez migracji danych. Stare adresy działają przez 302. Wayfinder po dodaniu tra
 #### Automated
 
 - [x] 4.1 Skan tokenów obejmuje `/places` i przechodzi: `vendor/bin/sail npm run test:js` — 1001ee1
-- [ ] 4.2 Nowy spec przechodzi: `npx playwright test tests/e2e/places-page.spec.ts`
+- [x] 4.2 Nowy spec przechodzi: `npx playwright test tests/e2e/places-page.spec.ts`
 - [x] 4.3 Spec scalania przechodzi: `npx playwright test tests/e2e/places-merge-and-delete.spec.ts` — 1001ee1
 - [x] 4.4 Pełny CI lokalnie: `vendor/bin/sail composer ci:check` — 1001ee1
 
 #### Manual
 
 - [ ] 4.5 Zrzuty „po” w `screenshots/after/` i `verdict.md` potwierdzają zamknięcie C1–C5 na desktopie i 375 px
-- [ ] 4.6 Celowo wprowadzony `ring-[3px]` w `places/index.tsx` czerwieni `test:js` (sprawdzenie i cofnięcie)
+- [x] 4.6 Celowo wprowadzony `ring-[3px]` w `places/index.tsx` czerwieni `test:js` (sprawdzenie i cofnięcie)
