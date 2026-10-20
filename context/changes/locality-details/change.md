@@ -1,7 +1,7 @@
 ---
 change_id: locality-details
 title: Szczegóły miejscowości
-status: implementing
+status: implemented
 created: 2026-10-20
 updated: 2026-10-20
 archived_at: null

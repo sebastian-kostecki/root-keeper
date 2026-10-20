@@ -298,15 +298,15 @@ Tylko nowe kolumny nullable / z wartością domyślną; istniejące miejscowośc
 
 #### Automated
 
-- [x] 2.1 Testy JS przechodzą (helpery i kontrola tokenów): `vendor/bin/sail npm run test:js`
-- [x] 2.2 Format i lint przechodzą: `vendor/bin/sail npm run check`
-- [x] 2.3 Typy przechodzą: `vendor/bin/sail npm run types:check`
-- [x] 2.4 Build przechodzi: `vendor/bin/sail npm run build`
+- [x] 2.1 Testy JS przechodzą (helpery i kontrola tokenów): `vendor/bin/sail npm run test:js` — d68ca89
+- [x] 2.2 Format i lint przechodzą: `vendor/bin/sail npm run check` — d68ca89
+- [x] 2.3 Typy przechodzą: `vendor/bin/sail npm run types:check` — d68ca89
+- [x] 2.4 Build przechodzi: `vendor/bin/sail npm run build` — d68ca89
 
 #### Manual
 
 - [x] 2.5 W panelu miejscowości zapis rodzaju, współrzędnych wklejonych z mapy, przynależności i „nie istnieje” z opisem; ponowne otwarcie pokazuje te same wartości, a „Pokaż na mapie” otwiera OpenStreetMap we właściwym punkcie
 - [x] 2.6 Błędne współrzędne pokazują komunikat pod polem i nie gubią reszty formularza
 - [x] 2.7 Lista `/places` pokazuje kolumnę Rodzaj i plakietkę „nie istnieje”, także na wąskim ekranie
-- [x] 2.8 Podpowiedź miejsca faktu, zamieszkania, cmentarza, siedziby parafii i scalania pokazuje dopisek „nie istnieje”; wpisywanie „nie istnieje” nie dopasowuje miejscowości
-- [x] 2.9 Zrzuty ekranu zapisane w `context/changes/locality-details/screenshots/`
+- [x] 2.8 Podpowiedź miejsca faktu, zamieszkania, cmentarza, siedziby parafii i scalania pokazuje dopisek „nie istnieje”; wpisywanie „nie istnieje” nie dopasowuje miejscowości — d68ca89
+- [x] 2.9 Zrzuty ekranu zapisane w `context/changes/locality-details/screenshots/` — d68ca89
