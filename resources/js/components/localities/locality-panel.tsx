@@ -251,13 +251,7 @@ function LocalityFields({ locality, localityKinds, errors }: FieldsProps) {
                         locality?.longitude ?? null,
                     )}
                     aria-describedby="locality-coordinates-hint"
-                    aria-invalid={
-                        errors.coordinates ||
-                        errors.latitude ||
-                        errors.longitude
-                            ? true
-                            : undefined
-                    }
+                    aria-invalid={errors.coordinates ? true : undefined}
                 />
                 <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
                     <p
@@ -284,8 +278,6 @@ function LocalityFields({ locality, localityKinds, errors }: FieldsProps) {
                     )}
                 </div>
                 <InputError message={errors.coordinates} />
-                <InputError message={errors.latitude} />
-                <InputError message={errors.longitude} />
             </div>
 
             <div className="space-y-2">

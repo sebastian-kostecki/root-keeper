@@ -163,6 +163,7 @@ test('invalid coordinates are an error on the field and nothing is saved', funct
 })->with([
     'one number' => ['50.0614'],
     'decimal comma' => ['50,0614, 19,9366'],
+    'single number with a decimal comma' => ['52,21'],
     'degrees minutes seconds' => ['50°03\'41"N 19°56\'12"E'],
     'latitude over 90' => ['91, 19.9366'],
     'longitude under -180' => ['50.0614, -181'],
@@ -458,16 +459,21 @@ test('merging keeps the filled details of the target and joins different histori
     expect($target->historical_affiliation)->toBe("pow. bocheński\n\nGalicja");
 });
 
-test('merging takes the coordinates of the duplicate only as a pair', function () {
+test('merging takes the coordinates of the duplicate only as a pair', function (?float $targetLatitude, ?float $targetLongitude, ?float $duplicateLatitude, ?float $duplicateLongitude, ?float $expectedLatitude, ?float $expectedLongitude) {
     $user = User::factory()->create();
-    $duplicate = Locality::factory()->for($user->tree)->create(['latitude' => 1.5, 'longitude' => 2.5]);
-    $target = Locality::factory()->for($user->tree)->create();
+    $duplicate = Locality::factory()->for($user->tree)->create(['latitude' => $duplicateLatitude, 'longitude' => $duplicateLongitude]);
+    $target = Locality::factory()->for($user->tree)->create(['latitude' => $targetLatitude, 'longitude' => $targetLongitude]);
 
     $this->actingAs($user)->post(route('localities.merge', $duplicate), ['target_id' => $target->id])->assertSessionHasNoErrors();
 
-    expect($target->refresh()->latitude)->toBe(1.5);
-    expect($target->longitude)->toBe(2.5);
-});
+    expect($target->refresh()->latitude)->toBe($expectedLatitude);
+    expect($target->longitude)->toBe($expectedLongitude);
+})->with([
+    'an empty target takes the full pair' => [null, null, 1.5, 2.5, 1.5, 2.5],
+    'a half pair of the duplicate is not taken' => [null, null, 1.5, null, null, null],
+    'a target with a half pair takes the full pair' => [3.5, null, 1.5, 2.5, 1.5, 2.5],
+    'a target with a full pair keeps it' => [3.5, 4.5, 1.5, 2.5, 3.5, 4.5],
+]);
 
 test('merging marks the target defunct when either was, keeping its own note first', function (bool $targetDefunct, ?string $targetNote, bool $duplicateDefunct, ?string $duplicateNote, bool $expectedDefunct, ?string $expectedNote) {
     $user = User::factory()->create();
@@ -486,6 +492,22 @@ test('merging marks the target defunct when either was, keeping its own note fir
     'only the target' => [true, 'Spalona', false, null, true, 'Spalona'],
     'both keep the target note' => [true, 'Spalona', true, 'Zalana', true, 'Spalona'],
     'target without a note takes the duplicate note' => [true, null, true, 'Zalana', true, 'Zalana'],
+]);
+
+test('merging two defunct localities keeps a different duplicate note in the description', function (string $duplicateNote, string $expectedDescription) {
+    $user = User::factory()->create();
+    $duplicate = Locality::factory()->for($user->tree)->defunct($duplicateNote)->create(['name' => 'Zalesie']);
+    $target = Locality::factory()->for($user->tree)->defunct('Spalona')->create(['description' => 'Wieś nad rzeką']);
+
+    $this->actingAs($user)->post(route('localities.merge', $duplicate), ['target_id' => $target->id])->assertSessionHasNoErrors();
+
+    $target->refresh();
+
+    expect($target->defunct_note)->toBe('Spalona');
+    expect($target->description)->toBe($expectedDescription);
+})->with([
+    'different notes' => ['Zalana', "Wieś nad rzeką\n\nOpis zaniku z „Zalesie”: Zalana"],
+    'the same note' => ['Spalona', 'Wieś nad rzeką'],
 ]);
 
 test('merging refuses a target that is foreign, missing or the duplicate itself and changes nothing', function (string $kind) {

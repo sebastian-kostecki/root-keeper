@@ -13,7 +13,8 @@ class MergeLocality
      * Move every reference of the duplicate to the target, drop the moved residences the target already has
      * (same person and years), delete the duplicate and fill the target's details from it, atomically.
      * The target's own values win: its empty kind and coordinates (as a pair) are taken from the duplicate,
-     * descriptions and historical affiliations are joined, and the target is defunct if either one was.
+     * descriptions and historical affiliations are joined, and the target is defunct if either one was; when both
+     * have a different defunct note, the target keeps its own and the duplicate's one is added to the description.
      * Both localities must belong to the same tree.
      */
     public function handle(Locality $duplicate, Locality $target): Locality
@@ -91,8 +92,16 @@ class MergeLocality
         $takesCoordinates = ($target->latitude === null || $target->longitude === null)
             && $duplicate->latitude !== null && $duplicate->longitude !== null;
 
+        $description = $this->mergedText($target->description, $duplicate->description);
+        $targetNote = trim((string) $target->defunct_note);
+        $duplicateNote = trim((string) $duplicate->defunct_note);
+
+        if ($targetNote !== '' && $duplicateNote !== '' && $targetNote !== $duplicateNote) {
+            $description = $this->mergedText($description, __('Opis zaniku z „:name”: :note', ['name' => $duplicate->name, 'note' => $duplicateNote]));
+        }
+
         $target->update([
-            'description' => $this->mergedText($target->description, $duplicate->description),
+            'description' => $description,
             'historical_affiliation' => $this->mergedText($target->historical_affiliation, $duplicate->historical_affiliation),
             'kind' => $target->kind ?? $duplicate->kind,
             'latitude' => $takesCoordinates ? $duplicate->latitude : $target->latitude,
