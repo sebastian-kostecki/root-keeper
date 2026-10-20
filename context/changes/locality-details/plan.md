@@ -284,29 +284,29 @@ Tylko nowe kolumny nullable / z wartością domyślną; istniejące miejscowośc
 
 #### Automated
 
-- [x] 1.1 Migracja przechodzi w obie strony: `vendor/bin/sail artisan migrate` i `vendor/bin/sail artisan migrate:rollback --step=1` → `vendor/bin/sail artisan migrate`
-- [x] 1.2 Testy miejscowości i miejsc przechodzą: `vendor/bin/sail artisan test --compact tests/Feature/LocalitiesTest.php tests/Feature/PlacesTest.php`
-- [x] 1.3 Testy z asercjami kształtu opcji przechodzą: `vendor/bin/sail artisan test --compact tests/Feature/PersonsTest.php tests/Feature/SourcesTest.php`
-- [x] 1.4 Formatowanie PHP: `vendor/bin/sail bin pint --dirty --format agent`
-- [x] 1.5 Larastan poziom 7 bez błędów: `vendor/bin/sail composer types:check`
+- [x] 1.1 Migracja przechodzi w obie strony: `vendor/bin/sail artisan migrate` i `vendor/bin/sail artisan migrate:rollback --step=1` → `vendor/bin/sail artisan migrate` — a50e32e
+- [x] 1.2 Testy miejscowości i miejsc przechodzą: `vendor/bin/sail artisan test --compact tests/Feature/LocalitiesTest.php tests/Feature/PlacesTest.php` — a50e32e
+- [x] 1.3 Testy z asercjami kształtu opcji przechodzą: `vendor/bin/sail artisan test --compact tests/Feature/PersonsTest.php tests/Feature/SourcesTest.php` — a50e32e
+- [x] 1.4 Formatowanie PHP: `vendor/bin/sail bin pint --dirty --format agent` — a50e32e
+- [x] 1.5 Larastan poziom 7 bez błędów: `vendor/bin/sail composer types:check` — a50e32e
 
 #### Manual
 
-- [x] 1.6 PRD: Non-Goal i dopisek przy FR-007 brzmią zgodnie z decyzjami (bez nazw alternatywnych, przynależność jako tekst)
+- [x] 1.6 PRD: Non-Goal i dopisek przy FR-007 brzmią zgodnie z decyzjami (bez nazw alternatywnych, przynależność jako tekst) — a50e32e
 
 ### Phase 2: Panel, lista i podpowiedzi (frontend)
 
 #### Automated
 
-- [ ] 2.1 Testy JS przechodzą (helpery i kontrola tokenów): `vendor/bin/sail npm run test:js`
-- [ ] 2.2 Format i lint przechodzą: `vendor/bin/sail npm run check`
-- [ ] 2.3 Typy przechodzą: `vendor/bin/sail npm run types:check`
-- [ ] 2.4 Build przechodzi: `vendor/bin/sail npm run build`
+- [x] 2.1 Testy JS przechodzą (helpery i kontrola tokenów): `vendor/bin/sail npm run test:js`
+- [x] 2.2 Format i lint przechodzą: `vendor/bin/sail npm run check`
+- [x] 2.3 Typy przechodzą: `vendor/bin/sail npm run types:check`
+- [x] 2.4 Build przechodzi: `vendor/bin/sail npm run build`
 
 #### Manual
 
-- [ ] 2.5 W panelu miejscowości zapis rodzaju, współrzędnych wklejonych z mapy, przynależności i „nie istnieje” z opisem; ponowne otwarcie pokazuje te same wartości, a „Pokaż na mapie” otwiera OpenStreetMap we właściwym punkcie
-- [ ] 2.6 Błędne współrzędne pokazują komunikat pod polem i nie gubią reszty formularza
-- [ ] 2.7 Lista `/places` pokazuje kolumnę Rodzaj i plakietkę „nie istnieje”, także na wąskim ekranie
-- [ ] 2.8 Podpowiedź miejsca faktu, zamieszkania, cmentarza, siedziby parafii i scalania pokazuje dopisek „nie istnieje”; wpisywanie „nie istnieje” nie dopasowuje miejscowości
-- [ ] 2.9 Zrzuty ekranu zapisane w `context/changes/locality-details/screenshots/`
+- [x] 2.5 W panelu miejscowości zapis rodzaju, współrzędnych wklejonych z mapy, przynależności i „nie istnieje” z opisem; ponowne otwarcie pokazuje te same wartości, a „Pokaż na mapie” otwiera OpenStreetMap we właściwym punkcie
+- [x] 2.6 Błędne współrzędne pokazują komunikat pod polem i nie gubią reszty formularza
+- [x] 2.7 Lista `/places` pokazuje kolumnę Rodzaj i plakietkę „nie istnieje”, także na wąskim ekranie
+- [x] 2.8 Podpowiedź miejsca faktu, zamieszkania, cmentarza, siedziby parafii i scalania pokazuje dopisek „nie istnieje”; wpisywanie „nie istnieje” nie dopasowuje miejscowości
+- [x] 2.9 Zrzuty ekranu zapisane w `context/changes/locality-details/screenshots/`

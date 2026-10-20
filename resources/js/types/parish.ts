@@ -19,4 +19,11 @@ export type ReligionOption = {
 export type LocalityOption = {
     id: number;
     name: string;
+    is_defunct?: boolean;
+};
+
+/** A locality kind as offered in the kind select. */
+export type LocalityKindOption = {
+    value: string;
+    label: string;
 };

@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
+import { localityHint } from '@/lib/localities-index';
 import { localityUsageNominative, noLocalityUsage } from '@/lib/places-usage';
 import type { Locality } from '@/types';
 
@@ -74,8 +75,8 @@ export function MergeLocalityDialog({
                     „{locality.name}” zniknie ze spisu. Jej odwołania (
                     {localityUsageNominative(usage)}) przejdą na wybraną
                     miejscowość. Puste pola wybranej uzupełnią się danymi „
-                    {locality.name}”, a różne opisy zostaną połączone. Tej
-                    operacji nie można cofnąć.
+                    {locality.name}”, a różne opisy i przynależności historyczne
+                    zostaną połączone. Tej operacji nie można cofnąć.
                 </DialogDescription>
 
                 <div className="grid gap-2">
@@ -89,6 +90,7 @@ export function MergeLocalityDialog({
                         label="Właściwa miejscowość"
                         options={candidates}
                         labelOf={(option) => option.name}
+                        hintOf={localityHint}
                         value={targetId}
                         onChange={setTargetId}
                         placeholder="Wpisz nazwę miejscowości"

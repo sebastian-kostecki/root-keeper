@@ -5,7 +5,14 @@ import { otherKindHint, placesCounts, withPlacesQuery } from './places-index';
 const locality = (id: number, name: string): Locality => ({
     id,
     name,
+    kind: null,
+    kind_label: null,
+    latitude: null,
+    longitude: null,
+    historical_affiliation: null,
     description: null,
+    is_defunct: false,
+    defunct_note: null,
 });
 
 const parish = (

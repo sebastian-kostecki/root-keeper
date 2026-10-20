@@ -35,6 +35,8 @@ const VIEW_FILES = [
     'pages/places/index.tsx',
     'components/places/places-empty-state.tsx',
     'components/localities/localities-table.tsx',
+    'components/localities/locality-picker.tsx',
+    'components/suggest-field.tsx',
     'components/parishes/parishes-table.tsx',
     'components/tree/ancestor-card.tsx',
     'components/tree/ancestor-chart.tsx',

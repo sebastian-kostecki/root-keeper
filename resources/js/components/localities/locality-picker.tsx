@@ -4,6 +4,7 @@ import InputError from '@/components/input-error';
 import { SuggestField } from '@/components/suggest-field';
 import { Label } from '@/components/ui/label';
 import { useOptionalList } from '@/hooks/use-relation-candidates';
+import { localityHint } from '@/lib/localities-index';
 import { store as storeInlineLocality } from '@/routes/localities/inline';
 import type { LocalityOption } from '@/types';
 
@@ -105,6 +106,7 @@ export function LocalityPicker({
                 name={name}
                 options={merged}
                 labelOf={(option) => option.name}
+                hintOf={localityHint}
                 value={selectedId}
                 onChange={select}
                 onCreate={createLocality}

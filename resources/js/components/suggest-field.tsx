@@ -15,6 +15,8 @@ type CommonProps<T> = {
     label: string;
     options: T[];
     labelOf: (option: T) => string;
+    /** A muted note after the label in the list; the filter and the filled-in text still use the label only. */
+    hintOf?: (option: T) => string | undefined;
     placeholder?: string;
     disabled?: boolean;
     'aria-invalid'?: boolean;
@@ -57,7 +59,8 @@ function setNativeValue(input: HTMLInputElement, value: string) {
 
 /** Text input with a suggestion list beneath it, in record mode (pick an id) or text mode (fill in free text). */
 export function SuggestField<T>(props: SuggestFieldProps<T>) {
-    const { id, name, label, options, labelOf, placeholder, disabled } = props;
+    const { id, name, label, options, labelOf, hintOf, placeholder, disabled } =
+        props;
     const isRecord = props.mode === 'record';
     const value = props.mode === 'record' ? props.value : null;
 
@@ -300,11 +303,23 @@ export function SuggestField<T>(props: SuggestFieldProps<T>) {
                             onMouseMove={() => setActiveIndex(index)}
                             onClick={() => choose(item)}
                         >
-                            {item.kind === 'create'
-                                ? (props.mode === 'record' &&
-                                      props.createLabel?.(trimmedQuery)) ||
-                                  `Dodaj „${trimmedQuery}”`
-                                : labelOf(item.option)}
+                            {item.kind === 'create' ? (
+                                (props.mode === 'record' &&
+                                    props.createLabel?.(trimmedQuery)) ||
+                                `Dodaj „${trimmedQuery}”`
+                            ) : (
+                                <>
+                                    {labelOf(item.option)}
+                                    {hintOf?.(item.option) !== undefined && (
+                                        <>
+                                            {' '}
+                                            <span className="text-muted-foreground">
+                                                {hintOf(item.option)}
+                                            </span>
+                                        </>
+                                    )}
+                                </>
+                            )}
                         </li>
                     ))}
                 </ul>

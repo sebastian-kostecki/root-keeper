@@ -31,12 +31,19 @@ import { pluralPhrase } from '@/lib/plural';
 import { failureHandlers } from '@/lib/visit-failure';
 import type { VisitError } from '@/lib/visit-failure';
 import { index as placesIndex } from '@/routes/places';
-import type { BreadcrumbItem, Locality, Parish, ReligionOption } from '@/types';
+import type {
+    BreadcrumbItem,
+    Locality,
+    LocalityKindOption,
+    Parish,
+    ReligionOption,
+} from '@/types';
 
 type Props = {
     localities: Locality[];
     parishes: Parish[];
     religions: ReligionOption[];
+    localityKinds: LocalityKindOption[];
     filters: { q: string; kind: PlacesKind };
     localityPanel: { locality: Locality | null } | null;
     parishPanel: { parish: Parish | null } | null;
@@ -76,6 +83,7 @@ export default function Index({
     localities,
     parishes,
     religions,
+    localityKinds,
     filters,
     localityPanel,
     parishPanel,
@@ -410,6 +418,7 @@ export default function Index({
                 <LocalityPanel
                     locality={localityPanel.locality}
                     localities={localities}
+                    localityKinds={localityKinds}
                     onRequestClose={() => guard(localityNav.close)}
                     onDirtyChange={setIsDirty}
                 />
