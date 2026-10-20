@@ -56,6 +56,7 @@ class HandleInertiaRequests extends Middleware
                 'sources' => $request->user()->tree->sources()->count(),
                 'localities' => $request->user()->tree->localities()->count(),
                 'parishes' => $request->user()->tree->parishes()->count(),
+                'cemeteries' => $request->user()->tree->cemeteries()->count(),
             ],
             'personPreview' => function () use ($request): ?array {
                 $person = $this->previewPerson($request);

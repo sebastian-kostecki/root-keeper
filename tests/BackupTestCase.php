@@ -166,6 +166,9 @@ abstract class BackupTestCase extends TestCase
             ];
         }
 
+        $this->post(route('cemeteries.store'), ['name' => 'Cmentarz parafialny', 'locality_id' => $seat->id])
+            ->assertSessionHasNoErrors();
+
         $gravestone = Source::query()->where('original_name', 'akt-2.jpg')->firstOrFail();
 
         $this->put(route('sources.update', $gravestone), [

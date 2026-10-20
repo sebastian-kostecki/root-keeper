@@ -3,6 +3,7 @@
 use App\Actions\Localities\StoreLocality;
 use App\Actions\Localities\UpdateLocality;
 use App\Enums\LocalityKind;
+use App\Models\Cemetery;
 use App\Models\Event;
 use App\Models\Locality;
 use App\Models\Parish;
@@ -283,12 +284,13 @@ test('a locality still referenced by any kind of record cannot be deleted', func
         'fact' => Event::factory()->for($user->tree)->birth()->create(['locality_id' => $locality->id]),
         'residence' => Residence::factory()->for($person)->create(['tree_id' => $user->tree->id, 'locality_id' => $locality->id]),
         'gravestone' => Source::factory()->for($user->tree)->gravestone()->create(['cemetery_locality_id' => $locality->id]),
+        'cemetery' => Cemetery::factory()->in($locality)->create(),
     };
 
     $this->actingAs($user)->delete(route('localities.destroy', $locality))->assertInvalid('locality');
 
     expect(Locality::find($locality->id))->not->toBeNull();
-})->with(['parish', 'fact', 'residence', 'gravestone']);
+})->with(['parish', 'fact', 'residence', 'gravestone', 'cemetery']);
 
 test('merging moves every kind of reference of the duplicate to the target and deletes the duplicate', function () {
     $user = User::factory()->create();
@@ -563,4 +565,44 @@ test('the inline store returns the locality created by a concurrent request as 2
         ->assertExactJson(['id' => $user->tree->localities()->firstOrFail()->id, 'name' => 'Kraków', 'is_defunct' => false]);
 
     expect($user->tree->localities()->count())->toBe(1);
+});
+
+test('merging moves the cemeteries of the duplicate to the target', function () {
+    $user = User::factory()->create();
+    $duplicate = Locality::factory()->for($user->tree)->create();
+    $target = Locality::factory()->for($user->tree)->create();
+    $cemetery = Cemetery::factory()->in($duplicate)->create(['name' => 'Cmentarz parafialny']);
+    $burial = Event::factory()->burial()->atCemetery($cemetery)->create();
+
+    $this->actingAs($user)->post(route('localities.merge', $duplicate), ['target_id' => $target->id])->assertSessionHasNoErrors();
+
+    expect($cemetery->refresh()->locality_id)->toBe($target->id);
+    expect($burial->refresh()->locality_id)->toBe($target->id);
+});
+
+test('merging merges the colliding cemeteries, named and unnamed, and moves their gravestones and burials to the target cemetery', function () {
+    $user = User::factory()->create();
+    $duplicate = Locality::factory()->for($user->tree)->create();
+    $target = Locality::factory()->for($user->tree)->create();
+
+    $duplicateNamed = Cemetery::factory()->in($duplicate)->create(['name' => 'Cmentarz Parafialny']);
+    $targetNamed = Cemetery::factory()->in($target)->create(['name' => 'cmentarz parafialny']);
+    $duplicateUnnamed = Cemetery::factory()->in($duplicate)->unnamed()->create();
+    $targetUnnamed = Cemetery::factory()->in($target)->unnamed()->create();
+    $duplicateOnly = Cemetery::factory()->in($duplicate)->create(['name' => 'Wojenny']);
+
+    $namedGravestone = Source::factory()->for($user->tree)->gravestone()->create(['cemetery_id' => $duplicateNamed->id]);
+    $unnamedBurial = Event::factory()->burial()->atCemetery($duplicateUnnamed)->create();
+    $onlyBurial = Event::factory()->burial()->atCemetery($duplicateOnly)->create();
+
+    $this->actingAs($user)->post(route('localities.merge', $duplicate), ['target_id' => $target->id])->assertSessionHasNoErrors();
+
+    expect(Cemetery::find($duplicateNamed->id))->toBeNull();
+    expect(Cemetery::find($duplicateUnnamed->id))->toBeNull();
+    expect($namedGravestone->refresh()->cemetery_id)->toBe($targetNamed->id);
+    expect($unnamedBurial->refresh()->cemetery_id)->toBe($targetUnnamed->id);
+    expect($unnamedBurial->locality_id)->toBe($target->id);
+    expect($duplicateOnly->refresh()->locality_id)->toBe($target->id);
+    expect($onlyBurial->refresh()->locality_id)->toBe($target->id);
+    expect($target->cemeteries()->count())->toBe(3);
 });

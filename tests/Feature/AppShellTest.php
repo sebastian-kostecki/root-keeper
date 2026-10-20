@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Cemetery;
 use App\Models\Locality;
 use App\Models\Parish;
 use App\Models\Person;
@@ -50,6 +51,16 @@ test('the shell counts parishes of the own tree only', function () {
     $this->actingAs($user)->get('/persons')
         ->assertOk()
         ->assertInertia(fn ($page) => $page->where('navCounts.parishes', 2));
+});
+
+test('the shell counts cemeteries of the own tree only', function () {
+    $user = User::factory()->create();
+    Cemetery::factory()->count(2)->for($user->tree)->create();
+    Cemetery::factory()->count(3)->for(User::factory()->create()->tree)->create();
+
+    $this->actingAs($user)->get('/persons')
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page->where('navCounts.cemeteries', 2));
 });
 
 test('the shell counts are null for a guest', function () {

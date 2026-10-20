@@ -6,6 +6,7 @@ export const noLocalityUsage: LocalityUsage = {
     facts: 0,
     parishes: 0,
     residences: 0,
+    cemeteries: 0,
     gravestones: 0,
     total: 0,
 };
@@ -57,6 +58,17 @@ export function localityUsagePhrase(usage: LocalityUsage): string {
         );
     }
 
+    if (usage.cemeteries > 0) {
+        parts.push(
+            countOf(
+                usage.cemeteries,
+                'cmentarzu',
+                'cmentarzach',
+                'cmentarzach',
+            ),
+        );
+    }
+
     if (usage.gravestones > 0) {
         parts.push(
             countOf(usage.gravestones, 'nagrobku', 'nagrobkach', 'nagrobkach'),
@@ -88,6 +100,12 @@ export function localityUsageNominative(usage: LocalityUsage): string {
                 'zamieszkania',
                 'zamieszkań',
             ),
+        );
+    }
+
+    if (usage.cemeteries > 0) {
+        parts.push(
+            countOf(usage.cemeteries, 'cmentarz', 'cmentarze', 'cmentarzy'),
         );
     }
 

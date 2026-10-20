@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\Religion;
+use App\Models\Cemetery;
 use App\Models\Event;
 use App\Models\Locality;
 use App\Models\Parish;
@@ -323,6 +324,40 @@ test('merging a parish removes exactly the duplicate and moves only its acts and
     expect($diff['tables']['sources']['changed'][0]['after']['parish_id'])->toBe($target->id);
     expect($otherAct->refresh()->parish_id)->toBe($untouched->id);
     foreach (['parishes', 'sources'] as $table) {
+        expect($diff['tables'][$table]['added'])->toBe([]);
+    }
+    expect($diff['files'])->toBe(['removed' => [], 'added' => []]);
+});
+
+test('merging a cemetery removes exactly the duplicate and moves only its gravestones and burials', function () {
+    Storage::fake('local');
+
+    $user = User::factory()->create();
+    $place = Locality::factory()->for($user->tree)->create();
+    $targetPlace = Locality::factory()->for($user->tree)->create();
+    $duplicate = Cemetery::factory()->in($place)->create();
+    $target = Cemetery::factory()->in($targetPlace)->create();
+    $untouched = Cemetery::factory()->in($place)->create();
+    $movedGravestone = Source::factory()->for($user->tree)->gravestone()->create(['cemetery_id' => $duplicate->id]);
+    $otherGravestone = Source::factory()->for($user->tree)->gravestone()->create(['cemetery_id' => $untouched->id]);
+    $movedBurial = Event::factory()->burial()->atCemetery($duplicate)->create();
+
+    $before = databaseRows();
+
+    $this->actingAs($user)->post(route('cemeteries.merge', $duplicate), ['target_id' => $target->id])
+        ->assertSessionHasNoErrors();
+
+    $diff = rowDiff($before, databaseRows());
+
+    expect(array_keys($diff['tables']))->toBe(['cemeteries', 'events', 'sources']);
+    expect(rowIds($diff['tables']['cemeteries']['removed']))->toBe([$duplicate->id]);
+    expect(collect($diff['tables']['events']['changed'])->pluck('after.id')->all())->toBe([$movedBurial->id]);
+    expect($diff['tables']['events']['changed'][0]['after']['cemetery_id'])->toBe($target->id);
+    expect($diff['tables']['events']['changed'][0]['after']['locality_id'])->toBe($targetPlace->id);
+    expect(collect($diff['tables']['sources']['changed'])->pluck('after.id')->all())->toBe([$movedGravestone->id]);
+    expect($diff['tables']['sources']['changed'][0]['after']['cemetery_id'])->toBe($target->id);
+    expect($otherGravestone->refresh()->cemetery_id)->toBe($untouched->id);
+    foreach (['cemeteries', 'events', 'sources'] as $table) {
         expect($diff['tables'][$table]['added'])->toBe([]);
     }
     expect($diff['files'])->toBe(['removed' => [], 'added' => []]);

@@ -23,11 +23,12 @@ use Illuminate\Support\Carbon;
  * @property bool $date_is_approximate
  * @property string|null $place
  * @property int|null $locality_id
+ * @property int|null $cemetery_id
  * @property-read PartialDate $date
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
-#[Fillable(['tree_id', 'type', 'date_year', 'date_month', 'date_day', 'date_is_approximate', 'place', 'locality_id'])]
+#[Fillable(['tree_id', 'type', 'date_year', 'date_month', 'date_day', 'date_is_approximate', 'place', 'locality_id', 'cemetery_id'])]
 class Event extends Model
 {
     /** @use HasFactory<EventFactory> */
@@ -60,6 +61,14 @@ class Event extends Model
     public function locality(): BelongsTo
     {
         return $this->belongsTo(Locality::class);
+    }
+
+    /**
+     * @return BelongsTo<Cemetery, $this>
+     */
+    public function cemetery(): BelongsTo
+    {
+        return $this->belongsTo(Cemetery::class);
     }
 
     /**

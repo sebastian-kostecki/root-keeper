@@ -3,6 +3,7 @@
 namespace Database\Factories;
 
 use App\Enums\EventType;
+use App\Models\Cemetery;
 use App\Models\Event;
 use App\Models\Locality;
 use App\Models\Tree;
@@ -61,6 +62,18 @@ class EventFactory extends Factory
             'date_month' => null,
             'date_day' => null,
             'date_is_approximate' => false,
+        ]);
+    }
+
+    /**
+     * Indicate that the burial lies in the given cemetery, and so in the cemetery's locality.
+     */
+    public function atCemetery(Cemetery $cemetery): static
+    {
+        return $this->state(fn (): array => [
+            'tree_id' => $cemetery->tree_id,
+            'cemetery_id' => $cemetery->id,
+            'locality_id' => $cemetery->locality_id,
         ]);
     }
 

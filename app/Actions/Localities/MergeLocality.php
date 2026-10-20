@@ -2,8 +2,11 @@
 
 namespace App\Actions\Localities;
 
+use App\Actions\Cemeteries\MergeCemetery;
+use App\Models\Cemetery;
 use App\Models\Locality;
 use App\Models\Residence;
+use App\Support\MergedText;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -41,6 +44,9 @@ class MergeLocality
 
             $movedResidenceIds = $lockedDuplicate->residences()->get(['id'])->map(fn (Residence $residence): int => $residence->id)->values()->all();
 
+            $this->mergeCollidingCemeteries($lockedDuplicate, $lockedTarget);
+            $lockedDuplicate->cemeteries()->update(['locality_id' => $lockedTarget->id]);
+
             $lockedDuplicate->parishes()->update(['locality_id' => $lockedTarget->id]);
             $lockedDuplicate->events()->update(['locality_id' => $lockedTarget->id]);
             $lockedDuplicate->residences()->update(['locality_id' => $lockedTarget->id]);
@@ -54,6 +60,24 @@ class MergeLocality
         });
 
         return $target->refresh();
+    }
+
+    /**
+     * Merge the duplicate's cemeteries that have a counterpart at the target (same name, letter case ignored, a
+     * missing name equals a missing name) into it, so that moving the rest cannot break the unique index.
+     */
+    private function mergeCollidingCemeteries(Locality $duplicate, Locality $target): void
+    {
+        $targetCemeteries = $target->cemeteries()->get()
+            ->keyBy(fn (Cemetery $cemetery): string => mb_strtolower((string) $cemetery->name));
+
+        foreach ($duplicate->cemeteries()->get() as $cemetery) {
+            $counterpart = $targetCemeteries->get(mb_strtolower((string) $cemetery->name));
+
+            if ($counterpart !== null) {
+                app(MergeCemetery::class)->moveInto($cemetery, $counterpart);
+            }
+        }
     }
 
     /**
@@ -92,41 +116,22 @@ class MergeLocality
         $takesCoordinates = ($target->latitude === null || $target->longitude === null)
             && $duplicate->latitude !== null && $duplicate->longitude !== null;
 
-        $description = $this->mergedText($target->description, $duplicate->description);
+        $description = MergedText::of($target->description, $duplicate->description);
         $targetNote = trim((string) $target->defunct_note);
         $duplicateNote = trim((string) $duplicate->defunct_note);
 
         if ($targetNote !== '' && $duplicateNote !== '' && $targetNote !== $duplicateNote) {
-            $description = $this->mergedText($description, __('Opis zaniku z „:name”: :note', ['name' => $duplicate->name, 'note' => $duplicateNote]));
+            $description = MergedText::of($description, __('Opis zaniku z „:name”: :note', ['name' => $duplicate->name, 'note' => $duplicateNote]));
         }
 
         $target->update([
             'description' => $description,
-            'historical_affiliation' => $this->mergedText($target->historical_affiliation, $duplicate->historical_affiliation),
+            'historical_affiliation' => MergedText::of($target->historical_affiliation, $duplicate->historical_affiliation),
             'kind' => $target->kind ?? $duplicate->kind,
             'latitude' => $takesCoordinates ? $duplicate->latitude : $target->latitude,
             'longitude' => $takesCoordinates ? $duplicate->longitude : $target->longitude,
             'is_defunct' => $isDefunct,
             'defunct_note' => $isDefunct ? ($target->defunct_note ?? $duplicate->defunct_note) : null,
         ]);
-    }
-
-    /**
-     * The target's text, extended by the duplicate's one when the target has none or they differ.
-     */
-    private function mergedText(?string $targetValue, ?string $duplicateValue): ?string
-    {
-        $targetText = trim((string) $targetValue);
-        $duplicateText = trim((string) $duplicateValue);
-
-        if ($duplicateText === '' || $targetText === $duplicateText) {
-            return $targetValue;
-        }
-
-        if ($targetText === '') {
-            return $duplicateValue;
-        }
-
-        return $targetText."\n\n".$duplicateText;
     }
 }

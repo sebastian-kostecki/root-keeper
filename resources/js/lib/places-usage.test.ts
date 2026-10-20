@@ -12,18 +12,26 @@ function usage(partial: Partial<LocalityUsage>): LocalityUsage {
     const facts = partial.facts ?? 0;
     const parishes = partial.parishes ?? 0;
     const residences = partial.residences ?? 0;
+    const cemeteries = partial.cemeteries ?? 0;
     const gravestones = partial.gravestones ?? 0;
 
     return {
         facts,
         parishes,
         residences,
+        cemeteries,
         gravestones,
-        total: facts + parishes + residences + gravestones,
+        total: facts + parishes + residences + cemeteries + gravestones,
     };
 }
 
-const mixed = usage({ facts: 3, parishes: 1, residences: 2, gravestones: 1 });
+const mixed = usage({
+    facts: 3,
+    parishes: 1,
+    residences: 2,
+    cemeteries: 2,
+    gravestones: 1,
+});
 
 describe('parishUsagePhrase', () => {
     it.each([
@@ -58,6 +66,8 @@ describe('localityUsagePhrase', () => {
         [{ facts: 1 }, '1 fakcie'],
         [{ parishes: 1 }, '1 parafii'],
         [{ residences: 1 }, '1 zamieszkaniu'],
+        [{ cemeteries: 1 }, '1 cmentarzu'],
+        [{ cemeteries: 5 }, '5 cmentarzach'],
         [{ gravestones: 1 }, '1 nagrobku'],
         [{ facts: 5 }, '5 faktach'],
         [{ gravestones: 22 }, '22 nagrobkach'],
@@ -67,7 +77,7 @@ describe('localityUsagePhrase', () => {
 
     it('pomija zera i łączy pozycje przez „i” przed ostatnią', () => {
         expect(localityUsagePhrase(mixed)).toBe(
-            '3 faktach, 1 parafii, 2 zamieszkaniach i 1 nagrobku',
+            '3 faktach, 1 parafii, 2 zamieszkaniach, 2 cmentarzach i 1 nagrobku',
         );
         expect(localityUsagePhrase(usage({ facts: 3, gravestones: 2 }))).toBe(
             '3 faktach i 2 nagrobkach',
@@ -86,7 +96,7 @@ describe('localityUsageNominative', () => {
 
     it('odmienia w mianowniku i łączy pozycje', () => {
         expect(localityUsageNominative(mixed)).toBe(
-            '3 fakty, 1 parafia, 2 zamieszkania i 1 nagrobek',
+            '3 fakty, 1 parafia, 2 zamieszkania, 2 cmentarze i 1 nagrobek',
         );
     });
 
@@ -94,6 +104,8 @@ describe('localityUsageNominative', () => {
         [{ facts: 12 }, '12 faktów'],
         [{ parishes: 5 }, '5 parafii'],
         [{ residences: 22 }, '22 zamieszkania'],
+        [{ cemeteries: 1 }, '1 cmentarz'],
+        [{ cemeteries: 5 }, '5 cmentarzy'],
     ])('odmienia %j w mianowniku', (partial, expected) => {
         expect(localityUsageNominative(usage(partial))).toBe(expected);
     });

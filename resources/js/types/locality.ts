@@ -2,6 +2,7 @@ export type LocalityUsage = {
     facts: number;
     parishes: number;
     residences: number;
+    cemeteries: number;
     gravestones: number;
     total: number;
 };

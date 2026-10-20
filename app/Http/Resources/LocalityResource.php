@@ -14,9 +14,9 @@ use Illuminate\Http\Resources\Json\JsonResource;
 class LocalityResource extends JsonResource
 {
     /**
-     * Transform the resource into an array. The `usage` counts are included only when all four were loaded with withCount().
+     * Transform the resource into an array. The `usage` counts are included only when all five were loaded with withCount().
      *
-     * @return array{id: int, name: string, kind: string|null, kind_label: string|null, latitude: float|null, longitude: float|null, historical_affiliation: string|null, description: string|null, is_defunct: bool, defunct_note: string|null, usage?: array{facts: int, parishes: int, residences: int, gravestones: int, total: int}}
+     * @return array{id: int, name: string, kind: string|null, kind_label: string|null, latitude: float|null, longitude: float|null, historical_affiliation: string|null, description: string|null, is_defunct: bool, defunct_note: string|null, usage?: array{facts: int, parishes: int, residences: int, cemeteries: int, gravestones: int, total: int}}
      */
     public function toArray(Request $request): array
     {
@@ -37,14 +37,16 @@ class LocalityResource extends JsonResource
             $facts = (int) $this->events_count;
             $parishes = (int) $this->parishes_count;
             $residences = (int) $this->residences_count;
+            $cemeteries = (int) $this->cemeteries_count;
             $gravestones = (int) $this->cemetery_sources_count;
 
             $data['usage'] = [
                 'facts' => $facts,
                 'parishes' => $parishes,
                 'residences' => $residences,
+                'cemeteries' => $cemeteries,
                 'gravestones' => $gravestones,
-                'total' => $facts + $parishes + $residences + $gravestones,
+                'total' => $facts + $parishes + $residences + $cemeteries + $gravestones,
             ];
         }
 
@@ -61,6 +63,7 @@ class LocalityResource extends JsonResource
         return array_key_exists('events_count', $attributes)
             && array_key_exists('parishes_count', $attributes)
             && array_key_exists('residences_count', $attributes)
+            && array_key_exists('cemeteries_count', $attributes)
             && array_key_exists('cemetery_sources_count', $attributes);
     }
 }

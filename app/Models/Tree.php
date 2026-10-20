@@ -80,6 +80,14 @@ class Tree extends Model
     }
 
     /**
+     * @return HasMany<Cemetery, $this>
+     */
+    public function cemeteries(): HasMany
+    {
+        return $this->hasMany(Cemetery::class);
+    }
+
+    /**
      * @return HasMany<ParentChildRelation, $this>
      */
     public function parentChildRelations(): HasMany
