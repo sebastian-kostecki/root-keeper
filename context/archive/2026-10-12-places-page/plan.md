@@ -484,5 +484,5 @@ Bez migracji danych. Stare adresy działają przez 302. Wayfinder po dodaniu tra
 
 #### Manual
 
-- [ ] 4.5 Zrzuty „po” w `screenshots/after/` i `verdict.md` potwierdzają zamknięcie C1–C5 na desktopie i 375 px
+- [x] 4.5 Zrzuty „po” w `screenshots/after/` i `verdict.md` potwierdzają zamknięcie C1–C5 na desktopie i 375 px
 - [x] 4.6 Celowo wprowadzony `ring-[3px]` w `places/index.tsx` czerwieni `test:js` (sprawdzenie i cofnięcie)

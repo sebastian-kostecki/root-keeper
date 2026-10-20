@@ -70,7 +70,7 @@ export function LocalitiesTable({
                                     }
                                     className={cn(
                                         focusRing,
-                                        '-m-1 block rounded-md p-1 font-medium',
+                                        '-m-1 block rounded-md p-1 font-medium break-words whitespace-normal',
                                         locality.id === openId && 'underline',
                                     )}
                                 >
