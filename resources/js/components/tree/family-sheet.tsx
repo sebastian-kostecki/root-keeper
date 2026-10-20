@@ -502,39 +502,20 @@ function NoChildren({
 /**
  * The branch of one child cell under the children bar. The first of two or more
  * children curves from the centre to the right; the last one curves from the
- * left to the centre when the add-child slot stands under the row. The others
- * run the full width of the bar. A single child takes the drop and the right
- * half of the bar, which reaches the slot standing beside it.
+ * left to the centre. The others run the full width of the bar. A single child
+ * takes the drop only. The add-child slot is not a child, so no line leads to it.
  */
-function ChildBranch({
-    index,
-    count,
-    slotBeside,
-}: {
-    index: number;
-    count: number;
-    slotBeside: boolean;
-}) {
+function ChildBranch({ index, count }: { index: number; count: number }) {
     if (count === 1) {
         return (
-            <>
-                <div
-                    className={clsx(
-                        'absolute top-0 left-1/2 h-4',
-                        LINE.colour,
-                        LINE.left,
-                    )}
-                    aria-hidden="true"
-                />
-                <div
-                    className={clsx(
-                        'absolute top-0 right-0 left-1/2',
-                        LINE.colour,
-                        LINE.top,
-                    )}
-                    aria-hidden="true"
-                />
-            </>
+            <div
+                className={clsx(
+                    'absolute top-0 left-1/2 h-4',
+                    LINE.colour,
+                    LINE.left,
+                )}
+                aria-hidden="true"
+            />
         );
     }
 
@@ -552,7 +533,7 @@ function ChildBranch({
         );
     }
 
-    if (index === count - 1 && !slotBeside) {
+    if (index === count - 1) {
         return (
             <div
                 className={clsx(
@@ -593,7 +574,7 @@ function ChildBranch({
  * trunk from the couple reaches. The bar is made of half segments inside the
  * cells, so cells have no gap (the card spacing is cell padding) and the
  * segments touch. The add-child slot stands right of the last child, outside
- * the bar, and does not move the row; in a row too wide for that it stands
+ * the bar and with no line to it, and does not move the row; in a row too wide for that it stands
  * under the last child.
  */
 function ChildrenRow({
@@ -627,11 +608,7 @@ function ChildrenRow({
             <div className="relative flex">
                 {children.map((child, i) => (
                     <div key={child.id} className="relative" style={cellStyle}>
-                        <ChildBranch
-                            index={i}
-                            count={children.length}
-                            slotBeside={layout.slotBeside}
-                        />
+                        <ChildBranch index={i} count={children.length} />
                         <SheetPersonCard
                             person={child}
                             variant={compact ? 'compact' : 'standard'}
@@ -640,24 +617,21 @@ function ChildrenRow({
                 ))}
                 {layout.slotBeside && (
                     <div
-                        className="absolute top-0 left-full pt-4 pb-2"
+                        className="absolute inset-y-0 left-full pt-4 pb-2"
                         style={slotStyle}
                     >
-                        <div
-                            className={clsx(
-                                'absolute top-0 right-1/2 left-0 h-4 rounded-tr-xl border-dashed',
-                                LINE.colour,
-                                LINE.top,
-                                LINE.right,
-                            )}
-                            aria-hidden="true"
-                        />
                         {addChild}
                     </div>
                 )}
             </div>
             {!layout.slotBeside && (
-                <div className="self-end pb-2" style={slotStyle}>
+                <div
+                    className="self-end pb-2"
+                    style={{
+                        ...slotStyle,
+                        height: `${cardHeightRem + CHILD_CELL_BOTTOM_REM}rem`,
+                    }}
+                >
                     {addChild}
                 </div>
             )}
