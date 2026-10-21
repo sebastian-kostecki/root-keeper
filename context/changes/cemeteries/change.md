@@ -3,7 +3,7 @@ change_id: cemeteries
 title: Cmentarze jako rekord miejsca
 status: implementing
 created: 2026-10-20
-updated: 2026-10-20
+updated: 2026-10-21
 archived_at: null
 ---
 
