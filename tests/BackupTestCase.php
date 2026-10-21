@@ -153,7 +153,7 @@ abstract class BackupTestCase extends TestCase
         linkParent($parent, $child);
 
         $seat = Locality::factory()->for($tree)->create(['name' => 'Lipnica Murowana']);
-        Parish::factory()->for($tree)->seatedIn($seat)->create(['name' => 'Św. Leonarda']);
+        Parish::factory()->for($tree)->seatedIn($seat)->dedicatedTo('Św. Leonarda')->create();
         Residence::factory()->for($parent)->create(['tree_id' => $tree->id, 'locality_id' => $seat->id]);
 
         $this->uploadedSourceHashes = [];

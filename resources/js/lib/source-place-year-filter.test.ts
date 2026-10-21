@@ -63,6 +63,21 @@ describe('filterSourcesByPlaceAndYear', () => {
         expect(visible).toEqual([parishNamed]);
     });
 
+    it('matches the seat in the label of a parish without a locality of its own', () => {
+        const seated = source(
+            8,
+            1900,
+            'Płock św. Bartłomieja (rzym.-kat.)',
+            null,
+        );
+        const { visible } = filterSourcesByPlaceAndYear([seated, elsewhere], {
+            place: 'płock',
+            year: '',
+        });
+
+        expect(visible).toEqual([seated]);
+    });
+
     it('finds a gravestone by the place of its cemetery and its year', () => {
         const { visible } = filterSourcesByPlaceAndYear(
             [gravestone, lubomlSeat, elsewhere],

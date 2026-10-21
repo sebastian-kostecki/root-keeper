@@ -21,6 +21,7 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { Spinner } from '@/components/ui/spinner';
+import { seatNamed } from '@/lib/parishes-index';
 import { store as storeInlineParish } from '@/routes/parishes/inline';
 import type {
     LocalityOption,
@@ -50,25 +51,6 @@ type ParishPayload = {
 
 /** Radix Select does not allow an empty item value. */
 const NONE = 'none';
-
-/** The locality named like the typed text (case and surrounding spaces ignored), if any. */
-function seatNamed(
-    localities: LocalityOption[],
-    text: string,
-): LocalityOption | null {
-    const needle = text.trim().toLocaleLowerCase('pl');
-
-    if (needle === '') {
-        return null;
-    }
-
-    return (
-        localities.find(
-            (locality) =>
-                locality.name.trim().toLocaleLowerCase('pl') === needle,
-        ) ?? null
-    );
-}
 
 /**
  * „Nowa parafia / urząd” over the source panel. It has no `<form>` and saves with plain HTTP: React

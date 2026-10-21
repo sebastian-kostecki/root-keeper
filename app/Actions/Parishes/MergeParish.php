@@ -11,8 +11,10 @@ class MergeParish
 {
     /**
      * Move every act of the duplicate to the target, delete the duplicate and fill the target's empty fields from
-     * it, atomically. Seat, religion and dedication move together, and only when the resulting key is free; the
-     * former name moves on its own. The kind of the target never changes. Both parishes must belong to the same tree.
+     * it, atomically. Each empty one of seat, religion and dedication is filled on its own, so a target that has a
+     * seat can end up with the duplicate's religion and dedication; the three are saved together, and only when the
+     * resulting key is free. The former name moves on its own. The kind of the target never changes. Both parishes
+     * must belong to the same tree.
      */
     public function handle(Parish $duplicate, Parish $target): Parish
     {

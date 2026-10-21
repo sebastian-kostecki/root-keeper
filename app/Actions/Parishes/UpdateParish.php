@@ -5,6 +5,7 @@ namespace App\Actions\Parishes;
 use App\Enums\ParishKind;
 use App\Enums\Religion;
 use App\Models\Parish;
+use Illuminate\Database\QueryException;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -32,11 +33,19 @@ class UpdateParish
         }
 
         try {
-            DB::transaction(fn (): bool => $parish->update($fields));
+            DB::transaction(function () use ($parish, $fields): void {
+                Parish::query()->whereKey($parish->id)->lockForUpdate()->firstOrFail()->update($fields);
+            });
         } catch (UniqueConstraintViolationException) {
             throw ValidationException::withMessages(['dedication' => __('Ta parafia / urząd już istnieje.')]);
+        } catch (QueryException $exception) {
+            if ($exception->getCode() !== '23503') {
+                throw $exception;
+            }
+
+            throw ValidationException::withMessages(['locality_id' => __('Wybierz miejscowość ze spisu.')]);
         }
 
-        return $parish;
+        return $parish->refresh();
     }
 }

@@ -1,4 +1,4 @@
-import type { Parish } from '@/types';
+import type { LocalityOption, Parish } from '@/types';
 
 const collator = new Intl.Collator('pl');
 
@@ -23,5 +23,24 @@ export function filterParishes(parishes: Parish[], q: string): Parish[] {
 export function sortParishes(parishes: Parish[]): Parish[] {
     return [...parishes].sort(
         (a, b) => collator.compare(a.label, b.label) || a.id - b.id,
+    );
+}
+
+/** The locality named like the typed text (case and surrounding spaces ignored), if any. */
+export function seatNamed(
+    localities: LocalityOption[],
+    text: string,
+): LocalityOption | null {
+    const needle = text.trim().toLocaleLowerCase('pl');
+
+    if (needle === '') {
+        return null;
+    }
+
+    return (
+        localities.find(
+            (locality) =>
+                locality.name.trim().toLocaleLowerCase('pl') === needle,
+        ) ?? null
     );
 }

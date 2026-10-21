@@ -319,7 +319,7 @@ export default function Index({
                     committed.cmentarze ===
                 0
               ? 'Brak wyników'
-              : `Znaleziono: ${committed.miejscowosci} ${pluralPhrase(committed.miejscowosci, 'miejscowość', 'miejscowości', 'miejscowości')}, ${committed.parafie} ${pluralPhrase(committed.parafie, 'parafia', 'parafie', 'parafii')}, ${committed.cmentarze} ${pluralPhrase(committed.cmentarze, 'cmentarz', 'cmentarze', 'cmentarzy')}`;
+              : `Znaleziono: ${committed.miejscowosci} ${pluralPhrase(committed.miejscowosci, 'miejscowość', 'miejscowości', 'miejscowości')}, ${committed.parafie} ${pluralPhrase(committed.parafie, 'parafia / urząd', 'parafie / urzędy', 'parafii / urzędów')}, ${committed.cmentarze} ${pluralPhrase(committed.cmentarze, 'cmentarz', 'cmentarze', 'cmentarzy')}`;
 
     const addCopy: Record<PlacesKind, { panel: string; label: string }> = {
         miejscowosci: { panel: 'locality', label: 'Dodaj miejscowość' },

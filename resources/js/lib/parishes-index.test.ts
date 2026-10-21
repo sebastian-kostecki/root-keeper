@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vite-plus/test';
-import type { Parish } from '@/types';
-import { filterParishes, sortParishes } from './parishes-index';
+import type { LocalityOption, Parish } from '@/types';
+import { filterParishes, seatNamed, sortParishes } from './parishes-index';
 
 function parish(
     id: number,
@@ -65,5 +65,26 @@ describe('sortParishes', () => {
         ];
 
         expect(sortParishes(list).map((item) => item.id)).toEqual([1, 2, 3]);
+    });
+});
+
+describe('seatNamed', () => {
+    const localities: LocalityOption[] = [
+        { id: 1, name: 'Płock' },
+        { id: 2, name: 'Łódź' },
+    ];
+
+    it('finds the locality named like the text, ignoring case and surrounding spaces', () => {
+        expect(seatNamed(localities, '  pŁOCK ')).toEqual(localities[0]);
+        expect(seatNamed(localities, 'łódź')).toEqual(localities[1]);
+    });
+
+    it('returns null for an unknown or blank text', () => {
+        expect(seatNamed(localities, 'Kraków')).toBeNull();
+        expect(seatNamed(localities, '   ')).toBeNull();
+    });
+
+    it('does not match a locality by a part of its name', () => {
+        expect(seatNamed(localities, 'Pło')).toBeNull();
     });
 });

@@ -326,8 +326,8 @@ test('merging moves every act of the duplicate to the target and deletes the dup
 test('merging fills the empty seat of the target from the duplicate', function () {
     $user = User::factory()->create();
     $seat = Locality::factory()->for($user->tree)->create();
-    $duplicate = Parish::factory()->for($user->tree)->create(['name' => 'Lubomla', 'locality_id' => $seat->id]);
-    $target = Parish::factory()->for($user->tree)->create(['name' => 'Luboml', 'locality_id' => null]);
+    $duplicate = Parish::factory()->for($user->tree)->legacy('Lubomla', $seat)->create();
+    $target = Parish::factory()->for($user->tree)->legacy('Luboml')->create();
 
     $this->actingAs($user)->post(route('parishes.merge', $duplicate), ['target_id' => $target->id])->assertSessionHasNoErrors();
 
@@ -338,15 +338,15 @@ test('merging keeps the seat of the target when it is set', function () {
     $user = User::factory()->create();
     $targetSeat = Locality::factory()->for($user->tree)->create();
     $duplicateSeat = Locality::factory()->for($user->tree)->create();
-    $duplicate = Parish::factory()->for($user->tree)->create(['name' => 'Lubomla', 'locality_id' => $duplicateSeat->id]);
-    $target = Parish::factory()->for($user->tree)->create(['name' => 'Luboml', 'locality_id' => $targetSeat->id]);
+    $duplicate = Parish::factory()->for($user->tree)->legacy('Lubomla', $duplicateSeat)->create();
+    $target = Parish::factory()->for($user->tree)->legacy('Luboml', $targetSeat)->create();
 
     $this->actingAs($user)->post(route('parishes.merge', $duplicate), ['target_id' => $target->id])->assertSessionHasNoErrors();
 
     expect($target->refresh()->locality_id)->toBe($targetSeat->id);
 });
 
-test('merging takes the religion of the duplicate when the target has none and no other parish has that name and religion', function () {
+test('merging takes the religion of the duplicate when the target has none and the resulting key is free', function () {
     $user = User::factory()->create();
     $duplicate = Parish::factory()->for($user->tree)->withReligion(Religion::RomanCatholic)->create(['name' => 'Luboml']);
     $target = Parish::factory()->for($user->tree)->create(['name' => 'Luboml']);
@@ -383,6 +383,21 @@ test('merging gives a target without a seat the seat, religion and dedication of
         ->and($target->religion)->toBe(Religion::GreekCatholic)
         ->and($target->dedication)->toBe('św. Jana')
         ->and($target->name)->toBe('Luboml');
+});
+
+test('merging fills only the empty key fields of a target that has a seat and keeps its seat', function () {
+    $user = User::factory()->create();
+    $targetSeat = Locality::factory()->for($user->tree)->create();
+    $duplicateSeat = Locality::factory()->for($user->tree)->create();
+    $duplicate = Parish::factory()->seatedIn($duplicateSeat)->withReligion(Religion::RomanCatholic)->dedicatedTo('Fara')->create();
+    $target = Parish::factory()->seatedIn($targetSeat)->create();
+
+    $this->actingAs($user)->post(route('parishes.merge', $duplicate), ['target_id' => $target->id])->assertSessionHasNoErrors();
+
+    $target->refresh();
+    expect($target->locality_id)->toBe($targetSeat->id)
+        ->and($target->religion)->toBe(Religion::RomanCatholic)
+        ->and($target->dedication)->toBe('Fara');
 });
 
 test('merging gives a target without a former name the former name of the duplicate, even when the key is taken', function () {
