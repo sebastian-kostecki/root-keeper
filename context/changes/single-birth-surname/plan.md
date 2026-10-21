@@ -291,16 +291,16 @@ Faza 1 przepisuje istniejące dane (`people.last_name`, `people.note`), więc ma
 
 #### Automated
 
-- [x] 2.1 Testy osób, drzewa, przodków, zapisu i granic własności przechodzą: `vendor/bin/sail artisan test --compact tests/Feature/PersonsTest.php tests/Feature/TreeTest.php tests/Feature/AncestorsTest.php tests/Feature/WriteTargetsTest.php tests/Feature/OwnershipBoundariesTest.php tests/Feature/SingleSurnameMigrationTest.php`
-- [x] 2.2 `grep -rn "maiden_name" app resources/js tests --include='*.php' --include='*.ts' --include='*.tsx'` trafia tylko w `@property` modelu, w test migracji i w migracjach
-- [x] 2.3 Formatowanie PHP i Larastan: `vendor/bin/sail bin pint --dirty --format agent`, `vendor/bin/sail composer types:check`
-- [x] 2.4 Frontend: `vendor/bin/sail npm run test:js`, `vendor/bin/sail npm run types:check`, `vendor/bin/sail npm run check`, `vendor/bin/sail npm run build`
-- [x] 2.5 Dotknięte specyfikacje E2E przechodzą: `npx playwright test tests/e2e/tree-slot-parent.spec.ts tests/e2e/persons-add-person-panel.spec.ts tests/e2e/tree-add-person-guard.spec.ts tests/e2e/tree-slot-child.spec.ts tests/e2e/tree-slot-spouse.spec.ts tests/e2e/fact-places-from-gazetteer.spec.ts tests/e2e/residence-history.spec.ts tests/e2e/person-panel-page-navigation-guard.spec.ts tests/e2e/person-panel-unsaved-guard.spec.ts tests/e2e/tree-card-name.spec.ts`
+- [x] 2.1 Testy osób, drzewa, przodków, zapisu i granic własności przechodzą: `vendor/bin/sail artisan test --compact tests/Feature/PersonsTest.php tests/Feature/TreeTest.php tests/Feature/AncestorsTest.php tests/Feature/WriteTargetsTest.php tests/Feature/OwnershipBoundariesTest.php tests/Feature/SingleSurnameMigrationTest.php` — 8a1a358
+- [x] 2.2 `grep -rn "maiden_name" app resources/js tests --include='*.php' --include='*.ts' --include='*.tsx'` trafia tylko w `@property` modelu, w test migracji i w migracjach — 8a1a358
+- [x] 2.3 Formatowanie PHP i Larastan: `vendor/bin/sail bin pint --dirty --format agent`, `vendor/bin/sail composer types:check` — 8a1a358
+- [x] 2.4 Frontend: `vendor/bin/sail npm run test:js`, `vendor/bin/sail npm run types:check`, `vendor/bin/sail npm run check`, `vendor/bin/sail npm run build` — 8a1a358
+- [x] 2.5 Dotknięte specyfikacje E2E przechodzą: `npx playwright test tests/e2e/tree-slot-parent.spec.ts tests/e2e/persons-add-person-panel.spec.ts tests/e2e/tree-add-person-guard.spec.ts tests/e2e/tree-slot-child.spec.ts tests/e2e/tree-slot-spouse.spec.ts tests/e2e/fact-places-from-gazetteer.spec.ts tests/e2e/residence-history.spec.ts tests/e2e/person-panel-page-navigation-guard.spec.ts tests/e2e/person-panel-unsaved-guard.spec.ts tests/e2e/tree-card-name.spec.ts` — 8a1a358
 
 #### Manual
 
-- [x] 2.6 Formularz osoby (panel, `?add=person`, sloty drzewa) ma jedno pole „Nazwisko rodowe”; widok „Dane osobowe” pokazuje imię i nazwisko rodowe
-- [x] 2.7 Nazwa w nagłówku panelu, na liście `/persons`, w pickerach i na karcie drzewa to „Imię Nazwisko” bez „z d.”
-- [x] 2.8 Wyszukiwanie na `/persons` i w pickerze znajduje osobę po nazwisku rodowym
-- [x] 2.9 Dodanie dziecka na drzewie podpowiada nazwisko ojca w polu „Nazwisko rodowe”
-- [x] 2.10 Zrzut ekranu formularza i widoku „Dane osobowe” w `context/changes/single-birth-surname/screenshots/`
+- [x] 2.6 Formularz osoby (panel, `?add=person`, sloty drzewa) ma jedno pole „Nazwisko rodowe”; widok „Dane osobowe” pokazuje imię i nazwisko rodowe — 8a1a358
+- [x] 2.7 Nazwa w nagłówku panelu, na liście `/persons`, w pickerach i na karcie drzewa to „Imię Nazwisko” bez „z d.” — 8a1a358
+- [x] 2.8 Wyszukiwanie na `/persons` i w pickerze znajduje osobę po nazwisku rodowym — 8a1a358
+- [x] 2.9 Dodanie dziecka na drzewie podpowiada nazwisko ojca w polu „Nazwisko rodowe” — 8a1a358
+- [x] 2.10 Zrzut ekranu formularza i widoku „Dane osobowe” w `context/changes/single-birth-surname/screenshots/` — 8a1a358

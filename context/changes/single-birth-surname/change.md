@@ -1,7 +1,7 @@
 ---
 change_id: single-birth-surname
 title: Jedno nazwisko osoby — zawsze rodowe
-status: implementing
+status: implemented
 created: 2026-10-21
 updated: 2026-10-21
 archived_at: null
