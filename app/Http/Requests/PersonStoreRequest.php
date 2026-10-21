@@ -27,10 +27,10 @@ class PersonStoreRequest extends FormRequest
         );
 
         $burialRules = [
-            'burial.locality_id' => [
+            'burial.cemetery_id' => [
                 'nullable',
                 'integer',
-                Rule::exists('localities', 'id')->where('tree_id', $this->user()->tree->id),
+                Rule::exists('cemeteries', 'id')->where('tree_id', $this->user()->tree->id),
                 'prohibited_unless:is_deceased,1,true',
             ],
         ];
@@ -85,7 +85,7 @@ class PersonStoreRequest extends FormRequest
             'death.day' => 'dzień zgonu',
             'death.is_approximate' => 'przybliżona data zgonu',
             'death.locality_id' => 'miejsce zgonu',
-            'burial.locality_id' => 'miejsce pochowania',
+            'burial.cemetery_id' => 'miejsce pochowania',
         ];
     }
 

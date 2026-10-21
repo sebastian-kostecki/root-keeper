@@ -39,6 +39,6 @@ class DeleteParish
      */
     private function inUseException(): ValidationException
     {
-        return ValidationException::withMessages(['parish' => __('Parafia jest używana — scal ją z inną zamiast usuwać.')]);
+        return ValidationException::withMessages(['parish' => __('Parafia / urząd jest używany — scal go z innym zamiast usuwać.')]);
     }
 }

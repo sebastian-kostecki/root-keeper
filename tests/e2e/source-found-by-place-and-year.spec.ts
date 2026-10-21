@@ -44,12 +44,8 @@ test('source-found-by-place-and-year: an act found by place and year is linked w
         last_name: suffix,
         birth: { year: BIRTH_YEAR, locality_id: localityId },
     });
-    const parishId = await createParish(page, {
-        name: `Parafia ${suffix}`,
-        localityId,
-    });
+    const parishId = await createParish(page, { localityId });
     const otherParishId = await createParish(page, {
-        name: `Parafia inna ${suffix}`,
         localityId: await createLocality(page, otherLocalityName),
     });
     const targetId = await createSource(page, {

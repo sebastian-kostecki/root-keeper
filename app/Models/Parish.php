@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\ParishKind;
 use App\Enums\Religion;
 use Database\Factories\ParishFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -14,13 +15,15 @@ use Illuminate\Support\Carbon;
 /**
  * @property int $id
  * @property int $tree_id
- * @property string $name
+ * @property string|null $name The former name, read-only; cleared by the author once moved into the seat and dedication.
+ * @property ParishKind $kind
+ * @property string|null $dedication
  * @property Religion|null $religion
  * @property int|null $locality_id
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
-#[Fillable(['tree_id', 'name', 'religion', 'locality_id'])]
+#[Fillable(['tree_id', 'name', 'kind', 'dedication', 'religion', 'locality_id'])]
 class Parish extends Model
 {
     /** @use HasFactory<ParishFactory> */
@@ -32,16 +35,24 @@ class Parish extends Model
     protected function casts(): array
     {
         return [
+            'kind' => ParishKind::class,
             'religion' => Religion::class,
         ];
     }
 
     /**
-     * The name with the religion in brackets, or the bare name without a religion.
+     * "{seat}[ {kind suffix}][ {dedication}][ ({short religion})]", as in Geneteka; a legacy row without a seat shows
+     * its former name instead of the seat. Needs the locality relation loaded.
      */
     public function label(): string
     {
-        return $this->religion === null ? $this->name : "{$this->name} ({$this->religion->label()})";
+        $parts = $this->locality_id === null
+            ? [$this->name]
+            : [$this->locality->name, $this->kind->labelSuffix(), $this->dedication];
+
+        $label = implode(' ', array_filter($parts, fn (?string $part): bool => $part !== null && $part !== ''));
+
+        return $this->religion === null ? $label : "{$label} ({$this->religion->shortLabel()})";
     }
 
     /**

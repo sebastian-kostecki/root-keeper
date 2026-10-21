@@ -1,6 +1,7 @@
+import { usePage } from '@inertiajs/react';
 import { useState } from 'react';
+import { CemeteryPicker } from '@/components/cemeteries/cemetery-picker';
 import InputError from '@/components/input-error';
-import { LocalityPicker } from '@/components/localities/locality-picker';
 import { PartialDateInput } from '@/components/persons/partial-date-input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
@@ -175,24 +176,33 @@ export function BirthFields({
     );
 }
 
-/** "Osoba nie żyje" switch row; the death date, place and burial place appear when checked. */
+/** "Osoba nie żyje" switch row; the death date and burial place (a cemetery) appear when checked. */
 export function DeathFields({
     errors,
     death,
     burial,
     isDeceased,
     burialSuggestion,
+    religions,
 }: {
     errors: Errors;
     death: PersonFormEvent | null;
     burial: PersonFormData['burial'];
     /** Cemetery of the person's gravestone; preselects an empty burial place. */
     burialSuggestion?: PersonFormData['burial_suggestion'];
+    /** Offered in the „Nowy cmentarz” dialog. */
+    religions: Religion[];
     /** Whether the checkbox starts checked. */
     isDeceased: boolean;
 }) {
+    const { cemeteryManagers, localityOptions } = usePage().props;
     const [checked, setChecked] = useState(isDeceased);
-    const suggested = burial?.locality ? null : (burialSuggestion ?? null);
+    const stored = burial?.cemetery ?? null;
+    const suggestion = stored === null ? (burialSuggestion ?? null) : null;
+    const [cemeteryId, setCemeteryId] = useState<number | null>(
+        (stored ?? suggestion)?.id ?? null,
+    );
+    const suggested = suggestion !== null && cemeteryId === suggestion.id;
 
     return (
         <div className="space-y-4">
@@ -221,12 +231,16 @@ export function DeathFields({
                         errors={errors}
                         defaultValue={death ?? undefined}
                     />
-                    <LocalityPicker
-                        id="burial-locality"
-                        name="burial.locality_id"
+                    <CemeteryPicker
+                        id="burial-cemetery"
+                        name="burial.cemetery_id"
                         label="Miejsce pochowania"
-                        value={burial?.locality ?? suggested}
+                        value={stored ?? suggestion}
+                        managers={cemeteryManagers}
+                        religions={religions}
+                        localities={localityOptions}
                         errors={errors}
+                        onChange={(next) => setCemeteryId(next?.id ?? null)}
                     />
                     {suggested && (
                         <p className="text-muted-foreground -mt-2 text-sm">

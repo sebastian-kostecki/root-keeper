@@ -96,7 +96,7 @@ export function SourcesTable({
                             sort={sort}
                             onSortChange={onSortChange}
                         />
-                        <TableHead>Parafia / cmentarz</TableHead>
+                        <TableHead>Parafia / urząd / cmentarz</TableHead>
                         <TableHead>Archiwum</TableHead>
                         <SortableHead<SourcesSortColumn>
                             column="potwierdza"

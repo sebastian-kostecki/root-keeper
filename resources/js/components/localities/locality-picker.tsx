@@ -4,6 +4,7 @@ import InputError from '@/components/input-error';
 import { SuggestField } from '@/components/suggest-field';
 import { Label } from '@/components/ui/label';
 import { useOptionalList } from '@/hooks/use-relation-candidates';
+import { localityHint } from '@/lib/localities-index';
 import { store as storeInlineLocality } from '@/routes/localities/inline';
 import type { LocalityOption } from '@/types';
 
@@ -43,6 +44,13 @@ export function LocalityPicker({
     const [selectedId, setSelectedId] = useState<number | null>(
         value?.id ?? null,
     );
+    const [seenValueId, setSeenValueId] = useState(value?.id ?? null);
+
+    // A value set from outside (e.g. by the other field of a form) replaces the selection.
+    if ((value?.id ?? null) !== seenValueId) {
+        setSeenValueId(value?.id ?? null);
+        setSelectedId(value?.id ?? null);
+    }
     const [created, setCreated] = useState<LocalityOption[]>([]);
     const [createError, setCreateError] = useState<string | undefined>();
     const http = useHttp<{ name: string }, LocalityOption>({ name: '' });
@@ -105,6 +113,7 @@ export function LocalityPicker({
                 name={name}
                 options={merged}
                 labelOf={(option) => option.name}
+                hintOf={localityHint}
                 value={selectedId}
                 onChange={select}
                 onCreate={createLocality}

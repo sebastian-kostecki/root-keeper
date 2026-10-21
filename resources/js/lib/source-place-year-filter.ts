@@ -1,10 +1,11 @@
 import type { Source } from '@/types';
 
-type FilterFields = Pick<Source, 'year' | 'parish_name' | 'locality_name'>;
+type FilterFields = Pick<Source, 'year' | 'parish_label' | 'locality_name'> &
+    Partial<Pick<Source, 'cemetery_label'>>;
 
 /**
- * Narrows a source list by place (parish name or locality name contains the
- * phrase, ignoring case) and exact year. Blank or non-integer input leaves that
+ * Narrows a source list by place (parish label, locality name or cemetery label
+ * contains the phrase, ignoring case) and exact year. Blank or non-integer input leaves that
  * criterion off. `hiddenUndescribedCount` counts hidden sources that lack the
  * data an active criterion needs (no year / no place), so the UI can say so.
  */
@@ -20,14 +21,18 @@ export function filterSourcesByPlaceAndYear<T extends FilterFields>(
     let hiddenUndescribedCount = 0;
 
     for (const source of sources) {
+        const cemeteryLabel = source.cemetery_label ?? null;
         const hasPlace =
-            source.parish_name !== null || source.locality_name !== null;
+            source.parish_label !== null ||
+            source.locality_name !== null ||
+            cemeteryLabel !== null;
         const placeMatches =
             needle === '' ||
-            (source.parish_name?.toLocaleLowerCase('pl').includes(needle) ??
+            (source.parish_label?.toLocaleLowerCase('pl').includes(needle) ??
                 false) ||
             (source.locality_name?.toLocaleLowerCase('pl').includes(needle) ??
-                false);
+                false) ||
+            (cemeteryLabel?.toLocaleLowerCase('pl').includes(needle) ?? false);
         const yearMatches = year === null || source.year === year;
 
         if (placeMatches && yearMatches) {

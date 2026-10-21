@@ -42,7 +42,7 @@ export type PersonPayload = {
     is_deceased: boolean;
     birth: PartialDatePayload;
     death?: PartialDatePayload;
-    burial?: { locality_id: number | null };
+    burial?: { cemetery_id: number | null };
 };
 
 function blankToNull(value: string | undefined): string | null {
@@ -138,7 +138,7 @@ export function personFormToPayload(personForm: PersonFormData): PersonPayload {
     if (personForm.is_deceased) {
         payload.death = eventToPayload(personForm.death);
         payload.burial = {
-            locality_id: personForm.burial?.locality?.id ?? null,
+            cemetery_id: personForm.burial?.cemetery?.id ?? null,
         };
     }
 
@@ -172,7 +172,7 @@ export function mergeSectionIntoPayload(
         if (payload.is_deceased) {
             payload.death = eventPayloadFromValues('death', values);
             payload.burial = {
-                locality_id: toNumber(values['burial.locality_id']),
+                cemetery_id: toNumber(values['burial.cemetery_id']),
             };
         } else {
             delete payload.death;

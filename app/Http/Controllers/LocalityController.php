@@ -33,8 +33,7 @@ class LocalityController extends Controller
     {
         $locality = $storeLocality->handle(
             $request->user()->tree,
-            $request->string('name')->toString(),
-            $request->filled('description') ? $request->string('description')->toString() : null,
+            $request->localityDetails(),
         );
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Dodano miejscowość')]);
@@ -43,14 +42,13 @@ class LocalityController extends Controller
     }
 
     /**
-     * Update the name and description of the given locality.
+     * Update the details of the given locality.
      */
     public function update(LocalityUpdateRequest $request, Locality $locality, UpdateLocality $updateLocality): RedirectResponse
     {
         $updateLocality->handle(
             $locality,
-            $request->string('name')->toString(),
-            $request->filled('description') ? $request->string('description')->toString() : null,
+            $request->localityDetails(),
         );
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Zapisano miejscowość')]);

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import type { MouseEvent, ReactNode } from 'react';
+import { CemeteryPicker } from '@/components/cemeteries/cemetery-picker';
 import InputError from '@/components/input-error';
-import { LocalityPicker } from '@/components/localities/locality-picker';
 import { NewParishDialog } from '@/components/parishes/new-parish-dialog';
 import { BuriedPeopleField } from '@/components/sources/buried-people-field';
 import { SuggestField } from '@/components/suggest-field';
@@ -17,8 +17,11 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 import type {
+    CemeteryManagerOption,
+    CemeteryOption,
     LocalityOption,
     Parish,
+    ParishKindOption,
     ReligionOption,
     Source,
     SourceKind,
@@ -31,7 +34,10 @@ type Props = {
     parishes: Parish[];
     archives: string[];
     localities: LocalityOption[];
+    cemeteries: CemeteryOption[];
+    cemeteryManagers: CemeteryManagerOption[];
     religions: ReligionOption[];
+    parishKinds: ParishKindOption[];
     errors: Partial<Record<string, string>>;
     defaults?: Source;
     /** File name shown as the „Nazwa” placeholder. */
@@ -42,6 +48,8 @@ type Props = {
     onPersonLinkClick?: (event: MouseEvent, personId: number) => void;
     /** Called with a locality added in the panel, so the caller can name it later. */
     onLocalityCreated?: (locality: LocalityOption) => void;
+    /** Called with a cemetery added in the panel, so the caller can name it later. */
+    onCemeteryCreated?: (cemetery: CemeteryOption) => void;
 };
 
 /** Radix Select does not allow an empty item value. */
@@ -54,13 +62,17 @@ export function SourceDescriptionFields({
     parishes,
     archives,
     localities,
+    cemeteries,
+    cemeteryManagers,
     religions,
+    parishKinds,
     errors,
     defaults,
     fileName,
     notice,
     onPersonLinkClick,
     onLocalityCreated,
+    onCemeteryCreated,
 }: Props) {
     const [recordType, setRecordType] = useState<string>(
         defaults?.record_type ?? '',
@@ -72,16 +84,29 @@ export function SourceDescriptionFields({
     const [createdLocalities, setCreatedLocalities] = useState<
         LocalityOption[]
     >([]);
-    /** Name typed in the parish field while „Nowa parafia” is open; null when it is closed. */
-    const [newParishName, setNewParishName] = useState<string | null>(null);
+    const [createdCemeteries, setCreatedCemeteries] = useState<
+        CemeteryOption[]
+    >([]);
+    /** Text typed in the parish field while „Nowa parafia / urząd” is open; null when it is closed. */
+    const [newParishText, setNewParishText] = useState<string | null>(null);
     const isRecord = kind === 'metrical_record';
     const isGravestone = kind === 'gravestone';
 
-    const cemeteryId = defaults?.cemetery_locality_id ?? null;
-    const cemetery: LocalityOption | null =
+    const cemeteryId = defaults?.cemetery_id ?? null;
+    const cemetery: CemeteryOption | null =
         cemeteryId === null
             ? null
-            : { id: cemeteryId, name: defaults?.cemetery_name ?? '' };
+            : {
+                  id: cemeteryId,
+                  label: defaults?.cemetery_label ?? '',
+                  locality_id: defaults?.cemetery_locality_id ?? 0,
+                  locality_name: defaults?.locality_name ?? '',
+              };
+
+    const addCreatedCemetery = (created: CemeteryOption) => {
+        setCreatedCemeteries((current) => [...current, created]);
+        onCemeteryCreated?.(created);
+    };
 
     const addCreatedLocality = (locality: LocalityOption) => {
         setCreatedLocalities((current) => [...current, locality]);
@@ -93,6 +118,12 @@ export function SourceDescriptionFields({
         ...parishes,
         ...createdParishes.filter(
             (created) => !parishes.some((known) => known.id === created.id),
+        ),
+    ];
+    const cemeteryOptions = [
+        ...cemeteries,
+        ...createdCemeteries.filter(
+            (created) => !cemeteries.some((known) => known.id === created.id),
         ),
     ];
     const localityOptions = [
@@ -142,34 +173,38 @@ export function SourceDescriptionFields({
             </div>
 
             <div className={cn('grid gap-2', !isRecord && 'hidden')}>
-                <Label htmlFor="parish_id">Parafia</Label>
+                <Label htmlFor="parish_id">Parafia / urząd</Label>
                 <SuggestField
                     mode="record"
                     id="parish_id"
-                    label="Parafia"
+                    label="Parafia / urząd"
                     name="parish_id"
                     options={parishOptions}
                     labelOf={(option) => option.label}
                     value={parishId}
                     onChange={setParishId}
-                    onCreate={setNewParishName}
+                    onCreate={setNewParishText}
                     offerCreate="always"
-                    createLabel={(query) => `Dodaj parafię „${query}”`}
-                    placeholder="Wpisz nazwę parafii"
+                    createLabel={(query) => `Dodaj parafię / urząd „${query}”`}
+                    placeholder="Wpisz miejscowość lub wezwanie"
                     aria-invalid={errors.parish_id ? true : undefined}
                 />
                 <InputError message={errors.parish_id} />
             </div>
 
             <div className={cn(!isGravestone && 'hidden')}>
-                <LocalityPicker
-                    id="cemetery_locality_id"
-                    name="cemetery_locality_id"
+                <CemeteryPicker
+                    id="cemetery_id"
+                    name="cemetery_id"
                     label="Cmentarz"
                     value={cemetery}
-                    options={localityOptions}
+                    options={cemeteryOptions}
+                    managers={cemeteryManagers}
+                    religions={religions}
+                    localities={localityOptions}
                     errors={errors}
-                    onCreated={addCreatedLocality}
+                    onCreated={addCreatedCemetery}
+                    onLocalityCreated={addCreatedLocality}
                 />
             </div>
 
@@ -181,7 +216,7 @@ export function SourceDescriptionFields({
                 />
             </div>
 
-            <div className="grid gap-2">
+            <div className={cn('grid gap-2', isGravestone && 'hidden')}>
                 <Label htmlFor="year">Rok</Label>
                 <Input
                     id="year"
@@ -192,7 +227,7 @@ export function SourceDescriptionFields({
                 <InputError message={errors.year} />
             </div>
 
-            <div className="grid gap-2">
+            <div className={cn('grid gap-2', isGravestone && 'hidden')}>
                 <Label htmlFor="archive">Archiwum</Label>
                 <SuggestField
                     mode="text"
@@ -237,17 +272,18 @@ export function SourceDescriptionFields({
                 <InputError message={errors.note} />
             </div>
 
-            {newParishName !== null && (
+            {newParishText !== null && (
                 <NewParishDialog
-                    initialName={newParishName}
+                    initialSeatName={newParishText}
                     religions={religions}
+                    parishKinds={parishKinds}
                     localities={localityOptions}
                     onCreated={(parish) => {
                         setCreatedParishes((current) => [...current, parish]);
                         setParishId(parish.id);
                     }}
                     onLocalityCreated={addCreatedLocality}
-                    onClose={() => setNewParishName(null)}
+                    onClose={() => setNewParishText(null)}
                 />
             )}
         </>

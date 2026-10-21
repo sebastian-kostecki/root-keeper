@@ -17,7 +17,7 @@ class UpdateSource
      * The file, its thumbnail and the event links are never touched. Saving a
      * gravestone fills the empty burial places of its deceased people.
      *
-     * @param  array{name?: string|null, record_type?: string|null, parish_id?: int|null, cemetery_locality_id?: int|null, buried_person_ids?: list<int>|null, year?: int|null, archive?: string|null, url?: string|null, note?: string|null}  $description
+     * @param  array{name?: string|null, record_type?: string|null, parish_id?: int|null, cemetery_id?: int|null, buried_person_ids?: list<int>|null, year?: int|null, archive?: string|null, url?: string|null, note?: string|null}  $description
      */
     public function handle(Source $source, SourceKind $kind, array $description): Source
     {
@@ -28,7 +28,7 @@ class UpdateSource
             'name' => null,
             'record_type' => null,
             'parish_id' => null,
-            'cemetery_locality_id' => null,
+            'cemetery_id' => null,
             'year' => null,
             'archive' => null,
             'url' => null,
@@ -43,7 +43,7 @@ class UpdateSource
         }
 
         if ($kind !== SourceKind::Gravestone) {
-            $attributes['cemetery_locality_id'] = null;
+            $attributes['cemetery_id'] = null;
             $buriedPersonIds = [];
         }
 

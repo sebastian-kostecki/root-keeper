@@ -4,8 +4,10 @@ namespace App\Http\Middleware;
 
 use App\Actions\Persons\BuildPersonPreview;
 use App\Actions\Relations\BuildMarriagePanel;
+use App\Enums\CemeteryManager;
 use App\Enums\EventType;
 use App\Http\Resources\SourceResource;
+use App\Models\Cemetery;
 use App\Models\Event;
 use App\Models\Locality;
 use App\Models\Person;
@@ -56,6 +58,7 @@ class HandleInertiaRequests extends Middleware
                 'sources' => $request->user()->tree->sources()->count(),
                 'localities' => $request->user()->tree->localities()->count(),
                 'parishes' => $request->user()->tree->parishes()->count(),
+                'cemeteries' => $request->user()->tree->cemeteries()->count(),
             ],
             'personPreview' => function () use ($request): ?array {
                 $person = $this->previewPerson($request);
@@ -69,11 +72,19 @@ class HandleInertiaRequests extends Middleware
             },
             'localityOptions' => Inertia::optional(fn (): array => $request->user() === null ? [] : $request->user()->tree->localities()
                 ->orderBy('name')
-                ->get(['id', 'name'])
-                ->map(fn (Locality $locality): array => ['id' => $locality->id, 'name' => $locality->name])
+                ->get(['id', 'name', 'is_defunct'])
+                ->map(fn (Locality $locality): array => ['id' => $locality->id, 'name' => $locality->name, 'is_defunct' => $locality->is_defunct])
+                ->all()),
+            'cemeteryManagers' => fn (): array => CemeteryManager::options(),
+            'cemeteryOptions' => Inertia::optional(fn (): array => $request->user() === null ? [] : $request->user()->tree->cemeteries()
+                ->with('locality')
+                ->get()
+                ->sortBy(fn (Cemetery $cemetery): string => mb_strtolower($cemetery->label()))
+                ->map(fn (Cemetery $cemetery): array => $cemetery->toOption())
+                ->values()
                 ->all()),
             'availableSources' => Inertia::optional(fn (): array => $request->user() === null ? [] : SourceResource::collection(
-                $request->user()->tree->sources()->with(['parish.locality', 'cemetery'])->latest()->orderByDesc('id')->get()
+                $request->user()->tree->sources()->with(['parish.locality', 'cemetery.locality'])->latest()->orderByDesc('id')->get()
             )->resolve()),
         ];
     }

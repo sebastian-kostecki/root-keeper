@@ -1,6 +1,7 @@
 import { Link } from '@inertiajs/react';
 import type { MouseEvent } from 'react';
 import { EmptyCell } from '@/components/table-parts';
+import { Badge } from '@/components/ui/badge';
 import {
     Table,
     TableBody,
@@ -41,6 +42,7 @@ export function LocalitiesTable({
                         <TableHead className={cn(stickyHeadCell, 'px-4')}>
                             Nazwa
                         </TableHead>
+                        <TableHead>Rodzaj</TableHead>
                         <TableHead>Opis</TableHead>
                         <TableHead className="px-4 text-right">
                             Użycia
@@ -56,26 +58,45 @@ export function LocalitiesTable({
                                 locality.id === openId ? 'selected' : undefined
                             }
                         >
-                            <TableCell className={cn(stickyCell, 'px-4 py-3')}>
-                                <Link
-                                    href={hrefFor(locality.id)}
-                                    {...panelVisitOptions}
-                                    aria-current={
-                                        locality.id === openId
-                                            ? 'true'
-                                            : undefined
-                                    }
-                                    onClick={(event) =>
-                                        onRowClick(event, locality.id)
-                                    }
-                                    className={cn(
-                                        focusRing,
-                                        '-m-1 block rounded-md p-1 font-medium break-words whitespace-normal',
-                                        locality.id === openId && 'underline',
+                            <TableCell
+                                className={cn(
+                                    stickyCell,
+                                    'px-4 py-3 md:min-w-64',
+                                )}
+                            >
+                                <div className="flex items-center gap-2">
+                                    <Link
+                                        href={hrefFor(locality.id)}
+                                        {...panelVisitOptions}
+                                        aria-current={
+                                            locality.id === openId
+                                                ? 'true'
+                                                : undefined
+                                        }
+                                        onClick={(event) =>
+                                            onRowClick(event, locality.id)
+                                        }
+                                        className={cn(
+                                            focusRing,
+                                            '-m-1 block min-w-0 rounded-md p-1 font-medium break-words whitespace-normal',
+                                            locality.id === openId &&
+                                                'underline',
+                                        )}
+                                    >
+                                        {locality.name}
+                                    </Link>
+                                    {locality.is_defunct && (
+                                        <Badge
+                                            variant="outline"
+                                            className="shrink-0 whitespace-nowrap"
+                                        >
+                                            nie istnieje
+                                        </Badge>
                                     )}
-                                >
-                                    {locality.name}
-                                </Link>
+                                </div>
+                            </TableCell>
+                            <TableCell className="whitespace-nowrap">
+                                {locality.kind_label ?? <EmptyCell />}
                             </TableCell>
                             <TableCell className="w-full max-w-0">
                                 {locality.description ? (

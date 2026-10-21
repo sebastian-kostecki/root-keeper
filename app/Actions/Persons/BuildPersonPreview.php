@@ -26,7 +26,7 @@ class BuildPersonPreview
      */
     public function handle(Person $person, User $user): array
     {
-        $person->load(['events.sources', 'events.locality', 'parents.events', 'children.events.locality', 'marriages.sources', 'marriages.locality', 'marriages.participants.events.locality', 'residences.locality', 'gravestones.cemetery']);
+        $person->load(['events.sources', 'events.locality', 'events.cemetery.locality', 'parents.events', 'children.events.locality', 'marriages.sources', 'marriages.locality', 'marriages.participants.events.locality', 'residences.locality', 'gravestones.cemetery.locality']);
 
         return [
             'person' => [

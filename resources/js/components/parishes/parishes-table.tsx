@@ -34,13 +34,14 @@ export function ParishesTable({
         <div className="rounded-lg border">
             <Table>
                 <TableCaption className="sr-only">
-                    Parafie w drzewie w kolejności alfabetycznej.
+                    Parafie i urzędy w drzewie w kolejności alfabetycznej.
                 </TableCaption>
                 <TableHeader>
                     <TableRow className="hover:bg-transparent">
                         <TableHead className={cn(stickyHeadCell, 'px-4')}>
-                            Nazwa
+                            Parafia / urząd
                         </TableHead>
+                        <TableHead>Rodzaj</TableHead>
                         <TableHead>Wyznanie</TableHead>
                         <TableHead>Siedziba</TableHead>
                         <TableHead className="px-4 text-right">
@@ -75,9 +76,10 @@ export function ParishesTable({
                                         parish.id === openId && 'underline',
                                     )}
                                 >
-                                    {parish.name}
+                                    {parish.label}
                                 </Link>
                             </TableCell>
+                            <TableCell>{parish.kind_label}</TableCell>
                             <TableCell>
                                 {parish.religion_label ?? <EmptyCell />}
                             </TableCell>

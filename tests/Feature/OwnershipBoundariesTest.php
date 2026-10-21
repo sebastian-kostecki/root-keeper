@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\ParticipantRole;
+use App\Models\Cemetery;
 use App\Models\Event;
 use App\Models\Locality;
 use App\Models\ParentChildRelation;
@@ -56,6 +57,7 @@ function ownershipRecords(User $attacker, User $victim): array
         'victimMarriage' => $victimMarriage,
         'victimLocality' => Locality::factory()->for($victim->tree)->create(),
         'victimParish' => Parish::factory()->for($victim->tree)->create(),
+        'victimCemetery' => Cemetery::factory()->for($victim->tree)->create(),
         'victimRelation' => ParentChildRelation::factory()->create([
             'tree_id' => $victim->tree->id,
             'parent_id' => $victimPerson->id,
@@ -66,6 +68,7 @@ function ownershipRecords(User $attacker, User $victim): array
         'ownEvent' => $ownEvent,
         'ownLocality' => Locality::factory()->for($attacker->tree)->create(),
         'ownParish' => Parish::factory()->for($attacker->tree)->create(),
+        'ownCemetery' => Cemetery::factory()->for($attacker->tree)->create(),
     ];
 }
 
@@ -96,6 +99,8 @@ function ownershipRouteCases(): array
         ['localities.merge', 'post', fn (array $r): array => ['locality' => $r['victimLocality']->id], fn (array $r): array => ['target_id' => $r['ownLocality']->id]],
         ['parishes.update', 'put', fn (array $r): array => ['parish' => $r['victimParish']->id], fn (array $r): array => ['name' => 'Przejęta']],
         ['parishes.merge', 'post', fn (array $r): array => ['parish' => $r['victimParish']->id], fn (array $r): array => ['target_id' => $r['ownParish']->id]],
+        ['cemeteries.update', 'put', fn (array $r): array => ['cemetery' => $r['victimCemetery']->id], fn (array $r): array => ['name' => 'Przejęty', 'locality_id' => $r['ownCemetery']->locality_id]],
+        ['cemeteries.merge', 'post', fn (array $r): array => ['cemetery' => $r['victimCemetery']->id], fn (array $r): array => ['target_id' => $r['ownCemetery']->id]],
         ['events.sources.store', 'post', fn (array $r): array => ['event' => $r['victimEvent']->id], fn (array $r): array => ['source_id' => $r['ownSource']->id]],
         ['marriages.update', 'put', fn (array $r): array => ['marriage' => $r['victimMarriage']->id], fn (array $r): array => ['marriage' => ['year' => 1950]]],
     ];
@@ -119,6 +124,7 @@ function ownershipRouteCases(): array
         ['sources.legacy-entry-number.destroy', 'delete', fn (array $r): array => ['source' => $r['victimSource']->id]],
         ['localities.destroy', 'delete', fn (array $r): array => ['locality' => $r['victimLocality']->id]],
         ['parishes.destroy', 'delete', fn (array $r): array => ['parish' => $r['victimParish']->id]],
+        ['cemeteries.destroy', 'delete', fn (array $r): array => ['cemetery' => $r['victimCemetery']->id]],
         ['parent-child-relations.destroy', 'delete', fn (array $r): array => ['parent_child_relation' => $r['victimRelation']->id]],
         ['marriages.destroy', 'delete', fn (array $r): array => ['marriage' => $r['victimMarriage']->id]],
     ];
@@ -243,6 +249,22 @@ it('answers 404 and writes nothing when ?parish= names another tree\'s parish', 
     expect(ownershipSnapshot())->toBe($before);
 });
 
+it('answers 404 and writes nothing when ?cemetery= names another tree\'s cemetery', function () {
+    Storage::fake('local');
+
+    $attacker = User::factory()->create();
+    $victim = User::factory()->create();
+    $records = ownershipRecords($attacker, $victim);
+
+    $before = ownershipSnapshot();
+
+    $this->actingAs($attacker)
+        ->get(route('places.index', ['kind' => 'cmentarze', 'cemetery' => $records['victimCemetery']->id]))
+        ->assertNotFound();
+
+    expect(ownershipSnapshot())->toBe($before);
+});
+
 it('answers 404 and writes nothing when ?source= names another tree\'s source', function () {
     Storage::fake('local');
 
@@ -277,15 +299,31 @@ it('ignores a tree_id sent in the body and creates the parish in the attacker\'s
     $attacker = User::factory()->create();
     $victim = User::factory()->create();
     $victimParishesBefore = $victim->tree->parishes()->count();
+    $seat = Locality::factory()->for($attacker->tree)->create();
 
     $this->actingAs($attacker)
-        ->postJson(route($route), ['name' => 'Wstrzyknięta', 'tree_id' => $victim->tree->id]);
+        ->postJson(route($route), ['kind' => 'parish', 'locality_id' => $seat->id, 'dedication' => 'Wstrzyknięta', 'tree_id' => $victim->tree->id]);
 
-    $parish = Parish::where('name', 'Wstrzyknięta')->firstOrFail();
+    $parish = Parish::where('dedication', 'Wstrzyknięta')->firstOrFail();
 
     expect($parish->tree_id)->toBe($attacker->tree->id);
     expect($victim->tree->parishes()->count())->toBe($victimParishesBefore);
 })->with(['parishes.store', 'parishes.inline.store']);
+
+it('ignores a tree_id sent in the body and creates the cemetery in the attacker\'s tree', function (string $route) {
+    $attacker = User::factory()->create();
+    $victim = User::factory()->create();
+    $locality = Locality::factory()->for($attacker->tree)->create();
+    $victimCemeteriesBefore = $victim->tree->cemeteries()->count();
+
+    $this->actingAs($attacker)
+        ->postJson(route($route), ['name' => 'Wstrzyknięty', 'locality_id' => $locality->id, 'tree_id' => $victim->tree->id]);
+
+    $cemetery = Cemetery::where('name', 'Wstrzyknięty')->firstOrFail();
+
+    expect($cemetery->tree_id)->toBe($attacker->tree->id);
+    expect($victim->tree->cemeteries()->count())->toBe($victimCemeteriesBefore);
+})->with(['cemeteries.store', 'cemeteries.inline.store']);
 
 it('ignores a tree_id sent in the body and creates the person in the attacker\'s tree', function () {
     $attacker = User::factory()->create();

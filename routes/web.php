@@ -1,6 +1,9 @@
 <?php
 
+use App\Http\Controllers\CemeteryController;
+use App\Http\Controllers\CemeteryMergeController;
 use App\Http\Controllers\EventSourceController;
+use App\Http\Controllers\InlineCemeteryController;
 use App\Http\Controllers\InlineLocalityController;
 use App\Http\Controllers\InlineParishController;
 use App\Http\Controllers\LocalityController;
@@ -51,6 +54,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('parishes/inline', [InlineParishController::class, 'store'])->name('parishes.inline.store');
     Route::resource('parishes', ParishController::class)->only(['index', 'store', 'update', 'destroy']);
     Route::post('parishes/{parish}/merge', ParishMergeController::class)->name('parishes.merge');
+
+    Route::post('cemeteries/inline', [InlineCemeteryController::class, 'store'])->name('cemeteries.inline.store');
+    Route::resource('cemeteries', CemeteryController::class)->only(['store', 'update', 'destroy']);
+    Route::post('cemeteries/{cemetery}/merge', CemeteryMergeController::class)->name('cemeteries.merge');
 
     Route::post('events/{event}/sources', [EventSourceController::class, 'store'])->name('events.sources.store');
     Route::patch('events/{event}/sources/{source}', [EventSourceController::class, 'update'])->name('events.sources.update');

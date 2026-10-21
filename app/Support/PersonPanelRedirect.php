@@ -14,7 +14,7 @@ class PersonPanelRedirect
      *
      * @var list<string>
      */
-    private const PANEL_KEYS = ['person', 'marriage', 'add', 'source', 'locality', 'parish', 'demo'];
+    private const PANEL_KEYS = ['person', 'marriage', 'add', 'source', 'locality', 'parish', 'cemetery', 'demo'];
 
     /**
      * Redirect back to the referring page with the given person's panel open.

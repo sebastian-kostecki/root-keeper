@@ -2,6 +2,7 @@
 
 use App\Enums\EventType;
 use App\Enums\ParticipantRole;
+use App\Models\Cemetery;
 use App\Models\Event;
 use App\Models\Locality;
 use App\Models\ParentChildRelation;
@@ -1516,46 +1517,47 @@ test('the legacy place key is ignored and events.place stays untouched', functio
     expect($birth->locality_id)->toBeNull();
 });
 
-test('store creates a burial event with a locality for a deceased person', function () {
+test('store creates a burial event at the cemetery for a deceased person', function () {
     $user = User::factory()->create();
-    $cemetery = Locality::factory()->for($user->tree)->create(['name' => 'Lipnica']);
+    $cemetery = Cemetery::factory()->for($user->tree)->create();
 
     $this->actingAs($user)->post(route('persons.store'), [
         'first_name' => 'Jan',
         'is_deceased' => '1',
-        'burial' => ['locality_id' => $cemetery->id],
+        'burial' => ['cemetery_id' => $cemetery->id],
     ])->assertSessionHasNoErrors();
 
     $person = Person::where('first_name', 'Jan')->firstOrFail()->load('events');
     $burial = $person->burial();
 
     expect($burial)->not->toBeNull()
-        ->and($burial->locality_id)->toBe($cemetery->id)
+        ->and($burial->cemetery_id)->toBe($cemetery->id)
+        ->and($burial->locality_id)->toBe($cemetery->locality_id)
         ->and($burial->date_year)->toBeNull()
         ->and($burial->date_is_approximate)->toBeFalse()
         ->and($burial->participants()->firstOrFail()->pivot->role)->toBe(ParticipantRole::Subject);
 });
 
-test('store without a burial locality creates no burial event', function () {
+test('store without a burial cemetery creates no burial event', function () {
     $user = User::factory()->create();
 
     $this->actingAs($user)->post(route('persons.store'), [
         'first_name' => 'Jan',
         'is_deceased' => '1',
-        'burial' => ['locality_id' => ''],
+        'burial' => ['cemetery_id' => ''],
     ])->assertSessionHasNoErrors();
 
     expect(Event::where('type', EventType::Burial)->count())->toBe(0);
 });
 
-test('store rejects a burial locality when the person is not deceased', function () {
+test('store rejects a burial cemetery when the person is not deceased', function () {
     $user = User::factory()->create();
-    $cemetery = Locality::factory()->for($user->tree)->create();
+    $cemetery = Cemetery::factory()->for($user->tree)->create();
 
     $this->actingAs($user)->post(route('persons.store'), [
         'first_name' => 'Jan',
-        'burial' => ['locality_id' => $cemetery->id],
-    ])->assertSessionHasErrors('burial.locality_id');
+        'burial' => ['cemetery_id' => $cemetery->id],
+    ])->assertSessionHasErrors('burial.cemetery_id');
 
     expect(Person::count())->toBe(0);
 });
@@ -1565,22 +1567,23 @@ test('update creates, changes in place and clears the burial without touching th
     $person = Person::factory()->for($user->tree)->create();
     $death = Event::factory()->for($user->tree)->death()->create(['date_year' => 1999, 'date_month' => 5, 'date_day' => 6]);
     $death->participants()->attach($person, ['role' => ParticipantRole::Subject]);
-    $first = Locality::factory()->for($user->tree)->create(['name' => 'Lipnica']);
-    $second = Locality::factory()->for($user->tree)->create(['name' => 'Nowy Targ']);
-    $payload = fn (?int $localityId): array => [
+    $first = Cemetery::factory()->for($user->tree)->create();
+    $second = Cemetery::factory()->for($user->tree)->unnamed()->create();
+    $payload = fn (?int $cemeteryId): array => [
         'first_name' => 'Jan',
         'is_deceased' => '1',
         'death' => ['year' => 1999, 'month' => 5, 'day' => 6],
-        'burial' => ['locality_id' => $localityId],
+        'burial' => ['cemetery_id' => $cemeteryId],
     ];
 
     $this->actingAs($user)->put(route('persons.update', $person), $payload($first->id))->assertSessionHasNoErrors();
     $burial = Event::where('type', EventType::Burial)->sole();
-    expect($burial->locality_id)->toBe($first->id);
+    expect($burial->cemetery_id)->toBe($first->id)->and($burial->locality_id)->toBe($first->locality_id);
 
     $this->actingAs($user)->put(route('persons.update', $person), $payload($second->id))->assertSessionHasNoErrors();
     expect(Event::where('type', EventType::Burial)->sole()->id)->toBe($burial->id)
-        ->and($burial->refresh()->locality_id)->toBe($second->id)
+        ->and($burial->refresh()->cemetery_id)->toBe($second->id)
+        ->and($burial->locality_id)->toBe($second->locality_id)
         ->and($burial->date_year)->toBeNull();
 
     $death->refresh();
@@ -1623,19 +1626,64 @@ test('unchecking is_deceased removes the burial together with the death', functi
     expect(Event::whereIn('type', [EventType::Death, EventType::Burial])->count())->toBe(0);
 });
 
-test('the preview exposes the burial locality for the form and the death section', function () {
-    $user = User::factory()->create();
+/**
+ * A deceased person of the tree, with the death and, optionally, a burial in the given place.
+ */
+function deceasedPersonForBurial(User $user): Person
+{
     $person = Person::factory()->for($user->tree)->create();
-    $death = Event::factory()->for($user->tree)->death()->create();
+    $death = Event::factory()->for($user->tree)->death()->create(['date_year' => 1999]);
     $death->participants()->attach($person, ['role' => ParticipantRole::Subject]);
-    $lipnica = Locality::factory()->for($user->tree)->create(['name' => 'Lipnica']);
-    $burial = Event::factory()->for($user->tree)->burial()->create(['locality_id' => $lipnica->id]);
+
+    return $person;
+}
+
+function burialPayload(array $burial): array
+{
+    return [
+        'first_name' => 'Jan',
+        'is_deceased' => '1',
+        'death' => ['year' => 1999],
+        'burial' => $burial,
+    ];
+}
+
+test('a cemetery of another tree or a missing one is rejected and nothing is written', function () {
+    $user = User::factory()->create();
+    $person = deceasedPersonForBurial($user);
+    $foreign = Cemetery::factory()->for(User::factory()->create()->tree)->create();
+    $eventsBefore = Event::count();
+
+    foreach ([$foreign->id, 999999] as $cemeteryId) {
+        $this->actingAs($user)->put(route('persons.update', $person), burialPayload(['cemetery_id' => $cemeteryId]))
+            ->assertSessionHasErrors('burial.cemetery_id');
+    }
+
+    expect(Event::count())->toBe($eventsBefore);
+});
+
+test('a locality sent as the burial place is ignored', function () {
+    $user = User::factory()->create();
+    $person = deceasedPersonForBurial($user);
+    $locality = Locality::factory()->for($user->tree)->create();
+
+    $this->actingAs($user)->put(route('persons.update', $person), burialPayload(['locality_id' => $locality->id]))
+        ->assertSessionHasNoErrors();
+
+    expect(Event::where('type', EventType::Burial)->count())->toBe(0);
+});
+
+test('the preview exposes the burial cemetery for the form and its label for the panel', function () {
+    $user = User::factory()->create();
+    $person = deceasedPersonForBurial($user);
+    $cemetery = Cemetery::factory()->for($user->tree)->unnamed()->create();
+    $burial = Event::factory()->for($user->tree)->burial()->atCemetery($cemetery)->create();
     $burial->participants()->attach($person, ['role' => ParticipantRole::Subject]);
 
     $this->actingAs($user)->get(personPreviewUrl($person))
         ->assertInertia(fn ($page) => $page
-            ->where('personPreview.person.burial_place', 'Lipnica')
-            ->where('personPreview.personForm.burial', ['locality' => ['id' => $lipnica->id, 'name' => 'Lipnica']]));
+            ->where('personPreview.person.burial_place', "cmentarz {$cemetery->locality->name}")
+            ->where('personPreview.personForm.burial', ['cemetery' => $cemetery->toOption()]));
 });
 
 test('a foreign or missing locality in any fact place field fails with the same error and writes nothing', function (string $field) {
@@ -1655,7 +1703,7 @@ test('a foreign or missing locality in any fact place field fails with the same 
     }
 
     expect(Event::count())->toBe($eventsBefore);
-})->with(['birth.locality_id', 'death.locality_id', 'burial.locality_id']);
+})->with(['birth.locality_id', 'death.locality_id']);
 
 test('the parent slot request inherits the locality rule', function () {
     $user = User::factory()->create();
@@ -1677,7 +1725,7 @@ test('the parent slot request inherits the locality rule', function () {
 test('the shared localityOptions prop lists only the own tree localities sorted by name', function () {
     $user = User::factory()->create();
     $person = Person::factory()->for($user->tree)->create();
-    $zator = Locality::factory()->for($user->tree)->create(['name' => 'Zator']);
+    $zator = Locality::factory()->for($user->tree)->defunct()->create(['name' => 'Zator']);
     $andrychow = Locality::factory()->for($user->tree)->create(['name' => 'Andrychów']);
     Locality::factory()->for(User::factory()->create()->tree)->create(['name' => 'Obca']);
     $url = personPreviewUrl($person);
@@ -1694,7 +1742,7 @@ test('the shared localityOptions prop lists only the own tree localities sorted 
     ]);
 
     expect($response->json('props.localityOptions'))->toBe([
-        ['id' => $andrychow->id, 'name' => 'Andrychów'],
-        ['id' => $zator->id, 'name' => 'Zator'],
+        ['id' => $andrychow->id, 'name' => 'Andrychów', 'is_defunct' => false],
+        ['id' => $zator->id, 'name' => 'Zator', 'is_defunct' => true],
     ]);
 });

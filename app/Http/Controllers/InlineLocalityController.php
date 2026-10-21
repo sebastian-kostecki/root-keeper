@@ -27,7 +27,16 @@ class InlineLocalityController extends Controller
         }
 
         try {
-            $locality = $storeLocality->handle($tree, $name, null);
+            $locality = $storeLocality->handle($tree, [
+                'name' => $name,
+                'description' => null,
+                'kind' => null,
+                'latitude' => null,
+                'longitude' => null,
+                'historical_affiliation' => null,
+                'is_defunct' => false,
+                'defunct_note' => null,
+            ]);
         } catch (ValidationException $exception) {
             $existing = $this->findByName($tree, $name);
 
@@ -48,6 +57,6 @@ class InlineLocalityController extends Controller
 
     private function respond(Locality $locality, int $status): JsonResponse
     {
-        return response()->json(['id' => $locality->id, 'name' => $locality->name], $status);
+        return response()->json(['id' => $locality->id, 'name' => $locality->name, 'is_defunct' => $locality->is_defunct], $status);
     }
 }

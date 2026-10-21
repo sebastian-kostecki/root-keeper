@@ -2,6 +2,7 @@
 
 use App\Enums\EventType;
 use App\Enums\ParticipantRole;
+use App\Models\Cemetery;
 use App\Models\Event;
 use App\Models\Locality;
 use App\Models\Person;
@@ -447,4 +448,22 @@ test('the payload gives the year, the approximation flag and whether the date ha
         [1920, true, false],
         [1960, false, false],
     ]);
+});
+
+test('the burial place of a timeline row is the label of the cemetery, or the locality without one', function () {
+    $user = User::factory()->create();
+    $named = Person::factory()->for($user->tree)->create();
+    $unnamed = Person::factory()->for($user->tree)->create();
+    $plain = Person::factory()->for($user->tree)->create();
+    $luboml = Locality::factory()->create(['tree_id' => $user->tree->id, 'name' => 'Luboml']);
+    $parish = Cemetery::factory()->for($user->tree)->in($luboml)->create(['name' => 'Cmentarz parafialny']);
+    $other = Cemetery::factory()->for($user->tree)->unnamed()->create();
+    $burial = fn (Person $person, Cemetery $cemetery) => attachTimelineEvent($person, EventType::Burial, ['cemetery_id' => $cemetery->id, 'locality_id' => $cemetery->locality_id]);
+    $burial($named, $parish);
+    $burial($unnamed, $other);
+    attachTimelineEvent($plain, EventType::Burial, ['locality_id' => $luboml->id]);
+
+    expect(timelineRows($this, $user, $named))->toBe([['Pochowanie', null, 'Cmentarz parafialny, Luboml', null]])
+        ->and(timelineRows($this, $user, $unnamed))->toBe([['Pochowanie', null, "cmentarz {$other->locality->name}", null]])
+        ->and(timelineRows($this, $user, $plain))->toBe([['Pochowanie', null, 'Luboml', null]]);
 });

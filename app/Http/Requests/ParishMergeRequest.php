@@ -47,8 +47,8 @@ class ParishMergeRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'target_id.exists' => __('Wybierz parafię ze spisu.'),
-            'target_id.not_in' => __('Wybierz inną parafię niż scalana.'),
+            'target_id.exists' => __('Wybierz parafię / urząd ze spisu.'),
+            'target_id.not_in' => __('Wybierz inną parafię / urząd niż scalany.'),
         ];
     }
 
@@ -60,7 +60,7 @@ class ParishMergeRequest extends FormRequest
     public function attributes(): array
     {
         return [
-            'target_id' => 'parafia docelowa',
+            'target_id' => 'parafia / urząd docelowy',
         ];
     }
 }

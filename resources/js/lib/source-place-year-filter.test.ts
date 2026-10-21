@@ -4,9 +4,9 @@ import { filterSourcesByPlaceAndYear } from './source-place-year-filter';
 const source = (
     id: number,
     year: number | null,
-    parish_name: string | null,
+    parish_label: string | null,
     locality_name: string | null,
-) => ({ id, year, parish_name, locality_name });
+) => ({ id, year, parish_label, locality_name });
 
 const lubomlSeat = source(1, 1900, 'Parafia św. Jana', 'Luboml');
 const parishNamed = source(2, 1901, 'Parafia Luboml', null);
@@ -61,6 +61,21 @@ describe('filterSourcesByPlaceAndYear', () => {
         );
 
         expect(visible).toEqual([parishNamed]);
+    });
+
+    it('matches the seat in the label of a parish without a locality of its own', () => {
+        const seated = source(
+            8,
+            1900,
+            'Płock św. Bartłomieja (rzym.-kat.)',
+            null,
+        );
+        const { visible } = filterSourcesByPlaceAndYear([seated, elsewhere], {
+            place: 'płock',
+            year: '',
+        });
+
+        expect(visible).toEqual([seated]);
     });
 
     it('finds a gravestone by the place of its cemetery and its year', () => {
@@ -127,5 +142,35 @@ describe('filterSourcesByPlaceAndYear', () => {
         );
 
         expect(visible.map((s) => s.id)).toEqual([6, 1, 5]);
+    });
+
+    it('finds a gravestone by the name of its cemetery and by its locality', () => {
+        const named = {
+            ...source(8, 1950, null, 'Luboml'),
+            cemetery_label: 'Cmentarz parafialny, Luboml',
+        };
+        const unnamed = {
+            ...source(9, 1950, null, 'Chełm'),
+            cemetery_label: 'cmentarz Chełm',
+        };
+
+        expect(
+            filterSourcesByPlaceAndYear([named, unnamed], {
+                place: 'parafialny',
+                year: '',
+            }).visible,
+        ).toEqual([named]);
+        expect(
+            filterSourcesByPlaceAndYear([named, unnamed], {
+                place: 'luboml',
+                year: '',
+            }).visible,
+        ).toEqual([named]);
+        expect(
+            filterSourcesByPlaceAndYear([named, unnamed], {
+                place: 'cmentarz chełm',
+                year: '',
+            }).visible,
+        ).toEqual([unnamed]);
     });
 });

@@ -21,13 +21,20 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { Spinner } from '@/components/ui/spinner';
+import { seatNamed } from '@/lib/parishes-index';
 import { store as storeInlineParish } from '@/routes/parishes/inline';
-import type { LocalityOption, Parish, ReligionOption } from '@/types';
+import type {
+    LocalityOption,
+    Parish,
+    ParishKindOption,
+    ReligionOption,
+} from '@/types';
 
 type Props = {
-    /** Name typed in the parish field; the dialog opens with it filled in. */
-    initialName: string;
+    /** Text typed in the parish field; a locality of that name becomes the seat. */
+    initialSeatName: string;
     religions: ReligionOption[];
+    parishKinds: ParishKindOption[];
     /** Localities known to the form, including those added by earlier dialogs. */
     localities: LocalityOption[];
     onCreated: (parish: Parish) => void;
@@ -36,7 +43,8 @@ type Props = {
 };
 
 type ParishPayload = {
-    name: string;
+    kind: string;
+    dedication: string | null;
     religion: string | null;
     locality_id: number | null;
 };
@@ -45,24 +53,32 @@ type ParishPayload = {
 const NONE = 'none';
 
 /**
- * „Nowa parafia” over the source panel. It has no `<form>` and saves with plain HTTP: React
+ * „Nowa parafia / urząd” over the source panel. It has no `<form>` and saves with plain HTTP: React
  * events cross the portal along the component tree, so a form here would submit the source
  * form, and an Inertia visit would reload the panel and reset what was typed.
  */
 export function NewParishDialog({
-    initialName,
+    initialSeatName,
     religions,
+    parishKinds,
     localities,
     onCreated,
     onLocalityCreated,
     onClose,
 }: Props) {
-    const [name, setName] = useState(initialName);
+    const [initialSeat] = useState(() =>
+        seatNamed(localities, initialSeatName),
+    );
+    const [kind, setKind] = useState('parish');
+    const [dedication, setDedication] = useState('');
     const [religion, setReligion] = useState('');
-    const [localityId, setLocalityId] = useState<number | null>(null);
+    const [localityId, setLocalityId] = useState<number | null>(
+        initialSeat?.id ?? null,
+    );
     const [saveError, setSaveError] = useState<string | undefined>();
     const parishHttp = useHttp<ParishPayload, { data: Parish }>({
-        name: '',
+        kind: 'parish',
+        dedication: null,
         religion: null,
         locality_id: null,
     });
@@ -70,7 +86,8 @@ export function NewParishDialog({
     const save = async () => {
         setSaveError(undefined);
         parishHttp.transform(() => ({
-            name,
+            kind,
+            dedication: dedication.trim() === '' ? null : dedication,
             religion: religion === '' ? null : religion,
             locality_id: localityId,
         }));
@@ -85,7 +102,7 @@ export function NewParishDialog({
             onCreated(response.data);
             onClose();
         } catch {
-            setSaveError('Nie udało się dodać parafii.');
+            setSaveError('Nie udało się dodać parafii / urzędu.');
         }
     };
 
@@ -104,21 +121,64 @@ export function NewParishDialog({
                     }
                 }}
             >
-                <DialogTitle>Nowa parafia</DialogTitle>
+                <DialogTitle>Nowa parafia / urząd</DialogTitle>
                 <DialogDescription>
-                    Parafia trafi do spisu parafii i zostanie wybrana w źródle.
+                    Parafia lub urząd trafi do spisu i zostanie wybrany w
+                    źródle.
                 </DialogDescription>
 
                 <div className="grid gap-2">
-                    <Label htmlFor="new-parish-name">Nazwa</Label>
+                    <Label htmlFor="new-parish-kind">Rodzaj</Label>
+                    <Select value={kind} onValueChange={setKind}>
+                        <SelectTrigger id="new-parish-kind" className="w-full">
+                            <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {parishKinds.map((option) => (
+                                <SelectItem
+                                    key={option.value}
+                                    value={option.value}
+                                >
+                                    {option.label}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                    <InputError message={parishHttp.errors.kind} />
+                </div>
+
+                <LocalityPicker
+                    id="new-parish-locality"
+                    name="locality_id"
+                    label="Miejscowość siedziby"
+                    value={initialSeat}
+                    options={localities}
+                    errors={parishHttp.errors}
+                    onChange={(locality) => setLocalityId(locality?.id ?? null)}
+                    onCreated={onLocalityCreated}
+                />
+
+                <div className="grid gap-2">
+                    <Label htmlFor="new-parish-dedication">
+                        Wezwanie / wyróżnik
+                    </Label>
                     <Input
-                        id="new-parish-name"
-                        value={name}
+                        id="new-parish-dedication"
+                        value={dedication}
                         maxLength={255}
-                        onChange={(event) => setName(event.target.value)}
-                        aria-invalid={parishHttp.errors.name ? true : undefined}
+                        onChange={(event) => setDedication(event.target.value)}
+                        aria-describedby="new-parish-dedication-hint"
+                        aria-invalid={
+                            parishHttp.errors.dedication ? true : undefined
+                        }
                     />
-                    <InputError message={parishHttp.errors.name} />
+                    <p
+                        id="new-parish-dedication-hint"
+                        className="text-muted-foreground text-sm"
+                    >
+                        np. św. Bartłomieja, Fara, Cyrkuł I
+                    </p>
+                    <InputError message={parishHttp.errors.dedication} />
                 </div>
 
                 <div className="grid gap-2">
@@ -150,17 +210,6 @@ export function NewParishDialog({
                     <InputError message={parishHttp.errors.religion} />
                 </div>
 
-                <LocalityPicker
-                    id="new-parish-locality"
-                    name="locality_id"
-                    label="Miejscowość siedziby"
-                    value={null}
-                    options={localities}
-                    errors={parishHttp.errors}
-                    onChange={(locality) => setLocalityId(locality?.id ?? null)}
-                    onCreated={onLocalityCreated}
-                />
-
                 <InputError message={saveError} />
 
                 <DialogFooter className="gap-2">
@@ -175,7 +224,7 @@ export function NewParishDialog({
                     </DialogClose>
                     <Button type="button" disabled={busy} onClick={save}>
                         {parishHttp.processing && <Spinner />}
-                        Dodaj parafię
+                        Dodaj
                     </Button>
                 </DialogFooter>
             </DialogContent>

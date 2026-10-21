@@ -19,7 +19,12 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { Spinner } from '@/components/ui/spinner';
-import type { LocalityOption, Parish, ReligionOption } from '@/types';
+import type {
+    LocalityOption,
+    Parish,
+    ParishKindOption,
+    ReligionOption,
+} from '@/types';
 
 type Props = {
     /** The record to edit, or null for a new one. */
@@ -27,6 +32,7 @@ type Props = {
     /** The whole register, offered as the target of a merge. */
     parishes: Parish[];
     religions: ReligionOption[];
+    parishKinds: ParishKindOption[];
     localities: LocalityOption[];
     onRequestClose: () => void;
     /** Reports whether the form holds unsaved changes. */
@@ -38,11 +44,12 @@ type Props = {
 /** Radix Select does not allow an empty item value. */
 const NONE = 'none';
 
-/** Name, religion and seat form in the side panel; one component for „Nowa parafia” and editing. */
+/** Kind, seat, dedication and religion form in the side panel; one component for „Nowa parafia / urząd” and editing. */
 export function ParishPanel({
     parish,
     parishes,
     religions,
+    parishKinds,
     localities,
     onRequestClose,
     onDirtyChange,
@@ -77,7 +84,7 @@ export function ParishPanel({
 
     return (
         <SidePanel
-            title={parish?.name ?? 'Nowa parafia'}
+            title={parish?.label ?? 'Nowa parafia / urząd'}
             contentKey={parish?.id ?? 'new'}
             onRequestClose={onRequestClose}
             actions={
@@ -91,7 +98,7 @@ export function ParishPanel({
                         aria-describedby={actionHintId}
                         onClick={() => setDeleteOpen(true)}
                     >
-                        Usuń parafię
+                        Usuń
                     </Button>
                 )
             }
@@ -99,7 +106,7 @@ export function ParishPanel({
                 <div className="flex flex-wrap items-center gap-3">
                     <Button type="submit" form={formId} disabled={processing}>
                         {processing && <Spinner />}
-                        Zapisz parafię
+                        Zapisz
                     </Button>
                     {parish !== null && (
                         <Button
@@ -128,6 +135,7 @@ export function ParishPanel({
                 formId={formId}
                 parish={parish}
                 religions={religions}
+                parishKinds={parishKinds}
                 localities={localities}
                 onDirtyChange={reportDirty}
                 onProcessingChange={setProcessing}
@@ -161,6 +169,7 @@ type ParishFormProps = {
     formId: string;
     parish: Parish | null;
     religions: ReligionOption[];
+    parishKinds: ParishKindOption[];
     localities: LocalityOption[];
     onDirtyChange: (isDirty: boolean) => void;
     onProcessingChange: (processing: boolean) => void;
@@ -172,12 +181,15 @@ function ParishForm({
     formId,
     parish,
     religions,
+    parishKinds,
     localities,
     onDirtyChange,
     onProcessingChange,
     onLocalityCreated,
 }: ParishFormProps) {
+    const [kind, setKind] = useState(parish?.kind ?? 'parish');
     const [religion, setReligion] = useState(parish?.religion ?? '');
+    const [clearName, setClearName] = useState(false);
     const seat =
         localities.find((locality) => locality.id === parish?.locality_id) ??
         null;
@@ -190,12 +202,13 @@ function ParishForm({
                 : ParishController.update.form(parish.id))}
             options={{ preserveScroll: true }}
             setDefaultsOnSuccess
+            onSuccess={() => setClearName(false)}
             className="space-y-4"
         >
             {({ errors, processing, isDirty }) => (
                 <>
                     <DirtyReporter
-                        isDirty={isDirty}
+                        isDirty={isDirty || clearName}
                         onDirtyChange={onDirtyChange}
                     />
                     <ProcessingReporter
@@ -204,16 +217,55 @@ function ParishForm({
                     />
 
                     <div className="space-y-2">
-                        <Label htmlFor="parish-name">Nazwa</Label>
+                        <Label htmlFor="parish-kind">Rodzaj</Label>
+                        <Select value={kind} onValueChange={setKind}>
+                            <SelectTrigger id="parish-kind" className="w-full">
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {parishKinds.map((option) => (
+                                    <SelectItem
+                                        key={option.value}
+                                        value={option.value}
+                                    >
+                                        {option.label}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                        <input type="hidden" name="kind" value={kind} />
+                        <InputError message={errors.kind} />
+                    </div>
+
+                    <LocalityPicker
+                        id="parish-locality"
+                        name="locality_id"
+                        label="Miejscowość siedziby"
+                        value={seat}
+                        options={localities}
+                        errors={errors}
+                        onCreated={onLocalityCreated}
+                    />
+
+                    <div className="space-y-2">
+                        <Label htmlFor="parish-dedication">
+                            Wezwanie / wyróżnik
+                        </Label>
                         <Input
-                            id="parish-name"
-                            name="name"
-                            defaultValue={parish?.name ?? ''}
+                            id="parish-dedication"
+                            name="dedication"
+                            defaultValue={parish?.dedication ?? ''}
                             maxLength={255}
-                            required
-                            aria-invalid={errors.name ? true : undefined}
+                            aria-describedby="parish-dedication-hint"
+                            aria-invalid={errors.dedication ? true : undefined}
                         />
-                        <InputError message={errors.name} />
+                        <p
+                            id="parish-dedication-hint"
+                            className="text-muted-foreground text-sm"
+                        >
+                            np. św. Bartłomieja, Fara, Cyrkuł I
+                        </p>
+                        <InputError message={errors.dedication} />
                     </div>
 
                     <div className="space-y-2">
@@ -246,15 +298,56 @@ function ParishForm({
                         <InputError message={errors.religion} />
                     </div>
 
-                    <LocalityPicker
-                        id="parish-locality"
-                        name="locality_id"
-                        label="Miejscowość siedziby"
-                        value={seat}
-                        options={localities}
-                        errors={errors}
-                        onCreated={onLocalityCreated}
-                    />
+                    {parish !== null && parish.name !== null && (
+                        <div className="space-y-2 rounded-lg border p-4">
+                            <p className="text-sm font-medium">Dawna nazwa</p>
+                            <p
+                                className={
+                                    clearName
+                                        ? 'text-muted-foreground text-sm line-through'
+                                        : 'text-sm'
+                                }
+                            >
+                                {parish.name}
+                            </p>
+                            <p className="text-muted-foreground text-sm">
+                                Przepisz siedzibę i wezwanie z dawnej nazwy,
+                                potem ją usuń.
+                            </p>
+                            {clearName ? (
+                                <div className="flex flex-wrap items-center gap-3">
+                                    <p className="text-muted-foreground text-sm">
+                                        Dawna nazwa zostanie usunięta po
+                                        zapisaniu.
+                                    </p>
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => setClearName(false)}
+                                    >
+                                        Cofnij
+                                    </Button>
+                                </div>
+                            ) : (
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => setClearName(true)}
+                                >
+                                    Usuń dawną nazwę
+                                </Button>
+                            )}
+                            {clearName && (
+                                <input
+                                    type="hidden"
+                                    name="clear_name"
+                                    value="1"
+                                />
+                            )}
+                        </div>
+                    )}
                 </>
             )}
         </Form>

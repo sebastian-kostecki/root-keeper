@@ -1,6 +1,9 @@
 <?php
 
+use App\Enums\LocalityKind;
+use App\Enums\ParishKind;
 use App\Enums\Religion;
+use App\Models\Cemetery;
 use App\Models\Event;
 use App\Models\Locality;
 use App\Models\Parish;
@@ -34,6 +37,7 @@ test('the kind parameter selects the parish tab and anything else is the localit
     'no parameter' => [[], 'miejscowosci'],
     'parafie' => [['kind' => 'parafie'], 'parafie'],
     'unknown value' => [['kind' => 'akty'], 'miejscowosci'],
+    'cmentarze' => [['kind' => 'cmentarze'], 'cmentarze'],
     'array' => [['kind' => ['parafie']], 'miejscowosci'],
 ]);
 
@@ -60,8 +64,33 @@ test('the index lists only the user own localities alphabetically', function () 
             ->has('localities', 2)
             ->where('localities.0.name', 'Kraków')
             ->where('localities.1.name', 'Lwów')
-            ->has('localities.0', fn ($locality) => $locality->hasAll(['id', 'name', 'description', 'usage']))
+            ->has('localities.0', fn ($locality) => $locality->hasAll(['id', 'name', 'kind', 'kind_label', 'latitude', 'longitude', 'historical_affiliation', 'description', 'is_defunct', 'defunct_note', 'usage']))
             ->where('filters.q', ''));
+});
+
+test('the list, the panel and the page carry the locality details and the kind options', function () {
+    $user = User::factory()->create();
+    $locality = Locality::factory()->for($user->tree)->defunct('Zajęta pod zalew 1975')->create([
+        'kind' => LocalityKind::Village,
+        'latitude' => 50.0614,
+        'longitude' => 19.9366,
+        'historical_affiliation' => 'Galicja',
+    ]);
+
+    $expected = fn ($page, string $path) => $page
+        ->where("{$path}.kind", 'village')
+        ->where("{$path}.kind_label", 'wieś')
+        ->where("{$path}.latitude", 50.0614)
+        ->where("{$path}.longitude", 19.9366)
+        ->where("{$path}.historical_affiliation", 'Galicja')
+        ->where("{$path}.is_defunct", true)
+        ->where("{$path}.defunct_note", 'Zajęta pod zalew 1975');
+
+    $this->actingAs($user)->get(route('places.index'))->assertInertia(fn ($page) => $expected($page, 'localities.0')
+        ->where('localityKinds', LocalityKind::options()));
+
+    $this->actingAs($user)->get(route('places.index', ['locality' => $locality->id]))
+        ->assertInertia(fn ($page) => $expected($page, 'localityPanel.locality'));
 });
 
 test('the list and the panel carry the usage counts of every kind of reference', function () {
@@ -72,21 +101,23 @@ test('the list and the panel carry the usage counts of every kind of reference',
     Event::factory()->for($user->tree)->birth()->create(['locality_id' => $locality->id]);
     Parish::factory()->for($user->tree)->seatedIn($locality)->create();
     Residence::factory()->for($person)->create(['tree_id' => $user->tree->id, 'locality_id' => $locality->id]);
-    Source::factory()->for($user->tree)->gravestone()->create(['cemetery_locality_id' => $locality->id]);
+    Cemetery::factory()->in($locality)->create();
 
     $this->actingAs($user)->get(route('places.index'))->assertInertia(fn ($page) => $page
         ->where('localities.0.usage.facts', 1)
         ->where('localities.0.usage.parishes', 1)
         ->where('localities.0.usage.residences', 1)
-        ->where('localities.0.usage.gravestones', 1)
-        ->where('localities.0.usage.total', 4));
+        ->where('localities.0.usage.cemeteries', 1)
+        ->where('localities.0.usage.total', 4)
+        ->missing('localities.0.usage.gravestones'));
 
     $this->actingAs($user)->get(route('places.index', ['locality' => $locality->id]))->assertInertia(fn ($page) => $page
         ->where('localityPanel.locality.usage.facts', 1)
         ->where('localityPanel.locality.usage.parishes', 1)
         ->where('localityPanel.locality.usage.residences', 1)
-        ->where('localityPanel.locality.usage.gravestones', 1)
-        ->where('localityPanel.locality.usage.total', 4));
+        ->where('localityPanel.locality.usage.cemeteries', 1)
+        ->where('localityPanel.locality.usage.total', 4)
+        ->missing('localityPanel.locality.usage.gravestones'));
 });
 
 test('the panel resolver returns null without a key or with a non-numeric one', function (string $query) {
@@ -167,22 +198,26 @@ test('a partial reload of the filters with an open panel runs no places query', 
 test('the index lists only the user own parishes alphabetically', function () {
     $user = User::factory()->create();
     $seat = Locality::factory()->for($user->tree)->create(['name' => 'Tarnów']);
-    Parish::factory()->for($user->tree)->create(['name' => 'Św. Jana']);
-    Parish::factory()->for($user->tree)->withReligion(Religion::RomanCatholic)->seatedIn($seat)->create(['name' => 'Katedralna']);
-    Parish::factory()->for(User::factory()->create()->tree)->create(['name' => 'Cudza']);
+    $plock = Locality::factory()->for($user->tree)->create(['name' => 'Płock']);
+    Parish::factory()->for($user->tree)->seatedIn($plock)->dedicatedTo('św. Jana')->create();
+    Parish::factory()->for($user->tree)->withReligion(Religion::RomanCatholic)->seatedIn($seat)->dedicatedTo('Katedralna')->create();
+    Parish::factory()->for(User::factory()->create()->tree)->create();
 
     $this->actingAs($user)->get(route('places.index'))
         ->assertOk()
         ->assertInertia(fn ($page) => $page
             ->component('places/index')
             ->has('parishes', 2)
-            ->where('parishes.0.name', 'Katedralna')
-            ->where('parishes.0.label', 'Katedralna (rzymskokatolickie)')
-            ->where('parishes.0.locality_name', 'Tarnów')
-            ->where('parishes.1.label', 'Św. Jana')
+            ->where('parishes.0.label', 'Płock św. Jana')
+            ->where('parishes.0.name', null)
+            ->where('parishes.0.kind', 'parish')
+            ->where('parishes.0.dedication', 'św. Jana')
+            ->where('parishes.1.label', 'Tarnów Katedralna (rzym.-kat.)')
+            ->where('parishes.1.locality_name', 'Tarnów')
             ->has('religions', count(Religion::cases()))
-            ->has('localities', 1)
-            ->where('localities.0.name', 'Tarnów')
+            ->has('parishKinds', count(ParishKind::cases()))
+            ->has('localities', 2)
+            ->where('localities.1.name', 'Tarnów')
             ->where('filters.q', '')
             ->where('parishPanel', null));
 });
@@ -211,4 +246,72 @@ test('the list and the panel carry the number of acts that name the parish', fun
 
     $this->actingAs($user)->get(route('places.index', ['kind' => 'parafie', 'parish' => $parish->id]))
         ->assertInertia(fn ($page) => $page->where('parishPanel.parish.sources_count', 2));
+});
+
+test('the panels answer 404 for a cemetery of another tree', function () {
+    $attacker = User::factory()->create();
+    $cemetery = Cemetery::factory()->for(User::factory()->create()->tree)->create();
+
+    $this->actingAs($attacker)->get(route('places.index', ['kind' => 'cmentarze', 'cemetery' => $cemetery->id]))->assertNotFound();
+});
+
+test('the index lists only the user own cemeteries with their usage counts', function () {
+    $user = User::factory()->create();
+    $locality = Locality::factory()->for($user->tree)->create(['name' => 'Luboml']);
+    $cemetery = Cemetery::factory()->in($locality)->unnamed()->create();
+    Source::factory()->for($user->tree)->gravestone()->create(['cemetery_id' => $cemetery->id]);
+    Event::factory()->burial()->atCemetery($cemetery)->create();
+    Event::factory()->burial()->atCemetery($cemetery)->create();
+    Cemetery::factory()->for(User::factory()->create()->tree)->create();
+
+    $this->actingAs($user)->get(route('places.index', ['kind' => 'cmentarze']))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->has('cemeteries', 1)
+            ->where('cemeteries.0.label', 'cmentarz Luboml')
+            ->where('cemeteries.0.locality_name', 'Luboml')
+            ->where('cemeteries.0.sources_count', 1)
+            ->where('cemeteries.0.burials_count', 2)
+            ->has('cemeteryManagers', 4)
+            ->where('cemeteryPanel', null));
+});
+
+test('the cemetery panel resolver returns an empty panel for new, the cemetery for an own id and null or 404 otherwise', function () {
+    $user = User::factory()->create();
+    $cemetery = Cemetery::factory()->for($user->tree)->create(['name' => 'Cmentarz parafialny']);
+
+    $this->actingAs($user)->get(route('places.index', ['kind' => 'cmentarze', 'cemetery' => 'new']))
+        ->assertInertia(fn ($page) => $page->where('cemeteryPanel.cemetery', null));
+
+    $this->actingAs($user)->get(route('places.index', ['kind' => 'cmentarze', 'cemetery' => $cemetery->id]))
+        ->assertInertia(fn ($page) => $page
+            ->where('cemeteryPanel.cemetery.id', $cemetery->id)
+            ->where('cemeteryPanel.cemetery.name', 'Cmentarz parafialny')
+            ->where('cemeteryPanel.cemetery.sources_count', 0));
+
+    $this->actingAs($user)->get(route('places.index', ['cemetery' => 'abc']))
+        ->assertInertia(fn ($page) => $page->where('cemeteryPanel', null));
+
+    $this->actingAs($user)->get(route('places.index', ['cemetery' => 999999]))->assertNotFound();
+});
+
+test('a partial reload of the filters runs no cemetery query', function () {
+    $user = User::factory()->create();
+
+    $version = $this->actingAs($user)->get(route('places.index'), ['X-Inertia' => 'true'])->headers->get('X-Inertia-Version');
+
+    DB::enableQueryLog();
+
+    $response = $this->actingAs($user)->get(route('places.index', ['kind' => 'cmentarze', 'q' => 'łódź']), [
+        'X-Inertia' => 'true',
+        'X-Inertia-Version' => $version,
+        'X-Inertia-Partial-Data' => 'filters',
+        'X-Inertia-Partial-Component' => 'places/index',
+    ]);
+
+    $queries = collect(DB::getQueryLog())->filter(fn (array $log): bool => str_contains($log['query'], '"cemeteries"'));
+
+    $response->assertOk();
+    expect($response->json('props'))->not->toHaveKey('cemeteries')->not->toHaveKey('cemeteryPanel');
+    expect($queries)->toBeEmpty();
 });

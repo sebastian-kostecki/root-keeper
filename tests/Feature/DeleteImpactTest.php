@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\Religion;
+use App\Models\Cemetery;
 use App\Models\Event;
 use App\Models\Locality;
 use App\Models\Parish;
@@ -60,7 +61,7 @@ test('merging a locality removes exactly the duplicate and its redundant residen
     $redundantResidence = Residence::factory()->for($person)->create(['tree_id' => $user->tree->id, 'locality_id' => $duplicate->id, 'year_from' => 1900, 'year_to' => 1910]);
     $movedResidence = Residence::factory()->for($movedPerson)->create(['tree_id' => $user->tree->id, 'locality_id' => $duplicate->id]);
     $parish = Parish::factory()->for($user->tree)->seatedIn($duplicate)->create();
-    $gravestone = Source::factory()->for($user->tree)->gravestone()->create(['cemetery_locality_id' => $duplicate->id]);
+    $cemetery = Cemetery::factory()->in($duplicate)->create();
     $event = Event::factory()->for($user->tree)->birth()->create(['locality_id' => $duplicate->id]);
 
     $before = databaseRows();
@@ -70,7 +71,7 @@ test('merging a locality removes exactly the duplicate and its redundant residen
 
     $diff = rowDiff($before, databaseRows());
 
-    expect(array_keys($diff['tables']))->toBe(['events', 'localities', 'parishes', 'residences', 'sources']);
+    expect(array_keys($diff['tables']))->toBe(['cemeteries', 'events', 'localities', 'parishes', 'residences']);
     expect(rowIds($diff['tables']['localities']['removed']))->toBe([$duplicate->id]);
     expect(collect($diff['tables']['localities']['changed'])->pluck('after.id')->all())->toBe([$target->id]);
     expect($diff['tables']['localities']['changed'][0]['after']['description'])->toBe('Opis duplikatu');
@@ -78,8 +79,8 @@ test('merging a locality removes exactly the duplicate and its redundant residen
     expect(collect($diff['tables']['residences']['changed'])->pluck('after.id')->all())->toBe([$movedResidence->id]);
     expect(collect($diff['tables']['events']['changed'])->pluck('after.id')->all())->toBe([$event->id]);
     expect(collect($diff['tables']['parishes']['changed'])->pluck('after.id')->all())->toBe([$parish->id]);
-    expect(collect($diff['tables']['sources']['changed'])->pluck('after.id')->all())->toBe([$gravestone->id]);
-    foreach (['events', 'localities', 'parishes', 'residences', 'sources'] as $table) {
+    expect(collect($diff['tables']['cemeteries']['changed'])->pluck('after.id')->all())->toBe([$cemetery->id]);
+    foreach (['cemeteries', 'events', 'localities', 'parishes', 'residences'] as $table) {
         expect($diff['tables'][$table]['added'])->toBe([]);
     }
     expect($diff['files'])->toBe(['removed' => [], 'added' => []]);
@@ -302,7 +303,7 @@ test('merging a parish removes exactly the duplicate and moves only its acts and
     $user = User::factory()->create();
     $seat = Locality::factory()->for($user->tree)->create();
     $duplicate = Parish::factory()->for($user->tree)->withReligion(Religion::RomanCatholic)->seatedIn($seat)->create(['name' => 'Lubomla']);
-    $target = Parish::factory()->for($user->tree)->create(['name' => 'Luboml']);
+    $target = Parish::factory()->for($user->tree)->legacy('Luboml')->create();
     $untouched = Parish::factory()->for($user->tree)->create();
     $movedAct = Source::factory()->for($user->tree)->create(['parish_id' => $duplicate->id]);
     $otherAct = Source::factory()->for($user->tree)->create(['parish_id' => $untouched->id]);
@@ -323,6 +324,40 @@ test('merging a parish removes exactly the duplicate and moves only its acts and
     expect($diff['tables']['sources']['changed'][0]['after']['parish_id'])->toBe($target->id);
     expect($otherAct->refresh()->parish_id)->toBe($untouched->id);
     foreach (['parishes', 'sources'] as $table) {
+        expect($diff['tables'][$table]['added'])->toBe([]);
+    }
+    expect($diff['files'])->toBe(['removed' => [], 'added' => []]);
+});
+
+test('merging a cemetery removes exactly the duplicate and moves only its gravestones and burials', function () {
+    Storage::fake('local');
+
+    $user = User::factory()->create();
+    $place = Locality::factory()->for($user->tree)->create();
+    $targetPlace = Locality::factory()->for($user->tree)->create();
+    $duplicate = Cemetery::factory()->in($place)->create();
+    $target = Cemetery::factory()->in($targetPlace)->create();
+    $untouched = Cemetery::factory()->in($place)->create();
+    $movedGravestone = Source::factory()->for($user->tree)->gravestone()->create(['cemetery_id' => $duplicate->id]);
+    $otherGravestone = Source::factory()->for($user->tree)->gravestone()->create(['cemetery_id' => $untouched->id]);
+    $movedBurial = Event::factory()->burial()->atCemetery($duplicate)->create();
+
+    $before = databaseRows();
+
+    $this->actingAs($user)->post(route('cemeteries.merge', $duplicate), ['target_id' => $target->id])
+        ->assertSessionHasNoErrors();
+
+    $diff = rowDiff($before, databaseRows());
+
+    expect(array_keys($diff['tables']))->toBe(['cemeteries', 'events', 'sources']);
+    expect(rowIds($diff['tables']['cemeteries']['removed']))->toBe([$duplicate->id]);
+    expect(collect($diff['tables']['events']['changed'])->pluck('after.id')->all())->toBe([$movedBurial->id]);
+    expect($diff['tables']['events']['changed'][0]['after']['cemetery_id'])->toBe($target->id);
+    expect($diff['tables']['events']['changed'][0]['after']['locality_id'])->toBe($targetPlace->id);
+    expect(collect($diff['tables']['sources']['changed'])->pluck('after.id')->all())->toBe([$movedGravestone->id]);
+    expect($diff['tables']['sources']['changed'][0]['after']['cemetery_id'])->toBe($target->id);
+    expect($otherGravestone->refresh()->cemetery_id)->toBe($untouched->id);
+    foreach (['cemeteries', 'events', 'sources'] as $table) {
         expect($diff['tables'][$table]['added'])->toBe([]);
     }
     expect($diff['files'])->toBe(['removed' => [], 'added' => []]);

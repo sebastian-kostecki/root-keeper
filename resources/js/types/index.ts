@@ -1,4 +1,5 @@
 export type * from './auth';
+export type * from './cemetery';
 export type * from './locality';
 export type * from './navigation';
 export type * from './parish';

@@ -29,6 +29,7 @@ export type SourcesFilters = {
 export type SourcesPlaceOptions = {
     localities: { id: number; name: string }[];
     parishes: { id: number; label: string }[];
+    cemeteries: { id: number; label: string }[];
 };
 
 type SourcesCounts = Record<SourcesKindFilter, number>;
@@ -45,7 +46,7 @@ const BASE_URL = 'http://localhost';
 
 const DEFAULT_SORT: SourcesSort = '-dodano';
 
-const PLACE_PATTERN = /^(miejscowosc|parafia)-(\d+)$/;
+const PLACE_PATTERN = /^(miejscowosc|parafia|cmentarz)-(\d+)$/;
 
 const CRITERIA_ORDER: SourcesMissingCriterion[] = ['year', 'place', 'archive'];
 
@@ -153,6 +154,7 @@ export function resolveFilters(
             (locality) => `miejscowosc-${locality.id}`,
         ),
         ...placeOptions.parishes.map((parish) => `parafia-${parish.id}`),
+        ...placeOptions.cemeteries.map((cemetery) => `cmentarz-${cemetery.id}`),
     ]);
 
     return {
@@ -245,7 +247,7 @@ function matchesSearch(source: IndexSource, words: string[]): boolean {
 
 function parsePlace(
     place: string,
-): { prefix: 'miejscowosc' | 'parafia'; id: number } | null {
+): { prefix: 'miejscowosc' | 'parafia' | 'cmentarz'; id: number } | null {
     const match = PLACE_PATTERN.exec(place);
 
     if (match === null) {
@@ -253,7 +255,10 @@ function parsePlace(
     }
 
     return {
-        prefix: match[1] === 'parafia' ? 'parafia' : 'miejscowosc',
+        prefix:
+            match[1] === 'parafia' || match[1] === 'cmentarz'
+                ? match[1]
+                : 'miejscowosc',
         id: Number(match[2]),
     };
 }
@@ -268,6 +273,10 @@ function matchesPlace(
 
     if (place.prefix === 'parafia') {
         return source.parish_id === place.id;
+    }
+
+    if (place.prefix === 'cmentarz') {
+        return source.cemetery_id === place.id;
     }
 
     return (
@@ -326,10 +335,7 @@ function lacksData(
         case 'year':
             return source.year === null;
         case 'place':
-            return (
-                source.parish_id === null &&
-                source.cemetery_locality_id === null
-            );
+            return source.parish_id === null && source.cemetery_id === null;
         case 'archive':
             return (source.archive ?? '').trim() === '';
     }

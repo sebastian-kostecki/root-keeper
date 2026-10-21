@@ -2,8 +2,13 @@
 
 namespace App\Actions\Localities;
 
+use App\Actions\Cemeteries\MergeCemetery;
+use App\Actions\Parishes\MergeParish;
+use App\Models\Cemetery;
 use App\Models\Locality;
+use App\Models\Parish;
 use App\Models\Residence;
+use App\Support\MergedText;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -11,7 +16,11 @@ class MergeLocality
 {
     /**
      * Move every reference of the duplicate to the target, drop the moved residences the target already has
-     * (same person and years), delete the duplicate and fill the target's description from it, atomically.
+     * (same person and years), merge the parishes that have a counterpart at the target (same kind, religion and
+     * dedication), delete the duplicate and fill the target's details from it, atomically.
+     * The target's own values win: its empty kind and coordinates (as a pair) are taken from the duplicate,
+     * descriptions and historical affiliations are joined, and the target is defunct if either one was; when both
+     * have a different defunct note, the target keeps its own and the duplicate's one is added to the description.
      * Both localities must belong to the same tree.
      */
     public function handle(Locality $duplicate, Locality $target): Locality
@@ -38,23 +47,67 @@ class MergeLocality
 
             $movedResidenceIds = $lockedDuplicate->residences()->get(['id'])->map(fn (Residence $residence): int => $residence->id)->values()->all();
 
+            $this->mergeCollidingCemeteries($lockedDuplicate, $lockedTarget);
+            $lockedDuplicate->cemeteries()->update(['locality_id' => $lockedTarget->id]);
+
+            $this->mergeCollidingParishes($lockedDuplicate, $lockedTarget);
             $lockedDuplicate->parishes()->update(['locality_id' => $lockedTarget->id]);
             $lockedDuplicate->events()->update(['locality_id' => $lockedTarget->id]);
             $lockedDuplicate->residences()->update(['locality_id' => $lockedTarget->id]);
-            $lockedDuplicate->cemeterySources()->update(['cemetery_locality_id' => $lockedTarget->id]);
 
             $this->dropMovedResidencesAlreadyAtTarget($lockedTarget, $movedResidenceIds);
 
             $lockedDuplicate->delete();
 
-            $description = $this->mergedDescription($lockedTarget->description, $lockedDuplicate->description);
-
-            if ($description !== $lockedTarget->description) {
-                $lockedTarget->update(['description' => $description]);
-            }
+            $this->fillTargetFromDuplicate($lockedTarget, $lockedDuplicate);
         });
 
         return $target->refresh();
+    }
+
+    /**
+     * Merge the duplicate's cemeteries that have a counterpart at the target (same name, letter case ignored, a
+     * missing name equals a missing name) into it, so that moving the rest cannot break the unique index.
+     */
+    private function mergeCollidingCemeteries(Locality $duplicate, Locality $target): void
+    {
+        $nameKey = "lower(coalesce(name, '')) as name_key";
+
+        $targetCemeteries = $target->cemeteries()->select('cemeteries.*')->selectRaw($nameKey)->orderBy('id')->lockForUpdate()->get()
+            ->keyBy(fn (Cemetery $cemetery): string => $cemetery->getAttribute('name_key'));
+
+        foreach ($duplicate->cemeteries()->select('cemeteries.*')->selectRaw($nameKey)->orderBy('id')->lockForUpdate()->get() as $cemetery) {
+            $counterpart = $targetCemeteries->get($cemetery->getAttribute('name_key'));
+
+            if ($counterpart !== null) {
+                app(MergeCemetery::class)->moveInto($cemetery, $counterpart);
+            }
+        }
+    }
+
+    /**
+     * Merge the duplicate's parishes that have a counterpart at the target (same kind, religion and dedication,
+     * letter case ignored) into it, so that moving the rest cannot break the unique index.
+     */
+    private function mergeCollidingParishes(Locality $duplicate, Locality $target): void
+    {
+        $keyColumns = "coalesce(religion, '') as religion_key, lower(coalesce(dedication, '')) as dedication_key";
+        $keyOf = fn (Parish $parish): string => json_encode([
+            $parish->getAttribute('kind')->value,
+            $parish->getAttribute('religion_key'),
+            $parish->getAttribute('dedication_key'),
+        ], JSON_THROW_ON_ERROR);
+
+        $targetParishes = $target->parishes()->select('parishes.*')->selectRaw($keyColumns)->orderBy('id')->lockForUpdate()->get()
+            ->keyBy($keyOf);
+
+        foreach ($duplicate->parishes()->select('parishes.*')->selectRaw($keyColumns)->orderBy('id')->lockForUpdate()->get() as $parish) {
+            $counterpart = $targetParishes->get($keyOf($parish));
+
+            if ($counterpart !== null) {
+                app(MergeParish::class)->moveInto($parish, $counterpart);
+            }
+        }
     }
 
     /**
@@ -85,21 +138,30 @@ class MergeLocality
     }
 
     /**
-     * The target's description, extended by the duplicate's one when the target has none or they differ.
+     * Update the target with what the duplicate adds, without overwriting what the target already has.
      */
-    private function mergedDescription(?string $targetDescription, ?string $duplicateDescription): ?string
+    private function fillTargetFromDuplicate(Locality $target, Locality $duplicate): void
     {
-        $targetText = trim((string) $targetDescription);
-        $duplicateText = trim((string) $duplicateDescription);
+        $isDefunct = $target->is_defunct || $duplicate->is_defunct;
+        $takesCoordinates = ($target->latitude === null || $target->longitude === null)
+            && $duplicate->latitude !== null && $duplicate->longitude !== null;
 
-        if ($duplicateText === '' || $targetText === $duplicateText) {
-            return $targetDescription;
+        $description = MergedText::of($target->description, $duplicate->description);
+        $targetNote = trim((string) $target->defunct_note);
+        $duplicateNote = trim((string) $duplicate->defunct_note);
+
+        if ($targetNote !== '' && $duplicateNote !== '' && $targetNote !== $duplicateNote) {
+            $description = MergedText::of($description, __('Opis zaniku z „:name”: :note', ['name' => $duplicate->name, 'note' => $duplicateNote]));
         }
 
-        if ($targetText === '') {
-            return $duplicateDescription;
-        }
-
-        return $targetText."\n\n".$duplicateText;
+        $target->update([
+            'description' => $description,
+            'historical_affiliation' => MergedText::of($target->historical_affiliation, $duplicate->historical_affiliation),
+            'kind' => $target->kind ?? $duplicate->kind,
+            'latitude' => $takesCoordinates ? $duplicate->latitude : $target->latitude,
+            'longitude' => $takesCoordinates ? $duplicate->longitude : $target->longitude,
+            'is_defunct' => $isDefunct,
+            'defunct_note' => $isDefunct ? ($target->defunct_note ?? $duplicate->defunct_note) : null,
+        ]);
     }
 }

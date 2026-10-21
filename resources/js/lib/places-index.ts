@@ -1,8 +1,16 @@
+import { filterCemeteries } from '@/lib/cemeteries-index';
 import { filterLocalities } from '@/lib/localities-index';
 import { filterParishes } from '@/lib/parishes-index';
-import type { Locality, Parish } from '@/types';
+import type { Cemetery, Locality, Parish } from '@/types';
 
-export type PlacesKind = 'miejscowosci' | 'parafie';
+export type PlacesKind = 'miejscowosci' | 'parafie' | 'cmentarze';
+
+/** The tabs in the order they are shown. */
+export const PLACES_KINDS: PlacesKind[] = [
+    'miejscowosci',
+    'parafie',
+    'cmentarze',
+];
 
 export type PlacesCounts = Record<PlacesKind, number>;
 
@@ -12,34 +20,31 @@ const BASE_URL = 'http://localhost';
 export function placesCounts(
     localities: Locality[],
     parishes: Parish[],
+    cemeteries: Cemetery[],
     q: string,
 ): PlacesCounts {
     return {
         miejscowosci: filterLocalities(localities, q).length,
         parafie: filterParishes(parishes, q).length,
+        cmentarze: filterCemeteries(cemeteries, q).length,
     };
 }
 
 /**
- * The other list, when the search has no hits here but some there; `null` otherwise, including a blank search.
+ * The other tabs with hits, in tab order, when the search has none here; empty otherwise, including a blank search.
  */
 export function otherKindHint(
     kind: PlacesKind,
     counts: PlacesCounts,
     q: string,
-): { kind: PlacesKind; count: number } | null {
-    if (q.trim() === '') {
-        return null;
+): { kind: PlacesKind; count: number }[] {
+    if (q.trim() === '' || counts[kind] !== 0) {
+        return [];
     }
 
-    const other: PlacesKind =
-        kind === 'miejscowosci' ? 'parafie' : 'miejscowosci';
-
-    if (counts[kind] !== 0 || counts[other] < 1) {
-        return null;
-    }
-
-    return { kind: other, count: counts[other] };
+    return PLACES_KINDS.filter(
+        (other) => other !== kind && counts[other] > 0,
+    ).map((other) => ({ kind: other, count: counts[other] }));
 }
 
 /**

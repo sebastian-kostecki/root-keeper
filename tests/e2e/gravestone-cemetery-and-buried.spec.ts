@@ -1,16 +1,18 @@
 // Risk: S-09 gravestone-cemetery-and-buried (FR-002, FR-004) — describing a
-// gravestone in the source panel (a cemetery from the register and a buried
-// person chosen in a dialog, both sent as hidden inputs of the Inertia form) must
-// bury a deceased person with no burial place at that cemetery, and the same
-// gravestone must then be found in the source picker of her death by place and
-// year, shown as "cmentarz …" where an act shows its parish. Pest sees the
+// gravestone in the source panel (a cemetery from the register of cemeteries and
+// a buried person chosen in a dialog, both sent as hidden inputs of the Inertia
+// form) must bury a deceased person with no burial place at that cemetery
+// (shown as "cmentarz {locality}" in her panel), and the same gravestone must
+// then be found in the source picker of
+// her death by place and year, shown as "cmentarz …" where an act shows its
+// parish. Pest sees the
 // endpoints; only the browser sees the form, the picker dialog and the three views
-// together. Data through the app's routes (tests/e2e/support/api.ts). A locality
-// has no delete route until S-11, so it stays in the `e2e` database (unique per
-// run by the suffix) — see context/foundation/test-stack.md. Source and person go
-// with the suffix sweep.
+// together. Data through the app's routes (tests/e2e/support/api.ts). The
+// cemetery has no name, so its label is "cmentarz {locality}"; locality, cemetery,
+// source and person go with the suffix sweep.
 import { expect, test } from './support/fixtures';
 import {
+    createCemetery,
     createLocality,
     createPerson,
     createSource,
@@ -25,7 +27,8 @@ test('gravestone-cemetery-and-buried: a person added to a gravestone is buried a
     page,
     suffix,
 }) => {
-    const cemetery = `Luboml ${suffix}`;
+    const locality = `Luboml ${suffix}`;
+    const cemetery = `cmentarz ${locality}`;
     const gravestone = `Nagrobek ${suffix}`;
 
     // Setup: a deceased person (death year only, no burial place), and a
@@ -35,7 +38,8 @@ test('gravestone-cemetery-and-buried: a person added to a gravestone is buried a
         last_name: suffix,
         death: { year: DEATH_YEAR },
     });
-    await createLocality(page, cemetery);
+    const localityId = await createLocality(page, locality);
+    await createCemetery(page, { locality: localityId });
     const gravestoneId = await createSource(page, {
         kind: 'gravestone',
         name: gravestone,
@@ -53,7 +57,7 @@ test('gravestone-cemetery-and-buried: a person added to a gravestone is buried a
     const panel = sourcePanel(page, gravestone);
     await expect(panel).toBeVisible();
     const cemeteryField = panel.getByRole('combobox', { name: 'Cmentarz' });
-    await cemeteryField.fill(cemetery);
+    await cemeteryField.fill(locality);
     await page.getByRole('option', { name: cemetery, exact: true }).click();
     await expect(cemeteryField).toHaveValue(cemetery);
 
@@ -87,7 +91,7 @@ test('gravestone-cemetery-and-buried: a person added to a gravestone is buried a
     await expect(dialog.getByText(cemetery).first()).toBeVisible();
     await expect(
         dialog.getByRole('link', {
-            name: `${gravestone} (cmentarz ${cemetery})`,
+            name: `${gravestone} (${cemetery})`,
         }),
     ).toBeVisible();
 
@@ -100,10 +104,10 @@ test('gravestone-cemetery-and-buried: a person added to a gravestone is buried a
     await expect(sourcePicker.getByLabel('Rok')).toHaveValue(
         String(DEATH_YEAR),
     );
-    await sourcePicker.getByLabel('Miejsce').fill(cemetery);
+    await sourcePicker.getByLabel('Miejsce').fill(locality);
     await expect(
         sourcePicker.getByRole('button', {
-            name: new RegExp(`${gravestone}.*cmentarz ${cemetery}`),
+            name: new RegExp(`${gravestone}.*${cemetery}`),
         }),
     ).toBeVisible();
 });

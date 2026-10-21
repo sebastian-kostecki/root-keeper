@@ -36,7 +36,7 @@ class PersonResource extends JsonResource
      *     children?: list<array<string, mixed>>,
      *     marriages?: list<array<string, mixed>>,
      *     residences?: list<array{id: int, locality: array{id: int, name: string}, year_from: int|null, year_to: int|null}>,
-     *     gravestones?: list<array{id: int, display_name: string, cemetery_name: string|null}>,
+     *     gravestones?: list<array{id: int, display_name: string, cemetery_label: string|null}>,
      * }
      */
     public function toArray(Request $request): array
@@ -57,7 +57,7 @@ class PersonResource extends JsonResource
             ],
             'birth' => $this->birth() === null ? null : EventResource::make($this->birth())->resolve(),
             'death' => $this->death() === null ? null : EventResource::make($this->death())->resolve(),
-            'burial_place' => $this->burial()?->locality?->name,
+            'burial_place' => $this->burial()?->cemetery?->label() ?? $this->burial()?->locality?->name,
             'age' => $this->age()?->toArray(),
             'photo_version' => $this->photo_thumbnail_path === null ? null : pathinfo($this->photo_thumbnail_path, PATHINFO_FILENAME),
             'parents' => $this->whenLoaded('parents', fn (): array => RelativeResource::collection(
@@ -76,7 +76,7 @@ class PersonResource extends JsonResource
                 ->map(fn (Source $source): array => [
                     'id' => $source->id,
                     'display_name' => $source->displayName(),
-                    'cemetery_name' => $source->cemetery?->name,
+                    'cemetery_label' => $source->cemetery?->label(),
                 ])
                 ->values()
                 ->all()),

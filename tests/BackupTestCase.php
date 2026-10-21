@@ -3,6 +3,7 @@
 namespace Tests;
 
 use App\Enums\EventType;
+use App\Models\Cemetery;
 use App\Models\Event;
 use App\Models\Locality;
 use App\Models\Parish;
@@ -152,7 +153,7 @@ abstract class BackupTestCase extends TestCase
         linkParent($parent, $child);
 
         $seat = Locality::factory()->for($tree)->create(['name' => 'Lipnica Murowana']);
-        Parish::factory()->for($tree)->seatedIn($seat)->create(['name' => 'Św. Leonarda']);
+        Parish::factory()->for($tree)->seatedIn($seat)->dedicatedTo('Św. Leonarda')->create();
         Residence::factory()->for($parent)->create(['tree_id' => $tree->id, 'locality_id' => $seat->id]);
 
         $this->uploadedSourceHashes = [];
@@ -166,12 +167,26 @@ abstract class BackupTestCase extends TestCase
             ];
         }
 
+        $this->post(route('cemeteries.store'), ['name' => 'Cmentarz parafialny', 'locality_id' => $seat->id])
+            ->assertSessionHasNoErrors();
+
+        $cemetery = Cemetery::query()->where('tree_id', $tree->id)->firstOrFail();
+
         $gravestone = Source::query()->where('original_name', 'akt-2.jpg')->firstOrFail();
 
         $this->put(route('sources.update', $gravestone), [
             'kind' => 'gravestone',
-            'cemetery_locality_id' => $seat->id,
+            'cemetery_id' => $cemetery->id,
             'buried_person_ids' => [$parent->id],
+        ])->assertSessionHasNoErrors();
+
+        $this->put(route('persons.update', $parent), [
+            'first_name' => 'Zygmunt',
+            'last_name' => 'Backupowski',
+            'is_deceased' => '1',
+            'death' => ['year' => 1990],
+            'burial' => ['cemetery_id' => $cemetery->id],
+            'residences' => [['locality_id' => $seat->id]],
         ])->assertSessionHasNoErrors();
 
         $birth = Event::query()->where('tree_id', $tree->id)->where('type', EventType::Birth)->firstOrFail();
@@ -180,6 +195,7 @@ abstract class BackupTestCase extends TestCase
             ->assertSessionHasNoErrors();
 
         expect(Source::query()->count())->toBe(2)
+            ->and(Event::query()->where('type', EventType::Burial)->where('cemetery_id', $cemetery->id)->count())->toBe(1)
             ->and(DB::table('buried_people')->count())->toBe(1)
             ->and(DB::table('event_source')->count())->toBe(1)
             ->and(DB::table('passkeys')->count())->toBe(1);

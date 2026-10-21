@@ -3,6 +3,7 @@
 use App\Actions\Trees\SetTreeRootPerson;
 use App\Enums\EventType;
 use App\Enums\ParticipantRole;
+use App\Models\Cemetery;
 use App\Models\Event;
 use App\Models\Person;
 use App\Models\User;
@@ -952,6 +953,19 @@ test('the pair cards carry birth, death and burial details with places', functio
     ]);
     expect($sheet['partner']['person']['details']['birth']['place'])->toBe($partnerBirth->locality->name);
     expect($sheet['partner']['person']['details']['birth']['date_parts']['year'])->toBe(1860);
+});
+
+test('the pair card shows the burial locality, not the cemetery', function () {
+    $user = User::factory()->create();
+    $tree = $user->tree;
+    $focus = Person::factory()->for($tree)->male()->create();
+    $wife = Person::factory()->for($tree)->female()->create();
+    attachMarriage($focus, $wife, 1880);
+    $cemetery = Cemetery::factory()->for($tree)->create(['name' => 'Cmentarz parafialny']);
+    $burial = Event::factory()->for($tree)->burial()->atCemetery($cemetery)->create();
+    $burial->participants()->attach($focus, ['role' => ParticipantRole::Subject]);
+
+    expect(sheetFor($this, $user, $focus)['focus']['details']['burial_place'])->toBe($cemetery->locality->name);
 });
 
 test('approximate dates, living people and empty events are reflected in the details', function () {

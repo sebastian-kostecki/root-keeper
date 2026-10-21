@@ -217,8 +217,8 @@ function GravestoneLinks({ gravestones }: { gravestones: PersonGravestone[] }) {
                         )}
                     >
                         {gravestone.display_name}
-                        {gravestone.cemetery_name &&
-                            ` (cmentarz ${gravestone.cemetery_name})`}
+                        {gravestone.cemetery_label &&
+                            ` (${gravestone.cemetery_label})`}
                     </Link>
                 </li>
             ))}
@@ -467,6 +467,7 @@ export function OverviewTab({ preview, availableSources }: Props) {
                                 death={personForm.death}
                                 burial={personForm.burial}
                                 burialSuggestion={personForm.burial_suggestion}
+                                religions={preview.religions}
                                 isDeceased={
                                     personForm.is_deceased ||
                                     editor.intent === 'mark-deceased'

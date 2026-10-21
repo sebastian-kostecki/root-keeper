@@ -30,8 +30,11 @@ import { erasedRecordFields } from '@/lib/source-description';
 import type { ErasedField } from '@/lib/source-description';
 import { cn } from '@/lib/utils';
 import type {
+    CemeteryManagerOption,
+    CemeteryOption,
     LocalityOption,
     Parish,
+    ParishKindOption,
     ReligionOption,
     Source,
     SourceConfirmation,
@@ -50,7 +53,10 @@ type Props = {
     parishes: Parish[];
     archives: string[];
     localities: LocalityOption[];
+    cemeteries: CemeteryOption[];
+    cemeteryManagers: CemeteryManagerOption[];
     religions: ReligionOption[];
+    parishKinds: ParishKindOption[];
     onRequestClose: () => void;
     /** A click on a „Potwierdza” person link; the page decides whether it may leave the form. */
     onPersonLinkClick: (event: MouseEvent, personId: number) => void;
@@ -64,7 +70,7 @@ type SourceFormData = {
     record_type: string;
     year: string;
     parish_id: string;
-    cemetery_locality_id: string;
+    cemetery_id: string;
     buried_person_ids: string[];
     archive: string;
     url: string;
@@ -104,7 +110,10 @@ export function SourcePanel({
     parishes,
     archives,
     localities,
+    cemeteries,
+    cemeteryManagers,
     religions,
+    parishKinds,
     onRequestClose,
     onPersonLinkClick,
     onDirtyChange,
@@ -153,7 +162,10 @@ export function SourcePanel({
                         parishes={parishes}
                         archives={archives}
                         localities={localities}
+                        cemeteries={cemeteries}
+                        cemeteryManagers={cemeteryManagers}
                         religions={religions}
+                        parishKinds={parishKinds}
                         onDirtyChange={onDirtyChange}
                         onProcessingChange={setProcessing}
                     />
@@ -168,7 +180,10 @@ export function SourcePanel({
                         parishes={parishes}
                         archives={archives}
                         localities={localities}
+                        cemeteries={cemeteries}
+                        cemeteryManagers={cemeteryManagers}
                         religions={religions}
+                        parishKinds={parishKinds}
                         onDirtyChange={onDirtyChange}
                         onProcessingChange={setProcessing}
                     />
@@ -184,7 +199,10 @@ type FormProps = {
     parishes: Parish[];
     archives: string[];
     localities: LocalityOption[];
+    cemeteries: CemeteryOption[];
+    cemeteryManagers: CemeteryManagerOption[];
     religions: ReligionOption[];
+    parishKinds: ParishKindOption[];
     onDirtyChange: (isDirty: boolean) => void;
     onProcessingChange: (processing: boolean) => void;
 };
@@ -206,7 +224,10 @@ function NewSourceForm({
     parishes,
     archives,
     localities,
+    cemeteries,
+    cemeteryManagers,
     religions,
+    parishKinds,
     onDirtyChange,
     onProcessingChange,
 }: FormProps & { onPersonLinkClick: Props['onPersonLinkClick'] }) {
@@ -346,7 +367,10 @@ function NewSourceForm({
                                 parishes={parishes}
                                 archives={archives}
                                 localities={localities}
+                                cemeteries={cemeteries}
+                                cemeteryManagers={cemeteryManagers}
                                 religions={religions}
+                                parishKinds={parishKinds}
                                 errors={errors}
                                 fileName={preview?.name}
                                 onPersonLinkClick={onPersonLinkClick}
@@ -367,7 +391,10 @@ function EditSourceForm({
     parishes,
     archives,
     localities,
+    cemeteries,
+    cemeteryManagers,
     religions,
+    parishKinds,
     onPersonLinkClick,
     onDirtyChange,
     onProcessingChange,
@@ -379,8 +406,8 @@ function EditSourceForm({
     const [kind, setKind] = useState<SourceKind>(source.kind);
     const [erased, setErased] = useState<ErasedField[]>([]);
     const [confirmOpen, setConfirmOpen] = useState(false);
-    const [createdLocalities, setCreatedLocalities] = useState<
-        LocalityOption[]
+    const [createdCemeteries, setCreatedCemeteries] = useState<
+        CemeteryOption[]
     >([]);
     const formRef = useRef<FormHandle>(null);
     const discardRef = useRef<HTMLInputElement>(null);
@@ -393,7 +420,7 @@ function EditSourceForm({
             formRef.current?.getData() ?? {},
             recordTypes,
             parishes,
-            [...localities, ...createdLocalities],
+            [...cemeteries, ...createdCemeteries],
         );
 
     const confirmAndSubmit = () => {
@@ -482,14 +509,17 @@ function EditSourceForm({
                                 parishes={parishes}
                                 archives={archives}
                                 localities={localities}
+                                cemeteries={cemeteries}
+                                cemeteryManagers={cemeteryManagers}
                                 religions={religions}
+                                parishKinds={parishKinds}
                                 errors={errors}
                                 defaults={source}
                                 onPersonLinkClick={onPersonLinkClick}
-                                onLocalityCreated={(locality) =>
-                                    setCreatedLocalities((current) => [
+                                onCemeteryCreated={(cemetery) =>
+                                    setCreatedCemeteries((current) => [
                                         ...current,
-                                        locality,
+                                        cemetery,
                                     ])
                                 }
                                 notice={

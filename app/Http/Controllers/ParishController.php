@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Actions\Parishes\DeleteParish;
 use App\Actions\Parishes\StoreParish;
 use App\Actions\Parishes\UpdateParish;
-use App\Enums\Religion;
 use App\Http\Requests\ParishStoreRequest;
 use App\Http\Requests\ParishUpdateRequest;
 use App\Models\Parish;
@@ -34,29 +33,25 @@ class ParishController extends Controller
     {
         $parish = $storeParish->handle(
             $request->user()->tree,
-            $request->string('name')->toString(),
-            $request->enum('religion', Religion::class),
-            $request->filled('locality_id') ? $request->integer('locality_id') : null,
+            $request->parishDetails(),
         );
 
-        Inertia::flash('toast', ['type' => 'success', 'message' => __('Dodano parafię')]);
+        Inertia::flash('toast', ['type' => 'success', 'message' => __('Dodano parafię / urząd')]);
 
         return to_route('places.index', ['kind' => 'parafie', 'parish' => $parish->id]);
     }
 
     /**
-     * Update the name, religion and seat of the given parish.
+     * Update the seat, kind, religion and dedication of the given parish.
      */
     public function update(ParishUpdateRequest $request, Parish $parish, UpdateParish $updateParish): RedirectResponse
     {
         $updateParish->handle(
             $parish,
-            $request->string('name')->toString(),
-            $request->enum('religion', Religion::class),
-            $request->filled('locality_id') ? $request->integer('locality_id') : null,
+            $request->parishDetails(),
         );
 
-        Inertia::flash('toast', ['type' => 'success', 'message' => __('Zapisano parafię')]);
+        Inertia::flash('toast', ['type' => 'success', 'message' => __('Zapisano parafię / urząd')]);
 
         return back();
     }
@@ -70,7 +65,7 @@ class ParishController extends Controller
 
         $deleteParish->handle($parish);
 
-        Inertia::flash('toast', ['type' => 'success', 'message' => __('Usunięto parafię')]);
+        Inertia::flash('toast', ['type' => 'success', 'message' => __('Usunięto parafię / urząd')]);
 
         return to_route('places.index', ['kind' => 'parafie']);
     }
