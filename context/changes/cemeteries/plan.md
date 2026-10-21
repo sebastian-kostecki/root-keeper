@@ -497,7 +497,7 @@ Listy cmentarzy i opcje filtra to jedno zapytanie z `withCount` i eager loadem m
 - [x] 2.7 Drugi cmentarz bez nazwy w tej samej miejscowości pokazuje komunikat pod polem Nazwa — 05ca253
 - [x] 2.8 Scalenie dwóch cmentarzy i próba usunięcia używanego działają jak przy parafii — 05ca253
 - [x] 2.9 Szukanie bez wyników w bieżącej zakładce podpowiada pozostałe zakładki z trafieniami — 05ca253
-- [x] 2.10 Zrzuty ekranu zapisane w `context/changes/cemeteries/screenshots/`
+- [x] 2.10 Zrzuty ekranu zapisane w `context/changes/cemeteries/screenshots/` — 8c36b2b
 
 ### Phase 3: Nagrobek wskazuje cmentarz
 
@@ -535,4 +535,4 @@ Listy cmentarzy i opcje filtra to jedno zapytanie z `withCount` i eager loadem m
 - [x] 4.8 Panel osoby i oś czasu pokazują „Cmentarz parafialny, Luboml” albo „cmentarz Luboml”; karta drzewa dalej „poch. Luboml” — dbd5c6d
 - [x] 4.9 Na lokalnej bazie po migracji pochowania osób z nagrobków mają cmentarz, a pozostałe tylko miejscowość — dbd5c6d
 - [x] 4.10 PRD i `CLAUDE.md` opisują cmentarze zgodnie z decyzjami — dbd5c6d
-- [x] 4.11 Zrzuty ekranu zapisane w `context/changes/cemeteries/screenshots/`
+- [x] 4.11 Zrzuty ekranu zapisane w `context/changes/cemeteries/screenshots/` — 8c36b2b
