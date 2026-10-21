@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use App\Concerns\PartialDateValidationRules;
+use App\Enums\MarriageForm;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -24,6 +25,7 @@ class MarriageStoreRequest extends FormRequest
             'spouse_id' => ['required', 'integer', 'different:person_id', Rule::exists('people', 'id')->where('tree_id', $this->user()->tree->id)],
 
             ...$this->partialDateRules('marriage'),
+            'marriage.form' => ['nullable', Rule::enum(MarriageForm::class)],
         ];
     }
 
@@ -53,6 +55,7 @@ class MarriageStoreRequest extends FormRequest
             'marriage.day' => 'dzień ślubu',
             'marriage.locality_id' => 'miejsce ślubu',
             'marriage.is_approximate' => 'przybliżona data ślubu',
+            'marriage.form' => 'forma ślubu',
         ];
     }
 

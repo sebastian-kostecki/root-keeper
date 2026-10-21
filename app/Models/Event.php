@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\EventType;
+use App\Enums\MarriageForm;
 use App\Support\PartialDate;
 use Database\Factories\EventFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -24,11 +25,12 @@ use Illuminate\Support\Carbon;
  * @property string|null $place
  * @property int|null $locality_id
  * @property int|null $cemetery_id
+ * @property MarriageForm|null $marriage_form
  * @property-read PartialDate $date
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
-#[Fillable(['tree_id', 'type', 'date_year', 'date_month', 'date_day', 'date_is_approximate', 'place', 'locality_id', 'cemetery_id'])]
+#[Fillable(['tree_id', 'type', 'date_year', 'date_month', 'date_day', 'date_is_approximate', 'place', 'locality_id', 'cemetery_id', 'marriage_form'])]
 class Event extends Model
 {
     /** @use HasFactory<EventFactory> */
@@ -44,6 +46,7 @@ class Event extends Model
         return [
             'type' => EventType::class,
             'date_is_approximate' => 'boolean',
+            'marriage_form' => MarriageForm::class,
         ];
     }
 

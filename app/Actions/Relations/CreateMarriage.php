@@ -19,7 +19,7 @@ class CreateMarriage
      * Create a marriage as one event with both people attached as spouses,
      * rejecting a duplicate pair atomically.
      *
-     * @param  array{year?: int|string|null, month?: int|string|null, day?: int|string|null, is_approximate?: bool|int|string|null, locality_id?: int|string|null}  $date
+     * @param  array{year?: int|string|null, month?: int|string|null, day?: int|string|null, is_approximate?: bool|int|string|null, locality_id?: int|string|null, form?: string|null}  $date
      */
     public function handle(Tree $tree, Person $person, Person $spouse, array $date): Event
     {
@@ -42,7 +42,7 @@ class CreateMarriage
 
             $event = $tree->events()->create([
                 'type' => EventType::Marriage,
-                ...$this->eventAttributesFrom($date),
+                ...$this->marriageAttributesFrom($date),
             ]);
 
             $event->participants()->attach([

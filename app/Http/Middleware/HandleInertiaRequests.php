@@ -6,6 +6,7 @@ use App\Actions\Persons\BuildPersonPreview;
 use App\Actions\Relations\BuildMarriagePanel;
 use App\Enums\CemeteryManager;
 use App\Enums\EventType;
+use App\Enums\MarriageForm;
 use App\Http\Resources\SourceResource;
 use App\Models\Cemetery;
 use App\Models\Event;
@@ -76,6 +77,7 @@ class HandleInertiaRequests extends Middleware
                 ->map(fn (Locality $locality): array => ['id' => $locality->id, 'name' => $locality->name, 'is_defunct' => $locality->is_defunct])
                 ->all()),
             'cemeteryManagers' => fn (): array => CemeteryManager::options(),
+            'marriageForms' => fn (): array => MarriageForm::options(),
             'cemeteryOptions' => Inertia::optional(fn (): array => $request->user() === null ? [] : $request->user()->tree->cemeteries()
                 ->with('locality')
                 ->get()

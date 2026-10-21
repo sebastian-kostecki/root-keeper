@@ -4,11 +4,13 @@ namespace App\Http\Requests;
 
 use App\Concerns\PartialDateValidationRules;
 use App\Enums\EventType;
+use App\Enums\MarriageForm;
 use App\Models\Event;
 use Illuminate\Auth\Access\Response;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
 
 class MarriageUpdateRequest extends FormRequest
@@ -37,7 +39,10 @@ class MarriageUpdateRequest extends FormRequest
      */
     public function rules(): array
     {
-        return $this->partialDateRules('marriage');
+        return [
+            ...$this->partialDateRules('marriage'),
+            'marriage.form' => ['nullable', Rule::enum(MarriageForm::class)],
+        ];
     }
 
     /**
@@ -53,6 +58,7 @@ class MarriageUpdateRequest extends FormRequest
             'marriage.day' => 'dzień ślubu',
             'marriage.locality_id' => 'miejsce ślubu',
             'marriage.is_approximate' => 'przybliżona data ślubu',
+            'marriage.form' => 'forma ślubu',
         ];
     }
 
