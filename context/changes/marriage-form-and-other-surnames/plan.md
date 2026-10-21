@@ -264,17 +264,17 @@ Kolumna dodawana jako nullable bez wartości domyślnej — istniejące małże�
 
 #### Automated
 
-- [x] 2.1 Testy frontendu przechodzą (w tym `marriage-details.test.ts`, `person-payload.test.ts`, `view-tokens.test.ts`): `vendor/bin/sail npm run test:js`
-- [x] 2.2 Typy przechodzą: `vendor/bin/sail npm run types:check`
-- [x] 2.3 Format i lint przechodzą: `vendor/bin/sail npm run check`
-- [x] 2.4 Build przechodzi: `vendor/bin/sail npm run build`
-- [x] 2.5 Testy małżeństw nadal przechodzą: `vendor/bin/sail artisan test --compact tests/Feature/MarriagesTest.php`
+- [x] 2.1 Testy frontendu przechodzą (w tym `marriage-details.test.ts`, `person-payload.test.ts`, `view-tokens.test.ts`): `vendor/bin/sail npm run test:js` — ea3ff23
+- [x] 2.2 Typy przechodzą: `vendor/bin/sail npm run types:check` — ea3ff23
+- [x] 2.3 Format i lint przechodzą: `vendor/bin/sail npm run check` — ea3ff23
+- [x] 2.4 Build przechodzi: `vendor/bin/sail npm run build` — ea3ff23
+- [x] 2.5 Testy małżeństw nadal przechodzą: `vendor/bin/sail artisan test --compact tests/Feature/MarriagesTest.php` — ea3ff23
 
 #### Manual
 
-- [x] 2.6 Na danych demo panel małżeństwa Jan i Anna pokazuje „Forma ślubu: cywilno-wyznaniowy”, a inne małżeństwo — wyszarzone „nieznana”
-- [x] 2.7 Zmiana formy w panelu małżeństwa zapisuje się i jest widoczna w przeglądzie osoby oraz w Rodzinie („ślub cywilny, …”) obu małżonków
-- [x] 2.8 Edycja samej daty w przeglądzie osoby nie zmienia ustawionej formy
-- [x] 2.9 Ustawienie „Nieznana” usuwa przedrostek w Rodzinie i pokazuje „nieznana” w karcie
-- [x] 2.10 Nagłówek panelu małżeństwa, węzeł drzewa i oś czasu wyglądają jak przed zmianą
-- [x] 2.11 Zrzuty ekranu karty „Ślub” (widok i edycja) i wiersza Rodziny w `context/changes/marriage-form-and-other-surnames/screenshots/`
+- [x] 2.6 Na danych demo panel małżeństwa Jan i Anna pokazuje „Forma ślubu: cywilno-wyznaniowy”, a inne małżeństwo — wyszarzone „nieznana” — ea3ff23
+- [x] 2.7 Zmiana formy w panelu małżeństwa zapisuje się i jest widoczna w przeglądzie osoby oraz w Rodzinie („ślub cywilny, …”) obu małżonków — ea3ff23
+- [x] 2.8 Edycja samej daty w przeglądzie osoby nie zmienia ustawionej formy — ea3ff23
+- [x] 2.9 Ustawienie „Nieznana” usuwa przedrostek w Rodzinie i pokazuje „nieznana” w karcie — ea3ff23
+- [x] 2.10 Nagłówek panelu małżeństwa, węzeł drzewa i oś czasu wyglądają jak przed zmianą — ea3ff23
+- [x] 2.11 Zrzuty ekranu karty „Ślub” (widok i edycja) i wiersza Rodziny w `context/changes/marriage-form-and-other-surnames/screenshots/` — ea3ff23
