@@ -5,6 +5,7 @@ namespace App\Actions\Cemeteries;
 use App\Enums\CemeteryManager;
 use App\Enums\Religion;
 use App\Models\Cemetery;
+use Illuminate\Database\QueryException;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -21,15 +22,23 @@ class UpdateCemetery
     public function handle(Cemetery $cemetery, array $details): Cemetery
     {
         try {
-            DB::transaction(function () use ($cemetery, $details): void {
-                $cemetery->update($details);
+            return DB::transaction(function () use ($cemetery, $details): Cemetery {
+                $locked = Cemetery::query()->whereKey($cemetery->id)->lockForUpdate()->firstOrFail();
 
-                $cemetery->burials()->update(['locality_id' => $cemetery->locality_id]);
+                $locked->update($details);
+
+                $locked->burials()->update(['locality_id' => $locked->locality_id]);
+
+                return $locked;
             });
         } catch (UniqueConstraintViolationException) {
             throw ValidationException::withMessages(['name' => __('W tej miejscowości jest już cmentarz o tej nazwie.')]);
-        }
+        } catch (QueryException $exception) {
+            if ($exception->getCode() !== '23503') {
+                throw $exception;
+            }
 
-        return $cemetery;
+            throw ValidationException::withMessages(['locality_id' => __('Wybierz miejscowość ze spisu.')]);
+        }
     }
 }

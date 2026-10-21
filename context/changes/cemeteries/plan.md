@@ -461,6 +461,14 @@ Listy cmentarzy i opcje filtra to jedno zapytanie z `withCount` i eager loadem m
 - Scalanie i usuwanie miejsc (S-11): `context/archive/2026-10-06-places-merge-and-delete/plan.md`
 - Wzorzec testu migracji: `tests/Feature/SourceMigrationTest.php`
 
+## Addendum (2026-10-21, impl-review F1): pochowanie tylko na cmentarzu
+
+Faza 4 została zbudowana inaczej niż w sekcjach powyżej; obowiązuje zbudowana wersja (PRD FR-022 i `CLAUDE.md` ją opisują):
+
+- Miejsce pochowania to cmentarz (`events.cemetery_id`); `events.locality_id` jest zawsze miejscowością cmentarza. Formularz osoby ma tylko pole „Cmentarz” (`burial.cemetery_id`), bez osobnego `burial.locality_id` i bez reguły „Ten cmentarz leży w innej miejscowości.”. Pochowanie powstaje tylko z cmentarzem.
+- Migracja `assign_cemeteries_to_burials` po dopasowaniu cmentarza z nagrobka tworzy (lub ponownie używa) cmentarz bez nazwy w miejscowości każdego pozostałego pochowania z miejscowością. Zastępuje to pozycję „What We're NOT Doing” o tworzeniu cmentarzy dla miejscowości pochowań i przypadek testowy „pochowanie z samą miejscowością zostaje”.
+- `PersonFormResource.burial = { cemetery }`.
+
 ## Progress
 
 > Convention: `- [ ]` pending, `- [x]` done. Append ` — <commit sha>` when a step lands. Do not rename step titles. See `references/progress-format.md`.
@@ -533,6 +541,6 @@ Listy cmentarzy i opcje filtra to jedno zapytanie z `withCount` i eager loadem m
 
 - [x] 4.7 W sekcji Zgon wybór cmentarza ustawia miejscowość, zmiana miejscowości czyści cmentarz, a podpowiedź z nagrobka wypełnia oba pola
 - [x] 4.8 Panel osoby i oś czasu pokazują „Cmentarz parafialny, Luboml” albo „cmentarz Luboml”; karta drzewa dalej „poch. Luboml” — dbd5c6d
-- [x] 4.9 Na lokalnej bazie po migracji pochowania osób z nagrobków mają cmentarz, a pozostałe tylko miejscowość — dbd5c6d
+- [x] 4.9 Na lokalnej bazie po migracji pochowania osób z nagrobków mają cmentarz, a pozostałe tylko miejscowość — dbd5c6d (zbudowano inaczej: pozostałe dostają cmentarz bez nazwy, zob. Addendum)
 - [x] 4.10 PRD i `CLAUDE.md` opisują cmentarze zgodnie z decyzjami — dbd5c6d
 - [x] 4.11 Zrzuty ekranu zapisane w `context/changes/cemeteries/screenshots/` — 8c36b2b

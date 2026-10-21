@@ -67,11 +67,13 @@ class MergeLocality
      */
     private function mergeCollidingCemeteries(Locality $duplicate, Locality $target): void
     {
-        $targetCemeteries = $target->cemeteries()->get()
-            ->keyBy(fn (Cemetery $cemetery): string => mb_strtolower((string) $cemetery->name));
+        $nameKey = "lower(coalesce(name, '')) as name_key";
 
-        foreach ($duplicate->cemeteries()->get() as $cemetery) {
-            $counterpart = $targetCemeteries->get(mb_strtolower((string) $cemetery->name));
+        $targetCemeteries = $target->cemeteries()->select('cemeteries.*')->selectRaw($nameKey)->orderBy('id')->lockForUpdate()->get()
+            ->keyBy(fn (Cemetery $cemetery): string => $cemetery->getAttribute('name_key'));
+
+        foreach ($duplicate->cemeteries()->select('cemeteries.*')->selectRaw($nameKey)->orderBy('id')->lockForUpdate()->get() as $cemetery) {
+            $counterpart = $targetCemeteries->get($cemetery->getAttribute('name_key'));
 
             if ($counterpart !== null) {
                 app(MergeCemetery::class)->moveInto($cemetery, $counterpart);

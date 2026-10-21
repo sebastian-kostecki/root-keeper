@@ -39,6 +39,7 @@ return new class extends Migration
             DB::table('sources')
                 ->where('tree_id', $pair->tree_id)
                 ->where('cemetery_locality_id', $pair->cemetery_locality_id)
+                ->whereNull('cemetery_id')
                 ->update(['cemetery_id' => $cemeteryId]);
         }
 
@@ -50,6 +51,8 @@ return new class extends Migration
     /**
      * Reverse the migrations. The old column takes the locality of the gravestone's cemetery; gravestones without
      * a cemetery get null, because the stored value may point at a locality that a merge has deleted since.
+     * The rollback is lossy for cemetery details: names, managers, religions and descriptions disappear when the
+     * earlier migration drops the cemeteries table.
      */
     public function down(): void
     {

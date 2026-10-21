@@ -6,6 +6,7 @@ use App\Enums\CemeteryManager;
 use App\Enums\Religion;
 use App\Models\Cemetery;
 use App\Models\Tree;
+use Illuminate\Database\QueryException;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -24,6 +25,12 @@ class StoreCemetery
             return DB::transaction(fn (): Cemetery => $tree->cemeteries()->create($details));
         } catch (UniqueConstraintViolationException) {
             throw ValidationException::withMessages(['name' => __('W tej miejscowości jest już cmentarz o tej nazwie.')]);
+        } catch (QueryException $exception) {
+            if ($exception->getCode() !== '23503') {
+                throw $exception;
+            }
+
+            throw ValidationException::withMessages(['locality_id' => __('Wybierz miejscowość ze spisu.')]);
         }
     }
 }
