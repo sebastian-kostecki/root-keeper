@@ -180,12 +180,22 @@ abstract class BackupTestCase extends TestCase
             'buried_person_ids' => [$parent->id],
         ])->assertSessionHasNoErrors();
 
+        $this->put(route('persons.update', $parent), [
+            'first_name' => 'Zygmunt',
+            'last_name' => 'Backupowski',
+            'is_deceased' => '1',
+            'death' => ['year' => 1990],
+            'burial' => ['cemetery_id' => $cemetery->id],
+            'residences' => [['locality_id' => $seat->id]],
+        ])->assertSessionHasNoErrors();
+
         $birth = Event::query()->where('tree_id', $tree->id)->where('type', EventType::Birth)->firstOrFail();
 
         $this->post(route('events.sources.store', $birth), ['source_id' => Source::query()->orderBy('id')->firstOrFail()->id, 'entry_number' => '95'])
             ->assertSessionHasNoErrors();
 
         expect(Source::query()->count())->toBe(2)
+            ->and(Event::query()->where('type', EventType::Burial)->where('cemetery_id', $cemetery->id)->count())->toBe(1)
             ->and(DB::table('buried_people')->count())->toBe(1)
             ->and(DB::table('event_source')->count())->toBe(1)
             ->and(DB::table('passkeys')->count())->toBe(1);

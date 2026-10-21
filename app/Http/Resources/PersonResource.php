@@ -57,7 +57,7 @@ class PersonResource extends JsonResource
             ],
             'birth' => $this->birth() === null ? null : EventResource::make($this->birth())->resolve(),
             'death' => $this->death() === null ? null : EventResource::make($this->death())->resolve(),
-            'burial_place' => $this->burial()?->locality?->name,
+            'burial_place' => $this->burial()?->cemetery?->label() ?? $this->burial()?->locality?->name,
             'age' => $this->age()?->toArray(),
             'photo_version' => $this->photo_thumbnail_path === null ? null : pathinfo($this->photo_thumbnail_path, PATHINFO_FILENAME),
             'parents' => $this->whenLoaded('parents', fn (): array => RelativeResource::collection(

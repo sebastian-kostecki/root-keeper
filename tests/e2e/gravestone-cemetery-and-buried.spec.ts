@@ -1,8 +1,9 @@
 // Risk: S-09 gravestone-cemetery-and-buried (FR-002, FR-004) — describing a
 // gravestone in the source panel (a cemetery from the register of cemeteries and
 // a buried person chosen in a dialog, both sent as hidden inputs of the Inertia
-// form) must bury a deceased person with no burial place at that cemetery's
-// locality, and the same gravestone must then be found in the source picker of
+// form) must bury a deceased person with no burial place at that cemetery
+// (shown as "cmentarz {locality}" in her panel), and the same gravestone must
+// then be found in the source picker of
 // her death by place and year, shown as "cmentarz …" where an act shows its
 // parish. Pest sees the
 // endpoints; only the browser sees the form, the picker dialog and the three views
@@ -80,14 +81,14 @@ test('gravestone-cemetery-and-buried: a person added to a gravestone is buried a
     // the gravestone is among hers.
     await expect(async () => {
         const person = (await personPreview(page, personId)).person;
-        expect(person.burial_place).toBe(locality);
+        expect(person.burial_place).toBe(cemetery);
         expect(person.gravestones?.map((g) => g.id)).toEqual([gravestoneId]);
     }).toPass();
 
     // 4. Her panel shows the burial place and the link to the gravestone.
     const dialog = await openPerson(page, personId, displayName);
     await expect(dialog.getByText('Miejsce pochowania')).toBeVisible();
-    await expect(dialog.getByText(locality).first()).toBeVisible();
+    await expect(dialog.getByText(cemetery).first()).toBeVisible();
     await expect(
         dialog.getByRole('link', {
             name: `${gravestone} (${cemetery})`,

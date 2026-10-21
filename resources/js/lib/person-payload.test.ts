@@ -18,7 +18,14 @@ function personForm(): PersonFormData {
         is_deceased: true,
         birth: null,
         death: null,
-        burial: { locality: { id: 7, name: 'Luboml' } },
+        burial: {
+            cemetery: {
+                id: 4,
+                label: 'cmentarz Luboml',
+                locality_id: 7,
+                locality_name: 'Luboml',
+            },
+        },
     };
 }
 
@@ -48,31 +55,40 @@ describe('mergeSectionIntoPayload: maiden name', () => {
 
 describe('mergeSectionIntoPayload: burial place', () => {
     it.each(['personal', 'birth'] as const)(
-        'keeps the burial locality of a deceased person when the %s section is saved',
+        'keeps the burial cemetery of a deceased person when the %s section is saved',
         (section) => {
             const payload = mergeSectionIntoPayload(personForm(), section, {
                 first_name: 'Anna',
                 'birth.year': '1950',
             });
 
-            expect(payload.burial).toEqual({ locality_id: 7 });
+            expect(payload.burial).toEqual({ cemetery_id: 4 });
         },
     );
 
-    it('takes the burial locality from the death section values', () => {
+    it('takes the burial cemetery from the death section values', () => {
         const payload = mergeSectionIntoPayload(personForm(), 'death', {
             is_deceased: '1',
             'death.locality_id': '3',
-            'burial.locality_id': '9',
+            'burial.cemetery_id': '12',
         });
 
         expect(payload.death?.locality_id).toBe(3);
-        expect(payload.burial).toEqual({ locality_id: 9 });
+        expect(payload.burial).toEqual({ cemetery_id: 12 });
+    });
+
+    it('clears the burial cemetery when the death section has none', () => {
+        const payload = mergeSectionIntoPayload(personForm(), 'death', {
+            is_deceased: '1',
+            'burial.cemetery_id': '',
+        });
+
+        expect(payload.burial).toEqual({ cemetery_id: null });
     });
 
     it('sends neither death nor burial when the death is unchecked', () => {
         const payload = mergeSectionIntoPayload(personForm(), 'death', {
-            'burial.locality_id': '9',
+            'burial.cemetery_id': '9',
         });
 
         expect(payload.death).toBeUndefined();

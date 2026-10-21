@@ -41,7 +41,7 @@ class UpdatePerson
      *         is_approximate?: bool|int|string|null,
      *         locality_id?: int|string|null,
      *     },
-     *     burial?: array{locality_id?: int|string|null},
+     *     burial?: array{cemetery_id?: int|string|null},
      *     residences?: array<int, array{locality_id: int|string, year_from?: int|string|null, year_to?: int|string|null}>,
      * }  $data
      */
@@ -66,10 +66,10 @@ class UpdatePerson
                 $this->putEvent($person, EventType::Death, $data['death'] ?? []);
 
                 // Full replace, like birth and death: a payload without `burial` clears the burial place.
-                $burialLocalityId = $data['burial']['locality_id'] ?? null;
+                $burialPlace = $this->burialPlaceFrom($person->tree, $data['burial'] ?? []);
 
-                if (filled($burialLocalityId)) {
-                    $this->putEvent($person, EventType::Burial, ['locality_id' => $burialLocalityId]);
+                if ($burialPlace !== null) {
+                    $this->putEvent($person, EventType::Burial, ['locality_id' => $burialPlace['locality_id']], ['cemetery_id' => $burialPlace['cemetery_id']]);
                 } else {
                     $person->burial()?->delete();
                 }
@@ -159,10 +159,11 @@ class UpdatePerson
 
     /**
      * @param  array{year?: int|string|null, month?: int|string|null, day?: int|string|null, is_approximate?: bool|int|string|null, locality_id?: int|string|null}  $date
+     * @param  array{cemetery_id: int|string|null}|array{}  $extra
      */
-    private function putEvent(Person $person, EventType $type, array $date): void
+    private function putEvent(Person $person, EventType $type, array $date, array $extra = []): void
     {
-        $attributes = $this->eventAttributesFrom($date);
+        $attributes = [...$this->eventAttributesFrom($date), ...$extra];
 
         $event = match ($type) {
             EventType::Birth => $person->birth(),

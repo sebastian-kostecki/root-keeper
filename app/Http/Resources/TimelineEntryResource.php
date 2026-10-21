@@ -43,7 +43,7 @@ class TimelineEntryResource extends JsonResource
             'is_approximate' => $event->date_is_approximate,
             'date_has_month' => $event->date_month !== null,
             'age' => $this->resource->age?->toArray(),
-            'place' => $event->locality?->name,
+            'place' => $event->cemetery?->label() ?? $event->locality?->name,
             'relative' => $relative === null ? null : [
                 'id' => $relative->id,
                 'display_name' => $relative->displayName(),

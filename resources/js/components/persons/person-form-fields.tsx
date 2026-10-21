@@ -52,6 +52,7 @@ export function PersonFormFields({
                     death={person?.death ?? null}
                     burial={person?.burial ?? null}
                     isDeceased={person?.is_deceased ?? false}
+                    religions={religions}
                 />
             </div>
         </>

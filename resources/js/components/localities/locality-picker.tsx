@@ -44,6 +44,13 @@ export function LocalityPicker({
     const [selectedId, setSelectedId] = useState<number | null>(
         value?.id ?? null,
     );
+    const [seenValueId, setSeenValueId] = useState(value?.id ?? null);
+
+    // A value set from outside (e.g. by the other field of a form) replaces the selection.
+    if ((value?.id ?? null) !== seenValueId) {
+        setSeenValueId(value?.id ?? null);
+        setSelectedId(value?.id ?? null);
+    }
     const [created, setCreated] = useState<LocalityOption[]>([]);
     const [createError, setCreateError] = useState<string | undefined>();
     const http = useHttp<{ name: string }, LocalityOption>({ name: '' });

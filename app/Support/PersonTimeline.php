@@ -10,7 +10,7 @@ use App\Models\Person;
  * The timeline of a person: own events, the birth and death of each child and
  * the death of each spouse, ordered by date. Reads only the relations already
  * loaded by BuildPersonPreview, so it issues no queries. The caller must preload
- * `events.locality`, `children.events.locality` and
+ * `events.locality`, `events.cemetery.locality`, `children.events.locality` and
  * `marriages.participants.events.locality`; otherwise every row lazy-loads its place.
  *
  * Rows after the row of the person's own death in the sorted order are dropped,

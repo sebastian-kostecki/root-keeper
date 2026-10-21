@@ -316,7 +316,7 @@ test('the sources page offers the tree people as an optional prop', function () 
     expect(collect($response->json('props.personCandidates'))->pluck('id')->all())->toBe([$mine->id]);
 });
 
-test('the person preview lists the gravestones and suggests the one shared burial locality', function (array $cemeteries, ?string $suggested, string $firstLabel) {
+test('the person preview lists the gravestones and suggests the one shared cemetery', function (array $cemeteries, ?string $suggested, string $firstLabel) {
     $user = User::factory()->create();
     $person = Person::factory()->for($user->tree)->create();
 
@@ -332,16 +332,75 @@ test('the person preview lists the gravestones and suggests the one shared buria
 
         $suggested === null
             ? $page->where('personPreview.personForm.burial_suggestion', null)
-            : $page->where('personPreview.personForm.burial_suggestion.name', $suggested);
+            : $page->where('personPreview.personForm.burial_suggestion.label', $suggested)
+                ->where('personPreview.personForm.burial_suggestion.locality_name', $cemeteries[0][0]);
 
         if ($cemeteries !== []) {
             $page->where('personPreview.person.gravestones.0.cemetery_label', $firstLabel);
         }
     });
 })->with([
-    'one unnamed cemetery' => [[['Luboml', null]], 'Luboml', 'cmentarz Luboml'],
-    'one named cemetery' => [[['Luboml', 'Parafialny']], 'Luboml', 'Parafialny, Luboml'],
-    'two cemeteries, same locality' => [[['Luboml', null], ['Luboml', 'Parafialny']], 'Luboml', 'cmentarz Luboml'],
+    'one unnamed cemetery' => [[['Luboml', null]], 'cmentarz Luboml', 'cmentarz Luboml'],
+    'one named cemetery' => [[['Luboml', 'Parafialny']], 'Parafialny, Luboml', 'Parafialny, Luboml'],
+    'two cemeteries, same locality' => [[['Luboml', null], ['Luboml', 'Parafialny']], null, 'cmentarz Luboml'],
     'two different localities' => [[['Luboml', null], ['Chełm', null]], null, 'cmentarz Luboml'],
     'no gravestones' => [[], null, ''],
 ]);
+
+test('saving a gravestone fills the empty cemetery of a burial in the same locality only', function () {
+    $user = User::factory()->create();
+    $cemetery = Cemetery::factory()->for($user->tree)->unnamed()->create();
+    $chelm = Locality::factory()->for($user->tree)->create();
+    $elsewhere = Cemetery::factory()->for($user->tree)->create();
+    $jan = deceasedPerson($user, 'Jan', $cemetery->locality);
+    $maria = deceasedPerson($user, 'Maria', $chelm);
+    $adam = deceasedPerson($user, 'Adam', $cemetery->locality);
+    Person::query()->with('events')->findOrFail($adam->id)->burial()->update(['cemetery_id' => $elsewhere->id]);
+    $source = Source::factory()->for($user->tree)->gravestone()->create();
+
+    $this->actingAs($user)->put(route('sources.update', $source), gravestoneFields([
+        'cemetery_id' => $cemetery->id,
+        'buried_person_ids' => [$jan->id, $maria->id, $adam->id],
+    ]))->assertSessionHasNoErrors();
+
+    expect(burialCemeteryOf($jan))->toBe($cemetery->id);
+    expect(burialCemeteryOf($maria))->toBeNull();
+    expect(burialPlaceOf($maria))->toBe($chelm->id);
+    expect(burialCemeteryOf($adam))->toBe($elsewhere->id);
+});
+
+test('a person on gravestones of two cemeteries in one locality keeps an empty burial cemetery', function () {
+    $user = User::factory()->create();
+    $luboml = Locality::factory()->for($user->tree)->create();
+    $first = Cemetery::factory()->for($user->tree)->in($luboml)->unnamed()->create();
+    $second = Cemetery::factory()->for($user->tree)->in($luboml)->create(['name' => 'Parafialny']);
+    $jan = deceasedPerson($user, 'Jan', $luboml);
+
+    Source::factory()->for($user->tree)->gravestone()->create(['cemetery_id' => $second->id])->buriedPeople()->attach($jan);
+    $source = Source::factory()->for($user->tree)->gravestone()->create();
+
+    $this->actingAs($user)->put(route('sources.update', $source), gravestoneFields([
+        'cemetery_id' => $first->id,
+        'buried_person_ids' => [$jan->id],
+    ]))->assertSessionHasNoErrors();
+
+    expect(burialPlaceOf($jan))->toBe($luboml->id);
+    expect(burialCemeteryOf($jan))->toBeNull();
+});
+
+test('a person on two gravestones of one cemetery gets that cemetery on an empty burial', function () {
+    $user = User::factory()->create();
+    $cemetery = Cemetery::factory()->for($user->tree)->create();
+    $jan = deceasedPerson($user, 'Jan', $cemetery->locality);
+
+    foreach (range(1, 2) as $ignored) {
+        $source = Source::factory()->for($user->tree)->gravestone()->create();
+
+        $this->actingAs($user)->put(route('sources.update', $source), gravestoneFields([
+            'cemetery_id' => $cemetery->id,
+            'buried_person_ids' => [$jan->id],
+        ]))->assertSessionHasNoErrors();
+    }
+
+    expect(burialCemeteryOf($jan))->toBe($cemetery->id);
+});

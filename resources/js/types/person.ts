@@ -1,3 +1,4 @@
+import type { CemeteryOption } from './cemetery';
 import type { LocalityOption } from './parish';
 import type { SourceKind } from './source';
 
@@ -168,6 +169,7 @@ export type PersonFormData = {
     is_deceased: boolean;
     birth: PersonFormEvent | null;
     death: PersonFormEvent | null;
-    burial: { locality: LocalityOption | null } | null;
-    burial_suggestion?: LocalityOption | null;
+    burial: { cemetery: CemeteryOption | null } | null;
+    /** The one cemetery of the person's gravestones; preselects an empty burial place. */
+    burial_suggestion?: CemeteryOption | null;
 };

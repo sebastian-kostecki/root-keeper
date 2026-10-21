@@ -467,6 +467,7 @@ export function OverviewTab({ preview, availableSources }: Props) {
                                 death={personForm.death}
                                 burial={personForm.burial}
                                 burialSuggestion={personForm.burial_suggestion}
+                                religions={preview.religions}
                                 isDeceased={
                                     personForm.is_deceased ||
                                     editor.intent === 'mark-deceased'

@@ -84,10 +84,10 @@ PHP 8.5 · Laravel 13 · Inertia v3 (inertia-laravel 3.5, @inertiajs/react 3.8) 
 - Read path: pass data to Inertia pages through API Resources (`app/Http/Resources/`) with `->resolve()`; pages live in `resources/js/pages/<domain>/{index,create,show,edit}.tsx`, domain components in `resources/js/components/<domain>/`.
 - Deleting a record that others reference shows the affected items first and requires explicit confirmation (pattern: `resources/js/components/sources/delete-source-dialog.tsx`).
 - Every new endpoint gets a Pest feature test in `tests/Feature/<Domain>Test.php` covering the happy path and the other-user 404.
-- Places and parishes are tree-owned records like every other: unique per tree, scoped through `$request->user()->tree`, Policy with `denyAsNotFound()`.
-- Merging a duplicate (place or parish) moves every reference — parishes, gravestones, event places, burial places, residences — to the target inside one DB transaction, then deletes the duplicate. Both records must belong to the same tree; the merge test covers every reference type and the other-user 404.
-- Deleting a place or parish is allowed only when nothing references it.
-- Miejscowości i parafie to jedna strona `/places` z przełącznikiem `?kind=` i jednym wpisem „Miejsca” w menu; nie dodawaj osobnej listy ani wpisu. Stare `/localities` i `/parishes` tylko przekierowują, a segmenty z licznikiem 0 nie są wyłączane (w odróżnieniu od `/sources`), bo pusta zakładka dodaje pierwszy rekord.
+- Places, parishes and cemeteries are tree-owned records like every other: unique per tree (a cemetery per locality and name, the name may be empty), scoped through `$request->user()->tree`, Policy with `denyAsNotFound()`. A cemetery lies in a locality; gravestones and burials point at it; a burial's place is a cemetery (`events.cemetery_id`) and `events.locality_id` is always the cemetery's locality.
+- Merging a duplicate (place, parish or cemetery) moves every reference — parishes, cemeteries, gravestones, burials, event places, burial places, residences — to the target inside one DB transaction, then deletes the duplicate; merging a locality first merges the duplicate's cemeteries that collide by name with the target's. Both records must belong to the same tree; the merge test covers every reference type and the other-user 404.
+- Deleting a place, parish or cemetery is allowed only when nothing references it.
+- Miejscowości, parafie i cmentarze to jedna strona `/places` z trzema zakładkami (przełącznik `?kind=`) i jednym wpisem „Miejsca” w menu; nie dodawaj osobnej listy ani wpisu. Stare `/localities` i `/parishes` tylko przekierowują (cmentarze nigdy nie miały osobnego adresu), a segmenty z licznikiem 0 nie są wyłączane (w odróżnieniu od `/sources`), bo pusta zakładka dodaje pierwszy rekord.
 
 ===
 

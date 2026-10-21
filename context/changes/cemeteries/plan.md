@@ -503,36 +503,36 @@ Listy cmentarzy i opcje filtra to jedno zapytanie z `withCount` i eager loadem m
 
 #### Automated
 
-- [x] 3.1 Migracja przechodzi w obie strony: `vendor/bin/sail artisan migrate`, `vendor/bin/sail artisan migrate:rollback --step=1`, `vendor/bin/sail artisan migrate`
-- [x] 3.2 Test migracji nagrobków przechodzi: `vendor/bin/sail artisan test --compact tests/Feature/GravestoneCemeteryMigrationTest.php`
-- [x] 3.3 Testy źródeł, nagrobków i miejsc przechodzą: `vendor/bin/sail artisan test --compact tests/Feature/GravestoneTest.php tests/Feature/SourcesTest.php tests/Feature/WriteTargetsTest.php tests/Feature/LocalitiesTest.php tests/Feature/PlacesTest.php tests/Feature/DeleteImpactTest.php`
-- [x] 3.4 Testy kopii zapasowej przechodzą: `vendor/bin/sail artisan test --compact tests/Backup`
-- [x] 3.5 Formatowanie PHP i Larastan: `vendor/bin/sail bin pint --dirty --format agent`, `vendor/bin/sail composer types:check`
-- [x] 3.6 Testy JS, lint, typy, build: `vendor/bin/sail npm run test:js`, `vendor/bin/sail npm run check`, `vendor/bin/sail npm run types:check`, `vendor/bin/sail npm run build`
-- [x] 3.7 Specy nagrobka i wyboru źródła przechodzą: `npx playwright test tests/e2e/gravestone-cemetery-and-buried.spec.ts tests/e2e/source-found-by-place-and-year.spec.ts tests/e2e/sources-grid-with-filters.spec.ts`
+- [x] 3.1 Migracja przechodzi w obie strony: `vendor/bin/sail artisan migrate`, `vendor/bin/sail artisan migrate:rollback --step=1`, `vendor/bin/sail artisan migrate` — 71089c3
+- [x] 3.2 Test migracji nagrobków przechodzi: `vendor/bin/sail artisan test --compact tests/Feature/GravestoneCemeteryMigrationTest.php` — 71089c3
+- [x] 3.3 Testy źródeł, nagrobków i miejsc przechodzą: `vendor/bin/sail artisan test --compact tests/Feature/GravestoneTest.php tests/Feature/SourcesTest.php tests/Feature/WriteTargetsTest.php tests/Feature/LocalitiesTest.php tests/Feature/PlacesTest.php tests/Feature/DeleteImpactTest.php` — 71089c3
+- [x] 3.4 Testy kopii zapasowej przechodzą: `vendor/bin/sail artisan test --compact tests/Backup` — 71089c3
+- [x] 3.5 Formatowanie PHP i Larastan: `vendor/bin/sail bin pint --dirty --format agent`, `vendor/bin/sail composer types:check` — 71089c3
+- [x] 3.6 Testy JS, lint, typy, build: `vendor/bin/sail npm run test:js`, `vendor/bin/sail npm run check`, `vendor/bin/sail npm run types:check`, `vendor/bin/sail npm run build` — 71089c3
+- [x] 3.7 Specy nagrobka i wyboru źródła przechodzą: `npx playwright test tests/e2e/gravestone-cemetery-and-buried.spec.ts tests/e2e/source-found-by-place-and-year.spec.ts tests/e2e/sources-grid-with-filters.spec.ts` — 71089c3
 
 #### Manual
 
-- [x] 3.8 W panelu nagrobka „Cmentarz” wybiera cmentarz, a „Dodaj cmentarz” otwiera okno; nowy cmentarz jest od razu wybrany
-- [x] 3.9 Karty i tabela `/sources` pokazują „cmentarz Luboml” dla migrowanych nagrobków i „Cmentarz parafialny, Luboml” dla nazwanych
-- [x] 3.10 Filtr „Miejsce” ma grupę Cmentarze; wybór miejscowości dalej pokazuje jej nagrobki
-- [x] 3.11 Na lokalnej bazie po migracji każdy nagrobek z cmentarzem ma `cemetery_id`, a liczba cmentarzy równa się liczbie różnych miejscowości nagrobków w drzewie
+- [x] 3.8 W panelu nagrobka „Cmentarz” wybiera cmentarz, a „Dodaj cmentarz” otwiera okno; nowy cmentarz jest od razu wybrany — 71089c3
+- [x] 3.9 Karty i tabela `/sources` pokazują „cmentarz Luboml” dla migrowanych nagrobków i „Cmentarz parafialny, Luboml” dla nazwanych — 71089c3
+- [x] 3.10 Filtr „Miejsce” ma grupę Cmentarze; wybór miejscowości dalej pokazuje jej nagrobki — 71089c3
+- [x] 3.11 Na lokalnej bazie po migracji każdy nagrobek z cmentarzem ma `cemetery_id`, a liczba cmentarzy równa się liczbie różnych miejscowości nagrobków w drzewie — 71089c3
 
 ### Phase 4: Pochowanie na cmentarzu
 
 #### Automated
 
-- [ ] 4.1 Migracja przechodzi w obie strony: `vendor/bin/sail artisan migrate`, `vendor/bin/sail artisan migrate:rollback --step=1`, `vendor/bin/sail artisan migrate`
-- [ ] 4.2 Test migracji pochowań przechodzi: `vendor/bin/sail artisan test --compact tests/Feature/BurialCemeteryMigrationTest.php`
-- [ ] 4.3 Testy osób, osi czasu, nagrobków i drzewa przechodzą: `vendor/bin/sail artisan test --compact tests/Feature/PersonsTest.php tests/Feature/PersonTimelineTest.php tests/Feature/GravestoneTest.php tests/Feature/TreeTest.php tests/Backup`
-- [ ] 4.4 Formatowanie PHP i Larastan: `vendor/bin/sail bin pint --dirty --format agent`, `vendor/bin/sail composer types:check`
-- [ ] 4.5 Testy JS, lint, typy, build: `vendor/bin/sail npm run test:js`, `vendor/bin/sail npm run check`, `vendor/bin/sail npm run types:check`, `vendor/bin/sail npm run build`
-- [ ] 4.6 Cały zestaw E2E przechodzi: `npx playwright test`
+- [x] 4.1 Migracja przechodzi w obie strony: `vendor/bin/sail artisan migrate`, `vendor/bin/sail artisan migrate:rollback --step=1`, `vendor/bin/sail artisan migrate`
+- [x] 4.2 Test migracji pochowań przechodzi: `vendor/bin/sail artisan test --compact tests/Feature/BurialCemeteryMigrationTest.php`
+- [x] 4.3 Testy osób, osi czasu, nagrobków i drzewa przechodzą: `vendor/bin/sail artisan test --compact tests/Feature/PersonsTest.php tests/Feature/PersonTimelineTest.php tests/Feature/GravestoneTest.php tests/Feature/TreeTest.php tests/Backup`
+- [x] 4.4 Formatowanie PHP i Larastan: `vendor/bin/sail bin pint --dirty --format agent`, `vendor/bin/sail composer types:check`
+- [x] 4.5 Testy JS, lint, typy, build: `vendor/bin/sail npm run test:js`, `vendor/bin/sail npm run check`, `vendor/bin/sail npm run types:check`, `vendor/bin/sail npm run build`
+- [x] 4.6 Cały zestaw E2E przechodzi: `npx playwright test`
 
 #### Manual
 
-- [ ] 4.7 W sekcji Zgon wybór cmentarza ustawia miejscowość, zmiana miejscowości czyści cmentarz, a podpowiedź z nagrobka wypełnia oba pola
-- [ ] 4.8 Panel osoby i oś czasu pokazują „Cmentarz parafialny, Luboml” albo „cmentarz Luboml”; karta drzewa dalej „poch. Luboml”
-- [ ] 4.9 Na lokalnej bazie po migracji pochowania osób z nagrobków mają cmentarz, a pozostałe tylko miejscowość
-- [ ] 4.10 PRD i `CLAUDE.md` opisują cmentarze zgodnie z decyzjami
+- [x] 4.7 W sekcji Zgon wybór cmentarza ustawia miejscowość, zmiana miejscowości czyści cmentarz, a podpowiedź z nagrobka wypełnia oba pola
+- [x] 4.8 Panel osoby i oś czasu pokazują „Cmentarz parafialny, Luboml” albo „cmentarz Luboml”; karta drzewa dalej „poch. Luboml”
+- [x] 4.9 Na lokalnej bazie po migracji pochowania osób z nagrobków mają cmentarz, a pozostałe tylko miejscowość
+- [x] 4.10 PRD i `CLAUDE.md` opisują cmentarze zgodnie z decyzjami
 - [ ] 4.11 Zrzuty ekranu zapisane w `context/changes/cemeteries/screenshots/`

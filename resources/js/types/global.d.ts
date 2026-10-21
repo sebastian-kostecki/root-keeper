@@ -1,5 +1,5 @@
 import type { Auth } from '@/types/auth';
-import type { CemeteryOption } from '@/types/cemetery';
+import type { CemeteryManagerOption, CemeteryOption } from '@/types/cemetery';
 import type { LocalityOption } from '@/types/parish';
 import type {
     MarriagePanelPayload,
@@ -31,6 +31,7 @@ declare module '@inertiajs/core' {
             availableSources?: Source[];
             localityOptions?: LocalityOption[];
             cemeteryOptions?: CemeteryOption[];
+            cemeteryManagers: CemeteryManagerOption[];
             [key: string]: unknown;
         };
     }

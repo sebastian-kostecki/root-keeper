@@ -32,9 +32,9 @@ class PersonFormResource extends JsonResource
      *     is_deceased: bool,
      *     birth: array{year: int|null, month: int|null, day: int|null, is_approximate: bool, locality: array{id: int, name: string}|null, is_confirmed: bool}|null,
      *     death: array{year: int|null, month: int|null, day: int|null, is_approximate: bool, locality: array{id: int, name: string}|null, is_confirmed: bool}|null,
-     *     burial: array{locality: array{id: int, name: string}|null}|null,
+     *     burial: array{cemetery: array{id: int, label: string, locality_id: int, locality_name: string}|null}|null,
      *     residences: list<array{id: int, locality: array{id: int, name: string}, year_from: int|null, year_to: int|null}>,
-     *     burial_suggestion: array{id: int, name: string}|null,
+     *     burial_suggestion: array{id: int, label: string, locality_id: int, locality_name: string}|null,
      * }
      */
     public function toArray(Request $request): array
@@ -50,26 +50,22 @@ class PersonFormResource extends JsonResource
             'is_deceased' => $this->death() !== null,
             'birth' => $this->formEvent($this->birth()),
             'death' => $this->formEvent($this->death()),
-            'burial' => $this->burial() === null ? null : ['locality' => $this->localityOf($this->burial())],
+            'burial' => $this->burial() === null ? null : ['cemetery' => $this->burial()->cemetery?->toOption()],
             'residences' => array_values(ResidenceResource::collection(PersonOrdering::residences($this->residences))->resolve()),
             'burial_suggestion' => $this->whenLoaded('gravestones', fn (): ?array => $this->burialSuggestion(), null),
         ];
     }
 
     /**
-     * The locality of the cemeteries of the person's gravestones when they all share exactly one, otherwise null.
+     * The cemetery of the person's gravestones when they all share exactly one, otherwise null.
      *
-     * @return array{id: int, name: string}|null
+     * @return array{id: int, label: string, locality_id: int, locality_name: string}|null
      */
     private function burialSuggestion(): ?array
     {
-        $localities = $this->gravestones->pluck('cemetery.locality')->filter()->unique('id')->values();
+        $cemeteries = $this->gravestones->pluck('cemetery')->filter()->unique('id')->values();
 
-        if ($localities->count() !== 1) {
-            return null;
-        }
-
-        return ['id' => $localities->first()->id, 'name' => $localities->first()->name];
+        return $cemeteries->count() === 1 ? $cemeteries->first()->toOption() : null;
     }
 
     /**

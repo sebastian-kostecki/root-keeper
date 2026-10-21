@@ -95,13 +95,13 @@ Wszystkie FR są `must-have` (zakres: całość do 2026-11-04). Jeśli zabraknie
 - [modified] FR-001: Autor can opisać akt metrykalny osobnymi danymi: parafia (ze spisu parafii, z możliwością dopisania nowej w locie), rok, typ aktu, archiwum (tekst z podpowiedziami wcześniej wpisanych archiwów). Priority: must-have. (Było: jeden płaski opis wspólny dla wszystkich rodzajów; parafia i archiwum w jednym polu „Pochodzenie” albo w notatce.)
   > Socrates: Counter-argument considered: "brak parafii w spisie blokuje opis aktu — wprowadzanie się rwie."
   > Resolution: kept; parafię dopisuje się w locie przy opisie aktu, bez wychodzenia z panelu źródła (jak archiwum).
-- [modified] FR-002: Autor can opisać zdjęcie nagrobka: cmentarz (miejscowość ze spisu) i osoby pochowane; miejsce pochowania osoby z listy pochowanych podpowiada się cmentarzem nagrobka (można zmienić). Priority: must-have. (Było: nagrobek opisany tym samym płaskim opisem co akt.)
+- [modified] FR-002: Autor can opisać zdjęcie nagrobka: cmentarz (ze spisu cmentarzy, osadzony w miejscowości) i osoby pochowane; miejsce pochowania osoby z listy pochowanych podpowiada się cmentarzem nagrobka (można zmienić). Priority: must-have. (Było: nagrobek opisany tym samym płaskim opisem co akt.)
   > Socrates: Counter-argument considered: "cmentarz na nagrobku dubluje miejsce pochowania osoby (FR-022) — dwa miejsca prawdy."
   > Resolution: kept; miejsce pochowania podpowiada się z nagrobka, ale pozostaje edytowalne przy osobie.
 - [modified] FR-003: Autor can podać numer wpisu przy powiązaniu źródła z faktem; numer jest widoczny przy fakcie i przy źródle. Priority: must-have. (Było: „Numer wpisu” jako pole źródła; to, kogo dotyczy który wpis — w notatce.)
   > Socrates: Counter-argument considered: "dubluje dzisiejsze pole „Numer wpisu” na źródle."
   > Resolution: kept; pole „Numer wpisu” znika ze źródła, a dotychczasowe wartości zostają widoczne do ręcznego przeniesienia.
-- [modified] FR-004: Autor can przy wyborze źródła do faktu szukać po miejscu (miejscowość parafii lub cmentarza) i roku i widzi przy każdym źródle rok i parafię lub cmentarz. Priority: must-have. (Było: najpierw akty o pasującym typie, bez roku i parafii przy źródle.)
+- [modified] FR-004: Autor can przy wyborze źródła do faktu szukać po miejscu (miejscowość parafii, miejscowość cmentarza lub nazwa cmentarza) i roku i widzi przy każdym źródle rok i parafię lub cmentarz. Priority: must-have. (Było: najpierw akty o pasującym typie, bez roku i parafii przy źródle.)
   > Socrates: Counter-argument considered: "nagrobki nie mają parafii — szukanie po parafii ich nie obejmie."
   > Resolution: kept; szukanie po miejscu obejmuje miejscowość parafii i cmentarza (zaproponowane przez facylitatora, potwierdzone przez autora 2026-10-04).
 - [modified] FR-005: Autor can przeglądać listę źródeł jako siatkę mniejszych kart z rodzajem, typem, parafią lub cmentarzem, rokiem i archiwum oraz filtrować ją po rodzaju, parafii/miejscu, roku i archiwum. Priority: must-have. (Było: lista większych kart.)
@@ -161,7 +161,7 @@ Wszystkie FR są `must-have` (zakres: całość do 2026-11-04). Jeśli zabraknie
 - [new] FR-021: Autor can zobaczyć zakładkę wydarzeń osoby: własne oraz urodzenia i zgony dzieci, ślub i zgon małżonka, uporządkowane po roku, z wydarzeniami bez daty na końcu. Priority: must-have.
   > Socrates: Counter-argument considered: "daty częściowe (sam rok, brak daty) psują kolejność osi czasu."
   > Resolution: kept; sortowanie po roku, wydarzenia bez daty na końcu.
-- [new] FR-022: Autor can zapisać miejsce pochowania osoby. Priority: must-have.
+- [new] FR-022: Autor can zapisać miejsce pochowania osoby jako cmentarz ze spisu (miejscowość wynika z cmentarza); pochowania zapisane dotąd samą miejscowością dostają cmentarz bez nazwy w tej miejscowości. Priority: must-have.
   > Socrates: Counter-argument considered: "brak — rozważane razem z FR-023."
   > Resolution: kept as written (przypomnienie: podpowiada się z nagrobka — FR-002).
 - [new] FR-023: Autor can prowadzić notatkę o osobie — jedno pole tekstowe w osobnej zakładce. Priority: must-have.
@@ -216,13 +216,13 @@ Wszystkie FR są `must-have` (zakres: całość do 2026-11-04). Jeśli zabraknie
 
 ## Business Logic Changes
 
-Każda miejscowość istnieje w drzewie raz, a parafie, cmentarze nagrobków, miejsca faktów (urodzenie, ślub, zgon, pochowanie) i zamieszkania osób odwołują się do niej. Scalenie duplikatu przenosi wszystkie te odwołania na właściwy wpis.
+Każda miejscowość istnieje w drzewie raz, a parafie, cmentarze (rekordy osadzone w miejscowości, które wskazują nagrobki i pochowania), miejsca faktów (urodzenie, ślub, zgon, pochowanie) i zamieszkania osób odwołują się do niej. Scalenie duplikatu przenosi wszystkie te odwołania na właściwy wpis.
 
 Reguła dziś: miejsca to wolny tekst przy osobie (zamieszkanie) i wydarzeniu (miejsce), więc „Luboml” i „Lubomla” to dwa różne miejsca, a nic ich nie łączy. Zmiana: autor wybiera miejsce ze spisu (z podpowiedziami i dopisywaniem w locie), a spis startuje z istniejących tekstów (identyczne teksty → jedna miejscowość). Literówki autor scala ręcznie, a wpis nieużywany może usunąć.
 
 Reguły pomocnicze:
-- **Wybór źródła (modyfikacja S-19):** dziś przy wiązaniu źródła z wydarzeniem najpierw pokazywane są akty o pasującym typie. Po zmianie autor może dodatkowo zawęzić źródła po miejscu (miejscowość parafii aktu lub cmentarza nagrobka) i roku; pierwszeństwo pasującego typu zostaje.
-- **Opis zależy od rodzaju źródła:** akt metrykalny — parafia, rok, typ aktu, archiwum; nagrobek — cmentarz i osoby pochowane. Miejsce pochowania osoby z listy pochowanych podpowiada się cmentarzem nagrobka (można zmienić).
+- **Wybór źródła (modyfikacja S-19):** dziś przy wiązaniu źródła z wydarzeniem najpierw pokazywane są akty o pasującym typie. Po zmianie autor może dodatkowo zawęzić źródła po miejscu (miejscowość parafii aktu, miejscowość cmentarza nagrobka lub nazwa cmentarza) i roku; pierwszeństwo pasującego typu zostaje.
+- **Opis zależy od rodzaju źródła:** akt metrykalny — parafia, rok, typ aktu, archiwum; nagrobek — cmentarz i osoby pochowane. Miejsce pochowania osoby to cmentarz ze spisu (jego miejscowość jest miejscowością pochowania); z listy pochowanych podpowiada się cmentarzem nagrobka (można zmienić).
 - **Numer wpisu należy do powiązania źródła z faktem,** nie do źródła — jeden skan, wiele wpisów, wiele osób.
 - **Wiek:** ile przeżyła, gdy znana jest data zgonu; ile ma tylko wtedy, gdy wynik jest poniżej ok. 110 lat — inaczej wiek nie jest pokazywany.
 

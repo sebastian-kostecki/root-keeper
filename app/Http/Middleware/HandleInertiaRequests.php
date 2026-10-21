@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use App\Actions\Persons\BuildPersonPreview;
 use App\Actions\Relations\BuildMarriagePanel;
+use App\Enums\CemeteryManager;
 use App\Enums\EventType;
 use App\Http\Resources\SourceResource;
 use App\Models\Cemetery;
@@ -74,6 +75,7 @@ class HandleInertiaRequests extends Middleware
                 ->get(['id', 'name', 'is_defunct'])
                 ->map(fn (Locality $locality): array => ['id' => $locality->id, 'name' => $locality->name, 'is_defunct' => $locality->is_defunct])
                 ->all()),
+            'cemeteryManagers' => fn (): array => CemeteryManager::options(),
             'cemeteryOptions' => Inertia::optional(fn (): array => $request->user() === null ? [] : $request->user()->tree->cemeteries()
                 ->with('locality')
                 ->get()
