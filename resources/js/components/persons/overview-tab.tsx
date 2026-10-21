@@ -93,6 +93,8 @@ type FactViewProps = {
     availableSources: Source[] | undefined;
     /** Shown as „Miejsce pochowania” (the death section only). */
     burialPlace?: string | null;
+    /** Shown as „Forma ślubu” (the marriage cards only). */
+    marriageForm?: string | null;
     /** Gravestones linked from the death card. */
     gravestones?: PersonGravestone[];
 };
@@ -102,6 +104,7 @@ function FactView({
     parts,
     availableSources,
     burialPlace,
+    marriageForm,
     gravestones,
 }: FactViewProps) {
     const date = parts ? formatPartialDate(parts, 'long') : '';
@@ -114,6 +117,13 @@ function FactView({
                 <Field label="Miejsce" value={event.place} />
                 {burialPlace !== undefined && (
                     <Field label="Miejsce pochowania" value={burialPlace} />
+                )}
+                {marriageForm !== undefined && (
+                    <Field
+                        label="Forma ślubu"
+                        value={marriageForm}
+                        emptyText="nieznana"
+                    />
                 )}
             </div>
 
@@ -421,6 +431,9 @@ export function OverviewTab({ preview, availableSources }: Props) {
                                         event={marriage}
                                         parts={marriage.date_parts}
                                         availableSources={availableSources}
+                                        marriageForm={
+                                            marriage.marriage_form_label
+                                        }
                                     />
                                 }
                                 edit={

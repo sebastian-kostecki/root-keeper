@@ -144,7 +144,7 @@ Wszystkie FR są `must-have` (zakres: całość do 2026-11-04). Jeśli zabraknie
 - [modified] FR-016: Autor can otworzyć panel osoby kliknięciem karty; przycisk „Podgląd” znika, a ustawienie osoby w centrum drzewa jest akcją w panelu. Priority: must-have. (Było: kliknięcie karty przecentrowuje drzewo, podgląd przyciskiem „Podgląd”.)
   > Socrates: Counter-argument considered: "kliknięcie karty dziś przecentrowuje drzewo — zmiana zabiera szybką nawigację."
   > Resolution: kept; kliknięcie = panel osoby, przecentrowanie przenosi się do przycisku w panelu.
-- [new] FR-017: Autor can otworzyć panel małżeństwa: data, miejsce, źródło (z edycją) i dzieci pary. Priority: must-have.
+- [new] FR-017: Autor can otworzyć panel małżeństwa: data, miejsce, forma ślubu (cywilny / wyznaniowy / cywilno-wyznaniowy / nieznana), źródło (z edycją) i dzieci pary. Priority: must-have.
   > Socrates: Counter-argument considered: "panel małżeństwa dubluje sekcję małżeństwa w panelu osoby."
   > Resolution: kept; oba miejsca pozwalają edytować małżeństwo — wygoda ważniejsza niż jedno miejsce edycji.
 - [new] FR-018: Autor can zobaczyć wybraną osobę i wszystkich jej przodków w jednym widoku z wyborem liczby pokoleń, z dopasowaniem do ekranu i przybliżaniem w tym widoku (przyciski, Ctrl+kółko, szczypanie). Priority: must-have.

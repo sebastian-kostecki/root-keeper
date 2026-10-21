@@ -47,7 +47,16 @@ export type SourcedPersonEvent = PersonEvent & {
     sources: LinkedSource[];
 };
 
-export type Marriage = SourcedPersonEvent & {
+/** One marriage-form option as the shared `marriageForms` prop carries it. */
+export type MarriageFormOption = { value: string; label: string };
+
+/** A marriage event: the sourced event plus its form (`null` = unknown). */
+export type MarriageEvent = SourcedPersonEvent & {
+    marriage_form: string | null;
+    marriage_form_label: string | null;
+};
+
+export type Marriage = MarriageEvent & {
     spouse: {
         id: number;
         display_name: string;
@@ -62,7 +71,7 @@ export type PersonSummary = NonNullable<Marriage['spouse']>;
 
 /** Payload of the marriage side panel (`marriagePanel` shared prop, `BuildMarriagePanel`). */
 export type MarriagePanelPayload = {
-    marriage: SourcedPersonEvent;
+    marriage: MarriageEvent;
     /** Both spouses, in the fixed order of `PersonOrdering::spouses`. */
     spouses: PersonSummary[];
     /** Children both spouses share. */

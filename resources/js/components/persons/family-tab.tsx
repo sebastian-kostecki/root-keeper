@@ -16,6 +16,7 @@ import { useInitials } from '@/hooks/use-initials';
 import { focusRing } from '@/lib/focus-ring';
 import { genderCard } from '@/lib/gender-styles';
 import { formatLifespan } from '@/lib/lifespan';
+import { marriageRowDetails } from '@/lib/marriage-details';
 import { cn } from '@/lib/utils';
 import type { Marriage, PersonPreview, Relative } from '@/types';
 
@@ -218,7 +219,7 @@ function MarriageRow({
     marriage: Marriage;
 }) {
     const spouseName = marriage.spouse?.display_name ?? 'Nieznany małżonek';
-    const details = [marriage.date, marriage.place].filter(Boolean).join(', ');
+    const details = marriageRowDetails(marriage);
 
     const extra = (
         <span className="mt-1 flex flex-wrap items-center gap-2">

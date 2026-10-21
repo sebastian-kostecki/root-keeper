@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vite-plus/test';
 import type { PersonFormData } from '@/types';
 import {
     eventPayloadFromValues,
+    marriageFieldDefaults,
+    marriageSaveRequest,
     mergeSectionIntoPayload,
 } from './person-payload';
 
@@ -155,5 +157,35 @@ describe('residences', () => {
             { locality_id: null, year_from: null, year_to: null },
             { locality_id: 5, year_from: null, year_to: 1950 },
         ]);
+    });
+});
+
+describe('marriage card', () => {
+    it('always sends the form, null when empty', () => {
+        expect(
+            marriageSaveRequest(5, { 'marriage.form': 'civil' })[1].marriage
+                .form,
+        ).toBe('civil');
+        expect(
+            marriageSaveRequest(5, { 'marriage.form': '' })[1].marriage.form,
+        ).toBeNull();
+        expect(marriageSaveRequest(5, {})[1].marriage.form).toBeNull();
+    });
+
+    it('carries the stored form into the edit defaults', () => {
+        const defaults = marriageFieldDefaults({
+            date_parts: {
+                year: 2001,
+                month: null,
+                day: null,
+                is_approximate: false,
+            },
+            locality_id: null,
+            place: null,
+            marriage_form: 'religious',
+            marriage_form_label: 'wyznaniowy',
+        } as unknown as Parameters<typeof marriageFieldDefaults>[0]);
+
+        expect(defaults.form).toBe('religious');
     });
 });

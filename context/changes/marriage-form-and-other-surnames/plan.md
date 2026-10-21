@@ -254,27 +254,27 @@ Kolumna dodawana jako nullable bez wartości domyślnej — istniejące małże�
 
 #### Automated
 
-- [x] 1.1 Migracja przechodzi w obie strony: `vendor/bin/sail artisan migrate`, `vendor/bin/sail artisan migrate:rollback --step=1`, `vendor/bin/sail artisan migrate`
-- [x] 1.2 Testy małżeństw i zapisu przechodzą: `vendor/bin/sail artisan test --compact tests/Feature/MarriagesTest.php tests/Feature/WriteTargetsTest.php tests/Feature/PersonsTest.php tests/Feature/TreeTest.php`
-- [x] 1.3 Testy kopii zapasowej przechodzą: `vendor/bin/sail artisan test --compact tests/Backup`
-- [x] 1.4 Seeder demo działa: `vendor/bin/sail artisan db:seed --class=TreeViewDemoSeeder` kończy się bez błędu
-- [x] 1.5 Formatowanie PHP i Larastan: `vendor/bin/sail bin pint --dirty --format agent`, `vendor/bin/sail composer types:check`
+- [x] 1.1 Migracja przechodzi w obie strony: `vendor/bin/sail artisan migrate`, `vendor/bin/sail artisan migrate:rollback --step=1`, `vendor/bin/sail artisan migrate` — 1373250
+- [x] 1.2 Testy małżeństw i zapisu przechodzą: `vendor/bin/sail artisan test --compact tests/Feature/MarriagesTest.php tests/Feature/WriteTargetsTest.php tests/Feature/PersonsTest.php tests/Feature/TreeTest.php` — 1373250
+- [x] 1.3 Testy kopii zapasowej przechodzą: `vendor/bin/sail artisan test --compact tests/Backup` — 1373250
+- [x] 1.4 Seeder demo działa: `vendor/bin/sail artisan db:seed --class=TreeViewDemoSeeder` kończy się bez błędu — 1373250
+- [x] 1.5 Formatowanie PHP i Larastan: `vendor/bin/sail bin pint --dirty --format agent`, `vendor/bin/sail composer types:check` — 1373250
 
 ### Phase 2: Edycja i wyświetlanie formy ślubu
 
 #### Automated
 
-- [ ] 2.1 Testy frontendu przechodzą (w tym `marriage-details.test.ts`, `person-payload.test.ts`, `view-tokens.test.ts`): `vendor/bin/sail npm run test:js`
-- [ ] 2.2 Typy przechodzą: `vendor/bin/sail npm run types:check`
-- [ ] 2.3 Format i lint przechodzą: `vendor/bin/sail npm run check`
-- [ ] 2.4 Build przechodzi: `vendor/bin/sail npm run build`
-- [ ] 2.5 Testy małżeństw nadal przechodzą: `vendor/bin/sail artisan test --compact tests/Feature/MarriagesTest.php`
+- [x] 2.1 Testy frontendu przechodzą (w tym `marriage-details.test.ts`, `person-payload.test.ts`, `view-tokens.test.ts`): `vendor/bin/sail npm run test:js`
+- [x] 2.2 Typy przechodzą: `vendor/bin/sail npm run types:check`
+- [x] 2.3 Format i lint przechodzą: `vendor/bin/sail npm run check`
+- [x] 2.4 Build przechodzi: `vendor/bin/sail npm run build`
+- [x] 2.5 Testy małżeństw nadal przechodzą: `vendor/bin/sail artisan test --compact tests/Feature/MarriagesTest.php`
 
 #### Manual
 
-- [ ] 2.6 Na danych demo panel małżeństwa Jan i Anna pokazuje „Forma ślubu: cywilno-wyznaniowy”, a inne małżeństwo — wyszarzone „nieznana”
-- [ ] 2.7 Zmiana formy w panelu małżeństwa zapisuje się i jest widoczna w przeglądzie osoby oraz w Rodzinie („ślub cywilny, …”) obu małżonków
-- [ ] 2.8 Edycja samej daty w przeglądzie osoby nie zmienia ustawionej formy
-- [ ] 2.9 Ustawienie „Nieznana” usuwa przedrostek w Rodzinie i pokazuje „nieznana” w karcie
-- [ ] 2.10 Nagłówek panelu małżeństwa, węzeł drzewa i oś czasu wyglądają jak przed zmianą
-- [ ] 2.11 Zrzuty ekranu karty „Ślub” (widok i edycja) i wiersza Rodziny w `context/changes/marriage-form-and-other-surnames/screenshots/`
+- [x] 2.6 Na danych demo panel małżeństwa Jan i Anna pokazuje „Forma ślubu: cywilno-wyznaniowy”, a inne małżeństwo — wyszarzone „nieznana”
+- [x] 2.7 Zmiana formy w panelu małżeństwa zapisuje się i jest widoczna w przeglądzie osoby oraz w Rodzinie („ślub cywilny, …”) obu małżonków
+- [x] 2.8 Edycja samej daty w przeglądzie osoby nie zmienia ustawionej formy
+- [x] 2.9 Ustawienie „Nieznana” usuwa przedrostek w Rodzinie i pokazuje „nieznana” w karcie
+- [x] 2.10 Nagłówek panelu małżeństwa, węzeł drzewa i oś czasu wyglądają jak przed zmianą
+- [x] 2.11 Zrzuty ekranu karty „Ślub” (widok i edycja) i wiersza Rodziny w `context/changes/marriage-form-and-other-surnames/screenshots/`
