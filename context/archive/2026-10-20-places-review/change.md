@@ -1,10 +1,10 @@
 ---
 change_id: places-review
 title: Places review
-status: preparing
+status: archived
 created: 2026-10-20
-updated: 2026-10-20
-archived_at: null
+updated: 2026-10-21
+archived_at: 2026-10-21T10:14:47Z
 ---
 
 ## Notes
