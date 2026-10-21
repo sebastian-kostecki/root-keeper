@@ -3,8 +3,10 @@
 namespace App\Actions\Localities;
 
 use App\Actions\Cemeteries\MergeCemetery;
+use App\Actions\Parishes\MergeParish;
 use App\Models\Cemetery;
 use App\Models\Locality;
+use App\Models\Parish;
 use App\Models\Residence;
 use App\Support\MergedText;
 use Illuminate\Support\Facades\DB;
@@ -14,7 +16,8 @@ class MergeLocality
 {
     /**
      * Move every reference of the duplicate to the target, drop the moved residences the target already has
-     * (same person and years), delete the duplicate and fill the target's details from it, atomically.
+     * (same person and years), merge the parishes that have a counterpart at the target (same kind, religion and
+     * dedication), delete the duplicate and fill the target's details from it, atomically.
      * The target's own values win: its empty kind and coordinates (as a pair) are taken from the duplicate,
      * descriptions and historical affiliations are joined, and the target is defunct if either one was; when both
      * have a different defunct note, the target keeps its own and the duplicate's one is added to the description.
@@ -47,6 +50,7 @@ class MergeLocality
             $this->mergeCollidingCemeteries($lockedDuplicate, $lockedTarget);
             $lockedDuplicate->cemeteries()->update(['locality_id' => $lockedTarget->id]);
 
+            $this->mergeCollidingParishes($lockedDuplicate, $lockedTarget);
             $lockedDuplicate->parishes()->update(['locality_id' => $lockedTarget->id]);
             $lockedDuplicate->events()->update(['locality_id' => $lockedTarget->id]);
             $lockedDuplicate->residences()->update(['locality_id' => $lockedTarget->id]);
@@ -77,6 +81,31 @@ class MergeLocality
 
             if ($counterpart !== null) {
                 app(MergeCemetery::class)->moveInto($cemetery, $counterpart);
+            }
+        }
+    }
+
+    /**
+     * Merge the duplicate's parishes that have a counterpart at the target (same kind, religion and dedication,
+     * letter case ignored) into it, so that moving the rest cannot break the unique index.
+     */
+    private function mergeCollidingParishes(Locality $duplicate, Locality $target): void
+    {
+        $keyColumns = "coalesce(religion, '') as religion_key, lower(coalesce(dedication, '')) as dedication_key";
+        $keyOf = fn (Parish $parish): string => json_encode([
+            $parish->getAttribute('kind')->value,
+            $parish->getAttribute('religion_key'),
+            $parish->getAttribute('dedication_key'),
+        ], JSON_THROW_ON_ERROR);
+
+        $targetParishes = $target->parishes()->select('parishes.*')->selectRaw($keyColumns)->orderBy('id')->lockForUpdate()->get()
+            ->keyBy($keyOf);
+
+        foreach ($duplicate->parishes()->select('parishes.*')->selectRaw($keyColumns)->orderBy('id')->lockForUpdate()->get() as $parish) {
+            $counterpart = $targetParishes->get($keyOf($parish));
+
+            if ($counterpart !== null) {
+                app(MergeParish::class)->moveInto($parish, $counterpart);
             }
         }
     }

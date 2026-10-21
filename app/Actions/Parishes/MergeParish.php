@@ -10,9 +10,9 @@ use Illuminate\Validation\ValidationException;
 class MergeParish
 {
     /**
-     * Move every act of the duplicate to the target, delete the duplicate and fill the target's empty seat and
-     * religion from it, atomically. The religion moves only when no other parish of the tree already has the
-     * target's name with that religion. Both parishes must belong to the same tree.
+     * Move every act of the duplicate to the target, delete the duplicate and fill the target's empty fields from
+     * it, atomically. Seat, religion and dedication move together, and only when the resulting key is free; the
+     * former name moves on its own. The kind of the target never changes. Both parishes must belong to the same tree.
      */
     public function handle(Parish $duplicate, Parish $target): Parish
     {
@@ -36,37 +36,53 @@ class MergeParish
                 throw ValidationException::withMessages(['target_id' => __('Wybierz parafię / urząd ze spisu.')]);
             }
 
-            $lockedDuplicate->sources()->update(['parish_id' => $lockedTarget->id]);
-
-            $duplicateReligion = $lockedDuplicate->religion;
-            $duplicateLocalityId = $lockedDuplicate->locality_id;
-
-            $lockedDuplicate->delete();
-
-            $fields = [];
-
-            if ($lockedTarget->locality_id === null && $duplicateLocalityId !== null) {
-                $fields['locality_id'] = $duplicateLocalityId;
-            }
-
-            if ($lockedTarget->religion === null && $duplicateReligion !== null && ! $this->nameAndReligionTaken($lockedTarget, $duplicateReligion->value)) {
-                $fields['religion'] = $duplicateReligion;
-            }
-
-            $this->fillTarget($lockedTarget, $fields);
+            $this->moveInto($lockedDuplicate, $lockedTarget);
         });
 
         return $target->refresh();
     }
 
     /**
-     * Fill the target's empty fields. A parish created or renamed concurrently to the target's name and the
-     * borrowed religion makes the savepoint fail; the religion then stays empty, as with a detected collision.
-     *
-     * @param  array<string, mixed>  $fields
+     * The core of a merge, without its own transaction or locks (the caller holds both): move the acts to the
+     * target, delete the duplicate and fill the target's empty fields from it.
      */
-    private function fillTarget(Parish $target, array $fields): void
+    public function moveInto(Parish $duplicate, Parish $target): void
     {
+        $duplicate->sources()->update(['parish_id' => $target->id]);
+
+        $duplicateName = $duplicate->name;
+        $key = [
+            'locality_id' => $target->locality_id ?? $duplicate->locality_id,
+            'religion' => $target->religion ?? $duplicate->religion,
+            'dedication' => $target->dedication ?? $duplicate->dedication,
+        ];
+
+        $duplicate->delete();
+
+        $keyFields = [];
+
+        if ($key['locality_id'] !== $target->locality_id || $key['religion'] !== $target->religion || $key['dedication'] !== $target->dedication) {
+            if ($this->keyFree($target, $key['locality_id'], $key['religion']?->value, $key['dedication'])) {
+                $keyFields = $key;
+            }
+        }
+
+        $nameFields = $target->name === null && $duplicateName !== null ? ['name' => $duplicateName] : [];
+
+        $this->fillTarget($target, $keyFields, $nameFields);
+    }
+
+    /**
+     * Fill the target's empty fields. A parish created or changed concurrently to the resulting key makes the
+     * savepoint fail; the key fields then stay as they were, as with a detected collision.
+     *
+     * @param  array<string, mixed>  $keyFields
+     * @param  array<string, mixed>  $nameFields
+     */
+    private function fillTarget(Parish $target, array $keyFields, array $nameFields): void
+    {
+        $fields = [...$keyFields, ...$nameFields];
+
         if ($fields === []) {
             return;
         }
@@ -75,24 +91,30 @@ class MergeParish
             DB::transaction(fn () => $target->update($fields));
         } catch (UniqueConstraintViolationException) {
             $target->refresh();
-            unset($fields['religion']);
 
-            if ($fields !== []) {
-                $target->update($fields);
+            if ($nameFields !== []) {
+                $target->update($nameFields);
             }
         }
     }
 
     /**
-     * Whether another parish of the target's tree already has the target's name (letter case ignored) with the given religion.
+     * Whether no other parish of the tree has the given seat, the target's kind, religion and dedication (letter
+     * case of the dedication ignored). Without a seat the key is not enforced.
      */
-    private function nameAndReligionTaken(Parish $target, string $religion): bool
+    private function keyFree(Parish $target, ?int $localityId, ?string $religion, ?string $dedication): bool
     {
-        return Parish::query()
+        if ($localityId === null) {
+            return true;
+        }
+
+        return ! Parish::query()
             ->where('tree_id', $target->tree_id)
             ->whereKeyNot($target->id)
-            ->whereRaw('lower(name) = lower(?)', [$target->name])
-            ->whereRaw("coalesce(religion, '') = ?", [$religion])
+            ->where('locality_id', $localityId)
+            ->where('kind', $target->kind->value)
+            ->whereRaw("coalesce(religion, '') = ?", [$religion ?? ''])
+            ->whereRaw("lower(coalesce(dedication, '')) = lower(?)", [$dedication ?? ''])
             ->exists();
     }
 }

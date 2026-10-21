@@ -3,6 +3,8 @@
 use App\Actions\Localities\StoreLocality;
 use App\Actions\Localities\UpdateLocality;
 use App\Enums\LocalityKind;
+use App\Enums\ParishKind;
+use App\Enums\Religion;
 use App\Models\Cemetery;
 use App\Models\Event;
 use App\Models\Locality;
@@ -625,4 +627,59 @@ test('merging merges the colliding cemeteries, named and unnamed, and moves thei
     expect($duplicateOnly->refresh()->locality_id)->toBe($target->id);
     expect($onlyBurial->refresh()->locality_id)->toBe($target->id);
     expect($target->cemeteries()->count())->toBe(3);
+});
+
+test('merging merges the parishes with the same key into one that keeps the acts of both', function () {
+    $user = User::factory()->create();
+    $duplicate = Locality::factory()->for($user->tree)->create();
+    $target = Locality::factory()->for($user->tree)->create();
+
+    $duplicateParish = Parish::factory()->seatedIn($duplicate)->withReligion(Religion::RomanCatholic)->dedicatedTo('Św. Jana')->create();
+    $targetParish = Parish::factory()->seatedIn($target)->withReligion(Religion::RomanCatholic)->dedicatedTo('św. jana')->create();
+    $movedAct = Source::factory()->for($user->tree)->create(['parish_id' => $duplicateParish->id]);
+    $ownAct = Source::factory()->for($user->tree)->create(['parish_id' => $targetParish->id]);
+
+    $this->actingAs($user)->post(route('localities.merge', $duplicate), ['target_id' => $target->id])->assertSessionHasNoErrors();
+
+    expect(Parish::find($duplicateParish->id))->toBeNull();
+    expect($movedAct->refresh()->parish_id)->toBe($targetParish->id);
+    expect($ownAct->refresh()->parish_id)->toBe($targetParish->id);
+    expect($target->parishes()->count())->toBe(1);
+});
+
+test('merging does not merge a parish with a civil registry office of the same religion and dedication', function () {
+    $user = User::factory()->create();
+    $duplicate = Locality::factory()->for($user->tree)->create();
+    $target = Locality::factory()->for($user->tree)->create();
+
+    $duplicateParish = Parish::factory()->seatedIn($duplicate)->create();
+    $duplicateOffice = Parish::factory()->seatedIn($duplicate)->ofKind(ParishKind::CivilRegistry)->create();
+    Parish::factory()->seatedIn($target)->create();
+    Parish::factory()->seatedIn($target)->ofKind(ParishKind::CivilRegistry)->create();
+    $onlyAtDuplicate = Parish::factory()->seatedIn($duplicate)->ofKind(ParishKind::JewishDistrict)->create();
+
+    $this->actingAs($user)->post(route('localities.merge', $duplicate), ['target_id' => $target->id])->assertSessionHasNoErrors();
+
+    expect(Parish::find($duplicateParish->id))->toBeNull();
+    expect(Parish::find($duplicateOffice->id))->toBeNull();
+    expect($onlyAtDuplicate->refresh()->locality_id)->toBe($target->id);
+    expect($target->parishes()->count())->toBe(3);
+});
+
+test('merging moves the parishes that differ in religion or dedication without merging them', function () {
+    $user = User::factory()->create();
+    $duplicate = Locality::factory()->for($user->tree)->create();
+    $target = Locality::factory()->for($user->tree)->create();
+
+    Parish::factory()->seatedIn($target)->withReligion(Religion::RomanCatholic)->dedicatedTo('Fara')->create();
+    $otherReligion = Parish::factory()->seatedIn($duplicate)->withReligion(Religion::GreekCatholic)->dedicatedTo('Fara')->create();
+    $otherDedication = Parish::factory()->seatedIn($duplicate)->withReligion(Religion::RomanCatholic)->dedicatedTo('Św. Jana')->create();
+    $noDedication = Parish::factory()->seatedIn($duplicate)->withReligion(Religion::RomanCatholic)->create();
+
+    $this->actingAs($user)->post(route('localities.merge', $duplicate), ['target_id' => $target->id])->assertSessionHasNoErrors();
+
+    expect($otherReligion->refresh()->locality_id)->toBe($target->id);
+    expect($otherDedication->refresh()->locality_id)->toBe($target->id);
+    expect($noDedication->refresh()->locality_id)->toBe($target->id);
+    expect($target->parishes()->count())->toBe(4);
 });

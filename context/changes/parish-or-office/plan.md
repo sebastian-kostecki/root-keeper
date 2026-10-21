@@ -328,24 +328,24 @@ Sortowanie w PHP po etykiecie wymaga `with('locality')` na każdej liście paraf
 
 #### Automated
 
-- [x] 1.1 Migracja przechodzi w obie strony
-- [x] 1.2 Test migracji parafii przechodzi
-- [x] 1.3 Testy parafii, miejsc, źródeł i miejscowości przechodzą
-- [x] 1.4 Testy granic własności, powłoki i migracji archiwum przechodzą
-- [x] 1.5 Testy kopii zapasowej przechodzą
-- [x] 1.6 Formatowanie PHP i Larastan
+- [x] 1.1 Migracja przechodzi w obie strony — 124eeb7
+- [x] 1.2 Test migracji parafii przechodzi — 124eeb7
+- [x] 1.3 Testy parafii, miejsc, źródeł i miejscowości przechodzą — 124eeb7
+- [x] 1.4 Testy granic własności, powłoki i migracji archiwum przechodzą — 124eeb7
+- [x] 1.5 Testy kopii zapasowej przechodzą — 124eeb7
+- [x] 1.6 Formatowanie PHP i Larastan — 124eeb7
 
 #### Manual
 
-- [x] 1.7 Lokalna baza po migracji zachowuje Luboml i parafię demo Tarnów
+- [x] 1.7 Lokalna baza po migracji zachowuje Luboml i parafię demo Tarnów — 124eeb7
 
 ### Phase 2: Scalanie pod nowym kluczem
 
 #### Automated
 
-- [ ] 2.1 Testy parafii i miejscowości przechodzą
-- [ ] 2.2 Testy wpływu usunięcia i granic własności przechodzą
-- [ ] 2.3 Formatowanie PHP i Larastan
+- [x] 2.1 Testy parafii i miejscowości przechodzą
+- [x] 2.2 Testy wpływu usunięcia i granic własności przechodzą
+- [x] 2.3 Formatowanie PHP i Larastan
 
 ### Phase 3: UI „Parafia / urząd”
 
