@@ -41,7 +41,7 @@ test('tree-slot-spouse: spouses added from the slot and the union menu are marri
     const addSpouse = await openSlot(page, 'małżonka', centreName);
     await addSpouse.getByRole('button', { name: 'Nowa osoba' }).click();
     await addSpouse.getByLabel('Imię').fill('Nowa');
-    await addSpouse.getByLabel('Nazwisko', { exact: true }).fill(suffix);
+    await addSpouse.getByLabel('Nazwisko rodowe', { exact: true }).fill(suffix);
     await addSpouse.getByRole('button', { name: 'Zapisz' }).click();
     await expect(addSpouse).toBeHidden();
     await expect(

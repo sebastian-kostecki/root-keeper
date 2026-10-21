@@ -44,13 +44,7 @@ type Props = {
     availableSources?: Source[];
 };
 
-const PERSONAL_KEYS = [
-    'first_name',
-    'last_name',
-    'maiden_name',
-    'gender',
-    'religion',
-];
+const PERSONAL_KEYS = ['first_name', 'last_name', 'gender', 'religion'];
 
 /** Whether a server error key is rendered by the fields of the given section. */
 function belongsToSection(id: SectionId, key: string): boolean {
@@ -315,10 +309,9 @@ export function OverviewTab({ preview, availableSources }: Props) {
                     view={
                         <div className="grid gap-3 sm:grid-cols-2">
                             <Field label="Imię" value={person.first_name} />
-                            <Field label="Nazwisko" value={person.last_name} />
                             <Field
                                 label="Nazwisko rodowe"
-                                value={person.maiden_name}
+                                value={person.last_name}
                             />
                         </div>
                     }

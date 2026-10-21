@@ -40,16 +40,14 @@ class PersonController extends Controller
                         ->withExists('sources')
                         ->with(['locality', 'cemetery.locality'])])
                     ->when($query !== '', function ($builder) use ($query): void {
-                        $nameWithoutMaidenMarker = preg_replace('/(?<!\S)z\s+d\.?(?!\S)/iu', ' ', $query) ?? $query;
-                        $words = preg_split('/\s+/u', $nameWithoutMaidenMarker, -1, PREG_SPLIT_NO_EMPTY) ?: [];
+                        $words = preg_split('/\s+/u', $query, -1, PREG_SPLIT_NO_EMPTY) ?: [];
 
                         foreach ($words as $word) {
                             $pattern = '%'.str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $word).'%';
 
                             $builder->where(fn ($builder) => $builder
                                 ->whereLike('first_name', $pattern)
-                                ->orWhereLike('last_name', $pattern)
-                                ->orWhereLike('maiden_name', $pattern));
+                                ->orWhereLike('last_name', $pattern));
                         }
                     })
                     ->orderByRaw('last_name is null')

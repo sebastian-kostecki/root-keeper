@@ -21,7 +21,7 @@ use Illuminate\Support\Facades\Date;
  * @property int $tree_id
  * @property string|null $first_name
  * @property string|null $last_name
- * @property string|null $maiden_name
+ * @property string|null $maiden_name Legacy column, no longer read or written; to be dropped by a later change.
  * @property Gender|null $gender
  * @property string|null $residence
  * @property Religion|null $religion
@@ -31,7 +31,7 @@ use Illuminate\Support\Facades\Date;
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
-#[Fillable(['tree_id', 'first_name', 'last_name', 'maiden_name', 'gender', 'residence', 'religion', 'note', 'photo_path', 'photo_thumbnail_path'])]
+#[Fillable(['tree_id', 'first_name', 'last_name', 'gender', 'residence', 'religion', 'note', 'photo_path', 'photo_thumbnail_path'])]
 class Person extends Model
 {
     /** @use HasFactory<PersonFactory> */
@@ -147,13 +147,7 @@ class Person extends Model
 
     public function displayName(): string
     {
-        $name = trim(($this->first_name ?? 'NN').' '.($this->last_name ?? 'NN'));
-
-        $showsMaidenName = filled($this->last_name)
-            && filled($this->maiden_name)
-            && mb_strtolower($this->last_name) !== mb_strtolower($this->maiden_name);
-
-        return $showsMaidenName ? $name.' z d. '.$this->maiden_name : $name;
+        return trim(($this->first_name ?? 'NN').' '.($this->last_name ?? 'NN'));
     }
 
     /**
@@ -175,7 +169,7 @@ class Person extends Model
     {
         return [
             'given' => $this->first_name ?? 'NN',
-            'surname' => filled($this->maiden_name) ? $this->maiden_name : ($this->last_name ?? 'NN'),
+            'surname' => $this->last_name ?? 'NN',
         ];
     }
 }

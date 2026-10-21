@@ -280,7 +280,7 @@ test('editing a person in the preview changes only that person and the birth fac
     $before = databaseRows();
 
     $this->actingAs($user)->put(route('persons.update', $focus), [
-        ...array_intersect_key($form, array_flip(['first_name', 'last_name', 'maiden_name', 'gender', 'religion', 'is_deceased'])),
+        ...array_intersect_key($form, array_flip(['first_name', 'last_name', 'gender', 'religion', 'is_deceased'])),
         'birth' => $event($form['birth'], ['year' => 1851]),
         'death' => $event($form['death']),
         'residences' => array_map(fn (array $row): array => [
@@ -354,7 +354,7 @@ test('replacing a person residence list changes only that person residence rows'
     $before = databaseRows();
 
     $this->actingAs($user)->put(route('persons.update', $focus), [
-        ...array_intersect_key($form, array_flip(['first_name', 'last_name', 'maiden_name', 'gender', 'religion', 'is_deceased'])),
+        ...array_intersect_key($form, array_flip(['first_name', 'last_name', 'gender', 'religion', 'is_deceased'])),
         'birth' => ['year' => $form['birth']['year'], 'month' => $form['birth']['month'], 'day' => $form['birth']['day'], 'locality_id' => null],
         'death' => ['year' => $form['death']['year'], 'locality_id' => null],
         'residences' => [['locality_id' => $town->id, 'year_from' => 1900, 'year_to' => null]],

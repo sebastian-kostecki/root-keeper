@@ -52,7 +52,7 @@ test('tree-slot-parent: a parent added from an empty slot is linked from both si
     const addMother = await openSlot(page, 'matkę', childName);
     await addMother.getByRole('button', { name: 'Nowa osoba' }).click();
     await addMother.getByLabel('Imię').fill('Matka');
-    await addMother.getByLabel('Nazwisko', { exact: true }).fill(suffix);
+    await addMother.getByLabel('Nazwisko rodowe', { exact: true }).fill(suffix);
     await addMother.getByRole('radio', { name: 'Kobieta' }).click();
     await addMother.getByRole('button', { name: 'Zapisz' }).click();
     await expect(addMother).toBeHidden();

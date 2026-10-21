@@ -81,9 +81,9 @@ test('fact-places-from-gazetteer: a locality added at birth and a burial cemeter
     await panel.getByRole('button', { name: 'Edytuj Dane osobowe' }).click();
     await personal
         .getByRole('textbox', { name: 'Nazwisko rodowe' })
-        .fill('Kowalska');
+        .fill(`${suffix}x`);
     await saveSection(page, personal);
-    await expect(personal.getByText('Kowalska')).toBeVisible();
+    await expect(personal.getByText(`${suffix}x`)).toBeVisible();
 
     // The burial place and the birth place are still there, in this panel and
     // after a fresh load of the page.

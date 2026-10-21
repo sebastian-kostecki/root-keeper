@@ -452,14 +452,14 @@ test('the ancestor chart carries the photo version of each person', function () 
         ->and($chart['root']['parents'][0]['person']['photo_version'])->toBeNull();
 });
 
-test('the ancestor chart carries the card name of a parent with a maiden name', function () {
+test('the ancestor chart carries the card name of a parent with a last name', function () {
     $user = User::factory()->create();
     $child = Person::factory()->for($user->tree)->create();
-    $mother = Person::factory()->for($user->tree)->female()->create(['first_name' => 'Anna', 'last_name' => 'Kowalska', 'maiden_name' => 'Nowak']);
+    $mother = Person::factory()->for($user->tree)->female()->create(['first_name' => 'Anna', 'last_name' => 'Nowak']);
     linkParent($mother, $child);
 
     $chart = ancestorsChartFor($this, $user, $child);
 
     expect($chart['root']['parents'][1]['person']['card_name'])->toBe('Anna Nowak')
-        ->and($chart['root']['parents'][1]['person']['display_name'])->toBe('Anna Kowalska z d. Nowak');
+        ->and($chart['root']['parents'][1]['person']['display_name'])->toBe('Anna Nowak');
 });

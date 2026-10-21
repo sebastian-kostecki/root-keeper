@@ -25,7 +25,7 @@ test('persons-add-person-panel: a person added beside a search keeps the typed d
     const addPanel = page.getByRole('dialog', { name: 'Dodaj osobę' });
     await expect(addPanel).toBeVisible();
     await addPanel.getByLabel('Imię').fill('Nowa');
-    await addPanel.getByLabel('Nazwisko', { exact: true }).fill(suffix);
+    await addPanel.getByLabel('Nazwisko rodowe', { exact: true }).fill(suffix);
 
     // 2. A search change does not close the panel nor clear the typed data.
     const searchField = page.getByRole('searchbox', { name: 'Szukaj osoby' });
@@ -37,9 +37,9 @@ test('persons-add-person-panel: a person added beside a search keeps the typed d
     );
     await expect(addPanel).toBeVisible();
     await expect(addPanel.getByLabel('Imię')).toHaveValue('Nowa');
-    await expect(addPanel.getByLabel('Nazwisko', { exact: true })).toHaveValue(
-        suffix,
-    );
+    await expect(
+        addPanel.getByLabel('Nazwisko rodowe', { exact: true }),
+    ).toHaveValue(suffix);
 
     // 3. `Zapisz` turns the panel into the preview of the new person; the list keeps its search.
     await addPanel.getByRole('button', { name: 'Zapisz' }).click();
@@ -79,7 +79,7 @@ test('persons-add-person-panel: a click on a person with an unsaved new person a
     const addPanel = page.getByRole('dialog', { name: 'Dodaj osobę' });
     await expect(addPanel).toBeVisible();
     await addPanel.getByLabel('Imię').fill('Nowa');
-    await addPanel.getByLabel('Nazwisko', { exact: true }).fill(suffix);
+    await addPanel.getByLabel('Nazwisko rodowe', { exact: true }).fill(suffix);
 
     // 1. The person's row in the list asks first; the panel stays with the typed data.
     await page.getByRole('link', { name: existingName }).click();

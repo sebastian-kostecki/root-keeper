@@ -492,19 +492,19 @@ test('the card name carries the birth surname and placeholders, leaving the disp
     $user = User::factory()->create();
     $tree = $user->tree;
 
-    $woman = Person::factory()->for($tree)->female()->create(['first_name' => 'Anna', 'last_name' => 'Kowalska', 'maiden_name' => 'Nowak']);
+    $woman = Person::factory()->for($tree)->female()->create(['first_name' => 'Anna', 'last_name' => 'Nowak']);
     $sheet = sheetFor($this, $user, $woman);
     expect($sheet['focus']['card_name'])->toBe('Anna Nowak');
-    expect($sheet['focus']['display_name'])->toBe('Anna Kowalska z d. Nowak');
+    expect($sheet['focus']['display_name'])->toBe('Anna Nowak');
 
-    $man = Person::factory()->for($tree)->male()->create(['first_name' => 'Jan', 'last_name' => 'Kowalski', 'maiden_name' => null]);
+    $man = Person::factory()->for($tree)->male()->create(['first_name' => 'Jan', 'last_name' => 'Kowalski']);
     expect(sheetFor($this, $user, $man)['focus']['card_name'])->toBe('Jan Kowalski');
 
-    $nameless = Person::factory()->for($tree)->create(['first_name' => null, 'last_name' => null, 'maiden_name' => null]);
+    $nameless = Person::factory()->for($tree)->create(['first_name' => null, 'last_name' => null]);
     expect(sheetFor($this, $user, $nameless)['focus']['card_name'])->toBe('NN NN');
 
-    $maidenWithoutSurname = Person::factory()->for($tree)->female()->create(['first_name' => 'Anna', 'last_name' => null, 'maiden_name' => 'Nowak']);
-    expect(sheetFor($this, $user, $maidenWithoutSurname)['focus']['card_name'])->toBe('Anna Nowak');
+    $withoutSurname = Person::factory()->for($tree)->female()->create(['first_name' => 'Anna', 'last_name' => null]);
+    expect(sheetFor($this, $user, $withoutSurname)['focus']['card_name'])->toBe('Anna NN');
 });
 
 test('the sheet card carries the age of a deceased and a living person, leaving the lifespan unchanged', function () {
@@ -1017,12 +1017,12 @@ test('the card name parts carry the birth surname and the NN fallbacks', functio
     $user = User::factory()->create();
     $tree = $user->tree;
 
-    $woman = Person::factory()->for($tree)->female()->create(['first_name' => 'Anna', 'last_name' => 'Kowalska', 'maiden_name' => 'Nowak']);
+    $woman = Person::factory()->for($tree)->female()->create(['first_name' => 'Anna', 'last_name' => 'Nowak']);
     $focus = sheetFor($this, $user, $woman)['focus'];
     expect($focus['card_given_name'])->toBe('Anna');
     expect($focus['card_surname'])->toBe('Nowak');
 
-    $nameless = Person::factory()->for($tree)->create(['first_name' => null, 'last_name' => null, 'maiden_name' => null]);
+    $nameless = Person::factory()->for($tree)->create(['first_name' => null, 'last_name' => null]);
     $focus = sheetFor($this, $user, $nameless)['focus'];
     expect($focus['card_given_name'])->toBe('NN');
     expect($focus['card_surname'])->toBe('NN');
