@@ -34,6 +34,7 @@ import type {
     CemeteryOption,
     LocalityOption,
     Parish,
+    ParishKindOption,
     ReligionOption,
     Source,
     SourceConfirmation,
@@ -55,6 +56,7 @@ type Props = {
     cemeteries: CemeteryOption[];
     cemeteryManagers: CemeteryManagerOption[];
     religions: ReligionOption[];
+    parishKinds: ParishKindOption[];
     onRequestClose: () => void;
     /** A click on a „Potwierdza” person link; the page decides whether it may leave the form. */
     onPersonLinkClick: (event: MouseEvent, personId: number) => void;
@@ -111,6 +113,7 @@ export function SourcePanel({
     cemeteries,
     cemeteryManagers,
     religions,
+    parishKinds,
     onRequestClose,
     onPersonLinkClick,
     onDirtyChange,
@@ -162,6 +165,7 @@ export function SourcePanel({
                         cemeteries={cemeteries}
                         cemeteryManagers={cemeteryManagers}
                         religions={religions}
+                        parishKinds={parishKinds}
                         onDirtyChange={onDirtyChange}
                         onProcessingChange={setProcessing}
                     />
@@ -179,6 +183,7 @@ export function SourcePanel({
                         cemeteries={cemeteries}
                         cemeteryManagers={cemeteryManagers}
                         religions={religions}
+                        parishKinds={parishKinds}
                         onDirtyChange={onDirtyChange}
                         onProcessingChange={setProcessing}
                     />
@@ -197,6 +202,7 @@ type FormProps = {
     cemeteries: CemeteryOption[];
     cemeteryManagers: CemeteryManagerOption[];
     religions: ReligionOption[];
+    parishKinds: ParishKindOption[];
     onDirtyChange: (isDirty: boolean) => void;
     onProcessingChange: (processing: boolean) => void;
 };
@@ -221,6 +227,7 @@ function NewSourceForm({
     cemeteries,
     cemeteryManagers,
     religions,
+    parishKinds,
     onDirtyChange,
     onProcessingChange,
 }: FormProps & { onPersonLinkClick: Props['onPersonLinkClick'] }) {
@@ -363,6 +370,7 @@ function NewSourceForm({
                                 cemeteries={cemeteries}
                                 cemeteryManagers={cemeteryManagers}
                                 religions={religions}
+                                parishKinds={parishKinds}
                                 errors={errors}
                                 fileName={preview?.name}
                                 onPersonLinkClick={onPersonLinkClick}
@@ -386,6 +394,7 @@ function EditSourceForm({
     cemeteries,
     cemeteryManagers,
     religions,
+    parishKinds,
     onPersonLinkClick,
     onDirtyChange,
     onProcessingChange,
@@ -503,6 +512,7 @@ function EditSourceForm({
                                 cemeteries={cemeteries}
                                 cemeteryManagers={cemeteryManagers}
                                 religions={religions}
+                                parishKinds={parishKinds}
                                 errors={errors}
                                 defaults={source}
                                 onPersonLinkClick={onPersonLinkClick}

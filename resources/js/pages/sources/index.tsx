@@ -612,6 +612,7 @@ export default function Index({
                     cemeteryManagers={sourcePanel.cemeteryManagers}
                     localities={sourcePanel.localities}
                     religions={sourcePanel.religions}
+                    parishKinds={sourcePanel.parishKinds}
                     onRequestClose={() => guard(close)}
                     onPersonLinkClick={openPersonFromPanel}
                     onDirtyChange={setIsDirty}

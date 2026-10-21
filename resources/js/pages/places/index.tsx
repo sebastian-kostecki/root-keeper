@@ -42,6 +42,7 @@ import type {
     Locality,
     LocalityKindOption,
     Parish,
+    ParishKindOption,
     ReligionOption,
 } from '@/types';
 
@@ -51,6 +52,7 @@ type Props = {
     cemeteries: Cemetery[];
     cemeteryManagers: CemeteryManagerOption[];
     religions: ReligionOption[];
+    parishKinds: ParishKindOption[];
     localityKinds: LocalityKindOption[];
     filters: { q: string; kind: PlacesKind };
     localityPanel: { locality: Locality | null } | null;
@@ -70,7 +72,7 @@ const VISIT_ERROR = 'Nie udało się wczytać listy.';
 /** The list name after „Pokaż w …”. */
 const kindLocative: Record<PlacesKind, string> = {
     miejscowosci: 'miejscowościach',
-    parafie: 'parafiach',
+    parafie: 'parafiach i urzędach',
     cmentarze: 'cmentarzach',
 };
 
@@ -105,6 +107,7 @@ export default function Index({
     cemeteries,
     cemeteryManagers,
     religions,
+    parishKinds,
     localityKinds,
     filters,
     localityPanel,
@@ -320,7 +323,7 @@ export default function Index({
 
     const addCopy: Record<PlacesKind, { panel: string; label: string }> = {
         miejscowosci: { panel: 'locality', label: 'Dodaj miejscowość' },
-        parafie: { panel: 'parish', label: 'Dodaj parafię' },
+        parafie: { panel: 'parish', label: 'Dodaj parafię / urząd' },
         cmentarze: { panel: 'cemetery', label: 'Dodaj cmentarz' },
     };
     const add = addCopy[filters.kind];
@@ -344,7 +347,7 @@ export default function Index({
         },
         {
             value: 'parafie',
-            label: 'Parafie',
+            label: 'Parafie i urzędy',
             count: counts.parafie,
         },
         {
@@ -429,7 +432,7 @@ export default function Index({
                     <Heading
                         variant="page"
                         title="Miejsca"
-                        description="Miejscowości, parafie i cmentarze zapisane w drzewie genealogicznym"
+                        description="Miejscowości, parafie i urzędy oraz cmentarze zapisane w drzewie genealogicznym"
                     />
 
                     {addButton}
@@ -451,7 +454,7 @@ export default function Index({
                             value={search}
                             onChange={setSearch}
                             placeholder="Szukaj po nazwie"
-                            ariaLabel="Szukaj miejscowości, parafii i cmentarzy"
+                            ariaLabel="Szukaj miejscowości, parafii, urzędów i cmentarzy"
                             busy={isVisiting}
                             busyLabel="Wczytywanie"
                             maxLength={100}
@@ -494,6 +497,7 @@ export default function Index({
                     parish={parishPanel.parish}
                     parishes={parishes}
                     religions={religions}
+                    parishKinds={parishKinds}
                     localities={localities}
                     onRequestClose={() => guard(parishNav.close)}
                     onDirtyChange={setIsDirty}

@@ -26,8 +26,9 @@ const emptyTreeCopy: Record<
     },
     parafie: {
         icon: <ChurchIcon />,
-        title: 'Brak parafii',
-        description: 'Dodaj pierwszą parafię: nazwę, wyznanie i siedzibę.',
+        title: 'Brak parafii i urzędów',
+        description:
+            'Dodaj pierwszą parafię lub urząd: siedzibę, rodzaj, wyznanie i wezwanie.',
     },
     cmentarze: {
         icon: <LandmarkIcon />,
@@ -40,7 +41,8 @@ const emptyTreeCopy: Record<
 const noResultsDescription: Record<PlacesKind, (query: string) => string> = {
     miejscowosci: (query) =>
         `Nie znaleziono miejscowości pasujących do „${query}”.`,
-    parafie: (query) => `Nie znaleziono parafii pasujących do „${query}”.`,
+    parafie: (query) =>
+        `Nie znaleziono parafii ani urzędów pasujących do „${query}”.`,
     cmentarze: (query) => `Nie znaleziono cmentarzy pasujących do „${query}”.`,
 };
 

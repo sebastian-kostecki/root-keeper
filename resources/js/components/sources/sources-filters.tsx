@@ -379,7 +379,7 @@ export function SourcesFilterBar({
             })),
         },
         {
-            heading: 'Parafie',
+            heading: 'Parafie i urzędy',
             options: placeOptions.parishes.map((parish) => ({
                 value: `parafia-${parish.id}`,
                 label: parish.label,

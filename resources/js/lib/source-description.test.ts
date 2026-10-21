@@ -146,7 +146,7 @@ describe('erasedRecordFields', () => {
                 { parish_id: '7' },
             ),
         ).toEqual([
-            { field: 'parish_id', label: 'Parafia', value: 'Św. Jana' },
+            { field: 'parish_id', label: 'Parafia / urząd', value: 'Św. Jana' },
         ]);
     });
 
@@ -158,7 +158,7 @@ describe('erasedRecordFields', () => {
                 { parish_id: '' },
             ),
         ).toEqual([
-            { field: 'parish_id', label: 'Parafia', value: 'Św. Jana' },
+            { field: 'parish_id', label: 'Parafia / urząd', value: 'Św. Jana' },
         ]);
     });
 
@@ -172,7 +172,7 @@ describe('erasedRecordFields', () => {
                 [{ id: 9, label: 'Św. Anny' }],
             ),
         ).toEqual([
-            { field: 'parish_id', label: 'Parafia', value: 'Św. Anny' },
+            { field: 'parish_id', label: 'Parafia / urząd', value: 'Św. Anny' },
         ]);
     });
 

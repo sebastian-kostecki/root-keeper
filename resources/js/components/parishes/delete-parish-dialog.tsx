@@ -59,16 +59,17 @@ export function DeleteParishDialog({
                     <>
                         <DialogTitle>Nie można usunąć</DialogTitle>
                         <DialogDescription>
-                            Parafia „{parish.label}” jest używana w:{' '}
+                            Parafia / urząd „{parish.label}” jest używana w:{' '}
                             {parishUsagePhrase(count)}. Scal ją z właściwą, aby
                             przenieść te akty.
                         </DialogDescription>
                     </>
                 ) : (
                     <>
-                        <DialogTitle>Usunąć parafię?</DialogTitle>
+                        <DialogTitle>Usunąć parafię / urząd?</DialogTitle>
                         <DialogDescription>
-                            Parafia „{parish.label}” zostanie usunięta ze spisu.
+                            Parafia / urząd „{parish.label}” zostanie usunięty
+                            ze spisu.
                         </DialogDescription>
                     </>
                 )}
@@ -100,7 +101,7 @@ export function DeleteParishDialog({
                             onClick={handleConfirm}
                         >
                             {processing && <Spinner />}
-                            Usuń parafię
+                            Usuń
                         </Button>
                     )}
                 </DialogFooter>

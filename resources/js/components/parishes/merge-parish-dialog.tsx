@@ -71,32 +71,33 @@ export function MergeParishDialog({
             <DialogContent>
                 <DialogTitle>Scal „{parish.label}” z…</DialogTitle>
                 <DialogDescription>
-                    „{parish.label}” zniknie ze spisu. Jej akty (
-                    {parishUsageNominative(count)}) przejdą na wybraną parafię.
-                    Puste pola wybranej uzupełnią się danymi „{parish.label}”.
-                    Tej operacji nie można cofnąć.
+                    „{parish.label}” zniknie ze spisu. Jego akty (
+                    {parishUsageNominative(count)}) przejdą na wybraną parafię /
+                    urząd. Puste pola wybranej pozycji uzupełnią się danymi „
+                    {parish.label}”. Tej operacji nie można cofnąć.
                 </DialogDescription>
 
                 <div className="grid gap-2">
                     <Label htmlFor="merge-parish-target">
-                        Właściwa parafia
+                        Właściwa parafia / urząd
                     </Label>
                     <SuggestField
                         mode="record"
                         id="merge-parish-target"
                         name="target_id"
-                        label="Właściwa parafia"
+                        label="Właściwa parafia / urząd"
                         options={candidates}
                         labelOf={(option) => option.label}
                         value={targetId}
                         onChange={setTargetId}
-                        placeholder="Wpisz nazwę parafii"
+                        placeholder="Wpisz nazwę parafii lub urzędu"
                         disabled={processing}
                         aria-invalid={errors.target_id ? true : undefined}
                     />
                     {candidates.length === 0 && (
                         <p className="text-muted-foreground text-sm">
-                            W spisie nie ma innej parafii do scalenia.
+                            W spisie nie ma innej parafii ani urzędu do
+                            scalenia.
                         </p>
                     )}
                     <InputError message={errors.target_id} />
@@ -115,7 +116,7 @@ export function MergeParishDialog({
                         onClick={handleConfirm}
                     >
                         {processing && <Spinner />}
-                        Scal parafie
+                        Scal
                     </Button>
                 </DialogFooter>
             </DialogContent>

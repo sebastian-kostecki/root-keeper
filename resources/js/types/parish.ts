@@ -1,6 +1,9 @@
 export type Parish = {
     id: number;
-    name: string;
+    name: string | null;
+    kind: string;
+    kind_label: string;
+    dedication: string | null;
     religion: string | null;
     religion_label: string | null;
     locality_id: number | null;
@@ -11,6 +14,11 @@ export type Parish = {
 };
 
 export type ReligionOption = {
+    value: string;
+    label: string;
+};
+
+export type ParishKindOption = {
     value: string;
     label: string;
 };

@@ -120,7 +120,11 @@ export function erasedRecordFields(
                 : null) ??
             (present(typedParish) ? typedParish : '');
 
-        erased.push({ field: 'parish_id', label: 'Parafia', value: label });
+        erased.push({
+            field: 'parish_id',
+            label: 'Parafia / urząd',
+            value: label,
+        });
     }
 
     return erased;

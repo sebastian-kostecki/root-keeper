@@ -343,26 +343,26 @@ Sortowanie w PHP po etykiecie wymaga `with('locality')` na każdej liście paraf
 
 #### Automated
 
-- [x] 2.1 Testy parafii i miejscowości przechodzą
-- [x] 2.2 Testy wpływu usunięcia i granic własności przechodzą
-- [x] 2.3 Formatowanie PHP i Larastan
+- [x] 2.1 Testy parafii i miejscowości przechodzą — 2dccf79
+- [x] 2.2 Testy wpływu usunięcia i granic własności przechodzą — 2dccf79
+- [x] 2.3 Formatowanie PHP i Larastan — 2dccf79
 
 ### Phase 3: UI „Parafia / urząd”
 
 #### Automated
 
-- [ ] 3.1 Testy JS przechodzą
-- [ ] 3.2 Format i lint przechodzą
-- [ ] 3.3 Typy przechodzą
-- [ ] 3.4 Build przechodzi
-- [ ] 3.5 Testy Pest stron i źródeł dalej przechodzą
+- [x] 3.1 Testy JS przechodzą
+- [x] 3.2 Format i lint przechodzą
+- [x] 3.3 Typy przechodzą
+- [x] 3.4 Build przechodzi
+- [x] 3.5 Testy Pest stron i źródeł dalej przechodzą
 
 #### Manual
 
-- [ ] 3.6 Dodanie parafii z wezwaniem i błąd duplikatu na /places
-- [ ] 3.7 Przeniesienie i usunięcie dawnej nazwy Lubomla
-- [ ] 3.8 Dodanie w locie ze źródła podstawia siedzibę
-- [ ] 3.9 Rodzaj „inny” bez wyróżnika pokazuje błąd
+- [x] 3.6 Dodanie parafii z wezwaniem i błąd duplikatu na /places
+- [x] 3.7 Przeniesienie i usunięcie dawnej nazwy Lubomla
+- [x] 3.8 Dodanie w locie ze źródła podstawia siedzibę
+- [x] 3.9 Rodzaj „inny” bez wyróżnika pokazuje błąd
 
 ### Phase 4: E2E, dokumentacja i bramka wizualna
 

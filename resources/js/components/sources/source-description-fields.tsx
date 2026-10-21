@@ -21,6 +21,7 @@ import type {
     CemeteryOption,
     LocalityOption,
     Parish,
+    ParishKindOption,
     ReligionOption,
     Source,
     SourceKind,
@@ -36,6 +37,7 @@ type Props = {
     cemeteries: CemeteryOption[];
     cemeteryManagers: CemeteryManagerOption[];
     religions: ReligionOption[];
+    parishKinds: ParishKindOption[];
     errors: Partial<Record<string, string>>;
     defaults?: Source;
     /** File name shown as the „Nazwa” placeholder. */
@@ -63,6 +65,7 @@ export function SourceDescriptionFields({
     cemeteries,
     cemeteryManagers,
     religions,
+    parishKinds,
     errors,
     defaults,
     fileName,
@@ -84,8 +87,8 @@ export function SourceDescriptionFields({
     const [createdCemeteries, setCreatedCemeteries] = useState<
         CemeteryOption[]
     >([]);
-    /** Name typed in the parish field while „Nowa parafia” is open; null when it is closed. */
-    const [newParishName, setNewParishName] = useState<string | null>(null);
+    /** Text typed in the parish field while „Nowa parafia / urząd” is open; null when it is closed. */
+    const [newParishText, setNewParishText] = useState<string | null>(null);
     const isRecord = kind === 'metrical_record';
     const isGravestone = kind === 'gravestone';
 
@@ -170,20 +173,20 @@ export function SourceDescriptionFields({
             </div>
 
             <div className={cn('grid gap-2', !isRecord && 'hidden')}>
-                <Label htmlFor="parish_id">Parafia</Label>
+                <Label htmlFor="parish_id">Parafia / urząd</Label>
                 <SuggestField
                     mode="record"
                     id="parish_id"
-                    label="Parafia"
+                    label="Parafia / urząd"
                     name="parish_id"
                     options={parishOptions}
                     labelOf={(option) => option.label}
                     value={parishId}
                     onChange={setParishId}
-                    onCreate={setNewParishName}
+                    onCreate={setNewParishText}
                     offerCreate="always"
-                    createLabel={(query) => `Dodaj parafię „${query}”`}
-                    placeholder="Wpisz nazwę parafii"
+                    createLabel={(query) => `Dodaj parafię / urząd „${query}”`}
+                    placeholder="Wpisz miejscowość lub wezwanie"
                     aria-invalid={errors.parish_id ? true : undefined}
                 />
                 <InputError message={errors.parish_id} />
@@ -269,17 +272,18 @@ export function SourceDescriptionFields({
                 <InputError message={errors.note} />
             </div>
 
-            {newParishName !== null && (
+            {newParishText !== null && (
                 <NewParishDialog
-                    initialName={newParishName}
+                    initialSeatName={newParishText}
                     religions={religions}
+                    parishKinds={parishKinds}
                     localities={localityOptions}
                     onCreated={(parish) => {
                         setCreatedParishes((current) => [...current, parish]);
                         setParishId(parish.id);
                     }}
                     onLocalityCreated={addCreatedLocality}
-                    onClose={() => setNewParishName(null)}
+                    onClose={() => setNewParishText(null)}
                 />
             )}
         </>

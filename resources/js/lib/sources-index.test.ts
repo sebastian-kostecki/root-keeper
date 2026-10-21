@@ -34,7 +34,6 @@ function source(id: number, overrides: Partial<IndexSource> = {}): IndexSource {
         archive: null,
         parish_id: null,
         parish_label: null,
-        parish_name: null,
         parish_locality_id: null,
         locality_name: null,
         cemetery_id: null,

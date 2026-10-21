@@ -4,9 +4,9 @@ import { filterSourcesByPlaceAndYear } from './source-place-year-filter';
 const source = (
     id: number,
     year: number | null,
-    parish_name: string | null,
+    parish_label: string | null,
     locality_name: string | null,
-) => ({ id, year, parish_name, locality_name });
+) => ({ id, year, parish_label, locality_name });
 
 const lubomlSeat = source(1, 1900, 'Parafia św. Jana', 'Luboml');
 const parishNamed = source(2, 1901, 'Parafia Luboml', null);

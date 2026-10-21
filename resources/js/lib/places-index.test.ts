@@ -21,7 +21,10 @@ const parish = (
     localityName: string | null,
 ): Parish => ({
     id,
-    name,
+    name: null,
+    kind: 'parish',
+    kind_label: 'parafia',
+    dedication: name,
     religion: null,
     religion_label: null,
     locality_id: null,
