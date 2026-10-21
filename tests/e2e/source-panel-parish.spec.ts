@@ -1,4 +1,4 @@
-// Risk: S-03 act-described-by-parish-and-archive — adding a parish (with a new
+// Risk: S-03 act-described-by-parish-and-archive — adding a parish / office (with a new
 // seat locality) from the panel of a new act must not lose what was already
 // typed: the modal saves over plain HTTP, so the source form keeps its fields,
 // the new parish is selected, and the saved act shows parish and archive. Pest
@@ -15,8 +15,11 @@ test('source-panel-parish: a parish added with a new seat keeps the typed act fi
     suffix,
 }) => {
     const sourceName = `Akt ${suffix}`;
-    const parishName = `Parafia ${suffix}`;
+    const typedText = `Parafia ${suffix}`;
     const localityName = `Miejscowość ${suffix}`;
+    const dedication = `Fara ${suffix}`;
+    // The parish has no name of its own: its label is the seat plus the dedication.
+    const parishLabel = `${localityName} ${dedication}`;
     const archive = `Archiwum ${suffix}`;
 
     // 1. Open "Dodaj źródło", upload a scan, choose the kind "akt metrykalny".
@@ -32,16 +35,17 @@ test('source-panel-parish: a parish added with a new seat keeps the typed act fi
     await panel.getByLabel('Nazwa', { exact: true }).fill(sourceName);
     await panel.getByLabel('Rok').fill('1878');
 
-    // 3. Parish: type a new name, offer "Dodaj parafię", the modal opens with the name.
-    await panel.getByRole('combobox', { name: 'Parafia' }).fill(parishName);
+    // 3. Parish / office: type new text, offer "Dodaj parafię / urząd", the modal opens.
+    await panel
+        .getByRole('combobox', { name: 'Parafia / urząd' })
+        .fill(typedText);
     await page
-        .getByRole('option', { name: `Dodaj parafię „${parishName}”` })
+        .getByRole('option', { name: `Dodaj parafię / urząd „${typedText}”` })
         .click();
-    const modal = page.getByRole('dialog', { name: 'Nowa parafia' });
+    const modal = page.getByRole('dialog', { name: 'Nowa parafia / urząd' });
     await expect(modal).toBeVisible();
-    await expect(modal.getByLabel('Nazwa')).toHaveValue(parishName);
 
-    // 4. Seat: a new locality added from the suggestion list, then the modal is saved.
+    // 4. Seat (required): a new locality added from the suggestion list, a dedication, then the modal is saved.
     await modal
         .getByRole('combobox', { name: 'Miejscowość siedziby' })
         .fill(localityName);
@@ -51,7 +55,8 @@ test('source-panel-parish: a parish added with a new seat keeps the typed act fi
     await expect(
         modal.getByRole('combobox', { name: 'Miejscowość siedziby' }),
     ).toHaveValue(localityName);
-    await modal.getByRole('button', { name: 'Dodaj parafię' }).click();
+    await modal.getByLabel('Wezwanie / wyróżnik').fill(dedication);
+    await modal.getByRole('button', { name: 'Dodaj', exact: true }).click();
     await expect(modal).toBeHidden();
 
     // 5. The risk: the source form kept its fields and shows the new parish.
@@ -59,9 +64,9 @@ test('source-panel-parish: a parish added with a new seat keeps the typed act fi
         sourceName,
     );
     await expect(panel.getByLabel('Rok')).toHaveValue('1878');
-    await expect(panel.getByRole('combobox', { name: 'Parafia' })).toHaveValue(
-        parishName,
-    );
+    await expect(
+        panel.getByRole('combobox', { name: 'Parafia / urząd' }),
+    ).toHaveValue(parishLabel);
 
     // 6. Archive, save the source.
     await panel.getByLabel('Archiwum').fill(archive);
@@ -74,8 +79,8 @@ test('source-panel-parish: a parish added with a new seat keeps the typed act fi
     const reopened = page.getByRole('dialog', { name: sourceName });
     await expect(reopened).toBeVisible();
     await expect(
-        reopened.getByRole('combobox', { name: 'Parafia' }),
-    ).toHaveValue(parishName);
+        reopened.getByRole('combobox', { name: 'Parafia / urząd' }),
+    ).toHaveValue(parishLabel);
     await expect(reopened.getByLabel('Archiwum')).toHaveValue(archive);
     await expect(reopened.getByLabel('Rok')).toHaveValue('1878');
 });

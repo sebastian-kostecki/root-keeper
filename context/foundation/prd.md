@@ -92,7 +92,7 @@ Wcześniej: parafia i archiwum lądowały w jednym polu „Pochodzenie” albo w
 Wszystkie FR są `must-have` (zakres: całość do 2026-11-04). Jeśli zabraknie czasu, pierwsze do odcięcia jest FR-015.
 
 ### Opis źródła
-- [modified] FR-001: Autor can opisać akt metrykalny osobnymi danymi: parafia (ze spisu parafii, z możliwością dopisania nowej w locie), rok, typ aktu, archiwum (tekst z podpowiedziami wcześniej wpisanych archiwów). Priority: must-have. (Było: jeden płaski opis wspólny dla wszystkich rodzajów; parafia i archiwum w jednym polu „Pochodzenie” albo w notatce.)
+- [modified] FR-001: Autor can opisać akt metrykalny osobnymi danymi: parafia / urząd (ze spisu parafii i urzędów, z możliwością dopisania nowej w locie), rok, typ aktu, archiwum (tekst z podpowiedziami wcześniej wpisanych archiwów). Priority: must-have. (Było: jeden płaski opis wspólny dla wszystkich rodzajów; parafia i archiwum w jednym polu „Pochodzenie” albo w notatce.)
   > Socrates: Counter-argument considered: "brak parafii w spisie blokuje opis aktu — wprowadzanie się rwie."
   > Resolution: kept; parafię dopisuje się w locie przy opisie aktu, bez wychodzenia z panelu źródła (jak archiwum).
 - [modified] FR-002: Autor can opisać zdjęcie nagrobka: cmentarz (ze spisu cmentarzy, osadzony w miejscowości) i osoby pochowane; miejsce pochowania osoby z listy pochowanych podpowiada się cmentarzem nagrobka (można zmienić). Priority: must-have. (Było: nagrobek opisany tym samym płaskim opisem co akt.)
@@ -115,7 +115,7 @@ Wszystkie FR są `must-have` (zakres: całość do 2026-11-04). Jeśli zabraknie
 - [new] FR-007: Autor can prowadzić spis miejscowości z opisem; spis startuje z istniejących tekstowych miejsc (identyczne teksty → jedna miejscowość), a literówki autor poprawia i scala ręcznie (rozszerzone 2026-10-20, `locality-details`: rodzaj, współrzędne, przynależność historyczna, „nie istnieje dziś”). Priority: must-have.
   > Socrates: Counter-argument considered: "przeniesienie wolnego tekstu na spis zjada czas."
   > Resolution: kept; spis wstaje automatycznie z istniejących wartości, autor tylko poprawia i scala.
-- [new] FR-008: Autor can prowadzić spis parafii: nazwa, wyznanie, miejscowość siedziby ze spisu. Priority: must-have.
+- [new] FR-008: Autor can prowadzić spis parafii i urzędów: miejscowość siedziby ze spisu (wymagana), rodzaj, wyznanie, wezwanie / wyróżnik. Priority: must-have.
   > Socrates: Counter-argument considered: "trzy spisy (miejscowości, parafie, archiwa) przy jednym akcie to dużo klikania."
   > Resolution: kept; każde pole spisu podpowiada po kilku literach i pozwala dopisać nowy wpis bez wychodzenia z panelu.
 - [new] FR-009: Autor can wpisać archiwum jako tekst, który podpowiada wcześniej wpisane archiwa. Priority: must-have.

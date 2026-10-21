@@ -281,17 +281,29 @@ export async function createCemetery(
     return ((await response.json()) as { data: { id: number } }).data.id;
 }
 
-/** `parishes.inline.store` with a seat locality; the sweep removes it through `parishes.destroy`. */
+/**
+ * `parishes.inline.store` with a seat locality (required). A parish has no name of its own any more: its label is
+ * built from the seat, kind, dedication and religion. The sweep finds it by the seat's name and removes it through
+ * `parishes.destroy`.
+ */
 export async function createParish(
     page: Page,
-    parish: { name: string; localityId: number },
+    parish: {
+        localityId: number;
+        kind?: string;
+        dedication?: string;
+        religion?: string;
+    },
 ): Promise<number> {
     const response = await page.request.post('/parishes/inline', {
         headers: await writeHeaders(page),
         form: {
-            name: parish.name,
-            religion: 'roman_catholic',
+            kind: parish.kind ?? 'parish',
+            religion: parish.religion ?? 'roman_catholic',
             locality_id: parish.localityId,
+            ...(parish.dedication !== undefined && {
+                dedication: parish.dedication,
+            }),
         },
     });
     expect(
@@ -475,10 +487,22 @@ export async function cleanupBySuffix(
     }
 
     const places = await pageProps(page, '/places');
+    // A parish of the test is found by the locality that seats it (or by a legacy name or a dedication with the suffix).
     const parishes =
-        (places.parishes as { id: number; name: string }[] | undefined) ?? [];
+        (places.parishes as
+            | {
+                  id: number;
+                  name: string | null;
+                  locality_name: string | null;
+                  dedication: string | null;
+              }[]
+            | undefined) ?? [];
     for (const parish of parishes) {
-        if (parish.name.includes(suffix)) {
+        if (
+            parish.locality_name?.includes(suffix) ||
+            parish.name?.includes(suffix) ||
+            parish.dedication?.includes(suffix)
+        ) {
             await deleteRecord(page, headers, `/parishes/${parish.id}`);
         }
     }

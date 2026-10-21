@@ -351,28 +351,28 @@ Sortowanie w PHP po etykiecie wymaga `with('locality')` na każdej liście paraf
 
 #### Automated
 
-- [x] 3.1 Testy JS przechodzą
-- [x] 3.2 Format i lint przechodzą
-- [x] 3.3 Typy przechodzą
-- [x] 3.4 Build przechodzi
-- [x] 3.5 Testy Pest stron i źródeł dalej przechodzą
+- [x] 3.1 Testy JS przechodzą — cefc727
+- [x] 3.2 Format i lint przechodzą — cefc727
+- [x] 3.3 Typy przechodzą — cefc727
+- [x] 3.4 Build przechodzi — cefc727
+- [x] 3.5 Testy Pest stron i źródeł dalej przechodzą — cefc727
 
 #### Manual
 
-- [x] 3.6 Dodanie parafii z wezwaniem i błąd duplikatu na /places
-- [x] 3.7 Przeniesienie i usunięcie dawnej nazwy Lubomla
-- [x] 3.8 Dodanie w locie ze źródła podstawia siedzibę
-- [x] 3.9 Rodzaj „inny” bez wyróżnika pokazuje błąd
+- [x] 3.6 Dodanie parafii z wezwaniem i błąd duplikatu na /places — cefc727
+- [x] 3.7 Przeniesienie i usunięcie dawnej nazwy Lubomla — cefc727
+- [x] 3.8 Dodanie w locie ze źródła podstawia siedzibę — cefc727
+- [x] 3.9 Rodzaj „inny” bez wyróżnika pokazuje błąd — cefc727
 
 ### Phase 4: E2E, dokumentacja i bramka wizualna
 
 #### Automated
 
-- [ ] 4.1 Specyfikacje E2E parafii i miejsc przechodzą
-- [ ] 4.2 Specyfikacje E2E źródeł przechodzą
-- [ ] 4.3 Zrzuty istnieją
+- [x] 4.1 Specyfikacje E2E parafii i miejsc przechodzą
+- [x] 4.2 Specyfikacje E2E źródeł przechodzą
+- [x] 4.3 Zrzuty istnieją
 
 #### Manual
 
-- [ ] 4.4 Zrzuty pokazują etykiety, dawną nazwę i okno z siedzibą
-- [ ] 4.5 Autor sprawdza CLAUDE.md i PRD
+- [x] 4.4 Zrzuty pokazują etykiety, dawną nazwę i okno z siedzibą
+- [x] 4.5 Autor sprawdza CLAUDE.md i PRD

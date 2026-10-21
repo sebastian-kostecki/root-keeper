@@ -21,17 +21,13 @@ test('sources-grid-with-filters: place and year range narrow the grid, survive a
     suffix,
 }) => {
     const localityName = `Miejscowość ${suffix}`;
-    const parishName = `Parafia ${suffix}`;
     const inRangeName = `Akt 1892 ${suffix}`;
     const outOfRangeName = `Akt 1900 ${suffix}`;
     const withoutParishName = `Akt bez parafii ${suffix}`;
 
     // 1. Setup through the API: a seat locality, a parish seated there, three sources.
     const localityId = await createLocality(page, localityName);
-    const parishId = await createParish(page, {
-        name: parishName,
-        localityId,
-    });
+    const parishId = await createParish(page, { localityId });
     await createSource(page, {
         kind: 'metrical_record',
         name: inRangeName,
@@ -67,7 +63,8 @@ test('sources-grid-with-filters: place and year range narrow the grid, survive a
     await page.getByRole('button', { name: 'Miejsce', exact: true }).click();
     await page
         .getByRole('option', {
-            name: new RegExp('^' + escapeRegExp(localityName)),
+            // The list now also offers the parish seated there, labelled "<seat> (rzym.-kat.)"; the locality option is the bare name.
+            name: new RegExp('^' + escapeRegExp(localityName) + '\\s*,'),
         })
         .click();
     await expect(page).toHaveURL(/[?&]place=miejscowosc-\d+/);

@@ -14,15 +14,12 @@ test('places-merge-and-delete: a duplicate merged from its panel opens the kept 
 }) => {
     const duplicateName = `Lubomla ${suffix}`;
     const keptName = `Luboml ${suffix}`;
-    const parishName = `Parafia ${suffix}`;
 
     // 1. Setup: a duplicate that seats a parish, and the locality to keep.
     const duplicateId = await createLocality(page, duplicateName);
     const keptId = await createLocality(page, keptName);
-    const parishId = await createParish(page, {
-        name: parishName,
-        localityId: duplicateId,
-    });
+    const parishId = await createParish(page, { localityId: duplicateId });
+    const parishLabel = `${keptName} (rzym.-kat.)`;
 
     // 2. Open the duplicate's panel from the register and choose the kept place.
     await page.goto(`/places?locality=${duplicateId}`);
@@ -61,7 +58,7 @@ test('places-merge-and-delete: a duplicate merged from its panel opens the kept 
 
     // 4. Oracle on data: a fresh visit to the parish shows the kept place as its seat.
     await page.goto(`/places?kind=parafie&parish=${parishId}`);
-    const parish = page.getByRole('dialog', { name: parishName, exact: true });
+    const parish = page.getByRole('dialog', { name: parishLabel, exact: true });
     await expect(parish).toBeVisible();
     await expect(
         parish.getByRole('combobox', { name: 'Miejscowość siedziby' }),
