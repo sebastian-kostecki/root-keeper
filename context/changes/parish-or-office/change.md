@@ -1,7 +1,7 @@
 ---
 change_id: parish-or-office
 title: Parafia / urząd z wezwaniem
-status: implementing
+status: implemented
 created: 2026-10-21
 updated: 2026-10-21
 archived_at: null

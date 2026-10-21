@@ -368,11 +368,11 @@ Sortowanie w PHP po etykiecie wymaga `with('locality')` na każdej liście paraf
 
 #### Automated
 
-- [x] 4.1 Specyfikacje E2E parafii i miejsc przechodzą
-- [x] 4.2 Specyfikacje E2E źródeł przechodzą
-- [x] 4.3 Zrzuty istnieją
+- [x] 4.1 Specyfikacje E2E parafii i miejsc przechodzą — a38cf38
+- [x] 4.2 Specyfikacje E2E źródeł przechodzą — a38cf38
+- [x] 4.3 Zrzuty istnieją — a38cf38
 
 #### Manual
 
-- [x] 4.4 Zrzuty pokazują etykiety, dawną nazwę i okno z siedzibą
-- [x] 4.5 Autor sprawdza CLAUDE.md i PRD
+- [x] 4.4 Zrzuty pokazują etykiety, dawną nazwę i okno z siedzibą — a38cf38
+- [x] 4.5 Autor sprawdza CLAUDE.md i PRD — a38cf38
