@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\LocalityKind;
+use App\Enums\ParishKind;
 use App\Enums\Religion;
 use App\Models\Cemetery;
 use App\Models\Event;
@@ -197,22 +198,26 @@ test('a partial reload of the filters with an open panel runs no places query', 
 test('the index lists only the user own parishes alphabetically', function () {
     $user = User::factory()->create();
     $seat = Locality::factory()->for($user->tree)->create(['name' => 'Tarnów']);
-    Parish::factory()->for($user->tree)->create(['name' => 'Św. Jana']);
-    Parish::factory()->for($user->tree)->withReligion(Religion::RomanCatholic)->seatedIn($seat)->create(['name' => 'Katedralna']);
-    Parish::factory()->for(User::factory()->create()->tree)->create(['name' => 'Cudza']);
+    $plock = Locality::factory()->for($user->tree)->create(['name' => 'Płock']);
+    Parish::factory()->for($user->tree)->seatedIn($plock)->dedicatedTo('św. Jana')->create();
+    Parish::factory()->for($user->tree)->withReligion(Religion::RomanCatholic)->seatedIn($seat)->dedicatedTo('Katedralna')->create();
+    Parish::factory()->for(User::factory()->create()->tree)->create();
 
     $this->actingAs($user)->get(route('places.index'))
         ->assertOk()
         ->assertInertia(fn ($page) => $page
             ->component('places/index')
             ->has('parishes', 2)
-            ->where('parishes.0.name', 'Katedralna')
-            ->where('parishes.0.label', 'Katedralna (rzymskokatolickie)')
-            ->where('parishes.0.locality_name', 'Tarnów')
-            ->where('parishes.1.label', 'Św. Jana')
+            ->where('parishes.0.label', 'Płock św. Jana')
+            ->where('parishes.0.name', null)
+            ->where('parishes.0.kind', 'parish')
+            ->where('parishes.0.dedication', 'św. Jana')
+            ->where('parishes.1.label', 'Tarnów Katedralna (rzym.-kat.)')
+            ->where('parishes.1.locality_name', 'Tarnów')
             ->has('religions', count(Religion::cases()))
-            ->has('localities', 1)
-            ->where('localities.0.name', 'Tarnów')
+            ->has('parishKinds', count(ParishKind::cases()))
+            ->has('localities', 2)
+            ->where('localities.1.name', 'Tarnów')
             ->where('filters.q', '')
             ->where('parishPanel', null));
 });

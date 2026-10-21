@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\CemeteryManager;
 use App\Enums\LocalityKind;
+use App\Enums\ParishKind;
 use App\Enums\Religion;
 use App\Http\Resources\CemeteryResource;
 use App\Http\Resources\LocalityResource;
@@ -29,12 +30,15 @@ class PlaceController extends Controller
                 $tree->localities()->withCount(['events', 'parishes', 'residences', 'cemeteries'])->orderBy('name')->get()
             )->resolve(),
             'parishes' => fn (): array => ParishResource::collection(
-                $tree->parishes()->with('locality')->withCount('sources')->orderBy('name')->get()
+                $tree->parishes()->with('locality')->withCount('sources')->get()
+                    ->sortBy(fn (Parish $parish): string => mb_strtolower($parish->label()))
+                    ->values()
             )->resolve(),
             'cemeteries' => fn (): array => CemeteryResource::collection(
                 $tree->cemeteries()->with('locality')->withCount(['sources', 'burials'])->get()
             )->resolve(),
             'religions' => Religion::options(),
+            'parishKinds' => ParishKind::options(),
             'cemeteryManagers' => CemeteryManager::options(),
             'localityKinds' => LocalityKind::options(),
             'filters' => [

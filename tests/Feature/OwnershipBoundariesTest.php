@@ -299,11 +299,12 @@ it('ignores a tree_id sent in the body and creates the parish in the attacker\'s
     $attacker = User::factory()->create();
     $victim = User::factory()->create();
     $victimParishesBefore = $victim->tree->parishes()->count();
+    $seat = Locality::factory()->for($attacker->tree)->create();
 
     $this->actingAs($attacker)
-        ->postJson(route($route), ['name' => 'Wstrzyknięta', 'tree_id' => $victim->tree->id]);
+        ->postJson(route($route), ['kind' => 'parish', 'locality_id' => $seat->id, 'dedication' => 'Wstrzyknięta', 'tree_id' => $victim->tree->id]);
 
-    $parish = Parish::where('name', 'Wstrzyknięta')->firstOrFail();
+    $parish = Parish::where('dedication', 'Wstrzyknięta')->firstOrFail();
 
     expect($parish->tree_id)->toBe($attacker->tree->id);
     expect($victim->tree->parishes()->count())->toBe($victimParishesBefore);

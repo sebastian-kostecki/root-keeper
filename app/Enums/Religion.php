@@ -24,6 +24,21 @@ enum Religion: string
     }
 
     /**
+     * The short form used in parish labels, as in Geneteka.
+     */
+    public function shortLabel(): string
+    {
+        return match ($this) {
+            self::RomanCatholic => 'rzym.-kat.',
+            self::GreekCatholic => 'gr.-kat.',
+            self::Evangelical => 'ewang.',
+            self::Orthodox => 'prawosł.',
+            self::Jewish => 'mojż.',
+            self::Other => 'inne',
+        };
+    }
+
+    /**
      * @return array<int, array{value: string, label: string}>
      */
     public static function options(): array

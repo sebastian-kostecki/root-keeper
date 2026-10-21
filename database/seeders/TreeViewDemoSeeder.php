@@ -346,7 +346,7 @@ class TreeViewDemoSeeder extends Seeder
             ->for($this->tree)
             ->withReligion(Religion::RomanCatholic)
             ->create([
-                'name' => 'Parafia rzymskokatolicka w Tarnowie',
+                'dedication' => 'Katedralna',
                 'locality_id' => Locality::factory()->for($this->tree)->create(['name' => 'Tarnów'])->id,
             ]);
 

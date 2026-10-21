@@ -33,7 +33,7 @@ class MergeParish
             if ($lockedDuplicate === null || $lockedTarget === null
                 || $lockedDuplicate->id === $lockedTarget->id
                 || $lockedDuplicate->tree_id !== $lockedTarget->tree_id) {
-                throw ValidationException::withMessages(['target_id' => __('Wybierz parafię ze spisu.')]);
+                throw ValidationException::withMessages(['target_id' => __('Wybierz parafię / urząd ze spisu.')]);
             }
 
             $lockedDuplicate->sources()->update(['parish_id' => $lockedTarget->id]);

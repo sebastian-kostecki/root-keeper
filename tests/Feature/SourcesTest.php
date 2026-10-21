@@ -49,7 +49,7 @@ test('sources index shows only the authenticated user own sources, newest first'
         ->component('sources/index')
         ->has('sources', 2)
         ->has('sources.0', fn ($source) => $source->hasAll([
-            'id', 'kind', 'kind_label', 'kind_short_label', 'name', 'display_name', 'record_type', 'record_type_label', 'legacy_entry_number', 'year', 'parish_id', 'parish_label', 'parish_name', 'parish_locality_id', 'locality_name', 'cemetery_id', 'cemetery_label', 'cemetery_locality_id', 'archive', 'url', 'note', 'original_name', 'mime_type', 'size', 'width', 'height', 'has_thumbnail', 'uploaded_at', 'events_count',
+            'id', 'kind', 'kind_label', 'kind_short_label', 'name', 'display_name', 'record_type', 'record_type_label', 'legacy_entry_number', 'year', 'parish_id', 'parish_label', 'parish_locality_id', 'locality_name', 'cemetery_id', 'cemetery_label', 'cemetery_locality_id', 'archive', 'url', 'note', 'original_name', 'mime_type', 'size', 'width', 'height', 'has_thumbnail', 'uploaded_at', 'events_count',
         ]))
         ->where('sources.0.id', $newer->id)
         ->where('sources.1.id', $older->id));
@@ -945,9 +945,9 @@ test('the place options list the cemeteries of gravestones and the seats of act 
     $seat = Locality::factory()->for($user->tree)->create(['name' => 'Tarnów']);
     Locality::factory()->for($user->tree)->create(['name' => 'Nieużyta']);
     $foreignLocality = Locality::factory()->for($other->tree)->create(['name' => 'Obca']);
-    $seated = Parish::factory()->for($user->tree)->seatedIn($seat)->create(['name' => 'Św. Jana']);
-    $seatless = Parish::factory()->for($user->tree)->create(['name' => 'Bez siedziby']);
-    Parish::factory()->for($user->tree)->seatedIn($cemeteryLocality)->create(['name' => 'Nieużywana']);
+    $seated = Parish::factory()->for($user->tree)->seatedIn($seat)->dedicatedTo('św. Jana')->create();
+    $seatless = Parish::factory()->for($user->tree)->legacy('Bez siedziby')->create();
+    Parish::factory()->for($user->tree)->seatedIn($cemeteryLocality)->dedicatedTo('Nieużywana')->create();
 
     Source::factory()->for($user->tree)->gravestone()->create(['cemetery_id' => $cemetery->id]);
     Source::factory()->for($user->tree)->gravestone()->create(['cemetery_id' => $namedCemetery->id]);
@@ -992,7 +992,7 @@ test('the source resource exposes the id of the parish seat, null without a seat
     $user = User::factory()->create();
     $locality = Locality::factory()->for($user->tree)->create();
     $seated = Parish::factory()->for($user->tree)->seatedIn($locality)->create();
-    $seatless = Parish::factory()->for($user->tree)->create();
+    $seatless = Parish::factory()->for($user->tree)->legacy('Bez siedziby')->create();
 
     $withSeat = Source::factory()->for($user->tree)->create(['parish_id' => $seated->id]);
     $withoutSeat = Source::factory()->for($user->tree)->create(['parish_id' => $seatless->id]);
@@ -1506,12 +1506,13 @@ test('changing an akt with a parish to another kind needs confirmation and then 
 
 test('the source resource exposes the parish id and label', function () {
     $user = User::factory()->create();
-    $parish = Parish::factory()->for($user->tree)->withReligion(Religion::RomanCatholic)->create(['name' => 'Św. Jana']);
+    $seat = Locality::factory()->for($user->tree)->create(['name' => 'Płock']);
+    $parish = Parish::factory()->for($user->tree)->withReligion(Religion::RomanCatholic)->seatedIn($seat)->dedicatedTo('św. Bartłomieja')->create();
     Source::factory()->for($user->tree)->create(['parish_id' => $parish->id]);
 
     $this->actingAs($user)->get(route('sources.index'))->assertInertia(fn ($page) => $page
         ->where('sources.0.parish_id', $parish->id)
-        ->where('sources.0.parish_label', 'Św. Jana (rzymskokatolickie)'));
+        ->where('sources.0.parish_label', 'Płock św. Bartłomieja (rzym.-kat.)'));
 });
 
 test('the source panel carries the parishes, localities and distinct archives of the tree only', function () {
@@ -1541,11 +1542,11 @@ test('the source panel carries the parishes, localities and distinct archives of
     }
 });
 
-test('the sources payload carries the parish name and the seat locality name, null without a seat', function () {
+test('the sources payload carries the parish label and the seat locality name, null without a seat', function () {
     $user = User::factory()->create();
     $locality = Locality::factory()->for($user->tree)->create(['name' => 'Luboml']);
-    $seated = Parish::factory()->seatedIn($locality)->create(['name' => 'Parafia św. Jana']);
-    $seatless = Parish::factory()->for($user->tree)->create(['name' => 'Parafia bez siedziby']);
+    $seated = Parish::factory()->seatedIn($locality)->dedicatedTo('św. Jana')->create();
+    $seatless = Parish::factory()->for($user->tree)->legacy('Parafia bez siedziby')->create();
 
     $withSeat = Source::factory()->for($user->tree)->create(['parish_id' => $seated->id]);
     $withoutSeat = Source::factory()->for($user->tree)->create(['parish_id' => $seatless->id]);
@@ -1554,9 +1555,9 @@ test('the sources payload carries the parish name and the seat locality name, nu
     $sources = $this->actingAs($user)->get(route('sources.index'))->inertiaProps('sources');
 
     expect(collect($sources)->mapWithKeys(fn (array $source): array => [
-        $source['id'] => [$source['parish_name'], $source['locality_name']],
+        $source['id'] => [$source['parish_label'], $source['locality_name']],
     ])->all())->toEqual([
-        $withSeat->id => ['Parafia św. Jana', 'Luboml'],
+        $withSeat->id => ['Luboml św. Jana', 'Luboml'],
         $withoutSeat->id => ['Parafia bez siedziby', null],
         $withoutParish->id => [null, null],
     ]);

@@ -7,6 +7,7 @@ use App\Actions\Sources\StoreSource;
 use App\Actions\Sources\UpdateSource;
 use App\Actions\Trees\ListPersonCandidates;
 use App\Enums\CemeteryManager;
+use App\Enums\ParishKind;
 use App\Enums\Religion;
 use App\Enums\SourceKind;
 use App\Enums\SourceRecordType;
@@ -98,14 +99,18 @@ class SourceController extends Controller
     /**
      * The suggestion lists the source panel needs: the tree's parishes, localities and archives, and the religions.
      *
-     * @return array{parishes: array<int, array<string, mixed>>, cemeteries: array<int, array{id: int, label: string, locality_id: int, locality_name: string}>, cemeteryManagers: array<int, array{value: string, label: string}>, localities: array<int, array{id: int, name: string, is_defunct: bool}>, archives: array<int, string>, religions: array<int, array{value: string, label: string}>}
+     * @return array{parishes: array<int, array<string, mixed>>, cemeteries: array<int, array{id: int, label: string, locality_id: int, locality_name: string}>, cemeteryManagers: array<int, array{value: string, label: string}>, localities: array<int, array{id: int, name: string, is_defunct: bool}>, archives: array<int, string>, religions: array<int, array{value: string, label: string}>, parishKinds: array<int, array{value: string, label: string}>}
      */
     private function panelOptions(Request $request): array
     {
         $tree = $request->user()->tree;
 
         return [
-            'parishes' => ParishResource::collection($tree->parishes()->with('locality')->orderBy('name')->get())->resolve(),
+            'parishes' => ParishResource::collection(
+                $tree->parishes()->with('locality')->get()
+                    ->sortBy(fn (Parish $parish): string => mb_strtolower($parish->label()))
+                    ->values()
+            )->resolve(),
             'cemeteries' => $this->cemeteryOptions($tree),
             'cemeteryManagers' => CemeteryManager::options(),
             'localities' => $tree->localities()->orderBy('name')->get(['id', 'name', 'is_defunct'])
@@ -113,6 +118,7 @@ class SourceController extends Controller
                 ->all(),
             'archives' => $this->distinctArchives($tree),
             'religions' => Religion::options(),
+            'parishKinds' => ParishKind::options(),
         ];
     }
 
@@ -135,8 +141,9 @@ class SourceController extends Controller
                 ->all(),
             'parishes' => $tree->parishes()
                 ->whereHas('sources')
-                ->orderBy('name')
+                ->with('locality')
                 ->get()
+                ->sortBy(fn (Parish $parish): string => mb_strtolower($parish->label()))
                 ->map(fn (Parish $parish): array => ['id' => $parish->id, 'label' => $parish->label()])
                 ->values()
                 ->all(),

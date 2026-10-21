@@ -65,7 +65,7 @@ trait SourceDescriptionValidationRules
             'url' => 'link',
             'note' => 'notatka',
             'record_type' => 'typ aktu',
-            'parish_id' => 'parafia',
+            'parish_id' => 'parafia / urząd',
             'cemetery_id' => 'cmentarz',
             'buried_person_ids' => 'osoby pochowane',
             'buried_person_ids.*' => 'osoby pochowane',

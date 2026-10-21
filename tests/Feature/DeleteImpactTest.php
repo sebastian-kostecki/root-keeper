@@ -303,7 +303,7 @@ test('merging a parish removes exactly the duplicate and moves only its acts and
     $user = User::factory()->create();
     $seat = Locality::factory()->for($user->tree)->create();
     $duplicate = Parish::factory()->for($user->tree)->withReligion(Religion::RomanCatholic)->seatedIn($seat)->create(['name' => 'Lubomla']);
-    $target = Parish::factory()->for($user->tree)->create(['name' => 'Luboml']);
+    $target = Parish::factory()->for($user->tree)->legacy('Luboml')->create();
     $untouched = Parish::factory()->for($user->tree)->create();
     $movedAct = Source::factory()->for($user->tree)->create(['parish_id' => $duplicate->id]);
     $otherAct = Source::factory()->for($user->tree)->create(['parish_id' => $untouched->id]);

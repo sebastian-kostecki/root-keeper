@@ -22,7 +22,9 @@ class ParishMergeController extends Controller
 
         $mergeParish->handle($parish, $target);
 
-        Inertia::flash('toast', ['type' => 'success', 'message' => __('Scalono z parafią „:name”', ['name' => $target->label()])]);
+        $target->load('locality');
+
+        Inertia::flash('toast', ['type' => 'success', 'message' => __('Scalono z parafią / urzędem „:name”', ['name' => $target->label()])]);
 
         return to_route('places.index', ['kind' => 'parafie', 'parish' => $target->id]);
     }
