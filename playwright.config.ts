@@ -2,8 +2,9 @@ import { existsSync } from 'node:fs';
 import { defineConfig, devices } from '@playwright/test';
 
 // Local secrets (E2E_USERNAME, E2E_PASSWORD) come from the gitignored .env.
-// In CI the file is absent and the variables come from the job.
-if (existsSync('.env')) process.loadEnvFile('.env');
+// In CI the variables come from the job; the .env copied from .env.example is
+// not read, its empty E2E_* values must not shadow them.
+if (!process.env.CI && existsSync('.env')) process.loadEnvFile('.env');
 
 // 8100 is the chosen E2E port (the dev app owns 8000 through Sail); E2E_PORT overrides it.
 const PORT = Number(process.env.E2E_PORT ?? 8100);
@@ -16,12 +17,20 @@ export default defineConfig({
     testDir: './tests/e2e',
     fullyParallel: true,
     forbidOnly: !!process.env.CI,
-    retries: process.env.CI ? 2 : 0,
-    workers: process.env.CI ? 1 : undefined,
-    reporter: 'html',
+    // No retries, in CI too: a flaky test must show up red, not pass on a rerun.
+    retries: 0,
+    // 2 locally too: with the default (half the cores) the slowest tree specs
+    // (~25 s each under Sail on WSL) run out of the 30 s limit.
+    workers: 2,
+    // In CI: annotations on the PR plus an HTML report uploaded as a job artifact.
+    reporter: process.env.CI
+        ? [['github'], ['html', { open: 'never' }]]
+        : 'html',
     use: {
         baseURL,
-        trace: 'on-first-retry',
+        // In CI the trace of a failed test goes into the artifact. Locally it stays off:
+        // recording adds ~15% to every test, and some are close to the 30 s limit.
+        trace: process.env.CI ? 'retain-on-failure' : 'off',
         screenshot: 'only-on-failure',
     },
     projects: [
@@ -38,8 +47,11 @@ export default defineConfig({
         },
     ],
     webServer: {
-        // Production-like build + artisan serve through Sail, own port and database `e2e`.
-        command: 'scripts/e2e-server.sh',
+        // Locally: production-like build + php -S through Sail, own port and database `e2e`.
+        // In CI: native PHP against the job's PostgreSQL service (build done by the workflow).
+        command: process.env.CI
+            ? 'scripts/e2e-server-ci.sh'
+            : 'scripts/e2e-server.sh',
         env: { E2E_PORT: String(PORT) },
         url: baseURL,
         reuseExistingServer: !process.env.CI,
