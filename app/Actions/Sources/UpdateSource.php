@@ -87,7 +87,7 @@ class UpdateSource
             $lines[] = 'Archiwum: '.trim($source->archive);
         }
 
-        $entryNumbers = DB::table('event_source')->where('source_id', $source->id)->orderBy('id')->pluck('entry_number');
+        $entryNumbers = DB::table('event_source')->where('source_id', $source->id)->orderBy('id')->lockForUpdate()->pluck('entry_number');
 
         foreach ($entryNumbers as $entryNumber) {
             if (filled($entryNumber) && trim((string) $entryNumber) !== '') {
