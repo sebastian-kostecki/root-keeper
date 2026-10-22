@@ -184,21 +184,21 @@ Dokumenty fundamentów przestają mówić „lokalnie, poza CI” i opisują, ja
 
 #### Automated
 
-- [x] 1.1 Formatowanie i lint przechodzą: `vendor/bin/sail npm run check`
-- [x] 1.2 Typy przechodzą: `vendor/bin/sail npm run types:check`
+- [x] 1.1 Formatowanie i lint przechodzą: `vendor/bin/sail npm run check` — 0f5b212
+- [x] 1.2 Typy przechodzą: `vendor/bin/sail npm run types:check` — 0f5b212
 - [ ] 1.3 Lokalny pełny przebieg nadal zielony przez Sail: `npx playwright test`
-- [x] 1.4 Workflow `e2e` jest zielony na PR z tą zmianą (`gh pr checks`)
+- [x] 1.4 Workflow `e2e` jest zielony na PR z tą zmianą (`gh pr checks`) — f1bc4b3
 
 #### Manual
 
-- [x] 1.5 Celowo zepsuta asercja daje czerwony job `e2e` z raportem HTML, trace i zrzutem w artefakcie
-- [x] 1.6 Czas joba `e2e` jest akceptowalny i zapisany w notatkach zmiany
+- [x] 1.5 Celowo zepsuta asercja daje czerwony job `e2e` z raportem HTML, trace i zrzutem w artefakcie — f1bc4b3
+- [x] 1.6 Czas joba `e2e` jest akceptowalny i zapisany w notatkach zmiany — f1bc4b3
 
 ### Phase 2: Dokumentacja i domknięcie
 
 #### Automated
 
-- [ ] 2.1 Żaden dokument fundamentów nie opisuje już E2E jako „poza CI”
+- [x] 2.1 Żaden dokument fundamentów nie opisuje już E2E jako „poza CI”
 
 #### Manual
 

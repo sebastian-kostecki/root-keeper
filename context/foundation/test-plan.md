@@ -59,7 +59,7 @@ Każdy wiersz to osobna faza wdrożenia, która otwiera własny folder zmiany pr
 |---|---|---|---|
 | backend integration + unit | Pest (PHPUnit) + pest-plugin-laravel | 5.3 / 13.3 | ~23 pliki, ~330 przypadków, głównie `tests/Feature`; w CI na PostgreSQL 18 |
 | frontend unit | Vitest przez `vp test` (vite-plus) | Vitest 5.0 / vite-plus 1.0 | 7 plików, ~95 przypadków, wyłącznie czysta logika w `resources/js/lib` i `resources/js/hooks` |
-| e2e | Playwright Test (`@playwright/test`) | 1.63 | skonfigurowany 2026-10-02 (`playwright.config.ts`, szczegóły w `test-stack.md`); 4 specyfikacje przepływów (`fact-source-scan`, `tree-slot-parent`, `tree-slot-child`, `tree-slot-spouse`) obok seed bramki logowania, moduł pomocniczy `tests/e2e/support/`; lokalnie, poza CI |
+| e2e | Playwright Test (`@playwright/test`) | 1.63 | skonfigurowany 2026-10-02 (`playwright.config.ts`, szczegóły w `test-stack.md`); 27 specyfikacji przepływów obok seed bramki logowania, moduł pomocniczy `tests/e2e/support/`; lokalnie przez Sail (`scripts/e2e-server.sh`) i w CI (`.github/workflows/e2e.yml`, natywny PHP + PostgreSQL 18, `scripts/e2e-server-ci.sh`), 2 workery, bez ponowień |
 | mutation testing (backend) | `pestphp/pest-plugin-mutate` (`pest --mutate`) | v5.0.2 (`composer.lock`) | ad hoc, zawężone `--class`; pokrycie `pcov`; Stryker tylko dla JS/TS — nieużywany, bo brak testów Vitest w fazach ryzyka |
 | backup / restore | spatie backup + `tests/Backup` + drill odtworzenia (§6.3) | — | zawartość kopii i odtworzenie zrzutu sprawdza `tests/Backup`; drill na serwerze według §6.3 |
 | (optional) AI-native | eksploracyjny przebieg agenta po drzewie w przeglądarce (checked: 2026-09-30) | n/a | When NOT to use: jako bramka regresji ani do oceny wyglądu (§7); tylko rekonesans przed napisaniem testu fazy 4 |
@@ -83,7 +83,7 @@ Profil bazy testów: `meaningful` — konfiguracja Pest i Vitest, ~30 plików te
 | weryfikacja zawartości kopii | CI (`tests`, `tests/Backup`) | required | kopia bez plików źródeł lub bez danych |
 | drill odtworzenia na czystej instancji | ręcznie, na serwerze | required — kwartalnie i po zmianach (§6.3) | kopia, której nie da się odtworzyć |
 | testowanie mutacyjne (`pest --mutate`) | lokalnie, po fazie ryzyka | ad hoc (nie wymagane w CI) | testy, które przechodzą mimo zepsutej linii |
-| e2e na krytycznych przepływach drzewa i modala | lokalnie przed S-04 – S-06, CI w osobnej zmianie | required przed S-04 – S-06 | UI wysyła akcję do niewłaściwej osoby; ścieżka fakt → źródło → skan przestaje prowadzić do tego samego pliku |
+| e2e na krytycznych przepływach drzewa i paneli (Playwright) | local + CI (`e2e`, każdy PR i push do `main`) | required — umownie: prywatne repo na GitHub Free nie pozwala na wymagane checki, więc nie mergujemy na czerwono | UI wysyła akcję do niewłaściwej osoby; ścieżka fakt → źródło → skan przestaje prowadzić do tego samego pliku |
 
 ## 6. Cookbook Patterns
 
@@ -236,7 +236,7 @@ Wykluczenia uzgodnione w wywiadzie (P5). Obowiązują, dopóki nie zmieni się z
 
 ## 8. Freshness Ledger
 
-- Strategy (§1–§5) last reviewed: 2026-10-05
+- Strategy (§1–§5) last reviewed: 2026-10-22
 - Stack versions last verified: 2026-10-04
 - AI-native tool references last verified: 2026-09-30
 
