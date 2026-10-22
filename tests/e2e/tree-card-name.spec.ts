@@ -93,7 +93,7 @@ test('tree-card-name: at 2560 a grandparent card shows the given name and the su
     }
 });
 
-test('tree-card-name: at 1366 a long name wraps by words to at most two lines, and a woman card shows her maiden surname', async ({
+test('tree-card-name: at 1366 a long name wraps by words to at most two lines, and a woman card shows her birth surname', async ({
     page,
     suffix,
 }) => {
@@ -135,8 +135,8 @@ test('tree-card-name: at 1366 a long name wraps by words to at most two lines, a
         expect(await visibleNameLines(longName)).toBeLessThanOrEqual(2);
 
         // The birth surname (the person's only surname) is the name on the card.
-        const maidenName = page.getByTitle('Anna Nowak', { exact: true });
-        await expect(maidenName).toBeVisible();
+        const birthSurnameCard = page.getByTitle('Anna Nowak', { exact: true });
+        await expect(birthSurnameCard).toBeVisible();
 
         // The card link's accessible name carries the gender and the surname.
         await expect(
