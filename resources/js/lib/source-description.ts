@@ -226,7 +226,7 @@ function formatUploadDate(uploadedAt: string): string | null {
           });
 }
 
-/** „akt urodzenia · 1878 · parafia” or „nagrobek · 1950 · cmentarz Luboml”; ends with „dodano {date}” when the upload date is shown. */
+/** „akt urodzenia · 1878 · parafia” or „nagrobek · cmentarz Luboml”; ends with „dodano {date}” when the upload date is shown. */
 export function formatSourceSummary(source: SummaryFields): string {
     const parts = [sourceKindText(source)];
 

@@ -4,8 +4,9 @@
 // form) must bury a deceased person with no burial place at that cemetery
 // (shown as "cmentarz {locality}" in her panel), and the same gravestone must
 // then be found in the source picker of
-// her death by place and year, shown as "cmentarz …" where an act shows its
-// parish. Pest sees the
+// her death by place, shown as "cmentarz …" where an act shows its parish; the
+// gravestone has no year, so the year of the death does not hide it, and it takes
+// no entry number when linked. Pest sees the
 // endpoints; only the browser sees the form, the picker dialog and the three views
 // together. Data through the app's routes (tests/e2e/support/api.ts). The
 // cemetery has no name, so its label is "cmentarz {locality}"; locality, cemetery,
@@ -32,7 +33,7 @@ test('gravestone-cemetery-and-buried: a person added to a gravestone is buried a
     const gravestone = `Nagrobek ${suffix}`;
 
     // Setup: a deceased person (death year only, no burial place), and a
-    // gravestone of the same year with no cemetery yet.
+    // gravestone with no cemetery yet.
     const personId = await createPerson(page, {
         first_name: 'Maria',
         last_name: suffix,
@@ -44,7 +45,6 @@ test('gravestone-cemetery-and-buried: a person added to a gravestone is buried a
         kind: 'gravestone',
         name: gravestone,
         fixture: FIXTURE,
-        year: DEATH_YEAR,
     });
     const displayName = (await personPreview(page, personId)).person
         .display_name;
@@ -95,8 +95,8 @@ test('gravestone-cemetery-and-buried: a person added to a gravestone is buried a
         }),
     ).toBeVisible();
 
-    // 5. At her death, the source picker finds the gravestone by place and year,
-    // shown by its cemetery.
+    // 5. At her death, the source picker finds the gravestone by place although
+    // it has no year, shown by its cemetery.
     const death = await sourcesGroup(dialog, 'Zgon');
     await death.getByRole('button', { name: 'Powiąż źródło' }).click();
     const sourcePicker = page.getByRole('dialog', { name: 'Powiąż źródło' });
@@ -110,4 +110,26 @@ test('gravestone-cemetery-and-buried: a person added to a gravestone is buried a
             name: new RegExp(`${gravestone}.*${cemetery}`),
         }),
     ).toBeVisible();
+
+    // 6. Choosing it offers no entry number; linking adds it to the group
+    // without an entry number button.
+    await sourcePicker
+        .getByRole('button', { name: new RegExp(`${gravestone}.*${cemetery}`) })
+        .click();
+    await expect(
+        sourcePicker.getByText(`Wybrane: ${gravestone}`),
+    ).toBeVisible();
+    await expect(sourcePicker.getByLabel('Numer wpisu')).toHaveCount(0);
+    await sourcePicker
+        .getByRole('button', { name: 'Powiąż', exact: true })
+        .click();
+    await expect(sourcePicker).toBeHidden();
+    await expect(
+        death.getByRole('link', { name: `Otwórz źródło ${gravestone}` }),
+    ).toBeVisible();
+    await expect(
+        death.getByRole('button', {
+            name: `Numer wpisu źródła ${gravestone}`,
+        }),
+    ).toHaveCount(0);
 });

@@ -287,9 +287,14 @@ function matchesPlace(
     );
 }
 
+/** A gravestone has no year, so any year bound hides it. */
 function matchesYears(source: IndexSource, filters: SourcesFilters): boolean {
     if (filters.year_from === null && filters.year_to === null) {
         return true;
+    }
+
+    if (source.kind === 'gravestone') {
+        return false;
     }
 
     if (source.year === null) {
@@ -326,18 +331,24 @@ function failedCriteria(
     return failed;
 }
 
-/** Whether the source has no data that the criterion needs. */
+/**
+ * Whether the source has no data that the criterion needs. A gravestone never has a year or
+ * an archive, so it is not counted as lacking them.
+ */
 function lacksData(
     source: IndexSource,
     criterion: SourcesMissingCriterion,
 ): boolean {
     switch (criterion) {
         case 'year':
-            return source.year === null;
+            return source.kind !== 'gravestone' && source.year === null;
         case 'place':
             return source.parish_id === null && source.cemetery_id === null;
         case 'archive':
-            return (source.archive ?? '').trim() === '';
+            return (
+                source.kind !== 'gravestone' &&
+                (source.archive ?? '').trim() === ''
+            );
     }
 }
 

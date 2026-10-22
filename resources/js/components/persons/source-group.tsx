@@ -124,21 +124,23 @@ export function SourceGroup({
                                             Otwórz
                                         </Link>
                                     </Button>
-                                    <EntryNumberDialog
-                                        eventId={event.id}
-                                        source={source}
-                                        trigger={
-                                            <Button
-                                                type="button"
-                                                variant="ghost"
-                                                size="sm"
-                                                className="text-muted-foreground"
-                                                aria-label={`Numer wpisu źródła ${source.display_name}`}
-                                            >
-                                                Numer wpisu
-                                            </Button>
-                                        }
-                                    />
+                                    {source.kind !== 'gravestone' && (
+                                        <EntryNumberDialog
+                                            eventId={event.id}
+                                            source={source}
+                                            trigger={
+                                                <Button
+                                                    type="button"
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    className="text-muted-foreground"
+                                                    aria-label={`Numer wpisu źródła ${source.display_name}`}
+                                                >
+                                                    Numer wpisu
+                                                </Button>
+                                            }
+                                        />
+                                    )}
                                     <UnlinkSourceDialog
                                         eventId={event.id}
                                         source={source}

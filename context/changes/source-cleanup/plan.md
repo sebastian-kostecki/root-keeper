@@ -316,30 +316,30 @@ Filtry `/sources` i pickera traktują nagrobek zgodnie z decyzjami. Wejścia „
 
 #### Automated
 
-- [x] 1.1 Migracja przechodzi na bazie lokalnej: `vendor/bin/sail artisan migrate`
-- [x] 1.2 Test migracji przechodzi: `vendor/bin/sail artisan test --compact tests/Feature/GravestoneDescriptionMigrationTest.php`
-- [x] 1.3 Testy źródeł i powiązań przechodzą: `vendor/bin/sail artisan test --compact tests/Feature/SourcesTest.php tests/Feature/EventSourcesTest.php`
-- [x] 1.4 Larastan bez błędów: `vendor/bin/sail composer types:check`
-- [x] 1.5 Pint czysty: `vendor/bin/sail bin pint --dirty --format agent`
+- [x] 1.1 Migracja przechodzi na bazie lokalnej: `vendor/bin/sail artisan migrate` — b249377
+- [x] 1.2 Test migracji przechodzi: `vendor/bin/sail artisan test --compact tests/Feature/GravestoneDescriptionMigrationTest.php` — b249377
+- [x] 1.3 Testy źródeł i powiązań przechodzą: `vendor/bin/sail artisan test --compact tests/Feature/SourcesTest.php tests/Feature/EventSourcesTest.php` — b249377
+- [x] 1.4 Larastan bez błędów: `vendor/bin/sail composer types:check` — b249377
+- [x] 1.5 Pint czysty: `vendor/bin/sail bin pint --dirty --format agent` — b249377
 
 #### Manual
 
-- [x] 1.6 Lokalny nagrobek „Nagrobek rodziny Kowalskich, cmentarz w Lipnicy” (id 47) ma po migracji `year = null`, a w notatce linię „Rok: 1932”
+- [x] 1.6 Lokalny nagrobek „Nagrobek rodziny Kowalskich, cmentarz w Lipnicy” (id 47) ma po migracji `year = null`, a w notatce linię „Rok: 1932” — b249377
 
 ### Phase 2: Frontend i E2E
 
 #### Automated
 
-- [ ] 2.1 Format i lint przechodzą: `vendor/bin/sail npm run check`
-- [ ] 2.2 Typy przechodzą: `vendor/bin/sail npm run types:check`
-- [ ] 2.3 Vitest przechodzi: `vendor/bin/sail npm run test:js`
-- [ ] 2.4 E2E nagrobka przechodzi: `npx playwright test tests/e2e/gravestone-cemetery-and-buried.spec.ts`
-- [ ] 2.5 E2E akt z numerem wpisu przechodzi: `npx playwright test tests/e2e/source-found-by-place-and-year.spec.ts`
+- [x] 2.1 Format i lint przechodzą: `vendor/bin/sail npm run check`
+- [x] 2.2 Typy przechodzą: `vendor/bin/sail npm run types:check`
+- [x] 2.3 Vitest przechodzi: `vendor/bin/sail npm run test:js`
+- [x] 2.4 E2E nagrobka przechodzi: `npx playwright test tests/e2e/gravestone-cemetery-and-buried.spec.ts`
+- [x] 2.5 E2E akt z numerem wpisu przechodzi: `npx playwright test tests/e2e/source-found-by-place-and-year.spec.ts`
 
 #### Manual
 
-- [ ] 2.6 Na `/sources` ustawienie Lat (np. 1900–1949) chowa wszystkie nagrobki, a komunikat „Ukryto N źródeł bez …” nie liczy nagrobków
-- [ ] 2.7 Na `/sources` wybór Archiwum chowa nagrobki bez wpisu w komunikacie o ukrytych
-- [ ] 2.8 W panelu osoby przy Zgonie picker z podstawionym rokiem pokazuje nagrobek z cmentarza po wpisaniu miejscowości, a po wybraniu nie ma pola „Numer wpisu”
-- [ ] 2.9 Przy powiązanym nagrobku nie ma przycisku „Numer wpisu”, a przy akcie jest
-- [ ] 2.10 Karta nagrobka w galerii nie pokazuje roku ani archiwum
+- [x] 2.6 Na `/sources` ustawienie Lat (np. 1900–1949) chowa wszystkie nagrobki, a komunikat „Ukryto N źródeł bez …” nie liczy nagrobków
+- [x] 2.7 Na `/sources` wybór Archiwum chowa nagrobki bez wpisu w komunikacie o ukrytych
+- [x] 2.8 W panelu osoby przy Zgonie picker z podstawionym rokiem pokazuje nagrobek z cmentarza po wpisaniu miejscowości, a po wybraniu nie ma pola „Numer wpisu”
+- [x] 2.9 Przy powiązanym nagrobku nie ma przycisku „Numer wpisu”, a przy akcie jest
+- [x] 2.10 Karta nagrobka w galerii nie pokazuje roku ani archiwum
