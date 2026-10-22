@@ -8,6 +8,7 @@ use App\Models\ParentChildRelation;
 use App\Models\Person;
 use App\Models\Source;
 use App\Models\User;
+use Illuminate\Database\Migrations\Migration;
 use Illuminate\Foundation\Testing\DatabaseTruncation;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -33,6 +34,22 @@ pest()->extend(TestCase::class)
 pest()->extend(BackupTestCase::class)
     ->use(DatabaseTruncation::class)
     ->in('Backup');
+
+function dropLegacyColumnsMigration(): Migration
+{
+    static $migration = null;
+
+    return $migration ??= require database_path('migrations/2026_10_22_124123_drop_legacy_columns.php');
+}
+
+/**
+ * Bring back, empty, the six legacy columns that `drop_legacy_columns` removed, so a test of an older
+ * data migration runs against the schema it was written for. The test transaction undoes it.
+ */
+function restoreLegacyColumns(): void
+{
+    dropLegacyColumnsMigration()->down();
+}
 
 /**
  * Attach a birth event with the given partial date to a person.

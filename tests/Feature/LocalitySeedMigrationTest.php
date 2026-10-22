@@ -13,6 +13,11 @@ function seedLocalitiesMigration(): Migration
     return $migration ??= require database_path('migrations/2026_10_05_081632_seed_localities_from_place_texts.php');
 }
 
+beforeEach(function () {
+    // The schema is fully migrated: bring back the legacy columns this test's migration works on.
+    restoreLegacyColumns();
+});
+
 function insertPlaceText(int $treeId, ?string $place): void
 {
     DB::table('events')->insert([

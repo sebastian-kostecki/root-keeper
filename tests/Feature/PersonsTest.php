@@ -921,19 +921,6 @@ test('residence years must be in range and from may not exceed to', function (ar
     'to in the future' => [['year_to' => 9999], 'residences.0.year_to'],
 ]);
 
-test('the legacy residence text key is ignored and the stored text stays untouched', function () {
-    $user = User::factory()->create();
-    $person = Person::factory()->for($user->tree)->create(['residence' => 'Stary tekst']);
-
-    $this->actingAs($user)->put(route('persons.update', $person), [
-        'first_name' => 'Jan',
-        'residence' => 'Nowy tekst',
-    ])->assertSessionHasNoErrors();
-
-    expect($person->refresh()->residence)->toBe('Stary tekst');
-    expect($person->residences()->count())->toBe(0);
-});
-
 test('update of a birth with a linked source keeps the same birth event id and the source link', function () {
     $user = User::factory()->create();
     $person = Person::factory()->for($user->tree)->create();
@@ -1389,24 +1376,6 @@ test('editing a parent without changing their sex is allowed even when their chi
     expect($person->fresh()->first_name)->toBe('Janusz');
 });
 
-test('store ignores a maiden_name key and the display name is first name and last name', function () {
-    $user = User::factory()->create();
-
-    $this->actingAs($user)->post(route('persons.store'), [
-        'first_name' => 'Anna',
-        'last_name' => 'Kowalska',
-        'maiden_name' => 'Nowak',
-    ])->assertSessionHasNoErrors();
-
-    $person = $user->tree->people()->firstOrFail();
-
-    expect($person->maiden_name)->toBeNull();
-
-    $this->actingAs($user)->get(route('persons.index'))->assertInertia(fn ($page) => $page
-        ->where('persons.0.display_name', 'Anna Kowalska')
-        ->missing('persons.0.maiden_name'));
-});
-
 test('store accepts a last name alone as the birth surname', function () {
     $user = User::factory()->create();
 
@@ -1414,49 +1383,6 @@ test('store accepts a last name alone as the birth surname', function () {
         ->assertSessionHasNoErrors();
 
     expect($user->tree->people()->firstOrFail()->last_name)->toBe('Kowalska');
-});
-
-test('update leaves a legacy maiden_name column untouched and does not return it', function () {
-    $user = User::factory()->create();
-    $person = Person::factory()->for($user->tree)->create([
-        'first_name' => 'Anna',
-        'last_name' => 'Kowalska',
-        'maiden_name' => 'Nowak',
-    ]);
-    $birth = Event::factory()->for($user->tree)->birth()->withoutDate()->create();
-    $birth->participants()->attach($person, ['role' => ParticipantRole::Subject]);
-
-    $this->actingAs($user)->put(route('persons.update', $person), [
-        'first_name' => 'Anna',
-        'last_name' => 'Kowalska',
-        'birth' => ['year' => 1950],
-    ])->assertSessionHasNoErrors();
-
-    expect($person->refresh()->maiden_name)->toBe('Nowak');
-    expect($birth->refresh()->date_year)->toBe(1950);
-
-    $this->actingAs($user)->get(route('persons.index'))->assertInertia(fn ($page) => $page
-        ->where('persons.0.display_name', 'Anna Kowalska')
-        ->missing('persons.0.maiden_name'));
-});
-
-test('persons index finds a person by last name and by first and last name, not by a legacy maiden_name', function () {
-    $user = User::factory()->create();
-    $anna = Person::factory()->for($user->tree)->create([
-        'first_name' => 'Anna',
-        'last_name' => 'Kowalska',
-        'maiden_name' => 'Nowak',
-    ]);
-    Person::factory()->for($user->tree)->create(['first_name' => 'Jan', 'last_name' => 'Wiśniewski']);
-
-    foreach (['Kowalska', 'Anna Kowalska'] as $query) {
-        $this->actingAs($user)->get(route('persons.index', ['q' => $query]))->assertInertia(fn ($page) => $page
-            ->has('persons', 1)
-            ->where('persons.0.id', $anna->id));
-    }
-
-    $this->actingAs($user)->get(route('persons.index', ['q' => 'Nowak']))->assertInertia(fn ($page) => $page
-        ->has('persons', 0));
 });
 
 test('person events read the locality name as place and the form carries the locality', function () {
@@ -1487,22 +1413,6 @@ test('saving a birth without locality_id clears the stored locality', function (
     ])->assertSessionHasNoErrors();
 
     expect($birth->refresh()->locality_id)->toBeNull();
-});
-
-test('the legacy place key is ignored and events.place stays untouched', function () {
-    $user = User::factory()->create();
-    $person = Person::factory()->for($user->tree)->create();
-    $birth = Event::factory()->for($user->tree)->birth()->create(['place' => 'Stary tekst']);
-    $birth->participants()->attach($person, ['role' => ParticipantRole::Subject]);
-
-    $this->actingAs($user)->put(route('persons.update', $person), [
-        'first_name' => 'Jan',
-        'birth' => ['year' => 1900, 'place' => 'Nowy tekst'],
-    ])->assertSessionHasNoErrors();
-
-    $birth->refresh();
-    expect($birth->place)->toBe('Stary tekst');
-    expect($birth->locality_id)->toBeNull();
 });
 
 test('store creates a burial event at the cemetery for a deceased person', function () {

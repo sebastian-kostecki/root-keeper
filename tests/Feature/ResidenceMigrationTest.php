@@ -13,6 +13,11 @@ function createResidencesMigration(): Migration
     return $migration ??= require database_path('migrations/2026_10_06_110402_create_residences_from_residence_texts.php');
 }
 
+beforeEach(function () {
+    // The schema is fully migrated: bring back the legacy columns this test's migration works on.
+    restoreLegacyColumns();
+});
+
 function insertPersonWithResidence(int $treeId, ?string $residence): int
 {
     return DB::table('people')->insertGetId([

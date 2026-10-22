@@ -560,7 +560,6 @@ test('storing with a full description persists every field', function () {
     expect($source->year)->toBe(1878);
     expect($source->parish_id)->toBe($parish->id);
     expect($source->archive)->toBe('Archiwum w Krakowie');
-    expect($source->provenance)->toBeNull();
     expect($source->url)->toBe('https://example.com/akt');
     expect($source->note)->toBe("Pierwszy akapit.\n\nDrugi akapit.");
 });
@@ -1411,21 +1410,6 @@ test('another tree parish is rejected on store and update without saving', funct
     ])->assertInvalid('parish_id');
 
     expect($source->refresh()->parish_id)->toBeNull();
-});
-
-test('updating a source never changes the stored provenance', function () {
-    $user = User::factory()->create();
-    $source = Source::factory()->for($user->tree)->create();
-    DB::table('sources')->where('id', $source->id)->update(['provenance' => 'Stare pochodzenie']);
-
-    $this->actingAs($user)->put(route('sources.update', $source), [
-        'kind' => 'metrical_record',
-        'archive' => 'Nowe archiwum',
-        'provenance' => 'Podmienione',
-    ])->assertSessionHasNoErrors();
-
-    expect(DB::table('sources')->where('id', $source->id)->value('provenance'))->toBe('Stare pochodzenie')
-        ->and($source->refresh()->archive)->toBe('Nowe archiwum');
 });
 
 test('changing an akt with a parish to another kind needs confirmation and then clears the parish', function () {

@@ -277,30 +277,30 @@ Lokalna baza staje się kopią produkcji, zmiana przechodzi przez CI, użytkowni
 
 #### Automated
 
-- [x] 1.1 Pełny Pest przechodzi
-- [x] 1.2 Larastan przechodzi
-- [x] 1.3 Pint czysty
-- [x] 1.4 Front: check, types:check, test:js
-- [x] 1.5 Brak odwołań do starej funkcji
+- [x] 1.1 Pełny Pest przechodzi — ab5e887
+- [x] 1.2 Larastan przechodzi — ab5e887
+- [x] 1.3 Pint czysty — ab5e887
+- [x] 1.4 Front: check, types:check, test:js — ab5e887
+- [x] 1.5 Brak odwołań do starej funkcji — ab5e887
 
 #### Manual
 
-- [x] 1.6 Panel źródła z aktem nie pokazuje sekcji „Stary numer wpisu”; numer przy powiązaniu działa
+- [x] 1.6 Panel źródła z aktem nie pokazuje sekcji „Stary numer wpisu”; numer przy powiązaniu działa — ab5e887
 
 ### Phase 2: Migracje i model
 
 #### Automated
 
-- [ ] 2.1 Nowe testy migracji przechodzą
-- [ ] 2.2 Celowe zepsucie bezpiecznika daje czerwony test
-- [ ] 2.3 Pełny Pest przechodzi (w tym zamrożone testy migracji)
-- [ ] 2.4 Larastan przechodzi
-- [ ] 2.5 Pint czysty
-- [ ] 2.6 Migracje od zera przechodzą na pustej bazie
+- [x] 2.1 Nowe testy migracji przechodzą
+- [x] 2.2 Celowe zepsucie bezpiecznika daje czerwony test
+- [x] 2.3 Pełny Pest przechodzi (w tym zamrożone testy migracji)
+- [x] 2.4 Larastan przechodzi
+- [x] 2.5 Pint czysty
+- [x] 2.6 Migracje od zera przechodzą na pustej bazie
 
 #### Manual
 
-- [ ] 2.7 Komunikat bezpiecznika jest zrozumiały na lokalnej bazie przed restore
+- [x] 2.7 Komunikat bezpiecznika jest zrozumiały na lokalnej bazie przed restore
 
 ### Phase 3: Lokalna baza i wydanie
 

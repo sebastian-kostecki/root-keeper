@@ -13,6 +13,11 @@ function linkEventPlacesMigration(): Migration
     return $migration ??= require database_path('migrations/2026_10_06_070850_link_event_places_to_localities.php');
 }
 
+beforeEach(function () {
+    // The schema is fully migrated: bring back the legacy columns this test's migration works on.
+    restoreLegacyColumns();
+});
+
 function insertEventWithPlace(int $treeId, ?string $place, string $type = 'birth'): int
 {
     return DB::table('events')->insertGetId([

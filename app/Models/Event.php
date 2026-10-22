@@ -22,7 +22,6 @@ use Illuminate\Support\Carbon;
  * @property int|null $date_month
  * @property int|null $date_day
  * @property bool $date_is_approximate
- * @property string|null $place
  * @property int|null $locality_id
  * @property int|null $cemetery_id
  * @property MarriageForm|null $marriage_form
@@ -30,7 +29,7 @@ use Illuminate\Support\Carbon;
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
-#[Fillable(['tree_id', 'type', 'date_year', 'date_month', 'date_day', 'date_is_approximate', 'place', 'locality_id', 'cemetery_id', 'marriage_form'])]
+#[Fillable(['tree_id', 'type', 'date_year', 'date_month', 'date_day', 'date_is_approximate', 'locality_id', 'cemetery_id', 'marriage_form'])]
 class Event extends Model
 {
     /** @use HasFactory<EventFactory> */

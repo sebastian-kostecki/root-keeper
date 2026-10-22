@@ -13,6 +13,11 @@ function moveMaidenNamesMigration(): Migration
     return $migration ??= require database_path('migrations/2026_10_21_152703_move_maiden_names_to_last_name.php');
 }
 
+beforeEach(function () {
+    // The schema is fully migrated: bring back the legacy columns this test's migration works on.
+    restoreLegacyColumns();
+});
+
 /**
  * @param  array<string, mixed>  $attributes
  */

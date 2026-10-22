@@ -221,7 +221,6 @@ test('update changes the date and locality and keeps linked sources', function (
     expect($marriage->date_month)->toBe(7);
     expect($marriage->date_day)->toBe(2);
     expect($marriage->locality_id)->toBe($krakow->id);
-    expect($marriage->place)->toBeNull();
 
     $this->assertDatabaseHas('event_source', ['event_id' => $marriage->id, 'source_id' => $source->id]);
     expect($marriage->participants()->count())->toBe(2);
@@ -431,7 +430,6 @@ test('attach marries the centre to an existing person without a date and shows t
 
     $marriage = Event::where('type', EventType::Marriage)->sole();
     expect($marriage->date_year)->toBeNull();
-    expect($marriage->place)->toBeNull();
     expect($marriage->participants()->pluck('people.id')->sort()->values()->all())
         ->toBe(collect([$focus->id, $spouse->id])->sort()->values()->all());
     expect($marriage->participants()->get()->every(fn (Person $participant): bool => $participant->pivot->role === ParticipantRole::Spouse))->toBeTrue();
@@ -549,7 +547,6 @@ test('store creates a new person married to the centre without a date and shows 
     $this->assertDatabaseCount('people', 2);
     $marriage = Event::where('type', EventType::Marriage)->sole();
     expect($marriage->date_year)->toBeNull();
-    expect($marriage->place)->toBeNull();
     expect($marriage->participants()->pluck('people.id')->sort()->values()->all())
         ->toBe(collect([$focus->id, $spouse->id])->sort()->values()->all());
 });
@@ -593,7 +590,6 @@ test('store without a date creates one marriage with no date and no place', func
     expect($marriage->date_year)->toBeNull();
     expect($marriage->date_month)->toBeNull();
     expect($marriage->date_day)->toBeNull();
-    expect($marriage->place)->toBeNull();
     expect($marriage->participants()->count())->toBe(2);
 });
 
