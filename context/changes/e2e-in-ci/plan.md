@@ -198,8 +198,8 @@ Dokumenty fundamentów przestają mówić „lokalnie, poza CI” i opisują, ja
 
 #### Automated
 
-- [x] 2.1 Żaden dokument fundamentów nie opisuje już E2E jako „poza CI”
+- [x] 2.1 Żaden dokument fundamentów nie opisuje już E2E jako „poza CI” — bff7490
 
 #### Manual
 
-- [ ] 2.2 Issue #36 zamknięte z linkiem do zielonego runu
+- [x] 2.2 Issue #36 zamknięte z linkiem do zielonego runu
