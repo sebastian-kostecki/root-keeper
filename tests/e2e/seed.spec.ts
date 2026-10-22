@@ -44,7 +44,7 @@ test('auth-gate-roundtrip: signed-out visit to /persons redirects to /login, sig
         });
     }).toPass();
 
-    await expect(page).toHaveURL(/\/persons$/);
+    await expect(page).toHaveURL(/\/persons-redcheck$/);
     await expect(
         page.getByRole('heading', { name: 'Osoby', level: 1, exact: true }),
     ).toBeVisible();

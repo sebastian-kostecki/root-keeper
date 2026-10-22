@@ -311,3 +311,9 @@ Use Wayfinder to generate TypeScript functions for Laravel routes. Import from `
 - IMPORTANT: Activate `inertia-react-development` when working with Inertia React client-side patterns.
 
 </laravel-boost-guidelines>
+
+## Dane badawcze (genealogy-project) — tylko lokalnie
+
+- Prawdziwe dane genealogiczne autora: `/mnt/d/my-projects/genealogy-project` (osobne repo, tylko do odczytu). W kontenerze Sail są zamontowane (`compose.override.yaml`, plik lokalny, poza gitem) jako `storage/app/private/genealogy-project`; na hoście ten katalog jest pusty, czytaj wprost z `/mnt/d/...`.
+- Struktura: `drzewo/` (1 plik na osobę, indeksy `_PRZODKOWIE.md`, `_MALZENSTWA.md`, `_GEOGRAFIA.md`), `zrodla/` (opisy źródeł, `_INDEKS.md`), `dziennik/`, `todo/`, `notatki/`. Format wpisu o osobie i poziomy pewności A–D opisuje `CLAUDE.md` tamtego repo — przeczytaj go, zanim zaczniesz parsować pliki.
+- Używaj ich jako realistycznych danych wzorcowych przy rozwoju (kształt importu, przypadki brzegowe: warianty nazwisk, niepewne daty, brak danych). Nie zapisuj do tego katalogu, nie kopiuj danych osobowych do repo, fixtures ani testów — testy i CI nie mogą od niego zależeć (na CI go nie ma).
