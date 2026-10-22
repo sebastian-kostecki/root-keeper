@@ -55,7 +55,7 @@ test('person-panel-unsaved-guard: opening another card with an unsaved section a
     await expect(page).toHaveURL(
         (url) => url.searchParams.get('person') === String(spouseId),
     );
-    await expect(heading).toHaveText(`${centreName} z d. Kowalska`);
+    await expect(heading).toHaveText('Dziecko Kowalska');
     await expect(
         spousePanel.getByRole('region', { name: 'Dane osobowe' }),
     ).not.toContainText('Kowalska');

@@ -44,13 +44,7 @@ type Props = {
     availableSources?: Source[];
 };
 
-const PERSONAL_KEYS = [
-    'first_name',
-    'last_name',
-    'maiden_name',
-    'gender',
-    'religion',
-];
+const PERSONAL_KEYS = ['first_name', 'last_name', 'gender', 'religion'];
 
 /** Whether a server error key is rendered by the fields of the given section. */
 function belongsToSection(id: SectionId, key: string): boolean {
@@ -93,6 +87,8 @@ type FactViewProps = {
     availableSources: Source[] | undefined;
     /** Shown as „Miejsce pochowania” (the death section only). */
     burialPlace?: string | null;
+    /** Shown as „Forma ślubu” (the marriage cards only). */
+    marriageForm?: string | null;
     /** Gravestones linked from the death card. */
     gravestones?: PersonGravestone[];
 };
@@ -102,6 +98,7 @@ function FactView({
     parts,
     availableSources,
     burialPlace,
+    marriageForm,
     gravestones,
 }: FactViewProps) {
     const date = parts ? formatPartialDate(parts, 'long') : '';
@@ -114,6 +111,13 @@ function FactView({
                 <Field label="Miejsce" value={event.place} />
                 {burialPlace !== undefined && (
                     <Field label="Miejsce pochowania" value={burialPlace} />
+                )}
+                {marriageForm !== undefined && (
+                    <Field
+                        label="Forma ślubu"
+                        value={marriageForm}
+                        emptyText="nieznana"
+                    />
                 )}
             </div>
 
@@ -305,10 +309,9 @@ export function OverviewTab({ preview, availableSources }: Props) {
                     view={
                         <div className="grid gap-3 sm:grid-cols-2">
                             <Field label="Imię" value={person.first_name} />
-                            <Field label="Nazwisko" value={person.last_name} />
                             <Field
                                 label="Nazwisko rodowe"
-                                value={person.maiden_name}
+                                value={person.last_name}
                             />
                         </div>
                     }
@@ -421,6 +424,9 @@ export function OverviewTab({ preview, availableSources }: Props) {
                                         event={marriage}
                                         parts={marriage.date_parts}
                                         availableSources={availableSources}
+                                        marriageForm={
+                                            marriage.marriage_form_label
+                                        }
                                     />
                                 }
                                 edit={

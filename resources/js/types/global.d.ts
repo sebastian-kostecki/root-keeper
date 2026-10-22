@@ -2,6 +2,7 @@ import type { Auth } from '@/types/auth';
 import type { CemeteryManagerOption, CemeteryOption } from '@/types/cemetery';
 import type { LocalityOption } from '@/types/parish';
 import type {
+    MarriageFormOption,
     MarriagePanelPayload,
     PersonPreviewPayload,
 } from '@/types/person';
@@ -32,6 +33,7 @@ declare module '@inertiajs/core' {
             localityOptions?: LocalityOption[];
             cemeteryOptions?: CemeteryOption[];
             cemeteryManagers: CemeteryManagerOption[];
+            marriageForms: MarriageFormOption[];
             [key: string]: unknown;
         };
     }

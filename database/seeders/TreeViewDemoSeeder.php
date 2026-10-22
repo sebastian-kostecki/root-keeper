@@ -7,6 +7,7 @@ use App\Actions\Relations\CreateParentChildRelation;
 use App\Actions\Sources\GenerateSourceThumbnail;
 use App\Actions\Trees\SetTreeRootPerson;
 use App\Enums\EventType;
+use App\Enums\MarriageForm;
 use App\Enums\ParticipantRole;
 use App\Enums\Religion;
 use App\Enums\SourceRecordType;
@@ -137,7 +138,7 @@ class TreeViewDemoSeeder extends Seeder
         // Co-parent without a marriage; no known parents.
         $marta = $this->person('Marta', 'Lewandowska', 'female', 1982);
 
-        $janAnnaMarriage = $this->marry($jan, $anna, ['year' => 2001, 'month' => 6, 'day' => 15, 'locality_id' => $this->localityId('Kraków')]);
+        $janAnnaMarriage = $this->marry($jan, $anna, ['year' => 2001, 'month' => 6, 'day' => 15, 'locality_id' => $this->localityId('Kraków'), 'form' => MarriageForm::CivilReligious->value]);
         $this->marry($jan, $ewa, []);
 
         // Children: one per union, one with a very long name, one with only the proband as parent.

@@ -1,5 +1,5 @@
 // Risk: "a person's name on the tree card breaks inside a word, runs under the eye
-// button or is cut at the card edge; a woman's card shows her maiden surname and
+// button or is cut at the card edge; a woman's card shows her birth surname and
 // her accessible name follows it". Pest does not see the layout, so the card is
 // measured in the browser at two screen sizes. Data is prepared through the app's
 // routes (tests/e2e/support/api.ts). The centre person carries the suffix in the
@@ -93,7 +93,7 @@ test('tree-card-name: at 2560 a grandparent card shows the given name and the su
     }
 });
 
-test('tree-card-name: at 1366 a long name wraps by words to at most two lines, and a woman card shows her maiden surname', async ({
+test('tree-card-name: at 1366 a long name wraps by words to at most two lines, and a woman card shows her birth surname', async ({
     page,
     suffix,
 }) => {
@@ -108,8 +108,7 @@ test('tree-card-name: at 1366 a long name wraps by words to at most two lines, a
         childId,
         {
             first_name: 'Anna',
-            last_name: 'Kowalska',
-            maiden_name: 'Nowak',
+            last_name: 'Nowak',
             gender: 'female',
         },
         'mother',
@@ -135,14 +134,11 @@ test('tree-card-name: at 1366 a long name wraps by words to at most two lines, a
         // At most two lines of text, then the ellipsis.
         expect(await visibleNameLines(longName)).toBeLessThanOrEqual(2);
 
-        // The maiden surname is the name on the card; the married one is not.
-        const maidenName = page.getByTitle('Anna Nowak', { exact: true });
-        await expect(maidenName).toBeVisible();
-        await expect(
-            page.getByTitle('Anna Kowalska z d. Nowak', { exact: true }),
-        ).toHaveCount(0);
+        // The birth surname (the person's only surname) is the name on the card.
+        const birthSurnameCard = page.getByTitle('Anna Nowak', { exact: true });
+        await expect(birthSurnameCard).toBeVisible();
 
-        // The card link's accessible name carries the gender and the maiden name.
+        // The card link's accessible name carries the gender and the surname.
         await expect(
             page.getByRole('link', { name: 'kobieta Anna Nowak' }),
         ).toBeVisible();

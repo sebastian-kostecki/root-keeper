@@ -68,7 +68,7 @@ export function PersonalFields({
                 </div>
 
                 <div className="grid gap-2">
-                    <Label htmlFor="last_name">Nazwisko</Label>
+                    <Label htmlFor="last_name">Nazwisko rodowe</Label>
                     <Input
                         id="last_name"
                         name="last_name"
@@ -79,17 +79,6 @@ export function PersonalFields({
                         }
                     />
                     <InputError message={errors.last_name} />
-                </div>
-
-                <div className="grid gap-2">
-                    <Label htmlFor="maiden_name">Nazwisko rodowe</Label>
-                    <Input
-                        id="maiden_name"
-                        name="maiden_name"
-                        maxLength={255}
-                        defaultValue={person?.maiden_name ?? undefined}
-                    />
-                    <InputError message={errors.maiden_name} />
                 </div>
             </div>
 
@@ -253,7 +242,7 @@ export function DeathFields({
     );
 }
 
-/** Marriage date and place. */
+/** Marriage date, place and form. */
 export function MarriageFields({
     errors,
     defaultValue,
@@ -261,13 +250,43 @@ export function MarriageFields({
     errors: Errors;
     defaultValue: NonNullable<
         React.ComponentProps<typeof PartialDateInput>['defaultValue']
-    >;
+    > & { form: string | null };
 }) {
+    const { marriageForms } = usePage().props;
+    const { form: storedForm, ...dateDefaults } = defaultValue;
+    const [form, setForm] = useState(storedForm ?? '');
+
     return (
-        <PartialDateInput
-            prefix="marriage"
-            errors={errors}
-            defaultValue={defaultValue}
-        />
+        <div className="space-y-4">
+            <PartialDateInput
+                prefix="marriage"
+                errors={errors}
+                defaultValue={dateDefaults}
+            />
+
+            <div className="grid gap-2">
+                <Label htmlFor="marriage-form">Forma ślubu</Label>
+                <Select
+                    value={form || NONE}
+                    onValueChange={(value) =>
+                        setForm(value === NONE ? '' : value)
+                    }
+                >
+                    <SelectTrigger id="marriage-form" className="w-full">
+                        <SelectValue placeholder="Nieznana" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value={NONE}>Nieznana</SelectItem>
+                        {marriageForms.map((option) => (
+                            <SelectItem key={option.value} value={option.value}>
+                                {option.label}
+                            </SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+                <input type="hidden" name="marriage.form" value={form} />
+                <InputError message={errors['marriage.form']} />
+            </div>
+        </div>
     );
 }

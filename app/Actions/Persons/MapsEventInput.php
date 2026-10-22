@@ -27,6 +27,20 @@ trait MapsEventInput
     }
 
     /**
+     * A marriage's date and place plus its wedding form, which a missing or blank key resets to unknown like the date.
+     *
+     * @param  array{year?: int|string|null, month?: int|string|null, day?: int|string|null, is_approximate?: bool|int|string|null, locality_id?: int|string|null, form?: string|null}  $marriage
+     * @return array{date_year: int|string|null, date_month: int|string|null, date_day: int|string|null, date_is_approximate: bool, locality_id: int|string|null, marriage_form: string|null}
+     */
+    private function marriageAttributesFrom(array $marriage): array
+    {
+        return [
+            ...$this->eventAttributesFrom($marriage),
+            'marriage_form' => $marriage['form'] ?? null,
+        ];
+    }
+
+    /**
      * The burial place from the form: the chosen cemetery and its locality, which every burial keeps equal to the
      * cemetery's. Null when no cemetery is chosen, i.e. there is no burial.
      *

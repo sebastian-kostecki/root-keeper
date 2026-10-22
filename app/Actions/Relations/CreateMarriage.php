@@ -17,13 +17,14 @@ class CreateMarriage
 
     /**
      * Create a marriage as one event with both people attached as spouses,
-     * rejecting a duplicate pair atomically.
+     * rejecting a duplicate pair atomically. The date, locality and wedding
+     * form come from the input; a missing key leaves its value unknown.
      *
-     * @param  array{year?: int|string|null, month?: int|string|null, day?: int|string|null, is_approximate?: bool|int|string|null, locality_id?: int|string|null}  $date
+     * @param  array{year?: int|string|null, month?: int|string|null, day?: int|string|null, is_approximate?: bool|int|string|null, locality_id?: int|string|null, form?: string|null}  $input
      */
-    public function handle(Tree $tree, Person $person, Person $spouse, array $date): Event
+    public function handle(Tree $tree, Person $person, Person $spouse, array $input): Event
     {
-        return DB::transaction(function () use ($tree, $person, $spouse, $date): Event {
+        return DB::transaction(function () use ($tree, $person, $spouse, $input): Event {
             [$first, $second] = $person->id <= $spouse->id ? [$person, $spouse] : [$spouse, $person];
 
             Person::whereKey($first->id)->lockForUpdate()->firstOrFail();
@@ -42,7 +43,7 @@ class CreateMarriage
 
             $event = $tree->events()->create([
                 'type' => EventType::Marriage,
-                ...$this->eventAttributesFrom($date),
+                ...$this->marriageAttributesFrom($input),
             ]);
 
             $event->participants()->attach([

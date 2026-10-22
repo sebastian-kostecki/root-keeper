@@ -35,7 +35,6 @@ function person(
         id,
         first_name,
         last_name,
-        maiden_name: null,
         display_name: [first_name, last_name].filter(Boolean).join(' '),
         gender: null,
         religion: null,

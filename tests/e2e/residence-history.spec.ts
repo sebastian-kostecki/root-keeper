@@ -81,9 +81,9 @@ test('residence-history: two residences saved in order of the year survive savin
     await panel.getByRole('button', { name: 'Edytuj Dane osobowe' }).click();
     await personal
         .getByRole('textbox', { name: 'Nazwisko rodowe' })
-        .fill('Kowalska');
+        .fill(`${suffix}x`);
     await saveSection(page, personal);
-    await expect(personal.getByText('Kowalska')).toBeVisible();
+    await expect(personal.getByText(`${suffix}x`)).toBeVisible();
 
     await expect(card.getByRole('listitem')).toHaveCount(2);
     const reloaded = await openPerson(page, personId, displayName);

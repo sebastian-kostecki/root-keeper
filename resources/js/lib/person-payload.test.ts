@@ -2,16 +2,17 @@ import { describe, expect, it } from 'vite-plus/test';
 import type { PersonFormData } from '@/types';
 import {
     eventPayloadFromValues,
+    marriageFieldDefaults,
+    marriageSaveRequest,
     mergeSectionIntoPayload,
 } from './person-payload';
 
 function personForm(): PersonFormData {
     return {
         id: 1,
-        display_name: 'Anna Kowalska z d. Nowak',
+        display_name: 'Anna Kowalska',
         first_name: 'Anna',
         last_name: 'Kowalska',
-        maiden_name: 'Nowak',
         gender: 'female',
         residences: [],
         religion: null,
@@ -29,27 +30,25 @@ function personForm(): PersonFormData {
     };
 }
 
-describe('mergeSectionIntoPayload: maiden name', () => {
-    it.each(['birth', 'death'] as const)(
-        'keeps the maiden name when the %s section is saved',
-        (section) => {
-            const payload = mergeSectionIntoPayload(personForm(), section, {
-                [`${section}.year`]: '1950',
-                is_deceased: '1',
-            });
-
-            expect(payload.maiden_name).toBe('Nowak');
-        },
-    );
-
-    it('takes the maiden name from the personal section values', () => {
-        const payload = mergeSectionIntoPayload(personForm(), 'personal', {
-            first_name: 'Anna',
-            last_name: 'Kowalska',
-            maiden_name: '',
+describe('mergeSectionIntoPayload: single surname', () => {
+    it('has no maiden_name key in the person payload', () => {
+        const payload = mergeSectionIntoPayload(personForm(), 'birth', {
+            'birth.year': '1950',
+            is_deceased: '1',
         });
 
-        expect(payload.maiden_name).toBeNull();
+        expect(payload).not.toHaveProperty('maiden_name');
+        expect(payload.last_name).toBe('Kowalska');
+    });
+
+    it('takes last_name from the personal section values', () => {
+        const payload = mergeSectionIntoPayload(personForm(), 'personal', {
+            first_name: 'Anna',
+            last_name: 'Nowak',
+        });
+
+        expect(payload).not.toHaveProperty('maiden_name');
+        expect(payload.last_name).toBe('Nowak');
     });
 });
 
@@ -155,5 +154,34 @@ describe('residences', () => {
             { locality_id: null, year_from: null, year_to: null },
             { locality_id: 5, year_from: null, year_to: 1950 },
         ]);
+    });
+});
+
+describe('marriage card', () => {
+    it('always sends the form, null when empty', () => {
+        expect(
+            marriageSaveRequest(5, { 'marriage.form': 'civil' })[1].marriage
+                .form,
+        ).toBe('civil');
+        expect(
+            marriageSaveRequest(5, { 'marriage.form': '' })[1].marriage.form,
+        ).toBeNull();
+        expect(marriageSaveRequest(5, {})[1].marriage.form).toBeNull();
+    });
+
+    it('carries the stored form into the edit defaults', () => {
+        const defaults = marriageFieldDefaults({
+            date_parts: {
+                year: 2001,
+                month: null,
+                day: null,
+                is_approximate: false,
+            },
+            locality_id: null,
+            place: null,
+            marriage_form: 'religious',
+        });
+
+        expect(defaults.form).toBe('religious');
     });
 });

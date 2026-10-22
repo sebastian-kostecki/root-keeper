@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\EventType;
+use App\Enums\MarriageForm;
 use App\Enums\ParticipantRole;
 use App\Models\Event;
 use App\Models\Locality;
@@ -224,6 +225,126 @@ test('update changes the date and locality and keeps linked sources', function (
 
     $this->assertDatabaseHas('event_source', ['event_id' => $marriage->id, 'source_id' => $source->id]);
     expect($marriage->participants()->count())->toBe(2);
+});
+
+test('update saves the wedding form and both the marriage panel and the person overview return it with its label', function () {
+    $user = User::factory()->create();
+    $person = Person::factory()->for($user->tree)->create();
+    $spouse = Person::factory()->for($user->tree)->create();
+    $marriage = attachMarriage($person, $spouse, year: 1850);
+
+    $this->actingAs($user)
+        ->put(route('marriages.update', $marriage), ['marriage' => ['year' => 1850, 'form' => 'civil_religious']])
+        ->assertSessionHasNoErrors();
+
+    expect($marriage->refresh()->marriage_form)->toBe(MarriageForm::CivilReligious);
+
+    $this->actingAs($user)->get(marriagePanelUrl($marriage))
+        ->assertInertia(fn ($page) => $page
+            ->where('marriagePanel.marriage.marriage_form', 'civil_religious')
+            ->where('marriagePanel.marriage.marriage_form_label', 'cywilno-wyznaniowy'));
+
+    $this->actingAs($user)->get(personPreviewUrl($person))
+        ->assertInertia(fn ($page) => $page
+            ->where('personPreview.person.marriages.0.marriage_form', 'civil_religious')
+            ->where('personPreview.person.marriages.0.marriage_form_label', 'cywilno-wyznaniowy'));
+});
+
+test('update without the form key, or with a null form, resets the wedding form to unknown', function (array $marriageInput) {
+    $user = User::factory()->create();
+    $person = Person::factory()->for($user->tree)->create();
+    $spouse = Person::factory()->for($user->tree)->create();
+    $marriage = attachMarriage($person, $spouse, year: 1850);
+    $marriage->update(['marriage_form' => MarriageForm::Civil]);
+
+    $this->actingAs($user)
+        ->put(route('marriages.update', $marriage), ['marriage' => $marriageInput])
+        ->assertSessionHasNoErrors();
+
+    expect($marriage->refresh()->marriage_form)->toBeNull();
+
+    $this->actingAs($user)->get(marriagePanelUrl($marriage))
+        ->assertInertia(fn ($page) => $page
+            ->where('marriagePanel.marriage.marriage_form', null)
+            ->where('marriagePanel.marriage.marriage_form_label', null));
+
+    $this->actingAs($user)->get(personPreviewUrl($person))
+        ->assertInertia(fn ($page) => $page
+            ->where('personPreview.person.marriages.0.marriage_form', null)
+            ->where('personPreview.person.marriages.0.marriage_form_label', null));
+})->with([
+    'key missing' => [['year' => 1851]],
+    'null form' => [['year' => 1851, 'form' => null]],
+]);
+
+test('an unknown wedding form is rejected on marriage.form and changes nothing', function () {
+    $user = User::factory()->create();
+    $person = Person::factory()->for($user->tree)->create();
+    $spouse = Person::factory()->for($user->tree)->create();
+    $marriage = attachMarriage($person, $spouse, year: 1850);
+    $marriage->update(['marriage_form' => MarriageForm::Religious]);
+
+    $this->actingAs($user)
+        ->put(route('marriages.update', $marriage), ['marriage' => ['year' => 1851, 'form' => 'kościelny']])
+        ->assertSessionHasErrors('marriage.form');
+
+    $marriage->refresh();
+    expect($marriage->marriage_form)->toBe(MarriageForm::Religious);
+    expect($marriage->date_year)->toBe(1850);
+
+    $this->actingAs($user)
+        ->post(route('marriages.store'), [
+            'person_id' => $person->id,
+            'spouse_id' => Person::factory()->for($user->tree)->create()->id,
+            'marriage' => ['form' => 'kościelny'],
+        ])
+        ->assertSessionHasErrors('marriage.form');
+
+    $this->assertDatabaseCount('events', 1);
+});
+
+test('store saves the wedding form while attach and spouse store leave it unknown', function () {
+    $user = User::factory()->create();
+    $person = Person::factory()->for($user->tree)->male()->create();
+    $spouse = Person::factory()->for($user->tree)->female()->create();
+
+    $this->actingAs($user)->post(route('marriages.store'), [
+        'person_id' => $person->id,
+        'spouse_id' => $spouse->id,
+        'marriage' => ['form' => 'religious'],
+    ])->assertSessionHasNoErrors();
+
+    $marriageWith = fn (Person $other): Event => Event::where('type', EventType::Marriage)
+        ->whereHas('participants', fn ($query) => $query->whereKey($other->id))
+        ->sole();
+
+    expect($marriageWith($spouse)->marriage_form)->toBe(MarriageForm::Religious);
+
+    $attached = Person::factory()->for($user->tree)->female()->create();
+    $this->actingAs($user)
+        ->post(route('persons.spouses.attach', $person), ['spouse_id' => $attached->id])
+        ->assertSessionHasNoErrors();
+
+    expect($marriageWith($attached)->marriage_form)->toBeNull();
+
+    $this->actingAs($user)
+        ->post(route('persons.spouses.store', $person), ['first_name' => 'Anna', 'last_name' => 'Nowak', 'gender' => 'female'])
+        ->assertSessionHasNoErrors();
+
+    $created = Person::whereKeyNot([$person->id, $spouse->id, $attached->id])->sole();
+    expect($marriageWith($created)->marriage_form)->toBeNull();
+});
+
+test('a birth event in the person overview carries no wedding form keys', function () {
+    $user = User::factory()->create();
+    $person = Person::factory()->for($user->tree)->create();
+    attachBirth($person, 1850);
+
+    $this->actingAs($user)->get(personPreviewUrl($person))
+        ->assertInertia(fn ($page) => $page
+            ->has('personPreview.person.birth')
+            ->missing('personPreview.person.birth.marriage_form')
+            ->missing('personPreview.person.birth.marriage_form_label'));
 });
 
 test('updating a birth event through the marriage routes returns not found', function () {

@@ -16,7 +16,6 @@ export const TEST_PREFIX = 'e2etest';
 export type PersonFields = {
     first_name?: string;
     last_name?: string;
-    maiden_name?: string;
     gender?: 'male' | 'female' | 'unknown';
     birth?: { year?: number; locality_id?: number };
     death?: { year?: number };
@@ -109,7 +108,6 @@ function personForm(fields: PersonFields): Record<string, string | number> {
     if (fields.first_name) form.first_name = fields.first_name;
     if (fields.last_name) form.last_name = fields.last_name;
     if (fields.gender) form.gender = fields.gender;
-    if (fields.maiden_name) form.maiden_name = fields.maiden_name;
     if (fields.birth?.year !== undefined)
         form['birth[year]'] = fields.birth.year;
     if (fields.birth?.locality_id !== undefined)

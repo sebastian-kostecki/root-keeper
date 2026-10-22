@@ -83,7 +83,7 @@ test('tree-add-person-guard: Zapisz in the guard saves the new person, then open
     const addFather = await openSlot(page, 'ojca', centreName);
     await addFather.getByRole('button', { name: 'Nowa osoba' }).click();
     await addFather.getByLabel('Imię').fill('Ojciec');
-    await addFather.getByLabel('Nazwisko', { exact: true }).fill(suffix);
+    await addFather.getByLabel('Nazwisko rodowe', { exact: true }).fill(suffix);
 
     // 2. The spouse's card on the tree asks first.
     await page.getByRole('link', { name: `Podgląd: ${spouseName}` }).click();

@@ -144,7 +144,7 @@ Wszystkie FR są `must-have` (zakres: całość do 2026-11-04). Jeśli zabraknie
 - [modified] FR-016: Autor can otworzyć panel osoby kliknięciem karty; przycisk „Podgląd” znika, a ustawienie osoby w centrum drzewa jest akcją w panelu. Priority: must-have. (Było: kliknięcie karty przecentrowuje drzewo, podgląd przyciskiem „Podgląd”.)
   > Socrates: Counter-argument considered: "kliknięcie karty dziś przecentrowuje drzewo — zmiana zabiera szybką nawigację."
   > Resolution: kept; kliknięcie = panel osoby, przecentrowanie przenosi się do przycisku w panelu.
-- [new] FR-017: Autor can otworzyć panel małżeństwa: data, miejsce, źródło (z edycją) i dzieci pary. Priority: must-have.
+- [new] FR-017: Autor can otworzyć panel małżeństwa: data, miejsce, forma ślubu (cywilny / wyznaniowy / cywilno-wyznaniowy / nieznana), źródło (z edycją) i dzieci pary. Priority: must-have.
   > Socrates: Counter-argument considered: "panel małżeństwa dubluje sekcję małżeństwa w panelu osoby."
   > Resolution: kept; oba miejsca pozwalają edytować małżeństwo — wygoda ważniejsza niż jedno miejsce edycji.
 - [new] FR-018: Autor can zobaczyć wybraną osobę i wszystkich jej przodków w jednym widoku z wyborem liczby pokoleń, z dopasowaniem do ekranu i przybliżaniem w tym widoku (przyciski, Ctrl+kółko, szczypanie). Priority: must-have.
@@ -155,9 +155,9 @@ Wszystkie FR są `must-have` (zakres: całość do 2026-11-04). Jeśli zabraknie
 - [modified] FR-019: Autor can oglądać i edytować osobę w wysuwanym panelu z prawej zamiast modala; otwarty panel nie zasłania drzewa — drzewo zwęża się obok niego. Priority: must-have. (Było: podgląd i formularz osoby w modalach.)
   > Socrates: Counter-argument considered: "panel zasłania prawą część drzewa."
   > Resolution: kept; drzewo przesuwa się i zwęża obok otwartego panelu.
-- [new] FR-020: Autor can zapisać nazwisko rodowe; osoba wyświetla się „z d. …” i jest wyszukiwana po obu nazwiskach. Priority: must-have.
+- [modified] FR-020: Autor can zapisać jedno nazwisko osoby — rodowe (z urodzenia); osoba wyświetla się imieniem i tym nazwiskiem i jest po nim wyszukiwana. Priority: must-have. (Było: nazwisko i nazwisko rodowe, wyświetlanie „z d. …”, wyszukiwanie po obu.)
   > Socrates: Counter-argument considered: "kobieta bez znanego męża ma tylko nazwisko rodowe."
-  > Resolution: kept; gdy znane jest jedno nazwisko, wpisuje się je w główne pole, a „z d.” pojawia się tylko, gdy znane są oba.
+  > Resolution: kept; osoba ma jedno nazwisko — zawsze rodowe, bez „z d.”.
 - [new] FR-021: Autor can zobaczyć zakładkę wydarzeń osoby: własne oraz urodzenia i zgony dzieci, ślub i zgon małżonka, uporządkowane po roku, z wydarzeniami bez daty na końcu. Priority: must-have.
   > Socrates: Counter-argument considered: "daty częściowe (sam rok, brak daty) psują kolejność osi czasu."
   > Resolution: kept; sortowanie po roku, wydarzenia bez daty na końcu.
@@ -237,7 +237,7 @@ No access control changes — current model preserved: jedno drzewo na konto, ot
 - **Brak importu/eksportu GEDCOM** — dane wchodzą ręcznie, jak dotąd.
 - **Brak nazw alternatywnych i datowanej hierarchii jednostek** — dawne nazwy trafiają do opisu; przynależność historyczna to jedno pole tekstowe miejscowości.
 - **Brak świadków ślubu** — panel małżeństwa pokazuje datę, miejsce, źródło i dzieci pary.
-- **Brak wielu nazwisk po kolejnych mężach** — osoba ma nazwisko i nazwisko rodowe; reszta w notatce.
+- **Jedno nazwisko na osobę** — zawsze rodowe; nazwiska po ślubie w notatce.
 - **Brak daty pogrzebu i potwierdzania zamieszkania źródłem** — pogrzeb to samo miejsce pochowania; zamieszkanie to notatka badawcza bez źródła.
 - **Brak zarządzanej listy archiwów** — archiwum to tekst z podpowiedziami (FR-009).
 

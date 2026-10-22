@@ -22,8 +22,10 @@ test('person-panel-page-navigation-guard: a sidebar link with an unsaved section
     // 1. The person's panel, with the personal data edited but not saved.
     const panel = await openPerson(page, personId, personName);
     await panel.getByRole('button', { name: 'Edytuj Dane osobowe' }).click();
-    const maidenName = panel.getByRole('textbox', { name: 'Nazwisko rodowe' });
-    await maidenName.fill('Kowalska');
+    const lastNameField = panel.getByRole('textbox', {
+        name: 'Nazwisko rodowe',
+    });
+    await lastNameField.fill('Kowalska');
 
     // 2. `Źródła` in the sidebar asks first; the panel and the typed value stay.
     await page.getByRole('link', { name: 'Źródła', exact: true }).click();
@@ -34,7 +36,7 @@ test('person-panel-page-navigation-guard: a sidebar link with an unsaved section
             url.pathname === `/tree/${personId}` &&
             url.searchParams.get('person') === String(personId),
     );
-    await expect(maidenName).toHaveValue('Kowalska');
+    await expect(lastNameField).toHaveValue('Kowalska');
 
     // 3. `Porzuć` lets the visit go: the sources page, without the panel.
     await unsaved.getByRole('button', { name: 'Porzuć' }).click();

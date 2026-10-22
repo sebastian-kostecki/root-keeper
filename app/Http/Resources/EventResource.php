@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Enums\EventType;
 use App\Enums\SourceKind;
 use App\Models\Event;
 use App\Models\EventSource;
@@ -29,6 +30,8 @@ class EventResource extends JsonResource
      *     place: string|null,
      *     locality_id: int|null,
      *     date_parts: array{year: int|null, month: int|null, day: int|null, is_approximate: bool},
+     *     marriage_form?: string|null,
+     *     marriage_form_label?: string|null,
      *     is_confirmed?: bool,
      *     confirmed_kinds?: list<string>,
      *     sources?: list<array{id: int, kind: string, kind_short_label: string, original_name: string, display_name: string, has_thumbnail: bool, uploaded_at: string|null, entry_number: string|null}>,
@@ -48,6 +51,8 @@ class EventResource extends JsonResource
                 'day' => $this->date_day,
                 'is_approximate' => $this->date_is_approximate,
             ],
+            'marriage_form' => $this->when($this->type === EventType::Marriage, fn (): ?string => $this->marriage_form?->value),
+            'marriage_form_label' => $this->when($this->type === EventType::Marriage, fn (): ?string => $this->marriage_form?->label()),
             'is_confirmed' => $this->when(
                 $this->relationLoaded('sources') || array_key_exists('sources_exists', $this->getAttributes()),
                 fn (): bool => $this->relationLoaded('sources')

@@ -1,9 +1,9 @@
 import MarriageController from '@/actions/App/Http/Controllers/MarriageController';
 import type {
     LocalityOption,
+    MarriageEvent,
     PersonFormData,
     PersonFormEvent,
-    SourcedPersonEvent,
 } from '@/types';
 
 /** Form values of one edited section, keyed by input name (`birth.year`, ...). */
@@ -16,7 +16,9 @@ export type PersonSection = 'personal' | 'birth' | 'death' | 'residences';
 export type PersonNotePayload = { note: string | null };
 
 /** Body of `PUT marriages/{id}`. */
-export type MarriageSavePayload = { marriage: PartialDatePayload };
+export type MarriageSavePayload = {
+    marriage: PartialDatePayload & { form: string | null };
+};
 
 export type PartialDatePayload = {
     year: number | null;
@@ -35,7 +37,6 @@ export type ResidencePayload = {
 export type PersonPayload = {
     first_name: string | null;
     last_name: string | null;
-    maiden_name: string | null;
     gender: string | null;
     residences: ResidencePayload[];
     religion: string | null;
@@ -123,7 +124,6 @@ export function personFormToPayload(personForm: PersonFormData): PersonPayload {
     const payload: PersonPayload = {
         first_name: personForm.first_name,
         last_name: personForm.last_name,
-        maiden_name: personForm.maiden_name,
         gender: personForm.gender,
         residences: personForm.residences.map((residence) => ({
             locality_id: residence.locality.id,
@@ -159,7 +159,6 @@ export function mergeSectionIntoPayload(
     if (section === 'personal') {
         payload.first_name = blankToNull(values.first_name);
         payload.last_name = blankToNull(values.last_name);
-        payload.maiden_name = blankToNull(values.maiden_name);
         payload.gender = blankToNull(values.gender);
         payload.religion = blankToNull(values.religion);
     } else if (section === 'residences') {
@@ -184,15 +183,22 @@ export function mergeSectionIntoPayload(
 }
 
 /** Values of the marriage fields as `MarriageFields` shows them. */
-export function marriageFieldDefaults(marriage: SourcedPersonEvent): {
+export function marriageFieldDefaults(
+    marriage: Pick<
+        MarriageEvent,
+        'date_parts' | 'locality_id' | 'place' | 'marriage_form'
+    >,
+): {
     year: number | null;
     month: number | null;
     day: number | null;
     is_approximate: boolean;
     locality: LocalityOption | null;
+    form: string | null;
 } {
     return {
         ...marriage.date_parts,
+        form: marriage.marriage_form,
         locality:
             marriage.locality_id === null
                 ? null
@@ -207,6 +213,11 @@ export function marriageSaveRequest(
 ): readonly [string, MarriageSavePayload] {
     return [
         MarriageController.update.url(marriageId),
-        { marriage: eventPayloadFromValues('marriage', values) },
+        {
+            marriage: {
+                ...eventPayloadFromValues('marriage', values),
+                form: values['marriage.form'] || null,
+            },
+        },
     ];
 }

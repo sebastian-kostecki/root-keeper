@@ -183,6 +183,11 @@ function MarriagePanelContent({
                                     value={date === '' ? null : date}
                                 />
                                 <Field label="Miejsce" value={marriage.place} />
+                                <Field
+                                    label="Forma ślubu"
+                                    value={marriage.marriage_form_label}
+                                    emptyText="nieznana"
+                                />
                             </div>
                         }
                         edit={
