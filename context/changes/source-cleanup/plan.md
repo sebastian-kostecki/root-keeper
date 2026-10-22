@@ -330,16 +330,16 @@ Filtry `/sources` i pickera traktują nagrobek zgodnie z decyzjami. Wejścia „
 
 #### Automated
 
-- [x] 2.1 Format i lint przechodzą: `vendor/bin/sail npm run check`
-- [x] 2.2 Typy przechodzą: `vendor/bin/sail npm run types:check`
-- [x] 2.3 Vitest przechodzi: `vendor/bin/sail npm run test:js`
-- [x] 2.4 E2E nagrobka przechodzi: `npx playwright test tests/e2e/gravestone-cemetery-and-buried.spec.ts`
-- [x] 2.5 E2E akt z numerem wpisu przechodzi: `npx playwright test tests/e2e/source-found-by-place-and-year.spec.ts`
+- [x] 2.1 Format i lint przechodzą: `vendor/bin/sail npm run check` — d2aad79
+- [x] 2.2 Typy przechodzą: `vendor/bin/sail npm run types:check` — d2aad79
+- [x] 2.3 Vitest przechodzi: `vendor/bin/sail npm run test:js` — d2aad79
+- [x] 2.4 E2E nagrobka przechodzi: `npx playwright test tests/e2e/gravestone-cemetery-and-buried.spec.ts` — d2aad79
+- [x] 2.5 E2E akt z numerem wpisu przechodzi: `npx playwright test tests/e2e/source-found-by-place-and-year.spec.ts` — d2aad79
 
 #### Manual
 
-- [x] 2.6 Na `/sources` ustawienie Lat (np. 1900–1949) chowa wszystkie nagrobki, a komunikat „Ukryto N źródeł bez …” nie liczy nagrobków
-- [x] 2.7 Na `/sources` wybór Archiwum chowa nagrobki bez wpisu w komunikacie o ukrytych
-- [x] 2.8 W panelu osoby przy Zgonie picker z podstawionym rokiem pokazuje nagrobek z cmentarza po wpisaniu miejscowości, a po wybraniu nie ma pola „Numer wpisu”
-- [x] 2.9 Przy powiązanym nagrobku nie ma przycisku „Numer wpisu”, a przy akcie jest
-- [x] 2.10 Karta nagrobka w galerii nie pokazuje roku ani archiwum
+- [x] 2.6 Na `/sources` ustawienie Lat (np. 1900–1949) chowa wszystkie nagrobki, a komunikat „Ukryto N źródeł bez …” nie liczy nagrobków — d2aad79
+- [x] 2.7 Na `/sources` wybór Archiwum chowa nagrobki bez wpisu w komunikacie o ukrytych — d2aad79
+- [x] 2.8 W panelu osoby przy Zgonie picker z podstawionym rokiem pokazuje nagrobek z cmentarza po wpisaniu miejscowości, a po wybraniu nie ma pola „Numer wpisu” — d2aad79
+- [x] 2.9 Przy powiązanym nagrobku nie ma przycisku „Numer wpisu”, a przy akcie jest — d2aad79
+- [x] 2.10 Karta nagrobka w galerii nie pokazuje roku ani archiwum — d2aad79
