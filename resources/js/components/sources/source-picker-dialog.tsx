@@ -107,7 +107,8 @@ export function SourcePickerDialog({
         setError(undefined);
         setEntryNumberError(undefined);
 
-        const trimmedNumber = entryNumber.trim();
+        const trimmedNumber =
+            selectedSource?.kind === 'gravestone' ? '' : entryNumber.trim();
 
         router.post(
             EventSourceController.store(eventId).url,
@@ -329,35 +330,40 @@ export function SourcePickerDialog({
                             Wybrane: {selectedSource.display_name}
                         </p>
                         <div className="flex items-end gap-3">
-                            <div className="grid flex-1 gap-1">
-                                <Label htmlFor={entryNumberId}>
-                                    Numer wpisu
-                                </Label>
-                                <Input
-                                    id={entryNumberId}
-                                    value={entryNumber}
-                                    onChange={(event) =>
-                                        setEntryNumber(event.target.value)
-                                    }
-                                    onKeyDown={(event) => {
-                                        if (event.key === 'Enter') {
-                                            event.preventDefault();
-                                            handleLink();
+                            {selectedSource.kind !== 'gravestone' && (
+                                <div className="grid flex-1 gap-1">
+                                    <Label htmlFor={entryNumberId}>
+                                        Numer wpisu
+                                    </Label>
+                                    <Input
+                                        id={entryNumberId}
+                                        value={entryNumber}
+                                        onChange={(event) =>
+                                            setEntryNumber(event.target.value)
                                         }
-                                    }}
-                                    autoComplete="off"
-                                    autoFocus
-                                />
-                            </div>
+                                        onKeyDown={(event) => {
+                                            if (event.key === 'Enter') {
+                                                event.preventDefault();
+                                                handleLink();
+                                            }
+                                        }}
+                                        autoComplete="off"
+                                        autoFocus
+                                    />
+                                </div>
+                            )}
                             <Button
                                 type="button"
                                 disabled={processing}
                                 onClick={handleLink}
+                                autoFocus={selectedSource.kind === 'gravestone'}
                             >
                                 Powiąż
                             </Button>
                         </div>
-                        <InputError message={entryNumberError} />
+                        {selectedSource.kind !== 'gravestone' && (
+                            <InputError message={entryNumberError} />
+                        )}
                     </div>
                 )}
 

@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vite-plus/test';
+import type { Source } from '@/types';
 import { filterSourcesByPlaceAndYear } from './source-place-year-filter';
 
 const source = (
@@ -6,7 +7,8 @@ const source = (
     year: number | null,
     parish_label: string | null,
     locality_name: string | null,
-) => ({ id, year, parish_label, locality_name });
+    kind: Source['kind'] = 'metrical_record',
+) => ({ id, kind, year, parish_label, locality_name });
 
 const lubomlSeat = source(1, 1900, 'Parafia św. Jana', 'Luboml');
 const parishNamed = source(2, 1901, 'Parafia Luboml', null);
@@ -15,7 +17,7 @@ const noYear = source(4, null, 'Parafia św. Jana', 'Luboml');
 const noPlace = source(5, 1900, null, null);
 const elsewhere = source(6, 1900, 'Parafia X', 'Kraków');
 
-const gravestone = source(7, 1950, null, 'Luboml');
+const gravestone = source(7, null, null, 'Luboml', 'gravestone');
 
 const all = [lubomlSeat, parishNamed, otherYear, noYear, noPlace, elsewhere];
 const none = { place: '', year: '' };
@@ -78,13 +80,22 @@ describe('filterSourcesByPlaceAndYear', () => {
         expect(visible).toEqual([seated]);
     });
 
-    it('finds a gravestone by the place of its cemetery and its year', () => {
+    it('finds a gravestone without a year by the place of its cemetery while a year is active', () => {
         const { visible } = filterSourcesByPlaceAndYear(
             [gravestone, lubomlSeat, elsewhere],
-            { place: 'lubo', year: '1950' },
+            { place: 'lubo', year: '1900' },
         );
 
-        expect(visible).toEqual([gravestone]);
+        expect(visible).toEqual([gravestone, lubomlSeat]);
+    });
+
+    it('does not count a gravestone as hidden for lacking a year', () => {
+        expect(
+            filterSourcesByPlaceAndYear([gravestone], {
+                place: '',
+                year: '1900',
+            }),
+        ).toEqual({ visible: [gravestone], hiddenUndescribedCount: 0 });
     });
 
     it('ignores letter case and surrounding spaces', () => {
@@ -146,11 +157,11 @@ describe('filterSourcesByPlaceAndYear', () => {
 
     it('finds a gravestone by the name of its cemetery and by its locality', () => {
         const named = {
-            ...source(8, 1950, null, 'Luboml'),
+            ...source(8, null, null, 'Luboml', 'gravestone'),
             cemetery_label: 'Cmentarz parafialny, Luboml',
         };
         const unnamed = {
-            ...source(9, 1950, null, 'Chełm'),
+            ...source(9, null, null, 'Chełm', 'gravestone'),
             cemetery_label: 'cmentarz Chełm',
         };
 

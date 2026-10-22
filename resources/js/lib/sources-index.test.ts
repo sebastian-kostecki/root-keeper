@@ -342,18 +342,22 @@ describe('filterOptionCounts', () => {
         source(2, {
             kind: 'gravestone',
             name: 'Lipnica grób',
-            year: 1890,
-            archive: 'AP B',
             cemetery_id: 200,
             cemetery_locality_id: 20,
         }),
         source(3, {
             kind: 'gravestone',
             name: 'Inne',
-            year: 1950,
-            archive: 'AP A',
             cemetery_id: 100,
             cemetery_locality_id: 10,
+        }),
+        source(4, {
+            kind: 'metrical_record',
+            name: 'Lipnica akt B',
+            year: 1890,
+            archive: 'AP B',
+            parish_id: 2,
+            parish_locality_id: 20,
         }),
     ];
 
@@ -460,6 +464,52 @@ describe('resultCountText', () => {
         expect(resultCountText(1, 1, true)).toBe('1 z 1 źródła');
         expect(resultCountText(0, 64, true)).toBe('0 z 64 źródeł');
         expect(resultCountText(1, 2, true)).toBe('1 z 2 źródeł');
+    });
+});
+
+describe('filterSources with a gravestone', () => {
+    const list = [
+        source(1, { kind: 'metrical_record', year: 1880, archive: 'AP A' }),
+        source(2, { kind: 'metrical_record' }),
+        source(3, { kind: 'gravestone', cemetery_id: 100 }),
+    ];
+
+    it('hides a gravestone when a year is set and does not count it as lacking a year', () => {
+        const { visible, counts, hidden } = filterSources(
+            list,
+            filtersOf({ year_from: 1850, year_to: 1899 }),
+        );
+
+        expect(ids(visible)).toEqual([1]);
+        expect(counts.nagrobki).toBe(0);
+        expect(hidden).toEqual({ count: 1, missing: ['year'] });
+    });
+
+    it('hides a gravestone when an archive is set and does not count it as lacking an archive', () => {
+        const { visible, hidden } = filterSources(
+            list,
+            filtersOf({ archive: 'AP A' }),
+        );
+
+        expect(ids(visible)).toEqual([1]);
+        expect(hidden).toEqual({ count: 1, missing: ['archive'] });
+    });
+
+    it('shows no hidden gravestones on the nagrobki tab while a year is set', () => {
+        const { visible, hidden } = filterSources(
+            list,
+            filtersOf({ kind: 'nagrobki', year_from: 1850 }),
+        );
+
+        expect(visible).toEqual([]);
+        expect(hidden).toEqual({ count: 0, missing: [] });
+    });
+
+    it('still counts an akt without a year as lacking one', () => {
+        expect(
+            filterSources(list, filtersOf({ year_to: 1900, kind: 'akty' }))
+                .hidden,
+        ).toEqual({ count: 1, missing: ['year'] });
     });
 });
 

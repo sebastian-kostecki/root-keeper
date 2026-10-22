@@ -58,10 +58,9 @@ describe('formatSourceMeta', () => {
             formatSourceMeta({
                 ...empty,
                 kind: 'gravestone',
-                year: 1950,
                 cemetery_label: 'cmentarz Luboml',
             }),
-        ).toBe('1950 · cmentarz Luboml');
+        ).toBe('cmentarz Luboml');
     });
 
     it('shows the label of a named cemetery with its locality', () => {
@@ -79,10 +78,9 @@ describe('formatSourceMeta', () => {
             formatSourceMeta({
                 ...empty,
                 kind: 'gravestone',
-                year: 1950,
                 parish_label: 'Św. Jana',
             }),
-        ).toBe('1950');
+        ).toBeNull();
     });
 });
 
@@ -403,11 +401,9 @@ describe('formatSourceSummary', () => {
         expect(
             formatSourceSummary({
                 ...summarySource,
-                kind: 'gravestone',
-                kind_short_label: 'nagrobek',
                 year: 1932,
             }),
-        ).toBe('nagrobek · 1932');
+        ).toBe('inne · 1932');
     });
 
     it('adds the upload date when nothing else describes the source', () => {
@@ -438,10 +434,9 @@ describe('formatSourceSummary', () => {
                 ...summarySource,
                 kind: 'gravestone',
                 kind_short_label: 'nagrobek',
-                year: 1950,
                 cemetery_label: 'cmentarz Luboml',
             }),
-        ).toBe('nagrobek · 1950 · cmentarz Luboml');
+        ).toBe('nagrobek · cmentarz Luboml');
     });
 
     it('ends with the parish', () => {

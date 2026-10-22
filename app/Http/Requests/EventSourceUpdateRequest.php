@@ -2,7 +2,9 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\SourceKind;
 use App\Models\Event;
+use App\Models\Source;
 use Illuminate\Auth\Access\Response;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
@@ -21,9 +23,15 @@ class EventSourceUpdateRequest extends FormRequest
             return Response::denyAsNotFound();
         }
 
+        $source = $this->route('source');
+
+        if ($source instanceof Source && $source->kind === SourceKind::Gravestone) {
+            return Response::denyAsNotFound();
+        }
+
         $response = Gate::inspect('update', $event);
 
-        return $response->allowed() ? Gate::inspect('view', $this->route('source')) : $response;
+        return $response->allowed() ? Gate::inspect('view', $source) : $response;
     }
 
     /**
