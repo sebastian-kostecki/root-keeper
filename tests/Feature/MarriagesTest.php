@@ -314,16 +314,25 @@ test('store saves the wedding form while attach and spouse store leave it unknow
         'marriage' => ['form' => 'religious'],
     ])->assertSessionHasNoErrors();
 
-    expect(Event::where('type', EventType::Marriage)->sole()->marriage_form)->toBe(MarriageForm::Religious);
+    $marriageWith = fn (Person $other): Event => Event::where('type', EventType::Marriage)
+        ->whereHas('participants', fn ($query) => $query->whereKey($other->id))
+        ->sole();
+
+    expect($marriageWith($spouse)->marriage_form)->toBe(MarriageForm::Religious);
 
     $attached = Person::factory()->for($user->tree)->female()->create();
-    $this->actingAs($user)->post(route('persons.spouses.attach', $person), ['spouse_id' => $attached->id]);
+    $this->actingAs($user)
+        ->post(route('persons.spouses.attach', $person), ['spouse_id' => $attached->id])
+        ->assertSessionHasNoErrors();
 
-    $this->actingAs($user)->post(route('persons.spouses.store', $person), ['first_name' => 'Anna', 'last_name' => 'Nowak', 'gender' => 'female']);
+    expect($marriageWith($attached)->marriage_form)->toBeNull();
 
-    $unknownForms = Event::where('type', EventType::Marriage)->whereKeyNot(Event::where('marriage_form', 'religious')->value('id'))->get();
-    expect($unknownForms)->toHaveCount(2);
-    expect($unknownForms->every(fn (Event $event): bool => $event->marriage_form === null))->toBeTrue();
+    $this->actingAs($user)
+        ->post(route('persons.spouses.store', $person), ['first_name' => 'Anna', 'last_name' => 'Nowak', 'gender' => 'female'])
+        ->assertSessionHasNoErrors();
+
+    $created = Person::whereKeyNot([$person->id, $spouse->id, $attached->id])->sole();
+    expect($marriageWith($created)->marriage_form)->toBeNull();
 });
 
 test('a birth event in the person overview carries no wedding form keys', function () {

@@ -183,7 +183,12 @@ export function mergeSectionIntoPayload(
 }
 
 /** Values of the marriage fields as `MarriageFields` shows them. */
-export function marriageFieldDefaults(marriage: MarriageEvent): {
+export function marriageFieldDefaults(
+    marriage: Pick<
+        MarriageEvent,
+        'date_parts' | 'locality_id' | 'place' | 'marriage_form'
+    >,
+): {
     year: number | null;
     month: number | null;
     day: number | null;

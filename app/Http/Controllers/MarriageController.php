@@ -33,7 +33,8 @@ class MarriageController extends Controller
     }
 
     /**
-     * Update the given marriage's date and place.
+     * Replace the given marriage's date, place and wedding form; a missing
+     * `form` key resets the form to unknown.
      */
     public function update(MarriageUpdateRequest $request, Event $marriage, UpdateMarriage $updateMarriage): RedirectResponse
     {

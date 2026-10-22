@@ -10,14 +10,15 @@ class UpdateMarriage
     use MapsEventInput;
 
     /**
-     * Update a marriage event's date and locality in place, leaving its
-     * participants and linked sources untouched.
+     * Replace a marriage event's date, locality and wedding form in place,
+     * leaving its participants and linked sources untouched. A missing key
+     * clears its value: without `form` the wedding form becomes unknown.
      *
-     * @param  array{year?: int|string|null, month?: int|string|null, day?: int|string|null, is_approximate?: bool|int|string|null, locality_id?: int|string|null, form?: string|null}  $date
+     * @param  array{year?: int|string|null, month?: int|string|null, day?: int|string|null, is_approximate?: bool|int|string|null, locality_id?: int|string|null, form?: string|null}  $input
      */
-    public function handle(Event $marriage, array $date): Event
+    public function handle(Event $marriage, array $input): Event
     {
-        $marriage->update($this->marriageAttributesFrom($date));
+        $marriage->update($this->marriageAttributesFrom($input));
 
         return $marriage;
     }

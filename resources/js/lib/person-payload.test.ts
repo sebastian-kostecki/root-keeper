@@ -180,8 +180,7 @@ describe('marriage card', () => {
             locality_id: null,
             place: null,
             marriage_form: 'religious',
-            marriage_form_label: 'wyznaniowy',
-        } as unknown as Parameters<typeof marriageFieldDefaults>[0]);
+        });
 
         expect(defaults.form).toBe('religious');
     });

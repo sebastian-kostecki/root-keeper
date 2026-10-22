@@ -1,9 +1,9 @@
 ---
 change_id: marriage-form-and-other-surnames
 title: Forma ślubu, para bez ślubu i inne nazwiska osoby
-status: implemented
+status: impl_reviewed
 created: 2026-10-21
-updated: 2026-10-21
+updated: 2026-10-22
 archived_at: null
 ---
 
