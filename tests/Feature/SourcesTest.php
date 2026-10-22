@@ -49,7 +49,7 @@ test('sources index shows only the authenticated user own sources, newest first'
         ->component('sources/index')
         ->has('sources', 2)
         ->has('sources.0', fn ($source) => $source->hasAll([
-            'id', 'kind', 'kind_label', 'kind_short_label', 'name', 'display_name', 'record_type', 'record_type_label', 'legacy_entry_number', 'year', 'parish_id', 'parish_label', 'parish_locality_id', 'locality_name', 'cemetery_id', 'cemetery_label', 'cemetery_locality_id', 'archive', 'url', 'note', 'original_name', 'mime_type', 'size', 'width', 'height', 'has_thumbnail', 'uploaded_at', 'events_count',
+            'id', 'kind', 'kind_label', 'kind_short_label', 'name', 'display_name', 'record_type', 'record_type_label', 'year', 'parish_id', 'parish_label', 'parish_locality_id', 'locality_name', 'cemetery_id', 'cemetery_label', 'cemetery_locality_id', 'archive', 'url', 'note', 'original_name', 'mime_type', 'size', 'width', 'height', 'has_thumbnail', 'uploaded_at', 'events_count',
         ]))
         ->where('sources.0.id', $newer->id)
         ->where('sources.1.id', $older->id));
@@ -531,11 +531,11 @@ test('storing with only a file and a kind leaves the description empty', functio
 
     $source = Source::firstOrFail();
 
-    expect($source->only(['name', 'record_type', 'entry_number', 'parish_id', 'year', 'archive', 'url', 'note']))
+    expect($source->only(['name', 'record_type', 'parish_id', 'year', 'archive', 'url', 'note']))
         ->each->toBeNull();
 });
 
-test('storing with a full description persists every field and ignores a submitted entry number', function () {
+test('storing with a full description persists every field', function () {
     Storage::fake('local');
 
     $user = User::factory()->create();
@@ -546,7 +546,6 @@ test('storing with a full description persists every field and ignores a submitt
         'file' => UploadedFile::fake()->image('akt.jpg'),
         'name' => 'Urodzenia Lipnica 1878',
         'record_type' => 'birth',
-        'entry_number' => '47a',
         'year' => '1878',
         'parish_id' => $parish->id,
         'archive' => 'Archiwum w Krakowie',
@@ -558,7 +557,6 @@ test('storing with a full description persists every field and ignores a submitt
 
     expect($source->name)->toBe('Urodzenia Lipnica 1878');
     expect($source->record_type)->toBe(SourceRecordType::Birth);
-    expect($source->entry_number)->toBeNull();
     expect($source->year)->toBe(1878);
     expect($source->parish_id)->toBe($parish->id);
     expect($source->archive)->toBe('Archiwum w Krakowie');
@@ -581,7 +579,6 @@ test('storing a gravestone ignores a submitted record type', function () {
 
     expect($source->name)->toBe('Nagrobek');
     expect($source->record_type)->toBeNull();
-    expect($source->entry_number)->toBeNull();
 });
 
 test('store rejects an invalid description with polish messages', function (array $input, string $field, string $expected) {
@@ -607,15 +604,14 @@ test('store rejects an invalid description with polish messages', function (arra
     'long note' => [['note' => str_repeat('a', 5001)], 'note', 'notatka'],
 ]);
 
-test('updating changes the kind and the description, ignores a submitted entry number and redirects back with the toast', function () {
+test('updating changes the kind and the description and redirects back with the toast', function () {
     $user = User::factory()->create();
-    $source = Source::factory()->for($user->tree)->create(['entry_number' => '47']);
+    $source = Source::factory()->for($user->tree)->create();
 
     $this->actingAs($user)->from(route('sources.index', ['source' => $source->id]))->put(route('sources.update', $source), [
         'kind' => 'metrical_record',
         'name' => 'Nowa nazwa',
         'record_type' => 'death',
-        'entry_number' => '12/1878',
         'year' => '1878',
         'archive' => 'Archiwum',
         'url' => 'https://example.com',
@@ -628,14 +624,13 @@ test('updating changes the kind and the description, ignores a submitted entry n
 
     expect($source->name)->toBe('Nowa nazwa');
     expect($source->record_type)->toBe(SourceRecordType::Death);
-    expect($source->entry_number)->toBe('47');
     expect($source->year)->toBe(1878);
     expect($source->note)->toBe('Notatka');
 });
 
 test('changing an akt with a stored record type or parish to another kind without confirmation is rejected', function (string $stored) {
     $user = User::factory()->create();
-    $source = Source::factory()->for($user->tree)->create(['entry_number' => '47']);
+    $source = Source::factory()->for($user->tree)->create();
 
     if ($stored === 'record type') {
         $source->update(['record_type' => SourceRecordType::Birth]);
@@ -651,10 +646,9 @@ test('changing an akt with a stored record type or parish to another kind withou
     $source->refresh();
 
     expect($source->kind)->toBe(SourceKind::MetricalRecord);
-    expect($source->entry_number)->toBe('47');
 })->with(['record type', 'parish']);
 
-test('changing an akt to another kind with confirmation erases type and parish but keeps the legacy entry number', function () {
+test('changing an akt to another kind with confirmation erases type and parish', function () {
     $user = User::factory()->create();
     $parish = Parish::factory()->for($user->tree)->create();
     $source = Source::factory()->for($user->tree)->described()->create(['parish_id' => $parish->id]);
@@ -664,7 +658,6 @@ test('changing an akt to another kind with confirmation erases type and parish b
         'discard_record_fields' => '1',
         'name' => 'Nagrobek',
         'record_type' => 'birth',
-        'entry_number' => '99',
     ])->assertSessionHasNoErrors();
 
     $source->refresh();
@@ -672,55 +665,7 @@ test('changing an akt to another kind with confirmation erases type and parish b
     expect($source->kind)->toBe(SourceKind::Gravestone);
     expect($source->record_type)->toBeNull();
     expect($source->parish_id)->toBeNull();
-    expect($source->entry_number)->toBe('47');
     expect($source->name)->toBe('Nagrobek');
-});
-
-test('changing an akt with only a legacy entry number to another kind needs no confirmation and keeps the number', function () {
-    $user = User::factory()->create();
-    $source = Source::factory()->for($user->tree)->create(['entry_number' => '47']);
-
-    $this->actingAs($user)->put(route('sources.update', $source), ['kind' => 'other'])
-        ->assertSessionHasNoErrors();
-
-    $source->refresh();
-
-    expect($source->kind)->toBe(SourceKind::Other);
-    expect($source->entry_number)->toBe('47');
-});
-
-test('saving a source without an entry number in the body keeps the legacy entry number', function () {
-    $user = User::factory()->create();
-    $source = Source::factory()->for($user->tree)->described()->create();
-
-    $this->actingAs($user)->put(route('sources.update', $source), ['kind' => 'metrical_record', 'name' => 'Inna nazwa'])
-        ->assertSessionHasNoErrors();
-
-    expect($source->refresh()->entry_number)->toBe('47');
-});
-
-test('clearing the legacy entry number empties only that value and toasts', function () {
-    $user = User::factory()->create();
-    $source = Source::factory()->for($user->tree)->described()->create();
-
-    $this->actingAs($user)->from(route('sources.index', ['source' => $source->id]))->delete(route('sources.legacy-entry-number.destroy', $source))
-        ->assertRedirect(route('sources.index', ['source' => $source->id]))
-        ->assertInertiaFlash('toast', ['type' => 'success', 'message' => 'Usunięto stary numer wpisu']);
-
-    $source->refresh();
-
-    expect($source->entry_number)->toBeNull();
-    expect($source->name)->toBe('Urodzenia Lipnica 1878 s. 12');
-    expect($source->record_type)->toBe(SourceRecordType::Birth);
-});
-
-test('clearing the legacy entry number of another user\'s source is a 404', function () {
-    $source = Source::factory()->for(User::factory()->create()->tree)->described()->create();
-
-    $this->actingAs(User::factory()->create())->delete(route('sources.legacy-entry-number.destroy', $source))
-        ->assertNotFound();
-
-    expect($source->refresh()->entry_number)->toBe('47');
 });
 
 test('changing the kind of a linked akt keeps its event links and the events stay confirmed', function () {
