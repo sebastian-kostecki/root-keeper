@@ -19,7 +19,9 @@ export default defineConfig({
     forbidOnly: !!process.env.CI,
     // No retries, in CI too: a flaky test must show up red, not pass on a rerun.
     retries: 0,
-    workers: process.env.CI ? 2 : undefined,
+    // 2 locally too: with the default (half the cores) the slowest tree specs
+    // (~25 s each under Sail on WSL) run out of the 30 s limit.
+    workers: 2,
     // In CI: annotations on the PR plus an HTML report uploaded as a job artifact.
     reporter: process.env.CI
         ? [['github'], ['html', { open: 'never' }]]
