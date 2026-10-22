@@ -1423,7 +1423,7 @@ test('storing an akt saves the parish and the archive', function () {
         ->and($source->archive)->toBe('Archiwum Diecezjalne w Tarnowie');
 });
 
-test('storing a gravestone saves the archive and ignores a submitted parish', function () {
+test('storing a gravestone ignores a submitted year, archive and parish', function () {
     Storage::fake('local');
 
     $user = User::factory()->create();
@@ -1433,13 +1433,15 @@ test('storing a gravestone saves the archive and ignores a submitted parish', fu
         'kind' => 'gravestone',
         'file' => UploadedFile::fake()->image('nagrobek.jpg'),
         'parish_id' => $parish->id,
+        'year' => 1932,
         'archive' => 'Archiwum cmentarne',
     ])->assertSessionHasNoErrors();
 
     $source = Source::firstOrFail();
 
     expect($source->parish_id)->toBeNull()
-        ->and($source->archive)->toBe('Archiwum cmentarne');
+        ->and($source->year)->toBeNull()
+        ->and($source->archive)->toBeNull();
 });
 
 test('another tree parish is rejected on store and update without saving', function () {
@@ -1484,7 +1486,7 @@ test('updating a source never changes the stored provenance', function () {
 test('changing an akt with a parish to another kind needs confirmation and then clears the parish', function () {
     $user = User::factory()->create();
     $parish = Parish::factory()->for($user->tree)->create();
-    $source = Source::factory()->for($user->tree)->create(['parish_id' => $parish->id, 'archive' => 'Archiwum']);
+    $source = Source::factory()->for($user->tree)->create(['parish_id' => $parish->id, 'year' => 1878, 'archive' => 'Archiwum']);
 
     $response = $this->actingAs($user)->put(route('sources.update', $source), ['kind' => 'gravestone', 'archive' => 'Archiwum']);
 
@@ -1501,7 +1503,53 @@ test('changing an akt with a parish to another kind needs confirmation and then 
 
     expect($source->kind)->toBe(SourceKind::Gravestone)
         ->and($source->parish_id)->toBeNull()
-        ->and($source->archive)->toBe('Archiwum');
+        ->and($source->archive)->toBeNull()
+        ->and($source->year)->toBeNull()
+        ->and($source->note)->toContain('Rok: 1878')
+        ->and($source->note)->toContain('Archiwum: Archiwum');
+});
+
+test('changing an akt with entry numbers to a gravestone moves year, archive and numbers to the submitted note', function () {
+    $user = User::factory()->create();
+    $source = Source::factory()->for($user->tree)->described()->create(['note' => 'Stara notatka.']);
+    $first = Event::factory()->for($user->tree)->create();
+    $second = Event::factory()->for($user->tree)->create();
+    $first->sources()->attach($source, ['entry_number' => '12']);
+    $second->sources()->attach($source, ['entry_number' => '47/3']);
+
+    $this->actingAs($user)->put(route('sources.update', $source), [
+        'kind' => 'gravestone',
+        'discard_record_fields' => '1',
+        'year' => 1878,
+        'archive' => 'Archiwum Państwowe w Krakowie',
+        'note' => 'Nowa notatka.',
+    ])->assertSessionHasNoErrors();
+
+    $source->refresh();
+
+    expect($source->note)->toBe("Nowa notatka.\n\nRok: 1878\nArchiwum: Archiwum Państwowe w Krakowie\nNumer wpisu: 12\nNumer wpisu: 47/3")
+        ->and($source->year)->toBeNull()
+        ->and($source->archive)->toBeNull();
+    expect(DB::table('event_source')->where('source_id', $source->id)->whereNotNull('entry_number')->count())->toBe(0);
+    expect(DB::table('event_source')->where('source_id', $source->id)->count())->toBe(2);
+});
+
+test('updating a gravestone with a year and an archive in the body leaves both empty', function () {
+    $user = User::factory()->create();
+    $source = Source::factory()->gravestone()->for($user->tree)->create(['note' => 'Notatka.']);
+
+    $this->actingAs($user)->put(route('sources.update', $source), [
+        'kind' => 'gravestone',
+        'year' => 1932,
+        'archive' => 'Archiwum',
+        'note' => 'Notatka.',
+    ])->assertSessionHasNoErrors();
+
+    $source->refresh();
+
+    expect($source->year)->toBeNull()
+        ->and($source->archive)->toBeNull()
+        ->and($source->note)->toBe('Notatka.');
 });
 
 test('the source resource exposes the parish id and label', function () {

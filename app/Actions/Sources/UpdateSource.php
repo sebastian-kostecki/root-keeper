@@ -14,6 +14,9 @@ class UpdateSource
      * Update the kind and description of a source. Only a metrical record carries
      * a record type and a parish, and only a gravestone a cemetery and a list of
      * buried people (replaced as a whole), so those are cleared for any other kind.
+     * A gravestone has no year and no archive either. Changing another kind into a
+     * gravestone moves the stored year, archive and the entry numbers of its event links
+     * to the end of the submitted note and clears them, so no value is lost.
      * The file, its thumbnail and the event links are never touched. Saving a
      * gravestone fills the empty burial places of its deceased people.
      *
@@ -47,7 +50,19 @@ class UpdateSource
             $buriedPersonIds = [];
         }
 
-        return DB::transaction(function () use ($source, $attributes, $buriedPersonIds): Source {
+        $becomesGravestone = $kind === SourceKind::Gravestone && $source->kind !== SourceKind::Gravestone;
+
+        if ($kind === SourceKind::Gravestone) {
+            $attributes['year'] = null;
+            $attributes['archive'] = null;
+        }
+
+        return DB::transaction(function () use ($source, $attributes, $buriedPersonIds, $becomesGravestone): Source {
+            if ($becomesGravestone) {
+                $attributes['note'] = $this->noteWithMovedValues($source, $attributes['note']);
+                DB::table('event_source')->where('source_id', $source->id)->update(['entry_number' => null]);
+            }
+
             $source->update($attributes);
             $source->buriedPeople()->sync($buriedPersonIds);
 
@@ -55,5 +70,37 @@ class UpdateSource
 
             return $source;
         });
+    }
+
+    /**
+     * Append the stored year, archive and entry numbers (in link order) to the note as lines.
+     */
+    private function noteWithMovedValues(Source $source, ?string $note): ?string
+    {
+        $lines = [];
+
+        if ($source->year !== null) {
+            $lines[] = "Rok: {$source->year}";
+        }
+
+        if (filled($source->archive) && trim($source->archive) !== '') {
+            $lines[] = 'Archiwum: '.trim($source->archive);
+        }
+
+        $entryNumbers = DB::table('event_source')->where('source_id', $source->id)->orderBy('id')->pluck('entry_number');
+
+        foreach ($entryNumbers as $entryNumber) {
+            if (filled($entryNumber) && trim((string) $entryNumber) !== '') {
+                $lines[] = 'Numer wpisu: '.trim((string) $entryNumber);
+            }
+        }
+
+        if ($lines === []) {
+            return $note;
+        }
+
+        $block = implode("\n", $lines);
+
+        return filled($note) ? $note."\n\n".$block : $block;
     }
 }

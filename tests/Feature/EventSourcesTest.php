@@ -220,6 +220,30 @@ test('an entry number longer than 50 characters fails validation and creates not
     $this->assertDatabaseCount('event_source', 0);
 });
 
+test('linking a gravestone with an entry number stores the link without it', function () {
+    $user = User::factory()->create();
+    $event = Event::factory()->for($user->tree)->create();
+    $source = Source::factory()->gravestone()->for($user->tree)->create();
+
+    $this->actingAs($user)->post(route('events.sources.store', $event), ['source_id' => $source->id, 'entry_number' => '95'])
+        ->assertSessionHasNoErrors();
+
+    $this->assertDatabaseHas('event_source', ['event_id' => $event->id, 'source_id' => $source->id, 'entry_number' => null]);
+    $this->assertDatabaseCount('event_source', 1);
+});
+
+test('updating the entry number of a linked gravestone returns not found and changes nothing', function () {
+    $user = User::factory()->create();
+    $event = Event::factory()->for($user->tree)->create();
+    $source = Source::factory()->gravestone()->for($user->tree)->create();
+    $event->sources()->attach($source);
+
+    $this->actingAs($user)->patch(route('events.sources.update', [$event, $source]), ['entry_number' => '95'])
+        ->assertNotFound();
+
+    $this->assertDatabaseHas('event_source', ['event_id' => $event->id, 'source_id' => $source->id, 'entry_number' => null]);
+});
+
 test('updating sets and clears the entry number of a link', function () {
     $user = User::factory()->create();
     $event = Event::factory()->for($user->tree)->create();

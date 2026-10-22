@@ -369,7 +369,7 @@ class TreeViewDemoSeeder extends Seeder
         Source::factory()->for($this->tree)->gravestone()->create([
             'original_name' => 'nagrobek-opisany.jpg',
             'name' => 'Nagrobek rodziny Kowalskich, cmentarz w Lipnicy',
-            'year' => 1932,
+            'note' => 'Rok: 1932',
         ]);
 
         Source::factory()->for($this->tree)->create([
