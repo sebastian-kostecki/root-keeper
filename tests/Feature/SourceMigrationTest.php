@@ -222,6 +222,8 @@ test('events keep their confirmed state through the preview props', function () 
 });
 
 test('the description migration keeps existing rows with an empty description and rolls back cleanly', function () {
+    restoreLegacyColumns();
+
     $columns = ['name', 'record_type', 'entry_number', 'year', 'provenance', 'url', 'note'];
     $source = Source::factory()->create(['original_name' => 'akt.jpg']);
 

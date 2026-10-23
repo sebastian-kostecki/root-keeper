@@ -29,7 +29,6 @@ function source(id: number, overrides: Partial<IndexSource> = {}): IndexSource {
         display_name: name ?? `plik-${id}.jpg`,
         record_type: null,
         record_type_label: null,
-        legacy_entry_number: null,
         year: null,
         archive: null,
         parish_id: null,

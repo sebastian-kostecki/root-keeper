@@ -13,7 +13,6 @@ use App\Models\Person;
 use App\Models\Residence;
 use App\Models\Source;
 use App\Models\User;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 /**
@@ -340,21 +339,6 @@ test('merging moves every kind of reference of the duplicate to the target and d
     expect($otherEvent->refresh()->locality_id)->toBe($other->id);
     expect($otherResidence->refresh()->locality_id)->toBe($other->id);
     expect($foreignEvent->refresh()->locality_id)->toBe($foreign->id);
-});
-
-test('merging works for a legacy gravestone whose old cemetery locality still names the duplicate', function () {
-    $user = User::factory()->create();
-    $duplicate = Locality::factory()->for($user->tree)->create();
-    $target = Locality::factory()->for($user->tree)->create();
-    $gravestone = Source::factory()->for($user->tree)->gravestone()->create();
-
-    DB::table('sources')->where('id', $gravestone->id)->update(['cemetery_locality_id' => $duplicate->id]);
-
-    $this->actingAs($user)->post(route('localities.merge', $duplicate), ['target_id' => $target->id])
-        ->assertSessionHasNoErrors();
-
-    expect(Locality::find($duplicate->id))->toBeNull();
-    expect(Source::find($gravestone->id))->not->toBeNull();
 });
 
 test('merging keeps one residence where the same person lived in the same years', function (?int $fromTarget, ?int $toTarget, ?int $fromDuplicate, ?int $toDuplicate, int $expectedRows) {

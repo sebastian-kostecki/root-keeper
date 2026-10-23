@@ -121,7 +121,6 @@ function ownershipRouteCases(): array
         ['persons.photo.show', 'get', fn (array $r): array => ['person' => $r['victimPerson']->id]],
         ['persons.photo.destroy', 'delete', fn (array $r): array => ['person' => $r['victimPerson']->id]],
         ['sources.destroy', 'delete', fn (array $r): array => ['source' => $r['victimSource']->id]],
-        ['sources.legacy-entry-number.destroy', 'delete', fn (array $r): array => ['source' => $r['victimSource']->id]],
         ['localities.destroy', 'delete', fn (array $r): array => ['locality' => $r['victimLocality']->id]],
         ['parishes.destroy', 'delete', fn (array $r): array => ['parish' => $r['victimParish']->id]],
         ['cemeteries.destroy', 'delete', fn (array $r): array => ['cemetery' => $r['victimCemetery']->id]],

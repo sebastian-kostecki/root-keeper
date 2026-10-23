@@ -69,7 +69,6 @@ class SourceFactory extends Factory
             'kind' => SourceKind::MetricalRecord,
             'name' => 'Urodzenia Lipnica 1878 s. 12',
             'record_type' => SourceRecordType::Birth,
-            'entry_number' => '47',
             'year' => 1878,
             'archive' => 'Archiwum Państwowe w Krakowie',
             'url' => 'https://example.com/akt',

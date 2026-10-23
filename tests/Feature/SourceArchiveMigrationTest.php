@@ -12,6 +12,11 @@ function addParishAndArchiveMigration(): Migration
     return $migration ??= require database_path('migrations/2026_10_05_114945_add_parish_and_archive_to_sources_table.php');
 }
 
+beforeEach(function () {
+    // The schema is fully migrated: bring back the legacy columns this test's migration works on.
+    restoreLegacyColumns();
+});
+
 function insertSourceWithProvenance(int $treeId, ?string $provenance): int
 {
     return DB::table('sources')->insertGetId([

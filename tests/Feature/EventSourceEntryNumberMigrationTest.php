@@ -12,6 +12,11 @@ function addEntryNumberToEventSourceMigration(): Migration
     return $migration ??= require database_path('migrations/2026_10_05_135710_add_entry_number_to_event_source_table.php');
 }
 
+beforeEach(function () {
+    // The schema is fully migrated: bring back the legacy columns this test's migration works on.
+    restoreLegacyColumns();
+});
+
 /**
  * Put the schema back to its pre-migration shape and insert links (and a source with the old entry number).
  *
