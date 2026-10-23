@@ -35,7 +35,7 @@ Dwie granice, które należy jasno rozróżniać:
 
 <!-- END @przeprogramowani/10x-cli -->
 
-## Frontend toolchain — Vite+ (vite-plus 1.0.0)
+## Frontend toolchain — Vite+ (vite-plus 1.3.0)
 
 - The frontend toolchain is Vite+ (`vp` CLI), not plain Vite. Lint = Oxlint, format = Oxfmt, both configured in the `lint` and `fmt` blocks of `vite.config.ts`. There is no ESLint or Prettier in this repo — never add `.eslintrc*`, `eslint.config.*`, `.prettierrc*` or install those packages.
 - `vite.config.ts` imports `defineConfig` and `lazyPlugins` from `'vite-plus'`, not from `'vite'`. Add new plugins inside the `lazyPlugins(() => [...])` array.
@@ -46,7 +46,7 @@ Dwie granice, które należy jasno rozróżniać:
 
 ## Installed versions (check before relying on an API)
 
-PHP 8.5 · Laravel 13 · Inertia v3 (inertia-laravel 3.5, @inertiajs/react 3.8) · React 19 (React Compiler on) · TypeScript 7 · Tailwind v4 · Pest 5 / PHPUnit 13 · Larastan 3 (level 7) · Fortify 1.40 · Wayfinder 0.1 (pre-1.0) · PostgreSQL 18 · Vite 8 via vite-plus 1.0 · Vitest 5 (run as `vp test`) · Playwright 1.63 · react-zoom-pan-pinch 4.
+PHP 8.5 · Laravel 13 · Inertia v3 (inertia-laravel 3.5, @inertiajs/react 3.8) · React 19 (React Compiler on) · TypeScript 7 · Tailwind v4 · Pest 5 / PHPUnit 13 · Larastan 3 (level 7) · Fortify 1.40 · Wayfinder 0.1 (pre-1.0) · PostgreSQL 18 · Vite 8 via vite-plus 1.3 · Vitest 5 (run as `vp test`) · Playwright 1.63 · react-zoom-pan-pinch 4.
 
 - These are newer than most training data. Use Boost `search-docs` for Laravel/Inertia/Pest APIs instead of recalling them.
 - Frontend routes come from Wayfinder: import from `@/actions/...` or `@/routes/...`; never hardcode URLs. After adding or renaming a route, regenerate with `vendor/bin/sail artisan wayfinder:generate` (the Vite plugin also does it in dev).
