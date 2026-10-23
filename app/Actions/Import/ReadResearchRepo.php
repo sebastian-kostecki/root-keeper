@@ -53,6 +53,10 @@ class ReadResearchRepo
             }
         }
 
+        if ($files === []) {
+            $warnings[] = new ImportIssue('drzewo/', 'Nie znaleziono żadnych plików .md osób (sprawdź ścieżkę repo)');
+        }
+
         $persons = $this->dropDuplicateIds($parsedPersons, $skipped);
         ksort($persons);
 
@@ -76,10 +80,15 @@ class ReadResearchRepo
      */
     private function personFiles(string $treePath): array
     {
-        $files = array_filter(
-            glob($treePath.'/*.md') ?: [],
-            fn (string $path): bool => is_file($path) && ! str_starts_with(basename($path), '_'),
-        );
+        $files = [];
+
+        foreach (scandir($treePath) ?: [] as $name) {
+            $path = $treePath.'/'.$name;
+
+            if (str_ends_with($name, '.md') && ! str_starts_with($name, '_') && is_file($path)) {
+                $files[] = $path;
+            }
+        }
 
         sort($files);
 

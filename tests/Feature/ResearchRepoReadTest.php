@@ -189,3 +189,42 @@ test('reports a file without a front matter as having no block', function () {
     expect($parsed->hasBlock())->toBeFalse()
         ->and($parsed->warnings)->toBe([]);
 });
+
+test('reads a repo whose path contains glob characters', function () {
+    $repo = sys_get_temp_dir().'/repo [kopia] '.uniqid();
+    mkdir($repo.'/drzewo', 0777, true);
+    file_put_contents($repo.'/drzewo/jan.md', "---\nwersja: 1\nid: O-0200\nimiona: Jan\n---\n");
+
+    try {
+        $reading = app(ReadResearchRepo::class)->handle($repo);
+    } finally {
+        unlink($repo.'/drzewo/jan.md');
+        rmdir($repo.'/drzewo');
+        rmdir($repo);
+    }
+
+    expect($reading->scannedFiles)->toBe(1)
+        ->and($reading->persons)->toHaveKey('O-0200');
+});
+
+test('warns when the drzewo directory holds no person files', function () {
+    $repo = sys_get_temp_dir().'/repo-pusty-'.uniqid();
+    mkdir($repo.'/drzewo', 0777, true);
+
+    try {
+        $reading = app(ReadResearchRepo::class)->handle($repo);
+    } finally {
+        rmdir($repo.'/drzewo');
+        rmdir($repo);
+    }
+
+    expect($reading->scannedFiles)->toBe(0)
+        ->and(messagesFor($reading->warnings, 'drzewo'))->toContain('Nie znaleziono żadnych plików .md');
+});
+
+test('names the missing quotes when an unquoted date lands in a text field', function (string $field) {
+    $parsed = app(ParsePersonBlock::class)->handle('pole.md', "---\nwersja: 1\nid: O-0103\nimiona: Jan\nurodzenie:\n  {$field}: 1801-05-12\n---\n");
+
+    expect($parsed->person)->toBeNull()
+        ->and($parsed->skipReason)->toContain("urodzenie.{$field}")->toContain('ujmij datę w cudzysłów');
+})->with(['notatka', 'miejsce']);

@@ -138,9 +138,13 @@ class ParsePersonBlock
      */
     private function normalizeEventDate(array $event, string $path, array &$dateObjectPaths): array
     {
-        if (($event['data'] ?? null) instanceof DateTimeInterface) {
-            $dateObjectPaths[] = "{$path}.data";
-        } elseif (is_int($event['data'] ?? null)) {
+        foreach (self::EVENT_KEYS as $key) {
+            if (($event[$key] ?? null) instanceof DateTimeInterface) {
+                $dateObjectPaths[] = "{$path}.{$key}";
+            }
+        }
+
+        if (is_int($event['data'] ?? null)) {
             $event['data'] = (string) $event['data'];
         }
 
