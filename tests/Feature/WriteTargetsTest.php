@@ -485,37 +485,6 @@ test('setting an entry number on a link changes only that one event_source row',
     expect($diff['files'])->toBe(['removed' => [], 'added' => []]);
 });
 
-test('clearing the legacy entry number of a source changes only that one sources.entry_number value', function () {
-    Storage::fake('local');
-
-    $user = User::factory()->create();
-    $scene = familyScene($user);
-    extract($scene);
-
-    $sourceShared->update(['entry_number' => '47']);
-
-    $before = databaseRows();
-
-    $this->actingAs($user)->delete(route('sources.legacy-entry-number.destroy', $sourceShared))
-        ->assertSessionHasNoErrors()
-        ->assertRedirect();
-
-    $diff = rowDiff($before, databaseRows());
-
-    expect(array_keys($diff['tables']))->toBe(['sources']);
-    expect($diff['tables']['sources']['added'])->toBe([]);
-    expect($diff['tables']['sources']['removed'])->toBe([]);
-    expect($diff['tables']['sources']['changed'])->toHaveCount(1);
-
-    $change = $diff['tables']['sources']['changed'][0];
-
-    expect($change['before']['id'])->toBe($sourceShared->id);
-    expect($change['before']['entry_number'])->toBe('47');
-    expect($change['after']['entry_number'])->toBeNull();
-    expect(array_diff(array_keys(array_diff_assoc($change['after'], $change['before'])), ['entry_number', 'updated_at']))->toBe([]);
-    expect($diff['files'])->toBe(['removed' => [], 'added' => []]);
-});
-
 test('saving a gravestone touches only its source row, its buried list and the burial it fills in', function () {
     Storage::fake('local');
 

@@ -17,6 +17,7 @@ function moveGravestoneCemeteriesMigration(): Migration
 
 beforeEach(function () {
     // The schema is already migrated: step back to the shape before this migration (the test transaction undoes it).
+    restoreLegacyColumns();
     moveGravestoneCemeteriesMigration()->down();
 });
 

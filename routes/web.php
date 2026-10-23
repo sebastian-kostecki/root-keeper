@@ -21,7 +21,6 @@ use App\Http\Controllers\PersonSpouseController;
 use App\Http\Controllers\PlaceController;
 use App\Http\Controllers\SidePanelDemoController;
 use App\Http\Controllers\SourceController;
-use App\Http\Controllers\SourceLegacyEntryNumberController;
 use App\Http\Controllers\TreeAncestorsController;
 use App\Http\Controllers\TreeController;
 use App\Http\Controllers\TreeProbandController;
@@ -42,7 +41,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::resource('sources', SourceController::class)->only(['index', 'store', 'show', 'update', 'destroy']);
     Route::get('sources/{source}/file', [SourceController::class, 'file'])->name('sources.file');
-    Route::delete('sources/{source}/legacy-entry-number', SourceLegacyEntryNumberController::class)->name('sources.legacy-entry-number.destroy');
     Route::get('sources/{source}/thumbnail', [SourceController::class, 'thumbnail'])->name('sources.thumbnail');
 
     Route::get('places', [PlaceController::class, 'index'])->name('places.index');

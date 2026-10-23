@@ -21,9 +21,7 @@ use Illuminate\Support\Facades\Date;
  * @property int $tree_id
  * @property string|null $first_name
  * @property string|null $last_name
- * @property string|null $maiden_name Legacy column, no longer read or written; to be dropped by a later change.
  * @property Gender|null $gender
- * @property string|null $residence
  * @property Religion|null $religion
  * @property string|null $note
  * @property string|null $photo_path
@@ -31,7 +29,7 @@ use Illuminate\Support\Facades\Date;
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
-#[Fillable(['tree_id', 'first_name', 'last_name', 'gender', 'residence', 'religion', 'note', 'photo_path', 'photo_thumbnail_path'])]
+#[Fillable(['tree_id', 'first_name', 'last_name', 'gender', 'religion', 'note', 'photo_path', 'photo_thumbnail_path'])]
 class Person extends Model
 {
     /** @use HasFactory<PersonFactory> */
