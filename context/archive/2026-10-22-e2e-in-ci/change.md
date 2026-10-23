@@ -1,10 +1,10 @@
 ---
 change_id: e2e-in-ci
 title: E2E (Playwright) w CI
-status: implemented
+status: archived
 created: 2026-10-22
-updated: 2026-10-22
-archived_at: null
+updated: 2026-10-23
+archived_at: 2026-10-23T04:58:58Z
 ---
 
 ## Notes
