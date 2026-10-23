@@ -2,246 +2,199 @@
 project: "root-keeper"
 version: 1
 status: draft
-created: 2026-10-04
+created: 2026-10-23
 context_type: brownfield
 product_type: web-app
 target_scale:
   users: small
 timeline_budget:
-  delivery_weeks: 4
-  hard_deadline: 2026-11-04
+  delivery_weeks: 5
+  hard_deadline: null
   after_hours_only: true
 ---
 
-# root-keeper — opis źródeł, spis miejscowości, wygląd drzewa i widok przodków (zmiana brownfield)
+# root-keeper — import badań z repo badawczego (zmiana brownfield, M-3)
 
-Poprzednie PRD (zarchiwizowane): MVP `context/foundation/archive/prd-v1.md`, opisy skanów i spis miejscowości `context/foundation/archive/prd-v2.md`, źródła i drzewo edytowalne `context/foundation/archive/prd-v3.md`, podgląd osoby w modalu i relacje na drzewie `context/foundation/archive/prd-v4.md`. Notatki z kształtowania tej zmiany: `context/foundation/shape-notes.md`. Wymagania tej zmiany numerowane od nowa; odwołania do wcześniejszych PRD z prefiksem (`v2:FR-007`, `v4:FR-002`).
+Poprzednie PRD (zarchiwizowane): MVP `context/foundation/archive/prd-v1.md`, kolejne zmiany `archive/prd-v2.md` – `archive/prd-v4.md`, M-2 (opis źródeł, spis miejsc, wygląd drzewa, widok przodków) `archive/prd-v5.md`. Notatki z kształtowania tej zmiany: `context/foundation/shape-notes.md` (M-2: `archive/shape-notes-2026-10-23-0744.md`). Numeracja FR pochodzi z notatek; FR-012 i FR-013 odrzucono w rundzie kontrargumentów (zob. Scope of Change).
 
 ## Current System Overview
 
 root-keeper to prywatne, samodzielnie hostowane drzewo genealogiczne: każde konto ma jedno drzewo i widzi tylko swoje dane.
 
-- **Architektura i stack:** monolit Laravel 13 + Inertia v3 / React 19, shadcn/ui, PostgreSQL, Docker (self-hosted). Szczegóły: `context/foundation/tech-stack.md`.
-- **Użytkownicy:** autor, genealog wprowadzający własne prawdziwe drzewo z własnych materiałów; skala mała.
-- **Jakość dziś:** CI — lint/format bez ostrzeżeń, analiza statyczna, testy na PostgreSQL; ścieżki krytyczne (fakt–źródło, relacje ze slotów drzewa) chronione testami Pest (`WriteTargetsTest`); E2E (Playwright) skonfigurowane — na razie tylko test seed logowania, poza CI.
-- **Kopie zapasowe dziś:** baza danych i `storage/app`.
-- **Funkcje dziś (M-1, S-01 – S-29 zrobione):**
-  - Drzewo to arkusz rodziny: centrum, rodzice, dziadkowie, małżonek, dzieci. Relacje (rodzic, dziecko, małżonek) dodaje się z pustych slotów, wybierając istniejącą albo nową osobę. Kliknięcie karty przecentrowuje drzewo; karta ma przycisk „Podgląd”.
-  - Podgląd i formularz osoby działają w modalach. Podgląd pokazuje relacje tylko do odczytu, usuwanie relacji i małżeństwa jest w podglądzie.
-  - Źródła mają rodzaj (akt metrykalny / zdjęcie nagrobka / inne) i jeden płaski opis, wspólny dla wszystkich rodzajów: Nazwa, Typ aktu, Numer wpisu, Rok, Pochodzenie (wolny tekst), Link, Notatka.
-  - Fakty urodzenia, małżeństwa i zgonu potwierdza się źródłem każdego rodzaju. Przy wyborze źródła pasujące akty są pokazywane najpierw.
-  - Miejsca (zamieszkanie, miejsca faktów) są wolnym tekstem. Spis miejscowości z prd-v2 (S-12 – S-15) odłożono 2026-09-30.
+- **Architektura i stack:** monolit Laravel 13 + Inertia v3 / React 19, shadcn/ui, PostgreSQL 18, Docker (self-hosted).
+- **Użytkownicy:** autor; skala mała.
+- **Logowanie i dostęp:** Fortify (e-mail + hasło, passkeys), jedno konto = jedno drzewo, bez ról; cudzy rekord to 404 (Policy z `denyAsNotFound`).
+- **Funkcje dziś (M-1 i M-2 zrobione):** arkusz rodziny z relacjami ze slotów i panelami bocznymi (osoba, źródło, małżeństwo, miejscowość); źródła opisane rodzajem, parafią, rokiem, typem aktu, archiwum; numer wpisu przy powiązaniu źródła z faktem; spis miejscowości, parafii/urzędów i cmentarzy (`/places`); zamieszkania z latami; oś czasu wydarzeń; widok przodków z zoomem; zdjęcie osoby na karcie; notatka osoby. Daty wydarzeń są dokładne albo przybliżone („ok.”); wyszukiwarka osób szuka po nazwisku i nazwisku rodowym; źródło zawsze ma plik skanu.
+- **Jakość dziś:** CI — lint bez ostrzeżeń, analiza statyczna, testy Pest; E2E ścieżek krytycznych (Playwright).
+- **Wdrożenie dziś:** `scripts/deploy.sh` robi kopię bazy (`backup:run --only-db`) przed `migrate`.
+- **Drugi system (poza root-keeperem):** repo badawcze `genealogy-project` (markdown, prowadzone przez autora z Claude; żywe repo w `/mnt/d/my-projects/genealogy-project`, kopia w `storage/gen-tree-import/`, poza gitem root-keepera). Zasady w jego `CLAUDE.md`: nie zmyślać, każdy fakt ze źródłem, fakt oddzielony od wniosku, poziomy pewności A–D (A akt pierwotny, B indeks/źródło wtórne, C wskazówka, D hipoteza).
+  - `drzewo/`: 246 plików osób (jeden plik na osobę, nazwa `nazwisko_imie_rok.md`) + `_PRZODKOWIE.md` (indeks Ahnentafel, pokolenia I–IX, rodzeństwo poza numeracją, implex).
+  - Wpis osoby to szablon linii (`Nr Ahnentafel`, `Warianty zapisu nazwiska`, `Płeć`, `Urodzenie`, `Małżeństwo`, `Zgon`, `Rodzice`, `Dzieci`, `Zawód / religia / ciekawostki`, `Otwarte pytania`), ale wartości to proza: data, miejsce, parafia, numer aktu, sygnatura, poziom pewności, chrzestni, świadkowie i wnioski w jednej linii; często „brak danych”.
+  - `zrodla/`: 55 opisów źródeł (odczyty aktów, indeksy, kwerendy) + `skany/` (~21 pozycji, ok. 39 MB w kopii); `dziennik/` (sesje badawcze), `notatki/`, `TODO.md`.
+  - Dziś część treści repo jest przepisana ręcznie do root-keepera na produkcji; obie strony się pokrywają.
 
 ## Problem Statement & Motivation
 
-Przy wprowadzaniu prawdziwego drzewa autor nie ma gdzie rzetelnie opisać aktu metrykalnego. Akt powstał w parafii (np. Luboml), a przechowuje go archiwum (np. Archiwum Główne Akt Dawnych w Warszawie). Obie informacje trafiają dziś do jednego pola „Pochodzenie” albo do notatki. Nagrobki nie mają przemyślanego opisu, a to, który wpis na skanie dotyczy której osoby, zapisuje się w notatce. W efekcie przy wyborze źródła do faktu nie widać roku ani parafii, a opisy są niespójne. Do tego drzewo źle wygląda: małe karty zajmują tylko górę dużego ekranu, linie do dzieci są nieczytelne, nie ma zdjęć, a przycisk „Podgląd” jest zbędny. Nie ma też widoku wszystkich przodków osoby, a miejsca pozostają wolnym tekstem.
+**Kategoria zmiany:** integracja — nowa możliwość: import z repo badawczego. Z propozycji M-3 na GitHubie żadna nie dołącza (#37 i #38 rozważone i odłożone).
 
-Wgląd: parafia i archiwum to dwie różne informacje, bo jedno archiwum trzyma księgi wielu parafii. Opis źródła zależy od jego rodzaju (akt, nagrobek, inne). Genealog rozpoznaje źródło po roku i parafii, nie po nazwie pliku. Jeden skan strony księgi zawiera kilka wpisów dotyczących różnych osób. Zmiana porządkuje opis źródeł, dopracowuje wygląd drzewa i nawigację (panel boczny zamiast modali), dodaje widok przodków i spis miejscowości — bez psucia powiązań fakt–źródło i dodawania relacji z drzewa.
+Autor prowadzi badania w repo markdown (246 osób, dziesiątki opisanych aktów, skany) i przepisuje je ręcznie do root-keepera; przepisywanie nie nadąża za badaniami, a autor chce oglądać wyniki badań jako drzewo (karty, przodkowie, oś czasu), a nie jako pliki. Repo będzie dalej rosło i zmieniało się, więc przeniesienie nie jest jednorazowe — autor co jakiś czas aktualizuje kopię repo i chce przenieść zmiany. Obejście dziś: ręczne przepisywanie każdej osoby, faktu i aktu z markdownu.
 
-Dlaczego teraz: wprowadzanie prawdziwego drzewa autora odsłoniło luki w UX i niejednoznaczność opisu źródeł. Obecne obejście: parafia i archiwum w jednym polu „Pochodzenie” albo w notatce, numer wpisu i to, kogo dotyczy, w notatce — opisy są niespójne, a źródła przy fakcie trudno odnaleźć.
-
-Najbardziej bolą: (1) niejasny opis aktów i nagrobków, (2) wygląd drzewa.
-
-Kategoria zmiany: cztery części — opis źródła (znacząca funkcja), wygląd drzewa i panel boczny (UX), spis miejscowości (nowy moduł, wznawia odłożone S-12 – S-15), widok wszystkich przodków (nowy widok).
+Wgląd: repo badawcze jest źródłem prawdy dla zbadanych faktów, a root-keeper jego uporządkowanym widokiem. Wpisy w repo to proza (data, miejsce, parafia, akt, sygnatura, poziom A–D, wnioski w jednej linii), więc pomostem jest ustrukturyzowany blok danych w plikach repo, utrzymywany obok prozy, a nie odczytywanie prozy przez aplikację. Każdy rekord pamięta swój klucz z repo, żeby kolejny import aktualizował zamiast dublować.
 
 ## User & Persona
 
-Bez zmian: **autor**, genealog wprowadzający własne prawdziwe drzewo z aktów metrykalnych, zdjęć nagrobków i notatek. Sięga po aplikację, gdy siedzi nad skanem aktu i chce go opisać, podpiąć pod fakt i zobaczyć osobę na drzewie.
+Bez zmian: **autor** — genealog prowadzący własne badania w repo markdown z Claude i oglądający drzewo w root-keeperze; jedyny użytkownik importu, uruchamia go z dostępem do serwera. Zmienia się jego sposób wprowadzania danych: zamiast przepisywać badania ręcznie, przenosi je importem i rozstrzyga dopasowania i konflikty.
 
 ## Success Criteria
 
 ### Primary
-- Autor wgrywa skan strony księgi (Luboml, 1908, z AGAD) i opisuje go osobno: czego dotyczy (Luboml), rok (1908), typ (urodzenie), skąd (AGAD), a w notatce „nr 95 dotyczy X” (albo więcej). Zapisany akt jest źródłem. Przy dodawaniu źródła do faktu osoby autor znajduje ten akt, szukając po miejscu (Luboml) i roku (1908).
-
-Przepływ zmiany:
-1. Wgrywam skan strony księgi: Luboml, 1908 (z AGAD).
-2. Opisuję go: czego dotyczy (Luboml), rok, typ aktu (urodzenie), skąd (AGAD); notatka „nr 95 dotyczy X”.
-3. Zapisuję — akt jest źródłem.
-4. Przy dodawaniu źródła do faktu osoby szukam po miejscu i roku i trafiam w ten akt.
+- Autor przenosi swoje badania do aplikacji importem z dopasowaniem do już wpisanych danych:
+  1. Autor aktualizuje kopię repo badawczego na serwerze (pliki z blokami danych i skany).
+  2. Uruchamia komendę importu z e-mailem konta i ścieżką do repo; komenda sama czyta bloki danych z plików.
+  3. Komenda sprawdza bloki; błędne wpisy pomija i wypisuje w raporcie z powodem, resztę importuje.
+  4. Przy pierwszym imporcie komenda pokazuje podsumowanie oraz wyłącznie dopasowania do istniejących osób i konflikty; przy kolejnych — pełny podgląd zmian (nowe, zmienione, konflikty z ręcznymi zmianami, nowe miejsca do potwierdzenia).
+  5. Autor zatwierdza lub odrzuca pojedyncze zmiany i rozstrzyga wątpliwe dopasowania.
+  6. Zapis zatwierdzonych zmian i podsumowanie.
+  7. W aplikacji autor widzi przeniesione osoby w drzewie, z faktami, poziomem pewności A–D, źródłami i skanami.
 
 ### Secondary
-- Drzewo wypełnia duży ekran: większe karty, czytelne linie do dzieci.
-- Autor widzi wszystkich przodków wybranej osoby w jednym widoku.
-- Osobę i źródło ogląda i edytuje w wysuwanym panelu bocznym zamiast modala.
-- Miejscowość istnieje raz w spisie i jest używana w faktach, zamieszkaniu i źródle.
+- Brak — próbny przebieg (dry run) usunięty w rundzie kontrargumentów, bo zatwierdzanie pojedynczych zmian go zastępuje (zaakceptowane przez autora, zob. Open Questions 5).
 
 ### Guardrails
-- Powiązania fakt–źródło: każdy istniejący fakt potwierdzony źródłem nadal prowadzi do tego samego źródła i skanu.
-- Dodawanie relacji z drzewa (rodzic, dziecko, małżonek — istniejąca lub nowa osoba) działa jak dziś, także po przebudowie drzewa.
-
-Świadomie poza guardrails: przejście miejsc z wolnego tekstu na spis miejscowości (oraz ewentualnie starego opisu źródła na nowy) może zakłócić istniejące dane — autor dopuszcza ręczne poprawki.
+- Ręczna poprawka wpisana w aplikacji nigdy nie znika po imporcie bez pokazania jej w podglądzie i zgody autora (główne ryzyko wskazane przez autora).
+- Rzeczy dodane tylko w aplikacji (zdjęcia osób, ręcznie wgrane skany, notatki, osoby spoza repo) przetrwają każdy import.
+- Import zapisuje i dopasowuje tylko w drzewie wskazanego konta; cudze drzewo nietknięte. Import nie przechodzi przez zwykłe sprawdzanie uprawnień w aplikacji, więc granicy dowodzi osobny test.
+- Jeden spis miejsc: import nie dubluje miejscowości, parafii ani cmentarzy.
+- Ręczne wpisywanie i edycja w aplikacji działają jak dotąd.
 
 ## User Stories
 
-### US-01: Akt z Lubomla opisany parafią i archiwum, odnaleziony po miejscu i roku
+### US-01: Pierwszy import badań do drzewa z ręcznie wpisanymi osobami
 
-- **Given** autor wgrał skan strony księgi jako źródło: parafia Luboml, rok 1908, typ aktu „urodzenie”, archiwum AGAD
-- **When** podpina źródło do urodzenia osoby, szuka „Luboml” i 1908 i podaje wpis nr 95
-- **Then** widzi ten akt na liście wyboru (z rokiem i parafią), a przy fakcie urodzenia — źródło z numerem wpisu 95
+- **Given** drzewo autora na produkcji zawiera część osób wpisanych ręcznie, a na serwerze leży kopia repo badawczego z blokami danych w plikach przodków i skanami
+- **When** autor uruchamia komendę importu z e-mailem konta i katalogiem repo
+- **Then** komenda pokazuje podsumowanie, raport pominiętych wpisów oraz dopasowania do istniejących osób i konflikty; autor rozstrzyga je pojedynczo, a po zatwierdzeniu osoby, relacje, wydarzenia (z poziomem A–D i datami nieostrymi), miejsca, źródła i skany trafiają do drzewa bez duplikatów, a ręczne poprawki zostają tam, gdzie autor tak wybrał
 
-Wcześniej: parafia i archiwum lądowały w jednym polu „Pochodzenie” albo w notatce, a numer wpisu był polem źródła, nie powiązania.
+Wcześniej: autor przepisywał każdą osobę, fakt i akt ręcznie z markdownu.
 
-#### Acceptance Criteria
-- Parafię, której nie ma w spisie, autor dopisuje w trakcie opisu aktu, bez wychodzenia z panelu źródła.
-- Archiwum podpowiada się z wcześniej wpisanych wartości.
-- Przed zmianą: parafia i archiwum lądowały w jednym polu „Pochodzenie” albo w notatce, a numer wpisu był polem źródła, nie powiązania.
-- Istniejące powiązania fakt–źródło prowadzą do tych samych źródeł co przed zmianą.
+### US-02: Kolejny import po nowej sesji badawczej
+
+- **Given** drzewo zostało wcześniej zaimportowane, a autor dopisał w repo nowe osoby i poprawił odczyt aktu
+- **When** autor uruchamia import zaktualizowanej kopii repo
+- **Then** podgląd pokazuje tylko nowe osoby i zmienione wartości (rekordy rozpoznane po stałym identyfikatorze z bloku), autor zatwierdza je pojedynczo, a nic się nie dubluje
+
+Wcześniej: każdą zmianę z nowej sesji badawczej autor przepisywał ręcznie (jak w US-01).
+
+### US-03: Wyszukanie osoby po wariancie nazwiska
+
+- **Given** zaimportowana osoba Misiuk ma wariant zapisu Mysiuk
+- **When** autor wpisuje „Mysiuk” w wyszukiwarce osób
+- **Then** lista pokazuje tę osobę
+
+Wcześniej: wyszukiwarka znajdowała tylko po nazwisku i nazwisku rodowym.
 
 ## Scope of Change
 
-Wszystkie FR są `must-have` (zakres: całość do 2026-11-04). Jeśli zabraknie czasu, pierwsze do odcięcia jest FR-015.
+Wszystkie FR są `must-have` poza FR-020 (`nice-to-have`). Zakres w M-3: najpierw tylko przodkowie (pliki z numerem Ahnentafel i ich źródła); linie boczne w kolejnych krokach.
 
-### Opis źródła
-- [modified] FR-001: Autor can opisać akt metrykalny osobnymi danymi: parafia / urząd (ze spisu parafii i urzędów, z możliwością dopisania nowej w locie), rok, typ aktu, archiwum (tekst z podpowiedziami wcześniej wpisanych archiwów). Priority: must-have. (Było: jeden płaski opis wspólny dla wszystkich rodzajów; parafia i archiwum w jednym polu „Pochodzenie” albo w notatce.)
-  > Socrates: Counter-argument considered: "brak parafii w spisie blokuje opis aktu — wprowadzanie się rwie."
-  > Resolution: kept; parafię dopisuje się w locie przy opisie aktu, bez wychodzenia z panelu źródła (jak archiwum).
-- [modified] FR-002: Autor can opisać zdjęcie nagrobka: cmentarz (ze spisu cmentarzy, osadzony w miejscowości) i osoby pochowane; miejsce pochowania osoby z listy pochowanych podpowiada się cmentarzem nagrobka (można zmienić). Priority: must-have. (Było: nagrobek opisany tym samym płaskim opisem co akt.)
-  > Socrates: Counter-argument considered: "cmentarz na nagrobku dubluje miejsce pochowania osoby (FR-022) — dwa miejsca prawdy."
-  > Resolution: kept; miejsce pochowania podpowiada się z nagrobka, ale pozostaje edytowalne przy osobie.
-- [modified] FR-003: Autor can podać numer wpisu przy powiązaniu źródła z faktem; numer jest widoczny przy fakcie i przy źródle. Priority: must-have. (Było: „Numer wpisu” jako pole źródła; to, kogo dotyczy który wpis — w notatce.)
-  > Socrates: Counter-argument considered: "dubluje dzisiejsze pole „Numer wpisu” na źródle."
-  > Resolution: kept; pole „Numer wpisu” znika ze źródła, a dotychczasowe wartości zostają widoczne do ręcznego przeniesienia.
-- [modified] FR-004: Autor can przy wyborze źródła do faktu szukać po miejscu (miejscowość parafii, miejscowość cmentarza lub nazwa cmentarza) i roku i widzi przy każdym źródle rok i parafię lub cmentarz. Priority: must-have. (Było: najpierw akty o pasującym typie, bez roku i parafii przy źródle.)
-  > Socrates: Counter-argument considered: "nagrobki nie mają parafii — szukanie po parafii ich nie obejmie."
-  > Resolution: kept; szukanie po miejscu obejmuje miejscowość parafii i cmentarza (zaproponowane przez facylitatora, potwierdzone przez autora 2026-10-04).
-- [modified] FR-005: Autor can przeglądać listę źródeł jako siatkę mniejszych kart z rodzajem, typem, parafią lub cmentarzem, rokiem i archiwum oraz filtrować ją po rodzaju, parafii/miejscu, roku i archiwum. Priority: must-have. (Było: lista większych kart.)
-  > Socrates: Counter-argument considered: "przy setkach źródeł sama siatka nie wystarczy."
-  > Resolution: kept and extended; lista dostaje filtry po rodzaju, parafii/miejscu, roku i archiwum.
-- [modified] FR-006: Autor can dodawać, oglądać i edytować źródło w szerokim wysuwanym panelu bocznym (skan obok opisu) zamiast modala. Priority: must-have. (Było: modal.)
-  > Socrates: Counter-argument considered: "panel boczny jest za wąski, żeby opisywać akt patrząc na skan."
-  > Resolution: kept; panel źródła jest szerszy niż panel osoby, skan i formularz stoją obok siebie, powiększenie skanu jak dziś.
+### Repo badawcze
+- [new] FR-001: Autor może utrzymywać w plikach osób i źródeł repo badawczego blok danych obok prozy; w M-3 konwertowane są pliki przodków z numerem Ahnentafel (i ich źródła), linie boczne później. Priority: must-have.
+  > Socrates: Counter-argument considered: "przegląd konwersji ~300 plików zje M-3". Resolution: zmieniony — najpierw tylko przodkowie (Ahnentafel), linie boczne w kolejnych krokach.
+- [new] FR-002: Autor może wskazać komendzie katalog repo — komenda sama czyta bloki danych z plików (bez skryptu i pliku pośredniego w repo badawczym). Priority: must-have.
+  > Socrates: Counter-argument considered: "skrypt w repo badawczym to drugi projekt do utrzymania". Resolution: zmieniony — bez skryptu eksportu; komenda czyta katalog z blokami bezpośrednio.
 
-### Spisy: miejscowości, parafie, archiwa
-- [new] FR-007: Autor can prowadzić spis miejscowości z opisem; spis startuje z istniejących tekstowych miejsc (identyczne teksty → jedna miejscowość), a literówki autor poprawia i scala ręcznie (rozszerzone 2026-10-20, `locality-details`: rodzaj, współrzędne, przynależność historyczna, „nie istnieje dziś”). Priority: must-have.
-  > Socrates: Counter-argument considered: "przeniesienie wolnego tekstu na spis zjada czas."
-  > Resolution: kept; spis wstaje automatycznie z istniejących wartości, autor tylko poprawia i scala.
-- [new] FR-008: Autor can prowadzić spis parafii i urzędów: miejscowość siedziby ze spisu (wymagana), rodzaj, wyznanie, wezwanie / wyróżnik. Priority: must-have.
-  > Socrates: Counter-argument considered: "trzy spisy (miejscowości, parafie, archiwa) przy jednym akcie to dużo klikania."
-  > Resolution: kept; każde pole spisu podpowiada po kilku literach i pozwala dopisać nowy wpis bez wychodzenia z panelu.
-- [new] FR-009: Autor can wpisać archiwum jako tekst, który podpowiada wcześniej wpisane archiwa. Priority: must-have.
-  > Socrates: Counter-argument considered: "zarządzana lista archiwów to przesada — kilka archiwów na całe drzewo."
-  > Resolution: changed; zamiast listy archiwów pole tekstowe z podpowiedziami wcześniej wpisanych wartości.
-- [modified] FR-010: Autor can wybrać miejsce urodzenia, ślubu, zgonu i pochowania ze spisu miejscowości. Priority: must-have. (Było: miejsca faktów jako wolny tekst.)
-  > Socrates: Counter-argument considered: "miejsce bywa niepewne („okolice Lubomla”) i nie pasuje do spisu."
-  > Resolution: kept; miejsce zawsze ze spisu dla spójności, niepewność autor opisuje w notatce.
-- [modified] FR-011: Autor can ustawić osobie kilka miejscowości zamieszkania z opcjonalnymi latami od–do. Priority: must-have. (Było: jedno pole „Zamieszkanie” jako wolny tekst.)
-  > Socrates: Counter-argument considered: "zamieszkanie bez źródła to domysł."
-  > Resolution: kept; zamieszkania nie potwierdza się źródłem w tej wersji — to notatka badawcza.
-- [new] FR-012: Autor can scalić zduplikowaną miejscowość lub parafię z właściwym wpisem (powiązania przechodzą na właściwy) i usunąć wpis, który nie jest nigdzie używany. Priority: must-have.
-  > Socrates: Counter-argument considered: "usuwanie wpisów spisu z listą powiązań jest rzadko potrzebne."
-  > Resolution: changed; zamiast usuwania z listą powiązań — scalanie duplikatów (ważne po automatycznym przeniesieniu) i usuwanie tylko nieużywanych wpisów.
-
-### Drzewo
-- [modified] FR-013: Autor can oglądać drzewo z większymi kartami, które dopasowuje się do ekranu (wypełnia duży) i przesuwa się przeciąganiem; skala zależy od ekranu, bez ręcznego przybliżania (decyzja S-05, 2026-10-05). Priority: must-have. (Było: małe karty zajmują tylko górę dużego ekranu.)
-  > Socrates: Counter-argument considered: "większe karty nie zmieszczą się na laptopie."
-  > Resolution: kept and extended; drzewo dopasowuje się do ekranu i ma przybliżanie/oddalanie.
-- [modified] FR-014: Autor can czytelnie odróżnić linie łączące; linia do dziecka wychodzi od właściwej pary (małżeństwa), więc widać, z którego związku jest dziecko. Priority: must-have. (Było: linie do dzieci nieczytelne.)
-  > Socrates: Counter-argument considered: "dzieci z różnych małżeństw — „czytelne linie” nie mówią, z którego związku."
-  > Resolution: kept and sharpened; linia do dziecka wychodzi od właściwej pary.
-- [new] FR-015: Autor can dodać zdjęcie osoby i widzi je na karcie drzewa; karta bez zdjęcia pokazuje inicjały lub sylwetkę (pierwsze do odcięcia). Priority: must-have.
-  > Socrates: Counter-argument considered: "większość przodków nie ma zdjęć — drzewo wyglądałoby nierówno."
-  > Resolution: kept; karta bez zdjęcia pokazuje zastępczy znak (inicjały/sylwetka).
-- [modified] FR-016: Autor can otworzyć panel osoby kliknięciem karty; przycisk „Podgląd” znika, a ustawienie osoby w centrum drzewa jest akcją w panelu. Priority: must-have. (Było: kliknięcie karty przecentrowuje drzewo, podgląd przyciskiem „Podgląd”.)
-  > Socrates: Counter-argument considered: "kliknięcie karty dziś przecentrowuje drzewo — zmiana zabiera szybką nawigację."
-  > Resolution: kept; kliknięcie = panel osoby, przecentrowanie przenosi się do przycisku w panelu.
-- [new] FR-017: Autor can otworzyć panel małżeństwa: data, miejsce, forma ślubu (cywilny / wyznaniowy / cywilno-wyznaniowy / nieznana), źródło (z edycją) i dzieci pary. Priority: must-have.
-  > Socrates: Counter-argument considered: "panel małżeństwa dubluje sekcję małżeństwa w panelu osoby."
-  > Resolution: kept; oba miejsca pozwalają edytować małżeństwo — wygoda ważniejsza niż jedno miejsce edycji.
-- [new] FR-018: Autor can zobaczyć wybraną osobę i wszystkich jej przodków w jednym widoku z wyborem liczby pokoleń, z dopasowaniem do ekranu i przybliżaniem w tym widoku (przyciski, Ctrl+kółko, szczypanie). Priority: must-have.
-  > Socrates: Counter-argument considered: "przy 6+ pokoleniach widok przodków robi się nieczytelny."
-  > Resolution: kept; dopasowanie jak w FR-013, a przybliżanie tylko w widoku przodków, bez zmiany drzewa.
-
-### Osoba
-- [modified] FR-019: Autor can oglądać i edytować osobę w wysuwanym panelu z prawej zamiast modala; otwarty panel nie zasłania drzewa — drzewo zwęża się obok niego. Priority: must-have. (Było: podgląd i formularz osoby w modalach.)
-  > Socrates: Counter-argument considered: "panel zasłania prawą część drzewa."
-  > Resolution: kept; drzewo przesuwa się i zwęża obok otwartego panelu.
-- [modified] FR-020: Autor can zapisać jedno nazwisko osoby — rodowe (z urodzenia); osoba wyświetla się imieniem i tym nazwiskiem i jest po nim wyszukiwana. Priority: must-have. (Było: nazwisko i nazwisko rodowe, wyświetlanie „z d. …”, wyszukiwanie po obu.)
-  > Socrates: Counter-argument considered: "kobieta bez znanego męża ma tylko nazwisko rodowe."
-  > Resolution: kept; osoba ma jedno nazwisko — zawsze rodowe, bez „z d.”.
-- [new] FR-021: Autor can zobaczyć zakładkę wydarzeń osoby: własne oraz urodzenia i zgony dzieci, ślub i zgon małżonka, uporządkowane po roku, z wydarzeniami bez daty na końcu. Priority: must-have.
-  > Socrates: Counter-argument considered: "daty częściowe (sam rok, brak daty) psują kolejność osi czasu."
-  > Resolution: kept; sortowanie po roku, wydarzenia bez daty na końcu.
-- [new] FR-022: Autor can zapisać miejsce pochowania osoby jako cmentarz ze spisu (miejscowość wynika z cmentarza); pochowania zapisane dotąd samą miejscowością dostają cmentarz bez nazwy w tej miejscowości. Priority: must-have.
-  > Socrates: Counter-argument considered: "brak — rozważane razem z FR-023."
-  > Resolution: kept as written (przypomnienie: podpowiada się z nagrobka — FR-002).
-- [new] FR-023: Autor can prowadzić notatkę o osobie — jedno pole tekstowe w osobnej zakładce. Priority: must-have.
-  > Socrates: Counter-argument considered: "notatki jako lista wpisów z datą (dziennik badań)?"
-  > Resolution: kept simple; jedna notatka tekstowa wystarczy.
-- [new] FR-024: Autor can zobaczyć wiek osoby — ile przeżyła (gdy zna datę zgonu) albo ile ma (tylko gdy wynik jest poniżej ok. 110 lat; inaczej wiek nie jest pokazywany). Priority: must-have.
-  > Socrates: Counter-argument considered: "brak daty zgonu nie znaczy, że osoba żyje — ur. 1850 nie „ma 176 lat”."
-  > Resolution: kept; „ile ma” tylko poniżej progu ok. 110 lat.
+### Komenda importu
+- [new] FR-003: Autor może uruchomić na serwerze komendę importu, wskazując konto (e-mail) i katalog repo; import zapisuje tylko do drzewa tego konta. Priority: must-have.
+  > Socrates: Counter-argument considered: "repo i skany trzeba ręcznie skopiować na serwer". Resolution: kept; ręczne kopiowanie akceptowalne przy rzadkich importach.
+- [new] FR-004: Autor dostaje raport wpisów, których bloki są niezgodne z formatem (z powodem); błędne wpisy są pomijane, reszta się importuje. Priority: must-have.
+  > Socrates: Counter-argument considered: "jeden błędny plik blokuje cały import". Resolution: zmieniony — z „wszystko albo nic” na pominięcie błędnych wpisów z raportem.
+- [new] FR-005: Autor widzi przed zapisem: przy pierwszym imporcie podsumowanie oraz dopasowania i konflikty; przy kolejnych pełny podgląd zmian (nowe, zmienione, konflikty z ręcznymi zmianami — obie wartości). Priority: must-have.
+  > Socrates: Counter-argument considered: "pierwszy import to setki pozycji »nowe«". Resolution: zmieniony — pierwszy import: podsumowanie + tylko dopasowania i konflikty.
+- [new] FR-006: Autor może zatwierdzać lub odrzucać pojedyncze zmiany z podglądu; bez zgody nic się nie zapisuje. Priority: must-have.
+  > Socrates: Counter-argument considered: "zatwierdzenie wszystko albo nic jest za grube". Resolution: zmieniony — zatwierdzanie per zmiana.
+- [new] FR-007: Autor może przy pierwszym imporcie dopasować osoby z repo do osób już wpisanych ręcznie; wątpliwe przypadki rozstrzyga sam. Priority: must-have.
+  > Socrates: Counter-argument considered: "wyczyścić drzewo zamiast dopasowywać". Resolution: kept — autor po rozważeniu wrócił do dopasowania (zdjęcia i skany wiszą na istniejących osobach); czyszczenie tylko poza produkcją (FR-020).
+- [new] FR-008: Autor może ponawiać import: każda osoba i źródło niesie w bloku stały identyfikator (nie nazwę pliku), więc kolejny import aktualizuje zamiast dublować. Priority: must-have.
+  > Socrates: Counter-argument considered: "nazwa pliku się zmienia (`_xxxx` → rok)". Resolution: zmieniony — kluczem jest stały identyfikator w bloku.
+- [new] FR-009: Autor może przenieść osoby (imiona, nazwisko, nazwisko rodowe, płeć), relacje rodzic–dziecko, małżeństwa i wydarzenia (urodzenie, ślub, zgon, pochówek) z datą i miejscem; data może być dokładna, przybliżona („ok.”), zakresem lat albo „przed”/„po”. Priority: must-have.
+  - [modified] Rodzaje daty — było: dokładna albo przybliżona („ok.”); teraz także zakres lat, „przed” i „po”.
+  > Socrates: Counter-argument considered: "daty w repo są nieostre (ok. 1799, przed 1809, 1805–1811, dwa style kalendarza)". Resolution: zmieniony — nowe rodzaje daty: zakres, przed, po; styl juliański zostaje w notatce faktu.
+- [new] FR-010: Autor może przenieść miejsca dopasowane do spisu drzewa (miejscowości, parafie, cmentarze); nowe miejsca potwierdza w podglądzie, nic się nie dubluje. Priority: must-have.
+  > Socrates: Counter-argument considered: "warianty nazw miejscowości (Bukinia/Bokinia, formy polska/rosyjska, nieistniejąca Binduga)". Resolution: zmieniony — nowe miejsca i niepewne dopasowania do potwierdzenia w podglądzie.
+- [new] FR-011: Autor może przenieść źródła (opis: parafia, rok, typ aktu, archiwum, sygnatura, link; plik skanu z repo) podpięte do faktów z numerem wpisu. Priority: must-have.
+  > Socrates: Counter-argument considered: "źródła bez skanów są półpełne, a aplikacja wymaga pliku". Resolution: zmieniony — skany wracają do M-3; źródło nadal zawsze ma plik.
+- [new] FR-018: Autor może przenieść poziom pewności (A–D) jako osobne pole przy fakcie i widzieć go w aplikacji. Priority: must-have.
+  > Socrates: Counter-argument considered: "poziom przy fakcie czy przy powiązaniu ze źródłem?". Resolution: osobne pole przy fakcie, niezależne od źródeł.
+- [new] FR-019: Autor może przenieść warianty zapisu nazwiska osoby, a wyszukiwarka osób znajduje osobę po każdym wariancie. Priority: must-have.
+  - [modified] Wyszukiwarka osób — było: po nazwisku i nazwisku rodowym; teraz także po każdym wariancie zapisu nazwiska.
+  > Socrates: Counter-argument considered: "bez wyszukiwania po wariantach to tylko tekst". Resolution: zmieniony — dodane wyszukiwanie po wariantach.
+- [new] FR-020: Autor może poza produkcją uruchomić import „od zera”, który przed importem usuwa osoby i fakty drzewa wskazanego konta (z potwierdzeniem). Priority: nice-to-have.
+  > Socrates: Counter-argument considered: "niebezpieczna na produkcji — pomyłka w e-mailu kasuje drzewo". Resolution: zmieniony — tylko poza produkcją.
 
 ### Zachowane
-- [preserved] FR-025: Autor can potwierdzić urodzenie, małżeństwo i zgon źródłem każdego rodzaju i przejść z faktu do skanu. Priority: must-have.
-  > Socrates: Counter-argument considered: "czy to zachowanie może się zmienić przy przejściu na panele i przebudowie drzewa?"
-  > Resolution: kept; zachowane bez zmian (guardrail).
-- [preserved] FR-026: Autor can dodać rodzica, dziecko i małżonka (istniejącego lub nowego) z pustych slotów drzewa. Priority: must-have.
-  > Socrates: Counter-argument considered: "czy to zachowanie może się zmienić przy przejściu na panele i przebudowie drzewa?"
-  > Resolution: kept; zachowane bez zmian (guardrail).
-- [preserved] FR-027: Autor can usunąć źródło po zobaczeniu listy faktów, które stracą potwierdzenie. Priority: must-have.
-  > Socrates: Counter-argument considered: "czy to zachowanie może się zmienić przy przejściu na panele i przebudowie drzewa?"
-  > Resolution: kept; zachowane bez zmian (guardrail).
-- [modified] FR-028: Autor can w panelu osoby przechodzić do krewnych i po zamknięciu panelu być w tym samym miejscu; historia „Wstecz” między krewnymi nie jest wymagana. Priority: must-have. (Było: przechodzenie do krewnych w modalu podglądu z przyciskiem „Wstecz”, v4:FR-002.)
-  > Socrates: Counter-argument considered: "czy historia „Wstecz” między krewnymi musi przetrwać przejście na panel?"
-  > Resolution: changed; przejście do krewnego i powrót na to samo miejsce po zamknięciu zostają, historia „Wstecz” może zniknąć.
-- [preserved] FR-029: Autor can widzieć tylko swoje dane; cudzy rekord (także w panelach, spisach i widoku przodków) to 404. Priority: must-have.
-  > Socrates: Counter-argument considered: "czy to zachowanie może się zmienić przy przejściu na panele i przebudowie drzewa?"
-  > Resolution: kept; zachowane bez zmian (guardrail).
+- [preserved] FR-014: Autor zachowuje po każdym imporcie dane dodane tylko w aplikacji (zdjęcia osób, ręcznie wgrane skany, notatki, osoby spoza repo). Priority: must-have.
+  > Socrates: No counter-argument; it stands as written.
+- [preserved] FR-015: Autor może ręcznie wpisywać i edytować dane w aplikacji jak dotąd, także pola zaimportowane. Priority: must-have.
+  > Socrates: No counter-argument; edycja wszędzie jak dotąd, konflikty łapie podgląd.
+- [preserved] FR-016: Autor widzi wyłącznie swoje drzewo; cudzy rekord to 404, a import nie dopasowuje ani nie zapisuje rekordów z cudzego drzewa. Priority: must-have.
+  > Socrates: Counter-argument considered: "komenda omija sprawdzanie uprawnień w aplikacji". Resolution: kept; test musi udowodnić granicę własności dla komendy.
+- [preserved] FR-017: Autor ma jeden spis miejsc ze scalaniem duplikatów i unikalnością w obrębie drzewa. Priority: must-have.
+  > Socrates: Counter-argument considered: "granice i nazwy historyczne (gubernie, powiaty w różnych latach)". Resolution: kept; historyczne jednostki administracyjne nie są w M-3 — do Open Questions (autor nie wybrał ich jako Non-Goal).
 
-### Usunięte
-- [removed] Przycisk „Podgląd” na karcie drzewa — kliknięcie karty otwiera panel osoby (FR-016).
-- [removed] Pole „Numer wpisu” na źródle — numer wpisu należy do powiązania źródła z faktem (FR-003); dotychczasowe wartości zostają widoczne do ręcznego przeniesienia.
-- [removed] Pole „Pochodzenie” źródła — wartości przechodzą do pola archiwum (FR-009).
-- [removed] Historia „Wstecz” między krewnymi w podglądzie osoby — może zniknąć przy przejściu na panel (FR-028).
-
-### Wznowione z prd-v2
-- [modified] Spis miejscowości i historia zamieszkania z prd-v2 (v2:FR-007 – v2:FR-011, S-12 – S-15), odłożone 2026-09-30, wracają w tej zmianie jako FR-007 – FR-012; spis jest prywatny dla drzewa, jak w prd-v2.
+### Odrzucone w rundzie kontrargumentów (nie wchodzą)
+- ~~FR-012: próbny przebieg (dry run)~~
+  > Socrates: Counter-argument considered: "zbędny przy zatwierdzaniu per zmiana". Resolution: usunięty.
+- ~~FR-013: lista „Do zbadania” (#37)~~
+  > Socrates: Counter-argument considered: "repo już ma TODO.md — lista zadań badawczych żyje w repo". Resolution: usunięty z M-3; #37 wraca do parked.
 
 ## Constraints & Compatibility
 
-- **Zachowane bez zmian:** powiązania fakt–źródło (każdy istniejący fakt prowadzi do tego samego źródła i skanu); dodawanie rodzica, dziecka i małżonka ze slotów drzewa; usuwanie źródła z listą faktów tracących potwierdzenie; pierwszeństwo pasującego typu aktu przy wyborze źródła; własność danych (cudzy rekord = 404).
-- **Zmienione świadomie:** historia „Wstecz” między krewnymi w podglądzie osoby może zniknąć przy przejściu na panel; kliknięcie karty drzewa otwiera panel zamiast przecentrowywać.
-- **Przeniesienie istniejących danych (autor dopuszcza ręczne poprawki):**
-  - Miejsca wydarzeń i zamieszkanie (wolny tekst) → spis miejscowości tworzony automatycznie z istniejących wartości (identyczne teksty → jedna miejscowość).
-  - Jedno pole „Zamieszkanie” → pierwsza pozycja listy zamieszkań, bez lat.
-  - „Pochodzenie” źródła → pole archiwum.
-  - „Numer wpisu” źródła → znika jako pole źródła; dotychczasowe wartości pozostają widoczne do ręcznego przeniesienia na powiązania z faktami.
-- **Ograniczenia istniejącego systemu:** CI musi przechodzić jak dziś (zob. Current System Overview); ścieżki krytyczne z guardrails (fakt–źródło, relacje ze slotów drzewa) mają być chronione testami E2E przed przebudową paneli i drzewa (dziś chroni je Pest — zob. Current System Overview).
-- **Kopie zapasowe** muszą objąć nowe dane (spisy, zdjęcia osób, notatki) — tak jak dotychczasowe kopie (zob. Current System Overview).
+- **Integracja:** komenda czyta kopię repo badawczego (bloki danych + skany) skopiowaną na serwer; repo badawcze jest tylko czytane, nigdy zapisywane. Format bloku danych jest kontraktem między repo a aplikacją; zasady utrzymania bloku dopisuje się do `CLAUDE.md` repo badawczego.
+- **Repo badawcze:** zmiana jego formatu (blok danych) musi być zgodna z jego `CLAUDE.md` (nie zmyślać, fakt ze źródłem, poziomy A–D) i przeglądana przez autora.
+- **Istniejące dane:** nowe pola (stały identyfikator repo przy osobie/źródle/fakcie, poziom A–D przy fakcie, rodzaje daty zakres/przed/po, warianty nazwiska) dochodzą jako puste; istniejące fakty bez poziomu (= nieokreślony), daty i wpisy bez zmian. Żadne istniejące dane nie są przepisywane. Każdą zmianę struktury danych da się cofnąć, zgodnie z zasadami repo.
+- **Zgodność wstecz:** ręczne wpisywanie i edycja, istniejące daty (dokładne i „ok.”), źródła zawsze z plikiem, adresy stron i panele bez zmian.
+- **Zachowane:** granica własności drzewa (także dla komendy — test), jeden spis miejsc z unikalnością i scalaniem, dane dodane tylko w aplikacji, bramki jakości CI i E2E ścieżek krytycznych (zob. Current System Overview).
+- **Wdrożenie:** kopia bazy przed zmianą struktury danych przy wdrożeniu zostaje (zob. Current System Overview); zmiany tej zmiany idą tą samą ścieżką.
+- **Dane badawcze:** prawdziwe dane tylko lokalnie i na produkcji; nie trafiają do repo root-keepera, danych testowych ani CI — testy na danych przykładowych.
 - **Wymagania niefunkcjonalne:**
-  - Drzewo, widok przodków i panele są użyteczne na ekranach od 1366 px do 2560 px szerokości; na dużym ekranie drzewo wypełnia dostępną przestrzeń.
-  - Nowe dane (spisy miejscowości i parafii, zdjęcia osób, notatki, zamieszkania) są objęte kopią zapasową z utratą najwyżej 24 h danych (RPO 24 h), jak dotychczasowe dane.
-  - [removed] Wymaganie z poprzednich PRD „dane drzewa i skany nie trafiają do podmiotów trzecich” przestaje obowiązywać (decyzja autora 2026-10-04) — dotyczy wszystkich danych, także zdjęć osób.
-- **Termin:** 4 tygodnie, twardy termin 2026-11-04, praca po godzinach; wszystkie cztery części (opis źródła, wygląd drzewa i panel boczny, widok przodków, spis miejscowości). Koszt stałego wysiłku zaakceptowany 2026-10-04. Jeśli zabraknie czasu, pierwsze odpadają zdjęcia osób na kartach (FR-015). Rdzeń bólu: opis źródła (FR-001 – FR-006) i spis miejscowości (FR-007 – FR-012).
+  - Przed zapisem importu na produkcji istnieje kopia bazy danych z chwili tuż przed importem.
+  - Prawdziwe dane badawcze nie pojawiają się w repozytorium root-keepera, w danych testowych ani w CI; testy importu działają na danych przykładowych.
+  - Istniejące bramki jakości nie pogarszają się: CI przechodzi bez ostrzeżeń, E2E ścieżek krytycznych zielone.
+- **Termin:** 4–5 tygodni po godzinach (delivery_weeks: 5, górna granica), bez twardego terminu. Koszt stałego wysiłku zaakceptowany 2026-10-23, po tym, jak zakres urósł w rundzie kontrargumentów (skany, poziomy A–D, daty nieostre, wyszukiwanie po wariantach wróciły do M-3).
 
 ## Business Logic Changes
 
-Każda miejscowość istnieje w drzewie raz, a parafie, cmentarze (rekordy osadzone w miejscowości, które wskazują nagrobki i pochowania), miejsca faktów (urodzenie, ślub, zgon, pochowanie) i zamieszkania osób odwołują się do niej. Scalenie duplikatu przenosi wszystkie te odwołania na właściwy wpis.
+Osoba z repo badawczego jest tą samą osobą co osoba w drzewie, gdy zgadza się jej stały identyfikator z bloku danych albo — przy pierwszym imporcie — co najmniej dwa niezależne elementy poza imieniem i nazwiskiem; w każdym innym przypadku decyduje autor.
 
-Reguła dziś: miejsca to wolny tekst przy osobie (zamieszkanie) i wydarzeniu (miejsce), więc „Luboml” i „Lubomla” to dwa różne miejsca, a nic ich nie łączy. Zmiana: autor wybiera miejsce ze spisu (z podpowiedziami i dopisywaniem w locie), a spis startuje z istniejących tekstów (identyczne teksty → jedna miejscowość). Literówki autor scala ręcznie, a wpis nieużywany może usunąć.
+Reguła dziś: brak — osoby wchodzą do drzewa tylko ręcznie, a o tym, czy to ta sama osoba, decyduje autor przy przepisywaniu. Wejścia nowej reguły: stały identyfikator z bloku (po pierwszym imporcie zapamiętany przy rekordzie), a przy pierwszym imporcie elementy osoby z repo i z drzewa (np. rodzice, rok i miejsce urodzenia, małżonek). Zasada „dwóch niezależnych zgodnych elementów” pochodzi z `CLAUDE.md` repo badawczego (nie scalać po samym imieniu i nazwisku). Wynik: osoba dopasowana pewnie, osoba nowa albo przypadek wątpliwy — ten ostatni zawsze trafia do autora w podglądzie.
 
 Reguły pomocnicze:
-- **Wybór źródła (modyfikacja S-19):** dziś przy wiązaniu źródła z wydarzeniem najpierw pokazywane są akty o pasującym typie. Po zmianie autor może dodatkowo zawęzić źródła po miejscu (miejscowość parafii aktu, miejscowość cmentarza nagrobka lub nazwa cmentarza) i roku; pierwszeństwo pasującego typu zostaje.
-- **Opis zależy od rodzaju źródła:** akt metrykalny — parafia, rok, typ aktu, archiwum; nagrobek — cmentarz i osoby pochowane. Miejsce pochowania osoby to cmentarz ze spisu (jego miejscowość jest miejscowością pochowania); z listy pochowanych podpowiada się cmentarzem nagrobka (można zmienić).
-- **Numer wpisu należy do powiązania źródła z faktem,** nie do źródła — jeden skan, wiele wpisów, wiele osób.
-- **Wiek:** ile przeżyła, gdy znana jest data zgonu; ile ma tylko wtedy, gdy wynik jest poniżej ok. 110 lat — inaczej wiek nie jest pokazywany.
+- **Pierwszeństwo wartości:** wartość z repo zastępuje wartość w aplikacji bez pytania tylko wtedy, gdy w aplikacji nikt jej nie zmienił od ostatniego importu; inaczej to konflikt do decyzji autora (obie wartości w podglądzie).
+- **Zniknięcie z repo:** rekord z identyfikatorem repo, którego w repo już nie ma (scalenie, błędna tożsamość, usunięty plik), trafia do podglądu jako „usunięty w repo”; autor decyduje: usuń albo zostaw. Rekordy bez identyfikatora repo (dodane tylko w aplikacji) nigdy nie są ruszane.
+- **Miejsca:** miejsce z repo dopasowuje się do spisu drzewa; nowe miejsca i niepewne dopasowania (warianty pisowni) autor potwierdza w podglądzie.
+- **Daty (modyfikacja):** dziś data wydarzenia jest dokładna albo przybliżona („ok.”); po zmianie może być też zakresem lat, „przed” albo „po”. Styl juliański zostaje w notatce faktu.
+- **Poziom pewności (nowe):** każdy fakt może mieć poziom A–D niezależny od źródeł; fakt bez poziomu ma poziom nieokreślony.
 
 ## Access Control Changes
 
-No access control changes — current model preserved: jedno drzewo na konto, otwarta rejestracja, każdy widzi i edytuje tylko swoje dane, a cudzy rekord to 404 (także w panelach, widoku przodków i spisie miejscowości). Spis miejscowości i spis parafii są prywatne dla drzewa, jak w prd-v2.
+No access control changes — current model preserved: logowanie i model ról w aplikacji bez zmian, jedno konto = jedno drzewo, cudzy rekord to 404.
+
+Nowa ścieżka zapisu poza aplikacją: import uruchamia się komendą na serwerze — dostęp ma ten, kto ma dostęp do serwera. Komenda wskazuje konto (e-mail) i zapisuje wyłącznie do drzewa tego konta; nic nie trafia do cudzego drzewa (dopasowanie do istniejących rekordów też tylko w obrębie tego drzewa). Działa tak samo lokalnie, np. na koncie testowym. Import „od zera” (FR-020) jest dostępny tylko poza produkcją.
 
 ## Non-Goals
 
-- **Brak udostępniania drzewa rodzinie** — nadal jeden użytkownik na drzewo; model dostępu bez zmian.
-- **Brak dodawania osób i relacji z widoku przodków** — widok przodków służy do oglądania; relacje dodaje się na drzewie-arkuszu.
-- **Brak importu/eksportu GEDCOM** — dane wchodzą ręcznie, jak dotąd.
-- **Brak nazw alternatywnych i datowanej hierarchii jednostek** — dawne nazwy trafiają do opisu; przynależność historyczna to jedno pole tekstowe miejscowości.
-- **Brak świadków ślubu** — panel małżeństwa pokazuje datę, miejsce, źródło i dzieci pary.
-- **Jedno nazwisko na osobę** — zawsze rodowe; nazwiska po ślubie w notatce.
-- **Brak daty pogrzebu i potwierdzania zamieszkania źródłem** — pogrzeb to samo miejsce pochowania; zamieszkanie to notatka badawcza bez źródła.
-- **Brak zarządzanej listy archiwów** — archiwum to tekst z podpowiedziami (FR-009).
+- **Import GEDCOM i import z interfejsu aplikacji** — „profesjonalny” import GEDCOM w interfejsie to osobna, późniejsza praca; M-3 to komenda dla repo badawczego autora.
+- **Synchronizacja w dwie strony** — aplikacja nigdy nie zapisuje do repo badawczego; poprawki wracają do repo ręcznie.
+- **#37, #38, #39, #40, #41** — lista „Do zbadania” (repo ma TODO.md), znacznik źródła na karcie, wiele skanów naraz, eksport, widok potomków zostają w parked.
+- **Cofnięcie złego importu** — autor nie wybrał go w M-3 (rozważone przy „co musi przetrwać”).
+- **Próbny przebieg (dry run)** — zastąpiony zatwierdzaniem pojedynczych zmian (FR-012 odrzucone).
+- **Linie boczne w imporcie M-3** — w M-3 bloki danych dostają tylko przodkowie z numerem Ahnentafel (FR-001); termin dla linii bocznych w Open Questions.
+- **Pozostałe notatki z repo** (otwarte pytania, ciekawostki) — nie są importowane w M-3.
 
 ## Open Questions
 
-1. ~~**Czy NFR „dane nie trafiają do podmiotów trzecich” (z poprzednich PRD) nadal obowiązuje?**~~ — Rozstrzygnięte 2026-10-04 (autor): nie obowiązuje, dla żadnych danych, także zdjęć osób (FR-015). Zob. Constraints & Compatibility.
-2. ~~**FR-004: czy szukanie źródła po miejscu obejmuje miejscowość parafii i cmentarza?**~~ — Rozstrzygnięte 2026-10-04 (autor): tak — akt pasuje przez miejscowość siedziby parafii, nagrobek przez miejscowość cmentarza.
+1. **Historyczne jednostki administracyjne (gubernie, powiaty, zmiany nazw w czasie) — czy i kiedy?** Dziś jeden rekord miejscowości (z rundy kontrargumentów FR-017). — Owner: autor. Termin: nieustalony.
+2. **Kiedy linie boczne (pliki bez numeru Ahnentafel) dostaną bloki danych i wejdą do importu?** (FR-001) — Owner: autor. Termin: nieustalony.
+3. **Gdzie trafią pozostałe notatki z repo (otwarte pytania, ciekawostki)?** — Później, bez decyzji. Owner: autor.
+4. **Jak wygląda podgląd w terminalu przy dziesiątkach konfliktów, żeby zatwierdzanie per zmiana było wykonalne?** (FR-005/FR-006) — Owner: autor. Termin: przed planem komendy importu.
+5. ~~**Success Criteria → Secondary jest puste po usunięciu dry run.**~~ — Zaakceptowane przez autora 2026-10-23 (quality cross-check).

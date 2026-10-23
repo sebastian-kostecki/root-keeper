@@ -51,6 +51,12 @@ PHP 8.5 · Laravel 13 · Inertia v3 (inertia-laravel 3.5, @inertiajs/react 3.8) 
 - These are newer than most training data. Use Boost `search-docs` for Laravel/Inertia/Pest APIs instead of recalling them.
 - Frontend routes come from Wayfinder: import from `@/actions/...` or `@/routes/...`; never hardcode URLs. After adding or renaming a route, regenerate with `vendor/bin/sail artisan wayfinder:generate` (the Vite plugin also does it in dev).
 - Before adding a frontend dependency, check `package.json`: zoom/pan already uses `react-zoom-pan-pinch` (`resources/js/components/sources/source-viewer.tsx`); UI primitives come from `resources/js/components/ui/`. New dependencies need the user's approval.
+- Laravel Prompts 0.3 (interactive Artisan prompts) and league/commonmark 2.10 come through `laravel/framework`; `symfony/yaml` is in `composer.lock` only through dev packages (see "Production dependencies").
+
+## Production dependencies
+
+- Production builds with `composer install --no-dev` (`docker/8.5/Dockerfile.prod`); CI and Sail install dev packages. A class used from `app/` must come from a package in `require`, not only from the lockfile.
+- Before using a package's class in `app/`, run `vendor/bin/sail composer why <vendor/package>`: if only `require-dev` packages pull it in (e.g. `symfony/yaml` through `laravel/sail`), it is missing on production. Adding it to `require` is a new dependency and needs the user's approval.
 
 ## UI: tokens and shared components
 
@@ -75,6 +81,7 @@ PHP 8.5 · Laravel 13 · Inertia v3 (inertia-laravel 3.5, @inertiajs/react 3.8) 
 - Copy first, drop later: never drop the source column in the same migration that copies from it. Values the user must transfer by hand (e.g. the old source "Numer wpisu") stay readable until the user removes them.
 - Migrations must be reversible (`down()`) or state in a comment why they cannot be.
 - Production runs `backup:run --only-db` before `migrate` (`scripts/deploy.sh`); do not remove that step.
+- Replacing `events.date_is_approximate` with a date qualifier (exact, approximate, range, before, after) is a data-moving migration: add the new column, copy (`true` → approximate, `false` → exact), test it, and drop the boolean only in a later change.
 
 ## Backend conventions for tree-owned data
 
@@ -88,6 +95,21 @@ PHP 8.5 · Laravel 13 · Inertia v3 (inertia-laravel 3.5, @inertiajs/react 3.8) 
 - Merging a duplicate (place, parish or cemetery) moves every reference — parishes, cemeteries, gravestones, burials, event places, burial places, residences — to the target inside one DB transaction, then deletes the duplicate; merging a locality first merges the duplicate's cemeteries that collide by name, and its parishes / offices that collide by kind, religion and dedication, with the target's. Both records must belong to the same tree; the merge test covers every reference type and the other-user 404.
 - Deleting a place, parish or cemetery is allowed only when nothing references it.
 - Miejscowości, parafie i urzędy oraz cmentarze to jedna strona `/places` z trzema zakładkami („Miejscowości”, „Parafie i urzędy”, „Cmentarze”; przełącznik `?kind=`) i jednym wpisem „Miejsca” w menu; nie dodawaj osobnej listy ani wpisu. Stare `/localities` i `/parishes` tylko przekierowują (cmentarze nigdy nie miały osobnego adresu), a segmenty z licznikiem 0 nie są wyłączane (w odróżnieniu od `/sources`), bo pusta zakładka dodaje pierwszy rekord.
+
+## Research repo import (console write path)
+
+- The import is an Artisan command in `app/Console/Commands/` (attributes `#[Signature]` / `#[Description]`, as in `RestoreBackup`). The command only resolves arguments, prints and asks; parsing, matching and writing live in `app/Actions/Import/*` with `handle()`.
+- Resolve the tree once from the account e-mail (`User::where('email', …)->firstOrFail()->tree`) and pass it down. Every read and match goes through that tree (`$tree->persons()`, `$tree->localities()`), never `Person::query()` or another global query. `RestoreBackup` works on the whole instance and is not a template for this.
+- No Policy runs here, so validation is explicit: each data block is validated (`Validator::make` with rules) before it reaches an Action; an invalid entry is skipped and reported with its file and reason, the rest continues.
+- Split decide from apply: one Action builds a list of proposed changes (new, changed, conflict, match to confirm, removed in repo) without writing; the command reviews it with Laravel Prompts; another Action writes the approved changes in one DB transaction. Test the planning Action directly, and the command through `$this->artisan(...)` with `expectsQuestion` / `expectsChoice` / `expectsConfirmation` (check current API with `search-docs`).
+- Every import feature test has a second user with overlapping data (same names, same places) and asserts nothing of theirs is matched or written.
+- Records carry the stable repo ID from the block, never the file name; records without a repo ID (added only in the app) are never updated or deleted by import.
+
+## Research data
+
+- Real research data (`/mnt/d/my-projects/genealogy-project`, `storage/gen-tree-import/`) never enters the repo, fixtures, factories, seeders or CI. Import tests use a small invented repo under `tests/Fixtures/research-repo/` written for the test. Keep `/storage/gen-tree-import` in `.gitignore`.
+- The research repo is read-only for the app: the import never writes, moves or deletes files there; scans are copied into the app's storage.
+- On production the import takes a DB backup (`backup:run --only-db`) after the user approves changes and before the first write; if the backup fails, nothing is written.
 
 ===
 
