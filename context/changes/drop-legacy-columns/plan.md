@@ -306,10 +306,10 @@ Lokalna baza staje się kopią produkcji, zmiana przechodzi przez CI, użytkowni
 
 #### Automated
 
-- [x] 3.1 Workflowy lint, static-analysis, tests, e2e zielone na PR
+- [x] 3.1 Workflowy lint, static-analysis, tests, e2e zielone na PR — 4b856a7
 
 #### Manual
 
-- [x] 3.2 Lokalnie po restore z kopii produkcji migrate przechodzi, akt 2 pokazuje „nr 38”
-- [ ] 3.3 Po deployu: brak sześciu kolumn, numery 38, 145, 118 na powiązaniach
-- [ ] 3.4 Issue #35 zamknięte z wynikiem kontroli
+- [x] 3.2 Lokalnie po restore z kopii produkcji migrate przechodzi, akt 2 pokazuje „nr 38” — 4b856a7
+- [x] 3.3 Po deployu: brak sześciu kolumn, numery 38, 145, 118 na powiązaniach
+- [x] 3.4 Issue #35 zamknięte z wynikiem kontroli
