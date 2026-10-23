@@ -502,25 +502,25 @@ Brak. Jedna aktualizacja wierszy z flagą przy migracji (tabela `events` ma setk
 
 #### Automated
 
-- [x] 3.1 Testy Vitest przechodzą: `vendor/bin/sail npm run test:js` (w tym `partial-date.test.ts`, `person-payload.test.ts`, `person-timeline.test.ts`, `persons-index.test.ts`, `pair-details.test.ts`, `view-tokens.test.ts`)
-- [x] 3.2 Typy przechodzą: `vendor/bin/sail npm run types:check`
-- [x] 3.3 Format i lint przechodzą: `vendor/bin/sail npm run check`
-- [x] 3.4 Build przechodzi: `vendor/bin/sail npm run build`
-- [x] 3.5 Istniejące specyfikacje E2E z datami przechodzą: `marriage-side-panel.spec.ts`, `person-events-and-note-tabs.spec.ts`, `source-found-by-place-and-year.spec.ts`, `gravestone-cemetery-and-buried.spec.ts`
+- [x] 3.1 Testy Vitest przechodzą: `vendor/bin/sail npm run test:js` (w tym `partial-date.test.ts`, `person-payload.test.ts`, `person-timeline.test.ts`, `persons-index.test.ts`, `pair-details.test.ts`, `view-tokens.test.ts`) — 3fd3138
+- [x] 3.2 Typy przechodzą: `vendor/bin/sail npm run types:check` — 3fd3138
+- [x] 3.3 Format i lint przechodzą: `vendor/bin/sail npm run check` — 3fd3138
+- [x] 3.4 Build przechodzi: `vendor/bin/sail npm run build` — 3fd3138
+- [x] 3.5 Istniejące specyfikacje E2E z datami przechodzą: `marriage-side-panel.spec.ts`, `person-events-and-note-tabs.spec.ts`, `source-found-by-place-and-year.spec.ts`, `gravestone-cemetery-and-buried.spec.ts` — 3fd3138
 
 #### Manual
 
-- [x] 3.6 W panelu osoby wpisanie „przed 1809”, „po 12.05.1801”, „1805-1811” i „między 1805 a 1811” pokazuje właściwą podpowiedź, a „1811–1805” blokuje zapis z komunikatem
-- [x] 3.7 Po zapisie i ponownym otwarciu pole pokazuje „przed 1809” / „po 12.05.1801” / „1805–1811”
+- [x] 3.6 W panelu osoby wpisanie „przed 1809”, „po 12.05.1801”, „1805-1811” i „między 1805 a 1811” pokazuje właściwą podpowiedź, a „1811–1805” blokuje zapis z komunikatem — 3fd3138
+- [x] 3.7 Po zapisie i ponownym otwarciu pole pokazuje „przed 1809” / „po 12.05.1801” / „1805–1811” — 3fd3138
 - [x] 3.8 Karta drzewa i karta przodka pokazują „1805–1811 – 1870”, bez wieku przy dacie nieostrej; „ok. 1850 – 1912” wygląda jak dotąd
-- [x] 3.9 Zakładka Wydarzenia: „przed” nad rokiem, zakres w dwóch liniach, brak podwójnego „ok.” przy dacie z miesiącem
+- [x] 3.9 Zakładka Wydarzenia: „przed” nad rokiem, zakres w dwóch liniach, brak podwójnego „ok.” przy dacie z miesiącem — 3fd3138
 - [x] 3.10 Ślub „po 1830” widoczny w panelu małżeństwa, na łączniku w drzewie („ślub po 1830”) i w zakładce Rodzina
-- [x] 3.11 Zrzuty ekranu (pole z podpowiedzią, oś czasu, karta drzewa, karta przodka; jasny i ciemny motyw) w `context/changes/fuzzy-event-dates/screenshots/`
+- [x] 3.11 Zrzuty ekranu (pole z podpowiedzią, oś czasu, karta drzewa, karta przodka; jasny i ciemny motyw) w `context/changes/fuzzy-event-dates/screenshots/` — 3fd3138
 
 ### Phase 4: E2E — zakres przeżywa edycję
 
 #### Automated
 
-- [ ] 4.1 Nowa specyfikacja przechodzi lokalnie: `npx playwright test tests/e2e/fuzzy-event-dates.spec.ts` (komenda wg `context/foundation/test-stack.md`)
-- [ ] 4.2 Specyfikacja jest czerwona po celowym usunięciu `qualifier` z `eventToPayload` i zielona po przywróceniu
+- [x] 4.1 Nowa specyfikacja przechodzi lokalnie: `npx playwright test tests/e2e/fuzzy-event-dates.spec.ts` (komenda wg `context/foundation/test-stack.md`)
+- [x] 4.2 Specyfikacja jest czerwona po celowym usunięciu `qualifier` z `eventToPayload` i zielona po przywróceniu
 - [ ] 4.3 Cały zestaw E2E przechodzi w CI
