@@ -1,6 +1,7 @@
 <?php
 
 use App\Actions\Trees\SetTreeRootPerson;
+use App\Enums\DateQualifier;
 use App\Enums\EventType;
 use App\Enums\ParticipantRole;
 use App\Models\Cemetery;
@@ -832,7 +833,7 @@ test('an approximate parent marriage is labelled with ok.', function () {
         'date_year' => 1828,
         'date_month' => null,
         'date_day' => null,
-        'date_is_approximate' => true,
+        'date_qualifier' => DateQualifier::Approximate,
     ]);
     $marriage->participants()->attach([
         $father->id => ['role' => ParticipantRole::Spouse],

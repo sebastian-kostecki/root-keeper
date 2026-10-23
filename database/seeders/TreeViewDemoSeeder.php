@@ -6,6 +6,7 @@ use App\Actions\Relations\CreateMarriage;
 use App\Actions\Relations\CreateParentChildRelation;
 use App\Actions\Sources\GenerateSourceThumbnail;
 use App\Actions\Trees\SetTreeRootPerson;
+use App\Enums\DateQualifier;
 use App\Enums\EventType;
 use App\Enums\MarriageForm;
 use App\Enums\ParticipantRole;
@@ -198,7 +199,7 @@ class TreeViewDemoSeeder extends Seeder
         $this->attachSource($janAnnaMarriage, 'akt-slubu-jan-anna.jpg');
 
         $leon = $this->person('Leon', 'Kowalski', 'male', 1940, deceased: 2015);
-        $this->eventOf($leon, EventType::Death)->update(['date_is_approximate' => true]);
+        $this->eventOf($leon, EventType::Death)->update(['date_qualifier' => DateQualifier::Approximate]);
 
         $nina = $this->sparsePerson('Nina', 'Rzadka', 'female');
         $this->parents($nina, [$leon]);
@@ -284,7 +285,7 @@ class TreeViewDemoSeeder extends Seeder
             'date_year' => 1932,
             'date_month' => 3,
             'date_day' => 14,
-            'date_is_approximate' => false,
+            'date_qualifier' => DateQualifier::Exact,
             'locality_id' => $this->localityId('Nowy Targ'),
         ]);
         $birth->participants()->attach($person, ['role' => ParticipantRole::Subject]);
@@ -294,7 +295,7 @@ class TreeViewDemoSeeder extends Seeder
             'date_year' => 2011,
             'date_month' => 11,
             'date_day' => 2,
-            'date_is_approximate' => false,
+            'date_qualifier' => DateQualifier::Exact,
             'locality_id' => $this->localityId('Kraków'),
         ]);
         $death->participants()->attach($person, ['role' => ParticipantRole::Subject]);
@@ -546,7 +547,7 @@ class TreeViewDemoSeeder extends Seeder
 
         $birth = Event::factory()->for($this->tree)->birth()->withoutDate()->create([
             'date_year' => $birthYear,
-            'date_is_approximate' => $approximate,
+            'date_qualifier' => $approximate ? DateQualifier::Approximate : DateQualifier::Exact,
         ]);
         $birth->participants()->attach($person, ['role' => ParticipantRole::Subject]);
 

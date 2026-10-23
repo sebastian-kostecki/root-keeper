@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\DateQualifier;
 use App\Enums\EventType;
 use App\Enums\ParticipantRole;
 use App\Models\Cemetery;
@@ -23,7 +24,7 @@ function attachTimelineEvent(Person $person, EventType $type, array $attributes 
         'date_year' => null,
         'date_month' => null,
         'date_day' => null,
-        'date_is_approximate' => false,
+        'date_qualifier' => DateQualifier::Exact,
         ...$attributes,
     ]);
 
@@ -215,7 +216,7 @@ test('an approximate year sorts like its plain year', function () {
     $spouse = Person::factory()->for($user->tree)->create();
     $son = Person::factory()->for($user->tree)->male()->create(['first_name' => 'Jan', 'last_name' => 'Nowak']);
     attachMarriage($person, $spouse, 1849);
-    attachTimelineEvent($son, EventType::Birth, ['date_year' => 1850, 'date_is_approximate' => true]);
+    attachTimelineEvent($son, EventType::Birth, ['date_year' => 1850, 'date_qualifier' => DateQualifier::Approximate]);
     linkParent($person, $son);
 
     expect(timelineRows($this, $user, $person))->toBe([
@@ -426,7 +427,7 @@ test('an approximate date does not change the age', function () {
     $person = Person::factory()->for($user->tree)->create();
     $spouse = Person::factory()->for($user->tree)->create();
     attachTimelineEvent($person, EventType::Birth, ['date_year' => 1900]);
-    attachMarriage($person, $spouse, 1920)->update(['date_is_approximate' => true]);
+    attachMarriage($person, $spouse, 1920)->update(['date_qualifier' => DateQualifier::Approximate]);
 
     expect(timelineAges($this, $user, $person)[1])->toBe(['Małżeństwo', yearsOld(20)]);
 });
@@ -437,7 +438,7 @@ test('the payload gives the year, the approximation flag and whether the date ha
     attachTimelineEvent($person, EventType::Birth, ['date_year' => 1900, 'date_month' => 5, 'date_day' => 3]);
     attachTimelineEvent($person, EventType::Death, ['date_year' => 1960]);
     $spouse = Person::factory()->for($user->tree)->create();
-    attachMarriage($person, $spouse, 1920)->update(['date_is_approximate' => true]);
+    attachMarriage($person, $spouse, 1920)->update(['date_qualifier' => DateQualifier::Approximate]);
 
     $timeline = $this->actingAs($user)
         ->get(personPreviewUrl($person))

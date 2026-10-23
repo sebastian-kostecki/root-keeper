@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\DateQualifier;
 use App\Enums\EventType;
 use App\Enums\MarriageForm;
 use App\Support\PartialDate;
@@ -21,6 +22,8 @@ use Illuminate\Support\Carbon;
  * @property int|null $date_year
  * @property int|null $date_month
  * @property int|null $date_day
+ * @property int|null $date_until_year
+ * @property DateQualifier $date_qualifier
  * @property bool $date_is_approximate
  * @property int|null $locality_id
  * @property int|null $cemetery_id
@@ -29,11 +32,18 @@ use Illuminate\Support\Carbon;
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
-#[Fillable(['tree_id', 'type', 'date_year', 'date_month', 'date_day', 'date_is_approximate', 'locality_id', 'cemetery_id', 'marriage_form'])]
+#[Fillable(['tree_id', 'type', 'date_year', 'date_month', 'date_day', 'date_until_year', 'date_qualifier', 'locality_id', 'cemetery_id', 'marriage_form'])]
 class Event extends Model
 {
     /** @use HasFactory<EventFactory> */
     use HasFactory;
+
+    protected static function booted(): void
+    {
+        static::saving(function (Event $event): void {
+            $event->date_is_approximate = $event->date_qualifier === DateQualifier::Approximate;
+        });
+    }
 
     /**
      * Get the attributes that should be cast.
@@ -44,6 +54,8 @@ class Event extends Model
     {
         return [
             'type' => EventType::class,
+            'date_qualifier' => DateQualifier::class,
+            'date_until_year' => 'integer',
             'date_is_approximate' => 'boolean',
             'marriage_form' => MarriageForm::class,
         ];
@@ -106,7 +118,7 @@ class Event extends Model
                 year: $this->date_year,
                 month: $this->date_month,
                 day: $this->date_day,
-                isApproximate: $this->date_is_approximate,
+                isApproximate: $this->date_qualifier === DateQualifier::Approximate,
             ),
         );
     }

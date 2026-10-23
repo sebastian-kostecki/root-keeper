@@ -40,7 +40,6 @@ class FillBurialPlacesFromGravestone
 
             $burial = $gravestone->tree->events()->create([
                 'type' => EventType::Burial,
-                'date_is_approximate' => false,
                 'cemetery_id' => $gravestone->cemetery->id,
                 'locality_id' => $gravestone->cemetery->locality_id,
             ]);
