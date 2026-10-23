@@ -1,13 +1,13 @@
 ---
 project: root-keeper
-assessed_at: 2026-10-04T19:41:05Z
+assessed_at: 2026-10-23T07:12:12Z
 agent_readiness: ready-with-compensation
 context_type: brownfield
 stack_components:
   language: PHP 8.5 + TypeScript 7
   framework: Laravel 13 + Inertia v3 + React 19
-  build_tool: Vite 8 via vite-plus 0.3.0
-  test_runner: Pest 5 (+ Vitest 4 via vp test, Playwright 1.63 for E2E)
+  build_tool: Vite 8 via vite-plus 1.0.0
+  test_runner: Pest 5 (+ Vitest 5 via vp test, Playwright 1.63 for E2E)
   package_manager: composer + npm
   ci_provider: github-actions
   deployment_target: self-host (Docker Compose on VPS behind Traefik, manual scripts/deploy.sh)
@@ -15,23 +15,23 @@ gates_passed: 13
 gates_failed: 1
 ---
 
-Assessed against `context/foundation/prd.md` (source description, places gazetteer, tree look + side panels, all-ancestors view; delivery 4 weeks, deadline 2026-11-04). Detection confirmed by the user. Replaces the 2026-09-28 assessment made for `archive/prd-v2.md` (see git history).
+Assessed against `context/foundation/prd.md` (M-3: import from the research repo — Artisan command reading data blocks from markdown files, per-change review in the terminal, stable repo IDs, confidence A–D, fuzzy dates, surname variants; delivery up to 5 weeks after hours). Detection confirmed by the user. Replaces the 2026-10-04 assessment made for `archive/prd-v5.md` (see git history, commit `685ffa2`).
 
 ## Stack Components
 
-**Language — PHP 8.5 + TypeScript 7.** `composer.json` requires `php: ^8.5`. Backend typing is enforced by Larastan 3.12.1 at level 7 (`phpstan.neon`, no baseline, no `ignoreErrors`) over `app/`, `bootstrap/app.php`, `config/`, `database/`, `routes/`. `declare(strict_types=1)` appears in 0 of 87 files in `app/` (dropped as a claim on 2026-09-28; not enforced). Frontend is TypeScript 7.0.2 with `strict: true` and `noImplicitAny: true` in `tsconfig.json` (`noUncheckedIndexedAccess` off).
+**Language — PHP 8.5 + TypeScript 7.** `composer.json` requires `php: ^8.5`. Backend typing is enforced by Larastan 3.12.2 at level 7 (`phpstan.neon`, no baseline, no `ignoreErrors`) over `app/`, `bootstrap/app.php`, `config/`, `database/`, `routes/`. `declare(strict_types=1)` appears in 0 of 164 files in `app/` (not a convention here). Frontend is TypeScript 7.0.2 with `strict: true` and `noImplicitAny: true` in `tsconfig.json`.
 
-**Framework — Laravel 13.32 + Inertia v3 + React 19.3.** Built from `laravel/react-starter-kit`. inertia-laravel 3.3.4, @inertiajs/react 3.7.1, Fortify 1.39, Wayfinder 0.1.21 (pre-1.0, typed route functions), spatie/laravel-backup 10.3, shadcn/ui on Radix (`resources/js/components/ui/`, including `sheet.tsx`, `dialog.tsx`, `tabs.tsx`), Tailwind 4.3, react-zoom-pan-pinch 4 (used today in `resources/js/components/sources/source-viewer.tsx`). Database: PostgreSQL 18. Established code path: route → controller → Form Request → Action (`app/Actions/<Domain>/*::handle()`) → API Resource → Inertia page; ownership via Policies on `tree_id` with `denyAsNotFound()`.
+**Framework — Laravel 13.34 + Inertia v3 + React 19.3.** Built from `laravel/react-starter-kit`. inertia-laravel 3.5.1, @inertiajs/react 3.8.0, Fortify 1.40.0, Wayfinder 0.1.21 (pre-1.0), spatie/laravel-backup 10.3.3, shadcn/ui on Radix, Tailwind 4.3.3, react-zoom-pan-pinch 4.2.0. Database: PostgreSQL 18. Write path: controller → Form Request → Action (`app/Actions/<Domain>/*::handle()`) → redirect; read path: API Resource → Inertia page; ownership via Policies on `tree_id` with `denyAsNotFound()`. Console: one class-based command, `app/Console/Commands/RestoreBackup.php` (PHP attributes `#[Signature]` / `#[Description]`, `ConfirmableTrait`), tested in `tests/Backup/RestoreCommandTest.php`. Laravel Prompts 0.3.24 and league/commonmark 2.10.3 come in through `laravel/framework`.
 
-**Build tool — Vite 8.3 via vite-plus 0.3.0.** `package.json` scripts call `vp` (`vp build`, `vp dev`, `vp check`, `vp test`). `vite.config.ts` imports from `vite-plus` and holds `lint` (Oxlint, type-aware, `denyWarnings`) and `fmt` (Oxfmt). No ESLint/Prettier config.
+**Build tool — Vite 8 via vite-plus 1.0.0.** `package.json` scripts call `vp` (`vp build`, `vp dev`, `vp check`, `vp test`); `vite` is aliased to `@voidzero-dev/vite-plus-core@1.0.0`, `vitest` pinned to 5.0.1 in `overrides`. `vite.config.ts` holds `lint` (Oxlint, type-aware, `denyWarnings`) and `fmt` (Oxfmt). No ESLint/Prettier config.
 
-**Test runners.** Pest 5.2.1 / PHPUnit 13.3 — 29 test files in `tests/`, including data-migration tests (`tests/Feature/SourceMigrationTest.php`, `tests/Feature/TreeBackfillTest.php`). Vitest 4.1 via `npm run test:js` (`vp test`) — 7 unit tests in `resources/js/lib/` and `resources/js/hooks/`, run in CI. Playwright 1.63 — `playwright.config.ts`, `tests/e2e/auth.setup.ts` and one seed spec (`tests/e2e/seed.spec.ts`, auth gate round-trip) against an isolated Sail server (`scripts/e2e-server.sh`, port 8100); details in `context/foundation/test-stack.md`. E2E does not run in CI.
+**Test runners.** Pest 5.3.0 / PHPUnit 13.3.6 — 53 test files, including data-migration tests (`tests/Feature/SourceMigrationTest.php`). Vitest 5.0.1 via `npm run test:js` — 26 test files in `resources/js/`, incl. `view-tokens.test.ts`. Playwright 1.63 — 28 specs in `tests/e2e/` covering tree slots, side panels, sources, places, ancestors view; runs in CI (`.github/workflows/e2e.yml`); details in `context/foundation/test-stack.md`.
 
-**Package manager — composer + npm.** `composer.lock`, `package-lock.json`. `pnpm-workspace.yaml` still present without `pnpm-lock.yaml` (starter leftover).
+**Package manager — composer + npm.** `composer.lock`, `package-lock.json`. The starter's `pnpm-workspace.yaml` is gone.
 
-**CI/CD — GitHub Actions.** `lint.yml` (Pint `lint:check`, `npm run check`, `npm run test:js`), `static-analysis.yml` (Larastan, `tsc --noEmit`), `tests.yml` (Pest on a `postgres:18-alpine` service). Deploy is manual: `scripts/deploy.sh` → `production_backup_before_migrate` (`backup:run --only-db`) → `migrate --force` on the VPS (`docker-compose.prod.yml`, Traefik; see `infrastructure.md`).
+**CI/CD — GitHub Actions.** `lint.yml` (Pint, `npm run check`, `npm run test:js`), `static-analysis.yml` (Larastan, `tsc --noEmit`), `tests.yml` (Pest on `postgres:18-alpine`), `e2e.yml` (Playwright on `postgres:18-alpine`). CI installs Composer packages **with** dev dependencies. Deploy is manual: `scripts/deploy.sh` → `backup:run --only-db` → `migrate --force`; the production image (`docker/8.5/Dockerfile.prod`) runs `composer install --no-dev`.
 
-**Instruction files.** `CLAUDE.md`: 10xDevs E2E block (M3L4), Vite+ toolchain, installed versions, backend conventions for tree-owned data, Laravel Boost guidelines. Project skills in `.claude/skills/`. Boost MCP provides `search-docs`. `CLAUDE.md` tells agents to read `.ai/rules/index.md`, which does not exist (the same text says to continue without it).
+**Instruction files.** `CLAUDE.md`: 10xDevs E2E block, Vite+ toolchain, installed versions, UI tokens, side panels, data-moving migrations, tree-owned backend conventions, places, Laravel Boost guidelines. Project skills in `.claude/skills/`. Boost MCP provides `search-docs`. The Boost block tells agents to read `.ai/rules/index.md`; `.ai/` does not exist (the same text says to continue without it).
 
 ## Quality Gate Assessment
 
@@ -40,9 +40,9 @@ Assessed against `context/foundation/prd.md` (source description, places gazette
 | Language: PHP 8.5 (Larastan level 7)          | ✓     | —          | —             | —          | pass    |
 | Language: TypeScript 7 (strict)               | ✓     | —          | —             | —          | pass    |
 | Framework: Laravel 13 + Inertia v3 + React 19 | —     | ✓          | ✓             | ✓          | pass    |
-| Build tool: vite-plus 0.3.0 (Vite 8)          | —     | ✓          | ✗             | ✓          | fail    |
+| Build tool: vite-plus 1.0.0 (Vite 8)          | —     | ✓          | ✗             | ✓          | fail    |
 | Test runner: Pest 5                           | —     | —          | ✓             | ✓          | pass    |
-| Test runner: Vitest 4 (via `vp test`)         | —     | —          | ✓             | ✓          | pass    |
+| Test runner: Vitest 5 (via `vp test`)         | —     | —          | ✓             | ✓          | pass    |
 | E2E runner: Playwright 1.63                   | —     | —          | ✓             | ✓          | pass    |
 
 Legend: ✓ = pass, ✗ = fail, ~ = partial, — = not applicable
@@ -50,114 +50,114 @@ Legend: ✓ = pass, ✗ = fail, ~ = partial, — = not applicable
 ### Gate Details
 
 **Typed**
-- PHP ✓ — `phpstan.neon` includes the Larastan extension at `level: 7`, no baseline file, no `ignoreErrors`; run in CI by `static-analysis.yml` (`composer types:check` → `phpstan analyse`). Form Requests cover write endpoints.
-- TypeScript ✓ — `tsconfig.json` `strict: true`, `noImplicitAny: true`; `tsc --noEmit` in CI; Wayfinder generates typed route functions; Oxlint runs type-aware.
+- PHP ✓ — `phpstan.neon` includes the Larastan extension at `level: 7`, no baseline, no `ignoreErrors`; CI runs it in `static-analysis.yml`. Form Requests cover web write endpoints; a console command has no Form Request, so validation of parsed data blocks must be explicit (see gap 3).
+- TypeScript ✓ — `strict: true`, `noImplicitAny: true`; `tsc --noEmit` in CI; Wayfinder generates typed route functions; Oxlint runs type-aware.
 
 **Convention-based**
-- Laravel ✓ — the strongest-convention framework in PHP; the repo adds one consistent layer (Actions with `handle()`, Policies with `denyAsNotFound()`, Resources with `->resolve()`), documented in `CLAUDE.md`.
+- Laravel ✓ — the strongest-convention PHP framework; Artisan commands have a fixed home (`app/Console/Commands/`, auto-discovered) and a test API (`$this->artisan(...)`). The repo's Action/Policy/Resource layer is documented in `CLAUDE.md`; the console write path is not (gap 3).
 - vite-plus ✓ — one `vite.config.ts` holds build, lint and format; commands in `package.json`.
 
 **Popular in training data** (within each language family)
-- Laravel ✓ — mainstream PHP framework; Inertia + React is Laravel's official React starter path. Caveat: installed majors (Laravel 13, Inertia v3, Pest 5, TypeScript 7) are recent; agent priors skew to older APIs — mitigated by `CLAUDE.md` "Installed versions" and Boost `search-docs`.
-- Pest ✓ — default test framework of current Laravel starters.
-- Vitest ✓ — mainstream JS unit-test runner; here invoked through `vp test`, which the toolchain block already explains.
-- Playwright ✓ — mainstream JS E2E runner.
-- vite-plus ✗ — 0.3.0, pre-1.0, recent; little training-data presence even within JS. Agents default to `npx eslint`, `.prettierrc`, `import { defineConfig } from 'vite'`.
+- Laravel ✓ — mainstream PHP framework; Inertia + React is the official React starter. Caveat: installed majors (Laravel 13, Inertia v3, Pest 5, TypeScript 7, Vitest 5) are recent — mitigated by `CLAUDE.md` "Installed versions" and Boost `search-docs`. Laravel Prompts and Artisan console testing are well represented.
+- Pest, Vitest, Playwright ✓ — default/mainstream runners in their families.
+- vite-plus ✗ — 1.0.0 is the first stable release of a new tool; little training-data presence even within JS. Agents still default to `npx eslint`, `.prettierrc`, `import { defineConfig } from 'vite'`.
 
 **Well-documented**
-- Laravel / Inertia / Pest ✓ — versioned official docs, reachable via Boost `search-docs` scoped to installed versions.
-- Vitest / Playwright ✓ — versioned official docs (vitest.dev, playwright.dev).
+- Laravel / Inertia / Pest ✓ — versioned official docs, reachable via Boost `search-docs`.
+- Vitest / Playwright ✓ — versioned official docs.
 - vite-plus ✓ — https://viteplus.dev/guide/ plus version-matched local docs in `node_modules/vite-plus/docs/` and `node_modules/vite-plus/AGENTS.md`.
 
 ## Gaps & Compensation
 
 ### 1. vite-plus is not in the agent's training data (build tool, training data ✗) — compensated
 
-**Why it matters for this change:** most of the PRD is frontend work (side panels for person, source, marriage, locality; tree redesign with zoom; ancestors view; filters on the source grid; autocomplete pickers). Every slice ends with `npm run check`; an agent reaching for ESLint/Prettier fails CI or adds a second toolchain.
+**Why it matters for this change:** M-3 is mostly backend (command, parser, matching), but the frontend still changes: confidence A–D on facts, new date kinds in the timeline and forms, search by surname variant. Each slice ends with `npm run check`.
 
-**Compensation:** already in `CLAUDE.md` ("Frontend toolchain — Vite+") since 2026-09-28. Keep as is.
+**Compensation:** already in `CLAUDE.md` ("Frontend toolchain — Vite+"), updated for 1.0.0. Keep as is.
 
-### 2. Recent major versions (framework — hardening, not a gate failure)
+### 2. The YAML parser exists only in dev (framework conventions — hardening for this change)
 
-**Why it matters:** new routes, forms and pages; Wayfinder 0.1 and Inertia v3 form helpers are where outdated priors leak in. Since the last assessment Playwright 1.63 and Vitest (via `vp test`) joined the toolchain, and the change will lean on react-zoom-pan-pinch for tree and ancestors-view zoom (FR-013, FR-018).
+**Why it matters:** the data block in research files is the contract (FR-001, FR-002); the natural parsers are `symfony/yaml` or league/commonmark's front-matter extension, which itself needs `symfony/yaml`. `composer.lock` has `symfony/yaml` 8.1.8 only because `laravel/sail` and `laravel/roster` (dev) require it. Locally and in CI (`composer install` with dev) the import works and tests pass; the production image runs `composer install --no-dev`, so the command fails on the server with a missing class. Nothing in the pipeline catches it.
 
-**Compensation:** refresh the "Installed versions" block (replacement below).
+**Compensation:** a dependency rule (entry below). Adding `symfony/yaml` to `require` is a new direct dependency and needs the user's approval — decide in `/10x-plan`.
 
-### 3. Side panels replace modals in four places (framework conventions — hardening for this change)
+### 3. The import command writes outside the HTTP path (framework conventions — hardening for this change)
 
-**Why it matters:** FR-006, FR-016, FR-017, FR-019 move person, source, marriage and locality into a right side panel, while delete confirmations and small pickers stay modal (shape-notes decision "side panel scope"). FR-019 requires the tree to narrow beside the open panel, not be covered by it. The shadcn `sheet.tsx` in the repo is an overlay built on Radix Dialog, so an agent picking it "because it is the side panel component" would ship an overlay that fails FR-019. Without a written rule, each of four slices will invent its own panel.
+**Why it matters:** the PRD's guardrail is that import touches only the named account's tree, and it explicitly bypasses Policies (FR-016). The documented write path (Form Request → Action → Policy) does not apply to a command, and the repo has one command (`RestoreBackup`) that works on the whole instance — the wrong template for a tree-scoped import. An agent copying it, or reaching for `Person::query()` to match by name, would match against every tree. Interactive review (FR-005, FR-006, FR-007) mixed with domain logic is also hard to test without a TTY.
 
-**Compensation:** a panel rule (entry below). The concrete component choice belongs to `/10x-plan`; the rule fixes the constraints it must satisfy.
+**Compensation:** a console-import rule (entry below): thin command, logic in Actions, tree resolved once from the e-mail, every query through it, a pure "proposed changes" object reviewed by the command and applied by an Action, and a two-user test.
 
-### 4. Data moves with real data on production (framework conventions — hardening for this change)
+### 4. Real research data and the pre-import backup (framework conventions — hardening for this change)
 
-**Why it matters:** four data moves (free-text places → gazetteer, single residence → residence list, "Pochodzenie" → archive, "Numer wpisu" kept visible for manual transfer). The author accepts manual fixes, but a lost value is unrecoverable without a backup. The repo already has the right pattern — data migrations with their own Pest tests (`SourceMigrationTest.php`, `TreeBackfillTest.php`) and a DB backup before `migrate` in `scripts/deploy.sh` — but it is not written down.
+**Why it matters:** the PRD forbids real research data in the repo, test data and CI, and requires a DB copy taken right before an import writes on production. `storage/gen-tree-import` is gitignored today, and the live repo sits at `/mnt/d/my-projects/genealogy-project`, one copy away from a fixture. `scripts/deploy.sh` backs up before `migrate`, but an import runs outside deploy, so that backup does not cover it.
 
-**Compensation:** a data-move rule (entry below).
+**Compensation:** a research-data rule (entry below).
 
-### 5. Gazetteer is a new tree-owned module with merge (framework conventions — hardening for this change)
+### 5. New fields on existing rows (framework conventions — hardening, mostly already covered)
 
-**Why it matters:** places and parishes are referenced from parishes, gravestones, facts and residences; merging a duplicate must move every reference (Business Logic Changes). Missing one reference type leaves orphans; a merge across trees would leak data.
+**Why it matters:** new nullable fields (repo ID on person/source/event, confidence A–D, surname variants) are additive. The date kinds are not: `events.date_is_approximate` is a boolean today, and range/before/after will likely replace it with a qualifier column — a migration that rewrites existing rows.
 
-**Compensation:** extend the tree-owned conventions (entry below).
+**Compensation:** the existing "Migrations that move existing data" rule covers it; one line added below to say so explicitly.
 
 ### Recommended Instruction File Additions
 
 Paste into `CLAUDE.md` above the `<laravel-boost-guidelines>` block (Boost regenerates that block).
 
-**Installed versions — replaces the existing block (gap 2)**
+**Installed versions — add to the existing block (gap 1–2)**
 
 ```markdown
-## Installed versions (check before relying on an API)
-
-PHP 8.5 · Laravel 13 · Inertia v3 (inertia-laravel 3.3, @inertiajs/react 3.7) · React 19 (React Compiler on) · TypeScript 7 · Tailwind v4 · Pest 5 / PHPUnit 13 · Larastan 3 (level 7) · Fortify 1.39 · Wayfinder 0.1 (pre-1.0) · PostgreSQL 18 · Vite 8 via vite-plus 0.3 · Vitest 4 (run as `vp test`) · Playwright 1.63 · react-zoom-pan-pinch 4.
-
-- These are newer than most training data. Use Boost `search-docs` for Laravel/Inertia/Pest APIs instead of recalling them.
-- Frontend routes come from Wayfinder: import from `@/actions/...` or `@/routes/...`; never hardcode URLs. After adding or renaming a route, regenerate with `vendor/bin/sail artisan wayfinder:generate` (the Vite plugin also does it in dev).
-- Before adding a frontend dependency, check `package.json`: zoom/pan already uses `react-zoom-pan-pinch` (`resources/js/components/sources/source-viewer.tsx`); UI primitives come from `resources/js/components/ui/`. New dependencies need the user's approval.
+- Laravel Prompts 0.3 (interactive Artisan prompts) and league/commonmark 2.10 come through `laravel/framework`; `symfony/yaml` is in `composer.lock` only through dev packages (see "Production dependencies").
 ```
 
-**Side panels — gap 3**
+**Production dependencies — gap 2**
 
 ```markdown
-## Side panels vs modals
+## Production dependencies
 
-- Person, source, marriage and locality open in a right-hand side panel, not a modal. Delete confirmations and small pickers (choose a person, add a parish inline) stay modal (`resources/js/components/ui/dialog.tsx`).
-- An open panel must not cover the tree: the tree area narrows beside it. Do not use an overlay for these panels — `resources/js/components/ui/sheet.tsx` is an overlay (Radix Dialog) and does not meet this as-is.
-- Build one shared panel shell and reuse it for all four; the source panel is wider (scan beside the form).
-- Closing a panel returns the user to the same tree position; moving to a relative replaces the panel content.
+- Production builds with `composer install --no-dev` (`docker/8.5/Dockerfile.prod`); CI and Sail install dev packages. A class used from `app/` must come from a package in `require`, not only from the lockfile.
+- Before using a package's class in `app/`, run `vendor/bin/sail composer why <vendor/package>`: if only `require-dev` packages pull it in (e.g. `symfony/yaml` through `laravel/sail`), it is missing on production. Adding it to `require` is a new dependency and needs the user's approval.
 ```
 
-**Data moves — gap 4**
+**Research repo import — gap 3**
 
 ```markdown
-## Migrations that move existing data
+## Research repo import (console write path)
 
-- A migration that rewrites existing rows (free text → reference, field → other field) gets its own Pest test in `tests/Feature/<Name>MigrationTest.php`, following `tests/Feature/SourceMigrationTest.php`: insert rows in the old shape, run the migration, assert the new shape and that no value was lost.
-- Copy first, drop later: never drop the source column in the same migration that copies from it. Values the user must transfer by hand (e.g. the old source "Numer wpisu") stay readable until the user removes them.
-- Migrations must be reversible (`down()`) or state in a comment why they cannot be.
-- Production runs `backup:run --only-db` before `migrate` (`scripts/deploy.sh`); do not remove that step.
+- The import is an Artisan command in `app/Console/Commands/` (attributes `#[Signature]` / `#[Description]`, as in `RestoreBackup`). The command only resolves arguments, prints and asks; parsing, matching and writing live in `app/Actions/Import/*` with `handle()`.
+- Resolve the tree once from the account e-mail (`User::where('email', …)->firstOrFail()->tree`) and pass it down. Every read and match goes through that tree (`$tree->persons()`, `$tree->localities()`), never `Person::query()` or another global query. `RestoreBackup` works on the whole instance and is not a template for this.
+- No Policy runs here, so validation is explicit: each data block is validated (`Validator::make` with rules) before it reaches an Action; an invalid entry is skipped and reported with its file and reason, the rest continues.
+- Split decide from apply: one Action builds a list of proposed changes (new, changed, conflict, match to confirm, removed in repo) without writing; the command reviews it with Laravel Prompts; another Action writes the approved changes in one DB transaction. Test the planning Action directly, and the command through `$this->artisan(...)` with `expectsQuestion` / `expectsChoice` / `expectsConfirmation` (check current API with `search-docs`).
+- Every import feature test has a second user with overlapping data (same names, same places) and asserts nothing of theirs is matched or written.
+- Records carry the stable repo ID from the block, never the file name; records without a repo ID (added only in the app) are never updated or deleted by import.
 ```
 
-**Tree-owned gazetteer — gap 5 (append to "Backend conventions for tree-owned data")**
+**Research data and backup — gap 4**
 
 ```markdown
-- Places and parishes are tree-owned records like every other: unique per tree, scoped through `$request->user()->tree`, Policy with `denyAsNotFound()`.
-- Merging a duplicate (place or parish) moves every reference — parishes, gravestones, event places, burial places, residences — to the target inside one DB transaction, then deletes the duplicate. Both records must belong to the same tree; the merge test covers every reference type and the other-user 404.
-- Deleting a place or parish is allowed only when nothing references it.
+## Research data
+
+- Real research data (`/mnt/d/my-projects/genealogy-project`, `storage/gen-tree-import/`) never enters the repo, fixtures, factories, seeders or CI. Import tests use a small invented repo under `tests/Fixtures/research-repo/` written for the test. Keep `/storage/gen-tree-import` in `.gitignore`.
+- The research repo is read-only for the app: the import never writes, moves or deletes files there; scans are copied into the app's storage.
+- On production the import takes a DB backup (`backup:run --only-db`) after the user approves changes and before the first write; if the backup fails, nothing is written.
+```
+
+**Data moves — gap 5 (append to "Migrations that move existing data")**
+
+```markdown
+- Replacing `events.date_is_approximate` with a date qualifier (exact, approximate, range, before, after) is a data-moving migration: add the new column, copy (`true` → approximate, `false` → exact), test it, and drop the boolean only in a later change.
 ```
 
 ## Summary
 
-**Overall agent-readiness: ready with compensation.** 13 of 14 applicable checks pass.
+**Overall agent-readiness: ready with compensation.** 13 of 14 applicable checks pass, same as on 2026-10-04.
 
-**Strengths:** mainstream, convention-heavy PHP framework on its official React starter; real type discipline on both sides (Larastan level 7 without baseline, strict TypeScript, typed routes); lint, static analysis, PHP and JS unit tests all gate CI; consistent Action/Policy/Resource layer documented in `CLAUDE.md`; Boost gives version-scoped docs; data migrations already have a tested pattern.
+**Strengths:** mainstream, convention-heavy PHP framework on its official React starter; type discipline on both sides (Larastan level 7 without baseline, strict TypeScript, typed routes); lint, static analysis, Pest, Vitest and now 28 E2E specs gate CI; the repo's layers and recurring traps (side panels, data moves, places) are written in `CLAUDE.md`; Boost gives version-scoped docs; Artisan + Laravel Prompts give the import command a well-known home and test API.
 
-**Gaps:** the only failed check is still vite-plus (too new for the agent), already compensated in `CLAUDE.md`. For this change, three new rules harden the riskiest areas — side panels in four places, four data moves on real data, and the gazetteer merge — plus a refreshed versions block.
+**Gaps:** the only failed check is still vite-plus (now 1.0, still new to agents), already compensated. M-3 adds a write path outside HTTP, so the hardening moves to the backend: a YAML parser that silently disappears on production, tree scoping and validation without Policies and Form Requests, real data kept out of fixtures, and a backup before an import writes.
 
 **Hand-off to the health check:**
-- The PRD's Current System Overview says critical paths (fact–source, relations from tree slots) are protected by E2E tests, but `tests/e2e/` holds only the auth-gate seed and E2E does not run in CI. The PRD guardrails depend on that coverage.
-- The pre-migration backup is `--only-db`; person photos (FR-015) are files, and the PRD requires backups to cover them (RPO 24 h). Confirm how `storage/app` is backed up.
-- Minor: `.ai/rules` pointer in `CLAUDE.md` without the directory; `pnpm-workspace.yaml` beside an npm lockfile.
+- Dev/prod dependency drift: nothing checks that `app/` uses only `require` packages; CI installs dev. Consider a CI step or a `--no-dev` smoke test of the import command.
+- `.ai/rules/index.md` is referenced by the Boost block but `.ai/` does not exist.
+- Backup coverage: `deploy.sh` backs up with `--only-db`; the import copies scans into storage — confirm how `storage/app` is backed up before the first production import.
 
 **Next step:** `/10x-health-check`.

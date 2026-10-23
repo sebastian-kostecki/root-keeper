@@ -438,6 +438,14 @@ export function ZoomCanvas({
         fillHeight,
     ]);
 
+    // A new column or height to fill does not always resize the content (rows
+    // already at their maximum), so the pass that runs the fit is scheduled here,
+    // after the commit, instead of waiting for a resize that may never come. It
+    // cannot loop: the next pass finds both values settled and fits.
+    useEffect(() => {
+        scheduleRef.current?.();
+    }, [columnRem, fillRem]);
+
     // Separate effect: a change of the revealed slot must not detach the observer above.
     useEffect(() => {
         if (revealKey === undefined || revealKey === null) {
