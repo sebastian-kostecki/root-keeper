@@ -367,31 +367,31 @@ Brak migracji. Jedyna zmiana wdrożeniowa to `symfony/yaml` w `require`: obraz p
 
 #### Automated
 
-- [x] 1.1 `vendor/bin/sail composer why symfony/yaml` wymienia `laravel/react-starter-kit` (projekt główny) jako wymagający pakietu
-- [x] 1.2 `vendor/bin/sail composer validate` przechodzi
+- [x] 1.1 `vendor/bin/sail composer why symfony/yaml` wymienia `laravel/react-starter-kit` (projekt główny) jako wymagający pakietu — f5a456d
+- [x] 1.2 `vendor/bin/sail composer validate` przechodzi — f5a456d
 
 #### Manual
 
-- [x] 1.3 Autor przegląda kontrakt i potwierdza, że da się w nim zapisać kilku prawdziwych przodków (implex, zgon bez daty, data juliańska, małżeństwo w dwóch plikach)
+- [x] 1.3 Autor przegląda kontrakt i potwierdza, że da się w nim zapisać kilku prawdziwych przodków (implex, zgon bez daty, data juliańska, małżeństwo w dwóch plikach) — f5a456d
 
 ### Phase 2: Odczyt i walidacja bloków
 
 #### Automated
 
-- [x] 2.1 Testy odczytu i dat przechodzą: `vendor/bin/sail artisan test --compact tests/Unit/ResearchDateTest.php tests/Feature/ResearchRepoReadTest.php`
-- [x] 2.2 Analiza statyczna przechodzi: `vendor/bin/sail composer types:check`
-- [x] 2.3 Formatowanie: `vendor/bin/sail bin pint --dirty --format agent`
+- [x] 2.1 Testy odczytu i dat przechodzą: `vendor/bin/sail artisan test --compact tests/Unit/ResearchDateTest.php tests/Feature/ResearchRepoReadTest.php` — 8535a86
+- [x] 2.2 Analiza statyczna przechodzi: `vendor/bin/sail composer types:check` — 8535a86
+- [x] 2.3 Formatowanie: `vendor/bin/sail bin pint --dirty --format agent` — 8535a86
 
 ### Phase 3: Komenda i raport
 
 #### Automated
 
-- [x] 3.1 Test komendy przechodzi: `vendor/bin/sail artisan test --compact tests/Feature/ImportResearchCommandTest.php`
-- [x] 3.2 Analiza statyczna przechodzi: `vendor/bin/sail composer types:check`
-- [x] 3.3 Formatowanie: `vendor/bin/sail bin pint --dirty --format agent`
-- [x] 3.4 Komenda jest zarejestrowana: `vendor/bin/sail artisan list import` pokazuje `import:research`
+- [x] 3.1 Test komendy przechodzi: `vendor/bin/sail artisan test --compact tests/Feature/ImportResearchCommandTest.php` — 7cf97e2
+- [x] 3.2 Analiza statyczna przechodzi: `vendor/bin/sail composer types:check` — 7cf97e2
+- [x] 3.3 Formatowanie: `vendor/bin/sail bin pint --dirty --format agent` — 7cf97e2
+- [x] 3.4 Komenda jest zarejestrowana: `vendor/bin/sail artisan list import` pokazuje `import:research` — 7cf97e2
 
 #### Manual
 
-- [x] 3.5 Przebieg na kopii repo z kilkoma skonwertowanymi plikami przodków daje czytelny raport, a celowo zepsuty blok pojawia się w „Pominięte wpisy” z powodem, który da się poprawić bez zaglądania w kod
-- [x] 3.6 Autor potwierdza, że raport przy dziesiątkach plików mieści się w terminalu i da się go czytać (tabele, kolejność po nazwie pliku)
+- [x] 3.5 Przebieg na kopii repo z kilkoma skonwertowanymi plikami przodków daje czytelny raport, a celowo zepsuty blok pojawia się w „Pominięte wpisy” z powodem, który da się poprawić bez zaglądania w kod — 7cf97e2
+- [x] 3.6 Autor potwierdza, że raport przy dziesiątkach plików mieści się w terminalu i da się go czytać (tabele, kolejność po nazwie pliku) — 7cf97e2

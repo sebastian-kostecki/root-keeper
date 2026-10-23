@@ -1,7 +1,7 @@
 ---
 change_id: research-blocks-read-and-report
 title: Import — odczyt bloków danych z repo badawczego i raport
-status: implementing
+status: implemented
 created: 2026-10-23
 updated: 2026-10-23
 ---
