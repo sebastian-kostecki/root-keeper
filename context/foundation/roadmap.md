@@ -108,6 +108,7 @@ Brak. Każdy element przekrojowy wchodzi w pierwszym wycinku, który go używa: 
 - **Unknowns:**
   - Wydarzenia bez miejsca do czasu `S-05`, a pochowanie (wymaga cmentarza) wchodzi dopiero w `S-05` — czy to akceptowalne na koncie testowym? Owner: autor. Block: no.
 - **Risk:** Gwiazda przewodnia: na pustym drzewie nie ma dopasowań ani konfliktów, więc podgląd to samo podsumowanie, a ryzyko skupia się na torze zapisu. Test z drugim użytkownikiem o tych samych nazwiskach i miejscach dowodzi granicy drzewa, bo komenda omija Policy.
+- **Uwaga z przeglądu S-01 (F3):** odczyt nie wykrywa cykli rodzic–dziecko (A rodzicem B i B rodzicem A) ani samo-przodków; S-02 musi to sprawdzić przed zapisem relacji.
 - **Status:** proposed
 
 ### S-03: Pierwszy import dopasowuje osoby wpisane ręcznie
