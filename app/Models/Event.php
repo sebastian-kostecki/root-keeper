@@ -118,7 +118,8 @@ class Event extends Model
                 year: $this->date_year,
                 month: $this->date_month,
                 day: $this->date_day,
-                isApproximate: $this->date_qualifier === DateQualifier::Approximate,
+                qualifier: $this->date_qualifier,
+                untilYear: $this->date_until_year,
             ),
         );
     }

@@ -266,7 +266,7 @@ test('editing a person in the preview changes only that person and the birth fac
     extract($scene);
 
     $event = fn (?array $fact, array $overrides = []): array => $fact === null ? [] : [
-        ...array_intersect_key($fact, array_flip(['year', 'month', 'day', 'is_approximate'])),
+        ...array_intersect_key($fact, array_flip(['year', 'month', 'day', 'qualifier', 'until_year'])),
         'locality_id' => $fact['locality']['id'] ?? null,
         ...$overrides,
     ];

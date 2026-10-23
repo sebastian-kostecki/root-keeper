@@ -64,12 +64,14 @@ class PersonStoreRequest extends FormRequest
             'birth.year' => 'rok urodzenia',
             'birth.month' => 'miesiąc urodzenia',
             'birth.day' => 'dzień urodzenia',
-            'birth.is_approximate' => 'przybliżona data urodzenia',
+            'birth.qualifier' => 'rodzaj daty',
+            'birth.until_year' => 'rok końca zakresu',
             'birth.locality_id' => 'miejsce urodzenia',
             'death.year' => 'rok zgonu',
             'death.month' => 'miesiąc zgonu',
             'death.day' => 'dzień zgonu',
-            'death.is_approximate' => 'przybliżona data zgonu',
+            'death.qualifier' => 'rodzaj daty',
+            'death.until_year' => 'rok końca zakresu',
             'death.locality_id' => 'miejsce zgonu',
             'burial.cemetery_id' => 'miejsce pochowania',
         ];
@@ -82,7 +84,9 @@ class PersonStoreRequest extends FormRequest
     {
         $validator->after(function (Validator $validator): void {
             $this->validateFullDate($validator, 'birth');
+            $this->validateRange($validator, 'birth');
             $this->validateFullDate($validator, 'death');
+            $this->validateRange($validator, 'death');
         });
     }
 }

@@ -456,6 +456,28 @@ test('the focus sits right only next to a partner of a lower gender rank', funct
     expect($sheet['focus_side'])->toBe('left');
 });
 
+test('the lifespan label and marriage year carry before, after and range dates', function () {
+    $user = User::factory()->create();
+    $tree = $user->tree;
+
+    $ranged = Person::factory()->for($tree)->create();
+    Event::factory()->for($tree)->birth()->range(1805, 1811)->create()->participants()->attach($ranged, ['role' => ParticipantRole::Subject]);
+    attachDeath($ranged, 1870);
+    expect(sheetFor($this, $user, $ranged)['focus']['lifespan'])->toBe('1805–1811 – 1870');
+
+    $before = Person::factory()->for($tree)->create();
+    Event::factory()->for($tree)->birth()->before()->create(['date_year' => 1809, 'date_month' => null, 'date_day' => null])->participants()->attach($before, ['role' => ParticipantRole::Subject]);
+    attachDeath($before, 1870);
+    $sheet = sheetFor($this, $user, $before);
+    expect($sheet['focus']['lifespan'])->toBe('przed 1809 – 1870')
+        ->and($sheet['focus']['age'])->toBeNull();
+
+    $husband = Person::factory()->for($tree)->male()->create();
+    $wife = Person::factory()->for($tree)->female()->create();
+    attachMarriage($husband, $wife, 1830)->update(['date_qualifier' => DateQualifier::After]);
+    expect(sheetFor($this, $user, $husband)['unions'][0]['marriage_year'])->toBe('po 1830');
+});
+
 test('the lifespan label covers approximate, missing and unknown years', function () {
     $user = User::factory()->create();
     $tree = $user->tree;
@@ -943,11 +965,11 @@ test('the pair cards carry birth, death and burial details with places', functio
 
     expect($sheet['focus']['details'])->toBe([
         'birth' => [
-            'date_parts' => ['year' => 1850, 'month' => 3, 'day' => 12, 'is_approximate' => false],
+            'date_parts' => ['year' => 1850, 'month' => 3, 'day' => 12, 'qualifier' => 'exact', 'until_year' => null],
             'place' => $birth->locality->name,
         ],
         'death' => [
-            'date_parts' => ['year' => 1920, 'month' => null, 'day' => null, 'is_approximate' => false],
+            'date_parts' => ['year' => 1920, 'month' => null, 'day' => null, 'qualifier' => 'exact', 'until_year' => null],
             'place' => $death->locality->name,
         ],
         'burial_place' => $burial->locality->name,
@@ -979,7 +1001,7 @@ test('approximate dates, living people and empty events are reflected in the det
 
     $details = sheetFor($this, $user, $focus)['focus']['details'];
 
-    expect($details['birth']['date_parts']['is_approximate'])->toBeTrue();
+    expect($details['birth']['date_parts']['qualifier'])->toBe('approximate');
     expect($details['birth']['place'])->toBeNull();
     expect($details['death'])->toBeNull();
     expect($details['burial_place'])->toBeNull();

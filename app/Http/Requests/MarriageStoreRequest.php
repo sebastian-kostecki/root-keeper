@@ -54,7 +54,8 @@ class MarriageStoreRequest extends FormRequest
             'marriage.month' => 'miesiąc ślubu',
             'marriage.day' => 'dzień ślubu',
             'marriage.locality_id' => 'miejsce ślubu',
-            'marriage.is_approximate' => 'przybliżona data ślubu',
+            'marriage.qualifier' => 'rodzaj daty',
+            'marriage.until_year' => 'rok końca zakresu',
             'marriage.form' => 'forma ślubu',
         ];
     }
@@ -66,6 +67,7 @@ class MarriageStoreRequest extends FormRequest
     {
         $validator->after(function (Validator $validator): void {
             $this->validateFullDate($validator, 'marriage');
+            $this->validateRange($validator, 'marriage');
         });
     }
 }

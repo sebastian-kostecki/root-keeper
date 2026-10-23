@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\DateQualifier;
 use App\Enums\EventType;
 use App\Enums\ParticipantRole;
 use App\Models\Cemetery;
@@ -222,7 +223,8 @@ test('persons index exposes date_parts on birth and death events', function () {
             'year' => $birth->date_year,
             'month' => $birth->date_month,
             'day' => $birth->date_day,
-            'is_approximate' => (bool) $birth->date_is_approximate,
+            'qualifier' => $birth->date_qualifier->value,
+            'until_year' => $birth->date_until_year,
         ])
         ->has('persons.0.death.date_parts.year'));
 });
@@ -570,11 +572,81 @@ test('store rejects an approximate date without a year', function () {
 
     $response = $this->actingAs($user)->post(route('persons.store'), [
         'first_name' => 'Jan',
-        'birth' => ['is_approximate' => '1'],
+        'birth' => ['qualifier' => 'approximate'],
     ]);
 
     $response->assertSessionHasErrors('birth.year');
 });
+
+test('store saves a before date and a range with the qualifier and a false approximate flag', function () {
+    $user = User::factory()->create();
+
+    $this->actingAs($user)->post(route('persons.store'), [
+        'first_name' => 'Jan',
+        'is_deceased' => '1',
+        'birth' => ['year' => 1809, 'month' => 5, 'day' => 12, 'qualifier' => 'before'],
+        'death' => ['year' => 1805, 'qualifier' => 'range', 'until_year' => 1811],
+    ])->assertSessionHasNoErrors();
+
+    $birth = Event::where('type', EventType::Birth)->sole();
+    expect($birth->date_qualifier)->toBe(DateQualifier::Before)
+        ->and([$birth->date_year, $birth->date_month, $birth->date_day, $birth->date_until_year])->toBe([1809, 5, 12, null])
+        ->and($birth->date_is_approximate)->toBeFalse();
+
+    $death = Event::where('type', EventType::Death)->sole();
+    expect($death->date_qualifier)->toBe(DateQualifier::Range)
+        ->and([$death->date_year, $death->date_until_year])->toBe([1805, 1811])
+        ->and($death->date_is_approximate)->toBeFalse();
+});
+
+test('store without a qualifier saves an exact date', function () {
+    $user = User::factory()->create();
+
+    $this->actingAs($user)->post(route('persons.store'), ['first_name' => 'Jan', 'birth' => ['year' => 1850]])
+        ->assertSessionHasNoErrors();
+
+    $birth = Event::where('type', EventType::Birth)->sole();
+    expect($birth->date_qualifier)->toBe(DateQualifier::Exact)->and($birth->date_until_year)->toBeNull();
+});
+
+test('update switches a birth between exact, a before date and a range and drops the end year again', function () {
+    $user = User::factory()->create();
+    $person = Person::factory()->for($user->tree)->create();
+    $birth = Event::factory()->for($user->tree)->birth()->create(['date_year' => 1850, 'date_month' => null, 'date_day' => null]);
+    $birth->participants()->attach($person, ['role' => ParticipantRole::Subject]);
+
+    $this->actingAs($user)->put(route('persons.update', $person), ['first_name' => 'Jan', 'birth' => ['year' => 1809, 'month' => 5, 'day' => 12, 'qualifier' => 'before']])
+        ->assertSessionHasNoErrors();
+    expect($birth->refresh()->date_qualifier)->toBe(DateQualifier::Before)->and($birth->date_day)->toBe(12);
+
+    $this->actingAs($user)->put(route('persons.update', $person), ['first_name' => 'Jan', 'birth' => ['year' => 1805, 'qualifier' => 'range', 'until_year' => 1811]])
+        ->assertSessionHasNoErrors();
+    expect($birth->refresh()->date_qualifier)->toBe(DateQualifier::Range)
+        ->and([$birth->date_year, $birth->date_month, $birth->date_until_year])->toBe([1805, null, 1811]);
+
+    $this->actingAs($user)->put(route('persons.update', $person), ['first_name' => 'Jan', 'birth' => ['year' => 1806]])
+        ->assertSessionHasNoErrors();
+    expect($birth->refresh()->date_qualifier)->toBe(DateQualifier::Exact)->and($birth->date_until_year)->toBeNull();
+});
+
+test('store rejects invalid qualifier combinations', function (array $birth, string $errorKey) {
+    $user = User::factory()->create();
+
+    $this->actingAs($user)->post(route('persons.store'), ['first_name' => 'Jan', 'birth' => $birth])
+        ->assertSessionHasErrors($errorKey);
+
+    expect(Event::count())->toBe(0);
+})->with([
+    'before without a year' => [['qualifier' => 'before'], 'birth.year'],
+    'range without a year' => [['qualifier' => 'range', 'until_year' => 1811], 'birth.year'],
+    'range without an end year' => [['qualifier' => 'range', 'year' => 1805], 'birth.until_year'],
+    'range ending in the start year' => [['qualifier' => 'range', 'year' => 1805, 'until_year' => 1805], 'birth.until_year'],
+    'range ending before the start year' => [['qualifier' => 'range', 'year' => 1811, 'until_year' => 1805], 'birth.until_year'],
+    'range with a month' => [['qualifier' => 'range', 'year' => 1805, 'month' => 3, 'until_year' => 1811], 'birth.month'],
+    'end year with a before date' => [['qualifier' => 'before', 'year' => 1805, 'until_year' => 1811], 'birth.until_year'],
+    'end year without a qualifier' => [['year' => 1805, 'until_year' => 1811], 'birth.until_year'],
+    'unknown qualifier' => [['qualifier' => 'circa', 'year' => 1805], 'birth.qualifier'],
+]);
 
 test('store rejects an unknown religion', function () {
     $user = User::factory()->create();

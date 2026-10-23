@@ -29,8 +29,8 @@ class PersonFormResource extends JsonResource
      *     gender: string|null,
      *     religion: string|null,
      *     is_deceased: bool,
-     *     birth: array{year: int|null, month: int|null, day: int|null, is_approximate: bool, locality: array{id: int, name: string}|null, is_confirmed: bool}|null,
-     *     death: array{year: int|null, month: int|null, day: int|null, is_approximate: bool, locality: array{id: int, name: string}|null, is_confirmed: bool}|null,
+     *     birth: array{year: int|null, month: int|null, day: int|null, qualifier: string, until_year: int|null, locality: array{id: int, name: string}|null, is_confirmed: bool}|null,
+     *     death: array{year: int|null, month: int|null, day: int|null, qualifier: string, until_year: int|null, locality: array{id: int, name: string}|null, is_confirmed: bool}|null,
      *     burial: array{cemetery: array{id: int, label: string, locality_id: int, locality_name: string}|null}|null,
      *     residences: list<array{id: int, locality: array{id: int, name: string}, year_from: int|null, year_to: int|null}>,
      *     burial_suggestion: array{id: int, label: string, locality_id: int, locality_name: string}|null,
@@ -67,7 +67,7 @@ class PersonFormResource extends JsonResource
     }
 
     /**
-     * @return array{year: int|null, month: int|null, day: int|null, is_approximate: bool, locality: array{id: int, name: string}|null, is_confirmed: bool}|null
+     * @return array{year: int|null, month: int|null, day: int|null, qualifier: string, until_year: int|null, locality: array{id: int, name: string}|null, is_confirmed: bool}|null
      */
     private function formEvent(?Event $event): ?array
     {
@@ -79,7 +79,8 @@ class PersonFormResource extends JsonResource
             'year' => $event->date_year,
             'month' => $event->date_month,
             'day' => $event->date_day,
-            'is_approximate' => $event->date_is_approximate,
+            'qualifier' => $event->date_qualifier->value,
+            'until_year' => $event->date_until_year,
             'locality' => $this->localityOf($event),
             'is_confirmed' => $event->sources->isNotEmpty(),
         ];

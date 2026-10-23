@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\DateQualifier;
 use App\Enums\EventType;
 use App\Enums\MarriageForm;
 use App\Enums\ParticipantRole;
@@ -29,7 +30,7 @@ test('store creates exactly one marriage event with both people as spouses, redi
         ->post(route('marriages.store'), [
             'person_id' => $person->id,
             'spouse_id' => $spouse->id,
-            'marriage' => ['year' => 1850, 'month' => 6, 'day' => 12, 'is_approximate' => true, 'locality_id' => $krakow->id],
+            'marriage' => ['year' => 1850, 'month' => 6, 'day' => 12, 'qualifier' => 'approximate', 'locality_id' => $krakow->id],
         ]);
 
     $response->assertRedirect(personPreviewUrl($person));
@@ -210,7 +211,7 @@ test('update changes the date and locality and keeps linked sources', function (
     $response = $this->from(personPreviewUrl($person))
         ->actingAs($user)
         ->put(route('marriages.update', $marriage), [
-            'marriage' => ['year' => 1851, 'month' => 7, 'day' => 2, 'is_approximate' => false, 'locality_id' => $krakow->id],
+            'marriage' => ['year' => 1851, 'month' => 7, 'day' => 2, 'qualifier' => 'exact', 'locality_id' => $krakow->id],
         ]);
 
     $response->assertRedirect(personPreviewUrl($person));
@@ -224,6 +225,29 @@ test('update changes the date and locality and keeps linked sources', function (
 
     $this->assertDatabaseHas('event_source', ['event_id' => $marriage->id, 'source_id' => $source->id]);
     expect($marriage->participants()->count())->toBe(2);
+});
+
+test('store and update save a marriage dated after a year', function () {
+    $user = User::factory()->create();
+    $person = Person::factory()->for($user->tree)->create();
+    $spouse = Person::factory()->for($user->tree)->create();
+
+    $this->actingAs($user)->post(route('marriages.store'), [
+        'person_id' => $person->id,
+        'spouse_id' => $spouse->id,
+        'marriage' => ['year' => 1830, 'qualifier' => 'after'],
+    ])->assertSessionHasNoErrors();
+
+    $marriage = Event::where('type', EventType::Marriage)->sole();
+    expect($marriage->date_qualifier)->toBe(DateQualifier::After)->and($marriage->date_is_approximate)->toBeFalse();
+
+    $this->actingAs($user)->put(route('marriages.update', $marriage), ['marriage' => ['year' => 1825, 'qualifier' => 'range', 'until_year' => 1830]])
+        ->assertSessionHasNoErrors();
+    expect($marriage->refresh()->date_qualifier)->toBe(DateQualifier::Range)
+        ->and([$marriage->date_year, $marriage->date_until_year])->toBe([1825, 1830]);
+
+    $this->actingAs($user)->put(route('marriages.update', $marriage), ['marriage' => ['year' => 1825, 'qualifier' => 'range']])
+        ->assertSessionHasErrors('marriage.until_year');
 });
 
 test('update saves the wedding form and both the marriage panel and the person overview return it with its label', function () {

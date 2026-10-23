@@ -2,6 +2,7 @@
 
 namespace App\Actions\Persons;
 
+use App\Enums\DateQualifier;
 use App\Enums\EventType;
 use App\Enums\ParticipantRole;
 use App\Models\Event;
@@ -27,14 +28,16 @@ class CreatePerson
      *         year?: int|string|null,
      *         month?: int|string|null,
      *         day?: int|string|null,
-     *         is_approximate?: bool|int|string|null,
+     *         qualifier?: DateQualifier|string|null,
+     *         until_year?: int|string|null,
      *         locality_id?: int|string|null,
      *     },
      *     death?: array{
      *         year?: int|string|null,
      *         month?: int|string|null,
      *         day?: int|string|null,
-     *         is_approximate?: bool|int|string|null,
+     *         qualifier?: DateQualifier|string|null,
+     *         until_year?: int|string|null,
      *         locality_id?: int|string|null,
      *     },
      *     burial?: array{cemetery_id?: int|string|null},
@@ -67,7 +70,7 @@ class CreatePerson
     }
 
     /**
-     * @param  array{year?: int|string|null, month?: int|string|null, day?: int|string|null, is_approximate?: bool|int|string|null, locality_id?: int|string|null}  $date
+     * @param  array{year?: int|string|null, month?: int|string|null, day?: int|string|null, qualifier?: DateQualifier|string|null, until_year?: int|string|null, locality_id?: int|string|null}  $date
      * @param  array{cemetery_id: int|string|null}|array{}  $extra
      */
     private function createEvent(Tree $tree, Person $person, EventType $type, array $date, array $extra = []): void

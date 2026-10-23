@@ -2,6 +2,7 @@
 
 namespace App\Support;
 
+use App\Enums\DateQualifier;
 use Carbon\CarbonImmutable;
 
 /**
@@ -32,18 +33,18 @@ final readonly class Age
      */
     public static function from(?PartialDate $birth, ?PartialDate $death, bool $isDeceased, CarbonImmutable $today): ?self
     {
-        if ($birth === null || $birth->year === null) {
+        if ($birth === null || $birth->year === null || $birth->isFuzzy()) {
             return null;
         }
 
         if ($isDeceased) {
-            if ($death === null || $death->year === null) {
+            if ($death === null || $death->year === null || $death->isFuzzy()) {
                 return null;
             }
 
             $end = $death;
         } else {
-            $end = new PartialDate($today->year, $today->month, $today->day, false);
+            $end = new PartialDate($today->year, $today->month, $today->day, DateQualifier::Exact);
         }
 
         $hasMonths = $birth->month !== null && $end->month !== null;

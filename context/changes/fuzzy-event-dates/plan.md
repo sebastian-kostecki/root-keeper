@@ -484,19 +484,19 @@ Brak. Jedna aktualizacja wierszy z flagą przy migracji (tabela `events` ma setk
 
 #### Automated
 
-- [x] 1.1 Migracja przechodzi w obie strony: `vendor/bin/sail artisan migrate` i `vendor/bin/sail artisan migrate:rollback --step=1`, potem ponownie `migrate`
-- [x] 1.2 Test migracji przechodzi: `vendor/bin/sail artisan test --compact tests/Feature/DateQualifierMigrationTest.php`
-- [x] 1.3 Istniejące testy dat przechodzą bez zmian asercji: `vendor/bin/sail artisan test --compact tests/Feature/PersonsTest.php tests/Feature/MarriagesTest.php tests/Feature/PersonTimelineTest.php tests/Feature/TreeTest.php tests/Feature/WriteTargetsTest.php`
-- [x] 1.4 Larastan i Pint czyste: `vendor/bin/sail composer types:check` i `vendor/bin/sail bin pint --dirty --format agent`
+- [x] 1.1 Migracja przechodzi w obie strony: `vendor/bin/sail artisan migrate` i `vendor/bin/sail artisan migrate:rollback --step=1`, potem ponownie `migrate` — 34b7cb6
+- [x] 1.2 Test migracji przechodzi: `vendor/bin/sail artisan test --compact tests/Feature/DateQualifierMigrationTest.php` — 34b7cb6
+- [x] 1.3 Istniejące testy dat przechodzą bez zmian asercji: `vendor/bin/sail artisan test --compact tests/Feature/PersonsTest.php tests/Feature/MarriagesTest.php tests/Feature/PersonTimelineTest.php tests/Feature/TreeTest.php tests/Feature/WriteTargetsTest.php` — 34b7cb6
+- [x] 1.4 Larastan i Pint czyste: `vendor/bin/sail composer types:check` i `vendor/bin/sail bin pint --dirty --format agent` — 34b7cb6
 
 ### Phase 2: Serwer — zapis, walidacja, formatowanie, wiek
 
 #### Automated
 
-- [ ] 2.1 Testy jednostkowe dat przechodzą: `vendor/bin/sail artisan test --compact tests/Unit/PartialDateTest.php tests/Unit/AgeTest.php`
-- [ ] 2.2 Testy funkcjonalne dat przechodzą: `vendor/bin/sail artisan test --compact tests/Feature/PersonsTest.php tests/Feature/MarriagesTest.php tests/Feature/PersonTimelineTest.php tests/Feature/TreeTest.php tests/Feature/WriteTargetsTest.php tests/Feature/DateQualifierMigrationTest.php`
-- [ ] 2.3 Testy odczytu repo (używają `DateQualifier`) przechodzą: `vendor/bin/sail artisan test --compact tests/Unit/ResearchDateTest.php tests/Feature/ResearchRepoReadTest.php`
-- [ ] 2.4 Larastan poziom 7 i Pint czyste: `vendor/bin/sail composer types:check` i `vendor/bin/sail bin pint --dirty --format agent`
+- [x] 2.1 Testy jednostkowe dat przechodzą: `vendor/bin/sail artisan test --compact tests/Unit/PartialDateTest.php tests/Unit/AgeTest.php`
+- [x] 2.2 Testy funkcjonalne dat przechodzą: `vendor/bin/sail artisan test --compact tests/Feature/PersonsTest.php tests/Feature/MarriagesTest.php tests/Feature/PersonTimelineTest.php tests/Feature/TreeTest.php tests/Feature/WriteTargetsTest.php tests/Feature/DateQualifierMigrationTest.php`
+- [x] 2.3 Testy odczytu repo (używają `DateQualifier`) przechodzą: `vendor/bin/sail artisan test --compact tests/Unit/ResearchDateTest.php tests/Feature/ResearchRepoReadTest.php`
+- [x] 2.4 Larastan poziom 7 i Pint czyste: `vendor/bin/sail composer types:check` i `vendor/bin/sail bin pint --dirty --format agent`
 
 ### Phase 3: Frontend — pole „Data” i wyświetlanie
 
