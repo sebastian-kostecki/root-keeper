@@ -43,12 +43,12 @@ Autor prowadzi badania genealogiczne w repo markdown (dziś 283 pliki osób, dzi
 | ID   | Change ID                          | Outcome (user can …)                                                                                          | Prerequisites | PRD refs                                              | Status   |
 | ---- | ---------------------------------- | ------------------------------------------------------------------------------------------------------------- | ------------- | ----------------------------------------------------- | -------- |
 | S-01 | research-blocks-read-and-report    | uruchomić komendę na katalogu repo i dostać raport przeczytanych osób oraz pominiętych wpisów z powodem         | —             | FR-001, FR-002, FR-003, FR-004                        | done |
-| S-02 | first-import-into-empty-tree       | zaimportować przodków do pustego drzewa po podsumowaniu i zatwierdzeniu i zobaczyć ich z relacjami i datami      | S-01          | US-01, FR-003, FR-005, FR-006, FR-008, FR-009, FR-016 | proposed |
+| S-02 | first-import-into-empty-tree       | zaimportować przodków do pustego drzewa po podsumowaniu i zatwierdzeniu i zobaczyć ich z relacjami i datami      | S-01, S-07    | US-01, FR-003, FR-005, FR-006, FR-008, FR-009, FR-016 | planning |
 | S-03 | first-import-matches-hand-entered  | przy pierwszym imporcie dopasować osoby z repo do ręcznie wpisanych i rozstrzygnąć przypadki wątpliwe            | S-02          | US-01, FR-005, FR-006, FR-007, FR-014                 | blocked  |
 | S-04 | reimport-changes-and-conflicts     | ponowić import i w podglądzie zatwierdzać nowe, zmienione, konflikty z ręcznymi zmianami i usunięte w repo        | S-02          | US-02, FR-005, FR-006, FR-008, FR-014, FR-015         | blocked  |
 | S-05 | import-places-matched-to-gazetteer | dostać miejsca wydarzeń (także pochowanie na cmentarzu) dopasowane do spisu i potwierdzić nowe w podglądzie      | S-02          | FR-009, FR-010, FR-017                                | proposed |
 | S-06 | import-sources-with-scans          | dostać źródła z opisem i skanem podpięte do faktów z numerem wpisu                                             | S-05          | FR-001, FR-011, US-01                                 | blocked  |
-| S-07 | fuzzy-event-dates                  | zapisać i zobaczyć datę wydarzenia jako zakres lat, „przed” albo „po” — ręcznie i z importu                      | S-02          | FR-009, FR-015                                        | proposed |
+| S-07 | fuzzy-event-dates                  | zapisać i zobaczyć datę wydarzenia jako zakres lat, „przed” albo „po” — ręcznie i z importu                      | —             | FR-009, FR-015                                        | in-progress |
 | S-08 | fact-confidence-level              | zobaczyć i ustawić przy fakcie poziom pewności A–D — ręcznie i z importu                                        | S-02          | FR-018, FR-015                                        | proposed |
 | S-09 | surname-variant-search             | dostać warianty zapisu nazwiska z importu i znaleźć osobę w wyszukiwarce po każdym wariancie                     | S-02          | US-03, FR-019                                         | proposed |
 | S-10 | import-from-scratch-outside-prod   | poza produkcją zaimportować „od zera”, czyszcząc najpierw osoby i fakty drzewa konta (z potwierdzeniem)          | S-02          | FR-020                                                | proposed |
@@ -61,7 +61,7 @@ Navigation aid — groups items that share a Prerequisites chain. Canonical orde
 | ------ | ----------------------------- | ------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
 | A      | Tor importu i tożsamość osób  | `S-01` → `S-02` → `S-03`, `S-04`            | Rdzeń: najpierw prawdziwe pliki, potem gwiazda przewodnia `S-02`; `S-03` i `S-04` czekają na decyzję o podglądzie w terminalu.     |
 | B      | Miejsca i źródła              | `S-05` → `S-06`                             | Dołącza do A w `S-02`; warunek pierwszego importu na produkcji (spis miejsc bez duplikatów), `S-06` czeka na decyzję o źródłach bez skanu. |
-| C      | Szczegóły faktów i osób       | `S-07`, `S-08`, `S-09`, `S-10`              | Dołącza do A w `S-02`; cztery niezależne gałęzie, każda dodaje jedno pole lub tryb do działającego toru.                            |
+| C      | Szczegóły faktów i osób       | `S-07`, `S-08`, `S-09`, `S-10`              | `S-07` idzie przed `S-02` (decyzja autora 2026-10-23); `S-08` – `S-10` dołączają do A w `S-02`; każda gałąź dodaje jedno pole lub tryb. |
 
 ## Baseline
 
@@ -99,17 +99,17 @@ Brak. Każdy element przekrojowy wchodzi w pierwszym wycinku, który go używa: 
 
 ### S-02: Pierwszy import przodków do pustego drzewa
 
-- **Outcome:** autor importuje przodków do drzewa bez ręcznych wpisów (np. konta testowego): komenda pokazuje podsumowanie, po zatwierdzeniu zapisuje osoby (imiona, nazwisko, płeć), relacje rodzic–dziecko, małżeństwa oraz urodzenia, śluby i zgony z datą dokładną albo „ok.”, każdy rekord z identyfikatorem z repo; na produkcji przed zapisem powstaje kopia bazy; zapis trafia wyłącznie do drzewa wskazanego konta; autor widzi przodków w drzewie i w widoku przodków.
+- **Outcome:** autor importuje przodków do drzewa bez ręcznych wpisów (np. konta testowego): komenda pokazuje podsumowanie, po zatwierdzeniu zapisuje osoby (imiona, nazwisko, płeć), relacje rodzic–dziecko, małżeństwa oraz urodzenia, śluby i zgony z każdym rodzajem daty z `S-07` (dokładna, „ok.”, zakres, „przed”, „po”), każdy rekord z identyfikatorem z repo; na produkcji przed zapisem powstaje kopia bazy; zapis trafia wyłącznie do drzewa wskazanego konta; autor widzi przodków w drzewie i w widoku przodków.
 - **Change ID:** first-import-into-empty-tree
 - **PRD refs:** US-01, FR-003, FR-005, FR-006, FR-008, FR-009, FR-016
-- **Prerequisites:** S-01
+- **Prerequisites:** S-01, S-07 (decyzja autora 2026-10-23: daty nieostre w schemacie przed pierwszym importem)
 - **Parallel with:** —
 - **Blockers:** —
 - **Unknowns:**
-  - Wydarzenia bez miejsca do czasu `S-05`, a pochowanie (wymaga cmentarza) wchodzi dopiero w `S-05` — czy to akceptowalne na koncie testowym? Owner: autor. Block: no.
+  - ~~Wydarzenia bez miejsca do czasu `S-05`, a pochowanie (wymaga cmentarza) wchodzi dopiero w `S-05` — czy to akceptowalne na koncie testowym?~~ Rozstrzygnięte w planie (2026-10-23): miejsca, pochowanie, poziomy, notatki wydarzeń i warianty nazwiska trafiają tekstem do notatki osoby do czasu `S-05`, `S-08`, `S-09`.
 - **Risk:** Gwiazda przewodnia: na pustym drzewie nie ma dopasowań ani konfliktów, więc podgląd to samo podsumowanie, a ryzyko skupia się na torze zapisu. Test z drugim użytkownikiem o tych samych nazwiskach i miejscach dowodzi granicy drzewa, bo komenda omija Policy.
 - **Uwaga z przeglądu S-01 (F3):** odczyt nie wykrywa cykli rodzic–dziecko (A rodzicem B i B rodzicem A) ani samo-przodków; S-02 musi to sprawdzić przed zapisem relacji.
-- **Status:** proposed
+- **Status:** planning
 
 ### S-03: Pierwszy import dopasowuje osoby wpisane ręcznie
 
@@ -167,16 +167,16 @@ Brak. Każdy element przekrojowy wchodzi w pierwszym wycinku, który go używa: 
 
 ### S-07: Daty nieostre: zakres, przed, po
 
-- **Outcome:** autor zapisuje i widzi datę wydarzenia jako dokładną, „ok.”, zakres lat, „przed” albo „po” — w formularzu, na osi czasu i w panelu osoby — a import przenosi te rodzaje dat z repo; istniejące daty wyglądają jak dotąd, styl juliański zostaje w notatce faktu.
+- **Outcome:** autor zapisuje i widzi datę wydarzenia jako dokładną, „ok.”, zakres lat, „przed” albo „po” — w formularzu, na osi czasu i w panelu osoby; import tych rodzajów dat z repo robi `S-02`, który idzie po `S-07`; istniejące daty wyglądają jak dotąd, styl juliański zostaje w notatce faktu.
 - **Change ID:** fuzzy-event-dates
 - **PRD refs:** FR-009, FR-015
-- **Prerequisites:** S-02
+- **Prerequisites:** —
 - **Parallel with:** S-03, S-04, S-05, S-06, S-08, S-09, S-10
 - **Blockers:** —
 - **Unknowns:**
   - Czy rodzaj daty zastępuje flagę „ok.” (migracja przenosząca dane: kopiuj, testuj, usuń flagę później — wg `CLAUDE.md`), czy dochodzi obok niej jako puste pole (PRD: istniejące wiersze bez przepisywania)? Owner: autor. Block: no.
 - **Risk:** Jedyna zmiana istniejącego formatu danych w M-3; dotyka formularza, osi czasu i parsera dat, więc idzie jako osobny wycinek zamiast w `S-02`.
-- **Status:** proposed
+- **Status:** in-progress
 
 ### S-08: Poziom pewności A–D przy fakcie
 
@@ -219,12 +219,12 @@ Brak. Każdy element przekrojowy wchodzi w pierwszym wycinku, który go używa: 
 | Roadmap ID | Change ID                          | Suggested issue title                                        | Ready for `/10x-plan` | Notes |
 | ---------- | ---------------------------------- | ------------------------------------------------------------ | --------------------- | ----- |
 | S-01       | research-blocks-read-and-report    | Import: odczyt bloków danych z repo badawczego i raport      | yes                   | Run `/10x-plan research-blocks-read-and-report`; decyzja o `symfony/yaml` w planie. |
-| S-02       | first-import-into-empty-tree       | Import: pierwszy import przodków do pustego drzewa           | no                    | Gwiazda przewodnia; czeka na S-01. |
+| S-02       | first-import-into-empty-tree       | Import: pierwszy import przodków do pustego drzewa           | planned               | Gwiazda przewodnia; plan gotowy, implementacja czeka na S-07. |
 | S-03       | first-import-matches-hand-entered  | Import: dopasowanie do osób wpisanych ręcznie                | no                    | Czeka na S-02 i decyzję o podglądzie w terminalu (PRD OQ 4). |
 | S-04       | reimport-changes-and-conflicts     | Import: kolejny import z podglądem zmian i konfliktów        | no                    | Czeka na S-02 i decyzję o podglądzie w terminalu (PRD OQ 4). |
 | S-05       | import-places-matched-to-gazetteer | Import: miejsca dopasowane do spisu                          | no                    | Czeka na S-02. |
 | S-06       | import-sources-with-scans          | Import: źródła ze skanami podpięte do faktów                 | no                    | Czeka na S-05 i decyzję o źródłach bez skanu. |
-| S-07       | fuzzy-event-dates                  | Daty nieostre: zakres, przed, po                             | no                    | Czeka na S-02. |
+| S-07       | fuzzy-event-dates                  | Daty nieostre: zakres, przed, po                             | yes                   | Idzie przed S-02 (decyzja autora 2026-10-23); import dat robi S-02. Run `/10x-new fuzzy-event-dates`. |
 | S-08       | fact-confidence-level              | Poziom pewności A–D przy fakcie                              | no                    | Czeka na S-02. |
 | S-09       | surname-variant-search             | Wyszukiwanie osób po wariantach nazwiska                     | no                    | Czeka na S-02. |
 | S-10       | import-from-scratch-outside-prod   | Import „od zera” poza produkcją                              | no                    | Nice-to-have; czeka na S-02. |

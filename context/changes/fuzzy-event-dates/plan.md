@@ -515,12 +515,12 @@ Brak. Jedna aktualizacja wierszy z flagą przy migracji (tabela `events` ma setk
 - [x] 3.8 Karta drzewa i karta przodka pokazują „1805–1811 – 1870”, bez wieku przy dacie nieostrej; „ok. 1850 – 1912” wygląda jak dotąd
 - [x] 3.9 Zakładka Wydarzenia: „przed” nad rokiem, zakres w dwóch liniach, brak podwójnego „ok.” przy dacie z miesiącem — 3fd3138
 - [x] 3.10 Ślub „po 1830” widoczny w panelu małżeństwa, na łączniku w drzewie („ślub po 1830”) i w zakładce Rodzina
-- [x] 3.11 Zrzuty ekranu (pole z podpowiedzią, oś czasu, karta drzewa, karta przodka; jasny i ciemny motyw) w `context/changes/fuzzy-event-dates/screenshots/` — 3fd3138
+- [ ] 3.11 Zrzuty ekranu (pole z podpowiedzią, oś czasu, karta drzewa, karta przodka; jasny i ciemny motyw) w `context/changes/fuzzy-event-dates/screenshots/`
 
 ### Phase 4: E2E — zakres przeżywa edycję
 
 #### Automated
 
-- [x] 4.1 Nowa specyfikacja przechodzi lokalnie: `npx playwright test tests/e2e/fuzzy-event-dates.spec.ts` (komenda wg `context/foundation/test-stack.md`)
-- [x] 4.2 Specyfikacja jest czerwona po celowym usunięciu `qualifier` z `eventToPayload` i zielona po przywróceniu
+- [x] 4.1 Nowa specyfikacja przechodzi lokalnie: `npx playwright test tests/e2e/fuzzy-event-dates.spec.ts` (komenda wg `context/foundation/test-stack.md`) — 111f621
+- [x] 4.2 Specyfikacja jest czerwona po celowym usunięciu `qualifier` z `eventToPayload` i zielona po przywróceniu — 111f621
 - [ ] 4.3 Cały zestaw E2E przechodzi w CI

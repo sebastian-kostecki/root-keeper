@@ -1,7 +1,7 @@
 ---
 change_id: fuzzy-event-dates
 title: Fuzzy event dates
-status: implementing
+status: impl_reviewed
 created: 2026-10-23
 updated: 2026-10-23
 archived_at: null
