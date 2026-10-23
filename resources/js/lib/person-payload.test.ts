@@ -104,6 +104,45 @@ describe('eventPayloadFromValues', () => {
         ).toBe(12);
         expect(eventPayloadFromValues('marriage', {}).locality_id).toBeNull();
     });
+
+    it('carries a range into the payload', () => {
+        expect(
+            eventPayloadFromValues('birth', {
+                'birth.year': '1805',
+                'birth.qualifier': 'range',
+                'birth.until_year': '1811',
+            }),
+        ).toMatchObject({ year: 1805, qualifier: 'range', until_year: 1811 });
+    });
+
+    it('carries "przed" into the payload and defaults to exact', () => {
+        expect(
+            eventPayloadFromValues('marriage', {
+                'marriage.year': '1809',
+                'marriage.qualifier': 'before',
+                'marriage.until_year': '',
+            }),
+        ).toMatchObject({ year: 1809, qualifier: 'before', until_year: null });
+        expect(eventPayloadFromValues('birth', {}).qualifier).toBe('exact');
+    });
+
+    it('sends the stored qualifier back on a section save', () => {
+        const form = personForm();
+        form.birth = {
+            year: 1805,
+            month: null,
+            day: null,
+            qualifier: 'range',
+            until_year: 1811,
+            locality: null,
+            is_confirmed: false,
+        };
+
+        expect(mergeSectionIntoPayload(form, 'death', {}).birth).toMatchObject({
+            qualifier: 'range',
+            until_year: 1811,
+        });
+    });
 });
 
 describe('residences', () => {
@@ -175,7 +214,8 @@ describe('marriage card', () => {
                 year: 2001,
                 month: null,
                 day: null,
-                is_approximate: false,
+                qualifier: 'exact',
+                until_year: null,
             },
             locality_id: null,
             place: null,

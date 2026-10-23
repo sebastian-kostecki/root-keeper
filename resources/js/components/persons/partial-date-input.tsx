@@ -4,6 +4,7 @@ import { LocalityPicker } from '@/components/localities/locality-picker';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
+    type DateQualifier,
     describePrecision,
     formatPartialDate,
     parsePartialDate,
@@ -17,18 +18,21 @@ type Props = {
         year: number | null;
         month: number | null;
         day: number | null;
-        is_approximate: boolean;
+        qualifier: DateQualifier;
+        until_year: number | null;
         locality: LocalityOption | null;
     };
 };
 
-const NEUTRAL_HINT = 'np. 1948, 03.1948, ok. 1948';
+const NEUTRAL_HINT = 'np. 1948, 03.1948, ok. 1948, przed 1950, 1940–1945';
 const TWO_DIGIT_YEAR_ERROR = '1848 czy 1948? wpisz rok 4 cyframi';
+const RANGE_ORDER_ERROR =
+    'Rok końca zakresu musi być późniejszy niż rok początku';
 const INVALID_ERROR = 'Wpisz np. 1948, 03.1948 lub 12.03.1948';
 
 /**
  * One free-text date field (Polish genealogy notation) that posts the
- * `{prefix}.year|month|day|is_approximate` parts through hidden inputs, plus a
+ * `{prefix}.year|month|day|qualifier|until_year` parts through hidden inputs, plus a
  * place field. Unparseable text blocks native form submit via `setCustomValidity`.
  */
 export function PartialDateInput({ prefix, errors, defaultValue }: Props) {
@@ -44,9 +48,16 @@ export function PartialDateInput({ prefix, errors, defaultValue }: Props) {
     let clientError: string | null = null;
 
     if (parsed.kind === 'ok') {
-        hint = `${formatPartialDate(parsed.parts, 'short')} ${describePrecision(parsed.precision)}`;
+        const short = formatPartialDate(parsed.parts, 'short');
+
+        hint =
+            parsed.precision === 'range'
+                ? `${describePrecision('range')} ${short}`
+                : `${short} ${describePrecision(parsed.precision)}`;
     } else if (parsed.kind === 'two-digit-year') {
         clientError = TWO_DIGIT_YEAR_ERROR;
+    } else if (parsed.kind === 'range-order') {
+        clientError = RANGE_ORDER_ERROR;
     } else if (parsed.kind === 'invalid') {
         clientError = INVALID_ERROR;
     }
@@ -59,7 +70,8 @@ export function PartialDateInput({ prefix, errors, defaultValue }: Props) {
         errors[`${prefix}.year`] ??
         errors[`${prefix}.month`] ??
         errors[`${prefix}.day`] ??
-        errors[`${prefix}.is_approximate`];
+        errors[`${prefix}.qualifier`] ??
+        errors[`${prefix}.until_year`];
 
     return (
         <div className="grid gap-4">
@@ -92,8 +104,13 @@ export function PartialDateInput({ prefix, errors, defaultValue }: Props) {
                 />
                 <input
                     type="hidden"
-                    name={`${prefix}.is_approximate`}
-                    value={parts?.is_approximate ? '1' : '0'}
+                    name={`${prefix}.qualifier`}
+                    value={parts?.qualifier ?? 'exact'}
+                />
+                <input
+                    type="hidden"
+                    name={`${prefix}.until_year`}
+                    value={parts?.until_year ?? ''}
                 />
                 <p
                     id={`${prefix}-date-hint`}

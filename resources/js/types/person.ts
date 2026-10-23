@@ -1,3 +1,4 @@
+import type { DateQualifier } from '@/lib/partial-date';
 import type { CemeteryOption } from './cemetery';
 import type { LocalityOption } from './parish';
 import type { SourceKind } from './source';
@@ -22,7 +23,8 @@ export type PersonEvent = {
         year: number | null;
         month: number | null;
         day: number | null;
-        is_approximate: boolean;
+        qualifier: DateQualifier;
+        until_year: number | null;
     };
 };
 
@@ -128,7 +130,8 @@ export type TimelineEntry = {
     label: string;
     date: string | null;
     year: number | null;
-    is_approximate: boolean;
+    qualifier: DateQualifier;
+    until_year: number | null;
     date_has_month: boolean;
     age: PersonAge | null;
     place: string | null;
@@ -160,7 +163,8 @@ export type PersonFormEvent = {
     year: number | null;
     month: number | null;
     day: number | null;
-    is_approximate: boolean;
+    qualifier: DateQualifier;
+    until_year: number | null;
     locality: LocalityOption | null;
     is_confirmed: boolean;
 };

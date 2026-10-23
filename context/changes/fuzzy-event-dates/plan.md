@@ -493,29 +493,29 @@ Brak. Jedna aktualizacja wierszy z flagą przy migracji (tabela `events` ma setk
 
 #### Automated
 
-- [x] 2.1 Testy jednostkowe dat przechodzą: `vendor/bin/sail artisan test --compact tests/Unit/PartialDateTest.php tests/Unit/AgeTest.php`
-- [x] 2.2 Testy funkcjonalne dat przechodzą: `vendor/bin/sail artisan test --compact tests/Feature/PersonsTest.php tests/Feature/MarriagesTest.php tests/Feature/PersonTimelineTest.php tests/Feature/TreeTest.php tests/Feature/WriteTargetsTest.php tests/Feature/DateQualifierMigrationTest.php`
-- [x] 2.3 Testy odczytu repo (używają `DateQualifier`) przechodzą: `vendor/bin/sail artisan test --compact tests/Unit/ResearchDateTest.php tests/Feature/ResearchRepoReadTest.php`
-- [x] 2.4 Larastan poziom 7 i Pint czyste: `vendor/bin/sail composer types:check` i `vendor/bin/sail bin pint --dirty --format agent`
+- [x] 2.1 Testy jednostkowe dat przechodzą: `vendor/bin/sail artisan test --compact tests/Unit/PartialDateTest.php tests/Unit/AgeTest.php` — 1a1a689
+- [x] 2.2 Testy funkcjonalne dat przechodzą: `vendor/bin/sail artisan test --compact tests/Feature/PersonsTest.php tests/Feature/MarriagesTest.php tests/Feature/PersonTimelineTest.php tests/Feature/TreeTest.php tests/Feature/WriteTargetsTest.php tests/Feature/DateQualifierMigrationTest.php` — 1a1a689
+- [x] 2.3 Testy odczytu repo (używają `DateQualifier`) przechodzą: `vendor/bin/sail artisan test --compact tests/Unit/ResearchDateTest.php tests/Feature/ResearchRepoReadTest.php` — 1a1a689
+- [x] 2.4 Larastan poziom 7 i Pint czyste: `vendor/bin/sail composer types:check` i `vendor/bin/sail bin pint --dirty --format agent` — 1a1a689
 
 ### Phase 3: Frontend — pole „Data” i wyświetlanie
 
 #### Automated
 
-- [ ] 3.1 Testy Vitest przechodzą: `vendor/bin/sail npm run test:js` (w tym `partial-date.test.ts`, `person-payload.test.ts`, `person-timeline.test.ts`, `persons-index.test.ts`, `pair-details.test.ts`, `view-tokens.test.ts`)
-- [ ] 3.2 Typy przechodzą: `vendor/bin/sail npm run types:check`
-- [ ] 3.3 Format i lint przechodzą: `vendor/bin/sail npm run check`
-- [ ] 3.4 Build przechodzi: `vendor/bin/sail npm run build`
-- [ ] 3.5 Istniejące specyfikacje E2E z datami przechodzą: `marriage-side-panel.spec.ts`, `person-events-and-note-tabs.spec.ts`, `source-found-by-place-and-year.spec.ts`, `gravestone-cemetery-and-buried.spec.ts`
+- [x] 3.1 Testy Vitest przechodzą: `vendor/bin/sail npm run test:js` (w tym `partial-date.test.ts`, `person-payload.test.ts`, `person-timeline.test.ts`, `persons-index.test.ts`, `pair-details.test.ts`, `view-tokens.test.ts`)
+- [x] 3.2 Typy przechodzą: `vendor/bin/sail npm run types:check`
+- [x] 3.3 Format i lint przechodzą: `vendor/bin/sail npm run check`
+- [x] 3.4 Build przechodzi: `vendor/bin/sail npm run build`
+- [x] 3.5 Istniejące specyfikacje E2E z datami przechodzą: `marriage-side-panel.spec.ts`, `person-events-and-note-tabs.spec.ts`, `source-found-by-place-and-year.spec.ts`, `gravestone-cemetery-and-buried.spec.ts`
 
 #### Manual
 
-- [ ] 3.6 W panelu osoby wpisanie „przed 1809”, „po 12.05.1801”, „1805-1811” i „między 1805 a 1811” pokazuje właściwą podpowiedź, a „1811–1805” blokuje zapis z komunikatem
-- [ ] 3.7 Po zapisie i ponownym otwarciu pole pokazuje „przed 1809” / „po 12.05.1801” / „1805–1811”
-- [ ] 3.8 Karta drzewa i karta przodka pokazują „1805–1811 – 1870”, bez wieku przy dacie nieostrej; „ok. 1850 – 1912” wygląda jak dotąd
-- [ ] 3.9 Zakładka Wydarzenia: „przed” nad rokiem, zakres w dwóch liniach, brak podwójnego „ok.” przy dacie z miesiącem
-- [ ] 3.10 Ślub „po 1830” widoczny w panelu małżeństwa, na łączniku w drzewie („ślub po 1830”) i w zakładce Rodzina
-- [ ] 3.11 Zrzuty ekranu (pole z podpowiedzią, oś czasu, karta drzewa, karta przodka; jasny i ciemny motyw) w `context/changes/fuzzy-event-dates/screenshots/`
+- [x] 3.6 W panelu osoby wpisanie „przed 1809”, „po 12.05.1801”, „1805-1811” i „między 1805 a 1811” pokazuje właściwą podpowiedź, a „1811–1805” blokuje zapis z komunikatem
+- [x] 3.7 Po zapisie i ponownym otwarciu pole pokazuje „przed 1809” / „po 12.05.1801” / „1805–1811”
+- [x] 3.8 Karta drzewa i karta przodka pokazują „1805–1811 – 1870”, bez wieku przy dacie nieostrej; „ok. 1850 – 1912” wygląda jak dotąd
+- [x] 3.9 Zakładka Wydarzenia: „przed” nad rokiem, zakres w dwóch liniach, brak podwójnego „ok.” przy dacie z miesiącem
+- [x] 3.10 Ślub „po 1830” widoczny w panelu małżeństwa, na łączniku w drzewie („ślub po 1830”) i w zakładce Rodzina
+- [x] 3.11 Zrzuty ekranu (pole z podpowiedzią, oś czasu, karta drzewa, karta przodka; jasny i ciemny motyw) w `context/changes/fuzzy-event-dates/screenshots/`
 
 ### Phase 4: E2E — zakres przeżywa edycję
 

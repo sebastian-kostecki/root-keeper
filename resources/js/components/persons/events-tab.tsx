@@ -22,9 +22,9 @@ const MARKERS = {
 function YearColumn({ row }: { row: PersonTimelineRow }) {
     return (
         <>
-            {row.approximate && (
+            {row.qualifierLabel !== null && (
                 <span className="text-muted-foreground block text-xs leading-none">
-                    ok.
+                    {row.qualifierLabel}
                 </span>
             )}
             {row.year !== null && (
@@ -34,9 +34,22 @@ function YearColumn({ row }: { row: PersonTimelineRow }) {
                             <span aria-hidden>?</span>
                             <span className="sr-only">data nieznana</span>
                         </>
+                    ) : row.spokenDate !== null ? (
+                        <>
+                            <span className="sr-only">{row.spokenDate}</span>
+                            <span aria-hidden>{row.year}</span>
+                        </>
                     ) : (
                         row.year
                     )}
+                </span>
+            )}
+            {row.yearEnd !== null && (
+                <span
+                    aria-hidden
+                    className="block text-sm leading-5 font-medium"
+                >
+                    {row.yearEnd}
                 </span>
             )}
             {row.age !== null && (

@@ -20,7 +20,7 @@ function event(
         date: year === null ? null : String(year),
         place,
         locality_id: null,
-        date_parts: { year, month, day, is_approximate: false },
+        date_parts: { year, month, day, qualifier: 'exact', until_year: null },
         is_confirmed: false,
     };
 }
@@ -218,6 +218,34 @@ describe('sortPersons: dates', () => {
         expect(ids(sortPersons(people, '-urodzenie'))).toEqual([
             6, 1, 3, 5, 2, 4,
         ]);
+    });
+
+    it('sorts a range by its start year and ignores the qualifier', () => {
+        const fuzzy = (
+            year: number,
+            qualifier: 'before' | 'range',
+        ): Person['birth'] => ({
+            id: 1,
+            type: 'birth',
+            date: String(year),
+            place: null,
+            locality_id: null,
+            is_confirmed: false,
+            date_parts: {
+                year,
+                month: null,
+                day: null,
+                qualifier,
+                until_year: qualifier === 'range' ? year + 6 : null,
+            },
+        });
+        const people = [
+            person(1, 'A', 'A', { birth: event(1810) }),
+            person(2, 'B', 'A', { birth: fuzzy(1805, 'range') }),
+            person(3, 'C', 'A', { birth: fuzzy(1809, 'before') }),
+        ];
+
+        expect(ids(sortPersons(people, 'urodzenie'))).toEqual([2, 3, 1]);
     });
 
     it('sorts by death date', () => {
