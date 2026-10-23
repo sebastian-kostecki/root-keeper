@@ -42,7 +42,7 @@ Autor prowadzi badania genealogiczne w repo markdown (dziś 283 pliki osób, dzi
 
 | ID   | Change ID                          | Outcome (user can …)                                                                                          | Prerequisites | PRD refs                                              | Status   |
 | ---- | ---------------------------------- | ------------------------------------------------------------------------------------------------------------- | ------------- | ----------------------------------------------------- | -------- |
-| S-01 | research-blocks-read-and-report    | uruchomić komendę na katalogu repo i dostać raport przeczytanych osób oraz pominiętych wpisów z powodem         | —             | FR-001, FR-002, FR-003, FR-004                        | in-progress |
+| S-01 | research-blocks-read-and-report    | uruchomić komendę na katalogu repo i dostać raport przeczytanych osób oraz pominiętych wpisów z powodem         | —             | FR-001, FR-002, FR-003, FR-004                        | done |
 | S-02 | first-import-into-empty-tree       | zaimportować przodków do pustego drzewa po podsumowaniu i zatwierdzeniu i zobaczyć ich z relacjami i datami      | S-01          | US-01, FR-003, FR-005, FR-006, FR-008, FR-009, FR-016 | proposed |
 | S-03 | first-import-matches-hand-entered  | przy pierwszym imporcie dopasować osoby z repo do ręcznie wpisanych i rozstrzygnąć przypadki wątpliwe            | S-02          | US-01, FR-005, FR-006, FR-007, FR-014                 | blocked  |
 | S-04 | reimport-changes-and-conflicts     | ponowić import i w podglądzie zatwierdzać nowe, zmienione, konflikty z ręcznymi zmianami i usunięte w repo        | S-02          | US-02, FR-005, FR-006, FR-008, FR-014, FR-015         | blocked  |
@@ -95,7 +95,7 @@ Brak. Każdy element przekrojowy wchodzi w pierwszym wycinku, który go używa: 
   - Czy parser YAML (`symfony/yaml`) dochodzi do zależności produkcyjnych (nowa zależność — zgoda autora), czy blok ma inny format? Owner: autor. Block: no.
   - Jak blok jest wersjonowany i gdzie stoi w pliku (na górze czy obok prozy)? Owner: `/10x-plan`. Block: no.
 - **Risk:** Pierwszy kontakt z prawdziwymi plikami — przy celu `market-feedback` idzie pierwszy, bo ujawnia, czy blok da się napisać dla prawdziwych przodków, zanim cokolwiek trafi do bazy. Konwersja plików przodków dzieje się w repo badawczym (autor z Claude) i zjada ten sam czas co reszta M-3; testy działają wyłącznie na wymyślonym repo w `tests/Fixtures/`.
-- **Status:** planning
+- **Status:** done
 
 ### S-02: Pierwszy import przodków do pustego drzewa
 
@@ -254,3 +254,4 @@ Brak. Każdy element przekrojowy wchodzi w pierwszym wycinku, który go używa: 
 
 ## Done
 
+- **S-01: Import: odczyt bloków danych z repo badawczego i raport** — Archived 2026-10-23 → `context/archive/2026-10-23-research-blocks-read-and-report/`. Lesson: —.
