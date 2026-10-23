@@ -38,6 +38,11 @@ class Event extends Model
     /** @use HasFactory<EventFactory> */
     use HasFactory;
 
+    /**
+     * `date_is_approximate` is derived from `date_qualifier` on model save only; a bulk query-builder
+     * update of `date_qualifier` would leave it stale, so change the qualifier through the model
+     * until the flag is dropped.
+     */
     protected static function booted(): void
     {
         static::saving(function (Event $event): void {

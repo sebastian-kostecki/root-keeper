@@ -28,7 +28,7 @@ const NEUTRAL_HINT = 'np. 1948, 03.1948, ok. 1948, przed 1950, 1940–1945';
 const TWO_DIGIT_YEAR_ERROR = '1848 czy 1948? wpisz rok 4 cyframi';
 const RANGE_ORDER_ERROR =
     'Rok końca zakresu musi być późniejszy niż rok początku';
-const INVALID_ERROR = 'Wpisz np. 1948, 03.1948 lub 12.03.1948';
+const INVALID_ERROR = 'Wpisz np. 1948, 03.1948, 12.03.1948 lub 1940–1945';
 
 /**
  * One free-text date field (Polish genealogy notation) that posts the
