@@ -48,7 +48,7 @@ Autor prowadzi badania genealogiczne w repo markdown (dziś 283 pliki osób, dzi
 | S-04 | reimport-changes-and-conflicts     | ponowić import i w podglądzie zatwierdzać nowe, zmienione, konflikty z ręcznymi zmianami i usunięte w repo        | S-02          | US-02, FR-005, FR-006, FR-008, FR-014, FR-015         | blocked  |
 | S-05 | import-places-matched-to-gazetteer | dostać miejsca wydarzeń (także pochowanie na cmentarzu) dopasowane do spisu i potwierdzić nowe w podglądzie      | S-02          | FR-009, FR-010, FR-017                                | proposed |
 | S-06 | import-sources-with-scans          | dostać źródła z opisem i skanem podpięte do faktów z numerem wpisu                                             | S-05          | FR-001, FR-011, US-01                                 | blocked  |
-| S-07 | fuzzy-event-dates                  | zapisać i zobaczyć datę wydarzenia jako zakres lat, „przed” albo „po” — ręcznie i z importu                      | —             | FR-009, FR-015                                        | in-progress |
+| S-07 | fuzzy-event-dates                  | zapisać i zobaczyć datę wydarzenia jako zakres lat, „przed” albo „po” — ręcznie i z importu                      | —             | FR-009, FR-015                                        | done |
 | S-08 | fact-confidence-level              | zobaczyć i ustawić przy fakcie poziom pewności A–D — ręcznie i z importu                                        | S-02          | FR-018, FR-015                                        | proposed |
 | S-09 | surname-variant-search             | dostać warianty zapisu nazwiska z importu i znaleźć osobę w wyszukiwarce po każdym wariancie                     | S-02          | US-03, FR-019                                         | proposed |
 | S-10 | import-from-scratch-outside-prod   | poza produkcją zaimportować „od zera”, czyszcząc najpierw osoby i fakty drzewa konta (z potwierdzeniem)          | S-02          | FR-020                                                | proposed |
@@ -176,7 +176,7 @@ Brak. Każdy element przekrojowy wchodzi w pierwszym wycinku, który go używa: 
 - **Unknowns:**
   - Czy rodzaj daty zastępuje flagę „ok.” (migracja przenosząca dane: kopiuj, testuj, usuń flagę później — wg `CLAUDE.md`), czy dochodzi obok niej jako puste pole (PRD: istniejące wiersze bez przepisywania)? Owner: autor. Block: no.
 - **Risk:** Jedyna zmiana istniejącego formatu danych w M-3; dotyka formularza, osi czasu i parsera dat, więc idzie jako osobny wycinek zamiast w `S-02`.
-- **Status:** in-progress
+- **Status:** done
 
 ### S-08: Poziom pewności A–D przy fakcie
 
@@ -255,3 +255,4 @@ Brak. Każdy element przekrojowy wchodzi w pierwszym wycinku, który go używa: 
 ## Done
 
 - **S-01: Import: odczyt bloków danych z repo badawczego i raport** — Archived 2026-10-23 → `context/archive/2026-10-23-research-blocks-read-and-report/`. Lesson: —.
+- **S-07: autor zapisuje i widzi datę wydarzenia jako dokładną, „ok.”, zakres lat, „przed” albo „po” — w formularzu, na osi czasu i w panelu osoby** — Archived 2026-10-23 → `context/archive/2026-10-23-fuzzy-event-dates/`. Lesson: —.
