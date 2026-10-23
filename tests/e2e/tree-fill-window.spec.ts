@@ -170,3 +170,44 @@ test('tree-fill-window: at 1920x1080 the pair card is the tallest, the grandpare
         expect(sheetHeight).toBeGreaterThanOrEqual(areaHeight * 0.8);
     }).toPass();
 });
+
+// Risk: "on a slow machine at a large screen the tree area stays blank" (fix
+// zoom-canvas-lost-fit-pass). On a slow CPU a pass of the fit can measure the
+// sheet before the new column is rendered, so the next pass corrects the height to
+// fill once more. At 1920x1080 every sheet row is already at its maximum height,
+// so that correction resizes nothing, and the pass that shows the sheet waited for
+// a resize that never came. The race does not lose every time: without the fix
+// this test fails in about half of the runs. The CPU is slowed only during the load.
+test('tree-fill-window: at 1920x1080 on a slow CPU the sheet is shown once the page has loaded, not left hidden', async ({
+    page,
+    suffix,
+}) => {
+    await page.setViewportSize({ width: 1920, height: 1080 });
+    const focusId = await createPerson(page, {
+        first_name: 'Centrum',
+        last_name: suffix,
+        gender: 'male',
+    });
+    const partnerId = await createSpouse(page, focusId, {
+        first_name: 'Partnerka',
+        last_name: suffix,
+        gender: 'female',
+    });
+    await createChildOfCouple(page, focusId, partnerId, {
+        first_name: 'Dziecko',
+        last_name: suffix,
+        gender: 'male',
+    });
+
+    const cdp = await page.context().newCDPSession(page);
+    await cdp.send('Emulation.setCPUThrottlingRate', { rate: 8 });
+    try {
+        await gotoTree(page, focusId);
+    } finally {
+        await cdp.send('Emulation.setCPUThrottlingRate', { rate: 1 });
+    }
+
+    await expect(
+        personCard(page, 'mężczyzna', `Dziecko ${suffix}`),
+    ).toBeVisible();
+});
