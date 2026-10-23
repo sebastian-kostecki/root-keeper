@@ -1,7 +1,7 @@
 ---
 project: root-keeper
-checked_at: 2026-10-04T19:48:16Z
-health_status: needs-attention
+checked_at: 2026-10-23T07:38:57Z
+health_status: critical-issues
 context_type: brownfield
 language_family: multi
 stack_assessment_available: true
@@ -13,9 +13,9 @@ checks_run:
   - ci_cd
   - configuration
 audit_findings:
-  critical: 0
+  critical: 2
   high: 1
-  moderate: 1
+  moderate: 5
   low: 0
 test_runner_detected: true
 ci_provider: GitHub Actions
@@ -24,7 +24,7 @@ recommended_fixes: 7
 
 # Health check — root-keeper
 
-> Project: Laravel 13 + Inertia 3 + React 19 (TypeScript), PHP 8.5, PostgreSQL 18, run locally with Sail. Checked before the brownfield change in `context/foundation/prd.md` (source description, places gazetteer, tree look + side panels, all-ancestors view; deadline 2026-11-04). Replaces the 2026-09-28 check (see git history) — all of its high and medium fixes (Larastan errors, PostgreSQL in CI, `.env.example`) are done.
+> Project: Laravel 13 + Inertia 3 + React 19 (TypeScript 7), PHP 8.5, PostgreSQL 18, run locally with Sail. Checked before the brownfield change in `context/foundation/prd.md` (M-3: import from the research repo). Replaces the 2026-10-04 check (see git history, commit `685ffa2`) — all seven of its fixes are done: league/commonmark patched (2.10.3), guardrail E2E specs written and running in CI, Node 24 in CI, `pnpm-workspace.yaml` removed, vite-plus 1.0, `CLAUDE.md` rule blocks pasted.
 
 ## Dependency Health
 
@@ -35,88 +35,100 @@ Status: present (composer.lock, package-lock.json)
 Package manager: composer + npm
 ```
 
-`pnpm-workspace.yaml` (starter leftover) still sits next to `package-lock.json`.
-
 ### Security Audit
 
 ```
 Tool: vendor/bin/sail composer audit --format json; vendor/bin/sail npm audit --json
-Summary: 0 CRITICAL, 1 HIGH, 1 MODERATE, 0 LOW
-Direct vs transitive: composer — both advisories in one transitive package (league/commonmark, via laravel/framework and laravel-lang/publisher); npm — no advisories
+Summary: 2 CRITICAL, 1 HIGH, 5 MODERATE, 0 LOW
+Direct vs transitive: composer — no advisories, nothing abandoned; npm — every finding reaches the tree through two direct packages: concurrently (CRITICAL chain) and vite-plus (HIGH + all MODERATE)
 ```
+
+All eight findings sit in local development tooling (the `composer dev` process runner and the Vite/Vitest dev and test servers), not in code the production build ships. They are real for a developer machine running `vp dev` or `vp test --ui`, and they keep every audit red.
+
+#### CRITICAL findings
+
+- **shell-quote** 1.8.4–1.10.0 (transitive, via concurrently) — GHSA-pqg4-j6r4-53mv: `quote()` command injection via a line terminator in a token after a `{ comment }` token (CVSS 8.1; npm rates it critical). Fix: update concurrently.
+- **concurrently** 10.0.5 (direct, in `dependencies`, range `^10.0.3`) — affected through shell-quote. Fix: update to 10.0.6.
 
 #### HIGH findings
 
-- **league/commonmark** 2.10.1 — PKSA-m4t9-vsgq-8khn (GHSA-3q6v-r5mr-hxv8): quadratic-time denial of service in the GitHub Flavored Markdown table extension. Fix: update to 2.10.2+ (2.10.3 available). Exposure is low: the app does not render Markdown (`Str::markdown`, CommonMark — no hits in `app/`, `routes/`, `resources/views/`, `config/`); the package comes in through the framework. Reported 2026-09-30.
+- **vite-plus** 1.0.0 (direct, pinned exactly `"1.0.0"` in `devDependencies`) — affected range `<=1.2.0`: bundled Vite (GHSA-9jrq-w75r-8gcw cross-origin script execution through custom middleware; GHSA-rq7h-c2jc-7f22 files outside `server.fs.allow`; GHSA-vfpm-58rq-9qcg `?vite-wasm-instance` leaks 4 bytes), bundled launch-editor (GHSA-r825-w8mm-5pxw, GHSA-698v-4r3x-3vcv, GHSA-587h-7wmj-h5pm), and the Vitest findings below. Fix: update to 1.3.0+ (1.3.0 bundles vite-plus-core 1.3.0 and Vitest 5.0.5; 1.4.0 was published today).
 
-MODERATE: **league/commonmark** 2.10.1 — PKSA-m2dq-1fhr-29b1 (GHSA-97jj-33gv-5xf9): `DisallowedRawHtml` bypass when a disallowed tag name ends the raw-HTML literal. Same fix.
+MODERATE (all transitive through vite-plus, all fixed in Vitest 5.0.5):
+- **vitest** 5.0.1 — pinned by `overrides.vitest` in `package.json`; carries the advisories of its sub-packages.
+- **@vitest/mocker** — GHSA-qxg6-89mg-rqv8 code injection via unauthenticated manual mock registration (4.7); GHSA-xp26-3454-mjgp Windows backslash traversal (5.9).
+- **@vitest/ui** — GHSA-p458-7748-mcp3 `server.fs.deny` misapplied, serving `.env`, private keys, `.git` (6.5).
+- **@vitest/browser** — same GHSA-p458-7748-mcp3.
+- **@vitest/browser-preview** — via @vitest/browser.
+
+Note: the `overrides.vitest: "5.0.1"` pin forces the vulnerable Vitest even after vite-plus is bumped — it has to move with it (see `CLAUDE.md` "Frontend toolchain").
 
 ### Outdated Dependencies
 
 ```
-Packages with major version gaps: 2 (npm); composer: none
+Packages with major version gaps: 1 (npm); composer: none
 ```
 
-- **vite-plus**: 0.3.0 → 1.0.0 (pre-1.0 → stable 1.0). The 2026-09-28 check waited for 1.0 to leave RC; it now has. This is the toolchain the stack assessment flagged as least known to agents, and the `CLAUDE.md` Vite+ block pins 0.3.0.
-- **@types/node**: 24.13.5 → 26.6.4 (2 majors). Intentional — types track the Node 24 runtime (wanted 24.19.1).
+- **@types/node**: 24.19.1 → 26.6.5 (2 majors). Intentional — types track the Node 24 runtime (CI and Sail both run Node 24).
 
-Minor/patch updates available (none urgent): inertiajs/inertia-laravel 3.3.4 → 3.5.1, laravel/framework 13.32.0 → 13.34.0, laravel/fortify 1.39.0 → 1.40.0, laravel/boost 2.9.1 → 2.10.1, larastan/larastan 3.12.1 → 3.12.2, laravel/sail 1.67.0 → 1.68.0, pestphp/pest 5.2.1 → 5.3.0, phpunit/phpunit 13.3.4 → 13.4.0; @inertiajs/react and @inertiajs/vite 3.7.1 → 3.8.0, vite 8.3.0 → 8.3.2, lucide-react 1.47.0 → 1.52.0. Windows-only optional binaries show as missing — expected on Linux/WSL.
+Minor/patch updates available (none urgent): laravel/framework 13.34.0 → 13.38.0, laravel/fortify 1.40.0 → 1.41.0, larastan/larastan 3.12.2 → 3.13.1, phpunit/phpunit 13.3.6 → 13.4.3, pestphp/pest 5.3.0 → 5.3.3, inertiajs/inertia-laravel 3.5.1 → 3.5.2, laravel/wayfinder 0.1.21 → 0.1.23, laravel/boost 2.10.1 → 2.10.3, laravel/sail 1.68.0 → 1.69.0; @inertiajs/react and @inertiajs/vite 3.8.0 → 3.9.1, @playwright/test 1.63.0 → 1.64.1, React 19.3.0 → 19.3.1, lucide-react 1.52.0 → 1.61.0, the Radix packages (minor bumps), @laravel/vite-plugin-wayfinder 0.1.10 → 0.1.11. Windows-only optional binaries show as missing — expected on Linux/WSL. `@rollup/rollup-*` 4.9.5 are exact pins in `optionalDependencies` (a starter leftover) and show 4.65.0 as latest; not used by the Rolldown-based build.
 
 ## Test Suite
 
 ```
-Test runner: Pest 5.2 (PHPUnit 13.3) via `vendor/bin/sail artisan test`; Vitest 4.1 via `npm run test:js` (`vp test`); Playwright 1.63 (E2E)
-Tests found: 454 Pest tests; 124 Vitest tests in 7 files; 2 Playwright tests (setup + 1 seed spec)
-Test execution: passing — Pest 454/454 (2944 assertions, ~76 s, PostgreSQL 18); Vitest 124/124 (~1.7 s); Playwright listed, not executed (needs the isolated E2E server)
+Test runner: Pest 5.3 (PHPUnit 13.3) via `vendor/bin/sail artisan test`; Vitest 5.0 via `npm run test:js` (`vp test`); Playwright 1.63 (E2E)
+Tests found: 1036 Pest tests; 408 Vitest tests; 44 Playwright tests in 29 files (incl. auth setup)
+Test execution: failing locally — Pest 1033/1036 (2 failed, 1 error, 5908 assertions, ~287 s, PostgreSQL 18); Vitest 408/408 (~5.6 s); Playwright tree-fill-window.spec.ts 12/12 locally (--repeat-each=6)
 ```
 
 ```
-Configuration: phpunit.xml; vite.config.ts (`vp test`); playwright.config.ts + scripts/e2e-server.sh (see context/foundation/test-stack.md)
-Framework: Pest 5.2.1 + pest-plugin-laravel 5, PHPUnit 13.3.4; Vitest 4.1.11; @playwright/test 1.63.0
+Configuration: phpunit.xml; vite.config.ts (`vp test`); playwright.config.ts + scripts/e2e-server.sh / e2e-server-ci.sh (see context/foundation/test-stack.md)
+Framework: Pest 5.3.0 + pest-plugin-laravel, PHPUnit 13.3.6; Vitest 5.0.1; @playwright/test 1.63.0
 ```
 
-Other local gates, all passing: `composer types:check` (Larastan level 7, 0 errors), `npm run types:check` (tsc), `npm run check` (Oxfmt: 149 files formatted; Oxlint: 150 files, no warnings), `composer lint:check` (Pint).
+**The three local Pest failures are an environment leak, not a regression.** All three are in `tests/Backup/` (`BackupContentsTest` ×2: archive entries read as `null`; `RestoreCommandTest` "a fresh backup dump carries no ownership statements": dump is not iterable). The local `.env` sets a non-empty `BACKUP_ARCHIVE_PASSWORD`; `config/backup.php` turns on archive encryption when it is set, and `phpunit.xml` does not override it, so `BackupTestCase::readArchiveEntry()` reads an encrypted zip without a password. Re-running `tests/Backup` with `BACKUP_ARCHIVE_PASSWORD=` in the environment: 13/13 pass. CI has no `.env` password, which is why `tests` is green there. See Recommended Fixes #3.
 
-**E2E coverage vs. PRD guardrails.** The only E2E spec protects the auth-gate round-trip. The two PRD guardrails (fact–source links; adding relations from tree slots) have no browser test. They are covered one layer down by Pest (`tests/Feature/WriteTargetsTest.php` pins "Inertia prop → request → database"), which is why `test-plan.md` §3 Phase 4 stayed `not started` on 2026-10-02 with the trigger: "run e2e when client-side id state appears". This change creates exactly that state — side panels whose content is swapped when moving to a relative (FR-019, FR-028), and a marriage panel editing a couple (FR-017). See Recommended Fixes #2.
+Other local gates, all passing: `composer types:check` (Larastan level 7, 0 errors), `npm run types:check` (tsc), `npm run check` (Oxfmt: 261 files formatted; Oxlint: 274 files, no warnings), `composer lint:check` (Pint).
 
 ## CI/CD
 
 ```
 Provider: GitHub Actions
-Configuration: .github/workflows/lint.yml, static-analysis.yml, tests.yml (+ .github/dependabot.yml, github-actions ecosystem only)
+Configuration: .github/workflows/lint.yml, static-analysis.yml, tests.yml, e2e.yml (+ .github/dependabot.yml, github-actions ecosystem only)
 ```
 
-| Stage      | Status | Notes                                                                                 |
-|------------|--------|---------------------------------------------------------------------------------------|
+| Stage      | Status | Notes                                                                                       |
+|------------|--------|---------------------------------------------------------------------------------------------|
 | Lint       | ✓      | Pint (`composer lint:check`) + Vite+ (`npm run check`); Vitest (`npm run test:js`) runs here too |
-| Test       | ✓      | Pest on a `postgres:18-alpine` service with `pg_dump` 18 — green on `main`              |
-| Build      | ✓      | `npm run build` inside `composer setup`                                               |
-| Type check | ✓      | Larastan level 7 + `tsc --noEmit` — green on `main`                                   |
-| Security   | ✗      | No `composer audit` / `npm audit` step; Dependabot watches GitHub Actions only        |
+| Test       | ✓      | Pest on `postgres:18-alpine` with `pg_dump` 18; Playwright E2E (`e2e.yml`, 2 workers, no retries) |
+| Build      | ✓      | `npm run build` inside `composer setup` (tests, e2e)                                         |
+| Type check | ✓      | Larastan level 7 + `tsc --noEmit`                                                            |
+| Security   | ✗      | No `composer audit` / `npm audit` step; Dependabot watches GitHub Actions only               |
 
-All three workflows are green on `main` for the last three pushes (`0be67d4`, `e816162`, `4b23032`). E2E (Playwright) does not run in CI. Workflows still use `node-version: '22'` while Sail runs Node 24.
+All four workflows use Node 24 and PHP 8.5. Recent runs: `develop` 1038658 and `drop-legacy-columns` (×2) — all four green. `main` 6d04d65 (the merge of #54, today 04:21 UTC) — lint, static-analysis, tests green; **e2e red**: 43 passed, 1 failed — `tree-fill-window.spec.ts:139` ("at 1920x1080 the pair card is the tallest…"), `expect(child).toBeVisible()` timed out after 5 s, the "Dziecko" card was not found. `main` 6d04d65 and `develop` 1038658 have identical trees and e2e passed on `develop` four minutes earlier, and the spec passed 12/12 locally — the test is flaky in CI. See Recommended Fixes #4.
 
-The missing security stage has a concrete cost now: the league/commonmark HIGH advisory (reported 2026-09-30) went unnoticed for four days.
+The missing security stage has a concrete cost again: the concurrently and vite-plus advisories (fixes published within the last week) are visible only to a manual `npm audit`.
+
+All CI jobs install Composer packages **with** dev dependencies; nothing checks that `app/` uses only `require` packages (stack-assessment gap 2). See Recommended Fixes #5.
 
 ## Configuration
 
 ### High severity
 
-No high-severity gaps. `.gitignore` present; `tsconfig.json` `strict: true`; lint/format config present (`vite.config.ts` `lint`/`fmt`, `pint.json`); `phpstan.neon` level 7 without baseline.
+No high-severity gaps. `.gitignore` present (incl. `/storage/gen-tree-import`); `tsconfig.json` `strict: true`; lint/format config present (`vite.config.ts` `lint`/`fmt`, `pint.json`); `phpstan.neon` level 7 without baseline.
 
 ### Medium severity
 
-- **Docs describe E2E coverage that does not exist** — `prd.md` Current System Overview says the critical paths are "chronione testami E2E (Playwright)", and `test-plan.md` §4 Stack still says "e2e: none yet … kandydat: pest-plugin-browser" although Playwright is set up (`test-stack.md`, 2026-10-02). Agents planning slices from these files will either assume a safety net that isn't there or propose a second E2E tool. Fix: Recommended Fixes #3.
+- **`phpunit.xml` does not isolate the backup password** — a developer `.env` with `BACKUP_ARCHIVE_PASSWORD` turns three backup tests red. An agent running the suite after an M-3 change sees failures unrelated to its work, and may "fix" the backup code or the assertions. Fix: Recommended Fixes #3.
 
 ### Low severity
 
-- **CI Node version** — `node-version: '22'` in all three workflows; Sail runs Node 24 and `@types/node` is 24.x. Fix: Recommended Fixes #5.
-- **`pnpm-workspace.yaml`** — suggests pnpm while the project uses npm. Fix: Recommended Fixes #6.
-- **`.ai/rules` referenced but absent** — Boost's section of `CLAUDE.md` points agents to `.ai/rules/index.md`; the instruction is conditional ("If `.ai/rules` does not exist, continue without it"), so it only costs a lookup. No fix needed until the first rule is recorded.
+- **`.env.example` does not list `BACKUP_ARCHIVE_PASSWORD`** — the variable that switches archive encryption on is undocumented. Fix: Recommended Fixes #3.
+- **`.ai/rules` referenced but absent** — the Boost block in `CLAUDE.md` points agents to `.ai/rules/index.md`; the instruction is conditional ("If `.ai/rules` does not exist, continue without it"), so it costs only a lookup. No fix needed until the first rule is recorded.
 
-Present and fine: `.editorconfig`, `.env.example` (now `DB_CONNECTION=pgsql`, Sail defaults), `.gitignore`, `pint.json`, `CLAUDE.md`.
+Present and fine: `.editorconfig`, `.env.example` (pgsql, Sail defaults), `.gitignore`, `pint.json`, `CLAUDE.md`.
 
-**Backup scope (PRD NFR: new data incl. person photos, RPO 24 h).** `config/backup.php` includes the whole database and `storage_path('app')`; `bootstrap/app.php` schedules `backup:run` daily at 03:45 Europe/Warsaw in production (run by `schedule:work` in `docker/8.5/supervisord.prod.conf`). Photos stored under `storage/app` are therefore covered within 24 h. The pre-migration snapshot in `scripts/deploy.sh` is `--only-db`, which is enough — the planned data moves touch only the database. Store photos under `storage/app` (not outside it) to stay covered.
+**Backup scope for the import (stack-assessment hand-off).** `config/backup.php` includes the whole database and `storage_path('app')`; `bootstrap/app.php` schedules `backup:run` daily in production, plus `backup:clean` and `backup:monitor`. Scans the import copies into `storage/app` are therefore covered within 24 h. The pre-write snapshot the PRD requires before an import (`backup:run --only-db`) is not built yet — it belongs to the import slices (`CLAUDE.md` "Research data").
 
 ## Stack Assessment Cross-Reference
 
@@ -125,106 +137,129 @@ Stack assessment: context/foundation/stack-assessment.md
 Agent readiness (from stack-assess): ready-with-compensation
 ```
 
-| Quality Gate Gap / Assumption                               | Health-Check Finding                                                                  | Status      |
-|-------------------------------------------------------------|---------------------------------------------------------------------------------------|-------------|
-| Build tool (vite-plus 0.3) not in training data             | `CLAUDE.md` Vite+ block present; `vp check` green locally and in CI                   | Mitigated   |
-| vite-plus pinned at pre-1.0                                 | vite-plus 1.0.0 stable is out; `CLAUDE.md` block and versions line describe 0.3.0    | Watch — upgrade outside feature work (#4) |
-| Typed gate relies on Larastan level 7 in CI                 | Larastan 0 errors locally; `static-analysis` green on `main`                          | Mitigated (was Reinforced on 2026-09-28) |
-| Recent major versions (Inertia v3, Pest 5, TS 7)            | All gates pass on these versions; versions block refresh pending (stack-assessment gap 2) | Mitigated |
-| Side panels / data moves / gazetteer merge rules (gaps 3–5) | Proposed `CLAUDE.md` blocks not pasted yet (`CLAUDE.md` has no "Side panels" or "Migrations that move existing data" section) | Open — paste before the first slice (#7) |
-| Hand-off: E2E protects critical paths                       | Only the auth-gate seed exists; no E2E in CI; test-plan Phase 4 trigger now met by side panels | Reinforced (#2, #3) |
-| Hand-off: backups cover photos                              | Daily full backup covers `storage/app`; pre-migration DB-only snapshot suffices       | Resolved    |
+| Quality Gate Gap / Hand-off                                   | Health-Check Finding                                                                                  | Status       |
+|---------------------------------------------------------------|-------------------------------------------------------------------------------------------------------|--------------|
+| 1. vite-plus not in training data                             | `CLAUDE.md` Vite+ block (1.0.0) present; `vp check` green. But 1.0.0 is pinned exactly and is now under a HIGH advisory; the bump procedure (alias + `vitest` override) is in `CLAUDE.md` | Reinforced — the compensation rule is about to be exercised (#2) |
+| 2. YAML parser only in dev                                    | `composer why symfony/yaml`: only `laravel/sail`, `laravel/roster` (dev). Not used in `app/` yet. CI installs dev everywhere; no `--no-dev` check | Open — decide in `/10x-plan` (#5) |
+| 3. Import writes outside HTTP                                 | "Research repo import" rule block present in `CLAUDE.md`                                               | Mitigated    |
+| 4. Real research data + pre-import backup                     | "Research data" rule present; `.gitignore` has `/storage/gen-tree-import`; `tests/Fixtures/` holds only two images. Daily backup covers `storage/app`; pre-import snapshot not built yet | Mitigated (snapshot is slice work) |
+| 5. Date qualifier is a data move                              | Line present in "Migrations that move existing data"                                                   | Mitigated    |
+| Hand-off: `.ai/rules/index.md` referenced, `.ai/` absent      | Still absent; the reference is conditional                                                            | Accepted     |
+| Hand-off: dev/prod drift check                                | No CI step; three local test failures already show that the test env picks up whatever the developer's `.env` holds | Reinforced (#3, #5) |
 
 ## Recommended Fixes
 
 ### Fix before agent work (Category A)
 
-### 1. Patch league/commonmark (1 HIGH, 1 MODERATE advisory)
+### 1. Update concurrently (2 CRITICAL)
 
-**Impact**: Every `composer audit` (and any future CI audit step) stays red until patched, which trains agents and humans to ignore it. Real exposure is low — the app renders no Markdown — but the fix is a one-package update.
-**Severity**: high
+**Impact**: Every `npm audit` stays red with "critical", which trains agents and humans to ignore it — and a future CI audit step cannot be turned on while it is red. Exposure is local (the `composer dev` process runner), but the fix is a patch release.
+**Severity**: critical
 **Effort**: quick (< 5 min)
 **Fix**:
 
 ```bash
-vendor/bin/sail composer update league/commonmark
-vendor/bin/sail composer audit
-vendor/bin/sail artisan test --compact
+vendor/bin/sail npm update concurrently
+vendor/bin/sail npm audit
+vendor/bin/sail composer dev   # smoke: all processes start, then Ctrl+C
 ```
 
-Expected: league/commonmark 2.10.3, `composer audit` reports no advisories.
+Expected: concurrently 10.0.6, shell-quote outside 1.8.4–1.10.0, no critical findings.
 
-### 2. Cover the PRD guardrails in the browser before the panel slices
+### 2. Bump vite-plus to 1.3+ together with its alias and the Vitest pin (1 HIGH, 5 MODERATE)
 
-**Impact**: The change replaces modals with side panels in four places and swaps panel content when moving to a relative (FR-019, FR-028). That is the "client-side id state" `test-plan.md` named as the trigger for E2E. Without a browser test on the two guardrails (fact–source link, relation added from a tree slot), an agent can wire a panel action to the wrong person and every Pest test will still pass.
-**Severity**: medium
-**Effort**: significant (> 1 hour)
-**Fix**: before the first panel slice, run `/10x-e2e` for two risks — (a) adding an existing parent from an empty tree slot lands on the right person; (b) linking a source to a fact keeps leading to the same source and scan. Assert on data, not layout (test-plan §6.6). Then flip `test-plan.md` §3 Phase 4 to in progress. Running E2E in CI is a separate step (see Category B).
-
-### 3. Correct the docs that describe E2E coverage
-
-**Impact**: `/10x-roadmap` and `/10x-plan` read `prd.md` and `test-plan.md`. Today they say critical paths are already E2E-protected, and that no E2E tool is chosen.
-**Severity**: medium
-**Effort**: quick (< 5 min)
-**Fix**:
-
-- `context/foundation/prd.md`, Current System Overview, "Jakość dziś": replace the E2E clause with "ścieżki krytyczne (fakt–źródło, relacje ze slotów drzewa) chronione testami Pest (`WriteTargetsTest`); E2E (Playwright) skonfigurowane — na razie tylko test seed logowania, poza CI."
-- `context/foundation/test-plan.md` §4 Stack, row `e2e`: Playwright 1.63 via `playwright.config.ts` (see `test-stack.md`), replacing the pest-plugin-browser candidate.
-
-### 4. Upgrade vite-plus to 1.0 — outside feature work
-
-**Impact**: 1.0 is stable. The change is frontend-heavy; upgrading mid-change mixes toolchain diffs with feature diffs, while staying on 0.3 keeps agents on a pre-1.0 tool whose `CLAUDE.md` block will age.
-**Severity**: low
+**Impact**: the dev and test servers every slice uses (`vp dev`, `vp test`) carry file-disclosure and code-injection advisories. Bumping only `vite-plus` is not enough: the `vite` alias and `overrides.vitest: "5.0.1"` would keep the old core and the vulnerable Vitest — exactly the trap `CLAUDE.md` describes.
+**Severity**: high
 **Effort**: moderate (15–30 min)
-**Fix**: on its own branch, either before the first slice or after 2026-11-04 — not in between:
+**Fix**: on its own branch, before the first M-3 slice:
 
 ```bash
-vendor/bin/sail npm i -D vite-plus@^1
-# read node_modules/vite-plus/docs/guide/upgrade.md (if present) and node_modules/vite-plus/AGENTS.md
+# in package.json: "vite-plus": "1.3.0" (or 1.4.0 once it has settled — published 2026-10-23),
+#                  "vite": "npm:@voidzero-dev/vite-plus-core@1.3.0",
+#                  overrides.vitest: "5.0.5"
+vendor/bin/sail npm install
+vendor/bin/sail npx vp toolchain        # confirm bundled vite/vitest versions match the pins
+vendor/bin/sail npm audit
 vendor/bin/sail npm run check && vendor/bin/sail npm run types:check && vendor/bin/sail npm run test:js && vendor/bin/sail npm run build
 ```
 
-Then update "vite-plus 0.3.0" in the `CLAUDE.md` Vite+ block heading and the versions line.
+Read `node_modules/vite-plus/AGENTS.md` and `docs/guide/` for 1.1–1.3 changes first; do not run `vp migrate`. Then update "vite-plus 1.0.0" in the `CLAUDE.md` Vite+ heading and the versions line.
 
-### 5. Match CI's Node version to the runtime
+### 3. Isolate the backup tests from the developer's `.env`
 
-**Impact**: CI builds and type-checks on Node 22 while development runs Node 24 with `@types/node` 24 — an agent can use a Node 24 API that passes locally and breaks only in CI.
-**Severity**: low
+**Impact**: three Pest tests fail locally on a clean `develop` (1033/1036). An agent finishing an M-3 slice runs the suite, sees red tests it did not touch, and either stops or "fixes" backup code that is correct. Category A because the agent's main verification signal is unreliable on this machine.
+**Severity**: medium
 **Effort**: quick (< 5 min)
-**Fix**: in `.github/workflows/{lint,static-analysis,tests}.yml`, change `node-version: '22'` to `node-version: '24'`.
+**Fix**:
 
-### 6. Remove the package-manager ambiguity
+```xml
+<!-- phpunit.xml, inside <php> -->
+<env name="BACKUP_ARCHIVE_PASSWORD" value="" force="true"/>
+```
 
-**Impact**: agents that see `pnpm-workspace.yaml` may run `pnpm install` and create a second lockfile.
+```dotenv
+# .env.example — document the switch; empty = unencrypted archives
+BACKUP_ARCHIVE_PASSWORD=
+```
+
+Verify: `vendor/bin/sail artisan test --compact tests/Backup` → 13/13, then the full suite. The encrypted-archive test sets its own password, so it keeps covering encryption.
+
+### 4. Find out why `tree-fill-window` at 1920x1080 is flaky in CI
+
+**Impact**: `main` is red on e2e for a commit identical to a green `develop`. With `retries: 0` (deliberate), a flaky spec makes every red e2e run ambiguous — the agent cannot tell its regression from noise, and the M-3 slices that touch the timeline and forms will run this suite.
+**Severity**: medium
+**Effort**: moderate (15–30 min)
+**Fix**: diagnose from the trace, do not loosen the assertion:
+
+```bash
+gh run download 39899868644 -n playwright-report -D /tmp/e2e-main
+npx playwright show-trace /tmp/e2e-main/test-results/tree-fill-window-*-chromium/trace.zip
+```
+
+The failure is before the layout assertions: the "Dziecko" card never appeared within 5 s after `createFullFamily` (eleven API writes) and `gotoTree`. Check in the trace whether the child was created and whether the tree rendered before or after the last write. If it is a missing wait on the setup, fix the setup; if the app renders a stale tree, that is a real bug. Debugging failing tests is Lesson 5's topic — record the finding there.
+
+### 5. Close the dev/prod dependency gap before the YAML parser lands
+
+**Impact**: M-3's data blocks need a YAML parser; `symfony/yaml` is installed only through dev packages. Locally and in CI the import works; on production (`composer install --no-dev`) it fails with a missing class, and nothing in the pipeline catches it.
+**Severity**: medium
+**Effort**: moderate (15–30 min)
+**Fix**: decide in `/10x-plan` for the first import slice: add `symfony/yaml` to `require` (`vendor/bin/sail composer require symfony/yaml` — a new direct dependency, needs your approval), and add a CI step that proves it, e.g. in `tests.yml` after the Pest run:
+
+```bash
+composer install --no-dev --no-interaction --prefer-dist
+php -r "require 'vendor/autoload.php'; exit(class_exists(Symfony\Component\Yaml\Yaml::class) ? 0 : 1);"
+```
+
+(or, once the import command exists, run it against `tests/Fixtures/research-repo/` in dry-run mode on the `--no-dev` install).
+
+### 6. Apply pending minor updates — outside feature work
+
+**Impact**: keeps the `CLAUDE.md` versions block accurate and shrinks the next upgrade. Nothing here is a security fix.
 **Severity**: low
-**Effort**: quick (< 5 min)
-**Fix**: `git rm pnpm-workspace.yaml`, then verify with `vendor/bin/sail npm ci && vendor/bin/sail npm run build`.
+**Effort**: moderate (15–30 min)
+**Fix**: on a separate branch, after #1–#2:
 
-### 7. Paste the change-specific rules into `CLAUDE.md` and apply pending minor updates
+```bash
+vendor/bin/sail composer update -W
+vendor/bin/sail npm update
+vendor/bin/sail artisan test --compact && vendor/bin/sail composer types:check && vendor/bin/sail npm run check && vendor/bin/sail npm run test:js
+```
 
-**Impact**: the stack assessment wrote rules for the riskiest parts of this change (side panels vs modals, migrations that move existing data, gazetteer merge) and a refreshed versions block. Until they are in `CLAUDE.md`, an agent will not see them. Minor updates keep that versions block accurate.
-**Severity**: low
-**Effort**: quick (< 5 min) for the paste; moderate for updates
-**Fix**: copy the four blocks from `context/foundation/stack-assessment.md` → "Recommended Instruction File Additions" into `CLAUDE.md` above `<laravel-boost-guidelines>` (replace the existing "Installed versions" block; append the gazetteer bullets to "Backend conventions for tree-owned data"). On a separate branch: `vendor/bin/sail composer update -W && vendor/bin/sail npm update`, then `vendor/bin/sail artisan test --compact && vendor/bin/sail composer types:check && vendor/bin/sail npm run check`.
+If @playwright/test moves to 1.64, the CI cache key follows `package-lock.json` automatically; update "Playwright 1.63" in `CLAUDE.md`.
 
 ### Addressed in upcoming lessons (Category B)
 
 ### CI security scanning
 
 **Lesson**: [Sprint Zero z Agentem: infrastruktura, walking skeleton i pierwszy deploy (M1L5)](https://platforma.przeprogramowani.pl/external/10xdevs-3/m1-l5)
-**What you'll do there**: harden the pipeline — add `composer audit` and `npm audit --audit-level=high` steps, and add `composer` and `npm` ecosystems to `.github/dependabot.yml` (it watches GitHub Actions only). The league/commonmark advisory (#1) is what this would have caught.
+**What you'll do there**: harden the pipeline — add `composer audit` and `npm audit --audit-level=high` steps (they will pass once #1–#2 are done), and add `composer` and `npm` ecosystems to `.github/dependabot.yml` (it watches GitHub Actions only). This is the second check in a row where an advisory was found only by hand.
 
-### E2E in CI
-
-**Lesson**: [Sprint Zero z Agentem: infrastruktura, walking skeleton i pierwszy deploy (M1L5)](https://platforma.przeprogramowani.pl/external/10xdevs-3/m1-l5)
-**What you'll do there**: wire the pipeline stages. Here the E2E server is Sail-based (`scripts/e2e-server.sh`), so CI needs its own way to boot the app and the `e2e` database before `npx playwright test`; `test-plan.md` §5 already lists "e2e on critical tree/modal flows — CI on PR" as a gate after Phase 4.
-
-Agent instruction files are not a gap: `CLAUDE.md` carries project rules (Vite+, versions, tree-owned data, E2E rules); the pending additions are in #7.
+Agent instruction files are not a gap: `CLAUDE.md` carries the project rules, including every block the stack assessment recommended for M-3.
 
 ## Summary
 
-Health status: needs-attention
+Health status: critical-issues
 
-The project is in good shape for agent work: CI is green on `main`, Larastan, tsc, Oxlint/Oxfmt and Pint are clean, and 454 Pest plus 124 Vitest tests pass on PostgreSQL. All fixes from the 2026-09-28 check are done, and backups already cover the photos the PRD adds. What keeps the status at needs-attention is one HIGH advisory in a transitive package the app does not use (a five-minute update), plus two gaps specific to this change. The PRD guardrails have no browser test while side panels introduce exactly the client-side state the test plan was waiting for. And the docs claim E2E coverage that does not exist.
+The status comes from npm rating two advisories critical. Both are in the `concurrently` dev-process runner, exposure is local only, and a patch release fixes them in minutes. The rest is solid: Larastan level 7, tsc, Oxlint/Oxfmt and Pint are clean; 1036 Pest, 408 Vitest and 44 Playwright tests exist; four CI workflows cover lint, types, Pest and E2E; and every fix from the previous check is done. Before M-3 work, three things erode the agent's feedback loop. The dev toolchain sits under a HIGH advisory whose fix needs the alias and Vitest pin moved together. Three backup tests fail locally because the test env reads the developer's backup password. And one E2E spec is flaky in CI and has already turned `main` red.
 
-Next step: patch league/commonmark (#1), correct the E2E wording in `prd.md` and `test-plan.md` (#3), paste the `CLAUDE.md` blocks (#7), then plan the milestone with `/10x-roadmap` — scheduling the two guardrail E2E tests (#2) before the first panel slice.
+Next step: update concurrently (#1), bump vite-plus with its pins (#2), isolate the backup password in `phpunit.xml` (#3), diagnose the flaky spec (#4) — then proceed to agent onboarding / `/10x-plan` for the first M-3 slice, deciding `symfony/yaml` there (#5).
