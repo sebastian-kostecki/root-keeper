@@ -1,6 +1,6 @@
 <?php
 
-use App\Actions\Import\PlanFirstImport;
+use App\Actions\Import\PlanImport;
 use App\Actions\Relations\CreateMarriage;
 use App\Enums\ParticipantRole;
 use App\Models\Event;
@@ -216,7 +216,7 @@ test('reports a plan that no longer fits the tree and writes nothing', function 
     $author = arrangeEmptyAuthorWithOverlappingOther();
     $before = ownershipSnapshot();
 
-    $this->mock(PlanFirstImport::class, function ($mock): void {
+    $this->mock(PlanImport::class, function ($mock): void {
         $mock->shouldReceive('handle')->andThrow(new InvalidArgumentException('Decyzje wskazują osobę spoza drzewa konta.'));
     });
 

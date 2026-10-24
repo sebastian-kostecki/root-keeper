@@ -7,15 +7,16 @@ use App\Enums\Gender;
 use App\Models\Event;
 use App\Models\Person;
 use App\Models\Tree;
-use App\Support\Import\FirstImportPlan;
 use App\Support\Import\IdentityDecisions;
 use App\Support\Import\ImportIssue;
+use App\Support\Import\ImportPlan;
 use App\Support\Import\NoteValueCounts;
 use App\Support\Import\PlannedFill;
 use App\Support\Import\PlannedMarriage;
 use App\Support\Import\PlannedMatch;
 use App\Support\Import\PlannedPerson;
 use App\Support\Import\PlannedRelation;
+use App\Support\Import\RepoKeys;
 use App\Support\Import\ResearchDate;
 use App\Support\Import\ResearchEvent;
 use App\Support\Import\ResearchMarriage;
@@ -26,7 +27,7 @@ use App\Support\Import\ValueConflict;
 use Illuminate\Support\Collection;
 use InvalidArgumentException;
 
-class PlanFirstImport
+class PlanImport
 {
     /**
      * The fields of a matched person in the order they are listed.
@@ -34,7 +35,7 @@ class PlanFirstImport
     private const FIELDS = ['first_name', 'last_name', 'gender', 'birth_date', 'death_date'];
 
     /**
-     * Decide what a first import writes into the tree, without writing anything.
+     * Decide what an import writes into the tree, without writing anything.
      *
      * Every repo person is new, matched to a person of the tree or skipped, as the decisions say. Parent-child pairs
      * are checked on one graph made of the tree's pairs and the planned ones, so that the write never meets a rule
@@ -42,7 +43,7 @@ class PlanFirstImport
      *
      * @throws InvalidArgumentException when the decisions do not cover each repo person once or point outside the tree
      */
-    public function handle(Tree $tree, ResearchRepoReading $reading, IdentityDecisions $decisions): FirstImportPlan
+    public function handle(Tree $tree, ResearchRepoReading $reading, IdentityDecisions $decisions): ImportPlan
     {
         $matchedPeople = $this->matchedPeople($tree, $reading, $decisions);
 
@@ -65,6 +66,7 @@ class PlanFirstImport
         $skippedValues = [];
         $outcomes = [];
         $pendingGenders = [];
+        $skippedGenders = [];
 
         foreach ($persons as $repoId => $research) {
             if (! isset($decisions->matched[$repoId])) {
@@ -72,7 +74,7 @@ class PlanFirstImport
             }
 
             $person = $matchedPeople[$decisions->matched[$repoId]];
-            $outcomes[$repoId] = $this->compareMatch($research, $person, $nodes[$repoId], $graph, $genders, $labels, $skippedValues, $pendingGenders);
+            $outcomes[$repoId] = $this->compareMatch($research, $person, $nodes[$repoId], $graph, $genders, $labels, $skippedValues, $pendingGenders, $skippedGenders);
         }
 
         [$relations, $skippedRelations] = $this->planRelations($persons, $nodes, $graph, $genders, $labels, $decisions, $matchedPeople);
@@ -82,6 +84,7 @@ class PlanFirstImport
 
             if ($offender !== null) {
                 $skippedValues[] = $this->genderSkipped($persons[$repoId], $repoGender, $offender, $labels);
+                $skippedGenders[$repoId] = true;
 
                 continue;
             }
@@ -102,6 +105,7 @@ class PlanFirstImport
         $matched = [];
         $skippedPersons = [];
         $conflicts = [];
+        $snapshots = [];
         $totals = new class
         {
             public int $births = 0;
@@ -132,6 +136,7 @@ class PlanFirstImport
             }
 
             $note = $this->noteFor($research, $reading, $skippedIds);
+            $snapshots += $this->snapshotsOf($research, $note, ! isset($skippedGenders[$repoId]));
             $totals->variants += count($research->surnameVariants);
             $totals->burials += $research->burial === null ? 0 : 1;
 
@@ -143,8 +148,8 @@ class PlanFirstImport
                 $newPersons[] = new PlannedPerson(
                     $research,
                     $note,
-                    $research->birth === null ? null : $research->id.'/urodzenie',
-                    $research->death === null ? null : $research->id.'/zgon',
+                    $research->birth === null ? null : RepoKeys::birth($research->id),
+                    $research->death === null ? null : RepoKeys::death($research->id),
                 );
 
                 foreach ([$research->birth, $research->death] as $event) {
@@ -177,8 +182,8 @@ class PlanFirstImport
                 $research,
                 $person->id,
                 $note,
-                $research->birth === null ? null : $research->id.'/urodzenie',
-                $research->death === null ? null : $research->id.'/zgon',
+                $research->birth === null ? null : RepoKeys::birth($research->id),
+                $research->death === null ? null : RepoKeys::death($research->id),
                 $createBirth,
                 $createDeath,
                 $fills,
@@ -200,9 +205,14 @@ class PlanFirstImport
         [$marriages, $skippedMarriages, $marriageConflicts] = $this->planMarriages($reading, $decisions, $matchedPeople, $skippedIds, $persons);
         array_push($conflicts, ...$marriageConflicts);
 
+        foreach ($relations as $planned) {
+            $snapshots[$planned->repoId] = [];
+        }
+
         $weddings = 0;
 
         foreach ($marriages as $planned) {
+            $snapshots[$planned->repoId] = ['data' => $planned->marriage->event->date?->label()];
             $this->tallyNoteValues($planned->marriage->event, $totals->places, $totals->levels, $totals->eventNotes);
 
             if ($planned->existingEventId === null) {
@@ -213,7 +223,7 @@ class PlanFirstImport
 
         ksort($totals->dated);
 
-        return new FirstImportPlan(
+        return new ImportPlan(
             persons: $newPersons,
             matched: $matched,
             skippedPersons: $skippedPersons,
@@ -230,6 +240,8 @@ class PlanFirstImport
             undatedEvents: $totals->undated,
             noteValues: new NoteValueCounts($totals->places, $totals->burials, $totals->levels, $totals->eventNotes, $totals->variants),
             probandHint: $this->probandHint($reading, $skippedIds),
+            snapshots: $snapshots,
+            forgottenSnapshots: [],
             blockedReason: $tree->people()->whereNotNull('repo_id')->exists() ? MatchResearchPersons::BLOCKED_REASON : null,
         );
     }
@@ -309,9 +321,10 @@ class PlanFirstImport
      * @param  array<string, string>  $labels
      * @param  list<ImportIssue>  $skippedValues
      * @param  array<string, array{0: string, 1: Gender, 2: Gender}>  $pendingGenders
+     * @param  array<string, true>  $skippedGenders  repo ids whose gender the rules of the tree left out
      * @return array<string, PlannedFill|ValueConflict>
      */
-    private function compareMatch(ResearchPerson $research, Person $person, string $node, SharedParentGraph $graph, array &$genders, array $labels, array &$skippedValues, array &$pendingGenders): array
+    private function compareMatch(ResearchPerson $research, Person $person, string $node, SharedParentGraph $graph, array &$genders, array $labels, array &$skippedValues, array &$pendingGenders, array &$skippedGenders): array
     {
         $outcomes = [];
         $label = $this->personLabel($research);
@@ -334,6 +347,7 @@ class PlanFirstImport
                     $outcomes['gender'] = new PlannedFill('gender', $repoGender, 'Płeć');
                 } else {
                     $skippedValues[] = $this->genderSkipped($research, $repoGender, $offender, $labels);
+                    $skippedGenders[$research->id] = true;
                 }
             } elseif ($appGender !== $repoGender) {
                 $pendingGenders[$research->id] = [$node, $repoGender, $appGender];
@@ -508,7 +522,7 @@ class PlanFirstImport
         foreach ($this->withoutRepoCycles($candidates, $persons, $skipped) as [$parent, $child]) {
             $p = $nodes[$parent->id];
             $c = $nodes[$child->id];
-            $key = $parent->id.'>'.$child->id;
+            $key = RepoKeys::relation($parent->id, $child->id);
             $existingId = $graph->existingId($p, $c);
 
             if ($existingId !== null) {
@@ -645,7 +659,7 @@ class PlanFirstImport
 
         foreach ($reading->marriages as $marriage) {
             [$first, $second] = $marriage->personIds;
-            $repoId = $first.'+'.$second.'/slub';
+            $repoId = RepoKeys::marriage($first, $second);
             $left = array_values(array_filter($marriage->personIds, fn (string $id): bool => isset($skippedIds[$id])));
 
             if ($left !== []) {
@@ -698,6 +712,37 @@ class PlanFirstImport
             ->filter(fn (Event $event): bool => $event->type === EventType::Marriage && $event->participants->contains('id', $spouseId))
             ->sortBy('id')
             ->first();
+    }
+
+    /**
+     * What the repo holds for the keys of a person: the person, its birth and its death, as the next import compares it.
+     * A gender the rules of the tree left out has no entry, so that it comes back at the next import.
+     *
+     * @return array<string, array<string, string|null>>
+     */
+    private function snapshotsOf(ResearchPerson $research, ?string $note, bool $withGender): array
+    {
+        $person = [
+            'imiona' => self::cleanText($research->givenNames),
+            'nazwisko' => self::cleanText($research->surname),
+        ];
+
+        if ($withGender) {
+            $person['plec'] = $research->gender?->value;
+        }
+
+        $person['notatka'] = $note;
+        $snapshots = [RepoKeys::person($research->id) => $person];
+
+        if ($research->birth !== null) {
+            $snapshots[RepoKeys::birth($research->id)] = ['data' => $research->birth->date?->label()];
+        }
+
+        if ($research->death !== null) {
+            $snapshots[RepoKeys::death($research->id)] = ['data' => $research->death->date?->label()];
+        }
+
+        return $snapshots;
     }
 
     private function personLabel(ResearchPerson $person): string

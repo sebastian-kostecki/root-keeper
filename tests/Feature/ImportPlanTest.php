@@ -1,14 +1,14 @@
 <?php
 
-use App\Actions\Import\PlanFirstImport;
+use App\Actions\Import\PlanImport;
 use App\Actions\Import\ReadResearchRepo;
 use App\Enums\Gender;
 use App\Models\Person;
 use App\Models\Tree;
 use App\Models\User;
-use App\Support\Import\FirstImportPlan;
 use App\Support\Import\IdentityDecisions;
 use App\Support\Import\ImportIssue;
+use App\Support\Import\ImportPlan;
 use App\Support\Import\PlannedMatch;
 use App\Support\Import\PlannedPerson;
 use App\Support\Import\PlannedRelation;
@@ -29,11 +29,11 @@ function arrangeEmptyAuthorAndOverlappingOther(): Tree
     return $author->tree;
 }
 
-function planFixtureImport(Tree $tree): FirstImportPlan
+function planFixtureImport(Tree $tree): ImportPlan
 {
     $reading = app(ReadResearchRepo::class)->handle(base_path('tests/Fixtures/research-repo'));
 
-    return app(PlanFirstImport::class)->handle($tree, $reading, IdentityDecisions::allNew($reading));
+    return app(PlanImport::class)->handle($tree, $reading, IdentityDecisions::allNew($reading));
 }
 
 /**
@@ -44,7 +44,7 @@ function planFixtureImport(Tree $tree): FirstImportPlan
  * @param  array<string, Person>  $matched  repo id => the tree person it is
  * @param  list<string>  $skipped  repo ids left out
  */
-function planTemporaryRepo(Tree $tree, array $blocks, array $matched = [], array $skipped = []): FirstImportPlan
+function planTemporaryRepo(Tree $tree, array $blocks, array $matched = [], array $skipped = []): ImportPlan
 {
     $repo = sys_get_temp_dir().'/plan-repo-'.uniqid();
     mkdir($repo.'/drzewo', 0777, true);
@@ -61,7 +61,7 @@ function planTemporaryRepo(Tree $tree, array $blocks, array $matched = [], array
 
     $ids = array_keys($blocks);
 
-    return app(PlanFirstImport::class)->handle($tree, $reading, new IdentityDecisions(
+    return app(PlanImport::class)->handle($tree, $reading, new IdentityDecisions(
         array_map(fn (Person $person): int => $person->id, $matched),
         $skipped,
         array_values(array_diff($ids, array_keys($matched), $skipped)),
@@ -85,7 +85,7 @@ function arrangeAuthorWithTwin(Closure $arrange): array
     return [$author->tree, $arrange($author->tree)];
 }
 
-function plannedMatch(FirstImportPlan $plan, string $id): PlannedMatch
+function plannedMatch(ImportPlan $plan, string $id): PlannedMatch
 {
     return collect($plan->matched)->first(fn (PlannedMatch $planned): bool => $planned->person->id === $id);
 }
@@ -98,7 +98,7 @@ function fieldsOf(array $items): array
     return array_map(fn ($item): string => $item->field, $items);
 }
 
-function plannedPerson(FirstImportPlan $plan, string $id): PlannedPerson
+function plannedPerson(ImportPlan $plan, string $id): PlannedPerson
 {
     return collect($plan->persons)->first(fn (PlannedPerson $planned): bool => $planned->person->id === $id);
 }
@@ -106,7 +106,7 @@ function plannedPerson(FirstImportPlan $plan, string $id): PlannedPerson
 /**
  * @return list<string>
  */
-function relationKeys(FirstImportPlan $plan): array
+function relationKeys(ImportPlan $plan): array
 {
     return array_map(fn (PlannedRelation $relation): string => $relation->repoId, $plan->relations);
 }
@@ -599,7 +599,9 @@ test('drops a repo gender that would give a child two parents of one sex', funct
         ->and($plan->skippedPersons)->toBe([])
         ->and($plan->skippedValues)->toHaveCount(1)
         ->and(issueMessages($plan->skippedValues))->toContain('płeć z repo pominięta: Kobieta (O-0001)')
-        ->and(issueMessages($plan->skippedValues))->toContain('Ewa Lis');
+        ->and(issueMessages($plan->skippedValues))->toContain('Ewa Lis')
+        ->and($plan->snapshots['O-0001'])->not->toHaveKey('plec')
+        ->and($plan->snapshots['O-0001'])->toMatchArray(['imiona' => 'Maria', 'nazwisko' => 'Wrona']);
 })->with([
     'a conflict' => [Gender::Male],
     'a fill' => [null],
@@ -639,5 +641,5 @@ test('rejects decisions that point outside the tree or use a tree person twice o
 
     $reading = app(ReadResearchRepo::class)->handle(base_path('tests/Fixtures/research-repo'));
 
-    expect(fn () => app(PlanFirstImport::class)->handle($author->tree, $reading, new IdentityDecisions(new: ['O-0001'])))->toThrow(InvalidArgumentException::class);
+    expect(fn () => app(PlanImport::class)->handle($author->tree, $reading, new IdentityDecisions(new: ['O-0001'])))->toThrow(InvalidArgumentException::class);
 });

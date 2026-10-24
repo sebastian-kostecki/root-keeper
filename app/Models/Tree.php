@@ -94,4 +94,12 @@ class Tree extends Model
     {
         return $this->hasMany(ParentChildRelation::class);
     }
+
+    /**
+     * @return HasMany<RepoSnapshot, $this>
+     */
+    public function repoSnapshots(): HasMany
+    {
+        return $this->hasMany(RepoSnapshot::class);
+    }
 }

@@ -14,8 +14,8 @@ use App\Models\Event;
 use App\Models\Person;
 use App\Models\Tree;
 use App\Support\Import\ConflictResolutions;
-use App\Support\Import\FirstImportPlan;
-use App\Support\Import\FirstImportResult;
+use App\Support\Import\ImportPlan;
+use App\Support\Import\ImportResult;
 use App\Support\Import\PlannedMatch;
 use App\Support\Import\ResearchDate;
 use App\Support\Import\ResearchEvent;
@@ -25,7 +25,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use RuntimeException;
 
-class ApplyFirstImport
+class ApplyImport
 {
     use GuardsParentSexChange;
     use MapsEventInput;
@@ -36,7 +36,7 @@ class ApplyFirstImport
     ) {}
 
     /**
-     * Write a first-import plan into the tree, all or nothing. Any exception rolls the whole write back.
+     * Write an import plan into the tree, all or nothing. Any exception rolls the whole write back.
      *
      * Matched persons and the pairs and weddings already in the tree get their repo ids and the approved values; nothing
      * in them is removed, and what the import does not name (photo, residences, sources, places) stays as it is.
@@ -45,13 +45,13 @@ class ApplyFirstImport
      *                          person or an existing wedding changed since planning, or a step breaks a rule of the app
      * @throws ValidationException when a new wedding breaks a rule of the app
      */
-    public function handle(Tree $tree, FirstImportPlan $plan, ConflictResolutions $resolutions): FirstImportResult
+    public function handle(Tree $tree, ImportPlan $plan, ConflictResolutions $resolutions): ImportResult
     {
         if ($plan->blockedReason !== null) {
             throw new RuntimeException($plan->blockedReason);
         }
 
-        return DB::transaction(function () use ($tree, $plan, $resolutions): FirstImportResult {
+        return DB::transaction(function () use ($tree, $plan, $resolutions): ImportResult {
             Tree::whereKey($tree->id)->lockForUpdate()->firstOrFail();
 
             if ($tree->people()->whereNotNull('repo_id')->exists()) {
@@ -187,7 +187,9 @@ class ApplyFirstImport
                 $newMarriages++;
             }
 
-            return new FirstImportResult(
+            $this->rememberSnapshots($tree, $plan);
+
+            return new ImportResult(
                 persons: count($plan->persons),
                 births: $births,
                 deaths: $deaths,
@@ -204,13 +206,38 @@ class ApplyFirstImport
     }
 
     /**
+     * Leave the memory of this import: the repo values of every key the plan wrote or marked, and no memory of the
+     * keys it forgets. The query builder skips the casts of the model, so `values` goes in as encoded JSON.
+     */
+    private function rememberSnapshots(Tree $tree, ImportPlan $plan): void
+    {
+        if ($plan->forgottenSnapshots !== []) {
+            $tree->repoSnapshots()->whereIn('repo_id', $plan->forgottenSnapshots)->delete();
+        }
+
+        $rows = [];
+
+        foreach ($plan->snapshots as $key => $values) {
+            $rows[] = [
+                'repo_id' => $key,
+                'values' => json_encode($values, JSON_THROW_ON_ERROR | JSON_FORCE_OBJECT | JSON_UNESCAPED_UNICODE),
+                'deletion_kept' => false,
+            ];
+        }
+
+        if ($rows !== []) {
+            $tree->repoSnapshots()->upsert($rows, ['tree_id', 'repo_id'], ['values', 'deletion_kept']);
+        }
+    }
+
+    /**
      * Lock the matched persons in id order and check that each still belongs to the tree and has not been imported.
      *
      * @return Collection<int, Person>
      *
      * @throws RuntimeException
      */
-    private function lockMatchedPeople(Tree $tree, FirstImportPlan $plan): Collection
+    private function lockMatchedPeople(Tree $tree, ImportPlan $plan): Collection
     {
         $ids = array_map(fn (PlannedMatch $match): int => $match->personId, $plan->matched);
         sort($ids);
@@ -326,8 +353,8 @@ class ApplyFirstImport
     private function guardPerson(Person $person, string $field, ?string $planned): void
     {
         $current = match ($field) {
-            'first_name' => PlanFirstImport::cleanText($person->first_name),
-            'last_name' => PlanFirstImport::cleanText($person->last_name),
+            'first_name' => PlanImport::cleanText($person->first_name),
+            'last_name' => PlanImport::cleanText($person->last_name),
             'gender' => $person->gender?->label(),
             'birth_date' => ResearchDate::fromEvent($person->birth())?->label(),
             'death_date' => ResearchDate::fromEvent($person->death())?->label(),

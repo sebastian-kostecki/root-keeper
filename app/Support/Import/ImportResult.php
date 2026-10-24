@@ -2,7 +2,7 @@
 
 namespace App\Support\Import;
 
-final readonly class FirstImportResult
+final readonly class ImportResult
 {
     /**
      * @param  int  $persons  persons added as new

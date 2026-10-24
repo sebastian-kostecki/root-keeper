@@ -2,7 +2,7 @@
 
 namespace App\Support\Import;
 
-final readonly class FirstImportPlan
+final readonly class ImportPlan
 {
     /**
      * @param  list<PlannedPerson>  $persons  persons added as new
@@ -17,6 +17,8 @@ final readonly class FirstImportPlan
      * @param  int  $births  births written: of new persons and the missing ones of matched persons
      * @param  int  $weddings  new weddings
      * @param  array<string, int>  $datesByQualifier  keyed by DateQualifier value, only qualifiers that occur
+     * @param  array<string, array<string, string|null>>  $snapshots  repo key => the repo values to remember after the write
+     * @param  list<string>  $forgottenSnapshots  repo keys whose memory the write removes
      */
     public function __construct(
         public array $persons,
@@ -35,6 +37,8 @@ final readonly class FirstImportPlan
         public int $undatedEvents,
         public NoteValueCounts $noteValues,
         public ?ResearchPerson $probandHint,
+        public array $snapshots,
+        public array $forgottenSnapshots,
         public ?string $blockedReason,
     ) {}
 

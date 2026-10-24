@@ -125,9 +125,9 @@ abstract class BackupTestCase extends TestCase
     }
 
     /**
-     * Create a two-factor user with a tree, people, events, relations, a passkey, a locality, a parish seated in it and two
-     * uploaded sources of different bytes, one linked to an event and the other turned into a gravestone with that
-     * locality as cemetery and the parent as buried person.
+     * Create a two-factor user with a tree, people, events, relations, a passkey, a locality, a parish seated in it, a repo
+     * import snapshot and two uploaded sources of different bytes, one linked to an event and the other turned into a
+     * gravestone with that locality as cemetery and the parent as buried person.
      */
     protected function arrangeBackupData(): Person
     {
@@ -155,6 +155,8 @@ abstract class BackupTestCase extends TestCase
         $seat = Locality::factory()->for($tree)->create(['name' => 'Lipnica Murowana']);
         Parish::factory()->for($tree)->seatedIn($seat)->dedicatedTo('Św. Leonarda')->create();
         Residence::factory()->for($parent)->create(['tree_id' => $tree->id, 'locality_id' => $seat->id]);
+
+        $tree->repoSnapshots()->create(['repo_id' => 'O-0001', 'values' => ['imiona' => 'Zygmunt', 'nazwisko' => 'Backupowski', 'plec' => 'm', 'notatka' => null]]);
 
         $this->uploadedSourceHashes = [];
 

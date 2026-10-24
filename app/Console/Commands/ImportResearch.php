@@ -2,9 +2,9 @@
 
 namespace App\Console\Commands;
 
-use App\Actions\Import\ApplyFirstImport;
+use App\Actions\Import\ApplyImport;
 use App\Actions\Import\MatchResearchPersons;
-use App\Actions\Import\PlanFirstImport;
+use App\Actions\Import\PlanImport;
 use App\Actions\Import\ReadResearchRepo;
 use App\Enums\DateQualifier;
 use App\Enums\MatchVerdict;
@@ -12,10 +12,10 @@ use App\Models\Person;
 use App\Models\Tree;
 use App\Models\User;
 use App\Support\Import\ConflictResolutions;
-use App\Support\Import\FirstImportPlan;
-use App\Support\Import\FirstImportResult;
 use App\Support\Import\IdentityDecisions;
 use App\Support\Import\ImportIssue;
+use App\Support\Import\ImportPlan;
+use App\Support\Import\ImportResult;
 use App\Support\Import\PersonMatch;
 use App\Support\Import\PersonMatches;
 use App\Support\Import\ResearchDate;
@@ -42,7 +42,7 @@ class ImportResearch extends Command
      */
     private const OPTION_WIDTH = 74;
 
-    public function handle(ReadResearchRepo $readResearchRepo, MatchResearchPersons $matchResearchPersons, PlanFirstImport $planFirstImport, ApplyFirstImport $applyFirstImport): int
+    public function handle(ReadResearchRepo $readResearchRepo, MatchResearchPersons $matchResearchPersons, PlanImport $planImport, ApplyImport $applyImport): int
     {
         $email = (string) $this->argument('email');
         $path = (string) $this->argument('path');
@@ -92,7 +92,7 @@ class ImportResearch extends Command
         $decisions = $this->decideIdentities($matches);
 
         try {
-            $plan = $planFirstImport->handle($tree, $reading, $decisions);
+            $plan = $planImport->handle($tree, $reading, $decisions);
         } catch (InvalidArgumentException $exception) {
             $this->error($exception->getMessage());
 
@@ -134,7 +134,7 @@ class ImportResearch extends Command
         }
 
         try {
-            $result = $applyFirstImport->handle($tree, $plan, $resolutions);
+            $result = $applyImport->handle($tree, $plan, $resolutions);
         } catch (Throwable $exception) {
             report($exception);
             $this->error($exception->getMessage());
@@ -345,7 +345,7 @@ class ImportResearch extends Command
         $this->table($headers, [...$rows, $agreeing, $contradictions]);
     }
 
-    private function resolveConflicts(FirstImportPlan $plan): ConflictResolutions
+    private function resolveConflicts(ImportPlan $plan): ConflictResolutions
     {
         $choices = [];
         $total = count($plan->conflicts);
@@ -388,7 +388,7 @@ class ImportResearch extends Command
         return sprintf('%s (#%d, ur. %s)', $name === '' ? 'NN' : $name, $person->id, $born);
     }
 
-    private function summary(FirstImportPlan $plan, ResearchRepoReading $reading): void
+    private function summary(ImportPlan $plan, ResearchRepoReading $reading): void
     {
         $newRelations = count(array_filter($plan->relations, fn ($relation): bool => $relation->existingId === null));
         $newMarriages = count(array_filter($plan->marriages, fn ($marriage): bool => $marriage->existingEventId === null));
@@ -440,7 +440,7 @@ class ImportResearch extends Command
         $this->fillTable($plan, $reading);
     }
 
-    private function fillTable(FirstImportPlan $plan, ResearchRepoReading $reading): void
+    private function fillTable(ImportPlan $plan, ResearchRepoReading $reading): void
     {
         $rows = [];
 
@@ -483,7 +483,7 @@ class ImportResearch extends Command
         };
     }
 
-    private function written(FirstImportResult $result, FirstImportPlan $plan, Tree $tree): void
+    private function written(ImportResult $result, ImportPlan $plan, Tree $tree): void
     {
         $this->newLine();
         $this->info('Zapisano w drzewie:');
