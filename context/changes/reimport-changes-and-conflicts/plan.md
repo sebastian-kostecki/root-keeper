@@ -844,19 +844,19 @@ Klasyfikacja czyta raz rekordy drzewa z `repo_id` i pamięć (kilka zapytań). P
 
 #### Automated
 
-- [x] 1.1 Migracja przechodzi i da się ją cofnąć: `vendor/bin/sail artisan migrate` oraz `vendor/bin/sail artisan migrate:rollback --step=1 && vendor/bin/sail artisan migrate`
-- [x] 1.2 Testy importu i osób przechodzą: `vendor/bin/sail artisan test --compact tests/Feature/ImportPlanTest.php tests/Feature/ImportApplyTest.php tests/Feature/ImportResearchCommandTest.php tests/Feature/PersonsTest.php`
-- [x] 1.3 Analiza statyczna przechodzi: `vendor/bin/sail composer types:check`
-- [x] 1.4 Formatowanie: `vendor/bin/sail bin pint --dirty --format agent`
+- [x] 1.1 Migracja przechodzi i da się ją cofnąć: `vendor/bin/sail artisan migrate` oraz `vendor/bin/sail artisan migrate:rollback --step=1 && vendor/bin/sail artisan migrate` — 2c12c0a
+- [x] 1.2 Testy importu i osób przechodzą: `vendor/bin/sail artisan test --compact tests/Feature/ImportPlanTest.php tests/Feature/ImportApplyTest.php tests/Feature/ImportResearchCommandTest.php tests/Feature/PersonsTest.php` — 2c12c0a
+- [x] 1.3 Analiza statyczna przechodzi: `vendor/bin/sail composer types:check` — 2c12c0a
+- [x] 1.4 Formatowanie: `vendor/bin/sail bin pint --dirty --format agent` — 2c12c0a
 
 ### Phase 2: Klasyfikacja rekordów i reguła trzech wartości
 
 #### Automated
 
-- [ ] 2.1 Testy reguł i klasyfikacji przechodzą: `vendor/bin/sail artisan test --compact tests/Unit/ThreeWayValueTest.php tests/Unit/NoteBlockTest.php tests/Feature/ClassifyRepoRecordsTest.php tests/Feature/ResearchPersonMatchTest.php tests/Feature/ResearchRepoReadTest.php`
-- [ ] 2.2 Testy komendy przechodzą: `vendor/bin/sail artisan test --compact tests/Feature/ImportResearchCommandTest.php`
-- [ ] 2.3 Analiza statyczna przechodzi: `vendor/bin/sail composer types:check`
-- [ ] 2.4 Formatowanie: `vendor/bin/sail bin pint --dirty --format agent`
+- [x] 2.1 Testy reguł i klasyfikacji przechodzą: `vendor/bin/sail artisan test --compact tests/Unit/ThreeWayValueTest.php tests/Unit/NoteBlockTest.php tests/Feature/ClassifyRepoRecordsTest.php tests/Feature/ResearchPersonMatchTest.php tests/Feature/ResearchRepoReadTest.php`
+- [x] 2.2 Testy komendy przechodzą: `vendor/bin/sail artisan test --compact tests/Feature/ImportResearchCommandTest.php`
+- [x] 2.3 Analiza statyczna przechodzi: `vendor/bin/sail composer types:check`
+- [x] 2.4 Formatowanie: `vendor/bin/sail bin pint --dirty --format agent`
 
 ### Phase 3: Plan ponownego importu
 

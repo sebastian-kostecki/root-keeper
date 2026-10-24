@@ -12,6 +12,7 @@ final readonly class ParsedPersonBlock
         public ?ResearchPerson $person,
         public ?string $skipReason,
         public array $warnings,
+        public ?string $repoId = null,
     ) {}
 
     /**
@@ -22,9 +23,12 @@ final readonly class ParsedPersonBlock
         return new self($file, null, null, $warnings);
     }
 
-    public static function skipped(string $file, string $reason): self
+    /**
+     * @param  string|null  $repoId  the id of the skipped entry, when the block names a valid one
+     */
+    public static function skipped(string $file, string $reason, ?string $repoId = null): self
     {
-        return new self($file, null, $reason, []);
+        return new self($file, null, $reason, [], $repoId);
     }
 
     /**

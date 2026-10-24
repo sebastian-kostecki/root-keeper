@@ -55,7 +55,7 @@ class ApplyImport
             Tree::whereKey($tree->id)->lockForUpdate()->firstOrFail();
 
             if ($tree->people()->whereNotNull('repo_id')->exists()) {
-                throw new RuntimeException(MatchResearchPersons::BLOCKED_REASON);
+                throw new RuntimeException(PlanImport::BLOCKED_REASON);
             }
 
             $matchedPeople = $this->lockMatchedPeople($tree, $plan);

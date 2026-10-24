@@ -7,6 +7,7 @@ use App\Enums\DateQualifier;
 use App\Enums\Gender;
 use App\Support\Import\ImportIssue;
 use App\Support\Import\ResearchRepoReading;
+use Illuminate\Support\Facades\File;
 
 function readFixtureRepo(): ResearchRepoReading
 {
@@ -228,3 +229,101 @@ test('names the missing quotes when an unquoted date lands in a text field', fun
     expect($parsed->person)->toBeNull()
         ->and($parsed->skipReason)->toContain("urodzenie.{$field}")->toContain('ujmij datę w cudzysłów');
 })->with(['notatka', 'miejsce']);
+
+/**
+ * Reads a throwaway repo whose files are given by name and content.
+ *
+ * @param  array<string, string>  $files  file name => contents
+ */
+function readTemporaryFiles(array $files): ResearchRepoReading
+{
+    $repo = sys_get_temp_dir().'/read-repo-'.uniqid();
+    mkdir($repo.'/drzewo', 0777, true);
+
+    foreach ($files as $name => $contents) {
+        file_put_contents("{$repo}/drzewo/{$name}", $contents);
+    }
+
+    try {
+        return app(ReadResearchRepo::class)->handle($repo);
+    } finally {
+        File::deleteDirectory($repo);
+    }
+}
+
+test('keeps the id of an entry skipped because of a bad date', function () {
+    $reading = readTemporaryFiles(['jan.md' => "---\nwersja: 1\nid: O-0042\nimiona: Jan\nurodzenie:\n  data: \"1801-13-40\"\n---\n"]);
+
+    expect($reading->skipped)->toHaveCount(1)
+        ->and($reading->skipped[0]->repoId)->toBe('O-0042')
+        ->and($reading->skippedRepoIds())->toBe(['O-0042'])
+        ->and($reading->hasSkippedWithoutId())->toBeFalse();
+});
+
+test('keeps the id of an entry skipped for an unquoted date only when it fits the id pattern', function (string $id, ?string $expected) {
+    $reading = readTemporaryFiles(['jan.md' => "---\nwersja: 1\nid: {$id}\nimiona: Jan\nurodzenie:\n  data: 1801-05-12\n---\n"]);
+
+    expect($reading->skipped[0]->message)->toContain('ujmij datę w cudzysłów')
+        ->and($reading->skipped[0]->repoId)->toBe($expected)
+        ->and($reading->hasSkippedWithoutId())->toBe($expected === null);
+})->with([
+    'a valid id' => ['O-0042', 'O-0042'],
+    'an id off the pattern' => ['X-42', null],
+]);
+
+test('gives no id to an entry skipped for a YAML error, an unclosed block or a block that is not a map', function (string $contents) {
+    $reading = readTemporaryFiles(['jan.md' => $contents]);
+
+    expect($reading->skipped)->toHaveCount(1)
+        ->and($reading->skipped[0]->repoId)->toBeNull()
+        ->and($reading->skippedRepoIds())->toBe([])
+        ->and($reading->hasSkippedWithoutId())->toBeTrue();
+})->with([
+    'YAML error' => ["---\nwersja: 1\nid: O-0042\nimiona: [Jan\n---\n"],
+    'unclosed block' => ["---\nwersja: 1\nid: O-0042\nimiona: Jan\n"],
+    'list' => ["---\n- a\n- b\n---\n"],
+]);
+
+test('gives no id to an entry whose own id fails the validator', function () {
+    $reading = readTemporaryFiles(['jan.md' => "---\nwersja: 1\nid: nie-id\nimiona: Jan\n---\n"]);
+
+    expect($reading->skipped[0]->repoId)->toBeNull()
+        ->and($reading->hasSkippedWithoutId())->toBeTrue();
+});
+
+test('gives the id to both entries that share it', function () {
+    $block = "---\nwersja: 1\nid: O-0042\nimiona: Jan\n---\n";
+    $reading = readTemporaryFiles(['a.md' => $block, 'b.md' => $block]);
+
+    expect(array_map(fn (ImportIssue $issue): ?string => $issue->repoId, $reading->skipped))->toBe(['O-0042', 'O-0042'])
+        ->and($reading->skippedRepoIds())->toBe(['O-0042'])
+        ->and($reading->hasSkippedWithoutId())->toBeFalse();
+});
+
+test('counts a file whose block starts after an empty line as skipped with its id', function () {
+    $reading = readTemporaryFiles(['jan.md' => "\n---\nwersja: 1\nid: O-0042\nimiona: Jan\n---\n"]);
+
+    expect($reading->persons)->toBe([])
+        ->and($reading->filesWithoutBlock)->toBe(['jan.md'])
+        ->and($reading->skippedRepoIds())->toBe(['O-0042'])
+        ->and($reading->hasSkippedWithoutId())->toBeFalse();
+});
+
+test('counts a file with a misplaced block and no readable id as skipped without an id', function () {
+    $reading = readTemporaryFiles(['jan.md' => "Wstęp.\n\nwersja: 1\nimiona: Jan\n"]);
+
+    expect($reading->skippedRepoIds())->toBe([])
+        ->and($reading->hasSkippedWithoutId())->toBeTrue();
+});
+
+test('does not count a plain note without a block, nor files that are not scanned', function () {
+    $reading = readTemporaryFiles([
+        'proza.md' => "# Jan\n\nTylko proza.\n",
+        '_indeks.md' => "---\nwersja: 1\nid: O-0001\nimiona: Jan\n---\n",
+        'notatki.txt' => "---\nwersja: 1\nid: O-0002\nimiona: Anna\n---\n",
+    ]);
+
+    expect($reading->filesWithoutBlock)->toBe(['proza.md'])
+        ->and($reading->skippedRepoIds())->toBe([])
+        ->and($reading->hasSkippedWithoutId())->toBeFalse();
+});

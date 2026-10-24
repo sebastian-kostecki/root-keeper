@@ -35,6 +35,7 @@ class ReadResearchRepo
         $skipped = [];
         $warnings = [];
         $filesWithoutBlock = [];
+        $unrecognizedBlocks = [];
         $parsedPersons = [];
         $files = $this->personFiles($treePath);
 
@@ -46,8 +47,9 @@ class ReadResearchRepo
 
             if (! $parsed->hasBlock()) {
                 $filesWithoutBlock[] = $file;
+                array_push($unrecognizedBlocks, ...$parsed->warnings);
             } elseif ($parsed->skipReason !== null) {
-                $skipped[] = new ImportIssue($file, $parsed->skipReason);
+                $skipped[] = new ImportIssue($file, $parsed->skipReason, $parsed->repoId);
             } elseif ($parsed->person !== null) {
                 $parsedPersons[] = $parsed;
             }
@@ -72,6 +74,7 @@ class ReadResearchRepo
             filesWithoutBlock: $filesWithoutBlock,
             scannedFiles: count($files),
             parentChildRelations: $relations,
+            unrecognizedBlocks: $unrecognizedBlocks,
         );
     }
 
@@ -118,7 +121,7 @@ class ReadResearchRepo
                     'Powtórzony id %s w plikach: %s',
                     $person->id,
                     implode(', ', $filesById[$person->id]),
-                ));
+                ), $person->id);
 
                 continue;
             }

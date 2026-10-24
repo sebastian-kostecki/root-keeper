@@ -35,8 +35,9 @@ function authorWithTwin(Closure $arrange): Tree
  * Fails when a candidate comes from another tree.
  *
  * @param  array<string, string>  $blocks  repo id => block body without id and version
+ * @param  list<string>|null  $repoIds  the repo persons to classify, `null` for all of them
  */
-function matchTemporaryRepo(Tree $tree, array $blocks): PersonMatches
+function matchTemporaryRepo(Tree $tree, array $blocks, ?array $repoIds = null): PersonMatches
 {
     $repo = sys_get_temp_dir().'/match-repo-'.uniqid();
     mkdir($repo.'/drzewo', 0777, true);
@@ -51,7 +52,7 @@ function matchTemporaryRepo(Tree $tree, array $blocks): PersonMatches
         File::deleteDirectory($repo);
     }
 
-    $matches = app(MatchResearchPersons::class)->handle($tree, $reading);
+    $matches = app(MatchResearchPersons::class)->handle($tree, $reading, $repoIds);
 
     foreach ($matches->matches as $match) {
         foreach ($match->candidates as $candidate) {
@@ -124,8 +125,7 @@ test('classifies a person without a namesake in the tree as new', function () {
 
     $matches = matchTemporaryRepo($author->tree, ['O-0001' => "imiona: Jan\nnazwisko: Nowak"]);
 
-    expect($matches->blockedReason)->toBeNull()
-        ->and(matchFor($matches, 'O-0001')->verdict)->toBe(MatchVerdict::New)
+    expect(matchFor($matches, 'O-0001')->verdict)->toBe(MatchVerdict::New)
         ->and(matchFor($matches, 'O-0001')->candidates)->toBe([]);
 });
 
@@ -373,22 +373,25 @@ test('describes the comparison in the block grammar', function () {
     ]);
 });
 
-test('refuses a tree that already holds a person from an import', function () {
+test('never takes a person that came from an import as a candidate, but takes one without a repo id', function () {
     $author = User::factory()->create();
     $other = User::factory()->create();
-    treePerson($author->tree, 'Jan', 'Nowak');
+    $imported = Person::factory()->for($author->tree)->create(['first_name' => 'Jan', 'last_name' => 'Nowak', 'repo_id' => 'O-0001']);
     $theirs = treePerson($other->tree, 'Jan', 'Nowak');
-    Person::factory()->for($author->tree)->create(['first_name' => 'Anna', 'last_name' => 'Wrona', 'repo_id' => 'O-0007']);
 
-    $matches = matchTemporaryRepo($author->tree, ['O-0001' => "imiona: Jan\nnazwisko: Nowak"]);
+    $withoutHandEntered = matchTemporaryRepo($author->tree, ['O-0001' => "imiona: Jan\nnazwisko: Nowak"]);
+    $handEntered = treePerson($author->tree, 'Jan', 'Nowak');
+    $withHandEntered = matchTemporaryRepo($author->tree, ['O-0001' => "imiona: Jan\nnazwisko: Nowak"]);
 
-    expect($matches->blockedReason)->toContain('Drzewo konta ma już osoby z importu')
-        ->and($matches->matches)->toBe([])
-        ->and($theirs->fresh()->repo_id)->toBeNull()
-        ->and(matchFor(matchTemporaryRepo($other->tree, ['O-0001' => "imiona: Jan\nnazwisko: Nowak"]), 'O-0001')->candidates)->toHaveCount(1);
+    expect(matchFor($withoutHandEntered, 'O-0001')->verdict)->toBe(MatchVerdict::New)
+        ->and(matchFor($withoutHandEntered, 'O-0001')->candidates)->toBe([])
+        ->and(matchFor($withHandEntered, 'O-0001')->candidates)->toHaveCount(1)
+        ->and(matchFor($withHandEntered, 'O-0001')->candidates[0]->person->id)->toBe($handEntered->id)
+        ->and($imported->fresh()->repo_id)->toBe('O-0001')
+        ->and($theirs->fresh()->repo_id)->toBeNull();
 });
 
-test('does not block on a person from an import in another account', function () {
+test('is not affected by a person from an import in another account', function () {
     $author = User::factory()->create();
     $other = User::factory()->create();
     treePerson($author->tree, 'Jan', 'Nowak');
@@ -396,8 +399,21 @@ test('does not block on a person from an import in another account', function ()
 
     $matches = matchTemporaryRepo($author->tree, ['O-0001' => "imiona: Jan\nnazwisko: Nowak"]);
 
-    expect($matches->blockedReason)->toBeNull()
-        ->and(matchFor($matches, 'O-0001')->candidates)->toHaveCount(1);
+    expect(matchFor($matches, 'O-0001')->candidates)->toHaveCount(1);
+});
+
+test('classifies only the given repo persons', function () {
+    $tree = authorWithTwin(fn (Tree $tree) => arrangeJanWithParents($tree));
+    $blocks = repoWithParents("imiona: Jan\nnazwisko: Nowak");
+
+    $all = matchTemporaryRepo($tree, $blocks);
+    $limited = matchTemporaryRepo($tree, $blocks, ['O-0001', 'O-0003']);
+    $none = matchTemporaryRepo($tree, $blocks, []);
+
+    expect(array_keys($all->matches))->toBe(['O-0001', 'O-0002', 'O-0003'])
+        ->and(array_keys($limited->matches))->toBe(['O-0001', 'O-0003'])
+        ->and(matchFor($limited, 'O-0001')->verdict)->toBe(matchFor($all, 'O-0001')->verdict)
+        ->and($none->matches)->toBe([]);
 });
 
 test('classifies every person as new in an empty tree', function () {
@@ -407,7 +423,6 @@ test('classifies every person as new in an empty tree', function () {
 
     $matches = matchTemporaryRepo($author->tree, repoWithParents("imiona: Jan\nnazwisko: Nowak"));
 
-    expect($matches->blockedReason)->toBeNull()
-        ->and(array_keys($matches->matches))->toBe(['O-0001', 'O-0002', 'O-0003'])
+    expect(array_keys($matches->matches))->toBe(['O-0001', 'O-0002', 'O-0003'])
         ->and(collect($matches->matches)->every(fn (PersonMatch $match): bool => $match->verdict === MatchVerdict::New && $match->candidates === []))->toBeTrue();
 });

@@ -17,9 +17,9 @@ use App\Support\Import\PlannedMatch;
 use App\Support\Import\PlannedPerson;
 use App\Support\Import\PlannedRelation;
 use App\Support\Import\RepoKeys;
+use App\Support\Import\RepoValues;
 use App\Support\Import\ResearchDate;
 use App\Support\Import\ResearchEvent;
-use App\Support\Import\ResearchMarriage;
 use App\Support\Import\ResearchPerson;
 use App\Support\Import\ResearchRepoReading;
 use App\Support\Import\SharedParentGraph;
@@ -29,6 +29,11 @@ use InvalidArgumentException;
 
 class PlanImport
 {
+    /**
+     * Until a later import phase lifts it, a tree that already holds a person from an import cannot take another import.
+     */
+    public const BLOCKED_REASON = 'Drzewo konta ma już osoby z importu. Ponowny import (S-04) jeszcze nie działa; nic nie zostanie zapisane.';
+
     /**
      * The fields of a matched person in the order they are listed.
      */
@@ -135,7 +140,7 @@ class PlanImport
                 continue;
             }
 
-            $note = $this->noteFor($research, $reading, $skippedIds);
+            $note = RepoValues::note($research, $reading, $skippedIds);
             $snapshots += $this->snapshotsOf($research, $note, ! isset($skippedGenders[$repoId]));
             $totals->variants += count($research->surnameVariants);
             $totals->burials += $research->burial === null ? 0 : 1;
@@ -242,7 +247,7 @@ class PlanImport
             probandHint: $this->probandHint($reading, $skippedIds),
             snapshots: $snapshots,
             forgottenSnapshots: [],
-            blockedReason: $tree->people()->whereNotNull('repo_id')->exists() ? MatchResearchPersons::BLOCKED_REASON : null,
+            blockedReason: $tree->people()->whereNotNull('repo_id')->exists() ? self::BLOCKED_REASON : null,
         );
     }
 
@@ -722,24 +727,14 @@ class PlanImport
      */
     private function snapshotsOf(ResearchPerson $research, ?string $note, bool $withGender): array
     {
-        $person = [
-            'imiona' => self::cleanText($research->givenNames),
-            'nazwisko' => self::cleanText($research->surname),
-        ];
-
-        if ($withGender) {
-            $person['plec'] = $research->gender?->value;
-        }
-
-        $person['notatka'] = $note;
-        $snapshots = [RepoKeys::person($research->id) => $person];
+        $snapshots = [RepoKeys::person($research->id) => RepoValues::person($research, $note, $withGender)];
 
         if ($research->birth !== null) {
-            $snapshots[RepoKeys::birth($research->id)] = ['data' => $research->birth->date?->label()];
+            $snapshots[RepoKeys::birth($research->id)] = RepoValues::event($research->birth);
         }
 
         if ($research->death !== null) {
-            $snapshots[RepoKeys::death($research->id)] = ['data' => $research->death->date?->label()];
+            $snapshots[RepoKeys::death($research->id)] = RepoValues::event($research->death);
         }
 
         return $snapshots;
@@ -747,7 +742,7 @@ class PlanImport
 
     private function personLabel(ResearchPerson $person): string
     {
-        return sprintf('%s (%s)', $this->nameOf($person), $person->id);
+        return sprintf('%s (%s)', RepoValues::nameOf($person), $person->id);
     }
 
     /**
@@ -848,80 +843,5 @@ class PlanImport
         ));
 
         return count($holders) === 1 ? $holders[0] : null;
-    }
-
-    /**
-     * @param  array<string, true>  $skipped  repo ids of persons left out; no wedding line mentions them
-     */
-    private function noteFor(ResearchPerson $person, ResearchRepoReading $reading, array $skipped): ?string
-    {
-        $lines = [];
-
-        foreach (['Urodzenie' => $person->birth, 'Zgon' => $person->death] as $label => $event) {
-            $details = $event === null ? [] : $this->eventDetails($event);
-
-            if ($details !== []) {
-                $lines[] = "{$label}: ".implode('; ', $details);
-            }
-        }
-
-        if ($person->burial !== null) {
-            $details = $this->eventDetails($person->burial, withDate: true);
-            $lines[] = 'Pochowanie: '.($details === [] ? 'bez szczegółów' : implode('; ', $details));
-        }
-
-        $marriages = array_filter(
-            $reading->marriages,
-            fn (ResearchMarriage $marriage): bool => in_array($person->id, $marriage->personIds, true),
-        );
-        $byPartner = [];
-
-        foreach ($marriages as $marriage) {
-            $partnerId = $marriage->personIds[0] === $person->id ? $marriage->personIds[1] : $marriage->personIds[0];
-
-            if (! isset($skipped[$partnerId])) {
-                $byPartner[$partnerId] = $marriage;
-            }
-        }
-
-        ksort($byPartner);
-
-        foreach ($byPartner as $partnerId => $marriage) {
-            $details = $this->eventDetails($marriage->event);
-
-            if ($details !== []) {
-                $lines[] = sprintf('Ślub z %s (%s): %s', isset($reading->persons[$partnerId]) ? $this->nameOf($reading->persons[$partnerId]) : 'NN', $partnerId, implode('; ', $details));
-            }
-        }
-
-        if ($person->surnameVariants !== []) {
-            $lines[] = 'Warianty nazwiska: '.implode(', ', $person->surnameVariants);
-        }
-
-        if ($lines === []) {
-            return null;
-        }
-
-        return implode("\n", ["Z repo badawczego ({$person->id}):", ...$lines]);
-    }
-
-    /**
-     * @return list<string>
-     */
-    private function eventDetails(ResearchEvent $event, bool $withDate = false): array
-    {
-        return array_values(array_filter([
-            $withDate ? $event->date?->label() : null,
-            $event->place,
-            $event->level === null ? null : 'poziom '.$event->level->value,
-            $event->note,
-        ], fn (?string $part): bool => $part !== null));
-    }
-
-    private function nameOf(ResearchPerson $person): string
-    {
-        $name = trim(($person->givenNames ?? '').' '.($person->surname ?? ''));
-
-        return $name === '' ? 'NN' : $name;
     }
 }

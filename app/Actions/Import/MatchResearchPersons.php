@@ -21,27 +21,25 @@ use Illuminate\Support\Collection;
 
 class MatchResearchPersons
 {
-    public const BLOCKED_REASON = 'Drzewo konta ma już osoby z importu. Ponowny import (S-04) jeszcze nie działa; nic nie zostanie zapisane.';
-
     private const MIN_AGREEING_FOR_SURE = 2;
 
     private const EMPTY_VALUE = '—';
 
     /**
-     * Compare every repo person with the persons of the tree and classify it as new, sure or doubtful, without writing.
+     * Compare the repo persons with the persons of the tree that have no repo id and classify each as new, sure or
+     * doubtful, without writing. A tree person that came from an import is never a candidate.
      *
      * A repo person is sure when exactly one tree person carries the same first name and a matching surname and agrees
      * on at least two independent elements besides the name, with no contradiction. Any other case with a candidate is
      * left to the author.
+     *
+     * @param  list<string>|null  $repoIds  the repo persons to classify, `null` for all of them
      */
-    public function handle(Tree $tree, ResearchRepoReading $reading): PersonMatches
+    public function handle(Tree $tree, ResearchRepoReading $reading, ?array $repoIds = null): PersonMatches
     {
-        if ($tree->people()->whereNotNull('repo_id')->exists()) {
-            return new PersonMatches(blockedReason: self::BLOCKED_REASON);
-        }
-
         $byFirstName = $this->indexByFirstName(
             $tree->people()
+                ->whereNull('repo_id')
                 ->with(['events.locality', 'events.participants', 'parents'])
                 ->orderBy('id')
                 ->get()
@@ -50,6 +48,10 @@ class MatchResearchPersons
         $matches = [];
 
         foreach ($reading->persons as $repoId => $repoPerson) {
+            if ($repoIds !== null && ! in_array($repoId, $repoIds, true)) {
+                continue;
+            }
+
             $candidates = [];
 
             foreach ($byFirstName[NameKey::firstName($repoPerson->givenNames) ?? ''] ?? [] as $person) {

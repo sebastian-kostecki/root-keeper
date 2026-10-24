@@ -73,13 +73,13 @@ class ImportResearch extends Command
 
         $this->report($email, $path, $reading);
 
-        $matches = $matchResearchPersons->handle($tree, $reading);
-
-        if ($matches->blockedReason !== null) {
-            $this->error($matches->blockedReason);
+        if ($tree->people()->whereNotNull('repo_id')->exists()) {
+            $this->error(PlanImport::BLOCKED_REASON);
 
             return self::FAILURE;
         }
+
+        $matches = $matchResearchPersons->handle($tree, $reading);
 
         $this->matchSummary($matches);
 

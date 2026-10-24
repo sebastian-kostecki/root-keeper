@@ -65,13 +65,13 @@ class ParsePersonBlock
             return ParsedPersonBlock::skipped($file, sprintf(
                 'Pole %s: ujmij datę w cudzysłów: "RRRR-MM-DD"',
                 implode(', ', $dateObjectPaths),
-            ));
+            ), $this->validId($block['id'] ?? null));
         }
 
         $validator = Validator::make($block, $this->rules((string) ($block['id'] ?? '')), $this->messages());
 
         if ($validator->fails()) {
-            return ParsedPersonBlock::skipped($file, implode('; ', $validator->errors()->all()));
+            return ParsedPersonBlock::skipped($file, implode('; ', $validator->errors()->all()), $this->validId($block['id'] ?? null));
         }
 
         $warnings = array_map(
@@ -102,7 +102,17 @@ class ParsePersonBlock
             return [];
         }
 
-        return [new ImportIssue($file, 'Blok nie zaczyna się w pierwszej linii pliku, więc plik liczy się jako bez bloku')];
+        $repoId = preg_match('/^id: (O-\d+)[ \t]*$/m', $contents, $found) === 1 ? $this->validId($found[1]) : null;
+
+        return [new ImportIssue($file, 'Blok nie zaczyna się w pierwszej linii pliku, więc plik liczy się jako bez bloku', $repoId)];
+    }
+
+    /**
+     * The id when it is a text of the form O-NNNN, `null` for anything else.
+     */
+    private function validId(mixed $id): ?string
+    {
+        return is_string($id) && preg_match(self::ID_PATTERN, $id) === 1 ? $id : null;
     }
 
     /**
