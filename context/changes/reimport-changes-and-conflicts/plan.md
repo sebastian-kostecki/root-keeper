@@ -853,19 +853,19 @@ Klasyfikacja czyta raz rekordy drzewa z `repo_id` i pamięć (kilka zapytań). P
 
 #### Automated
 
-- [x] 2.1 Testy reguł i klasyfikacji przechodzą: `vendor/bin/sail artisan test --compact tests/Unit/ThreeWayValueTest.php tests/Unit/NoteBlockTest.php tests/Feature/ClassifyRepoRecordsTest.php tests/Feature/ResearchPersonMatchTest.php tests/Feature/ResearchRepoReadTest.php`
-- [x] 2.2 Testy komendy przechodzą: `vendor/bin/sail artisan test --compact tests/Feature/ImportResearchCommandTest.php`
-- [x] 2.3 Analiza statyczna przechodzi: `vendor/bin/sail composer types:check`
-- [x] 2.4 Formatowanie: `vendor/bin/sail bin pint --dirty --format agent`
+- [x] 2.1 Testy reguł i klasyfikacji przechodzą: `vendor/bin/sail artisan test --compact tests/Unit/ThreeWayValueTest.php tests/Unit/NoteBlockTest.php tests/Feature/ClassifyRepoRecordsTest.php tests/Feature/ResearchPersonMatchTest.php tests/Feature/ResearchRepoReadTest.php` — fc390e3
+- [x] 2.2 Testy komendy przechodzą: `vendor/bin/sail artisan test --compact tests/Feature/ImportResearchCommandTest.php` — fc390e3
+- [x] 2.3 Analiza statyczna przechodzi: `vendor/bin/sail composer types:check` — fc390e3
+- [x] 2.4 Formatowanie: `vendor/bin/sail bin pint --dirty --format agent` — fc390e3
 
 ### Phase 3: Plan ponownego importu
 
 #### Automated
 
-- [ ] 3.1 Testy planowania przechodzą: `vendor/bin/sail artisan test --compact tests/Feature/ImportPlanTest.php tests/Feature/ClassifyRepoRecordsTest.php`
-- [ ] 3.2 Testy odczytu i dopasowania przechodzą: `vendor/bin/sail artisan test --compact tests/Feature/ResearchRepoReadTest.php tests/Feature/ResearchPersonMatchTest.php`
-- [ ] 3.3 Analiza statyczna przechodzi: `vendor/bin/sail composer types:check`
-- [ ] 3.4 Formatowanie: `vendor/bin/sail bin pint --dirty --format agent`
+- [x] 3.1 Testy planowania przechodzą: `vendor/bin/sail artisan test --compact tests/Feature/ImportPlanTest.php tests/Feature/ClassifyRepoRecordsTest.php`
+- [x] 3.2 Testy odczytu i dopasowania przechodzą: `vendor/bin/sail artisan test --compact tests/Feature/ResearchRepoReadTest.php tests/Feature/ResearchPersonMatchTest.php`
+- [x] 3.3 Analiza statyczna przechodzi: `vendor/bin/sail composer types:check`
+- [x] 3.4 Formatowanie: `vendor/bin/sail bin pint --dirty --format agent`
 
 ### Phase 4: Zapis ponownego importu
 

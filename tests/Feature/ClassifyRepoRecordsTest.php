@@ -439,3 +439,51 @@ test('ignores the records and the memory of another account', function () {
         ->and($classes->goneBoth)->toBe([])
         ->and($classes->unassessable)->toBe([]);
 });
+
+test('does not remove, ask about or forget a wedding the reading dropped with a warning', function () {
+    [$tree] = arrangeTwinTrees(function (Tree $tree) {
+        $jan = recordedPerson($tree, 'O-0001');
+        $anna = recordedPerson($tree, 'O-0002', 'Anna');
+        $ewa = recordedPerson($tree, 'O-0003', 'Ewa');
+        $adam = recordedPerson($tree, 'O-0004', 'Adam');
+        attachMarriage($jan, $anna)->update(['repo_id' => 'O-0001+O-0002/slub']);
+        attachMarriage($ewa, $adam)->update(['repo_id' => 'O-0003+O-0004/slub']);
+        rememberRepoValues($tree, 'O-0001+O-0002/slub', ['data' => '1825']);
+        rememberRepoValues($tree, 'O-0003+O-0004/slub', ['data' => '1830']);
+        rememberRepoValues($tree, 'O-0005+O-0006/slub', ['data' => '1840']);
+    });
+
+    $classes = classifyTemporaryRepo($tree, [
+        'O-0001' => "imiona: Jan\nmalzenstwa:\n  - z: O-0002\n    data: \"1825\"",
+        'O-0002' => "imiona: Anna\nmalzenstwa:\n  - z: O-0001\n    data: \"1826\"",
+        'O-0003' => "imiona: Ewa\nmalzenstwa:\n  - z: O-0004\n  - z: O-0004",
+        'O-0004' => 'imiona: Adam',
+        'O-0005' => "imiona: Kaja\nmalzenstwa:\n  - z: O-0006\n    data: \"1840\"",
+        'O-0006' => "imiona: Leon\nmalzenstwa:\n  - z: O-0005\n    data: \"1841\"",
+    ]);
+
+    expect(array_keys($classes->knownPersons))->toBe(['O-0001', 'O-0002', 'O-0003', 'O-0004'])
+        ->and($classes->removedInRepo)->toBe([])
+        ->and($classes->deletedInApp)->toBe([])
+        ->and($classes->keptDeleted)->toBe([])
+        ->and($classes->goneBoth)->toBe([])
+        ->and($classes->unassessable)->toBe([]);
+});
+
+test('still removes a wedding the repo really dropped while another one is only unreadable', function () {
+    [$tree] = arrangeTwinTrees(function (Tree $tree) {
+        $jan = recordedPerson($tree, 'O-0001');
+        $anna = recordedPerson($tree, 'O-0002', 'Anna');
+        $ewa = recordedPerson($tree, 'O-0003', 'Ewa');
+        attachMarriage($jan, $anna)->update(['repo_id' => 'O-0001+O-0002/slub']);
+        attachMarriage($jan, $ewa)->update(['repo_id' => 'O-0001+O-0003/slub']);
+    });
+
+    $classes = classifyTemporaryRepo($tree, [
+        'O-0001' => "imiona: Jan\nmalzenstwa:\n  - z: O-0002\n    data: \"1825\"",
+        'O-0002' => "imiona: Anna\nmalzenstwa:\n  - z: O-0001\n    data: \"1826\"",
+        'O-0003' => 'imiona: Ewa',
+    ]);
+
+    expect(repoKeysOf($classes->removedInRepo))->toBe(['O-0001+O-0003/slub']);
+});

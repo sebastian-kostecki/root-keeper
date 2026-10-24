@@ -35,8 +35,9 @@ class ClassifyRepoRecords
      *
      * A key is in the repo when the reading holds it, in the tree when a record carries it as `repo_id` and in the
      * memory when the last import left a snapshot for it. Only records of the tree are read. A key that names a person
-     * whose repo entry was skipped is left out of every group, because that file may be the one that holds it; when an
-     * entry was skipped without a readable id, nothing is removed or forgotten and the removal candidates are held back.
+     * whose repo entry was skipped is left out of every group, because that file may be the one that holds it, and so is
+     * the key of a wedding the reading dropped with a warning (the repo still has it, only unreadable); when an entry
+     * was skipped without a readable id, nothing is removed or forgotten and the removal candidates are held back.
      *
      * The other keys of a person that is removed in the repo, deleted in the app or kept deleted are decided with the
      * person, so they are members of its entry instead of entries of their own.
@@ -48,12 +49,13 @@ class ClassifyRepoRecords
         $snapshots = $tree->repoSnapshots()->get()->keyBy('repo_id')->all();
         $skippedIds = array_flip($reading->skippedRepoIds());
         $holdBack = $reading->hasSkippedWithoutId();
+        $dropped = array_flip($reading->droppedMarriageKeys);
 
         $keys = array_map(strval(...), array_unique([...array_keys($inRepo), ...array_keys($records), ...array_keys($snapshots)]));
         sort($keys);
         $keys = array_values(array_filter(
             $keys,
-            fn (string $key): bool => array_intersect_key($skippedIds, array_flip(RepoKeys::personIdsOf($key))) === [],
+            fn (string $key): bool => ! isset($dropped[$key]) && array_intersect_key($skippedIds, array_flip(RepoKeys::personIdsOf($key))) === [],
         ));
 
         $states = [];

@@ -12,11 +12,12 @@ final readonly class ValueConflict
     /**
      * @param  string  $key  stable key of the question, e.g. "O-0042/urodzenie/data" or "O-0001+O-0004/slub/data"
      * @param  string  $person  who it is about, e.g. "Jan Nowak (O-0042)"
-     * @param  string  $field  first_name, last_name, gender, birth_date, death_date or marriage_date
+     * @param  string  $field  first_name, last_name, gender, note, birth_date, death_date or marriage_date
      * @param  string  $label  the Polish name of the field
-     * @param  string  $appLabel  the value in the app, as shown to the author
-     * @param  string  $repoLabel  the value in the repo, as shown to the author
-     * @param  string|Gender|ResearchDate  $repoValue  the repo value, what is written when the author takes it
+     * @param  string  $appLabel  the value in the app, as shown to the author, "—" for an empty field
+     * @param  string  $repoLabel  the value in the repo, as shown to the author, "—" when the repo cleared the field
+     * @param  string|Gender|ResearchDate|null  $repoValue  the repo value, what is written when the author takes it; `null` clears the field
+     * @param  string|null  $lastRepoLabel  what the repo held at the last import, "—" for an empty field; `null` without a memory of the field
      */
     public function __construct(
         public string $key,
@@ -25,6 +26,7 @@ final readonly class ValueConflict
         public string $label,
         public string $appLabel,
         public string $repoLabel,
-        public string|Gender|ResearchDate $repoValue,
+        public string|Gender|ResearchDate|null $repoValue,
+        public ?string $lastRepoLabel = null,
     ) {}
 }

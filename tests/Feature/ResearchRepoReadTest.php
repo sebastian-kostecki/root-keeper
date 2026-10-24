@@ -155,6 +155,23 @@ test('drops a pair written twice in one file', function () {
         ->and(messagesFor($reading->warnings, 'podwojne_jerzy.md'))->toContain('więcej niż raz');
 });
 
+test('collects the keys of the weddings it dropped between two valid persons', function () {
+    $reading = readFixtureRepo();
+
+    expect($reading->droppedMarriageKeys)->toBe(['O-0005+O-0006/slub', 'O-0010+O-0011/slub'])
+        ->and($reading->droppedMarriageKeys)->not->toContain('O-0009+O-0099/slub');
+});
+
+test('keeps no dropped key for a wedding that both files agree on', function () {
+    $reading = readTemporaryFiles([
+        'jan.md' => "---\nwersja: 1\nid: O-0001\nimiona: Jan\nmalzenstwa:\n  - z: O-0002\n    data: \"1825\"\n---\n",
+        'anna.md' => "---\nwersja: 1\nid: O-0002\nimiona: Anna\nmalzenstwa:\n  - z: O-0001\n    data: \"1825\"\n---\n",
+    ]);
+
+    expect($reading->marriages)->toHaveCount(1)
+        ->and($reading->droppedMarriageKeys)->toBe([]);
+});
+
 test('fails with a Polish message when the repo or its drzewo directory is missing', function () {
     $reader = app(ReadResearchRepo::class);
 

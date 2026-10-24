@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Actions\Import\ApplyImport;
+use App\Actions\Import\ClassifyRepoRecords;
 use App\Actions\Import\MatchResearchPersons;
 use App\Actions\Import\PlanImport;
 use App\Actions\Import\ReadResearchRepo;
@@ -13,6 +14,7 @@ use App\Models\Tree;
 use App\Models\User;
 use App\Support\Import\ConflictResolutions;
 use App\Support\Import\IdentityDecisions;
+use App\Support\Import\ImportDecisions;
 use App\Support\Import\ImportIssue;
 use App\Support\Import\ImportPlan;
 use App\Support\Import\ImportResult;
@@ -42,7 +44,7 @@ class ImportResearch extends Command
      */
     private const OPTION_WIDTH = 74;
 
-    public function handle(ReadResearchRepo $readResearchRepo, MatchResearchPersons $matchResearchPersons, PlanImport $planImport, ApplyImport $applyImport): int
+    public function handle(ReadResearchRepo $readResearchRepo, ClassifyRepoRecords $classifyRepoRecords, MatchResearchPersons $matchResearchPersons, PlanImport $planImport, ApplyImport $applyImport): int
     {
         $email = (string) $this->argument('email');
         $path = (string) $this->argument('path');
@@ -79,7 +81,15 @@ class ImportResearch extends Command
             return self::FAILURE;
         }
 
-        $matches = $matchResearchPersons->handle($tree, $reading);
+        $classes = $classifyRepoRecords->handle($tree, $reading);
+
+        if ($classes->removedInRepo !== [] || $classes->deletedInApp !== []) {
+            $this->error(PlanImport::BLOCKED_REASON);
+
+            return self::FAILURE;
+        }
+
+        $matches = $matchResearchPersons->handle($tree, $reading, $classes->newPersonIds);
 
         $this->matchSummary($matches);
 
@@ -89,10 +99,10 @@ class ImportResearch extends Command
             return self::FAILURE;
         }
 
-        $decisions = $this->decideIdentities($matches);
+        $decisions = ImportDecisions::forFirstImport($this->decideIdentities($matches));
 
         try {
-            $plan = $planImport->handle($tree, $reading, $decisions);
+            $plan = $planImport->handle($tree, $reading, $classes, $decisions);
         } catch (InvalidArgumentException $exception) {
             $this->error($exception->getMessage());
 
@@ -100,12 +110,6 @@ class ImportResearch extends Command
         }
 
         $this->summary($plan, $reading);
-
-        if ($plan->blockedReason !== null) {
-            $this->error($plan->blockedReason);
-
-            return self::FAILURE;
-        }
 
         $newCount = count($plan->persons);
         $matchedCount = count($plan->matched);

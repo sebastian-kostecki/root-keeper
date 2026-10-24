@@ -41,16 +41,12 @@ class ApplyImport
      * Matched persons and the pairs and weddings already in the tree get their repo ids and the approved values; nothing
      * in them is removed, and what the import does not name (photo, residences, sources, places) stays as it is.
      *
-     * @throws RuntimeException when the plan is blocked, the tree got a person from an import after planning, a matched
+     * @throws RuntimeException when the tree already holds a person from an import, a matched
      *                          person or an existing wedding changed since planning, or a step breaks a rule of the app
      * @throws ValidationException when a new wedding breaks a rule of the app
      */
     public function handle(Tree $tree, ImportPlan $plan, ConflictResolutions $resolutions): ImportResult
     {
-        if ($plan->blockedReason !== null) {
-            throw new RuntimeException($plan->blockedReason);
-        }
-
         return DB::transaction(function () use ($tree, $plan, $resolutions): ImportResult {
             Tree::whereKey($tree->id)->lockForUpdate()->firstOrFail();
 
@@ -276,7 +272,7 @@ class ApplyImport
      */
     private function writeMatch(Person $person, PlannedMatch $match, ConflictResolutions $resolutions): array
     {
-        /** @var list<array{0: string, 1: string|Gender|ResearchDate, 2: bool}> $changes */
+        /** @var list<array{0: string, 1: string|Gender|ResearchDate|null, 2: bool}> $changes */
         $changes = [];
 
         foreach ($match->fills as $fill) {

@@ -5,6 +5,7 @@ namespace App\Actions\Import;
 use App\Enums\Gender;
 use App\Support\Import\ImportIssue;
 use App\Support\Import\ParsedPersonBlock;
+use App\Support\Import\RepoKeys;
 use App\Support\Import\ResearchMarriage;
 use App\Support\Import\ResearchPerson;
 use App\Support\Import\ResearchRepoReading;
@@ -64,7 +65,8 @@ class ReadResearchRepo
 
         $relations = $this->checkRelations($persons, $warnings);
         $this->checkAhnentafel($persons, $warnings);
-        $marriages = $this->resolveMarriages($persons, $warnings);
+        $droppedMarriageKeys = [];
+        $marriages = $this->resolveMarriages($persons, $warnings, $droppedMarriageKeys);
 
         return new ResearchRepoReading(
             persons: $persons,
@@ -75,6 +77,7 @@ class ReadResearchRepo
             scannedFiles: count($files),
             parentChildRelations: $relations,
             unrecognizedBlocks: $unrecognizedBlocks,
+            droppedMarriageKeys: $droppedMarriageKeys,
         );
     }
 
@@ -192,11 +195,15 @@ class ReadResearchRepo
     }
 
     /**
+     * A marriage dropped with a warning because the files disagree or the pair is written twice in one file still
+     * exists in the repo, so its key is collected in `$dropped` and not treated as removed by a re-import.
+     *
      * @param  array<string, ResearchPerson>  $persons
      * @param  list<ImportIssue>  $warnings
+     * @param  list<string>  $dropped  repo keys of the dropped marriages between two persons that have a valid block
      * @return list<ResearchMarriage>
      */
-    private function resolveMarriages(array $persons, array &$warnings): array
+    private function resolveMarriages(array $persons, array &$warnings, array &$dropped): array
     {
         /** @var array<string, list<ResearchMarriage>> $byPair */
         $byPair = [];
@@ -227,10 +234,12 @@ class ReadResearchRepo
 
         foreach ($byPair as $key => $entries) {
             if (isset($repeated[$key])) {
+                $this->collectDropped($key, $persons, $dropped);
+
                 continue;
             }
 
-            $marriage = $this->resolvePair($key, $entries, $persons, $warnings);
+            $marriage = $this->resolvePair($key, $entries, $persons, $warnings, $dropped);
 
             if ($marriage !== null) {
                 $marriages[] = $marriage;
@@ -244,8 +253,9 @@ class ReadResearchRepo
      * @param  list<ResearchMarriage>  $entries
      * @param  array<string, ResearchPerson>  $persons
      * @param  list<ImportIssue>  $warnings
+     * @param  list<string>  $dropped
      */
-    private function resolvePair(string $key, array $entries, array $persons, array &$warnings): ?ResearchMarriage
+    private function resolvePair(string $key, array $entries, array $persons, array &$warnings, array &$dropped): ?ResearchMarriage
     {
         [$first, $second] = explode('|', $key);
         $firstEntry = $entries[0];
@@ -276,10 +286,24 @@ class ReadResearchRepo
                 implode(', ', [$entries[0]->files[0], $entries[1]->files[0]]),
                 "Małżeństwo {$first} i {$second}: dane (data, miejsce, poziom, notatka) różnią się w obu plikach; małżeństwo pominięte",
             );
+            $this->collectDropped($key, $persons, $dropped);
 
             return null;
         }
 
         return new ResearchMarriage($firstEntry->personIds, $firstEntry->event, [$entries[0]->files[0], $entries[1]->files[0]]);
+    }
+
+    /**
+     * @param  array<string, ResearchPerson>  $persons
+     * @param  list<string>  $dropped
+     */
+    private function collectDropped(string $pairKey, array $persons, array &$dropped): void
+    {
+        [$first, $second] = explode('|', $pairKey);
+
+        if (isset($persons[$first], $persons[$second])) {
+            $dropped[] = RepoKeys::marriage($first, $second);
+        }
     }
 }

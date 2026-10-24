@@ -11,6 +11,7 @@ final readonly class ResearchRepoReading
      * @param  list<ImportIssue>  $warnings
      * @param  list<string>  $filesWithoutBlock
      * @param  list<ImportIssue>  $unrecognizedBlocks  the warnings of files without a recognized block, i.e. whose block does not start on the first line
+     * @param  list<string>  $droppedMarriageKeys  repo keys of weddings between two valid persons that the reading dropped with a warning (the files disagree or the pair is written twice in one file); they are still in the repo, only unreadable
      */
     public function __construct(
         public array $persons,
@@ -21,6 +22,7 @@ final readonly class ResearchRepoReading
         public int $scannedFiles,
         public int $parentChildRelations,
         public array $unrecognizedBlocks = [],
+        public array $droppedMarriageKeys = [],
     ) {}
 
     /**

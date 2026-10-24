@@ -1,6 +1,7 @@
 <?php
 
 use App\Actions\Import\ApplyImport;
+use App\Actions\Import\ClassifyRepoRecords;
 use App\Actions\Import\PlanImport;
 use App\Actions\Import\ReadResearchRepo;
 use App\Actions\Relations\CreateMarriage;
@@ -21,6 +22,7 @@ use App\Models\Tree;
 use App\Models\User;
 use App\Support\Import\ConflictResolutions;
 use App\Support\Import\IdentityDecisions;
+use App\Support\Import\ImportDecisions;
 use App\Support\Import\ImportPlan;
 use App\Support\Import\ImportResult;
 use App\Support\Import\PlannedMatch;
@@ -51,7 +53,9 @@ function planFixtureForApply(Tree $tree): ImportPlan
 {
     $reading = app(ReadResearchRepo::class)->handle(base_path('tests/Fixtures/research-repo'));
 
-    return app(PlanImport::class)->handle($tree, $reading, IdentityDecisions::allNew($reading));
+    $classes = app(ClassifyRepoRecords::class)->handle($tree, $reading);
+
+    return app(PlanImport::class)->handle($tree, $reading, $classes, ImportDecisions::forFirstImport(new IdentityDecisions(new: $classes->newPersonIds)));
 }
 
 function importedPerson(Tree $tree, string $repoId): Person
@@ -197,21 +201,19 @@ test('writes only into the author tree and leaves the other account untouched', 
         ->and(Person::where('tree_id', '!=', $tree->id)->whereNotNull('repo_id')->count())->toBe(0);
 });
 
-test('refuses a plan that is blocked', function () {
+test('refuses a tree that already holds a person from an import', function () {
     $tree = arrangeApplyUsers();
     Person::factory()->for($tree)->create(['repo_id' => 'O-0001']);
     $plan = planFixtureForApply($tree);
     $before = ownershipSnapshot();
 
-    expect($plan->blockedReason)->not->toBeNull()
-        ->and(fn () => app(ApplyImport::class)->handle($tree, $plan, new ConflictResolutions))->toThrow(RuntimeException::class, 'Drzewo konta ma już osoby z importu')
+    expect(fn () => app(ApplyImport::class)->handle($tree, $plan, new ConflictResolutions))->toThrow(RuntimeException::class, 'Drzewo konta ma już osoby z importu')
         ->and(ownershipSnapshot())->toBe($before);
 });
 
 test('writes into a tree that got a hand-entered person after planning', function () {
     $tree = arrangeApplyUsers();
     $plan = planFixtureForApply($tree);
-    expect($plan->blockedReason)->toBeNull();
 
     $added = Person::factory()->for($tree)->create(['first_name' => 'Dodana', 'last_name' => 'Ręcznie']);
 
@@ -225,7 +227,6 @@ test('writes into a tree that got a hand-entered person after planning', functio
 test('refuses a tree that got a person from an import after planning and writes nothing', function () {
     $tree = arrangeApplyUsers();
     $plan = planFixtureForApply($tree);
-    expect($plan->blockedReason)->toBeNull();
 
     Person::factory()->for($tree)->create(['first_name' => 'Dodana', 'last_name' => 'Z importu', 'repo_id' => 'O-0900']);
     $before = ownershipSnapshot();
@@ -314,10 +315,11 @@ function arrangeHandEnteredAuthor(): array
 function planFixtureWithMatches(Tree $tree, array $scene): ImportPlan
 {
     $reading = app(ReadResearchRepo::class)->handle(base_path('tests/Fixtures/research-repo'));
+    $classes = app(ClassifyRepoRecords::class)->handle($tree, $reading);
     $matched = ['O-0001' => $scene['jan']->id, 'O-0002' => $scene['piotr']->id, 'O-0004' => $scene['anna']->id];
-    $new = array_values(array_diff(array_map(strval(...), array_keys($reading->persons)), array_keys($matched)));
+    $new = array_values(array_diff($classes->newPersonIds, array_keys($matched)));
 
-    return app(PlanImport::class)->handle($tree, $reading, new IdentityDecisions($matched, [], $new));
+    return app(PlanImport::class)->handle($tree, $reading, $classes, ImportDecisions::forFirstImport(new IdentityDecisions($matched, [], $new)));
 }
 
 /**
@@ -341,11 +343,13 @@ function planBlocksForApply(Tree $tree, array $blocks, array $matched = []): Imp
         File::deleteDirectory($repo);
     }
 
-    return app(PlanImport::class)->handle($tree, $reading, new IdentityDecisions(
+    $classes = app(ClassifyRepoRecords::class)->handle($tree, $reading);
+
+    return app(PlanImport::class)->handle($tree, $reading, $classes, ImportDecisions::forFirstImport(new IdentityDecisions(
         array_map(fn (Person $person): int => $person->id, $matched),
         [],
-        array_values(array_diff(array_keys($blocks), array_keys($matched))),
-    ));
+        array_values(array_diff($classes->newPersonIds, array_keys($matched))),
+    )));
 }
 
 /**
