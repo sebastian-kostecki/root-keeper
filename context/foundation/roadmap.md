@@ -43,7 +43,7 @@ Autor prowadzi badania genealogiczne w repo markdown (dziś 283 pliki osób, dzi
 | ID   | Change ID                          | Outcome (user can …)                                                                                          | Prerequisites | PRD refs                                              | Status   |
 | ---- | ---------------------------------- | ------------------------------------------------------------------------------------------------------------- | ------------- | ----------------------------------------------------- | -------- |
 | S-01 | research-blocks-read-and-report    | uruchomić komendę na katalogu repo i dostać raport przeczytanych osób oraz pominiętych wpisów z powodem         | —             | FR-001, FR-002, FR-003, FR-004                        | done |
-| S-02 | first-import-into-empty-tree       | zaimportować przodków do pustego drzewa po podsumowaniu i zatwierdzeniu i zobaczyć ich z relacjami i datami      | S-01, S-07    | US-01, FR-003, FR-005, FR-006, FR-008, FR-009, FR-016 | in-progress |
+| S-02 | first-import-into-empty-tree       | zaimportować przodków do pustego drzewa po podsumowaniu i zatwierdzeniu i zobaczyć ich z relacjami i datami      | S-01, S-07    | US-01, FR-003, FR-005, FR-006, FR-008, FR-009, FR-016 | done |
 | S-03 | first-import-matches-hand-entered  | przy pierwszym imporcie dopasować osoby z repo do ręcznie wpisanych i rozstrzygnąć przypadki wątpliwe            | S-02          | US-01, FR-005, FR-006, FR-007, FR-014                 | blocked  |
 | S-04 | reimport-changes-and-conflicts     | ponowić import i w podglądzie zatwierdzać nowe, zmienione, konflikty z ręcznymi zmianami i usunięte w repo        | S-02          | US-02, FR-005, FR-006, FR-008, FR-014, FR-015         | blocked  |
 | S-05 | import-places-matched-to-gazetteer | dostać miejsca wydarzeń (także pochowanie na cmentarzu) dopasowane do spisu i potwierdzić nowe w podglądzie      | S-02          | FR-009, FR-010, FR-017                                | proposed |
@@ -109,7 +109,7 @@ Brak. Każdy element przekrojowy wchodzi w pierwszym wycinku, który go używa: 
   - ~~Wydarzenia bez miejsca do czasu `S-05`, a pochowanie (wymaga cmentarza) wchodzi dopiero w `S-05` — czy to akceptowalne na koncie testowym?~~ Rozstrzygnięte w planie (2026-10-23): miejsca, pochowanie, poziomy, notatki wydarzeń i warianty nazwiska trafiają tekstem do notatki osoby do czasu `S-05`, `S-08`, `S-09`.
 - **Risk:** Gwiazda przewodnia: na pustym drzewie nie ma dopasowań ani konfliktów, więc podgląd to samo podsumowanie, a ryzyko skupia się na torze zapisu. Test z drugim użytkownikiem o tych samych nazwiskach i miejscach dowodzi granicy drzewa, bo komenda omija Policy.
 - **Uwaga z przeglądu S-01 (F3):** odczyt nie wykrywa cykli rodzic–dziecko (A rodzicem B i B rodzicem A) ani samo-przodków; S-02 musi to sprawdzić przed zapisem relacji.
-- **Status:** in-progress
+- **Status:** done
 
 ### S-03: Pierwszy import dopasowuje osoby wpisane ręcznie
 
@@ -257,3 +257,4 @@ Brak. Każdy element przekrojowy wchodzi w pierwszym wycinku, który go używa: 
 
 - **S-01: Import: odczyt bloków danych z repo badawczego i raport** — Archived 2026-10-23 → `context/archive/2026-10-23-research-blocks-read-and-report/`. Lesson: —.
 - **S-07: autor zapisuje i widzi datę wydarzenia jako dokładną, „ok.”, zakres lat, „przed” albo „po” — w formularzu, na osi czasu i w panelu osoby** — Archived 2026-10-23 → `context/archive/2026-10-23-fuzzy-event-dates/`. Lesson: —.
+- **S-02: autor importuje przodków do drzewa bez ręcznych wpisów (np. konta testowego): komenda pokazuje podsumowanie, po zatwierdzeniu zapisuje osoby (imiona, nazwisko, płeć), relacje rodzic–dziecko, małżeństwa oraz urodzenia, śluby i zgony z każdym rodzajem daty z `S-07` (dokładna, „ok.”, zakres, „przed”, „po”), każdy rekord z identyfikatorem z repo; na produkcji przed zapisem powstaje kopia bazy; zapis trafia wyłącznie do drzewa wskazanego konta; autor widzi przodków w drzewie i w widoku przodków.** — Archived 2026-10-24 → `context/archive/2026-10-23-first-import-into-empty-tree/`. Lesson: —.
