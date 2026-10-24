@@ -1,0 +1,19 @@
+<?php
+
+namespace App\Enums;
+
+enum MatchVerdict: string
+{
+    case New = 'new';
+    case Sure = 'sure';
+    case Doubtful = 'doubtful';
+
+    public function label(): string
+    {
+        return match ($this) {
+            self::New => 'nowa',
+            self::Sure => 'pewne',
+            self::Doubtful => 'wątpliwe',
+        };
+    }
+}
