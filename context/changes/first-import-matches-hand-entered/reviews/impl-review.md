@@ -90,7 +90,7 @@ Tree boundary: every read and write goes through `$tree`. The transaction and lo
   - Tradeoff: About 15 minutes of manual work.
   - Confidence: HIGH — confirmed in the dev database (7 people with `repo_id`, all created at 10:47:13).
   - Blind spot: None significant.
-- **Decision**: QUEUED — follow-ups/review-fixes.md (ręczna kontrola dla autora)
+- **Decision**: ACCEPTED — autor zaakceptował; kroki przebiegu z imiennikami w follow-ups/review-fixes.md (przed pierwszym importem na produkcji)
 
 ### F5 — Luki w kształcie testów względem planu
 

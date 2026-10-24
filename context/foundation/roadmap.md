@@ -44,7 +44,7 @@ Autor prowadzi badania genealogiczne w repo markdown (dziś 283 pliki osób, dzi
 | ---- | ---------------------------------- | ------------------------------------------------------------------------------------------------------------- | ------------- | ----------------------------------------------------- | -------- |
 | S-01 | research-blocks-read-and-report    | uruchomić komendę na katalogu repo i dostać raport przeczytanych osób oraz pominiętych wpisów z powodem         | —             | FR-001, FR-002, FR-003, FR-004                        | done |
 | S-02 | first-import-into-empty-tree       | zaimportować przodków do pustego drzewa po podsumowaniu i zatwierdzeniu i zobaczyć ich z relacjami i datami      | S-01, S-07    | US-01, FR-003, FR-005, FR-006, FR-008, FR-009, FR-016 | done |
-| S-03 | first-import-matches-hand-entered  | przy pierwszym imporcie dopasować osoby z repo do ręcznie wpisanych i rozstrzygnąć przypadki wątpliwe            | S-02          | US-01, FR-005, FR-006, FR-007, FR-014                 | blocked  |
+| S-03 | first-import-matches-hand-entered  | przy pierwszym imporcie dopasować osoby z repo do ręcznie wpisanych i rozstrzygnąć przypadki wątpliwe            | S-02          | US-01, FR-005, FR-006, FR-007, FR-014                 | in-progress |
 | S-04 | reimport-changes-and-conflicts     | ponowić import i w podglądzie zatwierdzać nowe, zmienione, konflikty z ręcznymi zmianami i usunięte w repo        | S-02          | US-02, FR-005, FR-006, FR-008, FR-014, FR-015         | blocked  |
 | S-05 | import-places-matched-to-gazetteer | dostać miejsca wydarzeń (także pochowanie na cmentarzu) dopasowane do spisu i potwierdzić nowe w podglądzie      | S-02          | FR-009, FR-010, FR-017                                | proposed |
 | S-06 | import-sources-with-scans          | dostać źródła z opisem i skanem podpięte do faktów z numerem wpisu                                             | S-05          | FR-001, FR-011, US-01                                 | blocked  |
@@ -123,7 +123,7 @@ Brak. Każdy element przekrojowy wchodzi w pierwszym wycinku, który go używa: 
   - Jak wygląda podgląd w terminalu przy dziesiątkach dopasowań i konfliktów, żeby rozstrzyganie pojedynczo było wykonalne? (PRD Otwarte pytania 4, termin: przed planem komendy importu) Owner: autor. Block: yes.
   - Które elementy liczą się jako niezależne (rodzice, rok urodzenia z jaką tolerancją, miejsce urodzenia, małżonek)? Owner: autor. Block: no.
 - **Risk:** Najryzykowniejsze założenie PRD — założenie, które gdy okaże się fałszywe, przekreśla wartość całej zmiany: import na produkcji nie zdubluje ręcznie wpisanego drzewa. Idzie zaraz po gwieździe przewodniej, żeby reguła tożsamości została sprawdzona na prawdziwych danych przed pierwszym importem na produkcji.
-- **Status:** blocked
+- **Status:** in-progress
 
 ### S-04: Kolejny import z podglądem zmian i konfliktów
 
