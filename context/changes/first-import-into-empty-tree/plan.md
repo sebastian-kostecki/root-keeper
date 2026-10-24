@@ -514,14 +514,14 @@ Podmiana `backup:run` w teście: zastępcza komenda `Artisan::command('backup:ru
 
 #### Automated
 
-- [x] 4.1 Testy komendy przechodzą: `vendor/bin/sail artisan test --compact tests/Feature/ImportResearchCommandTest.php`
-- [x] 4.2 Wszystkie testy importu przechodzą: `vendor/bin/sail artisan test --compact tests/Feature/ResearchRepoReadTest.php tests/Feature/FirstImportPlanTest.php tests/Feature/FirstImportApplyTest.php tests/Unit/ResearchDateTest.php`
-- [x] 4.3 Analiza statyczna przechodzi: `vendor/bin/sail composer types:check`
-- [x] 4.4 Formatowanie: `vendor/bin/sail bin pint --dirty --format agent`
+- [x] 4.1 Testy komendy przechodzą: `vendor/bin/sail artisan test --compact tests/Feature/ImportResearchCommandTest.php` — 52a8c9f
+- [x] 4.2 Wszystkie testy importu przechodzą: `vendor/bin/sail artisan test --compact tests/Feature/ResearchRepoReadTest.php tests/Feature/FirstImportPlanTest.php tests/Feature/FirstImportApplyTest.php tests/Unit/ResearchDateTest.php` — 52a8c9f
+- [x] 4.3 Analiza statyczna przechodzi: `vendor/bin/sail composer types:check` — 52a8c9f
+- [x] 4.4 Formatowanie: `vendor/bin/sail bin pint --dirty --format agent` — 52a8c9f
 
 #### Manual
 
-- [x] 4.5 Przebieg na kopii prawdziwego repo z pliku przodków na nowym koncie testowym: podsumowanie jest czytelne, liczby zgadzają się z repo, odpowiedź „tak” zapisuje bez błędu
-- [x] 4.6 Po wyborze probanta (Ahnentafel 1) w `/tree` przodkowie są widoczni z rodzicami i małżonkami, a widok przodków pokazuje wszystkie zaimportowane pokolenia
-- [x] 4.7 Panel osoby pokazuje urodzenie i zgon z datą (także zakres, „przed” i „po” wg S-07) oraz notatkę „Z repo badawczego (…)” z miejscami, poziomami i wariantami
-- [x] 4.8 Ponowne uruchomienie na tym samym koncie kończy się odmową bez zapisu
+- [x] 4.5 Przebieg na kopii prawdziwego repo z pliku przodków na nowym koncie testowym: podsumowanie jest czytelne, liczby zgadzają się z repo, odpowiedź „tak” zapisuje bez błędu — 52a8c9f
+- [x] 4.6 Po wyborze probanta (Ahnentafel 1) w `/tree` przodkowie są widoczni z rodzicami i małżonkami, a widok przodków pokazuje wszystkie zaimportowane pokolenia — 52a8c9f
+- [x] 4.7 Panel osoby pokazuje urodzenie i zgon z datą (także zakres, „przed” i „po” wg S-07) oraz notatkę „Z repo badawczego (…)” z miejscami, poziomami i wariantami — 52a8c9f
+- [x] 4.8 Ponowne uruchomienie na tym samym koncie kończy się odmową bez zapisu — 52a8c9f

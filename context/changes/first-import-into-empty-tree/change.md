@@ -1,7 +1,7 @@
 ---
 change_id: first-import-into-empty-tree
 title: First import into empty tree
-status: implementing
+status: implemented
 created: 2026-10-23
 updated: 2026-10-24
 archived_at: null
