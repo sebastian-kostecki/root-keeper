@@ -345,13 +345,13 @@ class PlanFirstImport
 
     private function compareText(string $field, string $label, string $key, string $person, ?string $repo, ?string $app): PlannedFill|ValueConflict|null
     {
-        $repoText = $this->cleanText($repo);
+        $repoText = self::cleanText($repo);
 
         if ($repoText === null) {
             return null;
         }
 
-        $appText = $this->cleanText($app);
+        $appText = self::cleanText($app);
 
         if ($appText === null) {
             return new PlannedFill($field, $repoText, $label);
@@ -385,7 +385,7 @@ class PlanFirstImport
         }
 
         if ($this->refines($repo, $app)) {
-            return new PlannedFill($field, $repo, $label);
+            return new PlannedFill($field, $repo, $label, $app->label());
         }
 
         return new ValueConflict($key, $person, $field, $label, $app->label(), $repo->label(), $repo);
@@ -407,7 +407,10 @@ class PlanFirstImport
         return $repo->month === $app->month && $app->day === null && $repo->day !== null;
     }
 
-    private function cleanText(?string $text): ?string
+    /**
+     * A text with its spaces trimmed and collapsed, `null` when nothing is left. The apply step reads the tree through the same rule.
+     */
+    public static function cleanText(?string $text): ?string
     {
         if ($text === null) {
             return null;
@@ -551,7 +554,7 @@ class PlanFirstImport
         if ($gender !== null) {
             foreach ($graph->parentsOf($child, true) as $other) {
                 if (($genders[$other] ?? null) === $gender) {
-                    return sprintf('w drzewie inny %s: %s', $gender === Gender::Male ? 'ojciec' : 'matka', $labels[$other] ?? $other);
+                    return sprintf('w drzewie %s: %s', $gender === Gender::Male ? 'inny ojciec' : 'inna matka', $labels[$other] ?? $other);
                 }
             }
         }

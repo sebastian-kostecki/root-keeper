@@ -1,5 +1,6 @@
 <?php
 
+use App\Actions\Import\PlanFirstImport;
 use App\Actions\Relations\CreateMarriage;
 use App\Enums\ParticipantRole;
 use App\Models\Event;
@@ -207,6 +208,23 @@ test('reports a failure in the middle of the write and writes nothing', function
         ->assertFailed();
 
     Exceptions::assertReported(fn (RuntimeException $exception): bool => $exception->getMessage() === 'Zapis małżeństwa nie powiódł się.');
+    expect(ownershipSnapshot())->toBe($before);
+});
+
+test('reports a plan that no longer fits the tree and writes nothing', function () {
+    Storage::fake('local');
+    $author = arrangeEmptyAuthorWithOverlappingOther();
+    $before = ownershipSnapshot();
+
+    $this->mock(PlanFirstImport::class, function ($mock): void {
+        $mock->shouldReceive('handle')->andThrow(new InvalidArgumentException('Decyzje wskazują osobę spoza drzewa konta.'));
+    });
+
+    $this->artisan('import:research', importArguments($author))
+        ->expectsOutputToContain('Decyzje wskazują osobę spoza drzewa konta.')
+        ->doesntExpectOutputToContain('Podsumowanie importu')
+        ->assertFailed();
+
     expect(ownershipSnapshot())->toBe($before);
 });
 
@@ -464,6 +482,67 @@ test('walks through the sure match one by one before the doubtful ones', functio
         ->expectsQuestion(BIRTH_CONFLICT_QUESTION, 'app')
         ->expectsConfirmation('Zapisać do drzewa konta autor@example.com: nowe osoby 11, dopasowane 1?', 'no')
         ->assertSuccessful();
+});
+
+/**
+ * Jan Nowak without dates, son of Piotr Nowak (male, birth 1770) and Maria Wrona (female, birth 1775), who married in 1795.
+ *
+ * @return list<Person> Jan, Piotr and Maria
+ */
+function arrangeSureThroughParentsTree(Tree $tree): array
+{
+    $jan = Person::factory()->for($tree)->create(['first_name' => 'Jan', 'last_name' => 'Nowak']);
+    $piotr = Person::factory()->male()->for($tree)->create(['first_name' => 'Piotr', 'last_name' => 'Nowak']);
+    $maria = Person::factory()->female()->for($tree)->create(['first_name' => 'Maria', 'last_name' => 'Wrona']);
+
+    attachBirth($piotr, 1770);
+    attachBirth($maria, 1775);
+    attachMarriage($piotr, $maria, 1795);
+    linkParent($piotr, $jan);
+    linkParent($maria, $jan);
+
+    return [$jan, $piotr, $maria];
+}
+
+test('lists a hand-entered person who is sure through both parents by name in the sure table and matches it on approving all', function () {
+    Storage::fake('local');
+    $other = User::factory()->create(['email' => 'inny@example.com']);
+    $author = User::factory()->create(['email' => 'autor@example.com']);
+    arrangeSureThroughParentsTree($other->tree);
+    [$jan, $piotr, $maria] = arrangeSureThroughParentsTree($author->tree);
+    $otherPeopleBefore = Person::where('tree_id', $other->tree->id)->orderBy('id')->get()->toArray();
+    $otherRelationsBefore = ParentChildRelation::where('tree_id', $other->tree->id)->orderBy('id')->get()->toArray();
+
+    $repo = commandTemporaryRepo([
+        'O-0001' => "imiona: Jan\nnazwisko: Nowak\nrodzice:\n  ojciec: O-0002\n  matka: O-0003",
+        'O-0002' => "imiona: Piotr\nnazwisko: Nowak\nplec: M\nurodzenie:\n  data: \"1770\"\nmalzenstwa:\n  - z: O-0003\n    data: \"1795\"",
+        'O-0003' => "imiona: Maria\nnazwisko: Wrona\nplec: K\nurodzenie:\n  data: \"1775\"",
+    ]);
+
+    try {
+        $this->artisan('import:research', ['email' => $author->email, 'path' => $repo])
+            ->expectsOutputToContain('nowe: 0, pewne: 3, wątpliwe: 0')
+            ->expectsOutputToContain('Pewne dopasowania:')
+            ->expectsOutputToContain('ojciec, matka')
+            ->expectsChoice('Pewne dopasowania (3): co zrobić?', 'all', ['all' => 'Zatwierdź wszystkie', 'each' => 'Przejrzyj pojedynczo'], true)
+            ->expectsOutputToContain('Osoby: nowe 0, dopasowane 3, pominięte 0')
+            ->expectsOutputToContain('Konflikty wartości do rozstrzygnięcia: 0')
+            ->expectsConfirmation('Zapisać do drzewa konta autor@example.com: nowe osoby 0, dopasowane 3?', 'yes')
+            ->expectsOutputToContain('Relacje rodzic–dziecko: 0 (istniejące oznaczone: 2)')
+            ->assertSuccessful();
+    } finally {
+        File::deleteDirectory($repo);
+    }
+
+    expect($jan->fresh()->repo_id)->toBe('O-0001')
+        ->and($piotr->fresh()->repo_id)->toBe('O-0002')
+        ->and($maria->fresh()->repo_id)->toBe('O-0003')
+        ->and($author->tree->people()->count())->toBe(3)
+        ->and($author->tree->parentChildRelations()->orderBy('repo_id')->pluck('repo_id')->all())->toBe(['O-0002>O-0001', 'O-0003>O-0001']);
+
+    expect(Person::where('tree_id', $other->tree->id)->orderBy('id')->get()->toArray())->toBe($otherPeopleBefore)
+        ->and(ParentChildRelation::where('tree_id', $other->tree->id)->orderBy('id')->get()->toArray())->toBe($otherRelationsBefore)
+        ->and(Person::where('tree_id', $other->tree->id)->whereNotNull('repo_id')->count())->toBe(0);
 });
 
 test('does not offer a tree person who was chosen before for another repo person', function () {

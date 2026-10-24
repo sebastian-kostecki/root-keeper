@@ -41,8 +41,9 @@ class ApplyFirstImport
      * Matched persons and the pairs and weddings already in the tree get their repo ids and the approved values; nothing
      * in them is removed, and what the import does not name (photo, residences, sources, places) stays as it is.
      *
-     * @throws RuntimeException when the plan is blocked, the tree got a person from an import after planning or a matched person changed
-     * @throws ValidationException when a gender from the repo breaks the parent sex rule
+     * @throws RuntimeException when the plan is blocked, the tree got a person from an import after planning, a matched
+     *                          person or an existing wedding changed since planning, or a step breaks a rule of the app
+     * @throws ValidationException when a new wedding breaks a rule of the app
      */
     public function handle(Tree $tree, FirstImportPlan $plan, ConflictResolutions $resolutions): FirstImportResult
     {
@@ -69,7 +70,12 @@ class ApplyFirstImport
                 $person = $matchedPeople[$match->personId];
                 $people[$match->person->id] = $person;
 
-                $written = $this->writeMatch($person, $match, $resolutions);
+                try {
+                    $written = $this->writeMatch($person, $match, $resolutions);
+                } catch (ValidationException $exception) {
+                    throw $this->withContext("{$match->person->id} (#{$person->id})", $exception);
+                }
+
                 $fills += $written['fills'];
                 $taken += $written['taken'];
 
@@ -127,7 +133,12 @@ class ApplyFirstImport
                     continue;
                 }
 
-                $relation = $this->createRelation->handle($tree, $parent, $child);
+                try {
+                    $relation = $this->createRelation->handle($tree, $parent, $child);
+                } catch (ValidationException $exception) {
+                    throw $this->withContext("{$planned->repoId} (#{$parent->id} → #{$child->id})", $exception);
+                }
+
                 $relation->update(['repo_id' => $planned->repoId]);
                 $newRelations++;
             }
@@ -150,7 +161,12 @@ class ApplyFirstImport
                     $date = $planned->dateFill?->value;
                     $fills += $planned->dateFill === null ? 0 : 1;
 
+                    if ($planned->dateFill !== null) {
+                        $this->guardWedding($event, $planned->repoId, $planned->dateFill->appLabel);
+                    }
+
                     if ($planned->dateConflict !== null && $resolutions->takesRepo($planned->dateConflict->key)) {
+                        $this->guardWedding($event, $planned->repoId, $planned->dateConflict->appLabel);
                         $date = $planned->dateConflict->repoValue;
                         $taken++;
                     }
@@ -199,6 +215,10 @@ class ApplyFirstImport
         $ids = array_map(fn (PlannedMatch $match): int => $match->personId, $plan->matched);
         sort($ids);
 
+        if (count(array_unique($ids)) !== count($ids)) {
+            throw new RuntimeException('Plan dopasowuje jedną osobę drzewa do kilku osób z repo; nic nie zostało zapisane.');
+        }
+
         $people = $tree->people()->whereIn('id', $ids)->orderBy('id')->lockForUpdate()->with('events')->get()->keyBy('id');
 
         foreach ($ids as $id) {
@@ -233,11 +253,13 @@ class ApplyFirstImport
         $changes = [];
 
         foreach ($match->fills as $fill) {
+            $this->guardPerson($person, $fill->field, $fill->appLabel);
             $changes[] = [$fill->field, $fill->value, false];
         }
 
         foreach ($match->conflicts as $conflict) {
             if ($resolutions->takesRepo($conflict->key)) {
+                $this->guardPerson($person, $conflict->field, $conflict->appLabel);
                 $changes[] = [$conflict->field, $conflict->repoValue, true];
             }
         }
@@ -291,6 +313,52 @@ class ApplyFirstImport
         }
 
         return ['fills' => $fills, 'taken' => $taken];
+    }
+
+    /**
+     * Check that a field of the locked person still holds what the plan saw: empty for a fill, the value shown to the
+     * author for a conflict settled for the repo.
+     *
+     * @param  string|null  $planned  the label the plan recorded, `null` for an empty field
+     *
+     * @throws RuntimeException
+     */
+    private function guardPerson(Person $person, string $field, ?string $planned): void
+    {
+        $current = match ($field) {
+            'first_name' => PlanFirstImport::cleanText($person->first_name),
+            'last_name' => PlanFirstImport::cleanText($person->last_name),
+            'gender' => $person->gender?->label(),
+            'birth_date' => ResearchDate::fromEvent($person->birth())?->label(),
+            'death_date' => ResearchDate::fromEvent($person->death())?->label(),
+            default => throw new RuntimeException("Plan ma niewłaściwe pole {$field} dla osoby #{$person->id}."),
+        };
+
+        if ($current !== $planned) {
+            throw new RuntimeException("Osoba {$person->displayName()} (#{$person->id}) zmieniła się po planowaniu; nic nie zostało zapisane.");
+        }
+    }
+
+    /**
+     * Check that the date of an existing wedding is still the one the plan saw.
+     *
+     * @param  string|null  $planned  the label the plan recorded, `null` for a wedding without a date
+     *
+     * @throws RuntimeException
+     */
+    private function guardWedding(Event $event, string $repoId, ?string $planned): void
+    {
+        if (ResearchDate::fromEvent($event)?->label() !== $planned) {
+            throw new RuntimeException("Małżeństwo {$repoId} zmieniło się po planowaniu; nic nie zostało zapisane.");
+        }
+    }
+
+    /**
+     * A failed rule of the app as a rollback message that says which record of the plan it came from.
+     */
+    private function withContext(string $context, ValidationException $exception): RuntimeException
+    {
+        return new RuntimeException($context.': '.implode(' ', Arr::flatten($exception->errors())), 0, $exception);
     }
 
     /**

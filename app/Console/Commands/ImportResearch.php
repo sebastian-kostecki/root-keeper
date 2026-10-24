@@ -25,6 +25,7 @@ use Illuminate\Console\Attributes\Description;
 use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
 use Illuminate\Support\Str;
+use InvalidArgumentException;
 use RuntimeException;
 use Throwable;
 
@@ -88,7 +89,15 @@ class ImportResearch extends Command
             return self::FAILURE;
         }
 
-        $plan = $planFirstImport->handle($tree, $reading, $this->decideIdentities($matches));
+        $decisions = $this->decideIdentities($matches);
+
+        try {
+            $plan = $planFirstImport->handle($tree, $reading, $decisions);
+        } catch (InvalidArgumentException $exception) {
+            $this->error($exception->getMessage());
+
+            return self::FAILURE;
+        }
 
         $this->summary($plan, $reading);
 
@@ -146,10 +155,13 @@ class ImportResearch extends Command
         $this->newLine();
         $this->info('Dopasowanie do osób w drzewie');
         $this->line(sprintf(
-            'Osoby z repo: %d (nowe: %d, pewne: %d, wątpliwe: %d)',
+            'Osoby z repo: %d (%s: %d, %s: %d, %s: %d)',
             count($matches->matches),
+            MatchVerdict::New->label(),
             $counts[MatchVerdict::New->value] ?? 0,
+            MatchVerdict::Sure->label(),
             $counts[MatchVerdict::Sure->value] ?? 0,
+            MatchVerdict::Doubtful->label(),
             $counts[MatchVerdict::Doubtful->value] ?? 0,
         ));
     }

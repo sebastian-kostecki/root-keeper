@@ -4,6 +4,7 @@ use App\Actions\Import\ApplyFirstImport;
 use App\Actions\Import\PlanFirstImport;
 use App\Actions\Import\ReadResearchRepo;
 use App\Actions\Relations\CreateMarriage;
+use App\Actions\Relations\CreateParentChildRelation;
 use App\Enums\DateQualifier;
 use App\Enums\EventType;
 use App\Enums\Gender;
@@ -21,6 +22,7 @@ use App\Support\Import\ConflictResolutions;
 use App\Support\Import\FirstImportPlan;
 use App\Support\Import\FirstImportResult;
 use App\Support\Import\IdentityDecisions;
+use App\Support\Import\PlannedMatch;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
@@ -585,7 +587,118 @@ test('refuses a gender from the repo that gives a child two parents of one sex s
     linkParent(Person::factory()->female()->for($author->tree)->create(), $jan);
     $before = ownershipSnapshot();
 
-    expect(fn () => app(ApplyFirstImport::class)->handle($author->tree, $plan, new ConflictResolutions))->toThrow(ValidationException::class, 'matkę')
+    expect(fn () => app(ApplyFirstImport::class)->handle($author->tree, $plan, new ConflictResolutions))->toThrow(RuntimeException::class, "O-0001 (#{$maria->id}): ")
+        ->and(fn () => app(ApplyFirstImport::class)->handle($author->tree, $plan, new ConflictResolutions))->toThrow(RuntimeException::class, 'matkę')
+        ->and(ownershipSnapshot())->toBe($before);
+});
+
+test('names the relation and both persons when a new relation breaks a rule of the app and writes nothing', function () {
+    Storage::fake('local');
+    [$tree, $scene] = arrangeHandEnteredAuthor();
+    $plan = planFixtureWithMatches($tree, $scene);
+    $before = ownershipSnapshot();
+
+    $this->mock(CreateParentChildRelation::class, function ($mock): void {
+        $mock->shouldReceive('handle')->andThrow(ValidationException::withMessages(['child_id' => 'Ta osoba ma już ojca.']));
+    });
+
+    $thrown = null;
+
+    try {
+        app(ApplyFirstImport::class)->handle($tree, $plan, new ConflictResolutions);
+    } catch (RuntimeException $exception) {
+        $thrown = $exception;
+    }
+
+    expect($thrown)->toBeInstanceOf(RuntimeException::class)
+        ->and($thrown->getMessage())->toStartWith('O-0003>O-0001 (#')
+        ->and($thrown->getMessage())->toContain('Ta osoba ma już ojca.')
+        ->and($thrown->getPrevious())->toBeInstanceOf(ValidationException::class)
+        ->and(ownershipSnapshot())->toBe($before);
+});
+
+test('refuses a field filled by hand since planning and writes nothing', function (Closure $change) {
+    Storage::fake('local');
+    [$tree, $scene] = arrangeHandEnteredAuthor();
+    $plan = planFixtureWithMatches($tree, $scene);
+    expect(fieldsOfFills($plan))->toContain('gender', 'birth_date');
+
+    $change($scene);
+    $before = ownershipSnapshot();
+
+    expect(fn () => app(ApplyFirstImport::class)->handle($tree, $plan, new ConflictResolutions))->toThrow(RuntimeException::class, "Osoba Jan Nowak (#{$scene['jan']->id}) zmieniła się po planowaniu")
+        ->and(ownershipSnapshot())->toBe($before)
+        ->and($tree->people()->whereNotNull('repo_id')->count())->toBe(0)
+        ->and(Person::where('tree_id', '!=', $tree->id)->whereNotNull('repo_id')->count())->toBe(0);
+})->with([
+    'gender' => [fn (array $scene) => $scene['jan']->update(['gender' => Gender::Female])],
+    'birth date refined by hand' => [fn (array $scene) => $scene['birth']->update(['date_month' => 7])],
+]);
+
+test('refuses a wedding date filled by hand since planning and writes nothing', function () {
+    $other = User::factory()->create();
+    $author = User::factory()->create();
+    $weddings = [];
+
+    foreach ([$other->tree, $author->tree] as $tree) {
+        $jan = Person::factory()->for($tree)->create(['first_name' => 'Jan', 'last_name' => 'Nowak']);
+        $anna = Person::factory()->for($tree)->create(['first_name' => 'Anna', 'last_name' => 'Wrona']);
+        $weddings[$tree->id] = [$jan, $anna, attachMarriage($jan, $anna)];
+    }
+
+    [$jan, $anna, $wedding] = $weddings[$author->tree->id];
+    $plan = planBlocksForApply($author->tree, [
+        'O-0001' => "imiona: Jan\nnazwisko: Nowak\nmalzenstwa:\n  - z: O-0002\n    data: \"1830\"",
+        'O-0002' => "imiona: Anna\nnazwisko: Wrona",
+    ], ['O-0001' => $jan, 'O-0002' => $anna]);
+    expect($plan->marriages[0]->dateFill)->not->toBeNull();
+
+    $wedding->update(['date_year' => 1829]);
+    $before = ownershipSnapshot();
+
+    expect(fn () => app(ApplyFirstImport::class)->handle($author->tree, $plan, new ConflictResolutions))->toThrow(RuntimeException::class, 'Małżeństwo O-0001+O-0002/slub zmieniło się po planowaniu')
+        ->and(ownershipSnapshot())->toBe($before);
+});
+
+test('refuses a value taken from the repo when the app value changed since planning and writes nothing', function (string $key, Closure $change) {
+    Storage::fake('local');
+    [$tree, $scene] = arrangeHandEnteredAuthor();
+    $plan = planFixtureWithMatches($tree, $scene);
+    expect(array_map(fn ($conflict) => $conflict->key, $plan->conflicts))->toContain($key);
+
+    $change($scene);
+    $before = ownershipSnapshot();
+
+    expect(fn () => app(ApplyFirstImport::class)->handle($tree, $plan, new ConflictResolutions([$key => ConflictResolutions::FROM_REPO])))->toThrow(RuntimeException::class, 'po planowaniu; nic nie zostało zapisane')
+        ->and(ownershipSnapshot())->toBe($before)
+        ->and($tree->people()->whereNotNull('repo_id')->count())->toBe(0)
+        ->and(Person::where('tree_id', '!=', $tree->id)->whereNotNull('repo_id')->count())->toBe(0);
+})->with([
+    'gender' => ['O-0004/plec', fn (array $scene) => $scene['anna']->update(['gender' => null])],
+    'birth date' => ['O-0002/urodzenie/data', fn (array $scene) => $scene['piotr']->load('events')->birth()->update(['date_year' => 1763])],
+    'wedding date' => ['O-0001+O-0004/slub/data', fn (array $scene) => $scene['wedding']->update(['date_year' => 1831])],
+]);
+
+test('does not check a value left for the app even when it changed since planning', function () {
+    [$tree, $scene] = arrangeHandEnteredAuthor();
+    $plan = planFixtureWithMatches($tree, $scene);
+    $scene['anna']->update(['gender' => Gender::Female]);
+
+    $result = app(ApplyFirstImport::class)->handle($tree, $plan, new ConflictResolutions(['O-0004/plec' => ConflictResolutions::FROM_APP]));
+
+    expect($scene['anna']->fresh()->gender)->toBe(Gender::Female)
+        ->and($result->takenFromRepo)->toBe(0);
+});
+
+test('refuses a plan that matches one tree person to two repo persons and writes nothing', function () {
+    Storage::fake('local');
+    [$tree, $scene] = arrangeHandEnteredAuthor();
+    $plan = planFixtureWithMatches($tree, $scene);
+    $duplicate = new PlannedMatch(...[...get_object_vars($plan->matched[1]), 'personId' => $plan->matched[0]->personId]);
+    $broken = new FirstImportPlan(...[...get_object_vars($plan), 'matched' => [$plan->matched[0], $duplicate, $plan->matched[2]]]);
+    $before = ownershipSnapshot();
+
+    expect(fn () => app(ApplyFirstImport::class)->handle($tree, $broken, new ConflictResolutions))->toThrow(RuntimeException::class, 'kilku osób z repo')
         ->and(ownershipSnapshot())->toBe($before);
 });
 

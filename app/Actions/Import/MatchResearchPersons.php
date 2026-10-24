@@ -148,7 +148,7 @@ class MatchResearchPersons
 
         foreach ($treeSpouses as $treeSpouse) {
             foreach ($repoSpouses as $repoSpouse) {
-                if ($this->sameName($treeSpouse, $repoSpouse)) {
+                if ($this->sameKnownName($treeSpouse, $repoSpouse)) {
                     $agreeing[] = MatchElement::Spouse;
 
                     break 2;
@@ -186,7 +186,7 @@ class MatchResearchPersons
     /**
      * A parent agrees when a tree parent whose known gender fits the role has the same name as the repo parent, and
      * contradicts when the tree parent of that gender has another first name. The surname never contradicts, because
-     * it may be written down after the husband.
+     * it may be written down after the husband. A parent without a first name never agrees.
      *
      * @param  list<MatchElement>  $agreeing
      * @param  list<string>  $contradictions
@@ -200,7 +200,7 @@ class MatchResearchPersons
         }
 
         foreach ($person->parents as $parent) {
-            if (($parent->gender === null || $parent->gender === $role) && $this->sameName($parent, $repoParent)) {
+            if (($parent->gender === null || $parent->gender === $role) && $this->sameKnownName($parent, $repoParent)) {
                 $agreeing[] = $element;
 
                 return;
@@ -323,6 +323,14 @@ class MatchResearchPersons
     private function joinLabels(array $labels): string
     {
         return $labels === [] ? self::EMPTY_VALUE : implode('; ', $labels);
+    }
+
+    /**
+     * The same name, as evidence for a relative: the first name must be known on both sides.
+     */
+    private function sameKnownName(Person $person, ResearchPerson $repo): bool
+    {
+        return NameKey::firstName($repo->givenNames) !== null && $this->sameName($person, $repo);
     }
 
     private function sameName(Person $person, ResearchPerson $repo): bool

@@ -444,6 +444,25 @@ test('skips a relation for a child who already has another father in the tree', 
         ->and(issueMessages($plan->skippedRelations))->toContain('w drzewie inny ojciec: Adam Nowak');
 });
 
+test('skips a relation for a child who already has another mother in the tree', function () {
+    [$tree, $people] = arrangeAuthorWithTwin(function (Tree $tree): array {
+        $jan = Person::factory()->for($tree)->create(['first_name' => 'Jan', 'last_name' => 'Nowak']);
+        $ewa = Person::factory()->for($tree)->female()->create(['first_name' => 'Ewa', 'last_name' => 'Nowak']);
+        linkParent($ewa, $jan);
+
+        return ['jan' => $jan];
+    });
+
+    $plan = planTemporaryRepo($tree, [
+        'O-0001' => "imiona: Jan\nnazwisko: Nowak\nrodzice:\n  matka: O-0002",
+        'O-0002' => "imiona: Maria\nnazwisko: Wrona\nplec: K",
+    ], ['O-0001' => $people['jan']]);
+
+    expect($plan->relations)->toBe([])
+        ->and(issueMessages($plan->skippedRelations))->toContain('w drzewie inna matka: Ewa Nowak')
+        ->and(issueMessages($plan->skippedRelations))->not->toContain('inny matka');
+});
+
 test('skips a relation for a child who already has two parents in the tree', function () {
     [$tree, $people] = arrangeAuthorWithTwin(function (Tree $tree): array {
         $jan = Person::factory()->for($tree)->create(['first_name' => 'Jan', 'last_name' => 'Nowak']);

@@ -254,6 +254,29 @@ test('contradicts on another known father by first name', function () {
         ->and($candidate->contradictions)->toBe(['ojciec: repo Piotr Nowak, drzewo Józef Nowak']);
 });
 
+test('does not count a parent or a spouse without a first name as agreeing', function () {
+    $tree = authorWithTwin(function (Tree $tree) {
+        $jan = treePerson($tree, 'Jan', 'Nowak');
+        withParents($jan, [
+            Person::factory()->for($tree)->create(['first_name' => null, 'last_name' => 'Nowak', 'gender' => Gender::Male]),
+            Person::factory()->for($tree)->create(['first_name' => null, 'last_name' => 'Wrona', 'gender' => Gender::Female]),
+        ]);
+        attachMarriage($jan, Person::factory()->for($tree)->create(['first_name' => null, 'last_name' => 'Lis']), 1825);
+    });
+
+    $match = matchFor(matchTemporaryRepo($tree, [
+        'O-0001' => "imiona: Jan\nnazwisko: Nowak\nrodzice:\n  ojciec: O-0002\n  matka: O-0003\nmalzenstwa:\n  - z: O-0004",
+        'O-0002' => "nazwisko: Nowak\nplec: M",
+        'O-0003' => "nazwisko: Wrona\nplec: K",
+        'O-0004' => "nazwisko: Lis\nmalzenstwa:\n  - z: O-0001",
+    ]), 'O-0001');
+
+    expect($match->candidates)->toHaveCount(1)
+        ->and($match->candidates[0]->agreeing)->toBe([])
+        ->and($match->candidates[0]->contradictions)->toBe([])
+        ->and($match->verdict)->toBe(MatchVerdict::Doubtful);
+});
+
 test('does not contradict on the same father with another surname', function () {
     $tree = authorWithTwin(function (Tree $tree) {
         $jan = treePerson($tree, 'Jan', 'Nowak');
@@ -352,13 +375,17 @@ test('describes the comparison in the block grammar', function () {
 
 test('refuses a tree that already holds a person from an import', function () {
     $author = User::factory()->create();
+    $other = User::factory()->create();
     treePerson($author->tree, 'Jan', 'Nowak');
+    $theirs = treePerson($other->tree, 'Jan', 'Nowak');
     Person::factory()->for($author->tree)->create(['first_name' => 'Anna', 'last_name' => 'Wrona', 'repo_id' => 'O-0007']);
 
     $matches = matchTemporaryRepo($author->tree, ['O-0001' => "imiona: Jan\nnazwisko: Nowak"]);
 
     expect($matches->blockedReason)->toContain('Drzewo konta ma już osoby z importu')
-        ->and($matches->matches)->toBe([]);
+        ->and($matches->matches)->toBe([])
+        ->and($theirs->fresh()->repo_id)->toBeNull()
+        ->and(matchFor(matchTemporaryRepo($other->tree, ['O-0001' => "imiona: Jan\nnazwisko: Nowak"]), 'O-0001')->candidates)->toHaveCount(1);
 });
 
 test('does not block on a person from an import in another account', function () {
