@@ -659,14 +659,14 @@ Dopasowanie ładuje osoby drzewa raz, z wydarzeniami, rodzicami i małżeństwam
 
 #### Automated
 
-- [x] 4.1 Testy komendy przechodzą: `vendor/bin/sail artisan test --compact tests/Feature/ImportResearchCommandTest.php`
-- [x] 4.2 Wszystkie testy importu przechodzą: `vendor/bin/sail artisan test --compact tests/Feature/ResearchRepoReadTest.php tests/Feature/ResearchPersonMatchTest.php tests/Feature/FirstImportPlanTest.php tests/Feature/FirstImportApplyTest.php tests/Unit/ResearchDateTest.php tests/Unit/NameKeyTest.php tests/Unit/YearSpanTest.php`
-- [x] 4.3 Pełny zestaw testów przechodzi: `vendor/bin/sail artisan test --compact`
-- [x] 4.4 Analiza statyczna przechodzi: `vendor/bin/sail composer types:check`
-- [x] 4.5 Formatowanie: `vendor/bin/sail bin pint --dirty --format agent`
+- [x] 4.1 Testy komendy przechodzą: `vendor/bin/sail artisan test --compact tests/Feature/ImportResearchCommandTest.php` — 42bb0db
+- [x] 4.2 Wszystkie testy importu przechodzą: `vendor/bin/sail artisan test --compact tests/Feature/ResearchRepoReadTest.php tests/Feature/ResearchPersonMatchTest.php tests/Feature/FirstImportPlanTest.php tests/Feature/FirstImportApplyTest.php tests/Unit/ResearchDateTest.php tests/Unit/NameKeyTest.php tests/Unit/YearSpanTest.php` — 42bb0db
+- [x] 4.3 Pełny zestaw testów przechodzi: `vendor/bin/sail artisan test --compact` — 42bb0db
+- [x] 4.4 Analiza statyczna przechodzi: `vendor/bin/sail composer types:check` — 42bb0db
+- [x] 4.5 Formatowanie: `vendor/bin/sail bin pint --dirty --format agent` — 42bb0db
 
 #### Manual
 
-- [x] 4.6 Przebieg `test-pack` przeciw drzewu dev z ręcznymi osobami (odpowiedź „nie” na końcu): tabela pewnych i porównania wątpliwych są czytelne w terminalu, etykiety opcji się nie ucinają, a werdykty zgadzają się z oceną autora
-- [x] 4.7 Ten sam przebieg z odpowiedzią „tak” po lokalnej kopii bazy: dopasowane osoby zachowują zdjęcie, notatkę (z dopisanym blokiem), źródła i miejscowości; nowe osoby są w drzewie z relacjami do dopasowanych; bazę potem przywrócono z kopii
-- [x] 4.8 Ponowne uruchomienie po zapisie kończy się odmową „ponowny import — S-04”
+- [x] 4.6 Przebieg `test-pack` przeciw drzewu dev z ręcznymi osobami (odpowiedź „nie” na końcu): tabela pewnych i porównania wątpliwych są czytelne w terminalu, etykiety opcji się nie ucinają, a werdykty zgadzają się z oceną autora — 42bb0db
+- [x] 4.7 Ten sam przebieg z odpowiedzią „tak” po lokalnej kopii bazy: dopasowane osoby zachowują zdjęcie, notatkę (z dopisanym blokiem), źródła i miejscowości; nowe osoby są w drzewie z relacjami do dopasowanych; bazę potem przywrócono z kopii — 42bb0db
+- [x] 4.8 Ponowne uruchomienie po zapisie kończy się odmową „ponowny import — S-04” — 42bb0db
