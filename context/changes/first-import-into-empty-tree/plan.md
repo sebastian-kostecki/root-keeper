@@ -497,18 +497,18 @@ Podmiana `backup:run` w teście: zastępcza komenda `Artisan::command('backup:ru
 
 #### Automated
 
-- [x] 2.1 Testy planowania i dat przechodzą: `vendor/bin/sail artisan test --compact tests/Feature/FirstImportPlanTest.php tests/Unit/ResearchDateTest.php`
-- [x] 2.2 Testy odczytu S-01 przechodzą bez zmian: `vendor/bin/sail artisan test --compact tests/Feature/ResearchRepoReadTest.php`
-- [x] 2.3 Analiza statyczna przechodzi: `vendor/bin/sail composer types:check`
-- [x] 2.4 Formatowanie: `vendor/bin/sail bin pint --dirty --format agent`
+- [x] 2.1 Testy planowania i dat przechodzą: `vendor/bin/sail artisan test --compact tests/Feature/FirstImportPlanTest.php tests/Unit/ResearchDateTest.php` — 12539b9
+- [x] 2.2 Testy odczytu S-01 przechodzą bez zmian: `vendor/bin/sail artisan test --compact tests/Feature/ResearchRepoReadTest.php` — 12539b9
+- [x] 2.3 Analiza statyczna przechodzi: `vendor/bin/sail composer types:check` — 12539b9
+- [x] 2.4 Formatowanie: `vendor/bin/sail bin pint --dirty --format agent` — 12539b9
 
 ### Phase 3: Zapis importu
 
 #### Automated
 
-- [ ] 3.1 Testy zapisu przechodzą: `vendor/bin/sail artisan test --compact tests/Feature/FirstImportApplyTest.php`
-- [ ] 3.2 Analiza statyczna przechodzi: `vendor/bin/sail composer types:check`
-- [ ] 3.3 Formatowanie: `vendor/bin/sail bin pint --dirty --format agent`
+- [x] 3.1 Testy zapisu przechodzą: `vendor/bin/sail artisan test --compact tests/Feature/FirstImportApplyTest.php`
+- [x] 3.2 Analiza statyczna przechodzi: `vendor/bin/sail composer types:check`
+- [x] 3.3 Formatowanie: `vendor/bin/sail bin pint --dirty --format agent`
 
 ### Phase 4: Komenda — podsumowanie, zgoda, kopia, zapis
 
