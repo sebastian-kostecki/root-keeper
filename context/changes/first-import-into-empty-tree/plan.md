@@ -102,6 +102,7 @@ Weryfikacja:
   - rodzica o sprzecznej płci (`kos_ewa.md`: `ojciec: O-0003` to Marta Lis, K),
   - małżeństwo zapisane tylko po jednej stronie (`wrona_adam.md` ↔ `kos_ewa.md`),
   - implex (`kos_katarzyna.md`: `[5, 15]`).
+- Import tworzy urodzenie i zgon tylko przy kluczu w bloku, a `CreatePerson` zawsze tworzy urodzenie (także puste). Osoba z importu może więc nie mieć urodzenia. Aplikacja to znosi (`UpdatePerson::putEvent` dopisuje brakujące), a urodzenie dopisane później w aplikacji ma `repo_id = null` (przegląd S-02, F3).
 - Test S-01 „writes nothing for either account” (`tests/Feature/ImportResearchCommandTest.php:41`) używa autora z osobami w drzewie. Po tej zmianie to przypadek odmowy, więc test dalej dowodzi braku zapisu, ale z innego powodu.
 
 ## What We're NOT Doing

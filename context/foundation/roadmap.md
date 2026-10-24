@@ -137,6 +137,7 @@ Brak. Każdy element przekrojowy wchodzi w pierwszym wycinku, który go używa: 
   - Jak wygląda podgląd w terminalu przy dziesiątkach zmian i konfliktów? (PRD Otwarte pytania 4, wspólne z `S-03`) Owner: autor. Block: yes.
   - Na jakim poziomie aplikacja pamięta „zmienione od ostatniego importu” (pole, rekord)? Owner: `/10x-plan`. Block: no.
 - **Risk:** Główne ryzyko wskazane przez autora — ręczna poprawka znika po imporcie. Pola dodane w późniejszych wycinkach (`S-05` – `S-09`) wchodzą do tego samego podglądu zmian; jeśli `S-04` wyląduje przed nimi, każdy z nich rozszerza podgląd o swoje pole.
+- **Uwaga z przeglądu S-02 (F3):** osoba z importu może nie mieć urodzenia (import tworzy wydarzenie tylko przy kluczu w bloku). Urodzenie dopisane potem w aplikacji ma `repo_id = null`, więc nie jest zmianą z repo, a gdy repo później doda `urodzenie`, `S-04` musi zdecydować: uzupełnić ręczne wydarzenie czy pokazać konflikt.
 - **Status:** blocked
 
 ### S-05: Miejsca z repo dopasowane do spisu
