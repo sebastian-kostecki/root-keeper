@@ -5,17 +5,29 @@ namespace App\Support\Import;
 final readonly class FirstImportPlan
 {
     /**
-     * @param  list<PlannedPerson>  $persons
-     * @param  list<PlannedRelation>  $relations
-     * @param  list<PlannedMarriage>  $marriages
+     * @param  list<PlannedPerson>  $persons  persons added as new
+     * @param  list<PlannedMatch>  $matched  persons of the tree that the repo person is matched to
+     * @param  list<ImportIssue>  $skippedPersons
+     * @param  list<PlannedRelation>  $relations  new pairs and existing ones that only get the repo id
      * @param  list<ImportIssue>  $skippedRelations
+     * @param  list<PlannedMarriage>  $marriages  new weddings and existing ones that only get the repo id
+     * @param  list<ImportIssue>  $skippedMarriages
+     * @param  list<ImportIssue>  $skippedValues  repo values left out, e.g. a gender that would give a child two parents of one sex
+     * @param  list<ValueConflict>  $conflicts  every conflict of the matches and the weddings
+     * @param  int  $births  births written: of new persons and the missing ones of matched persons
+     * @param  int  $weddings  new weddings
      * @param  array<string, int>  $datesByQualifier  keyed by DateQualifier value, only qualifiers that occur
      */
     public function __construct(
         public array $persons,
+        public array $matched,
+        public array $skippedPersons,
         public array $relations,
-        public array $marriages,
         public array $skippedRelations,
+        public array $marriages,
+        public array $skippedMarriages,
+        public array $skippedValues,
+        public array $conflicts,
         public int $births,
         public int $deaths,
         public int $weddings,
@@ -25,4 +37,22 @@ final readonly class FirstImportPlan
         public ?ResearchPerson $probandHint,
         public ?string $blockedReason,
     ) {}
+
+    /**
+     * Values the repo adds to empty fields of matched persons and existing weddings.
+     */
+    public function fillCount(): int
+    {
+        $fills = 0;
+
+        foreach ($this->matched as $match) {
+            $fills += count($match->fills);
+        }
+
+        foreach ($this->marriages as $marriage) {
+            $fills += $marriage->dateFill === null ? 0 : 1;
+        }
+
+        return $fills;
+    }
 }

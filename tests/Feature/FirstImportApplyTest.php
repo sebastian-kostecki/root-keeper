@@ -15,6 +15,7 @@ use App\Models\Tree;
 use App\Models\User;
 use App\Support\Import\FirstImportPlan;
 use App\Support\Import\FirstImportResult;
+use App\Support\Import\IdentityDecisions;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 
@@ -41,7 +42,7 @@ function planFixtureForApply(Tree $tree): FirstImportPlan
 {
     $reading = app(ReadResearchRepo::class)->handle(base_path('tests/Fixtures/research-repo'));
 
-    return app(PlanFirstImport::class)->handle($tree, $reading);
+    return app(PlanFirstImport::class)->handle($tree, $reading, IdentityDecisions::allNew($reading));
 }
 
 function importedPerson(Tree $tree, string $repoId): Person

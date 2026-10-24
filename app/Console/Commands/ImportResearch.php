@@ -9,6 +9,7 @@ use App\Enums\DateQualifier;
 use App\Models\User;
 use App\Support\Import\FirstImportPlan;
 use App\Support\Import\FirstImportResult;
+use App\Support\Import\IdentityDecisions;
 use App\Support\Import\ImportIssue;
 use App\Support\Import\ResearchRepoReading;
 use Illuminate\Console\Attributes\Description;
@@ -23,6 +24,8 @@ use Throwable;
 #[Description('Zaimportuj przodków z repo badawczego do pustego drzewa konta')]
 class ImportResearch extends Command
 {
+    private const BLOCKED_REASON = 'Drzewo konta ma już osoby. Import do drzewa z osobami (dopasowanie — S-03, ponowny import — S-04) jeszcze nie działa; nic nie zostanie zapisane.';
+
     public function handle(ReadResearchRepo $readResearchRepo, PlanFirstImport $planFirstImport, ApplyFirstImport $applyFirstImport): int
     {
         $email = (string) $this->argument('email');
@@ -52,7 +55,13 @@ class ImportResearch extends Command
 
         $this->report($email, $path, $reading);
 
-        $plan = $planFirstImport->handle($user->tree, $reading);
+        if ($user->tree->people()->exists()) {
+            $this->error(self::BLOCKED_REASON);
+
+            return self::FAILURE;
+        }
+
+        $plan = $planFirstImport->handle($user->tree, $reading, IdentityDecisions::allNew($reading));
 
         $this->summary($plan);
 

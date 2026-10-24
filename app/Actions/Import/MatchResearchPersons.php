@@ -2,7 +2,6 @@
 
 namespace App\Actions\Import;
 
-use App\Enums\DateQualifier;
 use App\Enums\EventType;
 use App\Enums\Gender;
 use App\Enums\MatchElement;
@@ -359,14 +358,6 @@ class MatchResearchPersons
      */
     private function eventDateLabel(?Event $event): string
     {
-        if ($event === null || $event->date_year === null) {
-            return self::EMPTY_VALUE;
-        }
-
-        $qualifier = $event->date_qualifier === DateQualifier::Range && $event->date_until_year === null
-            ? DateQualifier::Exact
-            : $event->date_qualifier;
-
-        return (new ResearchDate($qualifier, $event->date_year, $event->date_month, $event->date_day, $event->date_until_year))->label();
+        return ResearchDate::fromEvent($event)?->label() ?? self::EMPTY_VALUE;
     }
 }

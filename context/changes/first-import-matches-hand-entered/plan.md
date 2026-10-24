@@ -633,18 +633,18 @@ Dopasowanie ładuje osoby drzewa raz, z wydarzeniami, rodzicami i małżeństwam
 
 #### Automated
 
-- [x] 1.1 Testy dopasowania przechodzą: `vendor/bin/sail artisan test --compact tests/Unit/NameKeyTest.php tests/Unit/YearSpanTest.php tests/Feature/ResearchPersonMatchTest.php`
-- [x] 1.2 Analiza statyczna przechodzi: `vendor/bin/sail composer types:check`
-- [x] 1.3 Formatowanie: `vendor/bin/sail bin pint --dirty --format agent`
+- [x] 1.1 Testy dopasowania przechodzą: `vendor/bin/sail artisan test --compact tests/Unit/NameKeyTest.php tests/Unit/YearSpanTest.php tests/Feature/ResearchPersonMatchTest.php` — 222abdb
+- [x] 1.2 Analiza statyczna przechodzi: `vendor/bin/sail composer types:check` — 222abdb
+- [x] 1.3 Formatowanie: `vendor/bin/sail bin pint --dirty --format agent` — 222abdb
 
 ### Phase 2: Plan importu z decyzjami
 
 #### Automated
 
-- [ ] 2.1 Testy planowania przechodzą: `vendor/bin/sail artisan test --compact tests/Feature/FirstImportPlanTest.php tests/Feature/ResearchPersonMatchTest.php`
-- [ ] 2.2 Testy odczytu S-01 przechodzą bez zmian: `vendor/bin/sail artisan test --compact tests/Feature/ResearchRepoReadTest.php`
-- [ ] 2.3 Analiza statyczna przechodzi: `vendor/bin/sail composer types:check`
-- [ ] 2.4 Formatowanie: `vendor/bin/sail bin pint --dirty --format agent`
+- [x] 2.1 Testy planowania przechodzą: `vendor/bin/sail artisan test --compact tests/Feature/FirstImportPlanTest.php tests/Feature/ResearchPersonMatchTest.php`
+- [x] 2.2 Testy odczytu S-01 przechodzą bez zmian: `vendor/bin/sail artisan test --compact tests/Feature/ResearchRepoReadTest.php`
+- [x] 2.3 Analiza statyczna przechodzi: `vendor/bin/sail composer types:check`
+- [x] 2.4 Formatowanie: `vendor/bin/sail bin pint --dirty --format agent`
 
 ### Phase 3: Zapis importu do drzewa z ręcznymi osobami
 

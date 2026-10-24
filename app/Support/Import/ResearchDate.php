@@ -3,6 +3,7 @@
 namespace App\Support\Import;
 
 use App\Enums\DateQualifier;
+use App\Models\Event;
 
 final readonly class ResearchDate
 {
@@ -66,6 +67,22 @@ final readonly class ResearchDate
         }
 
         return new self($qualifier, $year, $month, $day);
+    }
+
+    /**
+     * The date of a stored event, `null` when it has no year. A range without an end year is read as an exact date.
+     */
+    public static function fromEvent(?Event $event): ?self
+    {
+        if ($event === null || $event->date_year === null) {
+            return null;
+        }
+
+        $qualifier = $event->date_qualifier === DateQualifier::Range && $event->date_until_year === null
+            ? DateQualifier::Exact
+            : $event->date_qualifier;
+
+        return new self($qualifier, $event->date_year, $event->date_month, $event->date_day, $event->date_until_year);
     }
 
     /**
