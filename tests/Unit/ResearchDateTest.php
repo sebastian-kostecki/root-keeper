@@ -61,3 +61,15 @@ test('rejects text outside the grammar', function () {
         ->and(ResearchDate::parse(''))->toBeNull()
         ->and(ResearchDate::parse('ok. ok. 1800'))->toBeNull();
 });
+
+test('writes a date back in the block grammar', function (string $value) {
+    expect(ResearchDate::parse($value)->label())->toBe($value);
+})->with([
+    'exact day' => '1801-05-12',
+    'exact month' => '1801-05',
+    'exact year' => '1801',
+    'approximate' => 'ok. 1825',
+    'before' => 'przed 1770',
+    'after' => 'po 1730-02',
+    'range' => 'między 1760 a 1765',
+]);

@@ -488,19 +488,19 @@ Podmiana `backup:run` w teście: zastępcza komenda `Artisan::command('backup:ru
 
 #### Automated
 
-- [x] 1.1 Migracja i jej cofnięcie działają: `vendor/bin/sail artisan migrate` oraz `vendor/bin/sail artisan migrate:rollback --step=1 && vendor/bin/sail artisan migrate`
-- [x] 1.2 Analiza statyczna przechodzi: `vendor/bin/sail composer types:check`
-- [x] 1.3 Formatowanie: `vendor/bin/sail bin pint --dirty --format agent`
-- [x] 1.4 Dotychczasowe testy osób, relacji i drzewa przechodzą: `vendor/bin/sail artisan test --compact tests/Feature/PersonsTest.php tests/Feature/ParentChildRelationsTest.php tests/Feature/MarriagesTest.php tests/Feature/TreeTest.php tests/Feature/AncestorsTest.php`
+- [x] 1.1 Migracja i jej cofnięcie działają: `vendor/bin/sail artisan migrate` oraz `vendor/bin/sail artisan migrate:rollback --step=1 && vendor/bin/sail artisan migrate` — ce58d82
+- [x] 1.2 Analiza statyczna przechodzi: `vendor/bin/sail composer types:check` — ce58d82
+- [x] 1.3 Formatowanie: `vendor/bin/sail bin pint --dirty --format agent` — ce58d82
+- [x] 1.4 Dotychczasowe testy osób, relacji i drzewa przechodzą: `vendor/bin/sail artisan test --compact tests/Feature/PersonsTest.php tests/Feature/ParentChildRelationsTest.php tests/Feature/MarriagesTest.php tests/Feature/TreeTest.php tests/Feature/AncestorsTest.php` — ce58d82
 
 ### Phase 2: Planowanie importu
 
 #### Automated
 
-- [ ] 2.1 Testy planowania i dat przechodzą: `vendor/bin/sail artisan test --compact tests/Feature/FirstImportPlanTest.php tests/Unit/ResearchDateTest.php`
-- [ ] 2.2 Testy odczytu S-01 przechodzą bez zmian: `vendor/bin/sail artisan test --compact tests/Feature/ResearchRepoReadTest.php`
-- [ ] 2.3 Analiza statyczna przechodzi: `vendor/bin/sail composer types:check`
-- [ ] 2.4 Formatowanie: `vendor/bin/sail bin pint --dirty --format agent`
+- [x] 2.1 Testy planowania i dat przechodzą: `vendor/bin/sail artisan test --compact tests/Feature/FirstImportPlanTest.php tests/Unit/ResearchDateTest.php`
+- [x] 2.2 Testy odczytu S-01 przechodzą bez zmian: `vendor/bin/sail artisan test --compact tests/Feature/ResearchRepoReadTest.php`
+- [x] 2.3 Analiza statyczna przechodzi: `vendor/bin/sail composer types:check`
+- [x] 2.4 Formatowanie: `vendor/bin/sail bin pint --dirty --format agent`
 
 ### Phase 3: Zapis importu
 

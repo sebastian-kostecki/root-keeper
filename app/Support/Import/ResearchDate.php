@@ -68,6 +68,30 @@ final readonly class ResearchDate
         return new self($qualifier, $year, $month, $day);
     }
 
+    /**
+     * The date in the block grammar, the inverse of parse().
+     */
+    public function label(): string
+    {
+        $text = sprintf('%04d', $this->year);
+
+        if ($this->month !== null) {
+            $text .= sprintf('-%02d', $this->month);
+
+            if ($this->day !== null) {
+                $text .= sprintf('-%02d', $this->day);
+            }
+        }
+
+        return match ($this->qualifier) {
+            DateQualifier::Exact => $text,
+            DateQualifier::Approximate => 'ok. '.$text,
+            DateQualifier::Before => 'przed '.$text,
+            DateQualifier::After => 'po '.$text,
+            DateQualifier::Range => sprintf('między %04d a %04d', $this->year, (int) $this->untilYear),
+        };
+    }
+
     private static function isYearInRange(int $year): bool
     {
         return $year >= self::FIRST_YEAR && $year <= (int) date('Y');
