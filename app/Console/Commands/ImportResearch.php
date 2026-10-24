@@ -7,6 +7,7 @@ use App\Actions\Import\PlanFirstImport;
 use App\Actions\Import\ReadResearchRepo;
 use App\Enums\DateQualifier;
 use App\Models\User;
+use App\Support\Import\ConflictResolutions;
 use App\Support\Import\FirstImportPlan;
 use App\Support\Import\FirstImportResult;
 use App\Support\Import\IdentityDecisions;
@@ -95,7 +96,7 @@ class ImportResearch extends Command
         }
 
         try {
-            $result = $applyFirstImport->handle($user->tree, $plan);
+            $result = $applyFirstImport->handle($user->tree, $plan, new ConflictResolutions);
         } catch (Throwable $exception) {
             report($exception);
             $this->error($exception->getMessage());

@@ -641,19 +641,19 @@ Dopasowanie ładuje osoby drzewa raz, z wydarzeniami, rodzicami i małżeństwam
 
 #### Automated
 
-- [x] 2.1 Testy planowania przechodzą: `vendor/bin/sail artisan test --compact tests/Feature/FirstImportPlanTest.php tests/Feature/ResearchPersonMatchTest.php`
-- [x] 2.2 Testy odczytu S-01 przechodzą bez zmian: `vendor/bin/sail artisan test --compact tests/Feature/ResearchRepoReadTest.php`
-- [x] 2.3 Analiza statyczna przechodzi: `vendor/bin/sail composer types:check`
-- [x] 2.4 Formatowanie: `vendor/bin/sail bin pint --dirty --format agent`
+- [x] 2.1 Testy planowania przechodzą: `vendor/bin/sail artisan test --compact tests/Feature/FirstImportPlanTest.php tests/Feature/ResearchPersonMatchTest.php` — 83daa76
+- [x] 2.2 Testy odczytu S-01 przechodzą bez zmian: `vendor/bin/sail artisan test --compact tests/Feature/ResearchRepoReadTest.php` — 83daa76
+- [x] 2.3 Analiza statyczna przechodzi: `vendor/bin/sail composer types:check` — 83daa76
+- [x] 2.4 Formatowanie: `vendor/bin/sail bin pint --dirty --format agent` — 83daa76
 
 ### Phase 3: Zapis importu do drzewa z ręcznymi osobami
 
 #### Automated
 
-- [ ] 3.1 Testy zapisu przechodzą: `vendor/bin/sail artisan test --compact tests/Feature/FirstImportApplyTest.php`
-- [ ] 3.2 Testy reguły płci rodzica przechodzą bez zmian: `vendor/bin/sail artisan test --compact tests/Feature/PersonsTest.php tests/Feature/ParentChildRelationsTest.php`
-- [ ] 3.3 Analiza statyczna przechodzi: `vendor/bin/sail composer types:check`
-- [ ] 3.4 Formatowanie: `vendor/bin/sail bin pint --dirty --format agent`
+- [x] 3.1 Testy zapisu przechodzą: `vendor/bin/sail artisan test --compact tests/Feature/FirstImportApplyTest.php`
+- [x] 3.2 Testy reguły płci rodzica przechodzą bez zmian: `vendor/bin/sail artisan test --compact tests/Feature/PersonsTest.php tests/Feature/ParentChildRelationsTest.php`
+- [x] 3.3 Analiza statyczna przechodzi: `vendor/bin/sail composer types:check`
+- [x] 3.4 Formatowanie: `vendor/bin/sail bin pint --dirty --format agent`
 
 ### Phase 4: Komenda — podgląd dopasowań i konfliktów w terminalu
 

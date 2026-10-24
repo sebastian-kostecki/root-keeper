@@ -7,15 +7,21 @@ use App\Actions\Relations\CreateMarriage;
 use App\Enums\DateQualifier;
 use App\Enums\EventType;
 use App\Enums\Gender;
+use App\Enums\MarriageForm;
 use App\Enums\ParticipantRole;
 use App\Models\Event;
+use App\Models\Locality;
 use App\Models\ParentChildRelation;
 use App\Models\Person;
+use App\Models\Residence;
+use App\Models\Source;
 use App\Models\Tree;
 use App\Models\User;
+use App\Support\Import\ConflictResolutions;
 use App\Support\Import\FirstImportPlan;
 use App\Support\Import\FirstImportResult;
 use App\Support\Import\IdentityDecisions;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 
@@ -59,7 +65,7 @@ test('writes persons with repo id, names, gender and note', function () {
     $tree = arrangeApplyUsers();
     $plan = planFixtureForApply($tree);
 
-    $result = app(ApplyFirstImport::class)->handle($tree, $plan);
+    $result = app(ApplyFirstImport::class)->handle($tree, $plan, new ConflictResolutions);
 
     $jan = importedPerson($tree, 'O-0001');
 
@@ -77,7 +83,7 @@ test('writes persons with repo id, names, gender and note', function () {
 test('writes births and deaths with every kind of date and the person as subject', function () {
     $tree = arrangeApplyUsers();
 
-    $result = app(ApplyFirstImport::class)->handle($tree, planFixtureForApply($tree));
+    $result = app(ApplyFirstImport::class)->handle($tree, planFixtureForApply($tree), new ConflictResolutions);
 
     $birth = importedEvent($tree, 'O-0001/urodzenie');
     $range = importedEvent($tree, 'O-0002/urodzenie');
@@ -108,7 +114,7 @@ test('writes births and deaths with every kind of date and the person as subject
 test('writes approximate dates through the qualifier', function () {
     $tree = arrangeApplyUsers();
 
-    app(ApplyFirstImport::class)->handle($tree, planFixtureForApply($tree));
+    app(ApplyFirstImport::class)->handle($tree, planFixtureForApply($tree), new ConflictResolutions);
 
     $wedding = importedEvent($tree, 'O-0001+O-0004/slub');
 
@@ -119,7 +125,7 @@ test('writes approximate dates through the qualifier', function () {
 test('writes relations with repo id and skips the one with a conflicting gender', function () {
     $tree = arrangeApplyUsers();
 
-    $result = app(ApplyFirstImport::class)->handle($tree, planFixtureForApply($tree));
+    $result = app(ApplyFirstImport::class)->handle($tree, planFixtureForApply($tree), new ConflictResolutions);
 
     $keys = $tree->parentChildRelations()->orderBy('repo_id')->pluck('repo_id')->all();
     $relation = $tree->parentChildRelations()->where('repo_id', 'O-0002>O-0001')->firstOrFail();
@@ -134,7 +140,7 @@ test('writes relations with repo id and skips the one with a conflicting gender'
 test('writes marriages with both spouses, the date and repo id', function () {
     $tree = arrangeApplyUsers();
 
-    $result = app(ApplyFirstImport::class)->handle($tree, planFixtureForApply($tree));
+    $result = app(ApplyFirstImport::class)->handle($tree, planFixtureForApply($tree), new ConflictResolutions);
 
     $wedding = importedEvent($tree, 'O-0002+O-0003/slub');
     $spouses = $wedding->participants()->get();
@@ -151,7 +157,7 @@ test('writes marriages with both spouses, the date and repo id', function () {
 test('leaves the proband unset', function () {
     $tree = arrangeApplyUsers();
 
-    app(ApplyFirstImport::class)->handle($tree, planFixtureForApply($tree));
+    app(ApplyFirstImport::class)->handle($tree, planFixtureForApply($tree), new ConflictResolutions);
 
     expect($tree->fresh()->root_person_id)->toBeNull();
 });
@@ -162,7 +168,7 @@ test('writes only into the author tree and leaves the other account untouched', 
     $plan = planFixtureForApply($tree);
     $before = databaseRows();
 
-    app(ApplyFirstImport::class)->handle($tree, $plan);
+    app(ApplyFirstImport::class)->handle($tree, $plan, new ConflictResolutions);
 
     $diff = rowDiff($before, databaseRows());
 
@@ -190,25 +196,39 @@ test('writes only into the author tree and leaves the other account untouched', 
 
 test('refuses a plan that is blocked', function () {
     $tree = arrangeApplyUsers();
-    Person::factory()->for($tree)->create();
+    Person::factory()->for($tree)->create(['repo_id' => 'O-0001']);
     $plan = planFixtureForApply($tree);
     $before = ownershipSnapshot();
 
-    expect(fn () => app(ApplyFirstImport::class)->handle($tree, $plan))->toThrow(RuntimeException::class, 'Drzewo konta ma już osoby')
+    expect($plan->blockedReason)->not->toBeNull()
+        ->and(fn () => app(ApplyFirstImport::class)->handle($tree, $plan, new ConflictResolutions))->toThrow(RuntimeException::class, 'Drzewo konta ma już osoby z importu')
         ->and(ownershipSnapshot())->toBe($before);
 });
 
-test('refuses a tree that got a person after planning and writes nothing', function () {
+test('writes into a tree that got a hand-entered person after planning', function () {
     $tree = arrangeApplyUsers();
     $plan = planFixtureForApply($tree);
     expect($plan->blockedReason)->toBeNull();
 
-    Person::factory()->for($tree)->create(['first_name' => 'Dodana', 'last_name' => 'Ręcznie']);
+    $added = Person::factory()->for($tree)->create(['first_name' => 'Dodana', 'last_name' => 'Ręcznie']);
+
+    app(ApplyFirstImport::class)->handle($tree, $plan, new ConflictResolutions);
+
+    expect($tree->people()->count())->toBe(14)
+        ->and($added->fresh()->repo_id)->toBeNull()
+        ->and($tree->people()->whereNotNull('repo_id')->count())->toBe(13);
+});
+
+test('refuses a tree that got a person from an import after planning and writes nothing', function () {
+    $tree = arrangeApplyUsers();
+    $plan = planFixtureForApply($tree);
+    expect($plan->blockedReason)->toBeNull();
+
+    Person::factory()->for($tree)->create(['first_name' => 'Dodana', 'last_name' => 'Z importu', 'repo_id' => 'O-0900']);
     $before = ownershipSnapshot();
 
-    expect(fn () => app(ApplyFirstImport::class)->handle($tree, $plan))->toThrow(RuntimeException::class)
-        ->and(ownershipSnapshot())->toBe($before)
-        ->and($tree->people()->whereNotNull('repo_id')->count())->toBe(0);
+    expect(fn () => app(ApplyFirstImport::class)->handle($tree, $plan, new ConflictResolutions))->toThrow(RuntimeException::class, 'Drzewo konta ma już osoby z importu')
+        ->and(ownershipSnapshot())->toBe($before);
 });
 
 test('rolls everything back when a step in the middle fails', function () {
@@ -220,9 +240,367 @@ test('rolls everything back when a step in the middle fails', function () {
         $mock->shouldReceive('handle')->andThrow(ValidationException::withMessages(['spouse_id' => 'Ta para ma już małżeństwo.']));
     });
 
-    expect(fn () => app(ApplyFirstImport::class)->handle($tree, $plan))->toThrow(ValidationException::class)
+    expect(fn () => app(ApplyFirstImport::class)->handle($tree, $plan, new ConflictResolutions))->toThrow(ValidationException::class)
         ->and(ownershipSnapshot())->toBe($before)
         ->and($tree->people()->count())->toBe(0)
         ->and($tree->events()->count())->toBe(0)
         ->and(ParentChildRelation::where('tree_id', $tree->id)->count())->toBe(0);
+});
+
+/**
+ * Hand-entered persons named like the fixture ones, with data the import must keep: Jan Nowak (birth 1801 at Zalesie
+ * with a source and an entry number, a photo, a residence, a note), Piotr Nowak (father of Jan, birth 1762), Anna Wrona
+ * (a male by mistake, a note about her married name) and a wedding of Jan and Anna in 1830 at Zalesie.
+ *
+ * @return array<string, Person|Event|Locality|Source>
+ */
+function arrangeHandEnteredTree(Tree $tree): array
+{
+    $zalesie = Locality::factory()->create(['tree_id' => $tree->id, 'name' => 'Zalesie']);
+    $source = Source::factory()->create(['tree_id' => $tree->id]);
+
+    $jan = Person::factory()->for($tree)->create([
+        'first_name' => 'Jan',
+        'last_name' => 'Nowak',
+        'note' => 'Nazwisko po mężu: Kowalski',
+        'photo_path' => "persons/{$tree->id}/jan.jpg",
+    ]);
+    $piotr = Person::factory()->for($tree)->create(['first_name' => 'Piotr', 'last_name' => 'Nowak']);
+    $anna = Person::factory()->male()->for($tree)->create(['first_name' => 'Anna', 'last_name' => 'Wrona', 'note' => 'Nazwisko po mężu: Kowalska']);
+
+    $birth = Event::factory()->for($tree)->birth()->create([
+        'date_year' => 1801,
+        'date_month' => null,
+        'date_day' => null,
+        'locality_id' => $zalesie->id,
+    ]);
+    $birth->participants()->attach($jan, ['role' => ParticipantRole::Subject]);
+    $birth->sources()->attach($source, ['entry_number' => '47']);
+
+    attachBirth($piotr, 1762);
+    attachBirth($anna);
+    Residence::factory()->create(['person_id' => $jan->id, 'locality_id' => $zalesie->id, 'year_from' => 1820]);
+    linkParent($piotr, $jan);
+
+    $wedding = attachMarriage($jan, $anna, 1830, locality: $zalesie);
+    $wedding->update(['marriage_form' => MarriageForm::Religious]);
+
+    return compact('zalesie', 'source', 'jan', 'piotr', 'anna', 'birth', 'wedding');
+}
+
+/**
+ * An author and another account with the same hand-entered persons.
+ *
+ * @return array{0: Tree, 1: array<string, Person|Event|Locality|Source>}
+ */
+function arrangeHandEnteredAuthor(): array
+{
+    $other = User::factory()->create();
+    $author = User::factory()->create();
+
+    arrangeHandEnteredTree($other->tree);
+
+    return [$author->tree, arrangeHandEnteredTree($author->tree)];
+}
+
+/**
+ * Plans the fixture repo with Jan, Piotr and Anna matched to the hand-entered persons.
+ *
+ * @param  array<string, Person|Event|Locality|Source>  $scene
+ */
+function planFixtureWithMatches(Tree $tree, array $scene): FirstImportPlan
+{
+    $reading = app(ReadResearchRepo::class)->handle(base_path('tests/Fixtures/research-repo'));
+    $matched = ['O-0001' => $scene['jan']->id, 'O-0002' => $scene['piotr']->id, 'O-0004' => $scene['anna']->id];
+    $new = array_values(array_diff(array_map(strval(...), array_keys($reading->persons)), array_keys($matched)));
+
+    return app(PlanFirstImport::class)->handle($tree, $reading, new IdentityDecisions($matched, [], $new));
+}
+
+/**
+ * Plans a throwaway repo built from person blocks for apply tests; the persons in `$matched` are matched, the rest new.
+ *
+ * @param  array<string, string>  $blocks  repo id => block body without id and version
+ * @param  array<string, Person>  $matched  repo id => the tree person it is
+ */
+function planBlocksForApply(Tree $tree, array $blocks, array $matched = []): FirstImportPlan
+{
+    $repo = sys_get_temp_dir().'/apply-repo-'.uniqid();
+    mkdir($repo.'/drzewo', 0777, true);
+
+    foreach ($blocks as $id => $body) {
+        file_put_contents("{$repo}/drzewo/".strtolower($id).'.md', "---\nwersja: 1\nid: {$id}\n{$body}\n---\n");
+    }
+
+    try {
+        $reading = app(ReadResearchRepo::class)->handle($repo);
+    } finally {
+        File::deleteDirectory($repo);
+    }
+
+    return app(PlanFirstImport::class)->handle($tree, $reading, new IdentityDecisions(
+        array_map(fn (Person $person): int => $person->id, $matched),
+        [],
+        array_values(array_diff(array_keys($blocks), array_keys($matched))),
+    ));
+}
+
+/**
+ * @return list<string>
+ */
+function fieldsOfFills(FirstImportPlan $plan): array
+{
+    return array_map(fn ($fill): string => $fill->field, $plan->matched[0]->fills);
+}
+
+test('hooks the repo into a hand-entered person and keeps what the app holds', function () {
+    Storage::fake('local');
+    [$tree, $scene] = arrangeHandEnteredAuthor();
+    $plan = planFixtureWithMatches($tree, $scene);
+    $note = collect($plan->matched)->first(fn ($match) => $match->person->id === 'O-0001')->note;
+
+    $result = app(ApplyFirstImport::class)->handle($tree, $plan, new ConflictResolutions);
+
+    $jan = $scene['jan']->fresh();
+    $anna = $scene['anna']->fresh();
+    $birth = $scene['birth']->fresh();
+
+    expect($jan->repo_id)->toBe('O-0001')
+        ->and($jan->gender)->toBe(Gender::Male)
+        ->and($jan->note)->toBe("Nazwisko po mężu: Kowalski\n\n{$note}")
+        ->and($jan->photo_path)->toBe($scene['jan']->photo_path)
+        ->and($jan->residences()->count())->toBe(1)
+        ->and($birth->repo_id)->toBe('O-0001/urodzenie')
+        ->and([$birth->date_year, $birth->date_month, $birth->date_day])->toBe([1801, 5, 12])
+        ->and($birth->locality_id)->toBe($scene['zalesie']->id)
+        ->and($birth->sources()->get()->map(fn (Source $source) => [$source->id, $source->pivot->entry_number])->all())->toBe([[$scene['source']->id, '47']])
+        ->and($anna->note)->toStartWith("Nazwisko po mężu: Kowalska\n\nZ repo badawczego (O-0004):")
+        ->and($anna->repo_id)->toBe('O-0004')
+        ->and($result->matched)->toBe(3)
+        ->and($result->fills)->toBe($plan->fillCount());
+});
+
+test('sets the repo id on the persons that were matched and on no other hand-entered person', function () {
+    [$tree, $scene] = arrangeHandEnteredAuthor();
+    $bystander = Person::factory()->for($tree)->create(['first_name' => 'Jan', 'last_name' => 'Nowak']);
+
+    app(ApplyFirstImport::class)->handle($tree, planFixtureWithMatches($tree, $scene), new ConflictResolutions);
+
+    expect($bystander->fresh()->repo_id)->toBeNull()
+        ->and($tree->people()->whereNotNull('repo_id')->count())->toBe(13)
+        ->and($tree->people()->whereNull('repo_id')->count())->toBe(1);
+});
+
+test('keeps the value from the app for a conflict without an answer and for one settled for the app', function (array $choices) {
+    [$tree, $scene] = arrangeHandEnteredAuthor();
+    $plan = planFixtureWithMatches($tree, $scene);
+    expect(array_map(fn ($conflict) => $conflict->key, $plan->conflicts))->toBe(['O-0002/urodzenie/data', 'O-0004/plec', 'O-0001+O-0004/slub/data']);
+
+    $result = app(ApplyFirstImport::class)->handle($tree, $plan, new ConflictResolutions($choices));
+
+    $piotrBirth = $scene['piotr']->load('events')->birth();
+    $wedding = $scene['wedding']->fresh();
+
+    expect($scene['anna']->fresh()->gender)->toBe(Gender::Male)
+        ->and([$piotrBirth->date_year, $piotrBirth->date_qualifier])->toBe([1762, DateQualifier::Exact])
+        ->and([$wedding->date_year, $wedding->date_qualifier, $wedding->date_is_approximate])->toBe([1830, DateQualifier::Exact, false])
+        ->and($wedding->repo_id)->toBe('O-0001+O-0004/slub')
+        ->and($result->takenFromRepo)->toBe(0);
+})->with([
+    'no answers' => [[]],
+    'every answer for the app' => [['O-0002/urodzenie/data' => 'app', 'O-0004/plec' => 'app', 'O-0001+O-0004/slub/data' => 'app']],
+]);
+
+test('writes the value from the repo for a conflict settled for the repo and keeps the derived flag in line', function () {
+    [$tree, $scene] = arrangeHandEnteredAuthor();
+    $plan = planFixtureWithMatches($tree, $scene);
+    $resolutions = new ConflictResolutions([
+        'O-0002/urodzenie/data' => ConflictResolutions::FROM_REPO,
+        'O-0004/plec' => ConflictResolutions::FROM_REPO,
+        'O-0001+O-0004/slub/data' => ConflictResolutions::FROM_REPO,
+    ]);
+
+    $result = app(ApplyFirstImport::class)->handle($tree, $plan, $resolutions);
+
+    $piotrBirth = $scene['piotr']->load('events')->birth();
+    $wedding = $scene['wedding']->fresh();
+
+    expect($scene['anna']->fresh()->gender)->toBe(Gender::Female)
+        ->and([$piotrBirth->date_year, $piotrBirth->date_until_year, $piotrBirth->date_qualifier, $piotrBirth->date_is_approximate])->toBe([1760, 1765, DateQualifier::Range, false])
+        ->and([$wedding->date_year, $wedding->date_qualifier, $wedding->date_is_approximate])->toBe([1825, DateQualifier::Approximate, true])
+        ->and([$wedding->locality_id, $wedding->marriage_form])->toBe([$scene['zalesie']->id, MarriageForm::Religious])
+        ->and($result->takenFromRepo)->toBe(3);
+});
+
+test('marks the existing birth without a second one and creates the death that was missing', function () {
+    [$tree, $scene] = arrangeHandEnteredAuthor();
+
+    $result = app(ApplyFirstImport::class)->handle($tree, planFixtureWithMatches($tree, $scene), new ConflictResolutions);
+
+    $jan = $scene['jan']->load('events');
+    $death = $jan->death();
+
+    expect($jan->events->where('type', EventType::Birth))->toHaveCount(1)
+        ->and($jan->birth()->id)->toBe($scene['birth']->id)
+        ->and($death)->not->toBeNull()
+        ->and([$death->repo_id, $death->date_year])->toBe(['O-0001/zgon', 1870])
+        ->and($death->participants()->pluck('people.id')->all())->toBe([$jan->id])
+        ->and($scene['piotr']->load('events')->death()->repo_id)->toBe('O-0002/zgon')
+        ->and($tree->events()->where('repo_id', 'O-0001/urodzenie')->count())->toBe(1)
+        ->and($result->deaths)->toBe(2)
+        ->and($result->births)->toBe(3);
+});
+
+test('marks the relation and the wedding that are in the tree and creates the new ones around matched persons', function () {
+    [$tree, $scene] = arrangeHandEnteredAuthor();
+    $existingRelation = $tree->parentChildRelations()->firstOrFail();
+
+    $result = app(ApplyFirstImport::class)->handle($tree, planFixtureWithMatches($tree, $scene), new ConflictResolutions);
+
+    $marta = importedPerson($tree, 'O-0003');
+    $relations = $tree->parentChildRelations()->orderBy('id')->get();
+
+    expect($existingRelation->fresh()->repo_id)->toBe('O-0002>O-0001')
+        ->and($scene['wedding']->fresh()->repo_id)->toBe('O-0001+O-0004/slub')
+        ->and($tree->events()->where('type', EventType::Marriage)->count())->toBe(3)
+        ->and($tree->parentChildRelations()->where('child_id', $scene['jan']->id)->orderBy('id')->pluck('parent_id')->all())->toBe([$scene['piotr']->id, $marta->id])
+        ->and($relations->pluck('repo_id')->all())->toBe(['O-0002>O-0001', 'O-0003>O-0001', 'O-0005>O-0002'])
+        ->and(importedEvent($tree, 'O-0002+O-0003/slub')->participants()->pluck('people.id')->sort()->values()->all())->toBe(collect([$scene['piotr']->id, $marta->id])->sort()->values()->all())
+        ->and([$result->relations, $result->markedRelations, $result->marriages, $result->markedMarriages])->toBe([2, 1, 2, 1]);
+});
+
+test('leaves the relations of a matched child alone when the repo names another father', function () {
+    $other = User::factory()->create();
+    $author = User::factory()->create();
+    $parents = [];
+
+    foreach ([$other->tree, $author->tree] as $tree) {
+        $jan = Person::factory()->for($tree)->create(['first_name' => 'Jan', 'last_name' => 'Nowak']);
+        $adam = Person::factory()->male()->for($tree)->create(['first_name' => 'Adam', 'last_name' => 'Nowak']);
+        linkParent($adam, $jan);
+        $parents[$tree->id] = [$jan, $adam];
+    }
+
+    [$jan, $adam] = $parents[$author->tree->id];
+    $plan = planBlocksForApply($author->tree, [
+        'O-0001' => "imiona: Jan\nnazwisko: Nowak\nrodzice:\n  ojciec: O-0002",
+        'O-0002' => "imiona: Piotr\nnazwisko: Nowak\nplec: M",
+    ], ['O-0001' => $jan]);
+
+    app(ApplyFirstImport::class)->handle($author->tree, $plan, new ConflictResolutions);
+
+    expect($author->tree->parentChildRelations()->where('child_id', $jan->id)->pluck('parent_id')->all())->toBe([$adam->id])
+        ->and($plan->skippedRelations)->toHaveCount(1)
+        ->and(importedPerson($author->tree, 'O-0002')->first_name)->toBe('Piotr');
+});
+
+test('changes only rows of the author tree and removes nothing when it hooks the repo into hand-entered persons', function () {
+    Storage::fake('local');
+    [$tree, $scene] = arrangeHandEnteredAuthor();
+    $plan = planFixtureWithMatches($tree, $scene);
+    $resolutions = new ConflictResolutions(['O-0002/urodzenie/data' => 'repo', 'O-0001+O-0004/slub/data' => 'repo', 'O-0004/plec' => 'repo']);
+    $before = databaseRows();
+
+    app(ApplyFirstImport::class)->handle($tree, $plan, $resolutions);
+
+    $diff = rowDiff($before, databaseRows());
+    $authorPeople = $tree->people()->pluck('id')->all();
+    $authorEvents = $tree->events()->pluck('id')->all();
+
+    expect(array_keys($diff['tables']))->toEqualCanonicalizing(['people', 'events', 'event_participants', 'parent_child_relations'])
+        ->and($diff['files'])->toBe(['removed' => [], 'added' => []]);
+
+    foreach ($diff['tables'] as $table => $changes) {
+        expect($changes['removed'])->toBe([]);
+
+        if ($table === 'event_participants') {
+            expect($changes['changed'])->toBe([])
+                ->and(collect($changes['added'])->pluck('person_id')->diff($authorPeople)->all())->toBe([])
+                ->and(collect($changes['added'])->pluck('event_id')->diff($authorEvents)->all())->toBe([]);
+
+            continue;
+        }
+
+        expect(collect($changes['added'])->pluck('tree_id')->unique()->all())->toBe([$tree->id])
+            ->and(collect($changes['changed'])->map(fn (array $change): array => [$change['before']['tree_id'], $change['after']['tree_id']])->unique()->all())->toBe([[$tree->id, $tree->id]]);
+    }
+
+    expect(Person::where('tree_id', '!=', $tree->id)->whereNotNull('repo_id')->count())->toBe(0)
+        ->and(Event::where('tree_id', '!=', $tree->id)->whereNotNull('repo_id')->count())->toBe(0)
+        ->and(ParentChildRelation::where('tree_id', '!=', $tree->id)->whereNotNull('repo_id')->count())->toBe(0);
+});
+
+test('refuses a plan made for the tree of another account', function () {
+    Storage::fake('local');
+    $other = User::factory()->create();
+    $author = User::factory()->create();
+    $scene = arrangeHandEnteredTree($other->tree);
+    arrangeHandEnteredTree($author->tree);
+    $foreignPlan = planFixtureWithMatches($other->tree, $scene);
+    $before = ownershipSnapshot();
+
+    expect(fn () => app(ApplyFirstImport::class)->handle($author->tree, $foreignPlan, new ConflictResolutions))->toThrow(RuntimeException::class, 'nie ma już w drzewie konta')
+        ->and(ownershipSnapshot())->toBe($before);
+});
+
+test('refuses a matched person who was deleted after planning and writes nothing', function () {
+    Storage::fake('local');
+    [$tree, $scene] = arrangeHandEnteredAuthor();
+    $plan = planFixtureWithMatches($tree, $scene);
+    $scene['anna']->delete();
+    $before = ownershipSnapshot();
+
+    expect(fn () => app(ApplyFirstImport::class)->handle($tree, $plan, new ConflictResolutions))->toThrow(RuntimeException::class, 'nie ma już w drzewie konta')
+        ->and(ownershipSnapshot())->toBe($before);
+});
+
+test('refuses a matched person who got a repo id after planning and writes nothing', function () {
+    Storage::fake('local');
+    [$tree, $scene] = arrangeHandEnteredAuthor();
+    $plan = planFixtureWithMatches($tree, $scene);
+    $scene['jan']->update(['repo_id' => 'O-0900']);
+    $before = ownershipSnapshot();
+
+    expect(fn () => app(ApplyFirstImport::class)->handle($tree, $plan, new ConflictResolutions))->toThrow(RuntimeException::class)
+        ->and(ownershipSnapshot())->toBe($before);
+});
+
+test('refuses a gender from the repo that gives a child two parents of one sex since planning and writes nothing', function () {
+    Storage::fake('local');
+    $other = User::factory()->create();
+    $author = User::factory()->create();
+    $mothers = [];
+
+    foreach ([$other->tree, $author->tree] as $tree) {
+        $maria = Person::factory()->for($tree)->create(['first_name' => 'Maria', 'last_name' => 'Wrona']);
+        $jan = Person::factory()->for($tree)->create(['first_name' => 'Jan', 'last_name' => 'Nowak']);
+        linkParent($maria, $jan);
+        $mothers[$tree->id] = [$maria, $jan];
+    }
+
+    [$maria, $jan] = $mothers[$author->tree->id];
+    $plan = planBlocksForApply($author->tree, ['O-0001' => "imiona: Maria\nnazwisko: Wrona\nplec: K"], ['O-0001' => $maria]);
+    expect(fieldsOfFills($plan))->toBe(['gender']);
+
+    linkParent(Person::factory()->female()->for($author->tree)->create(), $jan);
+    $before = ownershipSnapshot();
+
+    expect(fn () => app(ApplyFirstImport::class)->handle($author->tree, $plan, new ConflictResolutions))->toThrow(ValidationException::class, 'matkę')
+        ->and(ownershipSnapshot())->toBe($before);
+});
+
+test('rolls the matched persons back too when a step in the middle fails', function () {
+    Storage::fake('local');
+    [$tree, $scene] = arrangeHandEnteredAuthor();
+    $plan = planFixtureWithMatches($tree, $scene);
+    $before = ownershipSnapshot();
+
+    $this->mock(CreateMarriage::class, function ($mock): void {
+        $mock->shouldReceive('handle')->andThrow(ValidationException::withMessages(['spouse_id' => 'Ta para ma już małżeństwo.']));
+    });
+
+    expect(fn () => app(ApplyFirstImport::class)->handle($tree, $plan, new ConflictResolutions(['O-0004/plec' => 'repo'])))->toThrow(ValidationException::class)
+        ->and(ownershipSnapshot())->toBe($before)
+        ->and($tree->people()->whereNotNull('repo_id')->count())->toBe(0)
+        ->and($scene['anna']->fresh()->gender)->toBe(Gender::Male);
 });

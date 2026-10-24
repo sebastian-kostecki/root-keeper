@@ -4,17 +4,15 @@ namespace App\Actions\Persons;
 
 use App\Enums\DateQualifier;
 use App\Enums\EventType;
-use App\Enums\Gender;
 use App\Enums\ParticipantRole;
 use App\Models\Person;
 use App\Models\Residence;
-use App\Support\ParentChildGraph;
 use App\Support\PersonOrdering;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Validation\ValidationException;
 
 class UpdatePerson
 {
+    use GuardsParentSexChange;
     use MapsEventInput;
 
     /**
@@ -118,42 +116,6 @@ class UpdatePerson
                 'locality_id' => $localityId,
                 'year_from' => $yearFrom,
                 'year_to' => $yearTo,
-            ]);
-        }
-    }
-
-    /**
-     * Changing the sex to a known one must not give any child of the person
-     * a second parent of that sex. Clearing the sex or keeping it never
-     * checks relations, so older inconsistent pairs do not block other edits.
-     */
-    private function guardParentSexChange(Person $person, ?string $newGender): void
-    {
-        $new = $newGender === null ? null : Gender::tryFrom($newGender);
-        $stored = Person::query()->whereKey($person->id)->lockForUpdate()->firstOrFail()->gender;
-
-        if ($new === null || $new === $stored) {
-            return;
-        }
-
-        $graph = ParentChildGraph::forTree($person->tree);
-
-        $otherParentIds = collect($graph->childrenOf($person->id))
-            ->flatMap(fn (int $childId): array => $graph->parentsOf($childId))
-            ->reject(fn (int $parentId): bool => $parentId === $person->id)
-            ->unique()
-            ->all();
-
-        $conflicts = $person->tree->people()
-            ->whereIn('id', $otherParentIds)
-            ->where('gender', $new)
-            ->exists();
-
-        if ($conflicts) {
-            throw ValidationException::withMessages([
-                'gender' => $new === Gender::Male
-                    ? 'Ta osoba jest rodzicem dziecka, które ma już ojca.'
-                    : 'Ta osoba jest rodzicem dziecka, które ma już matkę.',
             ]);
         }
     }
