@@ -106,7 +106,9 @@ class PlanFirstImport
 
         foreach ($persons as $child) {
             if ($child->fatherId !== null && $child->fatherId === $child->motherId && isset($persons[$child->fatherId])) {
-                $skipped[] = new ImportIssue($child->file, 'relacje pominięte: ten sam id jako ojciec i matka ('.$child->fatherId.')');
+                foreach (['ojciec', 'matka'] as $role) {
+                    $skipped[] = new ImportIssue($child->file, "relacja pominięta: ten sam id jako ojciec i matka ({$role}: {$child->fatherId})");
+                }
 
                 continue;
             }

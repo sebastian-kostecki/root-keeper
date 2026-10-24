@@ -29,6 +29,9 @@ return new class extends Migration
 
     /**
      * Reverse the migrations.
+     *
+     * Permanently discards the repo IDs of imported records: afterwards a re-import can no longer tell
+     * them from records added in the app.
      */
     public function down(): void
     {

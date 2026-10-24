@@ -88,6 +88,7 @@ class ImportResearch extends Command
         try {
             $result = $applyFirstImport->handle($user->tree, $plan);
         } catch (Throwable $exception) {
+            report($exception);
             $this->error($exception->getMessage());
             $this->error('Nic nie zostało zapisane.');
 

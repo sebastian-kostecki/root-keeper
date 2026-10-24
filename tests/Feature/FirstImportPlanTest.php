@@ -121,8 +121,9 @@ test('skips both relations when father and mother are the same id', function () 
     ]);
 
     expect(relationKeys($plan))->toBe(['O-0001>O-0003'])
-        ->and($plan->skippedRelations)->toHaveCount(1)
-        ->and(issueMessages($plan->skippedRelations))->toContain('ten sam id jako ojciec i matka');
+        ->and($plan->skippedRelations)->toHaveCount(2)
+        ->and(issueMessages($plan->skippedRelations))->toContain('ten sam id jako ojciec i matka (ojciec: O-0001)')
+        ->and(issueMessages($plan->skippedRelations))->toContain('ten sam id jako ojciec i matka (matka: O-0001)');
 });
 
 test('skips every relation on a cycle and keeps the rest', function (array $blocks, array $kept, array $dropped) {

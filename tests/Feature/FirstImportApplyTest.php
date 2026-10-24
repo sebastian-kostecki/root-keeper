@@ -177,6 +177,12 @@ test('writes only into the author tree and leaves the other account untouched', 
         }
     }
 
+    $addedIds = fn (string $table): array => collect($diff['tables'][$table]['added'])->pluck('id')->all();
+    $participants = collect($diff['tables']['event_participants']['added']);
+
+    expect($participants->pluck('person_id')->diff($addedIds('people'))->all())->toBe([])
+        ->and($participants->pluck('event_id')->diff($addedIds('events'))->all())->toBe([]);
+
     expect(Person::where('tree_id', '!=', $tree->id)->count())->toBe(4)
         ->and(Person::where('tree_id', '!=', $tree->id)->whereNotNull('repo_id')->count())->toBe(0);
 });

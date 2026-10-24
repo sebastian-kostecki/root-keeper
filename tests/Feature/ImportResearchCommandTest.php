@@ -1,8 +1,11 @@
 <?php
 
+use App\Actions\Relations\CreateMarriage;
 use App\Models\Person;
 use App\Models\User;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Exceptions;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
 
 const RESEARCH_FIXTURE = 'tests/Fixtures/research-repo';
@@ -116,6 +119,56 @@ test('writes nothing after a no', function () {
         ->expectsConfirmation('Zapisać 13 osób do drzewa konta autor@example.com?', 'no')
         ->assertSuccessful();
 
+    expect(ownershipSnapshot())->toBe($before);
+});
+
+test('writes nothing without asking when run with --no-interaction', function () {
+    Storage::fake('local');
+    $author = arrangeEmptyAuthorWithOverlappingOther();
+    $before = ownershipSnapshot();
+
+    // Artisan::call, not $this->artisan(): its console output double intercepts every question, even with --no-interaction.
+    $exitCode = Artisan::call('import:research', [...importArguments($author), '--no-interaction' => true]);
+
+    expect($exitCode)->toBe(0)
+        ->and(Artisan::output())->toContain('Nic nie zostało zapisane.')
+        ->and(ownershipSnapshot())->toBe($before);
+});
+
+test('has nothing to save when the repo has no persons', function () {
+    $author = arrangeEmptyAuthorWithOverlappingOther();
+    $before = ownershipSnapshot();
+    $repo = sys_get_temp_dir().'/empty-repo-'.uniqid();
+    mkdir($repo.'/drzewo', 0777, true);
+
+    try {
+        $this->artisan('import:research', ['email' => $author->email, 'path' => $repo])
+            ->expectsOutputToContain('Nic do zapisania.')
+            ->assertSuccessful();
+    } finally {
+        File::deleteDirectory($repo);
+    }
+
+    expect(ownershipSnapshot())->toBe($before);
+});
+
+test('reports a failure in the middle of the write and writes nothing', function () {
+    Storage::fake('local');
+    Exceptions::fake();
+    $author = arrangeEmptyAuthorWithOverlappingOther();
+    $before = ownershipSnapshot();
+
+    $this->mock(CreateMarriage::class, function ($mock): void {
+        $mock->shouldReceive('handle')->andThrow(new RuntimeException('Zapis małżeństwa nie powiódł się.'));
+    });
+
+    $this->artisan('import:research', importArguments($author))
+        ->expectsConfirmation('Zapisać 13 osób do drzewa konta autor@example.com?', 'yes')
+        ->expectsOutputToContain('Zapis małżeństwa nie powiódł się.')
+        ->expectsOutputToContain('Nic nie zostało zapisane.')
+        ->assertFailed();
+
+    Exceptions::assertReported(fn (RuntimeException $exception): bool => $exception->getMessage() === 'Zapis małżeństwa nie powiódł się.');
     expect(ownershipSnapshot())->toBe($before);
 });
 
