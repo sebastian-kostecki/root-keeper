@@ -90,7 +90,7 @@ Nowe opcjonalne klucze dochodzą w v1 razem z aktualizacją aplikacji. Zmiana zn
 - Nie zmieniaj `id` przy zmianie nazwy pliku.
 - Pełną datę (`RRRR-MM-DD`) zawsze ujmuj w cudzysłów. Daty w kalendarzu gregoriańskim; styl juliański w `notatka`.
 - Małżeństwo zapisuj w plikach obojga małżonków, z tymi samymi danymi.
-- Sprawdź: `vendor/bin/sail artisan import:research <e-mail> <ścieżka-repo>` (tylko odczyt, nic nie zapisuje).
+- Sprawdź: `vendor/bin/sail artisan import:research <e-mail> <ścieżka-repo>` (pokazuje raport i podsumowanie, a zapisuje dopiero po odpowiedzi „tak”; do samego sprawdzenia bloku odpowiedz „nie”).
 ```
 
 ## Uwaga dla repo badawczego
