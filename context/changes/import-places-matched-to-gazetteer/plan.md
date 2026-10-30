@@ -708,15 +708,15 @@ Spis ma dziesiątki miejscowości, a repo ok. 70 różnych nazw, więc porównan
 
 #### Automated
 
-- [x] 1.1 Migracja przechodzi i da się ją cofnąć
-- [x] 1.2 Testy miejscowości i miejsc przechodzą
-- [x] 1.3 Analiza statyczna przechodzi
-- [x] 1.4 Formatowanie
-- [x] 1.5 Frontend: check, types:check i test:js
+- [x] 1.1 Migracja przechodzi i da się ją cofnąć — bd7fb01
+- [x] 1.2 Testy miejscowości i miejsc przechodzą — bd7fb01
+- [x] 1.3 Analiza statyczna przechodzi — bd7fb01
+- [x] 1.4 Formatowanie — bd7fb01
+- [x] 1.5 Frontend: check, types:check i test:js — bd7fb01
 
 #### Manual
 
-- [x] 1.6 Panel celu pokazuje nazwę duplikatu w „Inne zapisy nazwy” po scaleniu
+- [x] 1.6 Panel celu pokazuje nazwę duplikatu w „Inne zapisy nazwy” po scaleniu — bd7fb01
 
 ### Phase 2: Kontrakt bloku i odczyt miejsc
 
