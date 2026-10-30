@@ -17,6 +17,8 @@ export type Locality = {
     description: string | null;
     is_defunct: boolean;
     defunct_note: string | null;
+    /** Other spellings of the name; sorted, present when the register loads them. */
+    aliases?: string[];
     /** Present on the list and the panel, which load the counts. */
     usage?: LocalityUsage;
 };

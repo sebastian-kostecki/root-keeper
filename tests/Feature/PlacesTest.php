@@ -6,6 +6,7 @@ use App\Enums\Religion;
 use App\Models\Cemetery;
 use App\Models\Event;
 use App\Models\Locality;
+use App\Models\LocalityAlias;
 use App\Models\Parish;
 use App\Models\Person;
 use App\Models\Residence;
@@ -64,7 +65,7 @@ test('the index lists only the user own localities alphabetically', function () 
             ->has('localities', 2)
             ->where('localities.0.name', 'Kraków')
             ->where('localities.1.name', 'Lwów')
-            ->has('localities.0', fn ($locality) => $locality->hasAll(['id', 'name', 'kind', 'kind_label', 'latitude', 'longitude', 'historical_affiliation', 'description', 'is_defunct', 'defunct_note', 'usage']))
+            ->has('localities.0', fn ($locality) => $locality->hasAll(['id', 'name', 'kind', 'kind_label', 'latitude', 'longitude', 'historical_affiliation', 'description', 'is_defunct', 'defunct_note', 'aliases', 'usage']))
             ->where('filters.q', ''));
 });
 
@@ -314,4 +315,23 @@ test('a partial reload of the filters runs no cemetery query', function () {
     $response->assertOk();
     expect($response->json('props'))->not->toHaveKey('cemeteries')->not->toHaveKey('cemeteryPanel');
     expect($queries)->toBeEmpty();
+});
+
+test('the places page lists the name variants of a locality, sorted, and never those of another tree', function () {
+    $user = User::factory()->create();
+    $locality = Locality::factory()->for($user->tree)->create(['name' => 'Bukinia']);
+    $plain = Locality::factory()->for($user->tree)->create(['name' => 'Zalesie']);
+    LocalityAlias::factory()->create(['tree_id' => $user->tree->id, 'locality_id' => $locality->id, 'name' => 'Bukini']);
+    LocalityAlias::factory()->create(['tree_id' => $user->tree->id, 'locality_id' => $locality->id, 'name' => 'Bokinia']);
+
+    $other = User::factory()->create();
+    $foreign = Locality::factory()->for($other->tree)->create(['name' => 'Bukinia']);
+    LocalityAlias::factory()->create(['tree_id' => $other->tree->id, 'locality_id' => $foreign->id, 'name' => 'Cudzy wariant']);
+
+    $this->actingAs($user)->get(route('places.index', ['locality' => $locality->id]))->assertInertia(fn ($page) => $page
+        ->where('localities.0.aliases', ['Bokinia', 'Bukini'])
+        ->where('localities.1.aliases', [])
+        ->where('localityPanel.locality.aliases', ['Bokinia', 'Bukini']));
+
+    expect($plain->aliases()->count())->toBe(0);
 });

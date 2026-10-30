@@ -8,6 +8,7 @@ use App\Enums\Religion;
 use App\Models\Cemetery;
 use App\Models\Event;
 use App\Models\Locality;
+use App\Models\LocalityAlias;
 use App\Models\Parish;
 use App\Models\Person;
 use App\Models\Residence;
@@ -311,6 +312,7 @@ test('merging moves every kind of reference of the duplicate to the target and d
     $marriage = attachMarriage($person, $spouse, 1900, locality: $duplicate);
     $burial = Event::factory()->for($user->tree)->burial()->create(['locality_id' => $duplicate->id]);
     $residence = Residence::factory()->for($person)->create(['tree_id' => $user->tree->id, 'locality_id' => $duplicate->id, 'year_from' => 1900, 'year_to' => 1910]);
+    $alias = LocalityAlias::factory()->create(['tree_id' => $user->tree->id, 'locality_id' => $duplicate->id, 'name' => 'Cracovia']);
 
     $otherParish = Parish::factory()->for($user->tree)->seatedIn($other)->create();
     $otherCemetery = Cemetery::factory()->in($other)->create();
@@ -318,6 +320,7 @@ test('merging moves every kind of reference of the duplicate to the target and d
     $otherEvent = Event::factory()->for($user->tree)->birth()->create(['locality_id' => $other->id]);
     $otherResidence = Residence::factory()->for($person)->create(['tree_id' => $user->tree->id, 'locality_id' => $other->id]);
     $foreignEvent = Event::factory()->for(User::factory()->create()->tree)->birth()->create(['locality_id' => $foreign->id]);
+    $otherAlias = LocalityAlias::factory()->create(['tree_id' => $user->tree->id, 'locality_id' => $other->id]);
 
     $this->actingAs($user)->post(route('localities.merge', $duplicate), ['target_id' => $target->id])
         ->assertRedirect(route('places.index', ['locality' => $target->id]))
@@ -332,6 +335,8 @@ test('merging moves every kind of reference of the duplicate to the target and d
     expect($marriage->refresh()->locality_id)->toBe($target->id);
     expect($burial->refresh()->locality_id)->toBe($target->id);
     expect($residence->refresh()->locality_id)->toBe($target->id);
+    expect($alias->refresh()->locality_id)->toBe($target->id);
+    expect($otherAlias->refresh()->locality_id)->toBe($other->id);
 
     expect($otherParish->refresh()->locality_id)->toBe($other->id);
     expect($otherCemetery->refresh()->locality_id)->toBe($other->id);
@@ -666,4 +671,56 @@ test('merging moves the parishes that differ in religion or dedication without m
     expect($otherDedication->refresh()->locality_id)->toBe($target->id);
     expect($noDedication->refresh()->locality_id)->toBe($target->id);
     expect($target->parishes()->count())->toBe(4);
+});
+
+test('merging gives the target the duplicate name variants and the duplicate name as a variant', function () {
+    $user = User::factory()->create();
+    $duplicate = Locality::factory()->for($user->tree)->create(['name' => 'Bokinia']);
+    $target = Locality::factory()->for($user->tree)->create(['name' => 'Bukinia']);
+    LocalityAlias::factory()->create(['tree_id' => $user->tree->id, 'locality_id' => $duplicate->id, 'name' => 'Bukini']);
+    LocalityAlias::factory()->create(['tree_id' => $user->tree->id, 'locality_id' => $target->id, 'name' => 'Bukinja']);
+
+    $this->actingAs($user)->post(route('localities.merge', $duplicate), ['target_id' => $target->id])->assertSessionHasNoErrors();
+
+    expect($target->aliases()->pluck('name')->sort()->values()->all())->toBe(['Bokinia', 'Bukini', 'Bukinja'])
+        ->and(LocalityAlias::where('tree_id', $user->tree->id)->count())->toBe(3);
+});
+
+test('merging skips a variant that equals the target name or a variant the tree already has', function () {
+    $user = User::factory()->create();
+    $duplicate = Locality::factory()->for($user->tree)->create(['name' => 'Bokinia']);
+    $target = Locality::factory()->for($user->tree)->create(['name' => 'Bukinia']);
+    $third = Locality::factory()->for($user->tree)->create();
+    LocalityAlias::factory()->create(['tree_id' => $user->tree->id, 'locality_id' => $duplicate->id, 'name' => 'BUKINIA']);
+    LocalityAlias::factory()->create(['tree_id' => $user->tree->id, 'locality_id' => $third->id, 'name' => 'bokinia']);
+
+    $this->actingAs($user)->post(route('localities.merge', $duplicate), ['target_id' => $target->id])->assertSessionHasNoErrors();
+
+    expect($target->aliases()->count())->toBe(0)
+        ->and($third->aliases()->pluck('name')->all())->toBe(['bokinia']);
+});
+
+test('a locality with name variants can be deleted and its variants go with it', function () {
+    $user = User::factory()->create();
+    $locality = Locality::factory()->for($user->tree)->create();
+    LocalityAlias::factory()->create(['tree_id' => $user->tree->id, 'locality_id' => $locality->id]);
+
+    $this->actingAs($user)->delete(route('localities.destroy', $locality))->assertRedirect(route('places.index'));
+
+    expect(Locality::find($locality->id))->toBeNull()
+        ->and(LocalityAlias::count())->toBe(0);
+});
+
+test('merging leaves the name variants of another user untouched', function () {
+    $user = User::factory()->create();
+    $other = User::factory()->create();
+    $duplicate = Locality::factory()->for($user->tree)->create(['name' => 'Bokinia']);
+    $target = Locality::factory()->for($user->tree)->create(['name' => 'Bukinia']);
+    $foreign = Locality::factory()->for($other->tree)->create(['name' => 'Bukinia']);
+    LocalityAlias::factory()->create(['tree_id' => $other->tree->id, 'locality_id' => $foreign->id, 'name' => 'Bokinia']);
+
+    $this->actingAs($user)->post(route('localities.merge', $duplicate), ['target_id' => $target->id])->assertSessionHasNoErrors();
+
+    expect($foreign->aliases()->pluck('name')->all())->toBe(['Bokinia'])
+        ->and($target->aliases()->pluck('name')->all())->toBe(['Bokinia']);
 });

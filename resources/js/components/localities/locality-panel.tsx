@@ -134,6 +134,12 @@ export function LocalityPanel({
                 </div>
             )}
 
+            {locality?.aliases && locality.aliases.length > 0 && (
+                <p className="text-muted-foreground mb-4 text-sm">
+                    Inne zapisy nazwy: {locality.aliases.join(', ')}
+                </p>
+            )}
+
             <Form
                 key={`${locality?.id ?? 'new'}-${formatCoordinates(locality?.latitude ?? null, locality?.longitude ?? null)}`}
                 id={formId}

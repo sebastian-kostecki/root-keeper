@@ -72,6 +72,14 @@ class Tree extends Model
     }
 
     /**
+     * @return HasMany<LocalityAlias, $this>
+     */
+    public function localityAliases(): HasMany
+    {
+        return $this->hasMany(LocalityAlias::class);
+    }
+
+    /**
      * @return HasMany<Parish, $this>
      */
     public function parishes(): HasMany
