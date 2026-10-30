@@ -6,6 +6,7 @@ nazwisko: Kruk
 kolor: zielony
 urodzenie:
   rok: 1900
+  cmentarz: Nowy cmentarz
 ---
 
 # Leon Kruk

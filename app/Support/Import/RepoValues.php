@@ -33,11 +33,24 @@ final class RepoValues
     }
 
     /**
-     * @return array{data: string|null}
+     * The memory of an event: the date and the place text. A burial also keeps the cemetery name. The ids of the
+     * recognized place (`miejsce_id`, `cmentarz_id`) come from the planner, which knows the tree.
+     *
+     * @param  bool  $burial  true adds the `cmentarz` field
+     * @return array{data: string|null, miejsce: string|null, cmentarz?: string|null}
      */
-    public static function event(ResearchEvent $event): array
+    public static function event(ResearchEvent $event, bool $burial = false): array
     {
-        return ['data' => $event->date?->label()];
+        $values = [
+            'data' => $event->date?->label(),
+            'miejsce' => PlanImport::cleanText($event->place),
+        ];
+
+        if ($burial) {
+            $values['cmentarz'] = PlanImport::cleanText($event->cemetery);
+        }
+
+        return $values;
     }
 
     /**
@@ -62,6 +75,10 @@ final class RepoValues
                 $event = ($reading->persons[$ids[0]] ?? null)?->death;
 
                 return $event === null ? null : self::event($event);
+            case RepoKeyKind::Burial:
+                $event = ($reading->persons[$ids[0]] ?? null)?->burial;
+
+                return $event === null ? null : self::event($event, burial: true);
             case RepoKeyKind::Relation:
                 return null;
             case RepoKeyKind::Marriage:

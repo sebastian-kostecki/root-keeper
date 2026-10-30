@@ -24,6 +24,10 @@ class ParsePersonBlock
 
     private const EVENT_KEYS = ['data', 'miejsce', 'poziom', 'notatka'];
 
+    private const BURIAL_KEYS = ['data', 'miejsce', 'cmentarz', 'poziom', 'notatka'];
+
+    private const PLACE_DESCRIPTION_PATTERN = '/[(),]|(?<!\p{L})par\.|parafi/iu';
+
     private const ROOT_KEYS = [
         'wersja', 'id', 'ahnentafel', 'imiona', 'nazwisko', 'warianty_nazwiska', 'plec',
         'rodzice', 'urodzenie', 'zgon', 'pochowek', 'malzenstwa',
@@ -79,6 +83,12 @@ class ParsePersonBlock
             $this->unknownKeys($block),
         );
 
+        array_push($warnings, ...$this->placeWarnings($file, $block));
+
+        if (array_key_exists('pochowek', $block) && ! array_key_exists('zgon', $block)) {
+            $warnings[] = new ImportIssue($file, 'pochowanie bez zgonu: dodano zgon bez daty');
+        }
+
         return ParsedPersonBlock::person($this->buildPerson($file, $block), $warnings);
     }
 
@@ -126,7 +136,7 @@ class ParsePersonBlock
     {
         foreach (self::EVENT_FIELDS as $field) {
             if (is_array($block[$field] ?? null)) {
-                $block[$field] = $this->normalizeEventDate($block[$field], $field, $dateObjectPaths);
+                $block[$field] = $this->normalizeEventDate($block[$field], $field, $dateObjectPaths, $field === 'pochowek' ? self::BURIAL_KEYS : self::EVENT_KEYS);
             }
         }
 
@@ -144,11 +154,12 @@ class ParsePersonBlock
     /**
      * @param  array<mixed>  $event
      * @param  list<string>  $dateObjectPaths
+     * @param  list<string>  $keys
      * @return array<mixed>
      */
-    private function normalizeEventDate(array $event, string $path, array &$dateObjectPaths): array
+    private function normalizeEventDate(array $event, string $path, array &$dateObjectPaths, array $keys = self::EVENT_KEYS): array
     {
-        foreach (self::EVENT_KEYS as $key) {
+        foreach ($keys as $key) {
             if (($event[$key] ?? null) instanceof DateTimeInterface) {
                 $dateObjectPaths[] = "{$path}.{$key}";
             }
@@ -191,6 +202,11 @@ class ParsePersonBlock
 
             $rules["{$path}.data"] = ['nullable', 'string', $this->mustBeResearchDate()];
             $rules["{$path}.miejsce"] = ['nullable', 'string'];
+
+            if ($path === 'pochowek') {
+                $rules['pochowek.cmentarz'] = ['nullable', 'string'];
+            }
+
             $rules["{$path}.poziom"] = ['nullable', 'in:A,B,C,D'];
             $rules["{$path}.notatka"] = ['nullable', 'string'];
         }
@@ -273,7 +289,7 @@ class ParsePersonBlock
 
         foreach (self::EVENT_FIELDS as $field) {
             if (is_array($block[$field] ?? null)) {
-                $collect($block[$field], self::EVENT_KEYS, "{$field}.");
+                $collect($block[$field], $field === 'pochowek' ? self::BURIAL_KEYS : self::EVENT_KEYS, "{$field}.");
             }
         }
 
@@ -282,6 +298,40 @@ class ParsePersonBlock
         }
 
         return $unknown;
+    }
+
+    /**
+     * A place that holds a bracket, a comma or a parish marker reads as a description, not as the name of a locality.
+     * The value stays; only the warning tells the author.
+     *
+     * @param  array<mixed>  $block
+     * @return list<ImportIssue>
+     */
+    private function placeWarnings(string $file, array $block): array
+    {
+        $events = [];
+
+        foreach (self::EVENT_FIELDS as $field) {
+            if (is_array($block[$field] ?? null)) {
+                $events[$field] = $block[$field];
+            }
+        }
+
+        foreach ($block['malzenstwa'] ?? [] as $index => $marriage) {
+            $events["malzenstwa.{$index}"] = $marriage;
+        }
+
+        $warnings = [];
+
+        foreach ($events as $path => $event) {
+            $place = $this->text($event['miejsce'] ?? null);
+
+            if ($place !== null && preg_match(self::PLACE_DESCRIPTION_PATTERN, $place) === 1) {
+                $warnings[] = new ImportIssue($file, "Pole {$path}.miejsce: miejsce wygląda na opis, nie nazwę miejscowości („{$place}”)");
+            }
+        }
+
+        return $warnings;
     }
 
     /**
@@ -316,8 +366,8 @@ class ParsePersonBlock
             fatherId: $this->text($block['rodzice']['ojciec'] ?? null),
             motherId: $this->text($block['rodzice']['matka'] ?? null),
             birth: $this->buildOptionalEvent($block, 'urodzenie'),
-            death: $this->buildOptionalEvent($block, 'zgon'),
-            burial: $this->buildOptionalEvent($block, 'pochowek'),
+            death: $this->buildOptionalEvent($block, 'zgon') ?? (array_key_exists('pochowek', $block) ? new ResearchEvent : null),
+            burial: $this->buildOptionalEvent($block, 'pochowek', withCemetery: true),
             marriages: $marriages,
         );
     }
@@ -327,19 +377,19 @@ class ParsePersonBlock
      *
      * @param  array<mixed>  $block
      */
-    private function buildOptionalEvent(array $block, string $key): ?ResearchEvent
+    private function buildOptionalEvent(array $block, string $key, bool $withCemetery = false): ?ResearchEvent
     {
         if (! array_key_exists($key, $block)) {
             return null;
         }
 
-        return $this->buildEvent($block[$key] ?? []);
+        return $this->buildEvent($block[$key] ?? [], $withCemetery);
     }
 
     /**
      * @param  array<mixed>  $event
      */
-    private function buildEvent(array $event): ResearchEvent
+    private function buildEvent(array $event, bool $withCemetery = false): ResearchEvent
     {
         $date = $this->text($event['data'] ?? null);
         $level = $this->text($event['poziom'] ?? null);
@@ -349,6 +399,7 @@ class ParsePersonBlock
             place: $this->text($event['miejsce'] ?? null),
             level: $level === null ? null : ConfidenceLevel::from($level),
             note: $this->text($event['notatka'] ?? null),
+            cemetery: $withCemetery ? $this->text($event['cmentarz'] ?? null) : null,
         );
     }
 

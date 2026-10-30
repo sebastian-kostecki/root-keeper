@@ -372,7 +372,7 @@ class PlanImport
         $weddings = 0;
 
         foreach ($marriages as $planned) {
-            $snapshots[$planned->repoId] = ['data' => $planned->marriage->event->date?->label()];
+            $snapshots[$planned->repoId] = RepoValues::event($planned->marriage->event);
 
             if (! $planned->known) {
                 $this->tallyNoteValues($planned->marriage->event, $totals->places, $totals->levels, $totals->eventNotes);

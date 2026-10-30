@@ -722,10 +722,10 @@ Spis ma dziesiątki miejscowości, a repo ok. 70 różnych nazw, więc porównan
 
 #### Automated
 
-- [ ] 2.1 Testy odczytu i klasyfikacji przechodzą
-- [ ] 2.2 Wszystkie testy importu przechodzą po zmianie fixture
-- [ ] 2.3 Analiza statyczna przechodzi
-- [ ] 2.4 Formatowanie
+- [x] 2.1 Testy odczytu i klasyfikacji przechodzą
+- [x] 2.2 Wszystkie testy importu przechodzą po zmianie fixture
+- [x] 2.3 Analiza statyczna przechodzi
+- [x] 2.4 Formatowanie
 
 ### Phase 3: Dopasowanie miejsc do spisu (bez zapisu)
 

@@ -9,7 +9,7 @@ use InvalidArgumentException;
  * The shape of the keys that identify a repo record: `repo_id` of an imported record and the key of a repo snapshot.
  *
  * - person: `O-0042`
- * - birth and death: `O-0042/urodzenie`, `O-0042/zgon`
+ * - birth, death and burial: `O-0042/urodzenie`, `O-0042/zgon`, `O-0042/pochowek`
  * - parent-child pair: `O-0084>O-0042` (parent, then child)
  * - wedding: `O-0001+O-0004/slub` (the sorted pair of persons)
  */
@@ -30,6 +30,11 @@ final class RepoKeys
         return $id.'/zgon';
     }
 
+    public static function burial(string $id): string
+    {
+        return $id.'/pochowek';
+    }
+
     public static function relation(string $parentId, string $childId): string
     {
         return $parentId.'>'.$childId;
@@ -45,6 +50,7 @@ final class RepoKeys
         return match (true) {
             str_ends_with($key, '/urodzenie') => RepoKeyKind::Birth,
             str_ends_with($key, '/zgon') => RepoKeyKind::Death,
+            str_ends_with($key, '/pochowek') => RepoKeyKind::Burial,
             str_ends_with($key, '/slub') => RepoKeyKind::Marriage,
             str_contains($key, '>') => RepoKeyKind::Relation,
             default => RepoKeyKind::Person,
@@ -52,7 +58,7 @@ final class RepoKeys
     }
 
     /**
-     * The repo ids of the persons a key names: one for a person, a birth and a death, two for a pair and a wedding.
+     * The repo ids of the persons a key names: one for a person, a birth, a death and a burial, two for a pair and a wedding.
      *
      * @return list<string>
      *
@@ -65,6 +71,7 @@ final class RepoKeys
             RepoKeyKind::Person => [$key],
             RepoKeyKind::Birth => [substr($key, 0, -strlen('/urodzenie'))],
             RepoKeyKind::Death => [substr($key, 0, -strlen('/zgon'))],
+            RepoKeyKind::Burial => [substr($key, 0, -strlen('/pochowek'))],
             RepoKeyKind::Relation => explode('>', $key),
             RepoKeyKind::Marriage => explode('+', substr($key, 0, -strlen('/slub'))),
         };

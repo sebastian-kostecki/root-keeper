@@ -17,7 +17,7 @@ urodzenie:
 zgon:
   data: 1870
 pochowek:
-  miejsce: Cmentarz w Zalesiu
+  miejsce: Zalesie
 malzenstwa:
   - z: O-0004
     data: ok. 1825

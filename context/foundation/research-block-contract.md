@@ -2,7 +2,7 @@
 title: Kontrakt bloku osoby (repo badawcze → import)
 version: 1
 created: 2026-10-23
-updated: 2026-10-23
+updated: 2026-10-30
 ---
 
 # Kontrakt bloku osoby v1
@@ -25,12 +25,13 @@ rodzice:                        # opcjonalne
   matka: O-0085
 urodzenie:                      # opcjonalne; obecność klucza = wydarzenie zaszło
   data: "1801-05-12"            # pełna data zawsze w cudzysłowie
-  miejsce: Wieś Przykładowa     # tekst
+  miejsce: Wieś Przykładowa     # nazwa miejscowości, mianownik
   poziom: A                     # opcjonalne, A | B | C | D
   notatka: "24 IV 1801 st.st."  # opcjonalne (styl juliański, uwagi)
 zgon: {}                        # zmarł, data nieznana
-pochowek:                       # miejsce = cmentarz jako tekst
-  miejsce: Cmentarz parafialny w Wsi Przykładowej
+pochowek:                       # miejsce = miejscowość cmentarza
+  miejsce: Wieś Przykładowa
+  cmentarz: Cmentarz parafialny # opcjonalne; nazwa cmentarza, gdy w miejscowości jest ich kilka
 malzenstwa:                     # opcjonalne; w plikach obojga małżonków, zgodnie
   - z: O-0043
     data: ok. 1825
@@ -51,9 +52,19 @@ malzenstwa:                     # opcjonalne; w plikach obojga małżonków, zgo
 | `plec` | nie | `M` albo `K`. |
 | `rodzice.ojciec`, `rodzice.matka` | nie | `id` rodzica. |
 | `urodzenie`, `zgon`, `pochowek` | nie | Wydarzenie: `data`, `miejsce`, `poziom`, `notatka`. Obecność klucza (także `{}`) oznacza, że wydarzenie zaszło. |
+| `pochowek.cmentarz` | nie | Nazwa cmentarza, gdy w miejscowości jest ich kilka. Znany tylko w `pochowek`; w innych zdarzeniach to nieznany klucz (ostrzeżenie). |
 | `malzenstwa` | nie | Lista: `z` (id współmałżonka) oraz `data`, `miejsce`, `poziom`, `notatka`. Zapis w plikach obojga małżonków, zgodny. |
 
 Poziom pewności `poziom`: `A`–`D`, jak w prozie repo.
+
+## Miejsca
+
+- `miejsce` to nazwa miejscowości w mianowniku, bez parafii, gminy i nawiasów (`Zalesie`, nie `Zalesie (par. Uchanie)`). Gdy znana jest tylko parafia, zostaw `miejsce` puste; parafie przyjdą osobną zmianą (S-06).
+- `pochowek.miejsce` to miejscowość cmentarza, a opcjonalne `pochowek.cmentarz` to nazwa cmentarza, gdy w miejscowości jest ich kilka.
+- Wariant pisowni (`Bokinia` obok `Bukinia`) zostaje w prozie. W bloku stoi jedna nazwa.
+- `pochowek` bez `zgon` aplikacja czyta jako zgon bez daty (ostrzeżenie).
+
+Decyzja z 2026-10-30: to poprawka v1 bez zmiany numeru wersji, bo pole `pochowek` nie było użyte w żadnym bloku przed tą datą.
 
 ## Gramatyka `data`
 
@@ -70,7 +81,7 @@ Data z miesiącem i dniem stoi w cudzysłowie (`data: "1801-05-12"`). Bez cudzys
 
 **Pominięcie** (wpis nie wchodzi do importu, raport podaje plik i powód): niezamknięty frontmatter lub błąd składni YAML, blok niebędący mapą, brak/zła `wersja`, brak/zły `id`, brak imion i nazwiska, zła `plec`, zły `ahnentafel`, zła `data`, data bez cudzysłowu, zły `poziom`, odwołanie niezgodne z wzorcem lub wskazujące na własne `id`, zły typ wartości, duplikat `id` w kilku plikach (wszystkie wpisy pominięte).
 
-**Ostrzeżenie** (osoba przeczytana): nieznany klucz, odwołanie do `id` bez poprawnego bloku, rodzic o niezgodnej płci, ten sam numer `ahnentafel` u dwóch osób, małżeństwo zapisane tylko po jednej stronie, rozbieżne dane małżeństwa po obu stronach (małżeństwo pominięte), ta sama para dwa razy w jednym pliku, blok niezaczynający się w pierwszej linii pliku.
+**Ostrzeżenie** (osoba przeczytana): nieznany klucz, odwołanie do `id` bez poprawnego bloku, rodzic o niezgodnej płci, ten sam numer `ahnentafel` u dwóch osób, małżeństwo zapisane tylko po jednej stronie, rozbieżne dane małżeństwa po obu stronach (małżeństwo pominięte), ta sama para dwa razy w jednym pliku, blok niezaczynający się w pierwszej linii pliku, `miejsce` z nawiasem, przecinkiem albo `par.` / `parafi` („miejsce wygląda na opis, nie nazwę miejscowości”; wartość zostaje), `pochowek` bez `zgon` („pochowanie bez zgonu: dodano zgon bez daty”).
 
 Pliki `_*.md` (indeksy) i podkatalogi `drzewo/` są ignorowane. Plik bez frontmattera to „brak bloku”, nie błąd.
 
@@ -84,6 +95,7 @@ Nowe opcjonalne klucze dochodzą w v1 razem z aktualizacją aplikacji. Zmiana zn
 ## Blok danych osoby (frontmatter YAML)
 
 - Każdy plik osoby w `drzewo/` zaczyna się blokiem YAML według `context/foundation/research-block-contract.md` aplikacji root-keeper (wersja 1), przed nagłówkiem H1. Proza pod blokiem zostaje.
+- `miejsce` to sama nazwa miejscowości w mianowniku, bez parafii, gminy i nawiasów. Wariant pisowni zostaje w prozie, a w bloku stoi jedna nazwa. `pochowek.miejsce` to miejscowość cmentarza, a `pochowek.cmentarz` (opcjonalnie) to nazwa cmentarza.
 - Nie zmyślaj: wpisuj do bloku tylko to, co wynika z prozy pliku. Brak wiedzy = brak klucza.
 - Blok musi zgadzać się z prozą. Zmieniasz prozę (data, rodzice, małżeństwo) — zmień blok w tym samym commicie.
 - Nowa osoba dostaje kolejne `O-NNNN`. Numer nigdy nie jest używany ponownie, także po usunięciu osoby.

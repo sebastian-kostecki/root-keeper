@@ -229,7 +229,7 @@ test('writes the person note exactly as specified', function () {
     expect(plannedPerson($plan, 'O-0001')->note)->toBe(<<<'NOTE'
         Z repo badawczego (O-0001):
         Urodzenie: Zalesie; poziom A; 24 IV 1801 st.st.
-        Pochowanie: Cmentarz w Zalesiu
+        Pochowanie: Zalesie
         Ślub z Anna Wrona (O-0004): Zalesie; poziom B
         Warianty nazwiska: Nowakowski
         NOTE);
@@ -268,7 +268,7 @@ test('counts dates by qualifier and events without a date', function () {
 test('counts the values that go into the person note', function () {
     $counts = planFixtureImport(arrangeEmptyAuthorAndOverlappingOther())->noteValues;
 
-    expect([$counts->places, $counts->burials, $counts->levels, $counts->eventNotes, $counts->surnameVariants])->toBe([3, 1, 2, 1, 1]);
+    expect([$counts->places, $counts->burials, $counts->levels, $counts->eventNotes, $counts->surnameVariants])->toBe([4, 1, 2, 1, 1]);
 });
 
 test('derives the repo ids of persons, events, relations and marriages', function () {
@@ -828,7 +828,7 @@ test('plans nothing for a repo and a tree that neither moved since the last impo
         ->and($plan->forgottenSnapshots)->toBe([])
         ->and($plan->keptDeletedSnapshots)->toBe([])
         ->and($plan->snapshots)->toHaveKeys(['O-0001', 'O-0001/urodzenie', 'O-0002', 'O-0003', 'O-0001>O-0002', 'O-0001+O-0003/slub'])
-        ->and($plan->snapshots['O-0001/urodzenie'])->toBe(['data' => '1801']);
+        ->and($plan->snapshots['O-0001/urodzenie'])->toBe(['data' => '1801', 'miejsce' => null]);
 
     expectPlanInside($plan, $tree);
     expect($other->repoSnapshots()->count())->toBe($tree->repoSnapshots()->count());
@@ -848,7 +848,7 @@ test('plans a birth date the repo changed and nobody touched in the app as a cha
         ->and($plan->updates)->toHaveCount(1)
         ->and($plan->updates[0]->changes)->toBe([$change])
         ->and($plan->conflicts)->toBe([])
-        ->and($plan->snapshots['O-0001/urodzenie'])->toBe(['data' => '1802']);
+        ->and($plan->snapshots['O-0001/urodzenie'])->toBe(['data' => '1802', 'miejsce' => null]);
 
     expectPlanInside($plan, $tree);
 });
@@ -894,7 +894,7 @@ test('keeps a value changed only in the app and counts it', function () {
         ->and($plan->conflicts)->toBe([])
         ->and($plan->updates)->toBe([])
         ->and($plan->keptManual)->toBe(2)
-        ->and($plan->snapshots['O-0001/urodzenie'])->toBe(['data' => '1801']);
+        ->and($plan->snapshots['O-0001/urodzenie'])->toBe(['data' => '1801', 'miejsce' => null]);
 });
 
 test('reads a record without a memory of the last import as a conflict without a previous value', function () {
@@ -1071,12 +1071,12 @@ test('restores a death deleted in the app from the repo values or leaves it dele
         expect($plan->restorations)->toHaveCount(1)
             ->and([$restoration->key, $restoration->kind, $restoration->personId])->toBe(['O-0001/zgon', RepoKeyKind::Death, replanPerson($tree, 'O-0001')->id])
             ->and($restoration->event->date->year)->toBe(1870)
-            ->and($plan->snapshots['O-0001/zgon'])->toBe(['data' => '1870'])
+            ->and($plan->snapshots['O-0001/zgon'])->toBe(['data' => '1870', 'miejsce' => null])
             ->and($plan->keptDeletedSnapshots)->toBe([])
             ->and($plan->deaths)->toBe(1);
     } else {
         expect($plan->restorations)->toBe([])
-            ->and($plan->keptDeletedSnapshots)->toBe(['O-0001/zgon' => ['data' => '1870']])
+            ->and($plan->keptDeletedSnapshots)->toBe(['O-0001/zgon' => ['data' => '1870', 'miejsce' => null]])
             ->and($plan->snapshots)->not->toHaveKey('O-0001/zgon')
             ->and($plan->deaths)->toBe(0);
     }

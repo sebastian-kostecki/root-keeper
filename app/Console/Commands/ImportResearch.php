@@ -437,6 +437,7 @@ class ImportResearch extends Command
             RepoKeyKind::Person => $entry->record instanceof Person ? $entry->record->displayName() : $name($entry->personIds[0]),
             RepoKeyKind::Birth => 'Urodzenie: '.$name($entry->personIds[0]),
             RepoKeyKind::Death => 'Zgon: '.$name($entry->personIds[0]),
+            RepoKeyKind::Burial => 'Pochowanie: '.$name($entry->personIds[0]),
             RepoKeyKind::Relation => sprintf('Relacja: %s → %s', $name($entry->personIds[0]), $name($entry->personIds[1])),
             RepoKeyKind::Marriage => sprintf('Małżeństwo: %s i %s', $name($entry->personIds[0]), $name($entry->personIds[1])),
         };

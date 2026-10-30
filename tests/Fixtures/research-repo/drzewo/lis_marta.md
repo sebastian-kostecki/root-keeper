@@ -7,6 +7,7 @@ nazwisko: Lis
 plec: K
 urodzenie:
   data: przed 1770
+  miejsce: Dolina (par. Uchanie)
 malzenstwa:
   - z: O-0002
     data: "1798"

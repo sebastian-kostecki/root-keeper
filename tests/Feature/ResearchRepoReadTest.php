@@ -51,7 +51,8 @@ test('maps the block fields onto the person', function () {
         ->and($jan->birth->note)->toBe('24 IV 1801 st.st.')
         ->and($jan->death->date->year)->toBe(1870)
         ->and($jan->burial->date)->toBeNull()
-        ->and($jan->burial->place)->toBe('Cmentarz w Zalesiu');
+        ->and($jan->burial->place)->toBe('Zalesie')
+        ->and($jan->burial->cemetery)->toBeNull();
 });
 
 test('keeps an implex person with two ahnentafel numbers and a death without a date', function () {
@@ -108,6 +109,52 @@ test('warns about unknown keys, dangling references and a wrong parent gender', 
         ->and(messagesFor($warnings, 'wrona_adam.md'))->toContain('O-0098 nie ma poprawnego bloku')
         ->and(messagesFor($warnings, 'kos_ewa.md'))->toContain('płeć niezgodną z rolą')
         ->and(messagesFor($warnings, 'ten_sam_numer.md'))->toContain('Numer ahnentafel 4');
+});
+
+test('reads the cemetery name of a burial and adds a death without a date for a burial without a death', function () {
+    $reading = readTemporaryFiles([
+        'jan.md' => "---\nwersja: 1\nid: O-0001\nimiona: Jan\npochowek:\n  miejsce: Dolina\n  cmentarz: Stary cmentarz\n---\n",
+        'anna.md' => "---\nwersja: 1\nid: O-0002\nimiona: Anna\nzgon:\n  data: \"1870\"\npochowek:\n  miejsce: Dolina\n---\n",
+    ]);
+    $jan = $reading->persons['O-0001'];
+
+    expect($jan->burial->place)->toBe('Dolina')
+        ->and($jan->burial->cemetery)->toBe('Stary cmentarz')
+        ->and($jan->death)->not->toBeNull()
+        ->and([$jan->death->date, $jan->death->place, $jan->death->cemetery])->toBe([null, null, null])
+        ->and(messagesFor($reading->warnings, 'jan.md'))->toContain('pochowanie bez zgonu: dodano zgon bez daty')
+        ->and($reading->persons['O-0002']->death->date->year)->toBe(1870)
+        ->and($reading->persons['O-0002']->burial->cemetery)->toBeNull()
+        ->and(messagesFor($reading->warnings, 'anna.md'))->not->toContain('pochowanie bez zgonu');
+});
+
+test('warns about a place that reads as a description and keeps its value', function () {
+    $reading = readFixtureRepo();
+
+    expect(messagesFor($reading->warnings, 'lis_marta.md'))->toContain('miejsce wygląda na opis, nie nazwę miejscowości')
+        ->and($reading->persons['O-0003']->birth->place)->toBe('Dolina (par. Uchanie)')
+        ->and(messagesFor($reading->warnings, 'nowak_jan_1801.md'))->not->toContain('miejsce wygląda na opis');
+});
+
+test('warns about a place with a comma or a parish marker, but not about a plain name', function (string $place, bool $warns) {
+    $parsed = app(ParsePersonBlock::class)->handle('miejsce.md', "---\nwersja: 1\nid: O-0104\nimiona: Jan\nurodzenie:\n  miejsce: \"{$place}\"\n---\n");
+    $messages = implode(' | ', array_map(fn (ImportIssue $issue): string => $issue->message, $parsed->warnings));
+
+    expect(str_contains($messages, 'miejsce wygląda na opis'))->toBe($warns)
+        ->and($parsed->person->birth->place)->toBe($place);
+})->with([
+    'comma' => ['Zalesie, gm. Uchanie', true],
+    'parish abbreviation' => ['Parafia Uchanie', true],
+    'par. marker' => ['Uchanie par. Zalesie', true],
+    'plain name' => ['Zalesie', false],
+    'a name with a hyphen and a space' => ['Nowy Dwór-Kolonia', false],
+]);
+
+test('treats the cemetery key as unknown outside of a burial', function () {
+    $reading = readFixtureRepo();
+
+    expect(messagesFor($reading->warnings, 'nieznany_klucz.md'))->toContain('Nieznany klucz: urodzenie.cmentarz')
+        ->and($reading->persons['O-0012']->birth->cemetery)->toBeNull();
 });
 
 test('warns about a block that does not start on the first line', function () {
