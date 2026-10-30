@@ -3,7 +3,7 @@ project: root-keeper
 version: 6
 status: draft
 created: 2026-10-04
-updated: 2026-10-24
+updated: 2026-10-30
 prd_version: 1
 main_goal: market-feedback
 top_blocker: decisions
@@ -45,7 +45,7 @@ Autor prowadzi badania genealogiczne w repo markdown (dziś 283 pliki osób, dzi
 | S-01 | research-blocks-read-and-report    | uruchomić komendę na katalogu repo i dostać raport przeczytanych osób oraz pominiętych wpisów z powodem         | —             | FR-001, FR-002, FR-003, FR-004                        | done |
 | S-02 | first-import-into-empty-tree       | zaimportować przodków do pustego drzewa po podsumowaniu i zatwierdzeniu i zobaczyć ich z relacjami i datami      | S-01, S-07    | US-01, FR-003, FR-005, FR-006, FR-008, FR-009, FR-016 | done |
 | S-03 | first-import-matches-hand-entered  | przy pierwszym imporcie dopasować osoby z repo do ręcznie wpisanych i rozstrzygnąć przypadki wątpliwe            | S-02          | US-01, FR-005, FR-006, FR-007, FR-014                 | done |
-| S-04 | reimport-changes-and-conflicts     | ponowić import i w podglądzie zatwierdzać nowe, zmienione, konflikty z ręcznymi zmianami i usunięte w repo        | S-02          | US-02, FR-005, FR-006, FR-008, FR-014, FR-015         | in-progress |
+| S-04 | reimport-changes-and-conflicts     | ponowić import i w podglądzie zatwierdzać nowe, zmienione, konflikty z ręcznymi zmianami i usunięte w repo        | S-02          | US-02, FR-005, FR-006, FR-008, FR-014, FR-015         | done |
 | S-05 | import-places-matched-to-gazetteer | dostać miejsca wydarzeń (także pochowanie na cmentarzu) dopasowane do spisu i potwierdzić nowe w podglądzie      | S-02          | FR-009, FR-010, FR-017                                | proposed |
 | S-06 | import-sources-with-scans          | dostać źródła z opisem i skanem podpięte do faktów z numerem wpisu                                             | S-05          | FR-001, FR-011, US-01                                 | blocked  |
 | S-07 | fuzzy-event-dates                  | zapisać i zobaczyć datę wydarzenia jako zakres lat, „przed” albo „po” — ręcznie i z importu                      | —             | FR-009, FR-015                                        | done |
@@ -138,7 +138,7 @@ Brak. Każdy element przekrojowy wchodzi w pierwszym wycinku, który go używa: 
   - Na jakim poziomie aplikacja pamięta „zmienione od ostatniego importu” (pole, rekord)? Owner: `/10x-plan`. Block: no.
 - **Risk:** Główne ryzyko wskazane przez autora — ręczna poprawka znika po imporcie. Pola dodane w późniejszych wycinkach (`S-05` – `S-09`) wchodzą do tego samego podglądu zmian; jeśli `S-04` wyląduje przed nimi, każdy z nich rozszerza podgląd o swoje pole.
 - **Uwaga z przeglądu S-02 (F3):** osoba z importu może nie mieć urodzenia (import tworzy wydarzenie tylko przy kluczu w bloku). Urodzenie dopisane potem w aplikacji ma `repo_id = null`, więc nie jest zmianą z repo, a gdy repo później doda `urodzenie`, `S-04` musi zdecydować: uzupełnić ręczne wydarzenie czy pokazać konflikt.
-- **Status:** in-progress
+- **Status:** done
 
 ### S-05: Miejsca z repo dopasowane do spisu
 
@@ -259,3 +259,4 @@ Brak. Każdy element przekrojowy wchodzi w pierwszym wycinku, który go używa: 
 - **S-07: autor zapisuje i widzi datę wydarzenia jako dokładną, „ok.”, zakres lat, „przed” albo „po” — w formularzu, na osi czasu i w panelu osoby** — Archived 2026-10-23 → `context/archive/2026-10-23-fuzzy-event-dates/`. Lesson: —.
 - **S-02: autor importuje przodków do drzewa bez ręcznych wpisów (np. konta testowego): komenda pokazuje podsumowanie, po zatwierdzeniu zapisuje osoby (imiona, nazwisko, płeć), relacje rodzic–dziecko, małżeństwa oraz urodzenia, śluby i zgony z każdym rodzajem daty z `S-07` (dokładna, „ok.”, zakres, „przed”, „po”), każdy rekord z identyfikatorem z repo; na produkcji przed zapisem powstaje kopia bazy; zapis trafia wyłącznie do drzewa wskazanego konta; autor widzi przodków w drzewie i w widoku przodków.** — Archived 2026-10-24 → `context/archive/2026-10-23-first-import-into-empty-tree/`. Lesson: —.
 - **S-03: przy pierwszym imporcie do drzewa z ręcznie wpisanymi osobami komenda dopasowuje osobę z repo do istniejącej, gdy zgadzają się co najmniej dwa niezależne elementy poza imieniem i nazwiskiem, pokazuje przypadki wątpliwe i konflikty do rozstrzygnięcia pojedynczo, a dopasowana osoba zachowuje zdjęcie, skany, notatkę i dane dodane tylko w aplikacji — bez duplikatów.** — Archived 2026-10-24 → `context/archive/2026-10-24-first-import-matches-hand-entered/`. Lesson: —.
+- **S-04: autor ponawia import zaktualizowanej kopii repo; rekordy rozpoznane po identyfikatorze z repo, podgląd pokazuje nowe, zmienione, konflikty z ręcznymi zmianami (obie wartości) i rekordy usunięte w repo (usuń albo zostaw); wartość z repo zastępuje wartość w aplikacji bez pytania tylko wtedy, gdy nikt jej w aplikacji nie zmienił od ostatniego importu; rekordy bez identyfikatora repo nigdy nie są ruszane; ręczna edycja działa jak dotąd.** — Archived 2026-10-30 → `context/archive/2026-10-24-reimport-changes-and-conflicts/`. Lesson: —.
