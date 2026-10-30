@@ -9,7 +9,9 @@ use App\Actions\Import\PlanImport;
 use App\Actions\Import\ReadResearchRepo;
 use App\Enums\DateQualifier;
 use App\Enums\MatchVerdict;
+use App\Enums\RepoKeyKind;
 use App\Models\Person;
+use App\Models\RepoSnapshot;
 use App\Models\Tree;
 use App\Models\User;
 use App\Support\Import\ChangeApprovals;
@@ -21,9 +23,15 @@ use App\Support\Import\ImportPlan;
 use App\Support\Import\ImportResult;
 use App\Support\Import\PersonMatch;
 use App\Support\Import\PersonMatches;
+use App\Support\Import\PlannedRemoval;
+use App\Support\Import\RemovalImpact;
+use App\Support\Import\RepoRecord;
+use App\Support\Import\RepoRecordClasses;
+use App\Support\Import\RepoValues;
 use App\Support\Import\ResearchDate;
 use App\Support\Import\ResearchPerson;
 use App\Support\Import\ResearchRepoReading;
+use App\Support\Import\ValueConflict;
 use Illuminate\Console\Attributes\Description;
 use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
@@ -76,31 +84,27 @@ class ImportResearch extends Command
 
         $this->report($email, $path, $reading);
 
-        if ($tree->people()->whereNotNull('repo_id')->exists()) {
-            $this->error(PlanImport::BLOCKED_REASON);
-
-            return self::FAILURE;
-        }
-
         $classes = $classifyRepoRecords->handle($tree, $reading);
 
-        if ($classes->removedInRepo !== [] || $classes->deletedInApp !== []) {
-            $this->error(PlanImport::BLOCKED_REASON);
-
-            return self::FAILURE;
-        }
+        $this->stateSummary($classes);
 
         $matches = $matchResearchPersons->handle($tree, $reading, $classes->newPersonIds);
 
-        $this->matchSummary($matches);
-
-        if ($this->needsAnswers($matches) && ! $this->input->isInteractive()) {
-            $this->error('Dopasowanie wymaga odpowiedzi w terminalu; nic nie zostało zapisane.');
-
-            return self::FAILURE;
+        if ($classes->newPersonIds !== []) {
+            $this->matchSummary($matches);
         }
 
-        $decisions = ImportDecisions::forFirstImport($this->decideIdentities($matches));
+        $askedRemovals = array_values(array_filter($classes->removedInRepo, fn (RepoRecord $entry): bool => ! $entry->detachOnly()));
+
+        if (($this->needsAnswers($matches) || $askedRemovals !== [] || $classes->deletedInApp !== []) && ! $this->input->isInteractive()) {
+            return $this->needsTerminal();
+        }
+
+        $decisions = new ImportDecisions(
+            $this->decideIdentities($matches),
+            $this->decideRemovals($classes, $askedRemovals, $reading),
+            $this->decideDeletions($classes, $reading),
+        );
 
         try {
             $plan = $planImport->handle($tree, $reading, $classes, $decisions);
@@ -112,20 +116,31 @@ class ImportResearch extends Command
 
         $this->summary($plan, $reading);
 
-        $newCount = count($plan->persons);
-        $matchedCount = count($plan->matched);
+        $stored = $tree->repoSnapshots()->get()->keyBy('repo_id')->all();
 
-        if ($newCount + $matchedCount === 0) {
+        if ($this->nothingToWrite($plan, $stored)) {
             $this->info('Nic do zapisania.');
 
             return self::SUCCESS;
         }
 
+        if (($plan->changes !== [] || $plan->conflicts !== []) && ! $this->input->isInteractive()) {
+            return $this->needsTerminal();
+        }
+
+        $approvals = $this->decideChanges($plan);
         $resolutions = $this->resolveConflicts($plan);
 
         $this->newLine();
 
-        if (! $this->confirm("Zapisać do drzewa konta {$email}: nowe osoby {$newCount}, dopasowane {$matchedCount}?", false)) {
+        $newCount = count($plan->persons);
+        $matchedCount = count($plan->matched);
+        $changeCount = count($plan->changes) - count($approvals->rejected) + $plan->fillCount()
+            + count(array_filter($plan->conflicts, fn (ValueConflict $conflict): bool => $resolutions->takesRepo($conflict->key)));
+        $removalCount = count(array_filter($plan->removals, fn (PlannedRemoval $removal): bool => $removal->decision === ImportDecisions::DELETE));
+        $memoryCount = count($plan->changedSnapshots($stored)) + count(array_filter($plan->forgottenSnapshots, fn (string $key): bool => isset($stored[$key])));
+
+        if (! $this->confirm("Zapisać do drzewa konta {$email}: nowe osoby {$newCount}, dopasowane {$matchedCount}, zmiany {$changeCount}, usunięcia {$removalCount}, pamięć importu {$memoryCount}?", false)) {
             $this->info('Nic nie zostało zapisane.');
 
             return self::SUCCESS;
@@ -139,7 +154,7 @@ class ImportResearch extends Command
         }
 
         try {
-            $result = $applyImport->handle($tree, $plan, new ChangeApprovals, $resolutions);
+            $result = $applyImport->handle($tree, $plan, $approvals, $resolutions);
         } catch (Throwable $exception) {
             report($exception);
             $this->error($exception->getMessage());
@@ -151,6 +166,274 @@ class ImportResearch extends Command
         $this->written($result, $plan, $tree);
 
         return self::SUCCESS;
+    }
+
+    private function needsTerminal(): int
+    {
+        $this->error('Import wymaga odpowiedzi w terminalu; nic nie zostało zapisane.');
+
+        return self::FAILURE;
+    }
+
+    private function stateSummary(RepoRecordClasses $classes): void
+    {
+        $this->newLine();
+        $this->info('Stan względem ostatniego importu');
+        $this->line(sprintf('Znane osoby: %d', count($classes->knownPersons)));
+        $this->line(sprintf('Nowe w repo: %d', count($classes->newPersonIds)));
+        $this->line(sprintf('Usunięte w repo: %d', count($classes->removedInRepo)));
+        $this->line(sprintf('Usunięte w aplikacji: %d (do decyzji), %d (zostawione wcześniej)', count($classes->deletedInApp), count($classes->keptDeleted)));
+        $this->line(sprintf('Nie do oceny: %d', count($classes->unassessable)));
+    }
+
+    /**
+     * Whether the write would change nothing: no record, no value and no memory entry.
+     *
+     * @param  array<string, RepoSnapshot>  $stored
+     */
+    private function nothingToWrite(ImportPlan $plan, array $stored): bool
+    {
+        return $plan->persons === []
+            && $plan->matched === []
+            && $plan->updates === []
+            && $plan->changes === []
+            && $plan->conflicts === []
+            && $plan->fillCount() === 0
+            && $plan->removals === []
+            && $plan->detachedBirths === []
+            && $plan->restorations === []
+            && $plan->relations === []
+            && $plan->marriages === []
+            && $plan->forgottenSnapshots === []
+            && $plan->changedSnapshots($stored) === [];
+    }
+
+    /**
+     * Ask what to do with each record the repo no longer has; a birth is only detached, without a question.
+     *
+     * @param  list<RepoRecord>  $asked  the removed records that get a question, in the order of the keys
+     * @return array<string, string> key => `ImportDecisions::DELETE` or `DETACH`
+     */
+    private function decideRemovals(RepoRecordClasses $classes, array $asked, ResearchRepoReading $reading): array
+    {
+        $decisions = [];
+
+        foreach ($classes->removedInRepo as $entry) {
+            if ($entry->detachOnly()) {
+                $decisions[$entry->key] = ImportDecisions::DETACH;
+            }
+        }
+
+        $total = count($asked);
+
+        foreach ($asked as $index => $entry) {
+            $this->newLine();
+            $this->table(
+                ['Klucz', 'Skutki usunięcia', 'Dołączone klucze'],
+                [[$entry->key, $this->impactText($entry->impact), $this->memberKeys($entry)]],
+            );
+
+            $decisions[$entry->key] = $this->choose(
+                sprintf('Usunięte w repo %d/%d: %s (%s) — co zrobić?', $index + 1, $total, $this->describe($entry, $classes, $reading), $entry->key),
+                [ImportDecisions::DETACH => 'Zostaw — odłącz od repo', ImportDecisions::DELETE => 'Usuń z aplikacji'],
+                ImportDecisions::DETACH,
+            );
+        }
+
+        return $decisions;
+    }
+
+    /**
+     * Ask whether each record the author deleted in the app, and the repo still has, comes back.
+     *
+     * @return array<string, string> key => `ImportDecisions::RESTORE` or `KEEP`
+     */
+    private function decideDeletions(RepoRecordClasses $classes, ResearchRepoReading $reading): array
+    {
+        $decisions = [];
+        $total = count($classes->deletedInApp);
+
+        foreach ($classes->deletedInApp as $index => $entry) {
+            $this->newLine();
+            $this->line('Teraz w repo: '.$this->repoValuesText($entry, $reading));
+
+            $decisions[$entry->key] = $this->choose(
+                sprintf('Usunięte w aplikacji %d/%d: %s (%s) — co zrobić?', $index + 1, $total, $this->describe($entry, $classes, $reading), $entry->key),
+                [ImportDecisions::KEEP => 'Zostaw usunięte', ImportDecisions::RESTORE => 'Przywróć z repo'],
+                ImportDecisions::KEEP,
+            );
+        }
+
+        return $decisions;
+    }
+
+    /**
+     * Show every change of the repo in fields nobody touched in the app and ask for all of them at once or one by one.
+     */
+    private function decideChanges(ImportPlan $plan): ChangeApprovals
+    {
+        $changes = $plan->changes;
+
+        if ($changes === []) {
+            return new ChangeApprovals;
+        }
+
+        $rows = [];
+
+        foreach ($changes as $change) {
+            [$app, $repo] = $this->shown($change->field, $change->appLabel, $change->repoLabel);
+            $rows[] = [$change->person, $change->label, $app, $repo];
+        }
+
+        $this->newLine();
+        $this->line('Zmiany z repo:');
+        $this->table(['Osoba', 'Pole', 'W aplikacji', 'Teraz w repo'], $rows);
+
+        $mode = $this->choose(
+            sprintf('Zmiany z repo (%d): co zrobić?', count($changes)),
+            ['all' => 'Zatwierdź wszystkie', 'each' => 'Przejrzyj pojedynczo'],
+            'all',
+        );
+
+        if ($mode === 'all') {
+            return new ChangeApprovals;
+        }
+
+        $rejected = [];
+
+        foreach ($changes as $index => $change) {
+            [$app, $repo] = $this->shown($change->field, $change->appLabel, $change->repoLabel);
+
+            $answer = $this->choose(
+                sprintf('Zmiana %d/%d: %s — %s', $index + 1, count($changes), $change->person, $change->label),
+                [
+                    'repo' => Str::limit("Weź z repo: {$repo}", self::OPTION_WIDTH),
+                    'app' => Str::limit("Zostaw: {$app}", self::OPTION_WIDTH),
+                ],
+                'repo',
+            );
+
+            if ($answer === 'app') {
+                $rejected[] = $change->key;
+            }
+        }
+
+        return new ChangeApprovals($rejected);
+    }
+
+    /**
+     * The two values as the author sees them in a table or an option. A note block is cut to its first differing line.
+     *
+     * @return array{0: string, 1: string} the app value, then the repo value
+     */
+    private function shown(string $field, string $app, string $repo): array
+    {
+        if ($field !== 'note') {
+            return [$app, $repo];
+        }
+
+        $appLines = explode("\n", $app);
+        $repoLines = explode("\n", $repo);
+
+        foreach (range(0, max(count($appLines), count($repoLines)) - 1) as $index) {
+            if (($appLines[$index] ?? null) !== ($repoLines[$index] ?? null)) {
+                return [$appLines[$index] ?? '—', $repoLines[$index] ?? '—'];
+            }
+        }
+
+        return [$app, $repo];
+    }
+
+    private function impactText(?RemovalImpact $impact): string
+    {
+        if ($impact === null || $impact->isEmpty()) {
+            return 'brak';
+        }
+
+        $parts = [];
+
+        if ($impact->photo) {
+            $parts[] = 'zdjęcie';
+        }
+
+        if ($impact->sourceLinks > 0) {
+            $parts[] = "powiązania ze źródłami: {$impact->sourceLinks}";
+        }
+
+        if ($impact->burial) {
+            $parts[] = 'pochówek';
+        }
+
+        if ($impact->otherEvents > 0) {
+            $parts[] = "inne wydarzenia: {$impact->otherEvents}";
+        }
+
+        if ($impact->residences > 0) {
+            $parts[] = "zamieszkania: {$impact->residences}";
+        }
+
+        if ($impact->relations > 0) {
+            $parts[] = "relacje: {$impact->relations}";
+        }
+
+        if ($impact->marriages > 0) {
+            $parts[] = "małżeństwa: {$impact->marriages}";
+        }
+
+        if ($impact->gravestones > 0) {
+            $parts[] = "nagrobki: {$impact->gravestones}";
+        }
+
+        if ($impact->proband) {
+            $parts[] = 'proband drzewa';
+        }
+
+        return implode(', ', $parts);
+    }
+
+    private function memberKeys(RepoRecord $entry): string
+    {
+        return $entry->members === [] ? '—' : implode(', ', array_map(fn (RepoRecord $member): string => $member->key, $entry->members));
+    }
+
+    /**
+     * What the repo holds for the key of an entry and for the keys decided with it.
+     */
+    private function repoValuesText(RepoRecord $entry, ResearchRepoReading $reading): string
+    {
+        $parts = [];
+
+        foreach ([$entry, ...$entry->members] as $each) {
+            $values = array_filter(RepoValues::forKey($each->key, $reading) ?? [], fn (?string $value): bool => $value !== null);
+            $pairs = array_map(
+                fn (string $field, string $value): string => $field.': '.Str::limit(strtok($value, "\n") ?: '—', 60),
+                array_keys($values),
+                $values,
+            );
+
+            $parts[] = $each->key.' — '.($pairs === [] ? 'bez wartości' : implode(', ', $pairs));
+        }
+
+        return implode('; ', $parts);
+    }
+
+    private function describe(RepoRecord $entry, RepoRecordClasses $classes, ResearchRepoReading $reading): string
+    {
+        $name = function (string $id) use ($classes, $reading): string {
+            if (isset($reading->persons[$id])) {
+                return $this->researchName($reading->persons[$id]);
+            }
+
+            return isset($classes->knownPersons[$id]) ? $classes->knownPersons[$id]->displayName() : $id;
+        };
+
+        return match ($entry->kind) {
+            RepoKeyKind::Person => $entry->record instanceof Person ? $entry->record->displayName() : $name($entry->personIds[0]),
+            RepoKeyKind::Birth => 'Urodzenie: '.$name($entry->personIds[0]),
+            RepoKeyKind::Death => 'Zgon: '.$name($entry->personIds[0]),
+            RepoKeyKind::Relation => sprintf('Relacja: %s → %s', $name($entry->personIds[0]), $name($entry->personIds[1])),
+            RepoKeyKind::Marriage => sprintf('Małżeństwo: %s i %s', $name($entry->personIds[0]), $name($entry->personIds[1])),
+        };
     }
 
     private function matchSummary(PersonMatches $matches): void
@@ -356,11 +639,26 @@ class ImportResearch extends Command
         $total = count($plan->conflicts);
 
         foreach ($plan->conflicts as $index => $conflict) {
+            $this->newLine();
+
+            if ($conflict->field === 'note') {
+                $this->line('W aplikacji:');
+                $this->line($conflict->appLabel);
+                $this->line('Teraz w repo:');
+                $this->line($conflict->repoLabel);
+            }
+
+            if ($conflict->lastRepoLabel !== null) {
+                $this->line("poprzednio w repo: {$conflict->lastRepoLabel}");
+            }
+
+            [$app, $repo] = $this->shown($conflict->field, $conflict->appLabel, $conflict->repoLabel);
+
             $choices[$conflict->key] = $this->choose(
                 sprintf('Konflikt %d/%d: %s — %s', $index + 1, $total, $conflict->person, $conflict->label),
                 [
-                    ConflictResolutions::FROM_APP => Str::limit("Zostaw z aplikacji: {$conflict->appLabel}", self::OPTION_WIDTH),
-                    ConflictResolutions::FROM_REPO => Str::limit("Weź z repo: {$conflict->repoLabel}", self::OPTION_WIDTH),
+                    ConflictResolutions::FROM_APP => Str::limit("Zostaw z aplikacji: {$app}", self::OPTION_WIDTH),
+                    ConflictResolutions::FROM_REPO => Str::limit("Weź z repo: {$repo}", self::OPTION_WIDTH),
                 ],
                 ConflictResolutions::FROM_APP,
             );
@@ -416,6 +714,14 @@ class ImportResearch extends Command
         ));
         $this->line(sprintf('Urodzenia: %d, zgony: %d, śluby: %d', $plan->births, $plan->deaths, $plan->weddings));
         $this->line(sprintf('Konflikty wartości do rozstrzygnięcia: %d', count($plan->conflicts)));
+        $this->line(sprintf('Zmiany z repo: %d', count($plan->changes)));
+        $this->line(sprintf('Zachowane ręczne zmiany: %d', $plan->keptManual));
+        $this->line(sprintf(
+            'Usunięcia: %d, odłączenia: %d, przywrócenia: %d',
+            count(array_filter($plan->removals, fn (PlannedRemoval $removal): bool => $removal->decision === ImportDecisions::DELETE)),
+            count(array_filter($plan->removals, fn (PlannedRemoval $removal): bool => $removal->decision === ImportDecisions::DETACH)) + count($plan->detachedBirths),
+            count($plan->restorations),
+        ));
 
         $dates = [];
 
@@ -442,6 +748,11 @@ class ImportResearch extends Command
         $this->issueTable('Pominięte relacje', ['Plik', 'Powód'], $plan->skippedRelations);
         $this->issueTable('Pominięte małżeństwa', ['Plik', 'Powód'], $plan->skippedMarriages);
         $this->issueTable('Pominięte wartości', ['Plik', 'Powód'], $plan->skippedValues);
+        $this->issueTable('Odłączone urodzenia', ['Klucz', 'Powód'], array_map(
+            fn (PlannedRemoval $removal): ImportIssue => new ImportIssue($removal->key, 'urodzenie zniknęło z repo; zostaje w drzewie bez id repo'),
+            $plan->detachedBirths,
+        ));
+        $this->issueTable('Nie do oceny', ['Klucz', 'Powód'], $plan->unassessable);
         $this->fillTable($plan, $reading);
     }
 
@@ -452,6 +763,12 @@ class ImportResearch extends Command
         foreach ($plan->matched as $match) {
             foreach ($match->fills as $fill) {
                 $rows[] = [sprintf('%s (%s)', $this->researchName($match->person), $match->person->id), $fill->label, $fill->valueLabel()];
+            }
+        }
+
+        foreach ($plan->updates as $update) {
+            foreach ($update->fills as $fill) {
+                $rows[] = [sprintf('%s (%s)', $this->researchName($update->person), $update->person->id), $fill->label, $fill->valueLabel()];
             }
         }
 
@@ -497,8 +814,17 @@ class ImportResearch extends Command
         $this->line(sprintf('Relacje rodzic–dziecko: %d (istniejące oznaczone: %d)', $result->relations, $result->markedRelations));
         $this->line(sprintf('Małżeństwa: %d (istniejące oznaczone: %d)', $result->marriages, $result->markedMarriages));
         $this->line(sprintf('Wydarzenia: %d (urodzenia: %d, zgony: %d)', $result->events, $result->births, $result->deaths));
+        $this->line(sprintf('Zmiany z repo: wzięte %d, odrzucone %d', $result->changesTaken, $result->changesRejected));
+        $this->line(sprintf(
+            'Usunięte: osoby %d, inne rekordy %d; odłączone: %d; przywrócone: %d; zostawione jako usunięte: %d',
+            $result->removedPersons,
+            $result->removedRecords,
+            $result->detached,
+            $result->restored,
+            $result->keptDeleted,
+        ));
 
-        if ($tree->root_person_id !== null) {
+        if ($tree->refresh()->root_person_id !== null) {
             return;
         }
 

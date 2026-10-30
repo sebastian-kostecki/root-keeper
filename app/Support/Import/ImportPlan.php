@@ -2,6 +2,8 @@
 
 namespace App\Support\Import;
 
+use App\Models\RepoSnapshot;
+
 final readonly class ImportPlan
 {
     /**
@@ -79,5 +81,40 @@ final readonly class ImportPlan
         }
 
         return $fills;
+    }
+
+    /**
+     * The keys whose memory entry the write would add or change: no stored entry, another deletion flag or other values.
+     *
+     * @param  array<string, RepoSnapshot>  $stored  the memory of the tree by repo key
+     * @return list<string>
+     */
+    public function changedSnapshots(array $stored): array
+    {
+        $changed = [];
+
+        foreach ([[$this->snapshots, false], [$this->keptDeletedSnapshots, true]] as [$entries, $deletionKept]) {
+            foreach ($entries as $key => $values) {
+                $old = $stored[$key] ?? null;
+
+                if ($old === null || $old->deletion_kept !== $deletionKept || ! self::sameValues($old->values, $values)) {
+                    $changed[] = (string) $key;
+                }
+            }
+        }
+
+        return $changed;
+    }
+
+    /**
+     * @param  array<string, string|null>  $first
+     * @param  array<string, string|null>  $second
+     */
+    private static function sameValues(array $first, array $second): bool
+    {
+        ksort($first);
+        ksort($second);
+
+        return $first === $second;
     }
 }

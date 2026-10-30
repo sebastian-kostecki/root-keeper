@@ -1,14 +1,22 @@
 <?php
 
+use App\Actions\Import\ApplyImport;
+use App\Actions\Import\ClassifyRepoRecords;
 use App\Actions\Import\PlanImport;
+use App\Actions\Import\ReadResearchRepo;
 use App\Actions\Relations\CreateMarriage;
 use App\Enums\ParticipantRole;
 use App\Models\Event;
 use App\Models\Locality;
 use App\Models\ParentChildRelation;
 use App\Models\Person;
+use App\Models\RepoSnapshot;
 use App\Models\Tree;
 use App\Models\User;
+use App\Support\Import\ChangeApprovals;
+use App\Support\Import\ConflictResolutions;
+use App\Support\Import\IdentityDecisions;
+use App\Support\Import\ImportDecisions;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Exceptions;
 use Illuminate\Support\Facades\File;
@@ -65,6 +73,14 @@ function fakeBackupRun(int $exitCode): ArrayObject
     return $calls;
 }
 
+/**
+ * The question that asks for the final consent, with the counts of the plan.
+ */
+function saveQuestion(int $new, int $matched, int $memory, int $changes = 0, int $removals = 0): string
+{
+    return "Zapisać do drzewa konta autor@example.com: nowe osoby {$new}, dopasowane {$matched}, zmiany {$changes}, usunięcia {$removals}, pamięć importu {$memory}?";
+}
+
 function importArguments(User $author): array
 {
     return ['email' => $author->email, 'path' => base_path(RESEARCH_FIXTURE)];
@@ -84,7 +100,7 @@ test('prints the report for the fixture repo and exits successfully', function (
         ->expectsOutputToContain('Nieznany klucz: kolor')
         ->expectsOutputToContain('Podsumowanie importu')
         ->expectsOutputToContain('Pominięte relacje:')
-        ->expectsConfirmation('Zapisać do drzewa konta autor@example.com: nowe osoby 13, dopasowane 0?', 'no')
+        ->expectsConfirmation(saveQuestion(13, 0, 26), 'no')
         ->expectsOutputToContain('Nic nie zostało zapisane.')
         ->assertSuccessful();
 });
@@ -100,23 +116,9 @@ test('writes nothing for either account when the author skips every doubtful mat
         ->expectsQuestion('Wątpliwe 1/2: Jan Nowak (O-0001) — kto to?', 'skip')
         ->expectsQuestion('Wątpliwe 2/2: Anna Wrona (O-0004) — kto to?', 'skip')
         ->expectsOutputToContain('Pominięte osoby:')
-        ->expectsConfirmation('Zapisać do drzewa konta autor@example.com: nowe osoby 11, dopasowane 0?', 'no')
+        ->expectsConfirmation(saveQuestion(11, 0, 19), 'no')
         ->expectsOutputToContain('Nic nie zostało zapisane.')
         ->assertSuccessful();
-
-    expect(ownershipSnapshot())->toBe($before);
-});
-
-test('refuses without asking and writes nothing when the tree already has a person from an import', function () {
-    Storage::fake('local');
-    $author = arrangeOverlappingUsers();
-    Person::factory()->for($author->tree)->create(['first_name' => 'Leon', 'last_name' => 'Kruk', 'repo_id' => 'O-0012']);
-    $before = ownershipSnapshot();
-
-    $this->artisan('import:research', importArguments($author))
-        ->expectsOutputToContain('Ponowny import (S-04)')
-        ->doesntExpectOutputToContain('Dopasowanie do osób w drzewie')
-        ->assertFailed();
 
     expect(ownershipSnapshot())->toBe($before);
 });
@@ -129,7 +131,7 @@ test('refuses when run with --no-interaction and the repo has matches to answer,
     $exitCode = Artisan::call('import:research', [...importArguments($author), '--no-interaction' => true]);
 
     expect($exitCode)->toBe(1)
-        ->and(Artisan::output())->toContain('Dopasowanie wymaga odpowiedzi w terminalu; nic nie zostało zapisane.')
+        ->and(Artisan::output())->toContain('Import wymaga odpowiedzi w terminalu; nic nie zostało zapisane.')
         ->and(ownershipSnapshot())->toBe($before);
 });
 
@@ -138,7 +140,7 @@ test('saves the persons to the author tree after a yes and suggests the proband'
     $author = arrangeEmptyAuthorWithOverlappingOther();
 
     $this->artisan('import:research', importArguments($author))
-        ->expectsConfirmation('Zapisać do drzewa konta autor@example.com: nowe osoby 13, dopasowane 0?', 'yes')
+        ->expectsConfirmation(saveQuestion(13, 0, 26), 'yes')
         ->expectsOutputToContain('Zapisano w drzewie')
         ->expectsOutputToContain('Ahnentafel 1: Jan Nowak (O-0001)')
         ->assertSuccessful();
@@ -155,7 +157,7 @@ test('writes nothing after a no', function () {
     $before = ownershipSnapshot();
 
     $this->artisan('import:research', importArguments($author))
-        ->expectsConfirmation('Zapisać do drzewa konta autor@example.com: nowe osoby 13, dopasowane 0?', 'no')
+        ->expectsConfirmation(saveQuestion(13, 0, 26), 'no')
         ->assertSuccessful();
 
     expect(ownershipSnapshot())->toBe($before);
@@ -202,7 +204,7 @@ test('reports a failure in the middle of the write and writes nothing', function
     });
 
     $this->artisan('import:research', importArguments($author))
-        ->expectsConfirmation('Zapisać do drzewa konta autor@example.com: nowe osoby 13, dopasowane 0?', 'yes')
+        ->expectsConfirmation(saveQuestion(13, 0, 26), 'yes')
         ->expectsOutputToContain('Zapis małżeństwa nie powiódł się.')
         ->expectsOutputToContain('Nic nie zostało zapisane.')
         ->assertFailed();
@@ -236,7 +238,7 @@ test('stops when the database backup fails in production', function () {
     $before = ownershipSnapshot();
 
     $this->artisan('import:research', importArguments($author))
-        ->expectsConfirmation('Zapisać do drzewa konta autor@example.com: nowe osoby 13, dopasowane 0?', 'yes')
+        ->expectsConfirmation(saveQuestion(13, 0, 26), 'yes')
         ->expectsOutputToContain('Kopia bazy nie powiodła się, nic nie zostało zapisane.')
         ->assertFailed();
 
@@ -251,7 +253,7 @@ test('saves after a successful database backup in production', function () {
     $author = arrangeEmptyAuthorWithOverlappingOther();
 
     $this->artisan('import:research', importArguments($author))
-        ->expectsConfirmation('Zapisać do drzewa konta autor@example.com: nowe osoby 13, dopasowane 0?', 'yes')
+        ->expectsConfirmation(saveQuestion(13, 0, 26), 'yes')
         ->assertSuccessful();
 
     expect($calls->getArrayCopy())->toBe([true])
@@ -264,7 +266,7 @@ test('does not run a backup outside production', function () {
     $author = arrangeEmptyAuthorWithOverlappingOther();
 
     $this->artisan('import:research', importArguments($author))
-        ->expectsConfirmation('Zapisać do drzewa konta autor@example.com: nowe osoby 13, dopasowane 0?', 'yes')
+        ->expectsConfirmation(saveQuestion(13, 0, 26), 'yes')
         ->assertSuccessful();
 
     expect($calls->getArrayCopy())->toBe([])
@@ -277,13 +279,13 @@ test('lists files without a block only with -v', function () {
 
     $this->artisan('import:research', $arguments)
         ->doesntExpectOutputToContain('Pliki bez bloku:')
-        ->expectsConfirmation('Zapisać do drzewa konta autor@example.com: nowe osoby 13, dopasowane 0?', 'no')
+        ->expectsConfirmation(saveQuestion(13, 0, 26), 'no')
         ->assertSuccessful();
 
     $this->artisan('import:research', [...$arguments, '-v' => true])
         ->expectsOutputToContain('Pliki bez bloku:')
         ->expectsOutputToContain('bez_bloku.md')
-        ->expectsConfirmation('Zapisać do drzewa konta autor@example.com: nowe osoby 13, dopasowane 0?', 'no')
+        ->expectsConfirmation(saveQuestion(13, 0, 26), 'no')
         ->assertSuccessful();
 });
 
@@ -387,7 +389,7 @@ test('hooks the repo into the author hand-entered persons after sure, doubtful a
         ->expectsOutputToContain('Osoby: nowe 11, dopasowane 2, pominięte 0')
         ->expectsOutputToContain('Konflikty wartości do rozstrzygnięcia: 1')
         ->expectsChoice(BIRTH_CONFLICT_QUESTION, 'repo', BIRTH_CONFLICT_OPTIONS, true)
-        ->expectsConfirmation('Zapisać do drzewa konta autor@example.com: nowe osoby 11, dopasowane 2?', 'yes')
+        ->expectsConfirmation(saveQuestion(11, 2, 26, changes: 1), 'yes')
         ->expectsOutputToContain('Osoby: nowe 11, dopasowane 2')
         ->expectsOutputToContain('Import nie ustawia probanta')
         ->assertSuccessful();
@@ -416,7 +418,7 @@ test('keeps the value from the app when the author settles the conflict that way
     matchCommandUntilDoubtful($author)
         ->expectsQuestion('Wątpliwe 1/1: Piotr Nowak (O-0002) — kto to?', "person:{$scene['piotr']->id}")
         ->expectsQuestion(BIRTH_CONFLICT_QUESTION, 'app')
-        ->expectsConfirmation('Zapisać do drzewa konta autor@example.com: nowe osoby 11, dopasowane 2?', 'yes')
+        ->expectsConfirmation(saveQuestion(11, 2, 26), 'yes')
         ->assertSuccessful();
 
     $birth = $scene['jan']->fresh()->birth();
@@ -432,7 +434,7 @@ test('adds a doubtful repo person as a new person next to the hand-entered one',
     matchCommandUntilDoubtful($author)
         ->expectsQuestion('Wątpliwe 1/1: Piotr Nowak (O-0002) — kto to?', 'new')
         ->expectsQuestion(BIRTH_CONFLICT_QUESTION, 'app')
-        ->expectsConfirmation('Zapisać do drzewa konta autor@example.com: nowe osoby 12, dopasowane 1?', 'yes')
+        ->expectsConfirmation(saveQuestion(12, 1, 25), 'yes')
         ->assertSuccessful();
 
     $piotrs = $author->tree->people()->where('first_name', 'Piotr')->orderBy('id')->get();
@@ -454,7 +456,7 @@ test('leaves out a doubtful repo person and its relations and lists it among the
         ->expectsOutputToContain('Pominięte osoby:')
         ->expectsOutputToContain('osoba pominięta przy dopasowaniu')
         ->expectsQuestion(BIRTH_CONFLICT_QUESTION, 'repo')
-        ->expectsConfirmation('Zapisać do drzewa konta autor@example.com: nowe osoby 11, dopasowane 1?', 'yes')
+        ->expectsConfirmation(saveQuestion(11, 1, 20, changes: 1), 'yes')
         ->assertSuccessful();
 
     $tree = $author->tree;
@@ -480,7 +482,7 @@ test('walks through the sure match one by one before the doubtful ones', functio
         ], true)
         ->expectsQuestion('Wątpliwe 1/1: Piotr Nowak (O-0002) — kto to?', 'skip')
         ->expectsQuestion(BIRTH_CONFLICT_QUESTION, 'app')
-        ->expectsConfirmation('Zapisać do drzewa konta autor@example.com: nowe osoby 11, dopasowane 1?', 'no')
+        ->expectsConfirmation(saveQuestion(11, 1, 20), 'no')
         ->assertSuccessful();
 });
 
@@ -527,7 +529,7 @@ test('lists a hand-entered person who is sure through both parents by name in th
             ->expectsChoice('Pewne dopasowania (3): co zrobić?', 'all', ['all' => 'Zatwierdź wszystkie', 'each' => 'Przejrzyj pojedynczo'], true)
             ->expectsOutputToContain('Osoby: nowe 0, dopasowane 3, pominięte 0')
             ->expectsOutputToContain('Konflikty wartości do rozstrzygnięcia: 0')
-            ->expectsConfirmation('Zapisać do drzewa konta autor@example.com: nowe osoby 0, dopasowane 3?', 'yes')
+            ->expectsConfirmation(saveQuestion(0, 3, 8), 'yes')
             ->expectsOutputToContain('Relacje rodzic–dziecko: 0 (istniejące oznaczone: 2)')
             ->assertSuccessful();
     } finally {
@@ -583,7 +585,7 @@ test('does not offer a tree person who was chosen before for another repo person
                 'new' => 'Inna osoba — dodaj jako nową',
                 'skip' => 'Pomiń — nie importuj teraz',
             ], true)
-            ->expectsConfirmation('Zapisać do drzewa konta autor@example.com: nowe osoby 1, dopasowane 1?', 'yes')
+            ->expectsConfirmation(saveQuestion(1, 1, 4), 'yes')
             ->assertSuccessful();
     } finally {
         File::deleteDirectory($repo);
@@ -603,7 +605,7 @@ test('stops after a yes when the database backup fails in production and the tre
     matchCommandUntilDoubtful($author)
         ->expectsQuestion('Wątpliwe 1/1: Piotr Nowak (O-0002) — kto to?', "person:{$scene['piotr']->id}")
         ->expectsQuestion(BIRTH_CONFLICT_QUESTION, 'repo')
-        ->expectsConfirmation('Zapisać do drzewa konta autor@example.com: nowe osoby 11, dopasowane 2?', 'yes')
+        ->expectsConfirmation(saveQuestion(11, 2, 26, changes: 1), 'yes')
         ->expectsOutputToContain('Kopia bazy nie powiodła się, nic nie zostało zapisane.')
         ->assertFailed();
 
@@ -619,7 +621,7 @@ test('writes nothing after a no at the end of the match walkthrough', function (
     matchCommandUntilDoubtful($author)
         ->expectsQuestion('Wątpliwe 1/1: Piotr Nowak (O-0002) — kto to?', "person:{$scene['piotr']->id}")
         ->expectsQuestion(BIRTH_CONFLICT_QUESTION, 'repo')
-        ->expectsConfirmation('Zapisać do drzewa konta autor@example.com: nowe osoby 11, dopasowane 2?', 'no')
+        ->expectsConfirmation(saveQuestion(11, 2, 26, changes: 1), 'no')
         ->expectsOutputToContain('Nic nie zostało zapisane.')
         ->assertSuccessful();
 
@@ -642,3 +644,373 @@ function commandTemporaryRepo(array $blocks): string
 
     return $repo;
 }
+
+afterEach(function (): void {
+    foreach (reimportRepos() as $repo) {
+        File::deleteDirectory($repo);
+    }
+});
+
+/**
+ * The throwaway repos of this test, removed afterwards.
+ *
+ * @return list<string>
+ */
+function reimportRepos(?string $add = null): array
+{
+    static $repos = [];
+
+    if ($add !== null) {
+        $repos[] = $add;
+    }
+
+    return $repos;
+}
+
+/**
+ * Jan Nowak (birth 1801, death 1870), Anna Wrona (birth 1805) and their son Leon Nowak (birth 1830).
+ *
+ * @return array<string, string>
+ */
+function reimportBlocks(): array
+{
+    return [
+        'O-0001' => "imiona: Jan\nnazwisko: Nowak\nplec: M\nurodzenie:\n  data: \"1801\"\nzgon:\n  data: \"1870\"",
+        'O-0002' => "imiona: Anna\nnazwisko: Wrona\nplec: K\nurodzenie:\n  data: \"1805\"",
+        'O-0003' => "imiona: Leon\nnazwisko: Nowak\nplec: M\nurodzenie:\n  data: \"1830\"\nrodzice:\n  ojciec: O-0001\n  matka: O-0002",
+    ];
+}
+
+function reimportRepo(array $blocks): string
+{
+    $repo = commandTemporaryRepo($blocks);
+    reimportRepos($repo);
+
+    return $repo;
+}
+
+/**
+ * Import a repo into a tree the way the command does after the author approves everything.
+ */
+function importRepoInto(Tree $tree, string $repo): void
+{
+    $reading = app(ReadResearchRepo::class)->handle($repo);
+    $classes = app(ClassifyRepoRecords::class)->handle($tree, $reading);
+    $decisions = ImportDecisions::forFirstImport(IdentityDecisions::allNew($reading));
+    $plan = app(PlanImport::class)->handle($tree, $reading, $classes, $decisions);
+
+    app(ApplyImport::class)->handle($tree, $plan, new ChangeApprovals, new ConflictResolutions);
+}
+
+/**
+ * The author and another account that both imported the same repo and changed the same values in the app afterwards.
+ *
+ * @return array{0: User, 1: User}
+ */
+function arrangeImportedAuthors(): array
+{
+    Storage::fake('local');
+    $other = User::factory()->create(['email' => 'inny@example.com']);
+    $author = User::factory()->create(['email' => 'autor@example.com']);
+    $first = reimportRepo(reimportBlocks());
+
+    foreach ([$other, $author] as $user) {
+        importRepoInto($user->tree, $first);
+    }
+
+    return [$author, $other];
+}
+
+function setBirthYearInApp(Tree $tree, string $repoId, int $year): void
+{
+    $tree->events()->where('repo_id', $repoId)->firstOrFail()->update(['date_year' => $year]);
+}
+
+function birthYearOf(Tree $tree, string $repoId): ?int
+{
+    return $tree->events()->where('repo_id', $repoId)->firstOrFail()->date_year;
+}
+
+/**
+ * Everything a re-import could touch in a tree.
+ *
+ * @return array<string, mixed>
+ */
+function treeState(Tree $tree): array
+{
+    return [
+        'people' => $tree->people()->orderBy('id')->get()->toArray(),
+        'events' => $tree->events()->orderBy('id')->get()->toArray(),
+        'relations' => $tree->parentChildRelations()->orderBy('id')->get()->toArray(),
+        'memory' => $tree->repoSnapshots()->orderBy('id')->get()->toArray(),
+    ];
+}
+
+const CHANGES_ALL = ['all' => 'Zatwierdź wszystkie', 'each' => 'Przejrzyj pojedynczo'];
+
+test('has nothing to save and asks nothing when neither the repo nor the app changed', function () {
+    [$author, $other] = arrangeImportedAuthors();
+    setBirthYearInApp($author->tree, 'O-0002/urodzenie', 1806);
+    setBirthYearInApp($other->tree, 'O-0002/urodzenie', 1806);
+    $before = ownershipSnapshot();
+
+    $this->artisan('import:research', ['email' => $author->email, 'path' => reimportRepo(reimportBlocks())])
+        ->expectsOutputToContain('Stan względem ostatniego importu')
+        ->expectsOutputToContain('Znane osoby: 3')
+        ->expectsOutputToContain('Zachowane ręczne zmiany: 1')
+        ->expectsOutputToContain('Nic do zapisania.')
+        ->assertSuccessful();
+
+    expect(ownershipSnapshot())->toBe($before);
+});
+
+test('takes a changed date from the repo after approving all and leaves the other account alone', function () {
+    [$author, $other] = arrangeImportedAuthors();
+    $otherBefore = treeState($other->tree);
+    $blocks = reimportBlocks();
+    $blocks['O-0001'] = str_replace('1801', '1802', $blocks['O-0001']);
+
+    $this->artisan('import:research', ['email' => $author->email, 'path' => reimportRepo($blocks)])
+        ->expectsOutputToContain('Zmiany z repo: 1')
+        ->expectsChoice('Zmiany z repo (1): co zrobić?', 'all', CHANGES_ALL, true)
+        ->expectsConfirmation(saveQuestion(0, 0, 1, changes: 1), 'yes')
+        ->expectsOutputToContain('Zmiany z repo: wzięte 1, odrzucone 0')
+        ->assertSuccessful();
+
+    expect(birthYearOf($author->tree, 'O-0001/urodzenie'))->toBe(1802)
+        ->and(birthYearOf($other->tree, 'O-0001/urodzenie'))->toBe(1801)
+        ->and(treeState($other->tree))->toBe($otherBefore);
+});
+
+test('rejects one change and takes the other when the author goes through them one by one', function () {
+    [$author, $other] = arrangeImportedAuthors();
+    $otherBefore = treeState($other->tree);
+    $blocks = reimportBlocks();
+    $blocks['O-0001'] = str_replace('1801', '1802', $blocks['O-0001']);
+    $blocks['O-0002'] = str_replace('1805', '1806', $blocks['O-0002']);
+
+    $this->artisan('import:research', ['email' => $author->email, 'path' => reimportRepo($blocks)])
+        ->expectsChoice('Zmiany z repo (2): co zrobić?', 'each', CHANGES_ALL, true)
+        ->expectsQuestion('Zmiana 1/2: Jan Nowak (O-0001) — Data urodzenia', 'app')
+        ->expectsQuestion('Zmiana 2/2: Anna Wrona (O-0002) — Data urodzenia', 'repo')
+        ->expectsConfirmation(saveQuestion(0, 0, 2, changes: 1), 'yes')
+        ->expectsOutputToContain('Zmiany z repo: wzięte 1, odrzucone 1')
+        ->assertSuccessful();
+
+    expect(birthYearOf($author->tree, 'O-0001/urodzenie'))->toBe(1801)
+        ->and(birthYearOf($author->tree, 'O-0002/urodzenie'))->toBe(1806)
+        ->and(treeState($other->tree))->toBe($otherBefore);
+});
+
+test('asks about a date changed on both sides, shows the previous repo value and keeps the app value on app', function () {
+    [$author, $other] = arrangeImportedAuthors();
+    setBirthYearInApp($author->tree, 'O-0001/urodzenie', 1850);
+    setBirthYearInApp($other->tree, 'O-0001/urodzenie', 1850);
+    $otherBefore = treeState($other->tree);
+    $blocks = reimportBlocks();
+    $blocks['O-0001'] = str_replace('1801', '1802', $blocks['O-0001']);
+
+    $this->artisan('import:research', ['email' => $author->email, 'path' => reimportRepo($blocks)])
+        ->expectsOutputToContain('Konflikty wartości do rozstrzygnięcia: 1')
+        ->expectsOutputToContain('poprzednio w repo: 1801')
+        ->expectsQuestion('Konflikt 1/1: Jan Nowak (O-0001) — Data urodzenia', 'app')
+        ->expectsConfirmation(saveQuestion(0, 0, 1), 'yes')
+        ->assertSuccessful();
+
+    expect(birthYearOf($author->tree, 'O-0001/urodzenie'))->toBe(1850)
+        ->and(treeState($other->tree))->toBe($otherBefore);
+});
+
+/**
+ * The repo without Leon (O-0003), who is in both trees with his birth and his two parent pairs.
+ *
+ * @return array<string, string>
+ */
+function reimportBlocksWithoutLeon(): array
+{
+    return array_slice(reimportBlocks(), 0, 2, true);
+}
+
+test('shows what removing a person takes and removes him after delete and yes', function () {
+    [$author, $other] = arrangeImportedAuthors();
+    $otherBefore = treeState($other->tree);
+
+    $this->artisan('import:research', ['email' => $author->email, 'path' => reimportRepo(reimportBlocksWithoutLeon())])
+        ->expectsOutputToContain('Usunięte w repo: 1')
+        ->expectsOutputToContain('Skutki usunięcia')
+        ->expectsOutputToContain('relacje: 2')
+        ->expectsQuestion('Usunięte w repo 1/1: Leon Nowak (O-0003) — co zrobić?', 'delete')
+        ->expectsOutputToContain('Usunięcia: 1, odłączenia: 0, przywrócenia: 0')
+        ->expectsConfirmation(saveQuestion(0, 0, 4, removals: 1), 'yes')
+        ->expectsOutputToContain('Usunięte: osoby 1')
+        ->assertSuccessful();
+
+    expect($author->tree->people()->where('repo_id', 'O-0003')->exists())->toBeFalse()
+        ->and($author->tree->people()->count())->toBe(2)
+        ->and($author->tree->repoSnapshots()->where('repo_id', 'like', 'O-0003%')->count())->toBe(0)
+        ->and(treeState($other->tree))->toBe($otherBefore);
+});
+
+test('detaches a person the repo dropped and does not ask about him again', function () {
+    [$author, $other] = arrangeImportedAuthors();
+    $otherBefore = treeState($other->tree);
+    $repo = reimportRepo(reimportBlocksWithoutLeon());
+
+    $this->artisan('import:research', ['email' => $author->email, 'path' => $repo])
+        ->expectsQuestion('Usunięte w repo 1/1: Leon Nowak (O-0003) — co zrobić?', 'detach')
+        ->expectsConfirmation(saveQuestion(0, 0, 4), 'yes')
+        ->expectsOutputToContain('odłączone: 1')
+        ->assertSuccessful();
+
+    $leon = $author->tree->people()->where('first_name', 'Leon')->firstOrFail();
+
+    expect($leon->repo_id)->toBeNull()
+        ->and($author->tree->parentChildRelations()->whereNotNull('repo_id')->count())->toBe(0);
+
+    $this->artisan('import:research', ['email' => $author->email, 'path' => $repo])
+        ->expectsOutputToContain('Nic do zapisania.')
+        ->assertSuccessful();
+
+    expect(treeState($other->tree))->toBe($otherBefore);
+});
+
+test('leaves a death deleted in the app after keep and then does not ask again', function () {
+    [$author, $other] = arrangeImportedAuthors();
+
+    foreach ([$author, $other] as $user) {
+        $user->tree->events()->where('repo_id', 'O-0001/zgon')->firstOrFail()->delete();
+    }
+
+    $otherBefore = treeState($other->tree);
+    $repo = reimportRepo(reimportBlocks());
+
+    $this->artisan('import:research', ['email' => $author->email, 'path' => $repo])
+        ->expectsOutputToContain('Usunięte w aplikacji: 1 (do decyzji)')
+        ->expectsQuestion('Usunięte w aplikacji 1/1: Zgon: Jan Nowak (O-0001/zgon) — co zrobić?', 'keep')
+        ->expectsConfirmation(saveQuestion(0, 0, 1), 'yes')
+        ->expectsOutputToContain('zostawione jako usunięte: 1')
+        ->assertSuccessful();
+
+    expect($author->tree->events()->where('repo_id', 'O-0001/zgon')->exists())->toBeFalse();
+
+    $this->artisan('import:research', ['email' => $author->email, 'path' => $repo])
+        ->expectsOutputToContain('Nic do zapisania.')
+        ->assertSuccessful();
+
+    expect(treeState($other->tree))->toBe($otherBefore);
+});
+
+test('brings a death deleted in the app back after restore', function () {
+    [$author, $other] = arrangeImportedAuthors();
+
+    foreach ([$author, $other] as $user) {
+        $user->tree->events()->where('repo_id', 'O-0001/zgon')->firstOrFail()->delete();
+    }
+
+    $otherBefore = treeState($other->tree);
+
+    $this->artisan('import:research', ['email' => $author->email, 'path' => reimportRepo(reimportBlocks())])
+        ->expectsQuestion('Usunięte w aplikacji 1/1: Zgon: Jan Nowak (O-0001/zgon) — co zrobić?', 'restore')
+        ->expectsOutputToContain('Usunięcia: 0, odłączenia: 0, przywrócenia: 1')
+        ->expectsConfirmation(saveQuestion(0, 0, 0), 'yes')
+        ->expectsOutputToContain('przywrócone: 1')
+        ->assertSuccessful();
+
+    $death = $author->tree->events()->where('repo_id', 'O-0001/zgon')->firstOrFail();
+
+    expect($death->date_year)->toBe(1870)
+        ->and(treeState($other->tree))->toBe($otherBefore);
+});
+
+test('asks for consent to write the memory of a tree imported before it existed and then has nothing to save', function () {
+    [$author, $other] = arrangeImportedAuthors();
+    $author->tree->repoSnapshots()->delete();
+    $other->tree->repoSnapshots()->delete();
+    $otherBefore = treeState($other->tree);
+    $repo = reimportRepo(reimportBlocks());
+
+    $this->artisan('import:research', ['email' => $author->email, 'path' => $repo])
+        ->expectsConfirmation(saveQuestion(0, 0, 9), 'yes')
+        ->assertSuccessful();
+
+    expect($author->tree->repoSnapshots()->count())->toBe(9)
+        ->and(RepoSnapshot::where('tree_id', $other->tree->id)->count())->toBe(0);
+
+    $this->artisan('import:research', ['email' => $author->email, 'path' => $repo])
+        ->expectsOutputToContain('Nic do zapisania.')
+        ->assertSuccessful();
+
+    expect(treeState($other->tree))->toBe($otherBefore);
+});
+
+test('asks who a new repo person is when a namesake was entered by hand', function () {
+    [$author, $other] = arrangeImportedAuthors();
+
+    foreach ([$author, $other] as $user) {
+        Person::factory()->for($user->tree)->create(['first_name' => 'Maria', 'last_name' => 'Kruk']);
+    }
+
+    $otherBefore = treeState($other->tree);
+    $blocks = reimportBlocks();
+    $blocks['O-0004'] = "imiona: Maria\nnazwisko: Kruk\nplec: K";
+    $maria = $author->tree->people()->where('first_name', 'Maria')->firstOrFail();
+
+    $this->artisan('import:research', ['email' => $author->email, 'path' => reimportRepo($blocks)])
+        ->expectsOutputToContain('Nowe w repo: 1')
+        ->expectsQuestion('Wątpliwe 1/1: Maria Kruk (O-0004) — kto to?', "person:{$maria->id}")
+        ->expectsConfirmation(saveQuestion(0, 1, 1, changes: 1), 'yes')
+        ->assertSuccessful();
+
+    expect($maria->fresh()->repo_id)->toBe('O-0004')
+        ->and(treeState($other->tree))->toBe($otherBefore);
+});
+
+test('lists an entry skipped without an id as not assessable and does not ask about removals', function () {
+    [$author, $other] = arrangeImportedAuthors();
+    $otherBefore = treeState($other->tree);
+    $repo = reimportRepo(reimportBlocksWithoutLeon());
+    file_put_contents("{$repo}/drzewo/zepsuty.md", "---\nwersja: 1\nimiona: Ktoś\n---\n");
+    $before = ownershipSnapshot();
+
+    $this->artisan('import:research', ['email' => $author->email, 'path' => $repo])
+        ->expectsOutputToContain('Nie do oceny: 1')
+        ->expectsOutputToContain('nie do oceny: popraw pominięte wpisy repo')
+        ->expectsOutputToContain('Nic do zapisania.')
+        ->assertSuccessful();
+
+    expect(ownershipSnapshot())->toBe($before)
+        ->and(treeState($other->tree))->toBe($otherBefore);
+});
+
+test('refuses a re-import with changes when run with --no-interaction and writes nothing', function () {
+    [$author, $other] = arrangeImportedAuthors();
+    $blocks = reimportBlocks();
+    $blocks['O-0001'] = str_replace('1801', '1802', $blocks['O-0001']);
+    $repo = reimportRepo($blocks);
+    $before = ownershipSnapshot();
+
+    $exitCode = Artisan::call('import:research', ['email' => $author->email, 'path' => $repo, '--no-interaction' => true]);
+
+    expect($exitCode)->toBe(1)
+        ->and(Artisan::output())->toContain('Import wymaga odpowiedzi w terminalu; nic nie zostało zapisane.')
+        ->and(ownershipSnapshot())->toBe($before);
+});
+
+test('writes nothing when the database backup fails after the consent to a re-import in production', function () {
+    [$author, $other] = arrangeImportedAuthors();
+    $calls = fakeBackupRun(1);
+    app()->detectEnvironment(fn (): string => 'production');
+    $blocks = reimportBlocks();
+    $blocks['O-0001'] = str_replace('1801', '1802', $blocks['O-0001']);
+    $repo = reimportRepo($blocks);
+    $before = ownershipSnapshot();
+
+    $this->artisan('import:research', ['email' => $author->email, 'path' => $repo])
+        ->expectsChoice('Zmiany z repo (1): co zrobić?', 'all', CHANGES_ALL, true)
+        ->expectsConfirmation(saveQuestion(0, 0, 1, changes: 1), 'yes')
+        ->expectsOutputToContain('Kopia bazy nie powiodła się, nic nie zostało zapisane.')
+        ->assertFailed();
+
+    expect($calls->getArrayCopy())->toBe([true])
+        ->and(ownershipSnapshot())->toBe($before);
+});

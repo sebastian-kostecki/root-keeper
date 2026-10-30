@@ -871,23 +871,23 @@ Klasyfikacja czyta raz rekordy drzewa z `repo_id` i pamięć (kilka zapytań). P
 
 #### Automated
 
-- [x] 4.1 Testy zapisu przechodzą: `vendor/bin/sail artisan test --compact tests/Feature/ImportApplyTest.php`
-- [x] 4.2 Testy osób i relacji przechodzą bez zmian: `vendor/bin/sail artisan test --compact tests/Feature/PersonsTest.php tests/Feature/ParentChildRelationsTest.php`
-- [x] 4.3 Analiza statyczna przechodzi: `vendor/bin/sail composer types:check`
-- [x] 4.4 Formatowanie: `vendor/bin/sail bin pint --dirty --format agent`
+- [x] 4.1 Testy zapisu przechodzą: `vendor/bin/sail artisan test --compact tests/Feature/ImportApplyTest.php` — 50189d7
+- [x] 4.2 Testy osób i relacji przechodzą bez zmian: `vendor/bin/sail artisan test --compact tests/Feature/PersonsTest.php tests/Feature/ParentChildRelationsTest.php` — 50189d7
+- [x] 4.3 Analiza statyczna przechodzi: `vendor/bin/sail composer types:check` — 50189d7
+- [x] 4.4 Formatowanie: `vendor/bin/sail bin pint --dirty --format agent` — 50189d7
 
 ### Phase 5: Komenda — podgląd zmian w terminalu
 
 #### Automated
 
-- [ ] 5.1 Testy komendy przechodzą: `vendor/bin/sail artisan test --compact tests/Feature/ImportResearchCommandTest.php`
-- [ ] 5.2 Wszystkie testy importu przechodzą: `vendor/bin/sail artisan test --compact tests/Feature/ResearchRepoReadTest.php tests/Feature/ResearchPersonMatchTest.php tests/Feature/ClassifyRepoRecordsTest.php tests/Feature/ImportPlanTest.php tests/Feature/ImportApplyTest.php tests/Unit/ResearchDateTest.php tests/Unit/NameKeyTest.php tests/Unit/YearSpanTest.php tests/Unit/ThreeWayValueTest.php tests/Unit/NoteBlockTest.php`
-- [ ] 5.3 Pełny zestaw testów przechodzi: `vendor/bin/sail artisan test --compact`
-- [ ] 5.4 Analiza statyczna przechodzi: `vendor/bin/sail composer types:check`
-- [ ] 5.5 Formatowanie: `vendor/bin/sail bin pint --dirty --format agent`
+- [x] 5.1 Testy komendy przechodzą: `vendor/bin/sail artisan test --compact tests/Feature/ImportResearchCommandTest.php`
+- [x] 5.2 Wszystkie testy importu przechodzą: `vendor/bin/sail artisan test --compact tests/Feature/ResearchRepoReadTest.php tests/Feature/ResearchPersonMatchTest.php tests/Feature/ClassifyRepoRecordsTest.php tests/Feature/ImportPlanTest.php tests/Feature/ImportApplyTest.php tests/Unit/ResearchDateTest.php tests/Unit/NameKeyTest.php tests/Unit/YearSpanTest.php tests/Unit/ThreeWayValueTest.php tests/Unit/NoteBlockTest.php`
+- [x] 5.3 Pełny zestaw testów przechodzi: `vendor/bin/sail artisan test --compact`
+- [x] 5.4 Analiza statyczna przechodzi: `vendor/bin/sail composer types:check`
+- [x] 5.5 Formatowanie: `vendor/bin/sail bin pint --dirty --format agent`
 
 #### Manual
 
-- [ ] 5.6 Przebieg na kopii `test-pack` po pierwszym imporcie, z ręczną zmianą jednej daty w aplikacji i zmianą tej oraz innej daty w kopii repo (odpowiedź „nie” na końcu): tabele zmian, konfliktów i skutków są czytelne w terminalu, etykiety się nie ucinają, a podział na zmiany i konflikty zgadza się z oceną autora
-- [ ] 5.7 Ten sam przebieg z odpowiedzią „tak” po lokalnej kopii bazy: zmieniona w aplikacji wartość została tam, gdzie autor tak wybrał; osoba usunięta z kopii repo została odłączona albo usunięta zgodnie z odpowiedzią; bazę potem przywrócono z kopii
-- [ ] 5.8 Drugi przebieg na tej samej kopii repo kończy się „Nic do zapisania.” bez pytań
+- [x] 5.6 Przebieg na kopii `test-pack` po pierwszym imporcie, z ręczną zmianą jednej daty w aplikacji i zmianą tej oraz innej daty w kopii repo (odpowiedź „nie” na końcu): tabele zmian, konfliktów i skutków są czytelne w terminalu, etykiety się nie ucinają, a podział na zmiany i konflikty zgadza się z oceną autora
+- [x] 5.7 Ten sam przebieg z odpowiedzią „tak” po lokalnej kopii bazy: zmieniona w aplikacji wartość została tam, gdzie autor tak wybrał; osoba usunięta z kopii repo została odłączona albo usunięta zgodnie z odpowiedzią; bazę potem przywrócono z kopii
+- [x] 5.8 Drugi przebieg na tej samej kopii repo kończy się „Nic do zapisania.” bez pytań
