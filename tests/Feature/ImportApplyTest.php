@@ -366,6 +366,18 @@ function fieldsOfFills(ImportPlan $plan): array
     return array_map(fn ($fill): string => $fill->field, $plan->matched[0]->fills);
 }
 
+test('replaces a block of the repo that the author pasted into a hand-entered person instead of adding a second one', function () {
+    Storage::fake('local');
+    [$tree, $scene] = arrangeHandEnteredAuthor();
+    $scene['jan']->update(['note' => "Moja uwaga\n\nZ repo badawczego (O-0001):\nstary tekst"]);
+    $plan = planFixtureWithMatches($tree, $scene);
+    $note = collect($plan->matched)->first(fn ($match) => $match->person->id === 'O-0001')->note;
+
+    app(ApplyImport::class)->handle($tree, $plan, new ChangeApprovals, new ConflictResolutions);
+
+    expect($scene['jan']->fresh()->note)->toBe("Moja uwaga\n\n{$note}");
+});
+
 test('hooks the repo into a hand-entered person and keeps what the app holds', function () {
     Storage::fake('local');
     [$tree, $scene] = arrangeHandEnteredAuthor();
@@ -1061,11 +1073,13 @@ test('leaves the photo of another account in place when it removes a person', fu
     Storage::fake('local');
     [$tree, $other] = reimportTwins(REIMPORT_FAMILY, reimportDressPiotr());
     $otherPhoto = "persons/{$other->id}/piotr.jpg";
+    $otherState = reimportTreeState($other);
 
     app(ApplyImport::class)->handle($tree, reimportPlan($tree, REIMPORT_WITHOUT_PIOTR, removals: ['O-0002' => 'delete']), new ChangeApprovals, new ConflictResolutions);
 
     expect(Storage::disk('local')->exists($otherPhoto))->toBeTrue()
-        ->and($other->people()->where('repo_id', 'O-0002')->exists())->toBeTrue();
+        ->and($other->people()->where('repo_id', 'O-0002')->exists())->toBeTrue()
+        ->and(reimportTreeState($other))->toBe($otherState);
 });
 
 test('detaches a person from the repo and keeps the person, its records, photo, residence and sources', function () {
@@ -1197,6 +1211,19 @@ test('brings a person deleted in the app back with its birth and its pair', func
     expectOnlyAuthorRowsChanged(rowDiff($before, databaseRows()), $tree, $eventIds);
 });
 
+test('counts a person left deleted as one kept record, not one per key', function () {
+    Storage::fake('local');
+    [$tree, $other] = reimportTwins(REIMPORT_FAMILY, fn (Tree $tree) => app(DeletePerson::class)->handle($tree->people()->where('repo_id', 'O-0002')->firstOrFail()));
+    $plan = reimportPlan($tree, REIMPORT_FAMILY, deletions: ['O-0002' => 'keep']);
+    $otherState = reimportTreeState($other);
+
+    $result = app(ApplyImport::class)->handle($tree, $plan, new ChangeApprovals, new ConflictResolutions);
+
+    expect(count($plan->keptDeletedSnapshots))->toBeGreaterThan(1)
+        ->and($result->keptDeleted)->toBe(1)
+        ->and(reimportTreeState($other))->toBe($otherState);
+});
+
 test('deletes the old pair and creates the pair with the new father in one write', function () {
     Storage::fake('local');
     $v1 = ['O-0001' => "imiona: Dziecko\nrodzice:\n  ojciec: O-0002", 'O-0002' => "imiona: Piotr\nplec: M", 'O-0003' => "imiona: Paweł\nplec: M"];
@@ -1248,6 +1275,19 @@ test('refuses a record to remove that disappeared since planning and writes noth
 
     expect(fn () => app(ApplyImport::class)->handle($tree, $plan, new ChangeApprovals, new ConflictResolutions))->toThrow(RuntimeException::class, 'zmieniła się po planowaniu')
         ->and(ownershipSnapshot())->toBe($before);
+});
+
+test('refuses a removal whose effects changed since planning and writes nothing', function () {
+    Storage::fake('local');
+    [$tree, $other] = reimportTwins(REIMPORT_FAMILY, reimportDressPiotr());
+    $plan = reimportPlan($tree, REIMPORT_WITHOUT_PIOTR, removals: ['O-0002' => 'delete']);
+    Residence::factory()->create(['person_id' => $tree->people()->where('repo_id', 'O-0002')->firstOrFail()->id]);
+    $before = ownershipSnapshot();
+
+    expect(fn () => app(ApplyImport::class)->handle($tree, $plan, new ChangeApprovals, new ConflictResolutions))->toThrow(RuntimeException::class, 'Skutki usunięcia O-0002 zmieniły się po planowaniu; nic nie zostało zapisane')
+        ->and(ownershipSnapshot())->toBe($before)
+        ->and($tree->people()->where('repo_id', 'O-0002')->exists())->toBeTrue()
+        ->and(Storage::disk('local')->exists("persons/{$tree->id}/piotr.jpg"))->toBeTrue();
 });
 
 test('refuses a write when the memory of the last import moved since planning', function () {

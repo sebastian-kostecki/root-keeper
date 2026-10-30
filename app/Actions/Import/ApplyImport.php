@@ -45,6 +45,7 @@ class ApplyImport
         private CreateParentChildRelation $createRelation,
         private CreateMarriage $createMarriage,
         private DeletePerson $deletePerson,
+        private ClassifyRepoRecords $classify,
     ) {}
 
     /**
@@ -267,7 +268,7 @@ class ApplyImport
                 removedRecords: $removedRecords,
                 detached: $detached,
                 restored: count($plan->restorations),
-                keptDeleted: count($plan->keptDeletedSnapshots),
+                keptDeleted: $this->countKeptRecords(array_map(strval(...), array_keys($plan->keptDeletedSnapshots))),
             );
         });
     }
@@ -381,6 +382,24 @@ class ApplyImport
     }
 
     /**
+     * The records the author chose to keep deleted: a key that travels with a kept person does not count on its own.
+     *
+     * @param  list<string>  $keys
+     */
+    private function countKeptRecords(array $keys): int
+    {
+        $keptPeople = array_values(array_filter($keys, fn (string $key): bool => RepoKeys::kindOf($key) === RepoKeyKind::Person));
+
+        return count(array_filter($keys, function (string $key) use ($keptPeople): bool {
+            if (RepoKeys::kindOf($key) === RepoKeyKind::Person) {
+                return true;
+            }
+
+            return array_intersect(RepoKeys::personIdsOf($key), array_map(fn (string $person): string => RepoKeys::personIdsOf($person)[0], $keptPeople)) === [];
+        }));
+    }
+
+    /**
      * Check, before anything is written, that everything the plan saw is still so: the values of the known persons and
      * weddings, the records to delete or detach, the keys to create, and the memory of the last import.
      *
@@ -410,12 +429,26 @@ class ApplyImport
             }
         }
 
+        foreach ($plan->matched as $match) {
+            $person = $locked[$match->personId]->load('events');
+
+            foreach ($match->fills as $fill) {
+                $this->guardPerson($person, $fill->field, $fill->appLabel);
+            }
+
+            foreach ($match->conflicts as $conflict) {
+                if ($resolutions->takesRepo($conflict->key)) {
+                    $this->guardPerson($person, $conflict->field, $conflict->appLabel);
+                }
+            }
+        }
+
         foreach ($plan->marriages as $planned) {
             if ($planned->existingEventId === null) {
                 continue;
             }
 
-            $event = $tree->events()->whereKey($planned->existingEventId)->where('type', EventType::Marriage)->first();
+            $event = $tree->events()->whereKey($planned->existingEventId)->where('type', EventType::Marriage)->lockForUpdate()->first();
 
             if ($event === null) {
                 throw new RuntimeException("Małżeństwo {$planned->repoId} nie pasuje już do drzewa; nic nie zostało zapisane.");
@@ -443,7 +476,8 @@ class ApplyImport
     }
 
     /**
-     * Check that the record to delete or detach is still in the tree with the repo id the plan saw.
+     * Check that the record to delete or detach is still in the tree with the repo id the plan saw, and that a removal
+     * still takes with it exactly what the author saw in the table of effects.
      *
      * @throws RuntimeException
      */
@@ -455,8 +489,15 @@ class ApplyImport
             default => $tree->events(),
         };
 
-        if ($removal->recordId === null || ! $query->whereKey($removal->recordId)->where('repo_id', $removal->key)->exists()) {
+        $record = $removal->recordId === null ? null : $query->whereKey($removal->recordId)->where('repo_id', $removal->key)->first();
+
+        if ($record === null) {
             throw new RuntimeException("Rekord {$removal->key} zmienił się po planowaniu; nic nie zostało zapisane.");
+        }
+
+        if ($removal->decision === ImportDecisions::DELETE && $removal->impact !== null
+            && $this->classify->impactOf($tree, $removal->key, $record) != $removal->impact) {
+            throw new RuntimeException("Skutki usunięcia {$removal->key} zmieniły się po planowaniu; nic nie zostało zapisane.");
         }
     }
 
@@ -741,13 +782,11 @@ class ApplyImport
         $changes = [];
 
         foreach ($match->fills as $fill) {
-            $this->guardPerson($person, $fill->field, $fill->appLabel);
             $changes[] = [$fill->field, $fill->value, false];
         }
 
         foreach ($match->conflicts as $conflict) {
             if ($resolutions->takesRepo($conflict->key)) {
-                $this->guardPerson($person, $conflict->field, $conflict->appLabel);
                 $changes[] = [$conflict->field, $conflict->repoValue, true];
             }
         }
@@ -773,7 +812,7 @@ class ApplyImport
         }
 
         if ($match->note !== null) {
-            $attributes['note'] = trim((string) $person->note) === '' ? $match->note : $person->note."\n\n".$match->note;
+            $attributes['note'] = NoteBlock::replace($person->note, $match->person->id, $match->note);
         }
 
         $person->update($attributes);

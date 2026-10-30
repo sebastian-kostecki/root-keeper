@@ -9,6 +9,7 @@ use App\Support\Import\RepoKeys;
 use App\Support\Import\ResearchMarriage;
 use App\Support\Import\ResearchPerson;
 use App\Support\Import\ResearchRepoReading;
+use ErrorException;
 use Illuminate\Support\Facades\File;
 use RuntimeException;
 
@@ -42,6 +43,13 @@ class ReadResearchRepo
 
         foreach ($files as $path) {
             $file = basename($path);
+
+            if (! is_readable($path)) {
+                $skipped[] = new ImportIssue($file, 'Nie udało się odczytać pliku');
+
+                continue;
+            }
+
             $parsed = $this->parsePersonBlock->handle($file, File::get($path));
 
             array_push($warnings, ...$parsed->warnings);
@@ -88,7 +96,13 @@ class ReadResearchRepo
     {
         $files = [];
 
-        foreach (scandir($treePath) ?: [] as $name) {
+        try {
+            $names = scandir($treePath);
+        } catch (ErrorException $exception) {
+            throw new RuntimeException('Nie udało się odczytać katalogu drzewo/: '.$treePath, previous: $exception);
+        }
+
+        foreach ($names ?: [] as $name) {
             $path = $treePath.'/'.$name;
 
             if (str_ends_with($name, '.md') && ! str_starts_with($name, '_') && is_file($path)) {

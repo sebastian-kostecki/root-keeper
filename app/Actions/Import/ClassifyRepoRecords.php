@@ -322,7 +322,7 @@ class ClassifyRepoRecords
     /**
      * What a removal takes with it. A birth is only detached, so it has no impact.
      */
-    private function impactOf(Tree $tree, string $key, Model $record): ?RemovalImpact
+    public function impactOf(Tree $tree, string $key, Model $record): ?RemovalImpact
     {
         return match (true) {
             $record instanceof Person => $this->personImpact($tree, $record),

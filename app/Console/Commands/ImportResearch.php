@@ -84,6 +84,12 @@ class ImportResearch extends Command
 
         $this->report($email, $path, $reading);
 
+        if ($reading->persons === [] && $tree->people()->whereNotNull('repo_id')->exists()) {
+            $this->error('Repo nie zawiera żadnej poprawnej osoby, a drzewo ma osoby z importu. Sprawdź ścieżkę i czy dysk jest zamontowany; nic nie zostało zapisane.');
+
+            return self::FAILURE;
+        }
+
         $classes = $classifyRepoRecords->handle($tree, $reading);
 
         $this->stateSummary($classes);

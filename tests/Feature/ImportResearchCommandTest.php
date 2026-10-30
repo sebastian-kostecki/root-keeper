@@ -748,6 +748,20 @@ function treeState(Tree $tree): array
 
 const CHANGES_ALL = ['all' => 'Zatwierdź wszystkie', 'each' => 'Przejrzyj pojedynczo'];
 
+test('refuses an empty repo when the tree already has imported persons and writes nothing', function () {
+    [$author, $other] = arrangeImportedAuthors();
+    $before = ownershipSnapshot();
+    $repo = sys_get_temp_dir().'/empty-repo-'.uniqid();
+    mkdir($repo.'/drzewo', 0777, true);
+    reimportRepos($repo);
+
+    $this->artisan('import:research', ['email' => $author->email, 'path' => $repo])
+        ->expectsOutputToContain('Repo nie zawiera żadnej poprawnej osoby')
+        ->assertFailed();
+
+    expect(ownershipSnapshot())->toBe($before);
+});
+
 test('has nothing to save and asks nothing when neither the repo nor the app changed', function () {
     [$author, $other] = arrangeImportedAuthors();
     setBirthYearInApp($author->tree, 'O-0002/urodzenie', 1806);

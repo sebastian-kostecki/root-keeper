@@ -45,7 +45,7 @@ Autor prowadzi badania genealogiczne w repo markdown (dziś 283 pliki osób, dzi
 | S-01 | research-blocks-read-and-report    | uruchomić komendę na katalogu repo i dostać raport przeczytanych osób oraz pominiętych wpisów z powodem         | —             | FR-001, FR-002, FR-003, FR-004                        | done |
 | S-02 | first-import-into-empty-tree       | zaimportować przodków do pustego drzewa po podsumowaniu i zatwierdzeniu i zobaczyć ich z relacjami i datami      | S-01, S-07    | US-01, FR-003, FR-005, FR-006, FR-008, FR-009, FR-016 | done |
 | S-03 | first-import-matches-hand-entered  | przy pierwszym imporcie dopasować osoby z repo do ręcznie wpisanych i rozstrzygnąć przypadki wątpliwe            | S-02          | US-01, FR-005, FR-006, FR-007, FR-014                 | done |
-| S-04 | reimport-changes-and-conflicts     | ponowić import i w podglądzie zatwierdzać nowe, zmienione, konflikty z ręcznymi zmianami i usunięte w repo        | S-02          | US-02, FR-005, FR-006, FR-008, FR-014, FR-015         | blocked  |
+| S-04 | reimport-changes-and-conflicts     | ponowić import i w podglądzie zatwierdzać nowe, zmienione, konflikty z ręcznymi zmianami i usunięte w repo        | S-02          | US-02, FR-005, FR-006, FR-008, FR-014, FR-015         | in-progress |
 | S-05 | import-places-matched-to-gazetteer | dostać miejsca wydarzeń (także pochowanie na cmentarzu) dopasowane do spisu i potwierdzić nowe w podglądzie      | S-02          | FR-009, FR-010, FR-017                                | proposed |
 | S-06 | import-sources-with-scans          | dostać źródła z opisem i skanem podpięte do faktów z numerem wpisu                                             | S-05          | FR-001, FR-011, US-01                                 | blocked  |
 | S-07 | fuzzy-event-dates                  | zapisać i zobaczyć datę wydarzenia jako zakres lat, „przed” albo „po” — ręcznie i z importu                      | —             | FR-009, FR-015                                        | done |
@@ -138,7 +138,7 @@ Brak. Każdy element przekrojowy wchodzi w pierwszym wycinku, który go używa: 
   - Na jakim poziomie aplikacja pamięta „zmienione od ostatniego importu” (pole, rekord)? Owner: `/10x-plan`. Block: no.
 - **Risk:** Główne ryzyko wskazane przez autora — ręczna poprawka znika po imporcie. Pola dodane w późniejszych wycinkach (`S-05` – `S-09`) wchodzą do tego samego podglądu zmian; jeśli `S-04` wyląduje przed nimi, każdy z nich rozszerza podgląd o swoje pole.
 - **Uwaga z przeglądu S-02 (F3):** osoba z importu może nie mieć urodzenia (import tworzy wydarzenie tylko przy kluczu w bloku). Urodzenie dopisane potem w aplikacji ma `repo_id = null`, więc nie jest zmianą z repo, a gdy repo później doda `urodzenie`, `S-04` musi zdecydować: uzupełnić ręczne wydarzenie czy pokazać konflikt.
-- **Status:** blocked
+- **Status:** in-progress
 
 ### S-05: Miejsca z repo dopasowane do spisu
 

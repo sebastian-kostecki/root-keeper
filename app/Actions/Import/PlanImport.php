@@ -49,11 +49,6 @@ use InvalidArgumentException;
 class PlanImport
 {
     /**
-     * Until a later import phase lifts it, a tree that already holds a person from an import cannot take another import.
-     */
-    public const BLOCKED_REASON = 'Drzewo konta ma już osoby z importu. Ponowny import (S-04) jeszcze nie działa; nic nie zostanie zapisane.';
-
-    /**
      * How an empty field is shown in a label.
      */
     public const EMPTY_LABEL = '—';

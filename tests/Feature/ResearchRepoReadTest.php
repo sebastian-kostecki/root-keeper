@@ -344,3 +344,24 @@ test('does not count a plain note without a block, nor files that are not scanne
         ->and($reading->skippedRepoIds())->toBe([])
         ->and($reading->hasSkippedWithoutId())->toBeFalse();
 });
+
+test('reports an unreadable person file as skipped without an id and reads the rest', function () {
+    $repo = sys_get_temp_dir().'/unreadable-repo-'.uniqid();
+    mkdir($repo.'/drzewo', 0777, true);
+    file_put_contents($repo.'/drzewo/O-0001.md', "---\nwersja: 1\nid: O-0001\nimiona: Jan\nnazwisko: Nowak\nplec: M\n---\n");
+    file_put_contents($repo.'/drzewo/O-0002.md', "---\nwersja: 1\nid: O-0002\nimiona: Anna\nnazwisko: Wrona\nplec: K\n---\n");
+    chmod($repo.'/drzewo/O-0002.md', 0000);
+
+    try {
+        $reading = app(ReadResearchRepo::class)->handle($repo);
+    } finally {
+        chmod($repo.'/drzewo/O-0002.md', 0600);
+        File::deleteDirectory($repo);
+    }
+
+    expect(array_keys($reading->persons))->toBe(['O-0001'])
+        ->and($reading->skipped)->toHaveCount(1)
+        ->and($reading->skipped[0]->file)->toBe('O-0002.md')
+        ->and($reading->skipped[0]->repoId)->toBeNull()
+        ->and($reading->hasSkippedWithoutId())->toBeTrue();
+});
