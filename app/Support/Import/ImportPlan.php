@@ -27,6 +27,7 @@ final readonly class ImportPlan
      * @param  list<ImportIssue>  $unassessable  records that could be removed in the repo, left alone because an entry of the repo was skipped without a readable id
      * @param  int  $keptManual  fields changed by hand in the app while the repo did not move, left alone
      * @param  array<string, array<string, string|null>>  $keptDeletedSnapshots  repo key => the repo values to remember for a record the author left deleted
+     * @param  array<string, string>  $seenSnapshots  repo key => `RepoSnapshot::fingerprint()` of the memory entry the plan saw, for every key the write touches that had one
      */
     public function __construct(
         public array $persons,
@@ -55,6 +56,7 @@ final readonly class ImportPlan
         public array $unassessable = [],
         public int $keptManual = 0,
         public array $keptDeletedSnapshots = [],
+        public array $seenSnapshots = [],
     ) {}
 
     /**

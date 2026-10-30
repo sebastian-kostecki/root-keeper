@@ -12,6 +12,7 @@ use App\Enums\MatchVerdict;
 use App\Models\Person;
 use App\Models\Tree;
 use App\Models\User;
+use App\Support\Import\ChangeApprovals;
 use App\Support\Import\ConflictResolutions;
 use App\Support\Import\IdentityDecisions;
 use App\Support\Import\ImportDecisions;
@@ -138,7 +139,7 @@ class ImportResearch extends Command
         }
 
         try {
-            $result = $applyImport->handle($tree, $plan, $resolutions);
+            $result = $applyImport->handle($tree, $plan, new ChangeApprovals, $resolutions);
         } catch (Throwable $exception) {
             report($exception);
             $this->error($exception->getMessage());

@@ -4,6 +4,7 @@ use App\Actions\Import\ApplyImport;
 use App\Actions\Import\ClassifyRepoRecords;
 use App\Actions\Import\PlanImport;
 use App\Actions\Import\ReadResearchRepo;
+use App\Actions\Persons\DeletePerson;
 use App\Actions\Relations\CreateMarriage;
 use App\Actions\Relations\CreateParentChildRelation;
 use App\Enums\DateQualifier;
@@ -20,12 +21,14 @@ use App\Models\Residence;
 use App\Models\Source;
 use App\Models\Tree;
 use App\Models\User;
+use App\Support\Import\ChangeApprovals;
 use App\Support\Import\ConflictResolutions;
 use App\Support\Import\IdentityDecisions;
 use App\Support\Import\ImportDecisions;
 use App\Support\Import\ImportPlan;
 use App\Support\Import\ImportResult;
 use App\Support\Import\PlannedMatch;
+use App\Support\Import\ResearchRepoReading;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
@@ -72,7 +75,7 @@ test('writes persons with repo id, names, gender and note', function () {
     $tree = arrangeApplyUsers();
     $plan = planFixtureForApply($tree);
 
-    $result = app(ApplyImport::class)->handle($tree, $plan, new ConflictResolutions);
+    $result = app(ApplyImport::class)->handle($tree, $plan, new ChangeApprovals, new ConflictResolutions);
 
     $jan = importedPerson($tree, 'O-0001');
 
@@ -90,7 +93,7 @@ test('writes persons with repo id, names, gender and note', function () {
 test('writes births and deaths with every kind of date and the person as subject', function () {
     $tree = arrangeApplyUsers();
 
-    $result = app(ApplyImport::class)->handle($tree, planFixtureForApply($tree), new ConflictResolutions);
+    $result = app(ApplyImport::class)->handle($tree, planFixtureForApply($tree), new ChangeApprovals, new ConflictResolutions);
 
     $birth = importedEvent($tree, 'O-0001/urodzenie');
     $range = importedEvent($tree, 'O-0002/urodzenie');
@@ -121,7 +124,7 @@ test('writes births and deaths with every kind of date and the person as subject
 test('writes approximate dates through the qualifier', function () {
     $tree = arrangeApplyUsers();
 
-    app(ApplyImport::class)->handle($tree, planFixtureForApply($tree), new ConflictResolutions);
+    app(ApplyImport::class)->handle($tree, planFixtureForApply($tree), new ChangeApprovals, new ConflictResolutions);
 
     $wedding = importedEvent($tree, 'O-0001+O-0004/slub');
 
@@ -132,7 +135,7 @@ test('writes approximate dates through the qualifier', function () {
 test('writes relations with repo id and skips the one with a conflicting gender', function () {
     $tree = arrangeApplyUsers();
 
-    $result = app(ApplyImport::class)->handle($tree, planFixtureForApply($tree), new ConflictResolutions);
+    $result = app(ApplyImport::class)->handle($tree, planFixtureForApply($tree), new ChangeApprovals, new ConflictResolutions);
 
     $keys = $tree->parentChildRelations()->orderBy('repo_id')->pluck('repo_id')->all();
     $relation = $tree->parentChildRelations()->where('repo_id', 'O-0002>O-0001')->firstOrFail();
@@ -147,7 +150,7 @@ test('writes relations with repo id and skips the one with a conflicting gender'
 test('writes marriages with both spouses, the date and repo id', function () {
     $tree = arrangeApplyUsers();
 
-    $result = app(ApplyImport::class)->handle($tree, planFixtureForApply($tree), new ConflictResolutions);
+    $result = app(ApplyImport::class)->handle($tree, planFixtureForApply($tree), new ChangeApprovals, new ConflictResolutions);
 
     $wedding = importedEvent($tree, 'O-0002+O-0003/slub');
     $spouses = $wedding->participants()->get();
@@ -164,7 +167,7 @@ test('writes marriages with both spouses, the date and repo id', function () {
 test('leaves the proband unset', function () {
     $tree = arrangeApplyUsers();
 
-    app(ApplyImport::class)->handle($tree, planFixtureForApply($tree), new ConflictResolutions);
+    app(ApplyImport::class)->handle($tree, planFixtureForApply($tree), new ChangeApprovals, new ConflictResolutions);
 
     expect($tree->fresh()->root_person_id)->toBeNull();
 });
@@ -175,7 +178,7 @@ test('writes only into the author tree and leaves the other account untouched', 
     $plan = planFixtureForApply($tree);
     $before = databaseRows();
 
-    app(ApplyImport::class)->handle($tree, $plan, new ConflictResolutions);
+    app(ApplyImport::class)->handle($tree, $plan, new ChangeApprovals, new ConflictResolutions);
 
     $diff = rowDiff($before, databaseRows());
 
@@ -201,14 +204,16 @@ test('writes only into the author tree and leaves the other account untouched', 
         ->and(Person::where('tree_id', '!=', $tree->id)->whereNotNull('repo_id')->count())->toBe(0);
 });
 
-test('refuses a tree that already holds a person from an import', function () {
+test('writes a plan made for a tree that already holds a person from an import', function () {
     $tree = arrangeApplyUsers();
-    Person::factory()->for($tree)->create(['repo_id' => 'O-0001']);
+    $known = Person::factory()->for($tree)->create(['repo_id' => 'O-0001']);
     $plan = planFixtureForApply($tree);
-    $before = ownershipSnapshot();
 
-    expect(fn () => app(ApplyImport::class)->handle($tree, $plan, new ConflictResolutions))->toThrow(RuntimeException::class, 'Drzewo konta ma już osoby z importu')
-        ->and(ownershipSnapshot())->toBe($before);
+    $result = app(ApplyImport::class)->handle($tree, $plan, new ChangeApprovals, new ConflictResolutions);
+
+    expect($result->persons)->toBe(12)
+        ->and($tree->people()->count())->toBe(13)
+        ->and($tree->people()->where('repo_id', 'O-0001')->pluck('id')->all())->toBe([$known->id]);
 });
 
 test('writes into a tree that got a hand-entered person after planning', function () {
@@ -217,21 +222,22 @@ test('writes into a tree that got a hand-entered person after planning', functio
 
     $added = Person::factory()->for($tree)->create(['first_name' => 'Dodana', 'last_name' => 'Ręcznie']);
 
-    app(ApplyImport::class)->handle($tree, $plan, new ConflictResolutions);
+    app(ApplyImport::class)->handle($tree, $plan, new ChangeApprovals, new ConflictResolutions);
 
     expect($tree->people()->count())->toBe(14)
         ->and($added->fresh()->repo_id)->toBeNull()
         ->and($tree->people()->whereNotNull('repo_id')->count())->toBe(13);
 });
 
-test('refuses a tree that got a person from an import after planning and writes nothing', function () {
+test('refuses a key the plan creates that the tree got after planning and writes nothing', function () {
+    Storage::fake('local');
     $tree = arrangeApplyUsers();
     $plan = planFixtureForApply($tree);
 
-    Person::factory()->for($tree)->create(['first_name' => 'Dodana', 'last_name' => 'Z importu', 'repo_id' => 'O-0900']);
+    Person::factory()->for($tree)->create(['first_name' => 'Dodana', 'last_name' => 'Z importu', 'repo_id' => 'O-0001']);
     $before = ownershipSnapshot();
 
-    expect(fn () => app(ApplyImport::class)->handle($tree, $plan, new ConflictResolutions))->toThrow(RuntimeException::class, 'Drzewo konta ma już osoby z importu')
+    expect(fn () => app(ApplyImport::class)->handle($tree, $plan, new ChangeApprovals, new ConflictResolutions))->toThrow(RuntimeException::class, 'Klucz repo O-0001 pojawił się w drzewie po planowaniu')
         ->and(ownershipSnapshot())->toBe($before);
 });
 
@@ -244,7 +250,7 @@ test('rolls everything back when a step in the middle fails', function () {
         $mock->shouldReceive('handle')->andThrow(ValidationException::withMessages(['spouse_id' => 'Ta para ma już małżeństwo.']));
     });
 
-    expect(fn () => app(ApplyImport::class)->handle($tree, $plan, new ConflictResolutions))->toThrow(ValidationException::class)
+    expect(fn () => app(ApplyImport::class)->handle($tree, $plan, new ChangeApprovals, new ConflictResolutions))->toThrow(ValidationException::class)
         ->and(ownershipSnapshot())->toBe($before)
         ->and($tree->people()->count())->toBe(0)
         ->and($tree->events()->count())->toBe(0)
@@ -366,7 +372,7 @@ test('hooks the repo into a hand-entered person and keeps what the app holds', f
     $plan = planFixtureWithMatches($tree, $scene);
     $note = collect($plan->matched)->first(fn ($match) => $match->person->id === 'O-0001')->note;
 
-    $result = app(ApplyImport::class)->handle($tree, $plan, new ConflictResolutions);
+    $result = app(ApplyImport::class)->handle($tree, $plan, new ChangeApprovals, new ConflictResolutions);
 
     $jan = $scene['jan']->fresh();
     $anna = $scene['anna']->fresh();
@@ -391,7 +397,7 @@ test('sets the repo id on the persons that were matched and on no other hand-ent
     [$tree, $scene] = arrangeHandEnteredAuthor();
     $bystander = Person::factory()->for($tree)->create(['first_name' => 'Jan', 'last_name' => 'Nowak']);
 
-    app(ApplyImport::class)->handle($tree, planFixtureWithMatches($tree, $scene), new ConflictResolutions);
+    app(ApplyImport::class)->handle($tree, planFixtureWithMatches($tree, $scene), new ChangeApprovals, new ConflictResolutions);
 
     expect($bystander->fresh()->repo_id)->toBeNull()
         ->and($tree->people()->whereNotNull('repo_id')->count())->toBe(13)
@@ -403,7 +409,7 @@ test('keeps the value from the app for a conflict without an answer and for one 
     $plan = planFixtureWithMatches($tree, $scene);
     expect(array_map(fn ($conflict) => $conflict->key, $plan->conflicts))->toBe(['O-0002/urodzenie/data', 'O-0004/plec', 'O-0001+O-0004/slub/data']);
 
-    $result = app(ApplyImport::class)->handle($tree, $plan, new ConflictResolutions($choices));
+    $result = app(ApplyImport::class)->handle($tree, $plan, new ChangeApprovals, new ConflictResolutions($choices));
 
     $piotrBirth = $scene['piotr']->load('events')->birth();
     $wedding = $scene['wedding']->fresh();
@@ -427,7 +433,7 @@ test('writes the value from the repo for a conflict settled for the repo and kee
         'O-0001+O-0004/slub/data' => ConflictResolutions::FROM_REPO,
     ]);
 
-    $result = app(ApplyImport::class)->handle($tree, $plan, $resolutions);
+    $result = app(ApplyImport::class)->handle($tree, $plan, new ChangeApprovals, $resolutions);
 
     $piotrBirth = $scene['piotr']->load('events')->birth();
     $wedding = $scene['wedding']->fresh();
@@ -442,7 +448,7 @@ test('writes the value from the repo for a conflict settled for the repo and kee
 test('marks the existing birth without a second one and creates the death that was missing', function () {
     [$tree, $scene] = arrangeHandEnteredAuthor();
 
-    $result = app(ApplyImport::class)->handle($tree, planFixtureWithMatches($tree, $scene), new ConflictResolutions);
+    $result = app(ApplyImport::class)->handle($tree, planFixtureWithMatches($tree, $scene), new ChangeApprovals, new ConflictResolutions);
 
     $jan = $scene['jan']->load('events');
     $death = $jan->death();
@@ -462,7 +468,7 @@ test('marks the relation and the wedding that are in the tree and creates the ne
     [$tree, $scene] = arrangeHandEnteredAuthor();
     $existingRelation = $tree->parentChildRelations()->firstOrFail();
 
-    $result = app(ApplyImport::class)->handle($tree, planFixtureWithMatches($tree, $scene), new ConflictResolutions);
+    $result = app(ApplyImport::class)->handle($tree, planFixtureWithMatches($tree, $scene), new ChangeApprovals, new ConflictResolutions);
 
     $marta = importedPerson($tree, 'O-0003');
     $relations = $tree->parentChildRelations()->orderBy('id')->get();
@@ -494,7 +500,7 @@ test('leaves the relations of a matched child alone when the repo names another 
         'O-0002' => "imiona: Piotr\nnazwisko: Nowak\nplec: M",
     ], ['O-0001' => $jan]);
 
-    app(ApplyImport::class)->handle($author->tree, $plan, new ConflictResolutions);
+    app(ApplyImport::class)->handle($author->tree, $plan, new ChangeApprovals, new ConflictResolutions);
 
     expect($author->tree->parentChildRelations()->where('child_id', $jan->id)->pluck('parent_id')->all())->toBe([$adam->id])
         ->and($plan->skippedRelations)->toHaveCount(1)
@@ -508,7 +514,7 @@ test('changes only rows of the author tree and removes nothing when it hooks the
     $resolutions = new ConflictResolutions(['O-0002/urodzenie/data' => 'repo', 'O-0001+O-0004/slub/data' => 'repo', 'O-0004/plec' => 'repo']);
     $before = databaseRows();
 
-    app(ApplyImport::class)->handle($tree, $plan, $resolutions);
+    app(ApplyImport::class)->handle($tree, $plan, new ChangeApprovals, $resolutions);
 
     $diff = rowDiff($before, databaseRows());
     $authorPeople = $tree->people()->pluck('id')->all();
@@ -553,7 +559,7 @@ test('refuses a plan made for the tree of another account', function () {
     $foreignPlan = planFixtureWithMatches($other->tree, $scene);
     $before = ownershipSnapshot();
 
-    expect(fn () => app(ApplyImport::class)->handle($author->tree, $foreignPlan, new ConflictResolutions))->toThrow(RuntimeException::class, 'nie ma już w drzewie konta')
+    expect(fn () => app(ApplyImport::class)->handle($author->tree, $foreignPlan, new ChangeApprovals, new ConflictResolutions))->toThrow(RuntimeException::class, 'nie ma już w drzewie konta')
         ->and(ownershipSnapshot())->toBe($before);
 });
 
@@ -564,7 +570,7 @@ test('refuses a matched person who was deleted after planning and writes nothing
     $scene['anna']->delete();
     $before = ownershipSnapshot();
 
-    expect(fn () => app(ApplyImport::class)->handle($tree, $plan, new ConflictResolutions))->toThrow(RuntimeException::class, 'nie ma już w drzewie konta')
+    expect(fn () => app(ApplyImport::class)->handle($tree, $plan, new ChangeApprovals, new ConflictResolutions))->toThrow(RuntimeException::class, 'nie ma już w drzewie konta')
         ->and(ownershipSnapshot())->toBe($before);
 });
 
@@ -575,7 +581,7 @@ test('refuses a matched person who got a repo id after planning and writes nothi
     $scene['jan']->update(['repo_id' => 'O-0900']);
     $before = ownershipSnapshot();
 
-    expect(fn () => app(ApplyImport::class)->handle($tree, $plan, new ConflictResolutions))->toThrow(RuntimeException::class)
+    expect(fn () => app(ApplyImport::class)->handle($tree, $plan, new ChangeApprovals, new ConflictResolutions))->toThrow(RuntimeException::class)
         ->and(ownershipSnapshot())->toBe($before);
 });
 
@@ -599,8 +605,8 @@ test('refuses a gender from the repo that gives a child two parents of one sex s
     linkParent(Person::factory()->female()->for($author->tree)->create(), $jan);
     $before = ownershipSnapshot();
 
-    expect(fn () => app(ApplyImport::class)->handle($author->tree, $plan, new ConflictResolutions))->toThrow(RuntimeException::class, "O-0001 (#{$maria->id}): ")
-        ->and(fn () => app(ApplyImport::class)->handle($author->tree, $plan, new ConflictResolutions))->toThrow(RuntimeException::class, 'matkę')
+    expect(fn () => app(ApplyImport::class)->handle($author->tree, $plan, new ChangeApprovals, new ConflictResolutions))->toThrow(RuntimeException::class, "O-0001 (#{$maria->id}): ")
+        ->and(fn () => app(ApplyImport::class)->handle($author->tree, $plan, new ChangeApprovals, new ConflictResolutions))->toThrow(RuntimeException::class, 'matkę')
         ->and(ownershipSnapshot())->toBe($before);
 });
 
@@ -617,7 +623,7 @@ test('names the relation and both persons when a new relation breaks a rule of t
     $thrown = null;
 
     try {
-        app(ApplyImport::class)->handle($tree, $plan, new ConflictResolutions);
+        app(ApplyImport::class)->handle($tree, $plan, new ChangeApprovals, new ConflictResolutions);
     } catch (RuntimeException $exception) {
         $thrown = $exception;
     }
@@ -638,7 +644,7 @@ test('refuses a field filled by hand since planning and writes nothing', functio
     $change($scene);
     $before = ownershipSnapshot();
 
-    expect(fn () => app(ApplyImport::class)->handle($tree, $plan, new ConflictResolutions))->toThrow(RuntimeException::class, "Osoba Jan Nowak (#{$scene['jan']->id}) zmieniła się po planowaniu")
+    expect(fn () => app(ApplyImport::class)->handle($tree, $plan, new ChangeApprovals, new ConflictResolutions))->toThrow(RuntimeException::class, "Osoba Jan Nowak (#{$scene['jan']->id}) zmieniła się po planowaniu")
         ->and(ownershipSnapshot())->toBe($before)
         ->and($tree->people()->whereNotNull('repo_id')->count())->toBe(0)
         ->and(Person::where('tree_id', '!=', $tree->id)->whereNotNull('repo_id')->count())->toBe(0);
@@ -668,7 +674,7 @@ test('refuses a wedding date filled by hand since planning and writes nothing', 
     $wedding->update(['date_year' => 1829]);
     $before = ownershipSnapshot();
 
-    expect(fn () => app(ApplyImport::class)->handle($author->tree, $plan, new ConflictResolutions))->toThrow(RuntimeException::class, 'Małżeństwo O-0001+O-0002/slub zmieniło się po planowaniu')
+    expect(fn () => app(ApplyImport::class)->handle($author->tree, $plan, new ChangeApprovals, new ConflictResolutions))->toThrow(RuntimeException::class, 'Małżeństwo O-0001+O-0002/slub zmieniło się po planowaniu')
         ->and(ownershipSnapshot())->toBe($before);
 });
 
@@ -681,7 +687,7 @@ test('refuses a value taken from the repo when the app value changed since plann
     $change($scene);
     $before = ownershipSnapshot();
 
-    expect(fn () => app(ApplyImport::class)->handle($tree, $plan, new ConflictResolutions([$key => ConflictResolutions::FROM_REPO])))->toThrow(RuntimeException::class, 'po planowaniu; nic nie zostało zapisane')
+    expect(fn () => app(ApplyImport::class)->handle($tree, $plan, new ChangeApprovals, new ConflictResolutions([$key => ConflictResolutions::FROM_REPO])))->toThrow(RuntimeException::class, 'po planowaniu; nic nie zostało zapisane')
         ->and(ownershipSnapshot())->toBe($before)
         ->and($tree->people()->whereNotNull('repo_id')->count())->toBe(0)
         ->and(Person::where('tree_id', '!=', $tree->id)->whereNotNull('repo_id')->count())->toBe(0);
@@ -696,7 +702,7 @@ test('does not check a value left for the app even when it changed since plannin
     $plan = planFixtureWithMatches($tree, $scene);
     $scene['anna']->update(['gender' => Gender::Female]);
 
-    $result = app(ApplyImport::class)->handle($tree, $plan, new ConflictResolutions(['O-0004/plec' => ConflictResolutions::FROM_APP]));
+    $result = app(ApplyImport::class)->handle($tree, $plan, new ChangeApprovals, new ConflictResolutions(['O-0004/plec' => ConflictResolutions::FROM_APP]));
 
     expect($scene['anna']->fresh()->gender)->toBe(Gender::Female)
         ->and($result->takenFromRepo)->toBe(0);
@@ -710,7 +716,7 @@ test('refuses a plan that matches one tree person to two repo persons and writes
     $broken = new ImportPlan(...[...get_object_vars($plan), 'matched' => [$plan->matched[0], $duplicate, $plan->matched[2]]]);
     $before = ownershipSnapshot();
 
-    expect(fn () => app(ApplyImport::class)->handle($tree, $broken, new ConflictResolutions))->toThrow(RuntimeException::class, 'kilku osób z repo')
+    expect(fn () => app(ApplyImport::class)->handle($tree, $broken, new ChangeApprovals, new ConflictResolutions))->toThrow(RuntimeException::class, 'kilku osób z repo')
         ->and(ownershipSnapshot())->toBe($before);
 });
 
@@ -724,7 +730,7 @@ test('rolls the matched persons back too when a step in the middle fails', funct
         $mock->shouldReceive('handle')->andThrow(ValidationException::withMessages(['spouse_id' => 'Ta para ma już małżeństwo.']));
     });
 
-    expect(fn () => app(ApplyImport::class)->handle($tree, $plan, new ConflictResolutions(['O-0004/plec' => 'repo'])))->toThrow(ValidationException::class)
+    expect(fn () => app(ApplyImport::class)->handle($tree, $plan, new ChangeApprovals, new ConflictResolutions(['O-0004/plec' => 'repo'])))->toThrow(ValidationException::class)
         ->and(ownershipSnapshot())->toBe($before)
         ->and($tree->people()->whereNotNull('repo_id')->count())->toBe(0)
         ->and($scene['anna']->fresh()->gender)->toBe(Gender::Male);
@@ -744,7 +750,7 @@ test('remembers the repo values of every person, birth, death, relation and marr
     $tree = arrangeApplyUsers();
     $plan = planFixtureForApply($tree);
 
-    app(ApplyImport::class)->handle($tree, $plan, new ConflictResolutions);
+    app(ApplyImport::class)->handle($tree, $plan, new ChangeApprovals, new ConflictResolutions);
 
     $written = collect([
         ...$tree->people()->pluck('repo_id'),
@@ -771,7 +777,7 @@ test('remembers the repo value and keeps the app value when the author leaves a 
     [$tree, $scene] = arrangeHandEnteredAuthor();
     $plan = planFixtureWithMatches($tree, $scene);
 
-    app(ApplyImport::class)->handle($tree, $plan, new ConflictResolutions([
+    app(ApplyImport::class)->handle($tree, $plan, new ChangeApprovals, new ConflictResolutions([
         'O-0004/plec' => ConflictResolutions::FROM_APP,
         'O-0002/urodzenie/data' => ConflictResolutions::FROM_APP,
     ]));
@@ -793,6 +799,513 @@ test('leaves no memory of the import when the write rolls back', function () {
         $mock->shouldReceive('handle')->andThrow(ValidationException::withMessages(['spouse_id' => 'Ta para ma już małżeństwo.']));
     });
 
-    expect(fn () => app(ApplyImport::class)->handle($tree, $plan, new ConflictResolutions))->toThrow(ValidationException::class)
+    expect(fn () => app(ApplyImport::class)->handle($tree, $plan, new ChangeApprovals, new ConflictResolutions))->toThrow(ValidationException::class)
         ->and(RepoSnapshot::count())->toBe(0);
+});
+
+/**
+ * Reads a throwaway repo made of person blocks.
+ *
+ * @param  array<string, string>  $blocks  repo id => block body without id and version
+ */
+function reimportReading(array $blocks): ResearchRepoReading
+{
+    $repo = sys_get_temp_dir().'/reimport-repo-'.uniqid();
+    mkdir($repo.'/drzewo', 0777, true);
+
+    foreach ($blocks as $id => $body) {
+        file_put_contents("{$repo}/drzewo/".strtolower($id).'.md', "---\nwersja: 1\nid: {$id}\n{$body}\n---\n");
+    }
+
+    try {
+        return app(ReadResearchRepo::class)->handle($repo);
+    } finally {
+        File::deleteDirectory($repo);
+    }
+}
+
+/**
+ * Plans a state of the repo over the tree: every new repo person is new, the rest is decided by the arguments.
+ *
+ * @param  array<string, string>  $blocks
+ * @param  array<string, string>  $removals
+ * @param  array<string, string>  $deletions
+ */
+function reimportPlan(Tree $tree, array $blocks, array $removals = [], array $deletions = []): ImportPlan
+{
+    $reading = reimportReading($blocks);
+    $classes = app(ClassifyRepoRecords::class)->handle($tree, $reading);
+
+    return app(PlanImport::class)->handle($tree, $reading, $classes, new ImportDecisions(new IdentityDecisions(new: $classes->newPersonIds), $removals, $deletions));
+}
+
+/**
+ * The first import of the blocks into the tree.
+ *
+ * @param  array<string, string>  $blocks
+ */
+function reimportFirst(Tree $tree, array $blocks): void
+{
+    app(ApplyImport::class)->handle($tree, reimportPlan($tree, $blocks), new ChangeApprovals, new ConflictResolutions);
+}
+
+/**
+ * The first import of the same blocks into the tree of another account and into the tree of the author, then the same
+ * arrangement in both. Returns the tree of the author and the tree of the other account.
+ *
+ * @param  array<string, string>  $blocks
+ * @param  (Closure(Tree): void)|null  $arrange
+ * @return array{0: Tree, 1: Tree}
+ */
+function reimportTwins(array $blocks, ?Closure $arrange = null): array
+{
+    $other = User::factory()->create();
+    $author = User::factory()->create();
+
+    foreach ([$other->tree, $author->tree] as $tree) {
+        reimportFirst($tree, $blocks);
+
+        if ($arrange !== null) {
+            $arrange($tree);
+        }
+    }
+
+    return [$author->tree, $other->tree];
+}
+
+/**
+ * Proves that the write touched only rows of the author: every changed row of a table with a tree column belongs to the
+ * author, and so does every pivot row.
+ *
+ * @param  array{tables: array<string, array{removed: list<array<string, mixed>>, added: list<array<string, mixed>>, changed: list<array{before: array<string, mixed>, after: array<string, mixed>}>}>, files: array{removed: list<string>, added: list<string>}}  $diff
+ * @param  list<int>  $eventIdsBefore
+ */
+function expectOnlyAuthorRowsChanged(array $diff, Tree $author, array $eventIdsBefore): void
+{
+    $eventIds = [...$eventIdsBefore, ...$author->events()->pluck('id')->all()];
+
+    foreach ($diff['tables'] as $table => $changes) {
+        $rows = [...$changes['removed'], ...$changes['added'], ...array_map(fn (array $change): array => $change['before'], $changes['changed']), ...array_map(fn (array $change): array => $change['after'], $changes['changed'])];
+
+        foreach ($rows as $row) {
+            if (array_key_exists('tree_id', $row)) {
+                expect($row['tree_id'])->toBe($author->id);
+            } elseif ($table === 'trees') {
+                expect($row['id'])->toBe($author->id);
+            } elseif (in_array($table, ['event_participants', 'event_source'], true)) {
+                expect($eventIds)->toContain($row['event_id']);
+            }
+        }
+    }
+}
+
+/**
+ * The state of a tree that another account's import must leave alone, as plain data.
+ *
+ * @return array<string, mixed>
+ */
+function reimportTreeState(Tree $tree): array
+{
+    return [
+        'people' => $tree->people()->orderBy('id')->get()->toArray(),
+        'events' => $tree->events()->orderBy('id')->get()->toArray(),
+        'relations' => $tree->parentChildRelations()->orderBy('id')->get()->toArray(),
+        'snapshots' => $tree->repoSnapshots()->orderBy('id')->get()->toArray(),
+    ];
+}
+
+const REIMPORT_JAN = "imiona: Jan\nnazwisko: Nowak\nplec: M\nurodzenie:\n  data: \"1801\"";
+
+test('writes an approved change of a date, keeps the derived flag in line and remembers the repo value', function () {
+    Storage::fake('local');
+    [$tree, $other] = reimportTwins(['O-0001' => REIMPORT_JAN]);
+    $plan = reimportPlan($tree, ['O-0001' => "imiona: Jan\nnazwisko: Nowak\nplec: M\nurodzenie:\n  data: \"ok. 1802\""]);
+    $eventIds = $tree->events()->pluck('id')->all();
+    $otherState = reimportTreeState($other);
+    $before = databaseRows();
+
+    $result = app(ApplyImport::class)->handle($tree, $plan, new ChangeApprovals, new ConflictResolutions);
+
+    $birth = $tree->events()->where('repo_id', 'O-0001/urodzenie')->firstOrFail();
+
+    expect([$birth->date_year, $birth->date_qualifier, $birth->date_is_approximate])->toBe([1802, DateQualifier::Approximate, true])
+        ->and(snapshotValues($tree)['O-0001/urodzenie'])->toBe(['data' => 'ok. 1802'])
+        ->and([$result->changesTaken, $result->changesRejected])->toBe([1, 0])
+        ->and(reimportTreeState($other))->toBe($otherState);
+
+    expectOnlyAuthorRowsChanged(rowDiff($before, databaseRows()), $tree, $eventIds);
+});
+
+test('keeps the date of the app for a rejected change and still remembers the repo value', function () {
+    Storage::fake('local');
+    [$tree, $other] = reimportTwins(['O-0001' => REIMPORT_JAN]);
+    $plan = reimportPlan($tree, ['O-0001' => "imiona: Jan\nnazwisko: Nowak\nplec: M\nurodzenie:\n  data: \"1802\""]);
+    $eventIds = $tree->events()->pluck('id')->all();
+    $otherState = reimportTreeState($other);
+    $before = databaseRows();
+
+    $result = app(ApplyImport::class)->handle($tree, $plan, new ChangeApprovals(['O-0001/urodzenie/data']), new ConflictResolutions);
+
+    expect($tree->events()->where('repo_id', 'O-0001/urodzenie')->firstOrFail()->date_year)->toBe(1801)
+        ->and(snapshotValues($tree)['O-0001/urodzenie'])->toBe(['data' => '1802'])
+        ->and([$result->changesTaken, $result->changesRejected])->toBe([0, 1])
+        ->and(reimportTreeState($other))->toBe($otherState);
+
+    expectOnlyAuthorRowsChanged(rowDiff($before, databaseRows()), $tree, $eventIds);
+});
+
+test('settles a conflict of a date for the app or for the repo and remembers the repo value either way', function (string $choice, int $year) {
+    Storage::fake('local');
+    [$tree, $other] = reimportTwins(['O-0001' => REIMPORT_JAN], fn (Tree $tree) => $tree->events()->where('repo_id', 'O-0001/urodzenie')->firstOrFail()->update(['date_year' => 1830]));
+    $plan = reimportPlan($tree, ['O-0001' => "imiona: Jan\nnazwisko: Nowak\nplec: M\nurodzenie:\n  data: \"1802\""]);
+    $eventIds = $tree->events()->pluck('id')->all();
+    $otherState = reimportTreeState($other);
+    $before = databaseRows();
+
+    expect($plan->conflicts[0]->key)->toBe('O-0001/urodzenie/data');
+
+    app(ApplyImport::class)->handle($tree, $plan, new ChangeApprovals, new ConflictResolutions(['O-0001/urodzenie/data' => $choice]));
+
+    expect($tree->events()->where('repo_id', 'O-0001/urodzenie')->firstOrFail()->date_year)->toBe($year)
+        ->and(snapshotValues($tree)['O-0001/urodzenie'])->toBe(['data' => '1802'])
+        ->and(reimportTreeState($other))->toBe($otherState);
+
+    expectOnlyAuthorRowsChanged(rowDiff($before, databaseRows()), $tree, $eventIds);
+})->with([
+    'for the app' => [ConflictResolutions::FROM_APP, 1830],
+    'for the repo' => [ConflictResolutions::FROM_REPO, 1802],
+]);
+
+test('replaces only the repo block of a note and leaves the hand-written text around it', function () {
+    Storage::fake('local');
+    $v1 = ['O-0001' => REIMPORT_JAN."\n  miejsce: Zalesie"];
+    [$tree, $other] = reimportTwins($v1, function (Tree $tree): void {
+        $person = $tree->people()->where('repo_id', 'O-0001')->firstOrFail();
+        $person->update(['note' => "Przed blokiem\n\n{$person->note}\n\nPo bloku"]);
+    });
+    $plan = reimportPlan($tree, ['O-0001' => REIMPORT_JAN."\n  miejsce: Wola"]);
+    $eventIds = $tree->events()->pluck('id')->all();
+    $otherState = reimportTreeState($other);
+    $before = databaseRows();
+
+    expect(collect($plan->changes)->pluck('key')->all())->toBe(['O-0001/notatka']);
+
+    app(ApplyImport::class)->handle($tree, $plan, new ChangeApprovals, new ConflictResolutions);
+
+    expect($tree->people()->where('repo_id', 'O-0001')->firstOrFail()->note)->toBe("Przed blokiem\n\nZ repo badawczego (O-0001):\nUrodzenie: Wola\n\nPo bloku")
+        ->and(reimportTreeState($other))->toBe($otherState);
+
+    expectOnlyAuthorRowsChanged(rowDiff($before, databaseRows()), $tree, $eventIds);
+});
+
+const REIMPORT_FAMILY = [
+    'O-0001' => "imiona: Dziecko\nrodzice:\n  ojciec: O-0002\nurodzenie:\n  data: \"1830\"",
+    'O-0002' => "imiona: Piotr\nplec: M\nurodzenie:\n  data: \"1801\"\nzgon:\n  data: \"1870\"\nmalzenstwa:\n  - z: O-0003\n    data: \"1825\"",
+    'O-0003' => "imiona: Anna\nplec: K\nmalzenstwa:\n  - z: O-0002\n    data: \"1825\"",
+];
+
+const REIMPORT_WITHOUT_PIOTR = [
+    'O-0001' => "imiona: Dziecko\nurodzenie:\n  data: \"1830\"",
+    'O-0003' => "imiona: Anna\nplec: K",
+];
+
+/**
+ * Gives Piotr (O-0002) of the family a photo, a residence, a source on his birth, a burial and the place of the proband.
+ *
+ * @return Closure(Tree): void
+ */
+function reimportDressPiotr(): Closure
+{
+    return function (Tree $tree): void {
+        $piotr = $tree->people()->where('repo_id', 'O-0002')->firstOrFail();
+        $piotr->update(['photo_path' => "persons/{$tree->id}/piotr.jpg", 'photo_thumbnail_path' => "persons/{$tree->id}/piotr-thumb.jpg"]);
+        Storage::disk('local')->put("persons/{$tree->id}/piotr.jpg", 'photo');
+        Storage::disk('local')->put("persons/{$tree->id}/piotr-thumb.jpg", 'thumb');
+        $tree->update(['root_person_id' => $piotr->id]);
+        Residence::factory()->create(['person_id' => $piotr->id]);
+        $source = Source::factory()->for($tree)->create();
+        $tree->events()->where('repo_id', 'O-0002/urodzenie')->firstOrFail()->sources()->attach($source, ['entry_number' => '12']);
+        $burial = Event::factory()->for($tree)->burial()->create();
+        $burial->participants()->attach($piotr, ['role' => ParticipantRole::Subject]);
+    };
+}
+
+test('removes a person with everything that goes with it, keeps the sources and deletes the photo only after the commit', function () {
+    Storage::fake('local');
+    [$tree, $other] = reimportTwins(REIMPORT_FAMILY, reimportDressPiotr());
+    $plan = reimportPlan($tree, REIMPORT_WITHOUT_PIOTR, removals: ['O-0002' => 'delete']);
+    $eventIds = $tree->events()->pluck('id')->all();
+    $otherState = reimportTreeState($other);
+    $sources = Source::where('tree_id', $tree->id)->count();
+    $before = databaseRows();
+
+    $result = app(ApplyImport::class)->handle($tree, $plan, new ChangeApprovals, new ConflictResolutions);
+
+    expect($tree->people()->where('repo_id', 'O-0002')->exists())->toBeFalse()
+        ->and($tree->people()->count())->toBe(2)
+        ->and($tree->events()->count())->toBe(1)
+        ->and($tree->parentChildRelations()->count())->toBe(0)
+        ->and(Source::where('tree_id', $tree->id)->count())->toBe($sources)
+        ->and($tree->fresh()->root_person_id)->toBeNull()
+        ->and(array_keys(snapshotValues($tree)))->toBe(['O-0001', 'O-0001/urodzenie', 'O-0003'])
+        ->and(Storage::disk('local')->exists("persons/{$tree->id}/piotr.jpg"))->toBeFalse()
+        ->and(Storage::disk('local')->exists("persons/{$tree->id}/piotr-thumb.jpg"))->toBeFalse()
+        ->and(Storage::disk('local')->exists("persons/{$other->id}/piotr.jpg"))->toBeTrue()
+        ->and([$result->removedPersons, $result->removedRecords, $result->detached])->toBe([1, 0, 0])
+        ->and(reimportTreeState($other))->toBe($otherState);
+
+    expectOnlyAuthorRowsChanged(rowDiff($before, databaseRows()), $tree, $eventIds);
+});
+
+test('leaves the photo of another account in place when it removes a person', function () {
+    Storage::fake('local');
+    [$tree, $other] = reimportTwins(REIMPORT_FAMILY, reimportDressPiotr());
+    $otherPhoto = "persons/{$other->id}/piotr.jpg";
+
+    app(ApplyImport::class)->handle($tree, reimportPlan($tree, REIMPORT_WITHOUT_PIOTR, removals: ['O-0002' => 'delete']), new ChangeApprovals, new ConflictResolutions);
+
+    expect(Storage::disk('local')->exists($otherPhoto))->toBeTrue()
+        ->and($other->people()->where('repo_id', 'O-0002')->exists())->toBeTrue();
+});
+
+test('detaches a person from the repo and keeps the person, its records, photo, residence and sources', function () {
+    Storage::fake('local');
+    [$tree, $other] = reimportTwins(REIMPORT_FAMILY, reimportDressPiotr());
+    $plan = reimportPlan($tree, REIMPORT_WITHOUT_PIOTR, removals: ['O-0002' => 'detach']);
+    $eventIds = $tree->events()->pluck('id')->all();
+    $otherState = reimportTreeState($other);
+    $before = databaseRows();
+    $piotr = $tree->people()->where('repo_id', 'O-0002')->firstOrFail();
+
+    $result = app(ApplyImport::class)->handle($tree, $plan, new ChangeApprovals, new ConflictResolutions);
+
+    $diff = rowDiff($before, databaseRows());
+
+    expect($piotr->fresh()->repo_id)->toBeNull()
+        ->and($piotr->fresh()->photo_path)->toBe("persons/{$tree->id}/piotr.jpg")
+        ->and($tree->events()->whereIn('id', $eventIds)->whereNotNull('repo_id')->pluck('repo_id')->sort()->values()->all())->toBe(['O-0001/urodzenie'])
+        ->and($tree->parentChildRelations()->whereNotNull('repo_id')->count())->toBe(0)
+        ->and($tree->parentChildRelations()->count())->toBe(1)
+        ->and(array_keys(snapshotValues($tree)))->toBe(['O-0001', 'O-0001/urodzenie', 'O-0003'])
+        ->and(Storage::disk('local')->exists("persons/{$tree->id}/piotr.jpg"))->toBeTrue()
+        ->and($result->detached)->toBe(1)
+        ->and(array_keys($diff['tables']))->toEqualCanonicalizing(['people', 'events', 'parent_child_relations', 'repo_snapshots'])
+        ->and(reimportTreeState($other))->toBe($otherState);
+
+    foreach (['people', 'events', 'parent_child_relations'] as $table) {
+        expect($diff['tables'][$table]['removed'])->toBe([])
+            ->and($diff['tables'][$table]['added'])->toBe([])
+            ->and(collect($diff['tables'][$table]['changed'])->every(fn (array $change): bool => $change['after']['repo_id'] === null))->toBeTrue();
+    }
+
+    expectOnlyAuthorRowsChanged($diff, $tree, $eventIds);
+});
+
+test('detaches a birth the repo no longer has and keeps the event', function () {
+    Storage::fake('local');
+    [$tree, $other] = reimportTwins(['O-0001' => REIMPORT_JAN]);
+    $plan = reimportPlan($tree, ['O-0001' => "imiona: Jan\nnazwisko: Nowak\nplec: M"], removals: ['O-0001/urodzenie' => 'detach']);
+    $eventIds = $tree->events()->pluck('id')->all();
+    $otherState = reimportTreeState($other);
+    $before = databaseRows();
+
+    app(ApplyImport::class)->handle($tree, $plan, new ChangeApprovals, new ConflictResolutions);
+
+    $birth = $tree->events()->whereKey($eventIds[0])->firstOrFail();
+
+    expect($tree->events()->count())->toBe(1)
+        ->and($birth->repo_id)->toBeNull()
+        ->and($birth->date_year)->toBe(1801)
+        ->and(array_keys(snapshotValues($tree)))->toBe(['O-0001'])
+        ->and(reimportTreeState($other))->toBe($otherState);
+
+    expectOnlyAuthorRowsChanged(rowDiff($before, databaseRows()), $tree, $eventIds);
+});
+
+test('removes a death the repo no longer has together with the burial of the person and keeps the person and the birth', function () {
+    Storage::fake('local');
+    $v1 = ['O-0001' => REIMPORT_JAN."\nzgon:\n  data: \"1870\""];
+    [$tree, $other] = reimportTwins($v1, function (Tree $tree): void {
+        $burial = Event::factory()->for($tree)->burial()->create();
+        $burial->participants()->attach($tree->people()->where('repo_id', 'O-0001')->firstOrFail(), ['role' => ParticipantRole::Subject]);
+    });
+    $plan = reimportPlan($tree, ['O-0001' => REIMPORT_JAN], removals: ['O-0001/zgon' => 'delete']);
+    $eventIds = $tree->events()->pluck('id')->all();
+    $otherState = reimportTreeState($other);
+    $before = databaseRows();
+
+    $result = app(ApplyImport::class)->handle($tree, $plan, new ChangeApprovals, new ConflictResolutions);
+
+    expect($tree->events()->pluck('type')->all())->toBe([EventType::Birth])
+        ->and($tree->people()->where('repo_id', 'O-0001')->exists())->toBeTrue()
+        ->and(array_keys(snapshotValues($tree)))->toBe(['O-0001', 'O-0001/urodzenie'])
+        ->and([$result->removedPersons, $result->removedRecords])->toBe([0, 1])
+        ->and(reimportTreeState($other))->toBe($otherState);
+
+    expectOnlyAuthorRowsChanged(rowDiff($before, databaseRows()), $tree, $eventIds);
+});
+
+test('brings a death deleted in the app back from the repo or leaves it deleted', function (string $decision) {
+    Storage::fake('local');
+    $v1 = ['O-0001' => REIMPORT_JAN."\nzgon:\n  data: \"1870\""];
+    [$tree, $other] = reimportTwins($v1, fn (Tree $tree) => $tree->events()->where('repo_id', 'O-0001/zgon')->firstOrFail()->delete());
+    $plan = reimportPlan($tree, $v1, deletions: ['O-0001/zgon' => $decision]);
+    $eventIds = $tree->events()->pluck('id')->all();
+    $otherState = reimportTreeState($other);
+    $before = databaseRows();
+
+    $result = app(ApplyImport::class)->handle($tree, $plan, new ChangeApprovals, new ConflictResolutions);
+
+    $death = $tree->events()->where('type', EventType::Death)->first();
+    $snapshot = $tree->repoSnapshots()->where('repo_id', 'O-0001/zgon')->firstOrFail();
+
+    if ($decision === 'restore') {
+        expect([$death->repo_id, $death->date_year])->toBe(['O-0001/zgon', 1870])
+            ->and($death->participants()->pluck('people.id')->all())->toBe([$tree->people()->where('repo_id', 'O-0001')->firstOrFail()->id])
+            ->and($snapshot->deletion_kept)->toBeFalse()
+            ->and([$result->restored, $result->keptDeleted])->toBe([1, 0]);
+    } else {
+        expect($death)->toBeNull()
+            ->and($snapshot->deletion_kept)->toBeTrue()
+            ->and($snapshot->values)->toBe(['data' => '1870'])
+            ->and([$result->restored, $result->keptDeleted])->toBe([0, 1]);
+    }
+
+    expect(reimportTreeState($other))->toBe($otherState);
+    expectOnlyAuthorRowsChanged(rowDiff($before, databaseRows()), $tree, $eventIds);
+})->with(['restore', 'keep']);
+
+test('brings a person deleted in the app back with its birth and its pair', function () {
+    Storage::fake('local');
+    [$tree, $other] = reimportTwins(REIMPORT_FAMILY, fn (Tree $tree) => app(DeletePerson::class)->handle($tree->people()->where('repo_id', 'O-0002')->firstOrFail()));
+    $plan = reimportPlan($tree, REIMPORT_FAMILY, deletions: ['O-0002' => 'restore']);
+    $eventIds = $tree->events()->pluck('id')->all();
+    $otherState = reimportTreeState($other);
+    $before = databaseRows();
+
+    $result = app(ApplyImport::class)->handle($tree, $plan, new ChangeApprovals, new ConflictResolutions);
+
+    $piotr = $tree->people()->where('repo_id', 'O-0002')->firstOrFail();
+
+    expect($piotr->first_name)->toBe('Piotr')
+        ->and($tree->events()->whereIn('repo_id', ['O-0002/urodzenie', 'O-0002/zgon', 'O-0002+O-0003/slub'])->count())->toBe(3)
+        ->and($tree->parentChildRelations()->where('repo_id', 'O-0002>O-0001')->firstOrFail()->parent_id)->toBe($piotr->id)
+        ->and($tree->repoSnapshots()->where('deletion_kept', true)->count())->toBe(0)
+        ->and($result->restored)->toBeGreaterThanOrEqual(1)
+        ->and(reimportTreeState($other))->toBe($otherState);
+
+    expectOnlyAuthorRowsChanged(rowDiff($before, databaseRows()), $tree, $eventIds);
+});
+
+test('deletes the old pair and creates the pair with the new father in one write', function () {
+    Storage::fake('local');
+    $v1 = ['O-0001' => "imiona: Dziecko\nrodzice:\n  ojciec: O-0002", 'O-0002' => "imiona: Piotr\nplec: M", 'O-0003' => "imiona: Paweł\nplec: M"];
+    [$tree, $other] = reimportTwins($v1);
+    $plan = reimportPlan($tree, ['O-0001' => "imiona: Dziecko\nrodzice:\n  ojciec: O-0003", 'O-0002' => $v1['O-0002'], 'O-0003' => $v1['O-0003']], removals: ['O-0002>O-0001' => 'delete']);
+    $eventIds = $tree->events()->pluck('id')->all();
+    $otherState = reimportTreeState($other);
+    $before = databaseRows();
+
+    $result = app(ApplyImport::class)->handle($tree, $plan, new ChangeApprovals, new ConflictResolutions);
+
+    $pairs = $tree->parentChildRelations()->get();
+
+    expect($pairs)->toHaveCount(1)
+        ->and($pairs[0]->repo_id)->toBe('O-0003>O-0001')
+        ->and($pairs[0]->parent_id)->toBe($tree->people()->where('repo_id', 'O-0003')->firstOrFail()->id)
+        ->and($result->removedRecords)->toBe(1)
+        ->and($result->relations)->toBe(1)
+        ->and(array_keys(snapshotValues($tree)))->not->toContain('O-0002>O-0001')
+        ->and(reimportTreeState($other))->toBe($otherState);
+
+    expectOnlyAuthorRowsChanged(rowDiff($before, databaseRows()), $tree, $eventIds);
+});
+
+test('refuses a hand change made after planning and writes nothing, not even the removals', function () {
+    Storage::fake('local');
+    $v2 = REIMPORT_WITHOUT_PIOTR;
+    $v2['O-0001'] = "imiona: Dziecko\nurodzenie:\n  data: \"1831\"";
+    [$tree, $other] = reimportTwins(REIMPORT_FAMILY, reimportDressPiotr());
+    $plan = reimportPlan($tree, $v2, removals: ['O-0002' => 'delete']);
+
+    expect(collect($plan->changes)->pluck('key')->all())->toBe(['O-0001/urodzenie/data']);
+
+    $tree->events()->where('repo_id', 'O-0001/urodzenie')->firstOrFail()->update(['date_year' => 1850]);
+    $before = ownershipSnapshot();
+
+    expect(fn () => app(ApplyImport::class)->handle($tree, $plan, new ChangeApprovals, new ConflictResolutions))->toThrow(RuntimeException::class, 'zmieniła się po planowaniu; nic nie zostało zapisane')
+        ->and(ownershipSnapshot())->toBe($before)
+        ->and($tree->people()->where('repo_id', 'O-0002')->exists())->toBeTrue()
+        ->and(Storage::disk('local')->exists("persons/{$tree->id}/piotr.jpg"))->toBeTrue();
+});
+
+test('refuses a record to remove that disappeared since planning and writes nothing', function () {
+    Storage::fake('local');
+    [$tree] = reimportTwins(REIMPORT_FAMILY, reimportDressPiotr());
+    $plan = reimportPlan($tree, REIMPORT_WITHOUT_PIOTR, removals: ['O-0002' => 'delete']);
+    $tree->people()->where('repo_id', 'O-0002')->firstOrFail()->update(['repo_id' => null]);
+    $before = ownershipSnapshot();
+
+    expect(fn () => app(ApplyImport::class)->handle($tree, $plan, new ChangeApprovals, new ConflictResolutions))->toThrow(RuntimeException::class, 'zmieniła się po planowaniu')
+        ->and(ownershipSnapshot())->toBe($before);
+});
+
+test('refuses a write when the memory of the last import moved since planning', function () {
+    Storage::fake('local');
+    [$tree] = reimportTwins(['O-0001' => REIMPORT_JAN]);
+    $plan = reimportPlan($tree, ['O-0001' => "imiona: Jan\nnazwisko: Nowak\nplec: M\nurodzenie:\n  data: \"1802\""]);
+    $tree->repoSnapshots()->where('repo_id', 'O-0001/urodzenie')->update(['values' => json_encode(['data' => '1900'], JSON_THROW_ON_ERROR)]);
+    $before = ownershipSnapshot();
+
+    expect(fn () => app(ApplyImport::class)->handle($tree, $plan, new ChangeApprovals, new ConflictResolutions))->toThrow(RuntimeException::class, 'Pamięć ostatniego importu zmieniła się po planowaniu')
+        ->and(ownershipSnapshot())->toBe($before);
+});
+
+test('rolls back the removal of a person, its photo and the memory when a later step fails', function () {
+    Storage::fake('local');
+    $v2 = [
+        'O-0001' => "imiona: Dziecko\nurodzenie:\n  data: \"1830\"\nmalzenstwa:\n  - z: O-0003\n    data: \"1850\"",
+        'O-0003' => "imiona: Anna\nplec: K\nmalzenstwa:\n  - z: O-0001\n    data: \"1850\"",
+    ];
+    [$tree, $other] = reimportTwins(REIMPORT_FAMILY, reimportDressPiotr());
+    $plan = reimportPlan($tree, $v2, removals: ['O-0002' => 'delete']);
+    $before = ownershipSnapshot();
+    $snapshots = snapshotValues($tree);
+
+    expect($plan->marriages)->toHaveCount(1);
+
+    $this->mock(CreateMarriage::class, function ($mock): void {
+        $mock->shouldReceive('handle')->andThrow(ValidationException::withMessages(['spouse_id' => 'Ta para ma już małżeństwo.']));
+    });
+
+    expect(fn () => app(ApplyImport::class)->handle($tree, $plan, new ChangeApprovals, new ConflictResolutions))->toThrow(ValidationException::class)
+        ->and(ownershipSnapshot())->toBe($before)
+        ->and($tree->people()->where('repo_id', 'O-0002')->exists())->toBeTrue()
+        ->and($tree->parentChildRelations()->where('repo_id', 'O-0002>O-0001')->exists())->toBeTrue()
+        ->and(Storage::disk('local')->exists("persons/{$tree->id}/piotr.jpg"))->toBeTrue()
+        ->and(snapshotValues($tree))->toBe($snapshots)
+        ->and($other->people()->where('repo_id', 'O-0002')->exists())->toBeTrue();
+});
+
+test('takes a changed wedding date and clears a date the repo dropped', function () {
+    Storage::fake('local');
+    $both = fn (string $date): array => [
+        'O-0001' => "imiona: Jan\nmalzenstwa:\n  - z: O-0002\n    data: \"{$date}\"\nurodzenie:\n  data: \"1801\"",
+        'O-0002' => "imiona: Anna\nmalzenstwa:\n  - z: O-0001\n    data: \"{$date}\"",
+    ];
+    [$tree, $other] = reimportTwins($both('1825'));
+    $plan = reimportPlan($tree, [
+        'O-0001' => "imiona: Jan\nmalzenstwa:\n  - z: O-0002\n    data: \"1826\"\nurodzenie:\n  data: \"1801\"",
+        'O-0002' => "imiona: Anna\nmalzenstwa:\n  - z: O-0001\n    data: \"1826\"",
+    ]);
+    $otherState = reimportTreeState($other);
+
+    $result = app(ApplyImport::class)->handle($tree, $plan, new ChangeApprovals, new ConflictResolutions);
+
+    $wedding = $tree->events()->where('repo_id', 'O-0001+O-0002/slub')->firstOrFail();
+
+    expect($wedding->date_year)->toBe(1826)
+        ->and(snapshotValues($tree)['O-0001+O-0002/slub'])->toBe(['data' => '1826'])
+        ->and([$result->changesTaken, $result->markedMarriages])->toBe([1, 0])
+        ->and(reimportTreeState($other))->toBe($otherState);
 });

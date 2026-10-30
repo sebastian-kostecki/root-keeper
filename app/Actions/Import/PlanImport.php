@@ -429,7 +429,29 @@ class PlanImport
             unassessable: $unassessable,
             keptManual: $keptManual,
             keptDeletedSnapshots: $keptDeleted,
+            seenSnapshots: $this->seenSnapshots($memory, [...array_keys($snapshots), ...array_keys($keptDeleted), ...$forgotten, ...$classes->goneBoth]),
         );
+    }
+
+    /**
+     * The fingerprint of each memory entry among the keys the write touches, so that the write can tell whether another
+     * import changed the memory after planning.
+     *
+     * @param  array<string, RepoSnapshot>  $memory
+     * @param  list<string>  $keys
+     * @return array<string, string>
+     */
+    private function seenSnapshots(array $memory, array $keys): array
+    {
+        $seen = [];
+
+        foreach (array_unique($keys) as $key) {
+            if (isset($memory[$key])) {
+                $seen[$key] = $memory[$key]->fingerprint();
+            }
+        }
+
+        return $seen;
     }
 
     /**

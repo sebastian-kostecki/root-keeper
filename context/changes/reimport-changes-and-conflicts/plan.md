@@ -862,19 +862,19 @@ Klasyfikacja czyta raz rekordy drzewa z `repo_id` i pamięć (kilka zapytań). P
 
 #### Automated
 
-- [x] 3.1 Testy planowania przechodzą: `vendor/bin/sail artisan test --compact tests/Feature/ImportPlanTest.php tests/Feature/ClassifyRepoRecordsTest.php`
-- [x] 3.2 Testy odczytu i dopasowania przechodzą: `vendor/bin/sail artisan test --compact tests/Feature/ResearchRepoReadTest.php tests/Feature/ResearchPersonMatchTest.php`
-- [x] 3.3 Analiza statyczna przechodzi: `vendor/bin/sail composer types:check`
-- [x] 3.4 Formatowanie: `vendor/bin/sail bin pint --dirty --format agent`
+- [x] 3.1 Testy planowania przechodzą: `vendor/bin/sail artisan test --compact tests/Feature/ImportPlanTest.php tests/Feature/ClassifyRepoRecordsTest.php` — 86a5f39
+- [x] 3.2 Testy odczytu i dopasowania przechodzą: `vendor/bin/sail artisan test --compact tests/Feature/ResearchRepoReadTest.php tests/Feature/ResearchPersonMatchTest.php` — 86a5f39
+- [x] 3.3 Analiza statyczna przechodzi: `vendor/bin/sail composer types:check` — 86a5f39
+- [x] 3.4 Formatowanie: `vendor/bin/sail bin pint --dirty --format agent` — 86a5f39
 
 ### Phase 4: Zapis ponownego importu
 
 #### Automated
 
-- [ ] 4.1 Testy zapisu przechodzą: `vendor/bin/sail artisan test --compact tests/Feature/ImportApplyTest.php`
-- [ ] 4.2 Testy osób i relacji przechodzą bez zmian: `vendor/bin/sail artisan test --compact tests/Feature/PersonsTest.php tests/Feature/ParentChildRelationsTest.php`
-- [ ] 4.3 Analiza statyczna przechodzi: `vendor/bin/sail composer types:check`
-- [ ] 4.4 Formatowanie: `vendor/bin/sail bin pint --dirty --format agent`
+- [x] 4.1 Testy zapisu przechodzą: `vendor/bin/sail artisan test --compact tests/Feature/ImportApplyTest.php`
+- [x] 4.2 Testy osób i relacji przechodzą bez zmian: `vendor/bin/sail artisan test --compact tests/Feature/PersonsTest.php tests/Feature/ParentChildRelationsTest.php`
+- [x] 4.3 Analiza statyczna przechodzi: `vendor/bin/sail composer types:check`
+- [x] 4.4 Formatowanie: `vendor/bin/sail bin pint --dirty --format agent`
 
 ### Phase 5: Komenda — podgląd zmian w terminalu
 

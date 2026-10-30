@@ -33,6 +33,14 @@ class RepoSnapshot extends Model
     }
 
     /**
+     * A short text that changes whenever the entry does, so that a write can tell the entry moved since the plan saw it.
+     */
+    public function fingerprint(): string
+    {
+        return ($this->updated_at?->format('Y-m-d H:i:s.u') ?? '').'|'.($this->deletion_kept ? '1' : '0').'|'.md5(json_encode($this->values, JSON_THROW_ON_ERROR));
+    }
+
+    /**
      * @return BelongsTo<Tree, $this>
      */
     public function tree(): BelongsTo

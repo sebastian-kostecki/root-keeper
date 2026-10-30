@@ -11,6 +11,7 @@ use App\Models\Event;
 use App\Models\Person;
 use App\Models\Tree;
 use App\Models\User;
+use App\Support\Import\ChangeApprovals;
 use App\Support\Import\ConflictResolutions;
 use App\Support\Import\IdentityDecisions;
 use App\Support\Import\ImportDecisions;
@@ -698,7 +699,7 @@ function replanFirstImport(Tree $tree, array $blocks): void
     $classes = app(ClassifyRepoRecords::class)->handle($tree, $reading);
     $plan = app(PlanImport::class)->handle($tree, $reading, $classes, ImportDecisions::forFirstImport(new IdentityDecisions(new: $classes->newPersonIds)));
 
-    app(ApplyImport::class)->handle($tree, $plan, new ConflictResolutions);
+    app(ApplyImport::class)->handle($tree, $plan, new ChangeApprovals, new ConflictResolutions);
 }
 
 /**
