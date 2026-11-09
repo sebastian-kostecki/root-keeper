@@ -2,8 +2,10 @@
 
 namespace App\Actions\Import;
 
+use App\Enums\CemeteryMatchKind;
 use App\Enums\EventType;
 use App\Enums\Gender;
+use App\Enums\PlaceMatchKind;
 use App\Enums\RepoKeyKind;
 use App\Enums\ThreeWayOutcome;
 use App\Models\Event;
@@ -11,17 +13,23 @@ use App\Models\ParentChildRelation;
 use App\Models\Person;
 use App\Models\RepoSnapshot;
 use App\Models\Tree;
+use App\Support\Import\CemeteryVerdict;
 use App\Support\Import\IdentityDecisions;
 use App\Support\Import\ImportDecisions;
 use App\Support\Import\ImportIssue;
 use App\Support\Import\ImportPlan;
 use App\Support\Import\NoteBlock;
 use App\Support\Import\NoteValueCounts;
+use App\Support\Import\PlaceDecisions;
+use App\Support\Import\PlaceMatches;
+use App\Support\Import\PlaceResolver;
+use App\Support\Import\PlannedAlias;
 use App\Support\Import\PlannedChange;
 use App\Support\Import\PlannedFill;
 use App\Support\Import\PlannedMarriage;
 use App\Support\Import\PlannedMatch;
 use App\Support\Import\PlannedPerson;
+use App\Support\Import\PlannedPlace;
 use App\Support\Import\PlannedRelation;
 use App\Support\Import\PlannedRemoval;
 use App\Support\Import\PlannedRestoration;
@@ -35,6 +43,7 @@ use App\Support\Import\ResearchEvent;
 use App\Support\Import\ResearchMarriage;
 use App\Support\Import\ResearchPerson;
 use App\Support\Import\ResearchRepoReading;
+use App\Support\Import\ResolvedPlace;
 use App\Support\Import\SharedParentGraph;
 use App\Support\Import\ThreeWayValue;
 use App\Support\Import\ValueConflict;
@@ -43,7 +52,8 @@ use InvalidArgumentException;
 /**
  * @phpstan-type Item PlannedChange|PlannedFill|ValueConflict
  * @phpstan-type FieldPlan array{items: array<string, Item>, kept: int, skippedGender: bool}
- * @phpstan-type EventPlan array{items: array<string, Item>, kept: int, key: string|null, create: bool, values: array<string, string|null>|null, restoration: PlannedRestoration|null}
+ * @phpstan-type EventPlan array{items: array<string, Item>, kept: int, key: string|null, create: bool, values: array<string, string|null>|null, restoration: PlannedRestoration|null, place: PlannedPlace|null, placed: bool, resolved: ResolvedPlace|null}
+ * @phpstan-type PlaceCompare array{item: Item|null, kept: bool, placed: bool, resolved: ResolvedPlace|null, values: array<string, string|null>}
  * @phpstan-type Pending array{node: string, gender: Gender, outcome: ThreeWayOutcome, appLabel: string|null, lastLabel: string|null, hasLast: bool, label: string, person: string}
  */
 class PlanImport
@@ -62,7 +72,9 @@ class PlanImport
     /**
      * The fields of a person in the order they are listed.
      */
-    private const FIELDS = ['first_name', 'last_name', 'gender', 'note', 'birth_date', 'death_date'];
+    private const FIELDS = ['first_name', 'last_name', 'gender', 'note', 'birth_date', 'birth_place', 'death_date', 'death_place', 'burial_date', 'burial_place'];
+
+    public function __construct(private readonly MatchResearchPlaces $placeMatcher = new MatchResearchPlaces) {}
 
     /**
      * Decide what an import writes into the tree, without writing anything.
@@ -82,6 +94,20 @@ class PlanImport
 
         $this->checkDecisions($classes, $decisions);
 
+        $placeMatches = $this->placeMatcher->handle($tree, $reading, $classes, $decisions);
+        $this->checkPlaceDecisions($tree, $placeMatches, $decisions->places);
+        $cemeteryMatches = $this->placeMatcher->cemeteries($tree, $placeMatches, $decisions->places);
+        $this->checkCemeteryDecisions($cemeteryMatches->matches, $decisions->places);
+        $places = new PlaceResolver(
+            $this->placeMatcher,
+            $tree->localities()->orderBy('id')->get()->keyBy('id')->all(),
+            $tree->localityAliases()->orderBy('id')->get()->values()->all(),
+            $tree->cemeteries()->with('locality')->orderBy('id')->get()->keyBy('id')->all(),
+            $placeMatches,
+            $cemeteryMatches,
+            $decisions->places,
+        );
+
         $matchedPeople = $this->matchedPeople($tree, $identity);
         $knownPeople = $this->knownPeople($tree, $classes);
         $treePeople = $knownPeople + $matchedPeople;
@@ -96,13 +122,10 @@ class PlanImport
         ksort($persons);
 
         $noteSkipped = array_fill_keys($identity->skipped, true);
-        $notes = [];
         $skippedIds = [];
         $nodes = [];
 
         foreach ($persons as $repoId => $research) {
-            $notes[$repoId] = RepoValues::note($research, $reading, $noteSkipped);
-
             if (isset($knownPeople[$repoId])) {
                 $nodes[$repoId] = SharedParentGraph::node($knownPeople[$repoId]->id);
             } elseif ($identity->isSkipped($repoId)) {
@@ -129,8 +152,62 @@ class PlanImport
         $keptByPerson = [];
         /** @var array<string, true> $skippedGenders */
         $skippedGenders = [];
-        /** @var array<string, array{birth: EventPlan, death: EventPlan}> $eventPlans */
+        /** @var array<string, array{birth: EventPlan, death: EventPlan, burial: EventPlan}> $eventPlans */
         $eventPlans = [];
+
+        $placed = [];
+
+        foreach ($persons as $repoId => $research) {
+            if (! isset($treePeople[$repoId])) {
+                continue;
+            }
+
+            $person = $treePeople[$repoId];
+            $inMemory = isset($knownPeople[$repoId]) ? $memory : [];
+            $birthPlan = $this->planEvent(EventType::Birth, $research, $person, $inMemory, $decisions, $settled, $places);
+            $deathPlan = $this->planEvent(EventType::Death, $research, $person, $inMemory, $decisions, $settled, $places);
+            $personDies = $person->events->contains(fn (Event $event): bool => $event->type === EventType::Death)
+                || $deathPlan['create'] || $deathPlan['restoration'] !== null;
+            $burialPlan = $this->planEvent(EventType::Burial, $research, $person, $inMemory, $decisions, $settled, $places, $personDies);
+
+            $eventPlans[$repoId] = ['birth' => $birthPlan, 'death' => $deathPlan, 'burial' => $burialPlan];
+
+            foreach ([RepoKeys::birth($repoId) => $birthPlan, RepoKeys::death($repoId) => $deathPlan, RepoKeys::burial($repoId) => $burialPlan] as $key => $plan) {
+                if ($plan['placed']) {
+                    $placed[$key] = true;
+                }
+            }
+        }
+
+        $marriagePlan = $this->planMarriages($reading, $treePeople, $skippedIds, $persons, $knownWeddings, $memory, $notPlanned, $restoredEntries, $places);
+
+        foreach ($marriagePlan['placed'] as $key) {
+            $placed[$key] = true;
+        }
+
+        /** @var array<string, array{birth: ResolvedPlace|null, death: ResolvedPlace|null, burial: ResolvedPlace|null}> $newPlaces */
+        $newPlaces = [];
+        $notes = [];
+
+        foreach ($persons as $repoId => $research) {
+            if (! isset($treePeople[$repoId]) && ! isset($skippedIds[$repoId])) {
+                $newPlaces[$repoId] = $this->newPersonPlaces($research, $places);
+
+                foreach ([RepoKeys::birth($repoId) => $newPlaces[$repoId]['birth'], RepoKeys::death($repoId) => $newPlaces[$repoId]['death']] as $key => $resolved) {
+                    if ($resolved !== null) {
+                        $placed[$key] = true;
+                    }
+                }
+
+                if ($newPlaces[$repoId]['burial'] !== null && $research->death !== null) {
+                    $placed[RepoKeys::burial($repoId)] = true;
+                }
+            }
+        }
+
+        foreach ($persons as $repoId => $research) {
+            $notes[$repoId] = RepoValues::note($research, $reading, $noteSkipped, $placed);
+        }
 
         foreach ($persons as $repoId => $research) {
             if (! isset($treePeople[$repoId])) {
@@ -141,17 +218,14 @@ class PlanImport
             $isKnown = isset($knownPeople[$repoId]);
             $snapshot = $isKnown ? ($memory[$repoId] ?? null) : null;
             $fieldPlan = $this->planFields($research, $person, $nodes[$repoId], $snapshot, $isKnown, $notes[$repoId], $graph, $genders, $labels, $skippedValues, $pendingGenders);
-            $birthPlan = $this->planEvent(true, $research, $person, $isKnown ? $memory : [], $decisions, $settled);
-            $deathPlan = $this->planEvent(false, $research, $person, $isKnown ? $memory : [], $decisions, $settled);
+            $eventPlan = $eventPlans[$repoId];
 
-            $items[$repoId] = [...$fieldPlan['items'], ...$birthPlan['items'], ...$deathPlan['items']];
-            $keptByPerson[$repoId] = $fieldPlan['kept'] + $birthPlan['kept'] + $deathPlan['kept'];
+            $items[$repoId] = [...$fieldPlan['items'], ...$eventPlan['birth']['items'], ...$eventPlan['death']['items'], ...$eventPlan['burial']['items']];
+            $keptByPerson[$repoId] = $fieldPlan['kept'] + $eventPlan['birth']['kept'] + $eventPlan['death']['kept'] + $eventPlan['burial']['kept'];
 
             if ($fieldPlan['skippedGender']) {
                 $skippedGenders[$repoId] = true;
             }
-
-            $eventPlans[$repoId] = ['birth' => $birthPlan, 'death' => $deathPlan];
         }
 
         [$relations, $skippedRelations, $knownRelations, $relationRestorations] = $this->planRelations($persons, $nodes, $graph, $genders, $labels, $skippedIds, $treePeople, $notPlanned, $knownRelationKeys, $restoredEntries);
@@ -200,7 +274,9 @@ class PlanImport
 
             public int $deaths = 0;
 
-            public int $places = 0;
+            public int $placed = 0;
+
+            public int $unplaced = 0;
 
             public int $burials = 0;
 
@@ -228,18 +304,26 @@ class PlanImport
             $note = $notes[$repoId];
 
             if (! isset($treePeople[$repoId])) {
+                $resolved = $newPlaces[$repoId];
+                $burialPlace = $research->death === null ? null : $resolved['burial'];
+                $burialKey = $burialPlace === null ? null : RepoKeys::burial($research->id);
                 $planned = new PlannedPerson(
                     $research,
                     $note,
                     $research->birth === null ? null : RepoKeys::birth($research->id),
                     $research->death === null ? null : RepoKeys::death($research->id),
+                    $resolved['birth']?->place,
+                    $resolved['death']?->place,
+                    $burialKey,
+                    $burialPlace?->place,
                 );
-                $snapshots += $this->snapshotsOf($research, $note);
+                $snapshots += $this->snapshotsOf($research, $note, $resolved['birth'], $resolved['death'], $burialPlace);
                 $totals->variants += count($research->surnameVariants);
-                $totals->burials += $research->burial === null ? 0 : 1;
+                $totals->burials += $burialKey === null ? 0 : 1;
 
-                foreach ([$research->birth, $research->death, $research->burial] as $event) {
-                    $this->tallyNoteValues($event, $totals->places, $totals->levels, $totals->eventNotes);
+                foreach ([[$research->birth, $resolved['birth']], [$research->death, $resolved['death']], [$research->burial, $burialPlace]] as [$event, $resolvedPlace]) {
+                    $this->tallyNoteValues($event, $totals->levels, $totals->eventNotes);
+                    $this->tallyPlace($event, $resolvedPlace, $totals->placed, $totals->unplaced);
                 }
 
                 foreach ([$research->birth, $research->death] as $event) {
@@ -270,7 +354,7 @@ class PlanImport
 
             $snapshots[RepoKeys::person($repoId)] = $this->personValues($research, $note, isset($skippedGenders[$repoId]), $isKnown ? ($memory[$repoId] ?? null) : null);
 
-            foreach (['birth' => [$research->birth, RepoKeys::birth($repoId)], 'death' => [$research->death, RepoKeys::death($repoId)]] as $kind => [$event, $key]) {
+            foreach (['birth' => [$research->birth, RepoKeys::birth($repoId)], 'death' => [$research->death, RepoKeys::death($repoId)], 'burial' => [$research->burial, RepoKeys::burial($repoId)]] as $kind => [$event, $key]) {
                 $plan = $eventPlan[$kind];
 
                 if ($plan['values'] !== null) {
@@ -284,11 +368,15 @@ class PlanImport
                 if ($plan['create'] || $plan['restoration'] !== null) {
                     if ($kind === 'birth') {
                         $totals->births++;
-                    } else {
+                    } elseif ($kind === 'death') {
                         $totals->deaths++;
+                    } else {
+                        $totals->burials++;
                     }
 
-                    $this->tally($event, $totals->dated, $totals->undated);
+                    if ($kind !== 'burial') {
+                        $this->tally($event, $totals->dated, $totals->undated);
+                    }
                 }
             }
 
@@ -321,12 +409,17 @@ class PlanImport
                     $eventPlan['death']['create'],
                     $fills,
                     $personConflicts,
+                    $eventPlan['birth']['place'],
+                    $eventPlan['death']['place'],
+                    $eventPlan['burial']['key'],
+                    $eventPlan['burial']['create'],
+                    $eventPlan['burial']['place'],
                 );
                 $totals->variants += count($research->surnameVariants);
-                $totals->burials += $research->burial === null ? 0 : 1;
 
-                foreach ([$research->birth, $research->death, $research->burial] as $event) {
-                    $this->tallyNoteValues($event, $totals->places, $totals->levels, $totals->eventNotes);
+                foreach (['birth' => $research->birth, 'death' => $research->death, 'burial' => $research->burial] as $kind => $event) {
+                    $this->tallyNoteValues($event, $totals->levels, $totals->eventNotes);
+                    $this->tallyPlace($event, $eventPlan[$kind]['resolved'], $totals->placed, $totals->unplaced);
                 }
 
                 continue;
@@ -335,7 +428,7 @@ class PlanImport
             $keptManual += $keptByPerson[$repoId];
             array_push($changes, ...$personChanges);
             $hasWork = $personChanges !== [] || $fills !== [] || $personConflicts !== []
-                || $eventPlan['birth']['key'] !== null || $eventPlan['death']['key'] !== null;
+                || $eventPlan['birth']['key'] !== null || $eventPlan['death']['key'] !== null || $eventPlan['burial']['key'] !== null;
 
             if ($hasWork) {
                 $updates[] = new PlannedUpdate(
@@ -349,11 +442,15 @@ class PlanImport
                     $eventPlan['death']['key'],
                     $eventPlan['birth']['create'],
                     $eventPlan['death']['create'],
+                    $eventPlan['birth']['place'],
+                    $eventPlan['death']['place'],
+                    $eventPlan['burial']['key'],
+                    $eventPlan['burial']['create'],
+                    $eventPlan['burial']['place'],
                 );
             }
         }
 
-        $marriagePlan = $this->planMarriages($reading, $treePeople, $skippedIds, $persons, $knownWeddings, $memory, $notPlanned, $restoredEntries);
         $marriages = $marriagePlan['planned'];
         $skippedMarriages = $marriagePlan['skipped'];
         array_push($conflicts, ...$marriagePlan['conflicts']);
@@ -369,23 +466,22 @@ class PlanImport
             $snapshots[$planned->repoId] = [];
         }
 
+        foreach ($marriagePlan['values'] as $key => $values) {
+            $snapshots[$key] = $values;
+        }
+
         $weddings = 0;
 
         foreach ($marriages as $planned) {
-            $snapshots[$planned->repoId] = RepoValues::event($planned->marriage->event);
-
             if (! $planned->known) {
-                $this->tallyNoteValues($planned->marriage->event, $totals->places, $totals->levels, $totals->eventNotes);
+                $this->tallyNoteValues($planned->marriage->event, $totals->levels, $totals->eventNotes);
+                $this->tallyPlace($planned->marriage->event, $marriagePlan['resolved'][$planned->repoId] ?? null, $totals->placed, $totals->unplaced);
             }
 
             if ($planned->existingEventId === null) {
                 $weddings++;
                 $this->tally($planned->marriage->event, $totals->dated, $totals->undated);
             }
-        }
-
-        foreach ($marriagePlan['knownKeys'] as $key => $values) {
-            $snapshots[$key] = $values;
         }
 
         [$removals, $detachedBirths, $forgotten] = $this->planRemovals($classes, $decisions);
@@ -396,6 +492,7 @@ class PlanImport
         );
 
         ksort($totals->dated);
+        $aliases = $this->plannedAliases($placeMatches, $decisions->places);
 
         return new ImportPlan(
             persons: $newPersons,
@@ -412,7 +509,17 @@ class PlanImport
             weddings: $weddings,
             datesByQualifier: $totals->dated,
             undatedEvents: $totals->undated,
-            noteValues: new NoteValueCounts($totals->places, $totals->burials, $totals->levels, $totals->eventNotes, $totals->variants),
+            noteValues: new NoteValueCounts(
+                count($places->newLocalities),
+                count($places->newCemeteries),
+                count($aliases),
+                $totals->placed,
+                $totals->unplaced,
+                $totals->burials,
+                $totals->levels,
+                $totals->eventNotes,
+                $totals->variants,
+            ),
             probandHint: $this->probandHint($reading, array_fill_keys(array_keys($skippedIds), true)),
             snapshots: $snapshots,
             forgottenSnapshots: array_values(array_unique([...$forgotten, ...$classes->goneBoth])),
@@ -425,6 +532,9 @@ class PlanImport
             keptManual: $keptManual,
             keptDeletedSnapshots: $keptDeleted,
             seenSnapshots: $this->seenSnapshots($memory, [...array_keys($snapshots), ...array_keys($keptDeleted), ...$forgotten, ...$classes->goneBoth]),
+            newLocalities: $places->newLocalities,
+            aliases: $aliases,
+            newCemeteries: $places->newCemeteries,
         );
     }
 
@@ -484,6 +594,88 @@ class PlanImport
                 throw new InvalidArgumentException("Urodzenie {$entry->key} można tylko odłączyć od repo.");
             }
         }
+    }
+
+    /**
+     * Check the answers about the localities of the repo: only names the matcher asked about, a legal answer for each
+     * kind of verdict and locality ids of the tree. A name without an answer counts as "no place".
+     *
+     * @throws InvalidArgumentException
+     */
+    private function checkPlaceDecisions(Tree $tree, PlaceMatches $matches, PlaceDecisions $places): void
+    {
+        $treeIds = array_flip($tree->localities()->pluck('id')->all());
+
+        foreach ($places->localities as $key => $answer) {
+            $verdict = $matches->localities[$key] ?? null;
+
+            if ($verdict === null || $verdict->kind === PlaceMatchKind::Sure) {
+                throw new InvalidArgumentException("Decyzja o miejscowości {$key}, o którą import nie pyta.");
+            }
+
+            if (is_int($answer)) {
+                $candidates = array_map(fn ($locality): int => $locality->id, $verdict->candidates);
+
+                if (! isset($treeIds[$answer]) || ! in_array($answer, $candidates, true)) {
+                    throw new InvalidArgumentException("Decyzja o miejscowości {$key} wskazuje miejscowość spoza kandydatów z drzewa konta.");
+                }
+            } elseif (! in_array($answer, [PlaceDecisions::NEW, PlaceDecisions::NONE], true)) {
+                throw new InvalidArgumentException("Niewłaściwa decyzja o miejscowości {$key}: {$answer}.");
+            }
+        }
+
+        foreach (array_keys($places->aliases) as $key) {
+            if (! is_int($places->localities[$key] ?? null)) {
+                throw new InvalidArgumentException("Wariant {$key} można zapamiętać tylko przy wskazanej miejscowości.");
+            }
+        }
+    }
+
+    /**
+     * Check the answers about the cemeteries: only the ones with a choice to make, among the cemeteries offered.
+     *
+     * @param  array<string, CemeteryVerdict>  $matches
+     *
+     * @throws InvalidArgumentException
+     */
+    private function checkCemeteryDecisions(array $matches, PlaceDecisions $places): void
+    {
+        foreach ($places->cemeteries as $key => $answer) {
+            $verdict = $matches[$key] ?? null;
+
+            if ($verdict === null || $verdict->kind !== CemeteryMatchKind::Choice) {
+                throw new InvalidArgumentException("Decyzja o cmentarzu {$key}, o który import nie pyta.");
+            }
+
+            if (is_int($answer)) {
+                if (! in_array($answer, array_map(fn ($cemetery): int => $cemetery->id, $verdict->options), true)) {
+                    throw new InvalidArgumentException("Decyzja o cmentarzu {$key} wskazuje cmentarz spoza listy z drzewa konta.");
+                }
+            } elseif (! in_array($answer, [PlaceDecisions::NEW, PlaceDecisions::NONE], true)) {
+                throw new InvalidArgumentException("Niewłaściwa decyzja o cmentarzu {$key}: {$answer}.");
+            }
+        }
+    }
+
+    /**
+     * The spellings the author chose to remember as variants of a locality of the tree.
+     *
+     * @return array<string, PlannedAlias>
+     */
+    private function plannedAliases(PlaceMatches $matches, PlaceDecisions $places): array
+    {
+        $aliases = [];
+
+        foreach (array_keys($places->aliases) as $key) {
+            $locality = $places->localities[$key] ?? null;
+            $verdict = $matches->localities[$key] ?? null;
+
+            if (is_int($locality) && $verdict !== null) {
+                $aliases[$key] = new PlannedAlias($verdict->name, $locality);
+            }
+        }
+
+        return $aliases;
     }
 
     /**
@@ -797,7 +989,7 @@ class PlanImport
      * @param  string|null  $fillAppLabel  what the app holds when a fill refines a value (a date), `null` for an empty field
      * @return Item|null
      */
-    private function itemFor(ThreeWayOutcome $outcome, string $field, string $label, string $key, string $person, ?string $appLabel, ?string $repoLabel, ?string $lastLabel, bool $hasLast, string|Gender|ResearchDate|null $repoValue, ?string $fillAppLabel = null): PlannedChange|PlannedFill|ValueConflict|null
+    private function itemFor(ThreeWayOutcome $outcome, string $field, string $label, string $key, string $person, ?string $appLabel, ?string $repoLabel, ?string $lastLabel, bool $hasLast, string|Gender|ResearchDate|PlannedPlace|null $repoValue, ?string $fillAppLabel = null): PlannedChange|PlannedFill|ValueConflict|null
     {
         return match ($outcome) {
             ThreeWayOutcome::Same, ThreeWayOutcome::KeptManual => null,
@@ -833,36 +1025,39 @@ class PlanImport
     }
 
     /**
-     * Plan the birth or the death of a person of the tree. The event an earlier import took is compared with the three
-     * values. Otherwise the repo key goes on the event the person has without one, compared like a hand-entered value,
-     * or the event is created, or it is restored when the author deleted it in the app and chose to bring it back.
+     * Plan the birth, the death or the burial of a person of the tree. The event an earlier import took is compared
+     * with the three values, the date and the place alike. Otherwise the repo key goes on the event the person has
+     * without one, compared like a hand-entered value, or the event is created, or it is restored when the author
+     * deleted it in the app and chose to bring it back.
+     *
+     * A burial exists in the app only with a cemetery and for a person who has a death, so a repo burial whose cemetery
+     * is not recognized, or whose person has no death, is not created: the plan keeps only its memory.
      *
      * @param  array<string, RepoSnapshot>  $memory  empty for a person that is not known yet
      * @param  array<string, true>  $settled  keys the author already left deleted
+     * @param  bool  $personDies  the person has a death or gets one in this import; only a burial reads it
      * @return EventPlan
      */
-    private function planEvent(bool $birth, ResearchPerson $research, Person $person, array $memory, ImportDecisions $decisions, array $settled): array
+    private function planEvent(EventType $type, ResearchPerson $research, Person $person, array $memory, ImportDecisions $decisions, array $settled, PlaceResolver $places, bool $personDies = true): array
     {
-        $none = ['items' => [], 'kept' => 0, 'key' => null, 'create' => false, 'values' => null, 'restoration' => null];
-        $repoEvent = $birth ? $research->birth : $research->death;
+        $none = ['items' => [], 'kept' => 0, 'key' => null, 'create' => false, 'values' => null, 'restoration' => null, 'place' => null, 'placed' => false, 'resolved' => null];
+        [$repoEvent, $key, $field, $label, $placeField, $placeLabel, $kind, $restoreLabel] = match ($type) {
+            EventType::Birth => [$research->birth, RepoKeys::birth($research->id), 'birth_date', 'Data urodzenia', 'birth_place', 'Miejsce urodzenia', RepoKeyKind::Birth, 'Urodzenie'],
+            EventType::Death => [$research->death, RepoKeys::death($research->id), 'death_date', 'Data zgonu', 'death_place', 'Miejsce zgonu', RepoKeyKind::Death, 'Zgon'],
+            default => [$research->burial, RepoKeys::burial($research->id), 'burial_date', 'Data pochowania', 'burial_place', 'Cmentarz', RepoKeyKind::Burial, 'Pochowanie'],
+        };
 
         if ($repoEvent === null) {
             return $none;
         }
 
-        $type = $birth ? EventType::Birth : EventType::Death;
-        $key = $birth ? RepoKeys::birth($research->id) : RepoKeys::death($research->id);
-        $field = $birth ? 'birth_date' : 'death_date';
-        $label = $birth ? 'Data urodzenia' : 'Data zgonu';
+        $burial = $type === EventType::Burial;
         $who = $this->personLabel($research);
-        $values = RepoValues::event($repoEvent);
         $decision = $decisions->deletions[$key] ?? null;
         $own = $person->events->first(fn (Event $event): bool => $event->type === $type && $event->repo_id === $key);
 
         if ($own !== null) {
-            [$item, $kept] = $this->dateItem($field, $label, "{$key}/data", $who, $repoEvent->date, $own, $memory[$key] ?? null);
-
-            return [...$none, 'items' => $item === null ? [] : [$field => $item], 'kept' => $kept ? 1 : 0, 'values' => $values];
+            return $this->planCompared($places, $none, $repoEvent, $own, $memory[$key] ?? null, $key, $field, $label, $placeField, $placeLabel, $who, $burial);
         }
 
         if ($decision === ImportDecisions::KEEP || isset($settled[$key])) {
@@ -872,22 +1067,129 @@ class PlanImport
         $unmarked = $person->events->first(fn (Event $event): bool => $event->type === $type && $event->repo_id === null);
 
         if ($unmarked !== null) {
-            [$item] = $this->dateItem($field, $label, "{$key}/data", $who, $repoEvent->date, $unmarked, null);
-
-            return [...$none, 'items' => $item === null ? [] : [$field => $item], 'key' => $key, 'values' => $values];
+            return [...$this->planCompared($places, $none, $repoEvent, $unmarked, null, $key, $field, $label, $placeField, $placeLabel, $who, $burial), 'key' => $key];
         }
 
+        $resolved = $burial ? $places->cemetery($repoEvent->place, $repoEvent->cemetery, null) : $places->locality($repoEvent->place, null);
+
+        if ($burial && ($resolved === null || ! $personDies)) {
+            return [...$none, 'values' => $this->eventMemory($repoEvent, true, null)];
+        }
+
+        $values = $this->eventMemory($repoEvent, $burial, $resolved);
+
         if ($decision === ImportDecisions::RESTORE) {
-            return [...$none, 'values' => $values, 'restoration' => new PlannedRestoration(
+            return [...$none, 'values' => $values, 'placed' => $resolved !== null, 'resolved' => $resolved, 'restoration' => new PlannedRestoration(
                 $key,
-                $birth ? RepoKeyKind::Birth : RepoKeyKind::Death,
-                ($birth ? 'Urodzenie' : 'Zgon').': '.$who,
+                $kind,
+                "{$restoreLabel}: {$who}",
                 personId: $person->id,
                 event: $repoEvent,
+                place: $resolved?->place,
             )];
         }
 
-        return [...$none, 'key' => $key, 'create' => true, 'values' => $values];
+        return [...$none, 'key' => $key, 'create' => true, 'values' => $values, 'place' => $resolved?->place, 'placed' => $resolved !== null, 'resolved' => $resolved];
+    }
+
+    /**
+     * The date and the place of an event of the tree compared with the repo.
+     *
+     * @param  EventPlan  $none
+     * @return EventPlan
+     */
+    private function planCompared(PlaceResolver $places, array $none, ResearchEvent $repoEvent, Event $event, ?RepoSnapshot $snapshot, string $key, string $field, string $label, string $placeField, string $placeLabel, string $who, bool $burial): array
+    {
+        [$dateItem, $dateKept] = $this->dateItem($field, $label, "{$key}/data", $who, $repoEvent->date, $event, $snapshot);
+        $place = $this->placeItem($places, $placeField, $placeLabel, $key, $who, $repoEvent, $event, $snapshot, $burial);
+        $items = [];
+
+        if ($dateItem !== null) {
+            $items[$field] = $dateItem;
+        }
+
+        if ($place['item'] !== null) {
+            $items[$placeField] = $place['item'];
+        }
+
+        return [...$none, 'items' => $items, 'kept' => ($dateKept ? 1 : 0) + ($place['kept'] ? 1 : 0), 'values' => $place['values'], 'placed' => $place['placed'], 'resolved' => $place['resolved']];
+    }
+
+    /**
+     * The three values of the place of an event: the place the repo text names now (R), the one it named at the last
+     * import (S) and the one of the event (A), compared as tokens of ids. A text that names no place makes no item and
+     * never clears the event; only a repo that drops the place of a birth, death or wedding does.
+     *
+     * @return PlaceCompare
+     */
+    private function placeItem(PlaceResolver $places, string $field, string $label, string $key, string $who, ResearchEvent $repo, ?Event $event, ?RepoSnapshot $snapshot, bool $burial): array
+    {
+        $text = self::cleanText($repo->place);
+        $cemetery = $burial ? self::cleanText($repo->cemetery) : null;
+        $idField = $burial ? 'cmentarz_id' : 'miejsce_id';
+        $values = $snapshot === null ? [] : $snapshot->values;
+        $remembered = ($values['miejsce'] ?? null) === $text && (! $burial || ($values['cmentarz'] ?? null) === $cemetery) && is_string($values[$idField] ?? null)
+            ? $values[$idField]
+            : null;
+        $resolved = $burial ? $places->cemetery($text, $cemetery, $remembered) : $places->locality($text, $remembered);
+        $memory = $this->eventMemory($repo, $burial, $resolved);
+
+        if ($resolved === null && ($text !== null || $burial)) {
+            return ['item' => null, 'kept' => false, 'placed' => false, 'resolved' => null, 'values' => $memory];
+        }
+
+        [$hasLast, $last] = $this->lastOf($snapshot, $idField);
+
+        if ($hasLast && $last !== null && ! $places->tokenExists($last)) {
+            $stale = $burial
+                ? $places->knownCemetery(is_string($values['miejsce'] ?? null) ? $values['miejsce'] : null, is_string($values['cmentarz'] ?? null) ? $values['cmentarz'] : null)
+                : $places->known(is_string($values['miejsce'] ?? null) ? $values['miejsce'] : null);
+            $last = $stale?->token;
+        }
+
+        $appId = $burial ? $event?->cemetery_id : $event?->locality_id;
+        $app = $appId === null ? null : ($burial ? 'C:' : 'L:').$appId;
+        $outcome = ThreeWayValue::compare($resolved?->token, $hasLast, $last, $app);
+
+        return [
+            'item' => $this->itemFor($outcome, $field, $label, "{$key}/miejsce", $who, $places->tokenLabel($app), $resolved?->place->label, $places->tokenLabel($last), $hasLast, $resolved?->place),
+            'kept' => $outcome === ThreeWayOutcome::KeptManual,
+            'placed' => $resolved !== null && in_array($outcome, [ThreeWayOutcome::Same, ThreeWayOutcome::Fill, ThreeWayOutcome::Changed], true),
+            'resolved' => $resolved,
+            'values' => $memory,
+        ];
+    }
+
+    /**
+     * What the memory keeps for an event: the date, the place text and the id of the place the text was recognized as.
+     * A burial keeps the cemetery text and id, and the locality of the cemetery as the id of its place.
+     *
+     * @return array<string, string|null>
+     */
+    private function eventMemory(ResearchEvent $event, bool $burial, ?ResolvedPlace $resolved): array
+    {
+        $values = RepoValues::event($event, $burial);
+        $values['miejsce_id'] = $burial ? $resolved?->localityToken : $resolved?->token;
+
+        if ($burial) {
+            $values['cmentarz_id'] = $resolved?->token;
+        }
+
+        return $values;
+    }
+
+    /**
+     * The places the events of a repo person that is added to the tree would get.
+     *
+     * @return array{birth: ResolvedPlace|null, death: ResolvedPlace|null, burial: ResolvedPlace|null}
+     */
+    private function newPersonPlaces(ResearchPerson $research, PlaceResolver $places): array
+    {
+        return [
+            'birth' => $research->birth === null ? null : $places->locality($research->birth->place, null),
+            'death' => $research->death === null ? null : $places->locality($research->death->place, null),
+            'burial' => $research->burial === null ? null : $places->cemetery($research->burial->place, $research->burial->cemetery, null),
+        ];
     }
 
     /**
@@ -1188,16 +1490,18 @@ class PlanImport
      * @param  array<string, RepoSnapshot>  $memory
      * @param  array<string, true>  $notPlanned
      * @param  array<string, RepoRecord>  $restoredEntries
-     * @return array{planned: list<PlannedMarriage>, skipped: list<ImportIssue>, conflicts: list<ValueConflict>, changes: list<PlannedChange>, restorations: list<PlannedRestoration>, kept: int, knownKeys: array<string, array<string, string|null>>}
+     * @return array{planned: list<PlannedMarriage>, skipped: list<ImportIssue>, conflicts: list<ValueConflict>, changes: list<PlannedChange>, restorations: list<PlannedRestoration>, kept: int, values: array<string, array<string, string|null>>, placed: list<string>, resolved: array<string, ResolvedPlace|null>}
      */
-    private function planMarriages(ResearchRepoReading $reading, array $treePeople, array $skippedIds, array $persons, array $knownWeddings, array $memory, array $notPlanned, array $restoredEntries): array
+    private function planMarriages(ResearchRepoReading $reading, array $treePeople, array $skippedIds, array $persons, array $knownWeddings, array $memory, array $notPlanned, array $restoredEntries, PlaceResolver $places): array
     {
         $planned = [];
         $skipped = [];
         $conflicts = [];
         $changes = [];
         $restorations = [];
-        $knownKeys = [];
+        $values = [];
+        $placed = [];
+        $resolvedPlaces = [];
         $kept = 0;
 
         foreach ($reading->marriages as $marriage) {
@@ -1219,12 +1523,18 @@ class PlanImport
             $own = $knownWeddings[$repoId] ?? null;
 
             if ($own !== null) {
-                [$item, $keptHere] = $this->dateItem('marriage_date', 'Data ślubu', "{$repoId}/data", $who, $marriage->event->date, $own, $memory[$repoId] ?? null);
-                $kept += $keptHere ? 1 : 0;
-                $knownKeys[$repoId] = RepoValues::event($marriage->event);
+                $snapshot = $memory[$repoId] ?? null;
+                [$item, $keptHere] = $this->dateItem('marriage_date', 'Data ślubu', "{$repoId}/data", $who, $marriage->event->date, $own, $snapshot);
+                $place = $this->placeItem($places, 'marriage_place', 'Miejsce ślubu', $repoId, $who, $marriage->event, $own, $snapshot, false);
+                $kept += ($keptHere ? 1 : 0) + ($place['kept'] ? 1 : 0);
+                $values[$repoId] = $place['values'];
 
-                if ($item !== null) {
-                    $planned[] = $this->plannedWedding($marriage, $repoId, $own->id, $item, $conflicts, $changes, true);
+                if ($place['placed']) {
+                    $placed[] = $repoId;
+                }
+
+                if ($item !== null || $place['item'] !== null) {
+                    $planned[] = $this->plannedWedding($marriage, $repoId, $own->id, $item, $place['item'], $conflicts, $changes, true);
                 }
 
                 continue;
@@ -1235,8 +1545,15 @@ class PlanImport
                 : null;
 
             if ($existing === null) {
-                $wedding = new PlannedMarriage($marriage, $repoId);
+                $resolved = $places->locality($marriage->event->place, null);
+                $resolvedPlaces[$repoId] = $resolved;
+                $values[$repoId] = $this->eventMemory($marriage->event, false, $resolved);
+                $wedding = new PlannedMarriage($marriage, $repoId, place: $resolved?->place);
                 $planned[] = $wedding;
+
+                if ($resolved !== null) {
+                    $placed[] = $repoId;
+                }
 
                 if (isset($restoredEntries[$repoId])) {
                     $restorations[] = new PlannedRestoration($repoId, RepoKeyKind::Marriage, 'Ślub: '.$who, marriage: $wedding);
@@ -1246,35 +1563,49 @@ class PlanImport
             }
 
             [$item] = $this->dateItem('marriage_date', 'Data ślubu', "{$repoId}/data", $who, $marriage->event->date, $existing, null);
-            $planned[] = $this->plannedWedding($marriage, $repoId, $existing->id, $item, $conflicts, $changes, false);
+            $place = $this->placeItem($places, 'marriage_place', 'Miejsce ślubu', $repoId, $who, $marriage->event, $existing, null, false);
+            $values[$repoId] = $place['values'];
+            $resolvedPlaces[$repoId] = $place['resolved'];
+
+            if ($place['placed']) {
+                $placed[] = $repoId;
+            }
+
+            $planned[] = $this->plannedWedding($marriage, $repoId, $existing->id, $item, $place['item'], $conflicts, $changes, false);
         }
 
-        return ['planned' => $planned, 'skipped' => $skipped, 'conflicts' => $conflicts, 'changes' => $changes, 'restorations' => $restorations, 'kept' => $kept, 'knownKeys' => $knownKeys];
+        return ['planned' => $planned, 'skipped' => $skipped, 'conflicts' => $conflicts, 'changes' => $changes, 'restorations' => $restorations, 'kept' => $kept, 'values' => $values, 'placed' => $placed, 'resolved' => $resolvedPlaces];
     }
 
     /**
-     * A wedding of the tree with the date item the three values asked for.
+     * A wedding of the tree with the date item and the place item the three values asked for.
      *
-     * @param  Item|null  $item
+     * @param  Item|null  $date
+     * @param  Item|null  $place
      * @param  list<ValueConflict>  $conflicts
      * @param  list<PlannedChange>  $changes
      */
-    private function plannedWedding(ResearchMarriage $marriage, string $repoId, int $eventId, PlannedChange|PlannedFill|ValueConflict|null $item, array &$conflicts, array &$changes, bool $known): PlannedMarriage
+    private function plannedWedding(ResearchMarriage $marriage, string $repoId, int $eventId, PlannedChange|PlannedFill|ValueConflict|null $date, PlannedChange|PlannedFill|ValueConflict|null $place, array &$conflicts, array &$changes, bool $known): PlannedMarriage
     {
-        if ($item instanceof ValueConflict) {
-            $conflicts[] = $item;
-        } elseif ($item instanceof PlannedChange) {
-            $changes[] = $item;
+        foreach ([$date, $place] as $item) {
+            if ($item instanceof ValueConflict) {
+                $conflicts[] = $item;
+            } elseif ($item instanceof PlannedChange) {
+                $changes[] = $item;
+            }
         }
 
         return new PlannedMarriage(
             $marriage,
             $repoId,
             $eventId,
-            $item instanceof PlannedFill ? $item : null,
-            $item instanceof ValueConflict ? $item : null,
-            $item instanceof PlannedChange ? $item : null,
+            $date instanceof PlannedFill ? $date : null,
+            $date instanceof ValueConflict ? $date : null,
+            $date instanceof PlannedChange ? $date : null,
             $known,
+            placeFill: $place instanceof PlannedFill ? $place : null,
+            placeConflict: $place instanceof ValueConflict ? $place : null,
+            placeChange: $place instanceof PlannedChange ? $place : null,
         );
     }
 
@@ -1290,20 +1621,25 @@ class PlanImport
     }
 
     /**
-     * What the repo holds for the keys of a new person: the person, its birth and its death, as the next import compares it.
+     * What the repo holds for the keys of a new person: the person, its birth, its death and its burial, as the next
+     * import compares it. A burial whose cemetery is not recognized has an entry without a record.
      *
      * @return array<string, array<string, string|null>>
      */
-    private function snapshotsOf(ResearchPerson $research, ?string $note): array
+    private function snapshotsOf(ResearchPerson $research, ?string $note, ?ResolvedPlace $birth, ?ResolvedPlace $death, ?ResolvedPlace $burial): array
     {
         $snapshots = [RepoKeys::person($research->id) => RepoValues::person($research, $note)];
 
         if ($research->birth !== null) {
-            $snapshots[RepoKeys::birth($research->id)] = RepoValues::event($research->birth);
+            $snapshots[RepoKeys::birth($research->id)] = $this->eventMemory($research->birth, false, $birth);
         }
 
         if ($research->death !== null) {
-            $snapshots[RepoKeys::death($research->id)] = RepoValues::event($research->death);
+            $snapshots[RepoKeys::death($research->id)] = $this->eventMemory($research->death, false, $death);
+        }
+
+        if ($research->burial !== null) {
+            $snapshots[RepoKeys::burial($research->id)] = $this->eventMemory($research->burial, true, $burial);
         }
 
         return $snapshots;
@@ -1464,13 +1800,28 @@ class PlanImport
         $dated[$key] = ($dated[$key] ?? 0) + 1;
     }
 
-    private function tallyNoteValues(?ResearchEvent $event, int &$places, int &$levels, int &$eventNotes): void
+    /**
+     * An event with a place text either got a place of the tree or keeps the text in the note.
+     */
+    private function tallyPlace(?ResearchEvent $event, ?ResolvedPlace $resolved, int &$placed, int &$unplaced): void
+    {
+        if ($event === null || self::cleanText($event->place) === null) {
+            return;
+        }
+
+        if ($resolved === null) {
+            $unplaced++;
+        } else {
+            $placed++;
+        }
+    }
+
+    private function tallyNoteValues(?ResearchEvent $event, int &$levels, int &$eventNotes): void
     {
         if ($event === null) {
             return;
         }
 
-        $places += $event->place === null ? 0 : 1;
         $levels += $event->level === null ? 0 : 1;
         $eventNotes += $event->note === null ? 0 : 1;
     }

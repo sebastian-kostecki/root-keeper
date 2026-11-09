@@ -100,7 +100,7 @@ test('prints the report for the fixture repo and exits successfully', function (
         ->expectsOutputToContain('Nieznany klucz: kolor')
         ->expectsOutputToContain('Podsumowanie importu')
         ->expectsOutputToContain('Pominięte relacje:')
-        ->expectsConfirmation(saveQuestion(13, 0, 26), 'no')
+        ->expectsConfirmation(saveQuestion(13, 0, 27), 'no')
         ->expectsOutputToContain('Nic nie zostało zapisane.')
         ->assertSuccessful();
 });
@@ -140,7 +140,7 @@ test('saves the persons to the author tree after a yes and suggests the proband'
     $author = arrangeEmptyAuthorWithOverlappingOther();
 
     $this->artisan('import:research', importArguments($author))
-        ->expectsConfirmation(saveQuestion(13, 0, 26), 'yes')
+        ->expectsConfirmation(saveQuestion(13, 0, 27), 'yes')
         ->expectsOutputToContain('Zapisano w drzewie')
         ->expectsOutputToContain('Ahnentafel 1: Jan Nowak (O-0001)')
         ->assertSuccessful();
@@ -157,7 +157,7 @@ test('writes nothing after a no', function () {
     $before = ownershipSnapshot();
 
     $this->artisan('import:research', importArguments($author))
-        ->expectsConfirmation(saveQuestion(13, 0, 26), 'no')
+        ->expectsConfirmation(saveQuestion(13, 0, 27), 'no')
         ->assertSuccessful();
 
     expect(ownershipSnapshot())->toBe($before);
@@ -204,7 +204,7 @@ test('reports a failure in the middle of the write and writes nothing', function
     });
 
     $this->artisan('import:research', importArguments($author))
-        ->expectsConfirmation(saveQuestion(13, 0, 26), 'yes')
+        ->expectsConfirmation(saveQuestion(13, 0, 27), 'yes')
         ->expectsOutputToContain('Zapis małżeństwa nie powiódł się.')
         ->expectsOutputToContain('Nic nie zostało zapisane.')
         ->assertFailed();
@@ -238,7 +238,7 @@ test('stops when the database backup fails in production', function () {
     $before = ownershipSnapshot();
 
     $this->artisan('import:research', importArguments($author))
-        ->expectsConfirmation(saveQuestion(13, 0, 26), 'yes')
+        ->expectsConfirmation(saveQuestion(13, 0, 27), 'yes')
         ->expectsOutputToContain('Kopia bazy nie powiodła się, nic nie zostało zapisane.')
         ->assertFailed();
 
@@ -253,7 +253,7 @@ test('saves after a successful database backup in production', function () {
     $author = arrangeEmptyAuthorWithOverlappingOther();
 
     $this->artisan('import:research', importArguments($author))
-        ->expectsConfirmation(saveQuestion(13, 0, 26), 'yes')
+        ->expectsConfirmation(saveQuestion(13, 0, 27), 'yes')
         ->assertSuccessful();
 
     expect($calls->getArrayCopy())->toBe([true])
@@ -266,7 +266,7 @@ test('does not run a backup outside production', function () {
     $author = arrangeEmptyAuthorWithOverlappingOther();
 
     $this->artisan('import:research', importArguments($author))
-        ->expectsConfirmation(saveQuestion(13, 0, 26), 'yes')
+        ->expectsConfirmation(saveQuestion(13, 0, 27), 'yes')
         ->assertSuccessful();
 
     expect($calls->getArrayCopy())->toBe([])
@@ -279,13 +279,13 @@ test('lists files without a block only with -v', function () {
 
     $this->artisan('import:research', $arguments)
         ->doesntExpectOutputToContain('Pliki bez bloku:')
-        ->expectsConfirmation(saveQuestion(13, 0, 26), 'no')
+        ->expectsConfirmation(saveQuestion(13, 0, 27), 'no')
         ->assertSuccessful();
 
     $this->artisan('import:research', [...$arguments, '-v' => true])
         ->expectsOutputToContain('Pliki bez bloku:')
         ->expectsOutputToContain('bez_bloku.md')
-        ->expectsConfirmation(saveQuestion(13, 0, 26), 'no')
+        ->expectsConfirmation(saveQuestion(13, 0, 27), 'no')
         ->assertSuccessful();
 });
 
@@ -389,7 +389,7 @@ test('hooks the repo into the author hand-entered persons after sure, doubtful a
         ->expectsOutputToContain('Osoby: nowe 11, dopasowane 2, pominięte 0')
         ->expectsOutputToContain('Konflikty wartości do rozstrzygnięcia: 1')
         ->expectsChoice(BIRTH_CONFLICT_QUESTION, 'repo', BIRTH_CONFLICT_OPTIONS, true)
-        ->expectsConfirmation(saveQuestion(11, 2, 26, changes: 1), 'yes')
+        ->expectsConfirmation(saveQuestion(11, 2, 27, changes: 1), 'yes')
         ->expectsOutputToContain('Osoby: nowe 11, dopasowane 2')
         ->expectsOutputToContain('Import nie ustawia probanta')
         ->assertSuccessful();
@@ -418,7 +418,7 @@ test('keeps the value from the app when the author settles the conflict that way
     matchCommandUntilDoubtful($author)
         ->expectsQuestion('Wątpliwe 1/1: Piotr Nowak (O-0002) — kto to?', "person:{$scene['piotr']->id}")
         ->expectsQuestion(BIRTH_CONFLICT_QUESTION, 'app')
-        ->expectsConfirmation(saveQuestion(11, 2, 26), 'yes')
+        ->expectsConfirmation(saveQuestion(11, 2, 27), 'yes')
         ->assertSuccessful();
 
     $birth = $scene['jan']->fresh()->birth();
@@ -434,7 +434,7 @@ test('adds a doubtful repo person as a new person next to the hand-entered one',
     matchCommandUntilDoubtful($author)
         ->expectsQuestion('Wątpliwe 1/1: Piotr Nowak (O-0002) — kto to?', 'new')
         ->expectsQuestion(BIRTH_CONFLICT_QUESTION, 'app')
-        ->expectsConfirmation(saveQuestion(12, 1, 25), 'yes')
+        ->expectsConfirmation(saveQuestion(12, 1, 26), 'yes')
         ->assertSuccessful();
 
     $piotrs = $author->tree->people()->where('first_name', 'Piotr')->orderBy('id')->get();
@@ -456,7 +456,7 @@ test('leaves out a doubtful repo person and its relations and lists it among the
         ->expectsOutputToContain('Pominięte osoby:')
         ->expectsOutputToContain('osoba pominięta przy dopasowaniu')
         ->expectsQuestion(BIRTH_CONFLICT_QUESTION, 'repo')
-        ->expectsConfirmation(saveQuestion(11, 1, 20, changes: 1), 'yes')
+        ->expectsConfirmation(saveQuestion(11, 1, 21, changes: 1), 'yes')
         ->assertSuccessful();
 
     $tree = $author->tree;
@@ -482,7 +482,7 @@ test('walks through the sure match one by one before the doubtful ones', functio
         ], true)
         ->expectsQuestion('Wątpliwe 1/1: Piotr Nowak (O-0002) — kto to?', 'skip')
         ->expectsQuestion(BIRTH_CONFLICT_QUESTION, 'app')
-        ->expectsConfirmation(saveQuestion(11, 1, 20), 'no')
+        ->expectsConfirmation(saveQuestion(11, 1, 21), 'no')
         ->assertSuccessful();
 });
 
@@ -605,7 +605,7 @@ test('stops after a yes when the database backup fails in production and the tre
     matchCommandUntilDoubtful($author)
         ->expectsQuestion('Wątpliwe 1/1: Piotr Nowak (O-0002) — kto to?', "person:{$scene['piotr']->id}")
         ->expectsQuestion(BIRTH_CONFLICT_QUESTION, 'repo')
-        ->expectsConfirmation(saveQuestion(11, 2, 26, changes: 1), 'yes')
+        ->expectsConfirmation(saveQuestion(11, 2, 27, changes: 1), 'yes')
         ->expectsOutputToContain('Kopia bazy nie powiodła się, nic nie zostało zapisane.')
         ->assertFailed();
 
@@ -621,7 +621,7 @@ test('writes nothing after a no at the end of the match walkthrough', function (
     matchCommandUntilDoubtful($author)
         ->expectsQuestion('Wątpliwe 1/1: Piotr Nowak (O-0002) — kto to?', "person:{$scene['piotr']->id}")
         ->expectsQuestion(BIRTH_CONFLICT_QUESTION, 'repo')
-        ->expectsConfirmation(saveQuestion(11, 2, 26, changes: 1), 'no')
+        ->expectsConfirmation(saveQuestion(11, 2, 27, changes: 1), 'no')
         ->expectsOutputToContain('Nic nie zostało zapisane.')
         ->assertSuccessful();
 

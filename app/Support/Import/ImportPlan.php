@@ -19,7 +19,7 @@ final readonly class ImportPlan
      * @param  int  $births  births written: of new and restored persons and the missing ones of matched and known persons
      * @param  int  $weddings  new weddings
      * @param  array<string, int>  $datesByQualifier  keyed by DateQualifier value, only qualifiers that occur
-     * @param  array<string, array<string, string|null>>  $snapshots  repo key => the repo values to remember after the write
+     * @param  array<string, array<string, string|null>>  $snapshots  repo key => the repo values to remember after the write; the ids of a recognized place (`miejsce_id`, `cmentarz_id`) are tokens (see {@see ResolvedPlace}), and a burial whose cemetery is not recognized has an entry with `cmentarz_id` empty but no record
      * @param  list<string>  $forgottenSnapshots  repo keys whose memory the write removes
      * @param  list<PlannedUpdate>  $updates  known persons with something to write
      * @param  list<PlannedChange>  $changes  every repo change nobody touched in the app, of the known persons and weddings
@@ -30,6 +30,9 @@ final readonly class ImportPlan
      * @param  int  $keptManual  fields changed by hand in the app while the repo did not move, left alone
      * @param  array<string, array<string, string|null>>  $keptDeletedSnapshots  repo key => the repo values to remember for a record the author left deleted
      * @param  array<string, string>  $seenSnapshots  repo key => `RepoSnapshot::fingerprint()` of the memory entry the plan saw, for every key the write touches that had one
+     * @param  array<string, string>  $newLocalities  key of the name => the name of each locality the plan adds, only the ones a plan item uses; the write decides after the rejected changes and conflicts
+     * @param  array<string, PlannedAlias>  $aliases  key of the spelling => the variant to remember, always saved
+     * @param  array<string, PlannedCemetery>  $newCemeteries  {@see PlaceDecisions::cemeteryKey()} => each cemetery the plan adds, only the ones a plan item uses
      */
     public function __construct(
         public array $persons,
@@ -59,6 +62,9 @@ final readonly class ImportPlan
         public int $keptManual = 0,
         public array $keptDeletedSnapshots = [],
         public array $seenSnapshots = [],
+        public array $newLocalities = [],
+        public array $aliases = [],
+        public array $newCemeteries = [],
     ) {}
 
     /**
@@ -77,7 +83,7 @@ final readonly class ImportPlan
         }
 
         foreach ($this->marriages as $marriage) {
-            $fills += $marriage->dateFill === null ? 0 : 1;
+            $fills += ($marriage->dateFill === null ? 0 : 1) + ($marriage->placeFill === null ? 0 : 1);
         }
 
         return $fills;

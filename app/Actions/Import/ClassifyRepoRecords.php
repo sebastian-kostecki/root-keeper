@@ -55,7 +55,9 @@ class ClassifyRepoRecords
         sort($keys);
         $keys = array_values(array_filter(
             $keys,
-            fn (string $key): bool => ! isset($dropped[$key]) && array_intersect_key($skippedIds, array_flip(RepoKeys::personIdsOf($key))) === [],
+            fn (string $key): bool => ! isset($dropped[$key])
+                && array_intersect_key($skippedIds, array_flip(RepoKeys::personIdsOf($key))) === []
+                && ! $this->isBurialWithoutRecord($key, $inRepo, $records, $snapshots),
         ));
 
         $states = [];
@@ -133,7 +135,27 @@ class ClassifyRepoRecords
     }
 
     /**
-     * Every key the reading holds: each person, its birth and death when the block names them, each parent-child pair
+     * Whether the key is a burial the repo has, whose cemetery the last import did not recognize: the memory holds it
+     * without a record (`cmentarz_id` is empty) because the app only keeps a burial with a cemetery. It is not a
+     * burial deleted in the app.
+     *
+     * @param  array<string, true>  $inRepo
+     * @param  array<string, Model>  $records
+     * @param  array<string, RepoSnapshot>  $snapshots
+     */
+    private function isBurialWithoutRecord(string $key, array $inRepo, array $records, array $snapshots): bool
+    {
+        if (! isset($inRepo[$key]) || isset($records[$key]) || ! isset($snapshots[$key]) || RepoKeys::kindOf($key) !== RepoKeyKind::Burial) {
+            return false;
+        }
+
+        $values = $snapshots[$key]->values;
+
+        return array_key_exists('cmentarz_id', $values) && $values['cmentarz_id'] === null;
+    }
+
+    /**
+     * Every key the reading holds: each person, its birth, death and burial when the block names them, each parent-child pair
      * whose two ends are in the reading and each wedding.
      *
      * @return array<string, true>
@@ -151,6 +173,10 @@ class ClassifyRepoRecords
 
             if ($person->death !== null) {
                 $keys[RepoKeys::death($person->id)] = true;
+            }
+
+            if ($person->burial !== null) {
+                $keys[RepoKeys::burial($person->id)] = true;
             }
 
             foreach ([$person->fatherId, $person->motherId] as $parentId) {
@@ -183,7 +209,7 @@ class ClassifyRepoRecords
         }
 
         foreach ($tree->events()->whereNotNull('repo_id')->get() as $event) {
-            if (in_array(RepoKeys::kindOf((string) $event->repo_id), [RepoKeyKind::Birth, RepoKeyKind::Death, RepoKeyKind::Marriage], true)) {
+            if (in_array(RepoKeys::kindOf((string) $event->repo_id), [RepoKeyKind::Birth, RepoKeyKind::Death, RepoKeyKind::Burial, RepoKeyKind::Marriage], true)) {
                 $records[(string) $event->repo_id] = $event;
             }
         }
@@ -285,6 +311,10 @@ class ClassifyRepoRecords
         $repo = RepoValues::forKey($key, $reading) ?? [];
 
         foreach (array_unique([...array_keys($repo), ...array_keys($snapshot->values)]) as $field) {
+            if (str_ends_with((string) $field, '_id')) {
+                continue;
+            }
+
             if (($repo[$field] ?? null) !== ($snapshot->values[$field] ?? null)) {
                 return true;
             }
@@ -320,7 +350,7 @@ class ClassifyRepoRecords
     }
 
     /**
-     * What a removal takes with it. A birth is only detached, so it has no impact.
+     * What a removal takes with it. A birth is only detached, so it has no impact; a burial takes nothing else with it.
      */
     public function impactOf(Tree $tree, string $key, Model $record): ?RemovalImpact
     {
@@ -328,6 +358,7 @@ class ClassifyRepoRecords
             $record instanceof Person => $this->personImpact($tree, $record),
             $record instanceof ParentChildRelation => new RemovalImpact,
             $record instanceof Event && RepoKeys::kindOf($key) === RepoKeyKind::Death => $this->deathImpact($tree, $record),
+            $record instanceof Event && RepoKeys::kindOf($key) === RepoKeyKind::Burial => new RemovalImpact,
             $record instanceof Event && RepoKeys::kindOf($key) === RepoKeyKind::Marriage => new RemovalImpact(sourceLinks: $this->sourceLinks([$record->id])),
             default => null,
         };

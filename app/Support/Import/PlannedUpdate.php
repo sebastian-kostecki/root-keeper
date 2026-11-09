@@ -16,6 +16,11 @@ final readonly class PlannedUpdate
      * @param  string|null  $deathRepoId  the same for the death
      * @param  bool  $createBirth  the repo has a birth and the person has none
      * @param  bool  $createDeath  the repo has a death and the person has none
+     * @param  PlannedPlace|null  $birthPlace  where a created birth stands
+     * @param  PlannedPlace|null  $deathPlace  where a created death stands
+     * @param  string|null  $burialRepoId  repo key set on the burial: on the one the person has without it, or on the created one; null when nothing is set
+     * @param  bool  $createBurial  the repo has a burial with a recognized cemetery and the person has none
+     * @param  PlannedPlace|null  $burialPlace  the cemetery of a created burial
      */
     public function __construct(
         public ResearchPerson $person,
@@ -28,5 +33,10 @@ final readonly class PlannedUpdate
         public ?string $deathRepoId,
         public bool $createBirth,
         public bool $createDeath,
+        public ?PlannedPlace $birthPlace = null,
+        public ?PlannedPlace $deathPlace = null,
+        public ?string $burialRepoId = null,
+        public bool $createBurial = false,
+        public ?PlannedPlace $burialPlace = null,
     ) {}
 }

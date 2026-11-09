@@ -731,18 +731,18 @@ Spis ma dziesiątki miejscowości, a repo ok. 70 różnych nazw, więc porównan
 
 #### Automated
 
-- [x] 3.1 Testy reguły i dopasowania przechodzą
-- [x] 3.2 Analiza statyczna przechodzi
-- [x] 3.3 Formatowanie
+- [x] 3.1 Testy reguły i dopasowania przechodzą — f47303f
+- [x] 3.2 Analiza statyczna przechodzi — f47303f
+- [x] 3.3 Formatowanie — f47303f
 
 ### Phase 4: Plan importu z miejscami i pochowaniem
 
 #### Automated
 
-- [ ] 4.1 Testy planowania, klasyfikacji i dopasowania przechodzą
-- [ ] 4.2 Testy jednostkowe importu przechodzą
-- [ ] 4.3 Analiza statyczna przechodzi
-- [ ] 4.4 Formatowanie
+- [x] 4.1 Testy planowania, klasyfikacji i dopasowania przechodzą
+- [x] 4.2 Testy jednostkowe importu przechodzą
+- [x] 4.3 Analiza statyczna przechodzi
+- [x] 4.4 Formatowanie
 
 ### Phase 5: Zapis miejsc i pochowań
 

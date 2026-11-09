@@ -224,11 +224,14 @@ class MatchResearchPlaces
     }
 
     /**
+     * The verdict for one place name against the localities and variants of the tree. Public so that the planner can
+     * recognize a name the memory of the last import already settled.
+     *
      * @param  array<string, list<PlaceUse>>  $spellings
      * @param  array<int, Locality>  $localities
      * @param  array<int, LocalityAlias>  $aliases
      */
-    private function verdict(string $key, array $spellings, array $localities, array $aliases): PlaceVerdict
+    public function verdict(string $key, array $spellings, array $localities, array $aliases): PlaceVerdict
     {
         $uses = array_merge(...array_values($spellings));
         $name = $this->chooseSpelling(array_map(count(...), $spellings));

@@ -487,3 +487,60 @@ test('still removes a wedding the repo really dropped while another one is only 
 
     expect(repoKeysOf($classes->removedInRepo))->toBe(['O-0001+O-0003/slub']);
 });
+
+test('asks about a burial deleted in the app that the repo still has', function () {
+    [$tree] = arrangeTwinTrees(function (Tree $tree) {
+        recordedPerson($tree, 'O-0001');
+        rememberRepoValues($tree, 'O-0001');
+        rememberRepoValues($tree, 'O-0001/pochowek', ['data' => null, 'miejsce' => 'Zalesie', 'miejsce_id' => 'L:7', 'cmentarz' => null, 'cmentarz_id' => 'C:3']);
+    });
+
+    $classes = classifyTemporaryRepo($tree, ['O-0001' => "imiona: Jan\nnazwisko: Nowak\npochowek:\n  miejsce: Zalesie"]);
+
+    expect(repoKeysOf($classes->deletedInApp))->toBe(['O-0001/pochowek'])
+        ->and($classes->deletedInApp[0]->kind)->toBe(RepoKeyKind::Burial)
+        ->and($classes->keptDeleted)->toBe([]);
+});
+
+test('does not read a burial remembered without a record as deleted in the app and forgets it with the repo entry', function () {
+    [$tree] = arrangeTwinTrees(function (Tree $tree) {
+        recordedPerson($tree, 'O-0001');
+        rememberRepoValues($tree, 'O-0001');
+        rememberRepoValues($tree, 'O-0001/pochowek', ['data' => null, 'miejsce' => 'Bokinia', 'miejsce_id' => null, 'cmentarz' => null, 'cmentarz_id' => null]);
+    });
+
+    $kept = classifyTemporaryRepo($tree, ['O-0001' => "imiona: Jan\nnazwisko: Nowak\npochowek:\n  miejsce: Bokinia"]);
+    $dropped = classifyTemporaryRepo($tree, ['O-0001' => "imiona: Jan\nnazwisko: Nowak"]);
+
+    expect($kept->deletedInApp)->toBe([])
+        ->and($kept->keptDeleted)->toBe([])
+        ->and($kept->goneBoth)->toBe([])
+        ->and($dropped->goneBoth)->toBe(['O-0001/pochowek']);
+});
+
+test('lists a burial removed in the repo apart, with nothing attached', function () {
+    [$tree] = arrangeTwinTrees(function (Tree $tree) {
+        $jan = recordedPerson($tree, 'O-0001');
+        recordedEvent($jan, EventType::Burial, 'O-0001/pochowek');
+    });
+
+    $classes = classifyTemporaryRepo($tree, ['O-0001' => 'imiona: Jan']);
+
+    expect(repoKeysOf($classes->removedInRepo))->toBe(['O-0001/pochowek'])
+        ->and($classes->removedInRepo[0]->kind)->toBe(RepoKeyKind::Burial)
+        ->and($classes->removedInRepo[0]->detachOnly())->toBeFalse()
+        ->and($classes->removedInRepo[0]->impact->isEmpty())->toBeTrue();
+});
+
+test('does not ask again about a deleted birth when only the remembered place id differs from the repo values', function () {
+    [$tree] = arrangeTwinTrees(function (Tree $tree) {
+        recordedPerson($tree, 'O-0001');
+        rememberRepoValues($tree, 'O-0001');
+        rememberRepoValues($tree, 'O-0001/urodzenie', ['data' => '1801', 'miejsce' => 'Zalesie', 'miejsce_id' => 'L:7'], deletionKept: true);
+    });
+
+    $classes = classifyTemporaryRepo($tree, ['O-0001' => "imiona: Jan\nnazwisko: Nowak\nurodzenie:\n  data: \"1801\"\n  miejsce: Zalesie"]);
+
+    expect($classes->deletedInApp)->toBe([])
+        ->and($classes->keptDeleted)->toBe(['O-0001/urodzenie']);
+});

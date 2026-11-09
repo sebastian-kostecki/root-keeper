@@ -96,14 +96,18 @@ final class RepoValues
      * The block a person's note gets: what the repo says besides the fields of the app, under a header with the repo id.
      * Its lines hold no empty line, so that the block ends at the first empty line of the note.
      *
+     * An event whose place the tree holds after the import does not repeat the place text. A burial line stays only
+     * when it has something to say.
+     *
      * @param  array<string, true>  $skipped  repo ids of persons left out; no wedding line mentions them
+     * @param  array<string, true>  $placed  repo keys of the events (and weddings) that have the place the repo names after the import
      */
-    public static function note(ResearchPerson $person, ResearchRepoReading $reading, array $skipped = []): ?string
+    public static function note(ResearchPerson $person, ResearchRepoReading $reading, array $skipped = [], array $placed = []): ?string
     {
         $lines = [];
 
-        foreach (['Urodzenie' => $person->birth, 'Zgon' => $person->death] as $label => $event) {
-            $details = $event === null ? [] : self::eventDetails($event);
+        foreach (['Urodzenie' => [$person->birth, RepoKeys::birth($person->id)], 'Zgon' => [$person->death, RepoKeys::death($person->id)]] as $label => [$event, $key]) {
+            $details = $event === null ? [] : self::eventDetails($event, placed: isset($placed[$key]));
 
             if ($details !== []) {
                 $lines[] = "{$label}: ".implode('; ', $details);
@@ -111,8 +115,11 @@ final class RepoValues
         }
 
         if ($person->burial !== null) {
-            $details = self::eventDetails($person->burial, withDate: true);
-            $lines[] = 'Pochowanie: '.($details === [] ? 'bez szczegółów' : implode('; ', $details));
+            $details = self::eventDetails($person->burial, withDate: true, placed: isset($placed[RepoKeys::burial($person->id)]));
+
+            if ($details !== []) {
+                $lines[] = 'Pochowanie: '.implode('; ', $details);
+            }
         }
 
         $marriages = array_filter(
@@ -132,7 +139,7 @@ final class RepoValues
         ksort($byPartner);
 
         foreach ($byPartner as $partnerId => $marriage) {
-            $details = self::eventDetails($marriage->event);
+            $details = self::eventDetails($marriage->event, placed: isset($placed[RepoKeys::marriage(...$marriage->personIds)]));
 
             if ($details !== []) {
                 $lines[] = sprintf('Ślub z %s (%s): %s', isset($reading->persons[$partnerId]) ? self::nameOf($reading->persons[$partnerId]) : 'NN', $partnerId, implode('; ', $details));
@@ -153,11 +160,12 @@ final class RepoValues
     /**
      * @return list<string>
      */
-    private static function eventDetails(ResearchEvent $event, bool $withDate = false): array
+    private static function eventDetails(ResearchEvent $event, bool $withDate = false, bool $placed = false): array
     {
         return array_values(array_filter([
             $withDate ? $event->date?->label() : null,
-            $event->place,
+            $placed ? null : $event->place,
+            $placed ? null : $event->cemetery,
             $event->level === null ? null : 'poziom '.$event->level->value,
             $event->note,
         ], fn (?string $part): bool => $part !== null));

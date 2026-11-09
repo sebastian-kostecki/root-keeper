@@ -10,14 +10,14 @@ use App\Enums\Gender;
 final readonly class PlannedFill
 {
     /**
-     * @param  string  $field  first_name, last_name, gender, birth_date, death_date or marriage_date
-     * @param  string|Gender|ResearchDate  $value  the repo value
+     * @param  string  $field  first_name, last_name, gender, birth_date, death_date, burial_date, marriage_date, birth_place, death_place, burial_place or marriage_place
+     * @param  string|Gender|ResearchDate|PlannedPlace  $value  the repo value
      * @param  string  $label  the Polish name of the field
      * @param  string|null  $appLabel  what the tree held when the plan was made, as the apply step reads it back (a date label for a refinement); null when the field was empty
      */
     public function __construct(
         public string $field,
-        public string|Gender|ResearchDate $value,
+        public string|Gender|ResearchDate|PlannedPlace $value,
         public string $label,
         public ?string $appLabel = null,
     ) {}
@@ -27,6 +27,7 @@ final readonly class PlannedFill
         return match (true) {
             $this->value instanceof Gender => $this->value->label(),
             $this->value instanceof ResearchDate => $this->value->label(),
+            $this->value instanceof PlannedPlace => $this->value->label,
             default => $this->value,
         };
     }

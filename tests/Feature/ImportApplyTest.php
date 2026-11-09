@@ -772,16 +772,18 @@ test('remembers the repo values of every person, birth, death, relation and marr
     $snapshots = snapshotValues($tree);
     $note = collect($plan->persons)->first(fn ($planned) => $planned->person->id === 'O-0001')->note;
 
-    expect(array_keys($snapshots))->toBe($written)
+    $withoutRecord = ['O-0001/pochowek'];
+
+    expect(array_keys($snapshots))->toBe(collect([...$written, ...$withoutRecord])->sort()->values()->all())
         ->and($tree->repoSnapshots()->where('deletion_kept', true)->count())->toBe(0)
         ->and($snapshots['O-0001'])->toEqual(['imiona' => 'Jan', 'nazwisko' => 'Nowak', 'plec' => 'male', 'notatka' => $note])
         ->and($snapshots['O-0008']['plec'])->toBeNull()
-        ->and($snapshots['O-0001/urodzenie'])->toBe(['data' => '1801-05-12', 'miejsce' => 'Zalesie'])
-        ->and($snapshots['O-0002/urodzenie'])->toBe(['data' => 'między 1760 a 1765', 'miejsce' => null])
-        ->and($snapshots['O-0001/zgon'])->toBe(['data' => '1870', 'miejsce' => null])
-        ->and($snapshots['O-0002/zgon'])->toBe(['data' => null, 'miejsce' => null])
+        ->and($snapshots['O-0001/urodzenie'])->toBe(['data' => '1801-05-12', 'miejsce' => 'Zalesie', 'miejsce_id' => null])
+        ->and($snapshots['O-0002/urodzenie'])->toBe(['data' => 'między 1760 a 1765', 'miejsce' => null, 'miejsce_id' => null])
+        ->and($snapshots['O-0001/zgon'])->toBe(['data' => '1870', 'miejsce' => null, 'miejsce_id' => null])
+        ->and($snapshots['O-0002/zgon'])->toBe(['data' => null, 'miejsce' => null, 'miejsce_id' => null])
         ->and($snapshots['O-0002>O-0001'])->toBe([])
-        ->and($snapshots['O-0001+O-0004/slub'])->toBe(['data' => 'ok. 1825', 'miejsce' => 'Zalesie'])
+        ->and($snapshots['O-0001+O-0004/slub'])->toBe(['data' => 'ok. 1825', 'miejsce' => 'Zalesie', 'miejsce_id' => null])
         ->and(RepoSnapshot::where('tree_id', '!=', $tree->id)->count())->toBe(0);
 });
 
@@ -799,7 +801,7 @@ test('remembers the repo value and keeps the app value when the author leaves a 
     expect($scene['anna']->fresh()->gender)->toBe(Gender::Male)
         ->and($snapshots['O-0004']['plec'])->toBe('female')
         ->and($scene['piotr']->birth()->date_year)->toBe(1762)
-        ->and($snapshots['O-0002/urodzenie'])->toBe(['data' => 'między 1760 a 1765', 'miejsce' => null])
+        ->and($snapshots['O-0002/urodzenie'])->toBe(['data' => 'między 1760 a 1765', 'miejsce' => null, 'miejsce_id' => null])
         ->and(RepoSnapshot::where('tree_id', '!=', $tree->id)->count())->toBe(0);
 });
 
@@ -941,7 +943,7 @@ test('writes an approved change of a date, keeps the derived flag in line and re
     $birth = $tree->events()->where('repo_id', 'O-0001/urodzenie')->firstOrFail();
 
     expect([$birth->date_year, $birth->date_qualifier, $birth->date_is_approximate])->toBe([1802, DateQualifier::Approximate, true])
-        ->and(snapshotValues($tree)['O-0001/urodzenie'])->toBe(['data' => 'ok. 1802', 'miejsce' => null])
+        ->and(snapshotValues($tree)['O-0001/urodzenie'])->toBe(['data' => 'ok. 1802', 'miejsce' => null, 'miejsce_id' => null])
         ->and([$result->changesTaken, $result->changesRejected])->toBe([1, 0])
         ->and(reimportTreeState($other))->toBe($otherState);
 
@@ -959,7 +961,7 @@ test('keeps the date of the app for a rejected change and still remembers the re
     $result = app(ApplyImport::class)->handle($tree, $plan, new ChangeApprovals(['O-0001/urodzenie/data']), new ConflictResolutions);
 
     expect($tree->events()->where('repo_id', 'O-0001/urodzenie')->firstOrFail()->date_year)->toBe(1801)
-        ->and(snapshotValues($tree)['O-0001/urodzenie'])->toBe(['data' => '1802', 'miejsce' => null])
+        ->and(snapshotValues($tree)['O-0001/urodzenie'])->toBe(['data' => '1802', 'miejsce' => null, 'miejsce_id' => null])
         ->and([$result->changesTaken, $result->changesRejected])->toBe([0, 1])
         ->and(reimportTreeState($other))->toBe($otherState);
 
@@ -979,7 +981,7 @@ test('settles a conflict of a date for the app or for the repo and remembers the
     app(ApplyImport::class)->handle($tree, $plan, new ChangeApprovals, new ConflictResolutions(['O-0001/urodzenie/data' => $choice]));
 
     expect($tree->events()->where('repo_id', 'O-0001/urodzenie')->firstOrFail()->date_year)->toBe($year)
-        ->and(snapshotValues($tree)['O-0001/urodzenie'])->toBe(['data' => '1802', 'miejsce' => null])
+        ->and(snapshotValues($tree)['O-0001/urodzenie'])->toBe(['data' => '1802', 'miejsce' => null, 'miejsce_id' => null])
         ->and(reimportTreeState($other))->toBe($otherState);
 
     expectOnlyAuthorRowsChanged(rowDiff($before, databaseRows()), $tree, $eventIds);
@@ -1345,7 +1347,7 @@ test('takes a changed wedding date and clears a date the repo dropped', function
     $wedding = $tree->events()->where('repo_id', 'O-0001+O-0002/slub')->firstOrFail();
 
     expect($wedding->date_year)->toBe(1826)
-        ->and(snapshotValues($tree)['O-0001+O-0002/slub'])->toBe(['data' => '1826', 'miejsce' => null])
+        ->and(snapshotValues($tree)['O-0001+O-0002/slub'])->toBe(['data' => '1826', 'miejsce' => null, 'miejsce_id' => null])
         ->and([$result->changesTaken, $result->markedMarriages])->toBe([1, 0])
         ->and(reimportTreeState($other))->toBe($otherState);
 });

@@ -426,3 +426,21 @@ test('classifies every person as new in an empty tree', function () {
     expect(array_keys($matches->matches))->toBe(['O-0001', 'O-0002', 'O-0003'])
         ->and(collect($matches->matches)->every(fn (PersonMatch $match): bool => $match->verdict === MatchVerdict::New && $match->candidates === []))->toBeTrue();
 });
+
+test('agrees on the birth place through a variant of the locality and not through a merely similar name', function (string $repoPlace, bool $agrees) {
+    $tree = authorWithTwin(function (Tree $tree) {
+        $jan = treePerson($tree, 'Jan', 'Nowak');
+        attachBirth($jan);
+        setBirthPlace($jan, 'Bukinia');
+        $tree->localities()->where('name', 'Bukinia')->firstOrFail()->aliases()->create(['tree_id' => $tree->id, 'name' => 'Bokinia']);
+    });
+
+    $candidate = matchFor(matchTemporaryRepo($tree, ['O-0001' => "imiona: Jan\nnazwisko: Nowak\nurodzenie:\n  miejsce: {$repoPlace}"]), 'O-0001')->candidates[0];
+
+    expect($candidate->agreeing)->toBe($agrees ? [MatchElement::BirthPlace] : [])
+        ->and($candidate->contradictions)->toBe([]);
+})->with([
+    'the variant' => ['bokinia', true],
+    'the name' => ['Bukinia', true],
+    'a similar spelling' => ['Bukinja', false],
+]);

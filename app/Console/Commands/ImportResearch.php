@@ -745,8 +745,7 @@ class ImportResearch extends Command
 
         $notes = $plan->noteValues;
         $this->line('Do notatki osoby:');
-        $this->line(sprintf('  miejsca: %d (spis miejsc — S-05)', $notes->places));
-        $this->line(sprintf('  pochowania: %d (cmentarze i pochowanie — S-05)', $notes->burials));
+        $this->line(sprintf('  miejsca: %d (spis miejsc — S-05)', $notes->unplacedEvents));
         $this->line(sprintf('  poziomy pewności: %d (S-08)', $notes->levels));
         $this->line(sprintf('  notatki wydarzeń: %d', $notes->eventNotes));
         $this->line(sprintf('  warianty nazwiska: %d (S-09)', $notes->surnameVariants));

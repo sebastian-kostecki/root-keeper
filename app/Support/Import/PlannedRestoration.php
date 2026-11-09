@@ -17,7 +17,8 @@ final readonly class PlannedRestoration
      * @param  list<string>  $memberKeys  the other keys of the person that are decided with it
      * @param  PlannedPerson|null  $person  a restored person, created like a new one
      * @param  int|null  $personId  the tree person that gets a restored birth or death
-     * @param  ResearchEvent|null  $event  the repo birth or death to create
+     * @param  ResearchEvent|null  $event  the repo birth, death or burial to create
+     * @param  PlannedPlace|null  $place  where the restored event stands
      */
     public function __construct(
         public string $key,
@@ -29,5 +30,6 @@ final readonly class PlannedRestoration
         public ?ResearchEvent $event = null,
         public ?PlannedRelation $relation = null,
         public ?PlannedMarriage $marriage = null,
+        public ?PlannedPlace $place = null,
     ) {}
 }

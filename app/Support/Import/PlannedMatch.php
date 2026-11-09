@@ -15,6 +15,11 @@ final readonly class PlannedMatch
      * @param  bool  $createDeath  the repo has a death and the person has none
      * @param  list<PlannedFill>  $fills
      * @param  list<ValueConflict>  $conflicts
+     * @param  PlannedPlace|null  $birthPlace  where a created birth stands
+     * @param  PlannedPlace|null  $deathPlace  where a created death stands
+     * @param  string|null  $burialRepoId  repo key set on the existing burial or on the created one; null when the person gets none
+     * @param  bool  $createBurial  the repo has a burial with a recognized cemetery and the person has none
+     * @param  PlannedPlace|null  $burialPlace  the cemetery of a created burial
      */
     public function __construct(
         public ResearchPerson $person,
@@ -26,5 +31,10 @@ final readonly class PlannedMatch
         public bool $createDeath,
         public array $fills,
         public array $conflicts,
+        public ?PlannedPlace $birthPlace = null,
+        public ?PlannedPlace $deathPlace = null,
+        public ?string $burialRepoId = null,
+        public bool $createBurial = false,
+        public ?PlannedPlace $burialPlace = null,
     ) {}
 }

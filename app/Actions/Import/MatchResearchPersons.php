@@ -7,6 +7,7 @@ use App\Enums\Gender;
 use App\Enums\MatchElement;
 use App\Enums\MatchVerdict;
 use App\Models\Event;
+use App\Models\Locality;
 use App\Models\Person;
 use App\Models\Tree;
 use App\Support\Import\MatchCandidate;
@@ -40,7 +41,7 @@ class MatchResearchPersons
         $byFirstName = $this->indexByFirstName(
             $tree->people()
                 ->whereNull('repo_id')
-                ->with(['events.locality', 'events.participants', 'parents'])
+                ->with(['events.locality.aliases', 'events.participants', 'parents'])
                 ->orderBy('id')
                 ->get()
         );
@@ -138,7 +139,7 @@ class MatchResearchPersons
 
         $repoPlace = NameKey::normalize($repo->birth?->place);
 
-        if ($repoPlace !== null && $repoPlace === NameKey::normalize($person->birth()?->locality?->name)) {
+        if ($repoPlace !== null && $this->namesLocality($person->birth()?->locality, $repoPlace)) {
             $agreeing[] = MatchElement::BirthPlace;
         }
 
@@ -163,6 +164,25 @@ class MatchResearchPersons
         }
 
         return new MatchCandidate($person, $agreeing, $contradictions, $this->rows($repo, $person, $reading, $repoSpouses, $treeSpouses));
+    }
+
+    /**
+     * Whether the key of a place name is the key of the locality's name or of one of its variants. A merely similar
+     * name does not count.
+     */
+    private function namesLocality(?Locality $locality, string $key): bool
+    {
+        if ($locality === null) {
+            return false;
+        }
+
+        foreach ([$locality->name, ...$locality->aliases->pluck('name')->all()] as $name) {
+            if (NameKey::normalize($name) === $key) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
