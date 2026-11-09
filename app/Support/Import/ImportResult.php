@@ -10,7 +10,7 @@ final readonly class ImportResult
      * @param  int  $deaths  deaths written, counted the same way
      * @param  int  $marriages  new weddings
      * @param  int  $relations  new parent-child pairs
-     * @param  int  $events  every event written: births, deaths and weddings
+     * @param  int  $events  every event written: births, deaths, burials and weddings
      * @param  int  $matched  persons of the tree that got a repo id
      * @param  int  $fills  values the repo added to empty fields
      * @param  int  $takenFromRepo  conflicts the author settled in favour of the repo
@@ -23,6 +23,10 @@ final readonly class ImportResult
      * @param  int  $detached  records the repo dropped that stay in the tree without a repo id
      * @param  int  $restored  records deleted in the app that came back from the repo
      * @param  int  $keptDeleted  keys deleted in the app that the author left deleted
+     * @param  int  $burials  burials written; they are also in `$events`
+     * @param  int  $newLocalities  localities the write added to the gazetteer
+     * @param  int  $newCemeteries  cemeteries the write added
+     * @param  int  $aliases  variants of a locality name the write remembered
      */
     public function __construct(
         public int $persons,
@@ -43,5 +47,9 @@ final readonly class ImportResult
         public int $detached = 0,
         public int $restored = 0,
         public int $keptDeleted = 0,
+        public int $burials = 0,
+        public int $newLocalities = 0,
+        public int $newCemeteries = 0,
+        public int $aliases = 0,
     ) {}
 }

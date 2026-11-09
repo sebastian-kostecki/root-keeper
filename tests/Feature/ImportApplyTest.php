@@ -12,6 +12,7 @@ use App\Enums\EventType;
 use App\Enums\Gender;
 use App\Enums\MarriageForm;
 use App\Enums\ParticipantRole;
+use App\Models\Cemetery;
 use App\Models\Event;
 use App\Models\Locality;
 use App\Models\ParentChildRelation;
@@ -27,6 +28,7 @@ use App\Support\Import\IdentityDecisions;
 use App\Support\Import\ImportDecisions;
 use App\Support\Import\ImportPlan;
 use App\Support\Import\ImportResult;
+use App\Support\Import\PlaceDecisions;
 use App\Support\Import\PlannedMatch;
 use App\Support\Import\ResearchRepoReading;
 use Illuminate\Support\Facades\File;
@@ -532,7 +534,7 @@ test('changes only rows of the author tree and removes nothing when it hooks the
     $authorPeople = $tree->people()->pluck('id')->all();
     $authorEvents = $tree->events()->pluck('id')->all();
 
-    expect(array_keys($diff['tables']))->toEqualCanonicalizing(['people', 'events', 'event_participants', 'parent_child_relations', 'repo_snapshots'])
+    expect(array_keys($diff['tables']))->toEqualCanonicalizing(['cemeteries', 'people', 'events', 'event_participants', 'parent_child_relations', 'repo_snapshots'])
         ->and($diff['files'])->toBe(['removed' => [], 'added' => []]);
 
     foreach ($diff['tables'] as $table => $changes) {
@@ -546,7 +548,7 @@ test('changes only rows of the author tree and removes nothing when it hooks the
             continue;
         }
 
-        if ($table === 'repo_snapshots') {
+        if (in_array($table, ['repo_snapshots', 'cemeteries'], true)) {
             expect($changes['changed'])->toBe([])
                 ->and(collect($changes['added'])->pluck('tree_id')->unique()->all())->toBe([$tree->id]);
 
@@ -1350,4 +1352,336 @@ test('takes a changed wedding date and clears a date the repo dropped', function
         ->and(snapshotValues($tree)['O-0001+O-0002/slub'])->toBe(['data' => '1826', 'miejsce' => null, 'miejsce_id' => null])
         ->and([$result->changesTaken, $result->markedMarriages])->toBe([1, 0])
         ->and(reimportTreeState($other))->toBe($otherState);
+});
+
+/**
+ * Zalesie with an unnamed cemetery and Bukinia in a tree; the other account also remembers "Bokinia" as a variant of Bukinia.
+ *
+ * @return array{zalesie: Locality, bukinia: Locality, cemetery: Cemetery}
+ */
+function arrangeApplyPlaceWorld(Tree $tree, bool $withVariant): array
+{
+    $zalesie = Locality::factory()->for($tree)->create(['name' => 'Zalesie']);
+    $bukinia = Locality::factory()->for($tree)->create(['name' => 'Bukinia']);
+
+    if ($withVariant) {
+        $bukinia->aliases()->create(['tree_id' => $tree->id, 'name' => 'Bokinia']);
+    }
+
+    return ['zalesie' => $zalesie, 'bukinia' => $bukinia, 'cemetery' => Cemetery::factory()->in($zalesie)->unnamed()->create()];
+}
+
+/**
+ * The tree of another account and the tree of the author with the same places, the first import of the blocks into both
+ * and then the same arrangement in both.
+ *
+ * @param  array<string, string>  $blocks  blocks to import first; none leaves both trees without repo persons
+ * @param  (Closure(Tree, array{zalesie: Locality, bukinia: Locality, cemetery: Cemetery}): void)|null  $arrange
+ * @return array{0: Tree, 1: Tree, 2: array{zalesie: Locality, bukinia: Locality, cemetery: Cemetery}}
+ */
+function applyPlaceTwins(array $blocks = [], ?Closure $arrange = null): array
+{
+    $other = User::factory()->create();
+    $author = User::factory()->create();
+    $world = [];
+
+    foreach ([$other->tree, $author->tree] as $tree) {
+        $world = arrangeApplyPlaceWorld($tree, $tree->is($other->tree));
+
+        if ($blocks !== []) {
+            reimportFirst($tree, $blocks);
+        }
+
+        if ($arrange !== null) {
+            $arrange($tree, $world);
+        }
+    }
+
+    return [$author->tree, $other->tree, $world];
+}
+
+/**
+ * Plans a throwaway repo over the tree with the author's answers about the places; every repo person is new.
+ *
+ * @param  array<string, string>  $blocks
+ * @param  array<string, string>  $deletions
+ * @param  array<string, string>  $removals
+ */
+function applyPlacePlan(Tree $tree, array $blocks, ?PlaceDecisions $places = null, array $deletions = [], array $removals = []): ImportPlan
+{
+    $reading = reimportReading($blocks);
+    $classes = app(ClassifyRepoRecords::class)->handle($tree, $reading);
+
+    return app(PlanImport::class)->handle($tree, $reading, $classes, new ImportDecisions(new IdentityDecisions(new: $classes->newPersonIds), $removals, $deletions, $places ?? new PlaceDecisions));
+}
+
+const APPLY_PLACE_PERSON = "imiona: Jan\nnazwisko: Nowak\nurodzenie:\n  data: \"1801\"\n  miejsce: Bokinia\nzgon:\n  data: \"1870\"\n  miejsce: Bindyga";
+
+test('adds each new locality, cemetery and variant once however many events name them', function () {
+    Storage::fake('local');
+    [$tree, $other, $world] = applyPlaceTwins();
+    $blocks = [
+        'O-0001' => APPLY_PLACE_PERSON."\npochowek:\n  data: \"1870\"\n  miejsce: Bindyga\n  cmentarz: Parafialny",
+        'O-0002' => str_replace('Jan', 'Anna', APPLY_PLACE_PERSON),
+    ];
+    $plan = applyPlacePlan($tree, $blocks, new PlaceDecisions(
+        localities: ['bokinia' => $world['bukinia']->id, 'bindyga' => PlaceDecisions::NEW],
+        aliases: ['bokinia' => true],
+    ));
+    $eventIds = $tree->events()->pluck('id')->all();
+    $before = databaseRows();
+
+    $result = app(ApplyImport::class)->handle($tree, $plan, new ChangeApprovals, new ConflictResolutions);
+
+    $bindyga = $tree->localities()->where('name', 'Bindyga')->firstOrFail();
+    $cemetery = $tree->cemeteries()->where('name', 'Parafialny')->firstOrFail();
+    $births = $tree->events()->where('type', EventType::Birth)->pluck('locality_id')->unique()->all();
+    $deaths = $tree->events()->where('type', EventType::Death)->pluck('locality_id')->unique()->all();
+    $burial = $tree->events()->where('type', EventType::Burial)->firstOrFail();
+    $snapshots = snapshotValues($tree);
+
+    expect($tree->localities()->count())->toBe(3)
+        ->and($tree->cemeteries()->count())->toBe(2)
+        ->and($cemetery->locality_id)->toBe($bindyga->id)
+        ->and($tree->localityAliases()->pluck('name', 'locality_id')->all())->toBe([$world['bukinia']->id => 'Bokinia'])
+        ->and($births)->toBe([$world['bukinia']->id])
+        ->and($deaths)->toBe([$bindyga->id])
+        ->and([$burial->repo_id, $burial->cemetery_id, $burial->locality_id])->toBe(['O-0001/pochowek', $cemetery->id, $bindyga->id])
+        ->and([$result->newLocalities, $result->newCemeteries, $result->aliases, $result->burials])->toBe([1, 1, 1, 1])
+        ->and($snapshots['O-0001/urodzenie']['miejsce_id'])->toBe('L:'.$world['bukinia']->id)
+        ->and($snapshots['O-0001/zgon']['miejsce_id'])->toBe('L:'.$bindyga->id)
+        ->and($snapshots['O-0001/pochowek'])->toMatchArray(['miejsce_id' => 'L:'.$bindyga->id, 'cmentarz_id' => 'C:'.$cemetery->id])
+        ->and($other->localities()->count())->toBe(2)
+        ->and($other->cemeteries()->count())->toBe(1)
+        ->and($other->localityAliases()->pluck('name')->all())->toBe(['Bokinia'])
+        ->and($other->events()->count())->toBe(0);
+
+    expectOnlyAuthorRowsChanged(rowDiff($before, databaseRows()), $tree, $eventIds);
+});
+
+test('adds a new locality only when an item of the write uses it', function (string $choice, bool $created) {
+    Storage::fake('local');
+    $first = ['O-0001' => "imiona: Jan\nnazwisko: Nowak\nurodzenie:\n  data: \"1801\"\n  miejsce: Zalesie"];
+    [$tree, $other] = applyPlaceTwins($first, function (Tree $tree, array $world): void {
+        $tree->events()->where('repo_id', 'O-0001/urodzenie')->firstOrFail()->update(['locality_id' => $world['bukinia']->id]);
+    });
+    $plan = applyPlacePlan($tree, ['O-0001' => "imiona: Jan\nnazwisko: Nowak\nurodzenie:\n  data: \"1801\"\n  miejsce: Bindyga"], new PlaceDecisions(localities: ['bindyga' => PlaceDecisions::NEW]));
+    $approvals = new ChangeApprovals;
+    $resolutions = new ConflictResolutions;
+
+    expect($plan->conflicts)->toHaveCount(1)
+        ->and($plan->newLocalities)->toBe(['bindyga' => 'Bindyga']);
+
+    if ($choice === 'app') {
+        $resolutions = new ConflictResolutions(['O-0001/urodzenie/miejsce' => ConflictResolutions::FROM_APP]);
+    } elseif ($choice === 'repo') {
+        $resolutions = new ConflictResolutions(['O-0001/urodzenie/miejsce' => ConflictResolutions::FROM_REPO]);
+    }
+
+    $eventIds = $tree->events()->pluck('id')->all();
+    $before = databaseRows();
+
+    $result = app(ApplyImport::class)->handle($tree, $plan, $approvals, $resolutions);
+
+    $birth = $tree->events()->where('repo_id', 'O-0001/urodzenie')->firstOrFail();
+    $bindyga = $tree->localities()->where('name', 'Bindyga')->first();
+    $memory = snapshotValues($tree)['O-0001/urodzenie'];
+
+    expect($bindyga !== null)->toBe($created)
+        ->and($result->newLocalities)->toBe($created ? 1 : 0)
+        ->and($birth->locality_id)->toBe($created ? $bindyga->id : $tree->localities()->where('name', 'Bukinia')->firstOrFail()->id)
+        ->and($memory['miejsce'])->toBe('Bindyga')
+        ->and($memory['miejsce_id'])->toBe($created ? 'L:'.$bindyga->id : null)
+        ->and($tree->localities()->count())->toBe($created ? 3 : 2)
+        ->and($other->localities()->count())->toBe(2);
+
+    expectOnlyAuthorRowsChanged(rowDiff($before, databaseRows()), $tree, $eventIds);
+})->with([
+    'conflict settled for the app' => ['app', false],
+    'conflict without an answer' => ['none', false],
+    'conflict settled for the repo' => ['repo', true],
+]);
+
+test('does not add a new locality whose only change the author rejected', function () {
+    Storage::fake('local');
+    $first = ['O-0001' => "imiona: Jan\nnazwisko: Nowak\nurodzenie:\n  data: \"1801\"\n  miejsce: Zalesie"];
+    [$tree, $other] = applyPlaceTwins($first);
+    $plan = applyPlacePlan($tree, ['O-0001' => "imiona: Jan\nnazwisko: Nowak\nurodzenie:\n  data: \"1801\"\n  miejsce: Bindyga"], new PlaceDecisions(localities: ['bindyga' => PlaceDecisions::NEW]));
+    $localities = $tree->localities()->count();
+
+    expect(collect($plan->changes)->pluck('key')->all())->toBe(['O-0001/urodzenie/miejsce']);
+
+    $result = app(ApplyImport::class)->handle($tree, $plan, new ChangeApprovals(['O-0001/urodzenie/miejsce']), new ConflictResolutions);
+
+    $birth = $tree->events()->where('repo_id', 'O-0001/urodzenie')->firstOrFail();
+
+    expect($tree->localities()->count())->toBe($localities)
+        ->and($result->newLocalities)->toBe(0)
+        ->and($birth->locality_id)->toBe($tree->localities()->where('name', 'Zalesie')->firstOrFail()->id)
+        ->and(snapshotValues($tree)['O-0001/urodzenie']['miejsce_id'])->toBeNull()
+        ->and($other->localities()->count())->toBe($localities);
+});
+
+test('puts the locality on the wedding, the burial with its cemetery and locality, and adds the death the burial needs', function () {
+    Storage::fake('local');
+    [$tree, $other, $world] = applyPlaceTwins();
+    $blocks = [
+        'O-0001' => "imiona: Jan\nnazwisko: Nowak\nurodzenie:\n  data: \"1801\"\n  miejsce: Zalesie\npochowek:\n  data: \"1870\"\n  miejsce: Zalesie\nmalzenstwa:\n  - z: O-0002\n    data: \"1825\"\n    miejsce: Zalesie",
+        'O-0002' => "imiona: Anna\nnazwisko: Wrona\nmalzenstwa:\n  - z: O-0001\n    data: \"1825\"\n    miejsce: Zalesie",
+    ];
+    $plan = applyPlacePlan($tree, $blocks);
+    $eventIds = $tree->events()->pluck('id')->all();
+    $before = databaseRows();
+
+    $result = app(ApplyImport::class)->handle($tree, $plan, new ChangeApprovals, new ConflictResolutions);
+
+    $birth = importedEvent($tree, 'O-0001/urodzenie');
+    $death = importedEvent($tree, 'O-0001/zgon');
+    $burial = importedEvent($tree, 'O-0001/pochowek');
+    $wedding = importedEvent($tree, 'O-0001+O-0002/slub');
+
+    expect($birth->locality_id)->toBe($world['zalesie']->id)
+        ->and([$death->date_year, $death->locality_id])->toBe([null, null])
+        ->and($death->participants()->pluck('people.id')->all())->toBe([importedPerson($tree, 'O-0001')->id])
+        ->and($burial->type)->toBe(EventType::Burial)
+        ->and([$burial->date_year, $burial->cemetery_id, $burial->locality_id])->toBe([1870, $world['cemetery']->id, $world['zalesie']->id])
+        ->and($burial->participants()->pluck('people.id')->all())->toBe([importedPerson($tree, 'O-0001')->id])
+        ->and($wedding->locality_id)->toBe($world['zalesie']->id)
+        ->and(importedPerson($tree, 'O-0001')->note)->toBe("Z repo badawczego (O-0001):\nPochowanie: 1870")
+        ->and([$result->burials, $result->deaths, $result->newLocalities, $result->newCemeteries])->toBe([1, 1, 0, 0])
+        ->and($other->events()->count())->toBe(0);
+
+    expectOnlyAuthorRowsChanged(rowDiff($before, databaseRows()), $tree, $eventIds);
+});
+
+test('leaves the locality of the event and the repo text in the note for a place the author answered with no place', function () {
+    Storage::fake('local');
+    $first = ['O-0001' => "imiona: Jan\nnazwisko: Nowak\nurodzenie:\n  data: \"1801\""];
+    [$tree, $other] = applyPlaceTwins($first, function (Tree $tree, array $world): void {
+        $tree->events()->where('repo_id', 'O-0001/urodzenie')->firstOrFail()->update(['locality_id' => $world['zalesie']->id]);
+    });
+    $plan = applyPlacePlan($tree, ['O-0001' => "imiona: Jan\nnazwisko: Nowak\nurodzenie:\n  data: \"1801\"\n  miejsce: Bindyga"], new PlaceDecisions(localities: ['bindyga' => PlaceDecisions::NONE]));
+    $eventIds = $tree->events()->pluck('id')->all();
+    $before = databaseRows();
+
+    $result = app(ApplyImport::class)->handle($tree, $plan, new ChangeApprovals, new ConflictResolutions);
+
+    expect($tree->events()->where('repo_id', 'O-0001/urodzenie')->firstOrFail()->locality_id)->toBe($tree->localities()->where('name', 'Zalesie')->firstOrFail()->id)
+        ->and(importedPerson($tree, 'O-0001')->note)->toContain('Urodzenie: Bindyga')
+        ->and($tree->localities()->count())->toBe(2)
+        ->and($result->newLocalities)->toBe(0)
+        ->and(snapshotValues($tree)['O-0001/urodzenie'])->toBe(['data' => '1801', 'miejsce' => 'Bindyga', 'miejsce_id' => null]);
+
+    expectOnlyAuthorRowsChanged(rowDiff($before, databaseRows()), $tree, $eventIds);
+});
+
+test('creates no burial for a cemetery the author left out but adds the death and remembers the burial', function () {
+    Storage::fake('local');
+    [$tree, $other] = applyPlaceTwins();
+    $plan = applyPlacePlan($tree, ['O-0001' => "imiona: Jan\nnazwisko: Nowak\npochowek:\n  data: \"1900\"\n  miejsce: Bindyga"], new PlaceDecisions(localities: ['bindyga' => PlaceDecisions::NONE]));
+
+    $result = app(ApplyImport::class)->handle($tree, $plan, new ChangeApprovals, new ConflictResolutions);
+
+    expect($tree->events()->pluck('type')->all())->toBe([EventType::Death])
+        ->and($tree->cemeteries()->count())->toBe(1)
+        ->and($result->burials)->toBe(0)
+        ->and(snapshotValues($tree)['O-0001/pochowek'])->toBe(['data' => '1900', 'miejsce' => 'Bindyga', 'cmentarz' => null, 'miejsce_id' => null, 'cmentarz_id' => null])
+        ->and(importedPerson($tree, 'O-0001')->note)->toContain('Pochowanie: 1900; Bindyga')
+        ->and($other->events()->count())->toBe(0);
+});
+
+test('refuses a plan whose place changed since planning and writes nothing', function (Closure $change, string $message) {
+    Storage::fake('local');
+    [$tree, $other, $world] = applyPlaceTwins();
+    $blocks = ['O-0001' => "imiona: Jan\nnazwisko: Nowak\nurodzenie:\n  data: \"1801\"\n  miejsce: Zalesie\nzgon:\n  data: \"1870\"\n  miejsce: Kołemczyce"];
+    $plan = applyPlacePlan($tree, $blocks, new PlaceDecisions(localities: ['kolemczyce' => PlaceDecisions::NEW]));
+    $change($tree, $world);
+    $before = ownershipSnapshot();
+
+    expect(fn () => app(ApplyImport::class)->handle($tree, $plan, new ChangeApprovals, new ConflictResolutions))->toThrow(RuntimeException::class, $message)
+        ->and(ownershipSnapshot())->toBe($before)
+        ->and($other->localities()->count())->toBe(2);
+})->with([
+    'a locality of the plan deleted' => [fn (Tree $tree, array $world) => $world['zalesie']->cemeteries()->delete() + $world['zalesie']->delete(), 'Miejsce Zalesie zmieniło się po planowaniu'],
+    'the new locality added by hand' => [fn (Tree $tree) => Locality::factory()->for($tree)->create(['name' => 'Kołemczyce']), 'Miejsce Kołemczyce zmieniło się po planowaniu'],
+    'the new locality added without diacritics' => [fn (Tree $tree) => Locality::factory()->for($tree)->create(['name' => 'Kolemczyce']), 'Miejsce Kołemczyce zmieniło się po planowaniu'],
+    'the new locality taken by a variant' => [fn (Tree $tree, array $world) => $world['bukinia']->aliases()->create(['tree_id' => $tree->id, 'name' => 'KOŁEMCZYCE']), 'Miejsce Kołemczyce zmieniło się po planowaniu'],
+]);
+
+test('leaves no new locality, cemetery or variant when a step in the middle fails', function () {
+    Storage::fake('local');
+    [$tree, $other, $world] = applyPlaceTwins();
+    $blocks = [
+        'O-0001' => "imiona: Jan\nnazwisko: Nowak\nurodzenie:\n  data: \"1801\"\n  miejsce: Bokinia\npochowek:\n  data: \"1870\"\n  miejsce: Bindyga\nmalzenstwa:\n  - z: O-0002\n    data: \"1825\"",
+        'O-0002' => "imiona: Anna\nnazwisko: Wrona\nmalzenstwa:\n  - z: O-0001\n    data: \"1825\"",
+    ];
+    $plan = applyPlacePlan($tree, $blocks, new PlaceDecisions(
+        localities: ['bokinia' => $world['bukinia']->id, 'bindyga' => PlaceDecisions::NEW],
+        aliases: ['bokinia' => true],
+    ));
+    $before = ownershipSnapshot();
+
+    expect($plan->aliases)->toHaveCount(1)
+        ->and($plan->newCemeteries)->toHaveCount(1);
+
+    $this->mock(CreateMarriage::class, function ($mock): void {
+        $mock->shouldReceive('handle')->andThrow(ValidationException::withMessages(['spouse_id' => 'Ta para ma już małżeństwo.']));
+    });
+
+    expect(fn () => app(ApplyImport::class)->handle($tree, $plan, new ChangeApprovals, new ConflictResolutions))->toThrow(ValidationException::class)
+        ->and(ownershipSnapshot())->toBe($before)
+        ->and($tree->localities()->count())->toBe(2)
+        ->and($tree->cemeteries()->count())->toBe(1)
+        ->and($tree->localityAliases()->count())->toBe(0)
+        ->and($tree->events()->count())->toBe(0);
+});
+
+test('does not duplicate places when the same plan is written a second time', function () {
+    Storage::fake('local');
+    [$tree, $other, $world] = applyPlaceTwins();
+    $plan = applyPlacePlan($tree, ['O-0001' => APPLY_PLACE_PERSON."\npochowek:\n  miejsce: Bindyga\n  cmentarz: Parafialny"], new PlaceDecisions(
+        localities: ['bokinia' => $world['bukinia']->id, 'bindyga' => PlaceDecisions::NEW],
+        aliases: ['bokinia' => true],
+    ));
+
+    app(ApplyImport::class)->handle($tree, $plan, new ChangeApprovals, new ConflictResolutions);
+    $after = ownershipSnapshot();
+
+    expect(fn () => app(ApplyImport::class)->handle($tree, $plan, new ChangeApprovals, new ConflictResolutions))->toThrow(RuntimeException::class)
+        ->and(ownershipSnapshot())->toBe($after)
+        ->and($tree->localities()->count())->toBe(3)
+        ->and($tree->cemeteries()->count())->toBe(2)
+        ->and($tree->localityAliases()->count())->toBe(1);
+});
+
+const APPLY_PLACE_BURIED = "imiona: Jan\nnazwisko: Nowak\nzgon:\n  data: \"1870\"\npochowek:\n  data: \"1870\"\n  miejsce: Zalesie";
+
+test('removes a burial the repo dropped and keeps the death and the burials of the other account', function () {
+    Storage::fake('local');
+    [$tree, $other, $world] = applyPlaceTwins(['O-0001' => APPLY_PLACE_BURIED]);
+
+    expect($tree->events()->where('type', EventType::Burial)->firstOrFail()->cemetery_id)->toBe($world['cemetery']->id);
+
+    $plan = applyPlacePlan($tree, ['O-0001' => "imiona: Jan\nnazwisko: Nowak\nzgon:\n  data: \"1870\""], removals: ['O-0001/pochowek' => 'delete']);
+    $result = app(ApplyImport::class)->handle($tree, $plan, new ChangeApprovals, new ConflictResolutions);
+
+    expect($tree->events()->where('type', EventType::Burial)->count())->toBe(0)
+        ->and($tree->events()->where('type', EventType::Death)->count())->toBe(1)
+        ->and($result->removedRecords)->toBe(1)
+        ->and($other->events()->where('type', EventType::Burial)->count())->toBe(1);
+});
+
+test('brings back a burial deleted in the app as a burial with its cemetery and locality', function () {
+    Storage::fake('local');
+    [$tree, $other, $world] = applyPlaceTwins(['O-0001' => APPLY_PLACE_BURIED], fn (Tree $tree) => $tree->events()->where('type', EventType::Burial)->firstOrFail()->delete());
+    $plan = applyPlacePlan($tree, ['O-0001' => APPLY_PLACE_BURIED], deletions: ['O-0001/pochowek' => 'restore']);
+
+    $result = app(ApplyImport::class)->handle($tree, $plan, new ChangeApprovals, new ConflictResolutions);
+
+    $burial = $tree->events()->where('type', EventType::Burial)->firstOrFail();
+
+    expect([$burial->repo_id, $burial->cemetery_id, $burial->locality_id])->toBe(['O-0001/pochowek', $world['cemetery']->id, $world['zalesie']->id])
+        ->and($tree->events()->where('type', EventType::Death)->count())->toBe(1)
+        ->and([$result->restored, $result->burials])->toBe([1, 1])
+        ->and($other->events()->where('type', EventType::Burial)->count())->toBe(0);
 });

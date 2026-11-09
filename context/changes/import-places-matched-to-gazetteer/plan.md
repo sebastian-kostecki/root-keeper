@@ -739,19 +739,19 @@ Spis ma dziesiątki miejscowości, a repo ok. 70 różnych nazw, więc porównan
 
 #### Automated
 
-- [x] 4.1 Testy planowania, klasyfikacji i dopasowania przechodzą
-- [x] 4.2 Testy jednostkowe importu przechodzą
-- [x] 4.3 Analiza statyczna przechodzi
-- [x] 4.4 Formatowanie
+- [x] 4.1 Testy planowania, klasyfikacji i dopasowania przechodzą — e3bcd16
+- [x] 4.2 Testy jednostkowe importu przechodzą — e3bcd16
+- [x] 4.3 Analiza statyczna przechodzi — e3bcd16
+- [x] 4.4 Formatowanie — e3bcd16
 
 ### Phase 5: Zapis miejsc i pochowań
 
 #### Automated
 
-- [ ] 5.1 Testy zapisu i planowania przechodzą
-- [ ] 5.2 Testy osób i miejsc przechodzą (niezmiennik pochowania)
-- [ ] 5.3 Analiza statyczna przechodzi
-- [ ] 5.4 Formatowanie
+- [x] 5.1 Testy zapisu i planowania przechodzą
+- [x] 5.2 Testy osób i miejsc przechodzą (niezmiennik pochowania)
+- [x] 5.3 Analiza statyczna przechodzi
+- [x] 5.4 Formatowanie
 
 ### Phase 6: Komenda: podgląd miejsc w terminalu
 
