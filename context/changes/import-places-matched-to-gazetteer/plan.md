@@ -722,18 +722,18 @@ Spis ma dziesiątki miejscowości, a repo ok. 70 różnych nazw, więc porównan
 
 #### Automated
 
-- [x] 2.1 Testy odczytu i klasyfikacji przechodzą
-- [x] 2.2 Wszystkie testy importu przechodzą po zmianie fixture
-- [x] 2.3 Analiza statyczna przechodzi
-- [x] 2.4 Formatowanie
+- [x] 2.1 Testy odczytu i klasyfikacji przechodzą — bea195f
+- [x] 2.2 Wszystkie testy importu przechodzą po zmianie fixture — bea195f
+- [x] 2.3 Analiza statyczna przechodzi — bea195f
+- [x] 2.4 Formatowanie — bea195f
 
 ### Phase 3: Dopasowanie miejsc do spisu (bez zapisu)
 
 #### Automated
 
-- [ ] 3.1 Testy reguły i dopasowania przechodzą
-- [ ] 3.2 Analiza statyczna przechodzi
-- [ ] 3.3 Formatowanie
+- [x] 3.1 Testy reguły i dopasowania przechodzą
+- [x] 3.2 Analiza statyczna przechodzi
+- [x] 3.3 Formatowanie
 
 ### Phase 4: Plan importu z miejscami i pochowaniem
 

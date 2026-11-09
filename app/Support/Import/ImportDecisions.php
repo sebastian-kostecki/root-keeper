@@ -4,7 +4,7 @@ namespace App\Support\Import;
 
 /**
  * Everything the author decides before the plan is made: who the new repo persons are, what happens to the records the
- * repo no longer has, and whether a record deleted in the app comes back.
+ * repo no longer has, whether a record deleted in the app comes back, and what the places of the repo are.
  *
  * The planner checks that each set covers exactly the keys the classification asked about.
  */
@@ -25,11 +25,13 @@ final readonly class ImportDecisions
     /**
      * @param  array<string, string>  $removals  key of each record removed in the repo => `DELETE` or `DETACH` (a birth only `DETACH`)
      * @param  array<string, string>  $deletions  key of each record deleted in the app => `RESTORE` or `KEEP`
+     * @param  PlaceDecisions  $places  the answers about the places of the repo
      */
     public function __construct(
         public IdentityDecisions $identity,
         public array $removals = [],
         public array $deletions = [],
+        public PlaceDecisions $places = new PlaceDecisions,
     ) {}
 
     /**

@@ -3,7 +3,7 @@ change_id: import-places-matched-to-gazetteer
 title: Import places matched to gazetteer
 status: implementing
 created: 2026-10-30
-updated: 2026-10-30
+updated: 2026-11-09
 archived_at: null
 ---
 
