@@ -45,4 +45,4 @@ $COMPOSE exec -T app php artisan config:cache
 $COMPOSE exec -T app php artisan route:cache
 $COMPOSE exec -T app php artisan view:cache
 
-echo "==> Done. Check https://genealog.kostecki.dev/up"
+echo "==> Done. Check https://genealogy.kostecki.dev/up"
