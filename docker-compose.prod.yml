@@ -29,10 +29,19 @@ services:
         labels:
             - traefik.enable=true
             - traefik.docker.network=proxy
-            - traefik.http.routers.genealog.rule=Host(`genealog.kostecki.dev`)
+            - traefik.http.routers.genealog.rule=Host(`genealogy.kostecki.dev`)
             - traefik.http.routers.genealog.entrypoints=websecure
             - traefik.http.routers.genealog.tls.certresolver=letsencrypt
             - traefik.http.services.genealog.loadbalancer.server.port=80
+            # Old address genealog.kostecki.dev: permanent redirect, path and query kept (301 GET, 308 POST).
+            - traefik.http.routers.genealog-old.rule=Host(`genealog.kostecki.dev`)
+            - traefik.http.routers.genealog-old.entrypoints=websecure
+            - traefik.http.routers.genealog-old.tls.certresolver=letsencrypt
+            - traefik.http.routers.genealog-old.service=genealog
+            - traefik.http.routers.genealog-old.middlewares=genealog-old-host
+            - traefik.http.middlewares.genealog-old-host.redirectregex.regex=^https?://genealog\.kostecki\.dev/(.*)
+            - traefik.http.middlewares.genealog-old-host.redirectregex.replacement=https://genealogy.kostecki.dev/$${1}
+            - traefik.http.middlewares.genealog-old-host.redirectregex.permanent=true
 
     pgsql:
         image: postgres:18-alpine
