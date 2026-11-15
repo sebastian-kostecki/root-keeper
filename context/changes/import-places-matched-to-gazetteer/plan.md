@@ -765,6 +765,6 @@ Spis ma dziesiątki miejscowości, a repo ok. 70 różnych nazw, więc porównan
 
 #### Manual
 
-- [ ] 6.6 Przebieg na kopii test-pack z odpowiedzią „nie”: czytelne pytania, jedno na nazwę
-- [ ] 6.7 Przebieg z odpowiedzią „tak”: miejsca, pochowanie, nowa miejscowość i wariant widoczne w UI
-- [ ] 6.8 Drugi przebieg kończy się „Nic do zapisania.” bez pytań o miejsca
+- [x] 6.6 Przebieg na kopii test-pack z odpowiedzią „nie”: czytelne pytania, jedno na nazwę — 55253eb
+- [x] 6.7 Przebieg z odpowiedzią „tak”: miejsca, pochowanie, nowa miejscowość i wariant widoczne w UI — 55253eb
+- [x] 6.8 Drugi przebieg kończy się „Nic do zapisania.” bez pytań o miejsca — 55253eb
