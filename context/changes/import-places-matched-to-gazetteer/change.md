@@ -1,9 +1,9 @@
 ---
 change_id: import-places-matched-to-gazetteer
 title: Import places matched to gazetteer
-status: implementing
+status: implemented
 created: 2026-10-30
-updated: 2026-11-09
+updated: 2026-11-15
 archived_at: null
 ---
 
