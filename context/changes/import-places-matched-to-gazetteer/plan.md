@@ -761,7 +761,7 @@ Spis ma dziesiątki miejscowości, a repo ok. 70 różnych nazw, więc porównan
 - [x] 6.2 Wszystkie testy importu przechodzą — 55253eb
 - [x] 6.3 Pełny zestaw testów przechodzi — 55253eb
 - [x] 6.4 Analiza statyczna przechodzi — 55253eb
-- [x] 6.5 Formatowanie
+- [x] 6.5 Formatowanie — 55253eb
 
 #### Manual
 
