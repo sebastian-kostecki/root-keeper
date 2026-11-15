@@ -6,6 +6,7 @@ use App\Enums\EventType;
 use App\Models\Cemetery;
 use App\Models\Event;
 use App\Models\Locality;
+use App\Models\LocalityAlias;
 use App\Models\Parish;
 use App\Models\Person;
 use App\Models\Residence;
@@ -153,6 +154,7 @@ abstract class BackupTestCase extends TestCase
         linkParent($parent, $child);
 
         $seat = Locality::factory()->for($tree)->create(['name' => 'Lipnica Murowana']);
+        LocalityAlias::factory()->for($tree)->create(['locality_id' => $seat->id, 'name' => 'Lipnica']);
         Parish::factory()->for($tree)->seatedIn($seat)->dedicatedTo('Św. Leonarda')->create();
         Residence::factory()->for($parent)->create(['tree_id' => $tree->id, 'locality_id' => $seat->id]);
 

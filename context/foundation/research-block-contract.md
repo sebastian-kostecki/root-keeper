@@ -95,7 +95,7 @@ Nowe opcjonalne klucze dochodzą w v1 razem z aktualizacją aplikacji. Zmiana zn
 ## Blok danych osoby (frontmatter YAML)
 
 - Każdy plik osoby w `drzewo/` zaczyna się blokiem YAML według `context/foundation/research-block-contract.md` aplikacji root-keeper (wersja 1), przed nagłówkiem H1. Proza pod blokiem zostaje.
-- `miejsce` to sama nazwa miejscowości w mianowniku, bez parafii, gminy i nawiasów. Wariant pisowni zostaje w prozie, a w bloku stoi jedna nazwa. `pochowek.miejsce` to miejscowość cmentarza, a `pochowek.cmentarz` (opcjonalnie) to nazwa cmentarza.
+- `miejsce` to sama nazwa miejscowości w mianowniku, bez parafii, gminy i nawiasów. Wariant pisowni zostaje w prozie, a w bloku stoi jedna nazwa. `pochowek.miejsce` to miejscowość cmentarza, a `pochowek.cmentarz` (opcjonalnie) to nazwa cmentarza; podaj ją, gdy w miejscowości jest kilka cmentarzy. Gdy znasz tylko parafię, zostaw `miejsce` puste. `pochowek` bez `zgon` dodaje zgon bez daty.
 - Nie zmyślaj: wpisuj do bloku tylko to, co wynika z prozy pliku. Brak wiedzy = brak klucza.
 - Blok musi zgadzać się z prozą. Zmieniasz prozę (data, rodzice, małżeństwo) — zmień blok w tym samym commicie.
 - Nowa osoba dostaje kolejne `O-NNNN`. Numer nigdy nie jest używany ponownie, także po usunięciu osoby.
@@ -103,6 +103,7 @@ Nowe opcjonalne klucze dochodzą w v1 razem z aktualizacją aplikacji. Zmiana zn
 - Pełną datę (`RRRR-MM-DD`) zawsze ujmuj w cudzysłów. Daty w kalendarzu gregoriańskim; styl juliański w `notatka`.
 - Małżeństwo zapisuj w plikach obojga małżonków, z tymi samymi danymi.
 - Sprawdź: `vendor/bin/sail artisan import:research <e-mail> <ścieżka-repo>` (pokazuje raport i podsumowanie, a zapisuje dopiero po odpowiedzi „tak”; do samego sprawdzenia bloku odpowiedz „nie”).
+- Sprawdź nowe miejsca w podglądzie: import pyta raz o każdą nową miejscowość („Nowe miejscowości”), o każdą niepewną pisownię („Niepewne”, np. Bokinia przy Bukini w spisie) i o cmentarz, gdy w miejscowości jest ich kilka. Literówka w bloku wychodzi tu jako nowa miejscowość albo niepewne dopasowanie: popraw blok i uruchom ponownie zamiast dodawać miejscowość do spisu.
 ```
 
 ## Uwaga dla repo badawczego

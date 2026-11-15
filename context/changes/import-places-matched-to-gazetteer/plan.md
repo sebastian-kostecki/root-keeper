@@ -748,20 +748,20 @@ Spis ma dziesiątki miejscowości, a repo ok. 70 różnych nazw, więc porównan
 
 #### Automated
 
-- [x] 5.1 Testy zapisu i planowania przechodzą
-- [x] 5.2 Testy osób i miejsc przechodzą (niezmiennik pochowania)
-- [x] 5.3 Analiza statyczna przechodzi
-- [x] 5.4 Formatowanie
+- [x] 5.1 Testy zapisu i planowania przechodzą — e20fada
+- [x] 5.2 Testy osób i miejsc przechodzą (niezmiennik pochowania) — e20fada
+- [x] 5.3 Analiza statyczna przechodzi — e20fada
+- [x] 5.4 Formatowanie — e20fada
 
 ### Phase 6: Komenda: podgląd miejsc w terminalu
 
 #### Automated
 
-- [ ] 6.1 Testy komendy przechodzą
-- [ ] 6.2 Wszystkie testy importu przechodzą
-- [ ] 6.3 Pełny zestaw testów przechodzi
-- [ ] 6.4 Analiza statyczna przechodzi
-- [ ] 6.5 Formatowanie
+- [x] 6.1 Testy komendy przechodzą
+- [x] 6.2 Wszystkie testy importu przechodzą
+- [x] 6.3 Pełny zestaw testów przechodzi
+- [x] 6.4 Analiza statyczna przechodzi
+- [x] 6.5 Formatowanie
 
 #### Manual
 

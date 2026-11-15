@@ -6,6 +6,7 @@ use App\Actions\Import\PlanImport;
 use App\Actions\Import\ReadResearchRepo;
 use App\Actions\Relations\CreateMarriage;
 use App\Enums\ParticipantRole;
+use App\Models\Cemetery;
 use App\Models\Event;
 use App\Models\Locality;
 use App\Models\ParentChildRelation;
@@ -81,6 +82,13 @@ function saveQuestion(int $new, int $matched, int $memory, int $changes = 0, int
     return "Zapisać do drzewa konta autor@example.com: nowe osoby {$new}, dopasowane {$matched}, zmiany {$changes}, usunięcia {$removals}, pamięć importu {$memory}?";
 }
 
+const PLACES_MODE_OPTIONS = ['all' => 'Zatwierdź wszystkie', 'each' => 'Przejrzyj pojedynczo'];
+
+function newPlacesQuestion(int $count): string
+{
+    return "Nowe miejscowości ({$count}): co zrobić?";
+}
+
 function importArguments(User $author): array
 {
     return ['email' => $author->email, 'path' => base_path(RESEARCH_FIXTURE)];
@@ -100,6 +108,7 @@ test('prints the report for the fixture repo and exits successfully', function (
         ->expectsOutputToContain('Nieznany klucz: kolor')
         ->expectsOutputToContain('Podsumowanie importu')
         ->expectsOutputToContain('Pominięte relacje:')
+        ->expectsChoice(newPlacesQuestion(2), 'all', PLACES_MODE_OPTIONS, true)
         ->expectsConfirmation(saveQuestion(13, 0, 27), 'no')
         ->expectsOutputToContain('Nic nie zostało zapisane.')
         ->assertSuccessful();
@@ -116,6 +125,7 @@ test('writes nothing for either account when the author skips every doubtful mat
         ->expectsQuestion('Wątpliwe 1/2: Jan Nowak (O-0001) — kto to?', 'skip')
         ->expectsQuestion('Wątpliwe 2/2: Anna Wrona (O-0004) — kto to?', 'skip')
         ->expectsOutputToContain('Pominięte osoby:')
+        ->expectsChoice(newPlacesQuestion(1), 'all', PLACES_MODE_OPTIONS, true)
         ->expectsConfirmation(saveQuestion(11, 0, 19), 'no')
         ->expectsOutputToContain('Nic nie zostało zapisane.')
         ->assertSuccessful();
@@ -140,6 +150,7 @@ test('saves the persons to the author tree after a yes and suggests the proband'
     $author = arrangeEmptyAuthorWithOverlappingOther();
 
     $this->artisan('import:research', importArguments($author))
+        ->expectsChoice(newPlacesQuestion(2), 'all', PLACES_MODE_OPTIONS, true)
         ->expectsConfirmation(saveQuestion(13, 0, 27), 'yes')
         ->expectsOutputToContain('Zapisano w drzewie')
         ->expectsOutputToContain('Ahnentafel 1: Jan Nowak (O-0001)')
@@ -157,13 +168,14 @@ test('writes nothing after a no', function () {
     $before = ownershipSnapshot();
 
     $this->artisan('import:research', importArguments($author))
+        ->expectsChoice(newPlacesQuestion(2), 'all', PLACES_MODE_OPTIONS, true)
         ->expectsConfirmation(saveQuestion(13, 0, 27), 'no')
         ->assertSuccessful();
 
     expect(ownershipSnapshot())->toBe($before);
 });
 
-test('writes nothing without asking when run with --no-interaction', function () {
+test('refuses new places when run with --no-interaction and writes nothing', function () {
     Storage::fake('local');
     $author = arrangeEmptyAuthorWithOverlappingOther();
     $before = ownershipSnapshot();
@@ -171,8 +183,8 @@ test('writes nothing without asking when run with --no-interaction', function ()
     // Artisan::call, not $this->artisan(): its console output double intercepts every question, even with --no-interaction.
     $exitCode = Artisan::call('import:research', [...importArguments($author), '--no-interaction' => true]);
 
-    expect($exitCode)->toBe(0)
-        ->and(Artisan::output())->toContain('Nic nie zostało zapisane.')
+    expect($exitCode)->toBe(1)
+        ->and(Artisan::output())->toContain('Import wymaga odpowiedzi w terminalu; nic nie zostało zapisane.')
         ->and(ownershipSnapshot())->toBe($before);
 });
 
@@ -204,6 +216,7 @@ test('reports a failure in the middle of the write and writes nothing', function
     });
 
     $this->artisan('import:research', importArguments($author))
+        ->expectsChoice(newPlacesQuestion(2), 'all', PLACES_MODE_OPTIONS, true)
         ->expectsConfirmation(saveQuestion(13, 0, 27), 'yes')
         ->expectsOutputToContain('Zapis małżeństwa nie powiódł się.')
         ->expectsOutputToContain('Nic nie zostało zapisane.')
@@ -223,6 +236,7 @@ test('reports a plan that no longer fits the tree and writes nothing', function 
     });
 
     $this->artisan('import:research', importArguments($author))
+        ->expectsChoice(newPlacesQuestion(2), 'all', PLACES_MODE_OPTIONS, true)
         ->expectsOutputToContain('Decyzje wskazują osobę spoza drzewa konta.')
         ->doesntExpectOutputToContain('Podsumowanie importu')
         ->assertFailed();
@@ -238,6 +252,7 @@ test('stops when the database backup fails in production', function () {
     $before = ownershipSnapshot();
 
     $this->artisan('import:research', importArguments($author))
+        ->expectsChoice(newPlacesQuestion(2), 'all', PLACES_MODE_OPTIONS, true)
         ->expectsConfirmation(saveQuestion(13, 0, 27), 'yes')
         ->expectsOutputToContain('Kopia bazy nie powiodła się, nic nie zostało zapisane.')
         ->assertFailed();
@@ -253,6 +268,7 @@ test('saves after a successful database backup in production', function () {
     $author = arrangeEmptyAuthorWithOverlappingOther();
 
     $this->artisan('import:research', importArguments($author))
+        ->expectsChoice(newPlacesQuestion(2), 'all', PLACES_MODE_OPTIONS, true)
         ->expectsConfirmation(saveQuestion(13, 0, 27), 'yes')
         ->assertSuccessful();
 
@@ -266,6 +282,7 @@ test('does not run a backup outside production', function () {
     $author = arrangeEmptyAuthorWithOverlappingOther();
 
     $this->artisan('import:research', importArguments($author))
+        ->expectsChoice(newPlacesQuestion(2), 'all', PLACES_MODE_OPTIONS, true)
         ->expectsConfirmation(saveQuestion(13, 0, 27), 'yes')
         ->assertSuccessful();
 
@@ -279,12 +296,14 @@ test('lists files without a block only with -v', function () {
 
     $this->artisan('import:research', $arguments)
         ->doesntExpectOutputToContain('Pliki bez bloku:')
+        ->expectsChoice(newPlacesQuestion(2), 'all', PLACES_MODE_OPTIONS, true)
         ->expectsConfirmation(saveQuestion(13, 0, 27), 'no')
         ->assertSuccessful();
 
     $this->artisan('import:research', [...$arguments, '-v' => true])
         ->expectsOutputToContain('Pliki bez bloku:')
         ->expectsOutputToContain('bez_bloku.md')
+        ->expectsChoice(newPlacesQuestion(2), 'all', PLACES_MODE_OPTIONS, true)
         ->expectsConfirmation(saveQuestion(13, 0, 27), 'no')
         ->assertSuccessful();
 });
@@ -388,8 +407,9 @@ test('hooks the repo into the author hand-entered persons after sure, doubtful a
         ->expectsChoice('Wątpliwe 1/1: Piotr Nowak (O-0002) — kto to?', "person:{$scene['piotr']->id}", piotrOptions($scene['piotr']), true)
         ->expectsOutputToContain('Osoby: nowe 11, dopasowane 2, pominięte 0')
         ->expectsOutputToContain('Konflikty wartości do rozstrzygnięcia: 1')
+        ->expectsChoice(newPlacesQuestion(2), 'all', PLACES_MODE_OPTIONS, true)
         ->expectsChoice(BIRTH_CONFLICT_QUESTION, 'repo', BIRTH_CONFLICT_OPTIONS, true)
-        ->expectsConfirmation(saveQuestion(11, 2, 27, changes: 1), 'yes')
+        ->expectsConfirmation(saveQuestion(11, 2, 27, changes: 2), 'yes')
         ->expectsOutputToContain('Osoby: nowe 11, dopasowane 2')
         ->expectsOutputToContain('Import nie ustawia probanta')
         ->assertSuccessful();
@@ -417,8 +437,9 @@ test('keeps the value from the app when the author settles the conflict that way
 
     matchCommandUntilDoubtful($author)
         ->expectsQuestion('Wątpliwe 1/1: Piotr Nowak (O-0002) — kto to?', "person:{$scene['piotr']->id}")
+        ->expectsChoice(newPlacesQuestion(2), 'all', PLACES_MODE_OPTIONS, true)
         ->expectsQuestion(BIRTH_CONFLICT_QUESTION, 'app')
-        ->expectsConfirmation(saveQuestion(11, 2, 27), 'yes')
+        ->expectsConfirmation(saveQuestion(11, 2, 27, changes: 1), 'yes')
         ->assertSuccessful();
 
     $birth = $scene['jan']->fresh()->birth();
@@ -433,8 +454,9 @@ test('adds a doubtful repo person as a new person next to the hand-entered one',
 
     matchCommandUntilDoubtful($author)
         ->expectsQuestion('Wątpliwe 1/1: Piotr Nowak (O-0002) — kto to?', 'new')
+        ->expectsChoice(newPlacesQuestion(2), 'all', PLACES_MODE_OPTIONS, true)
         ->expectsQuestion(BIRTH_CONFLICT_QUESTION, 'app')
-        ->expectsConfirmation(saveQuestion(12, 1, 26), 'yes')
+        ->expectsConfirmation(saveQuestion(12, 1, 26, changes: 1), 'yes')
         ->assertSuccessful();
 
     $piotrs = $author->tree->people()->where('first_name', 'Piotr')->orderBy('id')->get();
@@ -455,8 +477,9 @@ test('leaves out a doubtful repo person and its relations and lists it among the
         ->expectsOutputToContain('Osoby: nowe 11, dopasowane 1, pominięte 1')
         ->expectsOutputToContain('Pominięte osoby:')
         ->expectsOutputToContain('osoba pominięta przy dopasowaniu')
+        ->expectsChoice(newPlacesQuestion(2), 'all', PLACES_MODE_OPTIONS, true)
         ->expectsQuestion(BIRTH_CONFLICT_QUESTION, 'repo')
-        ->expectsConfirmation(saveQuestion(11, 1, 21, changes: 1), 'yes')
+        ->expectsConfirmation(saveQuestion(11, 1, 21, changes: 2), 'yes')
         ->assertSuccessful();
 
     $tree = $author->tree;
@@ -481,8 +504,9 @@ test('walks through the sure match one by one before the doubtful ones', functio
             'skip' => 'Pomiń — nie importuj teraz',
         ], true)
         ->expectsQuestion('Wątpliwe 1/1: Piotr Nowak (O-0002) — kto to?', 'skip')
+        ->expectsChoice(newPlacesQuestion(2), 'all', PLACES_MODE_OPTIONS, true)
         ->expectsQuestion(BIRTH_CONFLICT_QUESTION, 'app')
-        ->expectsConfirmation(saveQuestion(11, 1, 21), 'no')
+        ->expectsConfirmation(saveQuestion(11, 1, 21, changes: 1), 'no')
         ->assertSuccessful();
 });
 
@@ -604,8 +628,9 @@ test('stops after a yes when the database backup fails in production and the tre
 
     matchCommandUntilDoubtful($author)
         ->expectsQuestion('Wątpliwe 1/1: Piotr Nowak (O-0002) — kto to?', "person:{$scene['piotr']->id}")
+        ->expectsChoice(newPlacesQuestion(2), 'all', PLACES_MODE_OPTIONS, true)
         ->expectsQuestion(BIRTH_CONFLICT_QUESTION, 'repo')
-        ->expectsConfirmation(saveQuestion(11, 2, 27, changes: 1), 'yes')
+        ->expectsConfirmation(saveQuestion(11, 2, 27, changes: 2), 'yes')
         ->expectsOutputToContain('Kopia bazy nie powiodła się, nic nie zostało zapisane.')
         ->assertFailed();
 
@@ -620,8 +645,9 @@ test('writes nothing after a no at the end of the match walkthrough', function (
 
     matchCommandUntilDoubtful($author)
         ->expectsQuestion('Wątpliwe 1/1: Piotr Nowak (O-0002) — kto to?', "person:{$scene['piotr']->id}")
+        ->expectsChoice(newPlacesQuestion(2), 'all', PLACES_MODE_OPTIONS, true)
         ->expectsQuestion(BIRTH_CONFLICT_QUESTION, 'repo')
-        ->expectsConfirmation(saveQuestion(11, 2, 27, changes: 1), 'no')
+        ->expectsConfirmation(saveQuestion(11, 2, 27, changes: 2), 'no')
         ->expectsOutputToContain('Nic nie zostało zapisane.')
         ->assertSuccessful();
 
@@ -1026,5 +1052,215 @@ test('writes nothing when the database backup fails after the consent to a re-im
         ->assertFailed();
 
     expect($calls->getArrayCopy())->toBe([true])
+        ->and(ownershipSnapshot())->toBe($before);
+});
+
+/**
+ * Jan Nowak (born in Bukinia, died in Zalesie) and Anna Wrona (born in Bukinia), in a throwaway repo.
+ *
+ * @return array<string, string>
+ */
+function placeBlocks(string $birthPlace = 'Bukinia'): array
+{
+    return [
+        'O-0001' => "imiona: Jan\nnazwisko: Nowak\nplec: M\nurodzenie:\n  data: \"1801\"\n  miejsce: {$birthPlace}\nzgon:\n  data: \"1870\"\n  miejsce: Zalesie",
+        'O-0002' => "imiona: Anna\nnazwisko: Wrona\nplec: K\nurodzenie:\n  data: \"1805\"\n  miejsce: {$birthPlace}",
+    ];
+}
+
+/**
+ * Two accounts with the same localities and variant; the author may get a different list of them.
+ *
+ * @param  list<string>  $localities  the names both accounts hold
+ * @return array{0: User, 1: User}
+ */
+function arrangePlaceUsers(array $localities = []): array
+{
+    Storage::fake('local');
+    $other = User::factory()->create(['email' => 'inny@example.com']);
+    $author = User::factory()->create(['email' => 'autor@example.com']);
+
+    foreach ([$other, $author] as $user) {
+        foreach ($localities as $name) {
+            Locality::factory()->create(['tree_id' => $user->tree->id, 'name' => $name]);
+        }
+    }
+
+    return [$author, $other];
+}
+
+/**
+ * What the other account holds that an import could touch.
+ *
+ * @return array<string, mixed>
+ */
+function placeState(User $user): array
+{
+    return [
+        'localities' => $user->tree->localities()->orderBy('id')->pluck('name')->all(),
+        'aliases' => $user->tree->localityAliases()->count(),
+        'cemeteries' => $user->tree->cemeteries()->count(),
+        'events' => $user->tree->events()->count(),
+        'memory' => $user->tree->repoSnapshots()->count(),
+    ];
+}
+
+test('adds the new localities after approving them all and writes the places of the events', function () {
+    [$author, $other] = arrangePlaceUsers();
+    $repo = reimportRepo(placeBlocks());
+    $otherBefore = placeState($other);
+
+    $this->artisan('import:research', ['email' => $author->email, 'path' => $repo])
+        ->expectsOutputToContain('Nowe miejscowości:')
+        ->expectsOutputToContain('Jan Nowak (O-0001), Anna Wrona (O-0002)')
+        ->expectsChoice(newPlacesQuestion(2), 'all', PLACES_MODE_OPTIONS, true)
+        ->expectsOutputToContain('nowe miejscowości: 2, nowe cmentarze: 0, zapamiętane warianty: 0')
+        ->expectsConfirmation(saveQuestion(2, 0, 5), 'yes')
+        ->expectsOutputToContain('Miejsca: nowe miejscowości 2, nowe cmentarze 0, zapamiętane warianty 0')
+        ->assertSuccessful();
+
+    $tree = $author->tree;
+    $bukinia = $tree->localities()->where('name', 'Bukinia')->firstOrFail();
+    $zalesie = $tree->localities()->where('name', 'Zalesie')->firstOrFail();
+
+    expect($tree->events()->where('repo_id', 'O-0001/urodzenie')->firstOrFail()->locality_id)->toBe($bukinia->id)
+        ->and($tree->events()->where('repo_id', 'O-0002/urodzenie')->firstOrFail()->locality_id)->toBe($bukinia->id)
+        ->and($tree->events()->where('repo_id', 'O-0001/zgon')->firstOrFail()->locality_id)->toBe($zalesie->id)
+        ->and(placeState($other))->toBe($otherBefore);
+
+    $this->artisan('import:research', ['email' => $author->email, 'path' => $repo])
+        ->expectsOutputToContain('Nic do zapisania.')
+        ->assertSuccessful();
+});
+
+test('adds only the new localities the author approves one by one', function () {
+    [$author, $other] = arrangePlaceUsers();
+    $otherBefore = placeState($other);
+
+    $this->artisan('import:research', ['email' => $author->email, 'path' => reimportRepo(placeBlocks())])
+        ->expectsChoice(newPlacesQuestion(2), 'each', PLACES_MODE_OPTIONS, true)
+        ->expectsChoice('Nowa miejscowość 1/2: Bukinia (2 zdarzenia)', 'none', ['new' => 'Dodaj do spisu', 'none' => 'Bez miejsca'], true)
+        ->expectsChoice('Nowa miejscowość 2/2: Zalesie (1 zdarzenie)', 'new', ['new' => 'Dodaj do spisu', 'none' => 'Bez miejsca'], true)
+        ->expectsConfirmation(saveQuestion(2, 0, 5), 'yes')
+        ->assertSuccessful();
+
+    $tree = $author->tree;
+
+    expect($tree->localities()->pluck('name')->all())->toBe(['Zalesie'])
+        ->and($tree->events()->where('repo_id', 'O-0001/urodzenie')->firstOrFail()->locality_id)->toBeNull()
+        ->and($tree->events()->where('repo_id', 'O-0001/zgon')->firstOrFail()->locality_id)->toBe($tree->localities()->firstOrFail()->id)
+        ->and(placeState($other))->toBe($otherBefore);
+});
+
+test('remembers a doubtful spelling as a variant of the chosen locality and then asks nothing', function () {
+    [$author, $other] = arrangePlaceUsers(['Bukinia', 'Zalesie']);
+    $bukinia = $author->tree->localities()->where('name', 'Bukinia')->firstOrFail();
+    $repo = reimportRepo(placeBlocks('Bokinia'));
+    $otherBefore = placeState($other);
+
+    $this->artisan('import:research', ['email' => $author->email, 'path' => $repo])
+        ->expectsOutputToContain('Niepewne 1/1: Bokinia — Jan Nowak (O-0001), Anna Wrona (O-0002)')
+        ->expectsChoice('Niepewne 1/1: Bokinia (2 zdarzenia)', "locality:{$bukinia->id}", [
+            "locality:{$bukinia->id}" => 'To Bukinia (zapamiętaj wariant)',
+            'new' => 'Dodaj jako nową',
+            'none' => 'Bez miejsca',
+        ], true)
+        ->expectsOutputToContain('zapamiętane warianty: 1')
+        ->expectsConfirmation(saveQuestion(2, 0, 5), 'yes')
+        ->assertSuccessful();
+
+    $tree = $author->tree;
+
+    expect($tree->localityAliases()->pluck('name')->all())->toBe(['Bokinia'])
+        ->and($tree->localityAliases()->firstOrFail()->locality_id)->toBe($bukinia->id)
+        ->and($tree->events()->where('repo_id', 'O-0002/urodzenie')->firstOrFail()->locality_id)->toBe($bukinia->id)
+        ->and($tree->localities()->count())->toBe(2)
+        ->and(placeState($other))->toBe($otherBefore);
+
+    $this->artisan('import:research', ['email' => $author->email, 'path' => $repo])
+        ->expectsOutputToContain('Nic do zapisania.')
+        ->assertSuccessful();
+});
+
+test('leaves a doubtful place out when the author keeps the default and the text stays in the note', function () {
+    [$author, $other] = arrangePlaceUsers(['Bukinia', 'Zalesie']);
+    $otherBefore = placeState($other);
+    $bukinia = $author->tree->localities()->where('name', 'Bukinia')->firstOrFail();
+
+    $this->artisan('import:research', ['email' => $author->email, 'path' => reimportRepo(placeBlocks('Bokinia'))])
+        ->expectsChoice('Niepewne 1/1: Bokinia (2 zdarzenia)', 'none', [
+            "locality:{$bukinia->id}" => 'To Bukinia (zapamiętaj wariant)',
+            'new' => 'Dodaj jako nową',
+            'none' => 'Bez miejsca',
+        ], true)
+        ->expectsConfirmation(saveQuestion(2, 0, 5), 'yes')
+        ->assertSuccessful();
+
+    $tree = $author->tree;
+
+    expect($tree->localityAliases()->count())->toBe(0)
+        ->and($tree->localities()->count())->toBe(2)
+        ->and($tree->events()->where('repo_id', 'O-0001/urodzenie')->firstOrFail()->locality_id)->toBeNull()
+        ->and($tree->people()->where('repo_id', 'O-0001')->firstOrFail()->note)->toContain('Bokinia')
+        ->and(placeState($other))->toBe($otherBefore);
+});
+
+test('asks which cemetery a burial names when the locality has two and the block names none', function () {
+    [$author, $other] = arrangePlaceUsers();
+
+    foreach ([$other, $author] as $user) {
+        $husynne = Locality::factory()->create(['tree_id' => $user->tree->id, 'name' => 'Husynne']);
+        Cemetery::factory()->create(['tree_id' => $user->tree->id, 'locality_id' => $husynne->id, 'name' => 'Stary']);
+        Cemetery::factory()->create(['tree_id' => $user->tree->id, 'locality_id' => $husynne->id, 'name' => 'Nowy']);
+    }
+
+    $repo = reimportRepo(['O-0001' => "imiona: Jan\nnazwisko: Nowak\nplec: M\nzgon:\n  data: \"1870\"\npochowek:\n  miejsce: Husynne"]);
+    $stary = $author->tree->cemeteries()->where('name', 'Stary')->firstOrFail();
+    $nowy = $author->tree->cemeteries()->where('name', 'Nowy')->firstOrFail();
+    $otherBefore = placeState($other);
+
+    $this->artisan('import:research', ['email' => $author->email, 'path' => $repo])
+        ->expectsOutputToContain('Cmentarz 1/1: Husynne — Jan Nowak (O-0001)')
+        ->expectsChoice('Cmentarz 1/1: Husynne (1 pochowanie)', "cemetery:{$stary->id}", [
+            "cemetery:{$stary->id}" => 'Stary, Husynne',
+            "cemetery:{$nowy->id}" => 'Nowy, Husynne',
+            'new' => 'Nowy cmentarz',
+            'none' => 'Bez miejsca',
+        ], true)
+        ->expectsConfirmation(saveQuestion(1, 0, 3), 'yes')
+        ->assertSuccessful();
+
+    $burial = $author->tree->events()->where('repo_id', 'O-0001/pochowek')->firstOrFail();
+
+    expect($burial->cemetery_id)->toBe($stary->id)
+        ->and($burial->locality_id)->toBe($stary->locality_id)
+        ->and($author->tree->cemeteries()->count())->toBe(2)
+        ->and(placeState($other))->toBe($otherBefore);
+});
+
+test('adds a new cemetery without asking when its locality is new and counts it', function () {
+    [$author, $other] = arrangePlaceUsers();
+    $repo = reimportRepo(['O-0001' => "imiona: Jan\nnazwisko: Nowak\nplec: M\nzgon:\n  data: \"1870\"\npochowek:\n  miejsce: Husynne"]);
+    $otherBefore = placeState($other);
+
+    $this->artisan('import:research', ['email' => $author->email, 'path' => $repo])
+        ->expectsChoice(newPlacesQuestion(1), 'all', PLACES_MODE_OPTIONS, true)
+        ->expectsOutputToContain('nowe miejscowości: 1, nowe cmentarze: 1, zapamiętane warianty: 0')
+        ->expectsConfirmation(saveQuestion(1, 0, 3), 'yes')
+        ->assertSuccessful();
+
+    expect($author->tree->cemeteries()->count())->toBe(1)
+        ->and($author->tree->events()->where('repo_id', 'O-0001/pochowek')->firstOrFail()->cemetery_id)->toBe($author->tree->cemeteries()->firstOrFail()->id)
+        ->and(placeState($other))->toBe($otherBefore);
+});
+
+test('refuses a doubtful place when run with --no-interaction and writes nothing', function () {
+    [$author] = arrangePlaceUsers(['Bukinia', 'Zalesie']);
+    $before = ownershipSnapshot();
+
+    $exitCode = Artisan::call('import:research', ['email' => $author->email, 'path' => reimportRepo(placeBlocks('Bokinia')), '--no-interaction' => true]);
+
+    expect($exitCode)->toBe(1)
+        ->and(Artisan::output())->toContain('Import wymaga odpowiedzi w terminalu; nic nie zostało zapisane.')
         ->and(ownershipSnapshot())->toBe($before);
 });

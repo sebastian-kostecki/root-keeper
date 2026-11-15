@@ -5,15 +5,20 @@ namespace App\Console\Commands;
 use App\Actions\Import\ApplyImport;
 use App\Actions\Import\ClassifyRepoRecords;
 use App\Actions\Import\MatchResearchPersons;
+use App\Actions\Import\MatchResearchPlaces;
 use App\Actions\Import\PlanImport;
 use App\Actions\Import\ReadResearchRepo;
+use App\Enums\CemeteryMatchKind;
 use App\Enums\DateQualifier;
 use App\Enums\MatchVerdict;
+use App\Enums\PlaceMatchKind;
 use App\Enums\RepoKeyKind;
 use App\Models\Person;
 use App\Models\RepoSnapshot;
 use App\Models\Tree;
 use App\Models\User;
+use App\Support\Import\CemeteryMatches;
+use App\Support\Import\CemeteryVerdict;
 use App\Support\Import\ChangeApprovals;
 use App\Support\Import\ConflictResolutions;
 use App\Support\Import\IdentityDecisions;
@@ -23,6 +28,10 @@ use App\Support\Import\ImportPlan;
 use App\Support\Import\ImportResult;
 use App\Support\Import\PersonMatch;
 use App\Support\Import\PersonMatches;
+use App\Support\Import\PlaceDecisions;
+use App\Support\Import\PlaceMatches;
+use App\Support\Import\PlaceUse;
+use App\Support\Import\PlaceVerdict;
 use App\Support\Import\PlannedRemoval;
 use App\Support\Import\RemovalImpact;
 use App\Support\Import\RepoRecord;
@@ -53,7 +62,7 @@ class ImportResearch extends Command
      */
     private const OPTION_WIDTH = 74;
 
-    public function handle(ReadResearchRepo $readResearchRepo, ClassifyRepoRecords $classifyRepoRecords, MatchResearchPersons $matchResearchPersons, PlanImport $planImport, ApplyImport $applyImport): int
+    public function handle(ReadResearchRepo $readResearchRepo, ClassifyRepoRecords $classifyRepoRecords, MatchResearchPersons $matchResearchPersons, MatchResearchPlaces $matchResearchPlaces, PlanImport $planImport, ApplyImport $applyImport): int
     {
         $email = (string) $this->argument('email');
         $path = (string) $this->argument('path');
@@ -106,11 +115,17 @@ class ImportResearch extends Command
             return $this->needsTerminal();
         }
 
-        $decisions = new ImportDecisions(
-            $this->decideIdentities($matches),
-            $this->decideRemovals($classes, $askedRemovals, $reading),
-            $this->decideDeletions($classes, $reading),
-        );
+        $identity = $this->decideIdentities($matches);
+        $removals = $this->decideRemovals($classes, $askedRemovals, $reading);
+        $deletions = $this->decideDeletions($classes, $reading);
+
+        $placeMatches = $matchResearchPlaces->handle($tree, $reading, $classes, new ImportDecisions($identity, $removals, $deletions));
+
+        if (! $this->input->isInteractive() && $this->needsPlaceAnswers($tree, $matchResearchPlaces, $placeMatches)) {
+            return $this->needsTerminal();
+        }
+
+        $decisions = new ImportDecisions($identity, $removals, $deletions, $this->decidePlaces($tree, $matchResearchPlaces, $placeMatches, $reading));
 
         try {
             $plan = $planImport->handle($tree, $reading, $classes, $decisions);
@@ -210,6 +225,7 @@ class ImportResearch extends Command
             && $plan->restorations === []
             && $plan->relations === []
             && $plan->marriages === []
+            && $plan->aliases === []
             && $plan->forgottenSnapshots === []
             && $plan->changedSnapshots($stored) === [];
     }
@@ -274,6 +290,177 @@ class ImportResearch extends Command
     }
 
     /**
+     * Whether any place of the repo needs an answer: a new or doubtful locality, or a cemetery to choose.
+     */
+    private function needsPlaceAnswers(Tree $tree, MatchResearchPlaces $matcher, PlaceMatches $places): bool
+    {
+        foreach ($places->localities as $verdict) {
+            if ($verdict->kind !== PlaceMatchKind::Sure) {
+                return true;
+            }
+        }
+
+        foreach ($matcher->cemeteries($tree, $places, new PlaceDecisions)->matches as $verdict) {
+            if ($verdict->kind === CemeteryMatchKind::Choice) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Ask about the places of the repo, once per name: the new localities together or one by one, each doubtful one
+     * on its own, then the cemeteries with a choice. Sure matches and new cemeteries need no answer.
+     */
+    private function decidePlaces(Tree $tree, MatchResearchPlaces $matcher, PlaceMatches $places, ResearchRepoReading $reading): PlaceDecisions
+    {
+        $localities = [];
+        $aliases = [];
+
+        $new = array_filter($places->localities, fn (PlaceVerdict $verdict): bool => $verdict->kind === PlaceMatchKind::New);
+        $doubtful = array_filter($places->localities, fn (PlaceVerdict $verdict): bool => $verdict->kind === PlaceMatchKind::Doubtful);
+
+        if ($new !== []) {
+            $rows = [];
+
+            foreach ($new as $verdict) {
+                $rows[] = [$verdict->name, $verdict->eventCount(), $this->placeUsers($verdict->uses, $reading)];
+            }
+
+            $this->newLine();
+            $this->line('Nowe miejscowości:');
+            $this->table(['Nazwa', 'Zdarzeń', 'Osoby'], $rows);
+
+            $mode = $this->choose(
+                sprintf('Nowe miejscowości (%d): co zrobić?', count($new)),
+                ['all' => 'Zatwierdź wszystkie', 'each' => 'Przejrzyj pojedynczo'],
+                'all',
+            );
+
+            $position = 0;
+
+            foreach ($new as $key => $verdict) {
+                $position++;
+
+                $answer = $mode === 'all' ? PlaceDecisions::NEW : $this->choose(
+                    sprintf('Nowa miejscowość %d/%d: %s (%s)', $position, count($new), $verdict->name, $this->countText($verdict->eventCount(), ['zdarzenie', 'zdarzenia', 'zdarzeń'])),
+                    [PlaceDecisions::NEW => 'Dodaj do spisu', PlaceDecisions::NONE => 'Bez miejsca'],
+                    PlaceDecisions::NEW,
+                );
+
+                $localities[(string) $key] = $answer;
+            }
+        }
+
+        $position = 0;
+
+        foreach ($doubtful as $key => $verdict) {
+            $position++;
+
+            $this->newLine();
+            $this->line(sprintf('Niepewne %d/%d: %s — %s', $position, count($doubtful), $verdict->name, $this->placeUsers($verdict->uses, $reading)));
+
+            $options = [];
+
+            foreach ($verdict->candidates as $candidate) {
+                $options['locality:'.$candidate->id] = 'To '.$candidate->name.' (zapamiętaj wariant)';
+            }
+
+            $options[PlaceDecisions::NEW] = 'Dodaj jako nową';
+            $options[PlaceDecisions::NONE] = 'Bez miejsca';
+
+            $answer = $this->choose(
+                sprintf('Niepewne %d/%d: %s (%s)', $position, count($doubtful), $verdict->name, $this->countText($verdict->eventCount(), ['zdarzenie', 'zdarzenia', 'zdarzeń'])),
+                $options,
+                PlaceDecisions::NONE,
+            );
+
+            if (str_starts_with($answer, 'locality:')) {
+                $localities[(string) $key] = (int) substr($answer, strlen('locality:'));
+                $aliases[(string) $key] = true;
+            } else {
+                $localities[(string) $key] = $answer;
+            }
+        }
+
+        $cemeteries = $this->decideCemeteries($matcher->cemeteries($tree, $places, new PlaceDecisions($localities, $aliases)), $places, $reading);
+
+        return new PlaceDecisions($localities, $aliases, $cemeteries);
+    }
+
+    /**
+     * Ask which cemetery a burial names when its locality has several and the block does not point at one.
+     *
+     * @return array<string, int|string> {@see PlaceDecisions::cemeteryKey()} => id of a cemetery, `NEW` or `NONE`
+     */
+    private function decideCemeteries(CemeteryMatches $matches, PlaceMatches $places, ResearchRepoReading $reading): array
+    {
+        $choices = array_filter($matches->matches, fn (CemeteryVerdict $verdict): bool => $verdict->kind === CemeteryMatchKind::Choice);
+        $decisions = [];
+        $position = 0;
+
+        foreach ($choices as $key => $verdict) {
+            $position++;
+
+            $locality = $places->localities[$verdict->request->localityKey]->name ?? $verdict->request->localityKey;
+            $name = $verdict->request->name === null ? $locality : sprintf('%s, cmentarz „%s”', $locality, $verdict->request->name);
+
+            $this->newLine();
+            $this->line(sprintf('Cmentarz %d/%d: %s — %s', $position, count($choices), $name, $this->placeUsers($verdict->request->uses, $reading)));
+
+            $options = [];
+
+            foreach ($verdict->options as $cemetery) {
+                $options['cemetery:'.$cemetery->id] = $cemetery->label();
+            }
+
+            $options[PlaceDecisions::NEW] = 'Nowy cmentarz';
+            $options[PlaceDecisions::NONE] = 'Bez miejsca';
+
+            $answer = $this->choose(
+                sprintf('Cmentarz %d/%d: %s (%s)', $position, count($choices), $name, $this->countText($verdict->eventCount(), ['pochowanie', 'pochowania', 'pochowań'])),
+                $options,
+                PlaceDecisions::NONE,
+            );
+
+            $decisions[(string) $key] = str_starts_with($answer, 'cemetery:') ? (int) substr($answer, strlen('cemetery:')) : $answer;
+        }
+
+        return $decisions;
+    }
+
+    /**
+     * The persons whose events name a place, e.g. "Jan Nowak (O-0001), Anna Wrona (O-0004)", at most five.
+     *
+     * @param  list<PlaceUse>  $uses
+     */
+    private function placeUsers(array $uses, ResearchRepoReading $reading): string
+    {
+        $ids = array_values(array_unique(array_map(fn (PlaceUse $use): string => $use->repoId, $uses)));
+        $names = array_map(
+            fn (string $id): string => isset($reading->persons[$id]) ? sprintf('%s (%s)', $this->researchName($reading->persons[$id]), $id) : $id,
+            array_slice($ids, 0, 5),
+        );
+
+        return implode(', ', $names).(count($ids) > 5 ? sprintf(' i %d innych', count($ids) - 5) : '');
+    }
+
+    /**
+     * @param  array{0: string, 1: string, 2: string}  $forms  one, few and many
+     */
+    private function countText(int $count, array $forms): string
+    {
+        $form = match (true) {
+            $count === 1 => $forms[0],
+            $count % 10 >= 2 && $count % 10 <= 4 && ($count % 100 < 12 || $count % 100 > 14) => $forms[1],
+            default => $forms[2],
+        };
+
+        return "{$count} {$form}";
+    }
+
+    /**
      * Show every change of the repo in fields nobody touched in the app and ask for all of them at once or one by one.
      */
     private function decideChanges(ImportPlan $plan): ChangeApprovals
@@ -313,8 +500,8 @@ class ImportResearch extends Command
             $answer = $this->choose(
                 sprintf('Zmiana %d/%d: %s — %s', $index + 1, count($changes), $change->person, $change->label),
                 [
-                    'repo' => Str::limit("Weź z repo: {$repo}", self::OPTION_WIDTH),
-                    'app' => Str::limit("Zostaw: {$app}", self::OPTION_WIDTH),
+                    'repo' => $this->optionLabel("Weź z repo: {$repo}", $change->field),
+                    'app' => $this->optionLabel("Zostaw: {$app}", $change->field),
                 ],
                 'repo',
             );
@@ -348,6 +535,14 @@ class ImportResearch extends Command
         }
 
         return [$app, $repo];
+    }
+
+    /**
+     * An answer option cut to the width of the terminal; a place keeps its whole name.
+     */
+    private function optionLabel(string $text, string $field): string
+    {
+        return str_ends_with($field, '_place') ? $text : Str::limit($text, self::OPTION_WIDTH);
     }
 
     private function impactText(?RemovalImpact $impact): string
@@ -664,8 +859,8 @@ class ImportResearch extends Command
             $choices[$conflict->key] = $this->choose(
                 sprintf('Konflikt %d/%d: %s — %s', $index + 1, $total, $conflict->person, $conflict->label),
                 [
-                    ConflictResolutions::FROM_APP => Str::limit("Zostaw z aplikacji: {$app}", self::OPTION_WIDTH),
-                    ConflictResolutions::FROM_REPO => Str::limit("Weź z repo: {$repo}", self::OPTION_WIDTH),
+                    ConflictResolutions::FROM_APP => $this->optionLabel("Zostaw z aplikacji: {$app}", $conflict->field),
+                    ConflictResolutions::FROM_REPO => $this->optionLabel("Weź z repo: {$repo}", $conflict->field),
                 ],
                 ConflictResolutions::FROM_APP,
             );
@@ -744,8 +939,11 @@ class ImportResearch extends Command
         $this->line('Daty: '.implode(', ', $dates));
 
         $notes = $plan->noteValues;
+        $this->line('Miejsca:');
+        $this->line(sprintf('  nowe miejscowości: %d, nowe cmentarze: %d, zapamiętane warianty: %d', $notes->newLocalities, $notes->newCemeteries, $notes->aliases));
+        $this->line(sprintf('  zdarzenia z miejscem: %d, pochowania: %d', $notes->placedEvents, $notes->burials));
         $this->line('Do notatki osoby:');
-        $this->line(sprintf('  miejsca: %d (spis miejsc — S-05)', $notes->unplacedEvents));
+        $this->line(sprintf('  zdarzenia bez miejsca: %d', $notes->unplacedEvents));
         $this->line(sprintf('  poziomy pewności: %d (S-08)', $notes->levels));
         $this->line(sprintf('  notatki wydarzeń: %d', $notes->eventNotes));
         $this->line(sprintf('  warianty nazwiska: %d (S-09)', $notes->surnameVariants));
@@ -819,7 +1017,8 @@ class ImportResearch extends Command
         $this->line(sprintf('Uzupełnienia pustych pól: %d, wartości wzięte z repo: %d', $result->fills, $result->takenFromRepo));
         $this->line(sprintf('Relacje rodzic–dziecko: %d (istniejące oznaczone: %d)', $result->relations, $result->markedRelations));
         $this->line(sprintf('Małżeństwa: %d (istniejące oznaczone: %d)', $result->marriages, $result->markedMarriages));
-        $this->line(sprintf('Wydarzenia: %d (urodzenia: %d, zgony: %d)', $result->events, $result->births, $result->deaths));
+        $this->line(sprintf('Wydarzenia: %d (urodzenia: %d, zgony: %d, pochowania: %d)', $result->events, $result->births, $result->deaths, $result->burials));
+        $this->line(sprintf('Miejsca: nowe miejscowości %d, nowe cmentarze %d, zapamiętane warianty %d', $result->newLocalities, $result->newCemeteries, $result->aliases));
         $this->line(sprintf('Zmiany z repo: wzięte %d, odrzucone %d', $result->changesTaken, $result->changesRejected));
         $this->line(sprintf(
             'Usunięte: osoby %d, inne rekordy %d; odłączone: %d; przywrócone: %d; zostawione jako usunięte: %d',
