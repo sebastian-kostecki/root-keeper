@@ -5,21 +5,28 @@ use App\Actions\Import\ClassifyRepoRecords;
 use App\Actions\Import\PlanImport;
 use App\Actions\Import\ReadResearchRepo;
 use App\Actions\Relations\CreateMarriage;
+use App\Enums\ParishKind;
 use App\Enums\ParticipantRole;
+use App\Enums\Religion;
+use App\Enums\SourceRecordType;
 use App\Models\Cemetery;
 use App\Models\Event;
 use App\Models\Locality;
 use App\Models\ParentChildRelation;
+use App\Models\Parish;
 use App\Models\Person;
 use App\Models\PersonSurnameVariant;
 use App\Models\RepoSnapshot;
+use App\Models\Source;
 use App\Models\Tree;
 use App\Models\User;
 use App\Support\Import\ChangeApprovals;
 use App\Support\Import\ConflictResolutions;
 use App\Support\Import\IdentityDecisions;
 use App\Support\Import\ImportDecisions;
+use App\Support\Import\PlaceDecisions;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Exceptions;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
@@ -78,9 +85,11 @@ function fakeBackupRun(int $exitCode): ArrayObject
 /**
  * The question that asks for the final consent, with the counts of the plan.
  */
-function saveQuestion(int $new, int $matched, int $memory, int $changes = 0, int $removals = 0): string
+function saveQuestion(int $new, int $matched, int $memory, int $changes = 0, int $removals = 0, string $sources = ''): string
 {
-    return "Zapisać do drzewa konta autor@example.com: nowe osoby {$new}, dopasowane {$matched}, zmiany {$changes}, usunięcia {$removals}, pamięć importu {$memory}?";
+    $sourcesText = $sources === '' ? '' : ", źródła {$sources}";
+
+    return "Zapisać do drzewa konta autor@example.com: nowe osoby {$new}, dopasowane {$matched}, zmiany {$changes}, usunięcia {$removals}, pamięć importu {$memory}{$sourcesText}?";
 }
 
 const PLACES_MODE_OPTIONS = ['all' => 'Zatwierdź wszystkie', 'each' => 'Przejrzyj pojedynczo'];
@@ -1308,6 +1317,301 @@ test('refuses a doubtful place when run with --no-interaction and writes nothing
     $before = ownershipSnapshot();
 
     $exitCode = Artisan::call('import:research', ['email' => $author->email, 'path' => reimportRepo(placeBlocks('Bokinia')), '--no-interaction' => true]);
+
+    expect($exitCode)->toBe(1)
+        ->and(Artisan::output())->toContain('Import wymaga odpowiedzi w terminalu; nic nie zostało zapisane.')
+        ->and(ownershipSnapshot())->toBe($before);
+});
+
+/**
+ * A throwaway repo of persons and sources with real scans, written into `$repo` again when it is given so that a test
+ * can change the repo between two runs.
+ *
+ * @param  array<string, string>  $blocks  repo id of a person => block body without id and version
+ * @param  array<string, array{extra?: string, shade?: int, scan?: bool}>  $sources  repo id of a source => extra lines of its entry, the shade of its scan and whether it has a scan at all
+ */
+function cmdSrcRepo(array $blocks, array $sources, ?string $repo = null): string
+{
+    if ($repo === null) {
+        $repo = sys_get_temp_dir().'/command-src-repo-'.uniqid();
+        reimportRepos($repo);
+    } else {
+        File::deleteDirectory($repo);
+    }
+
+    mkdir($repo.'/drzewo', 0777, true);
+    mkdir($repo.'/zrodla/skany', 0777, true);
+
+    foreach ($blocks as $id => $body) {
+        file_put_contents("{$repo}/drzewo/".strtolower($id).'.md', "---\nwersja: 1\nid: {$id}\n{$body}\n---\n");
+    }
+
+    $entries = '';
+
+    foreach ($sources as $id => $spec) {
+        $entries .= "  - id: {$id}\n";
+
+        if ($spec['scan'] ?? true) {
+            $image = imagecreatetruecolor(40, 30);
+            imagefill($image, 0, 0, imagecolorallocate($image, $spec['shade'] ?? 20, 20, 20));
+            imagejpeg($image, "{$repo}/zrodla/skany/{$id}.jpg");
+            $entries .= "    plik: zrodla/skany/{$id}.jpg\n";
+        }
+
+        $entries .= "    rodzaj: akt\n".($spec['extra'] ?? '');
+    }
+
+    file_put_contents("{$repo}/zrodla/akty.md", "---\nwersja: 1\nskany:\n{$entries}---\n");
+
+    return $repo;
+}
+
+/**
+ * Jan Nowak born in 1837 and Anna Wrona born in 1840, each with a link to a source under an entry number.
+ *
+ * @return array<string, string>
+ */
+function cmdSrcBlocks(string $janEntry = '15/1837'): array
+{
+    return [
+        'O-0001' => "imiona: Jan\nnazwisko: Nowak\nurodzenie:\n  data: \"1837\"\n  zrodla:\n    - id: ZR-0001\n      wpis: \"{$janEntry}\"",
+        'O-0002' => "imiona: Anna\nnazwisko: Wrona\nurodzenie:\n  data: \"1840\"\n  zrodla:\n    - id: ZR-0003\n      wpis: \"7/1840\"",
+    ];
+}
+
+const CMD_SRC_OFFICE = "    typ: urodzenie\n    nazwa: Akt urodzenia 15/1837\n    rok: 1837\n    parafia:\n      miejscowosc: Lipnica\n      rodzaj: usc\n";
+
+/**
+ * Two accounts with the locality Lipnica, the same repo imported by both of them without any question: the sources
+ * name a civil registry office that is new in both trees.
+ *
+ * @return array{0: User, 1: User, 2: string}
+ */
+function cmdSrcImported(): array
+{
+    Storage::fake('local');
+    $other = User::factory()->create(['email' => 'inny@example.com']);
+    $author = User::factory()->create(['email' => 'autor@example.com']);
+    $repo = cmdSrcRepo(cmdSrcBlocks(), [
+        'ZR-0001' => ['extra' => CMD_SRC_OFFICE],
+        'ZR-0003' => ['extra' => "    nazwa: Akt urodzenia 7/1840\n"],
+    ]);
+
+    foreach ([$other, $author] as $user) {
+        Locality::factory()->create(['tree_id' => $user->tree->id, 'name' => 'Lipnica']);
+        importRepoInto($user->tree, $repo);
+    }
+
+    return [$author, $other, $repo];
+}
+
+/**
+ * Everything of a tree a source import could touch.
+ *
+ * @return array<string, mixed>
+ */
+function cmdSrcState(Tree $tree): array
+{
+    return [
+        'sources' => $tree->sources()->orderBy('id')->get()->toArray(),
+        'parishes' => $tree->parishes()->orderBy('id')->get()->toArray(),
+        'links' => DB::table('event_source')->whereIn('source_id', $tree->sources()->select('id'))->orderBy('id')->get()->map(fn (object $row): array => (array) $row)->all(),
+        'state' => treeState($tree),
+    ];
+}
+
+test('imports the sources of a repo after the questions about parishes and manual scans, and leaves the other account alone', function () {
+    Storage::fake('local');
+    $other = User::factory()->create(['email' => 'inny@example.com']);
+    $author = User::factory()->create(['email' => 'autor@example.com']);
+    $repo = cmdSrcRepo(cmdSrcBlocks(), [
+        'ZR-0001' => ['extra' => "    typ: urodzenie\n    nazwa: Akt urodzenia 15/1837\n    rok: 1837\n    parafia:\n      miejscowosc: Lipnica\n      wyznanie: rzymskokatolickie\n      wezwanie: św. Jana\n"],
+        'ZR-0003' => ['extra' => CMD_SRC_OFFICE],
+        'ZR-0009' => ['scan' => false, 'extra' => "    nazwa: Bez skanu\n"],
+    ]);
+
+    foreach ([$other, $author] as $user) {
+        $lipnica = Locality::factory()->create(['tree_id' => $user->tree->id, 'name' => 'Lipnica']);
+        Parish::factory()->seatedIn($lipnica)->withReligion(Religion::RomanCatholic)->dedicatedTo('św. Pawła')->create();
+        Parish::factory()->seatedIn($lipnica)->withReligion(Religion::RomanCatholic)->dedicatedTo('św. Piotra')->create();
+        $jan = Person::factory()->for($user->tree)->create(['first_name' => 'Jan', 'last_name' => 'Nowak']);
+        attachBirth($jan, 1837);
+        $user->tree->events()->firstOrFail()->sources()->attach(Source::factory()->create(['tree_id' => $user->tree->id, 'record_type' => SourceRecordType::Birth, 'year' => 1837]), ['entry_number' => '15/1837']);
+    }
+
+    $otherBefore = cmdSrcState($other->tree);
+    $jan = $author->tree->people()->firstOrFail();
+    $manual = $author->tree->sources()->firstOrFail();
+    $parishOptions = [
+        ...$author->tree->parishes()->orderBy('id')->get()->mapWithKeys(fn (Parish $parish): array => ["parish:{$parish->id}" => $parish->label()])->all(),
+        PlaceDecisions::NEW => 'Dodaj nową',
+        PlaceDecisions::NONE => 'Bez parafii',
+    ];
+
+    $this->artisan('import:research', ['email' => $author->email, 'path' => $repo])
+        ->expectsOutputToContain('Pliki źródeł przejrzane: 1 (z blokiem: 1, bez bloku: 0)')
+        ->expectsOutputToContain('Skany w blokach: 3, pominięte: 1')
+        ->expectsOutputToContain('Pominięte skany:')
+        ->expectsOutputToContain('brak skanu')
+        ->expectsQuestion('Wątpliwe 1/1: Jan Nowak (O-0001) — kto to?', "person:{$jan->id}")
+        ->expectsOutputToContain('Nowe parafie i urzędy:')
+        ->expectsChoice('Nowe parafie i urzędy (1): co zrobić?', 'all', PLACES_MODE_OPTIONS, true)
+        ->expectsChoice('Parafia 1/1: Lipnica św. Jana (rzym.-kat.) (1 źródło)', PlaceDecisions::NONE, $parishOptions, true)
+        ->expectsChoice('Źródło 1/1: Akt urodzenia 15/1837 (ZR-0001) — to ten sam skan?', 'new', ['new' => 'Dodaj jako nowe', "source:{$manual->id}" => "Połącz z {$manual->original_name}"], true)
+        ->expectsOutputToContain('Źródła: 2 nowych, 0 połączone z ręcznymi, 0 nowy plik skanu; powiązania z faktami: 1; nowe parafie: 1')
+        ->expectsConfirmation(saveQuestion(1, 1, 6, changes: 1, sources: '2, powiązania z faktami 1, nowe parafie 1'), 'yes')
+        ->expectsOutputToContain('Źródła: nowe 2, połączone z ręcznymi 0, zmienione 0 (podmienione pliki: 0), usunięte 0, odłączone od repo 0')
+        ->expectsOutputToContain('nowe parafie: 1')
+        ->assertSuccessful();
+
+    $tree = $author->tree;
+    $first = $tree->sources()->where('repo_id', 'ZR-0001')->firstOrFail();
+    $third = $tree->sources()->where('repo_id', 'ZR-0003')->firstOrFail();
+
+    expect($tree->sources()->count())->toBe(3)
+        ->and($tree->sources()->where('repo_id', 'ZR-0009')->exists())->toBeFalse()
+        ->and($first->parish_id)->toBeNull()
+        ->and($third->parish->kind)->toBe(ParishKind::CivilRegistry)
+        ->and($tree->parishes()->count())->toBe(3)
+        ->and(Storage::disk('local')->get($first->path))->toBe(file_get_contents("{$repo}/zrodla/skany/ZR-0001.jpg"))
+        ->and(Storage::disk('local')->exists($third->path))->toBeTrue()
+        ->and($manual->fresh()->repo_id)->toBeNull()
+        ->and($tree->events()->where('repo_id', 'O-0002/urodzenie')->firstOrFail()->sources()->firstOrFail()->id)->toBe($third->id)
+        ->and(cmdSrcState($other->tree))->toBe($otherBefore);
+
+    $this->artisan('import:research', ['email' => $author->email, 'path' => $repo])
+        ->expectsOutputToContain('Nic do zapisania.')
+        ->assertSuccessful();
+});
+
+/**
+ * The sources of {@see cmdSrcImported()} as the repo has them now.
+ *
+ * @return array<string, array{extra?: string, shade?: int, scan?: bool}>
+ */
+function cmdSrcSources(int $firstShade = 20): array
+{
+    return [
+        'ZR-0001' => ['extra' => CMD_SRC_OFFICE, 'shade' => $firstShade],
+        'ZR-0003' => ['extra' => "    nazwa: Akt urodzenia 7/1840\n"],
+    ];
+}
+
+test('takes a changed entry number of the repo as a change to approve', function () {
+    [$author, $other, $repo] = cmdSrcImported();
+    $otherBefore = cmdSrcState($other->tree);
+    cmdSrcRepo(cmdSrcBlocks('16/1837'), cmdSrcSources(), $repo);
+
+    $this->artisan('import:research', ['email' => $author->email, 'path' => $repo])
+        ->expectsOutputToContain('Zmiany z repo:')
+        ->expectsChoice('Zmiany z repo (1): co zrobić?', 'all', CHANGES_ALL, true)
+        ->expectsConfirmation(saveQuestion(0, 0, 1, changes: 1), 'yes')
+        ->assertSuccessful();
+
+    $link = $author->tree->events()->where('repo_id', 'O-0001/urodzenie')->firstOrFail()->sources()->firstOrFail();
+
+    expect($link->pivot->entry_number)->toBe('16/1837')
+        ->and(cmdSrcState($other->tree))->toBe($otherBefore);
+
+    $this->artisan('import:research', ['email' => $author->email, 'path' => $repo])
+        ->expectsOutputToContain('Nic do zapisania.')
+        ->assertSuccessful();
+});
+
+test('keeps the old scan when the author rejects the new file of a source one by one', function () {
+    [$author, $other, $repo] = cmdSrcImported();
+    $otherBefore = cmdSrcState($other->tree);
+    $source = $author->tree->sources()->where('repo_id', 'ZR-0001')->firstOrFail();
+    $oldScan = Storage::disk('local')->get($source->path);
+    cmdSrcRepo(cmdSrcBlocks(), cmdSrcSources(200), $repo);
+
+    $this->artisan('import:research', ['email' => $author->email, 'path' => $repo])
+        ->expectsOutputToContain('Zmiany z repo:')
+        ->expectsChoice('Zmiany z repo (1): co zrobić?', 'each', CHANGES_ALL, true)
+        ->expectsQuestion('Zmiana 1/1: Akt urodzenia 15/1837 (ZR-0001) — Plik skanu', 'app')
+        ->expectsConfirmation(saveQuestion(0, 0, 1), 'yes')
+        ->assertSuccessful();
+
+    $source->refresh();
+
+    expect(Storage::disk('local')->get($source->path))->toBe($oldScan)
+        ->and(cmdSrcState($other->tree))->toBe($otherBefore);
+});
+
+test('removes a source the repo dropped with its scan after delete and shows what it takes', function () {
+    [$author, $other, $repo] = cmdSrcImported();
+    $otherBefore = cmdSrcState($other->tree);
+    $source = $author->tree->sources()->where('repo_id', 'ZR-0003')->firstOrFail();
+    $blocks = cmdSrcBlocks();
+    $blocks['O-0002'] = "imiona: Anna\nnazwisko: Wrona\nurodzenie:\n  data: \"1840\"";
+    cmdSrcRepo($blocks, array_slice(cmdSrcSources(), 0, 1, true), $repo);
+
+    $this->artisan('import:research', ['email' => $author->email, 'path' => $repo])
+        ->expectsOutputToContain('Usunięte w repo: 1')
+        ->expectsOutputToContain('skan do usunięcia')
+        ->expectsQuestion('Usunięte w repo 1/1: Źródło: Akt urodzenia 7/1840 (ZR-0003) — co zrobić?', 'delete')
+        ->expectsConfirmation(saveQuestion(0, 0, 2, removals: 1), 'yes')
+        ->expectsOutputToContain('usunięte 1, odłączone od repo 0')
+        ->assertSuccessful();
+
+    expect($author->tree->sources()->where('repo_id', 'ZR-0003')->exists())->toBeFalse()
+        ->and(Storage::disk('local')->exists($source->path))->toBeFalse()
+        ->and($author->tree->sources()->where('repo_id', 'ZR-0001')->exists())->toBeTrue()
+        ->and(cmdSrcState($other->tree))->toBe($otherBefore);
+});
+
+test('leaves a source deleted in the app deleted and then does not ask again', function () {
+    [$author, $other, $repo] = cmdSrcImported();
+
+    foreach ([$author, $other] as $user) {
+        $user->tree->sources()->where('repo_id', 'ZR-0003')->firstOrFail()->delete();
+    }
+
+    $otherBefore = cmdSrcState($other->tree);
+
+    $this->artisan('import:research', ['email' => $author->email, 'path' => $repo])
+        ->expectsOutputToContain('Usunięte w aplikacji: 1 (do decyzji)')
+        ->expectsQuestion('Usunięte w aplikacji 1/1: Źródło: Akt urodzenia 7/1840 (ZR-0003) — co zrobić?', 'keep')
+        ->expectsConfirmation(saveQuestion(0, 0, 2), 'yes')
+        ->expectsOutputToContain('zostawione jako usunięte: 1')
+        ->assertSuccessful();
+
+    expect($author->tree->sources()->where('repo_id', 'ZR-0003')->exists())->toBeFalse();
+
+    $this->artisan('import:research', ['email' => $author->email, 'path' => $repo])
+        ->expectsOutputToContain('Nic do zapisania.')
+        ->assertSuccessful();
+
+    expect(cmdSrcState($other->tree))->toBe($otherBefore);
+});
+
+test('writes a source the repo gained when nothing else changed instead of saying there is nothing to write', function () {
+    [$author, $other, $repo] = cmdSrcImported();
+    $otherBefore = cmdSrcState($other->tree);
+    cmdSrcRepo(cmdSrcBlocks(), [...cmdSrcSources(), 'ZR-0004' => ['extra' => "    nazwa: Nowy akt\n"]], $repo);
+
+    $this->artisan('import:research', ['email' => $author->email, 'path' => $repo])
+        ->doesntExpectOutputToContain('Nic do zapisania.')
+        ->expectsConfirmation(saveQuestion(0, 0, 1, sources: '1, powiązania z faktami 0, nowe parafie 0'), 'yes')
+        ->assertSuccessful();
+
+    expect($author->tree->sources()->where('repo_id', 'ZR-0004')->exists())->toBeTrue()
+        ->and(cmdSrcState($other->tree))->toBe($otherBefore);
+});
+
+test('refuses a new parish when run with --no-interaction and writes nothing', function () {
+    Storage::fake('local');
+    $other = User::factory()->create(['email' => 'inny@example.com']);
+    $author = User::factory()->create(['email' => 'autor@example.com']);
+    $repo = cmdSrcRepo(cmdSrcBlocks(), cmdSrcSources());
+
+    foreach ([$other, $author] as $user) {
+        Locality::factory()->create(['tree_id' => $user->tree->id, 'name' => 'Lipnica']);
+    }
+
+    $before = ownershipSnapshot();
+
+    $exitCode = Artisan::call('import:research', ['email' => $author->email, 'path' => $repo, '--no-interaction' => true]);
 
     expect($exitCode)->toBe(1)
         ->and(Artisan::output())->toContain('Import wymaga odpowiedzi w terminalu; nic nie zostało zapisane.')

@@ -6,15 +6,18 @@ use App\Actions\Import\ApplyImport;
 use App\Actions\Import\ClassifyRepoRecords;
 use App\Actions\Import\MatchResearchPersons;
 use App\Actions\Import\MatchResearchPlaces;
+use App\Actions\Import\MatchResearchSources;
 use App\Actions\Import\PlanImport;
 use App\Actions\Import\ReadResearchRepo;
 use App\Enums\CemeteryMatchKind;
 use App\Enums\DateQualifier;
 use App\Enums\MatchVerdict;
+use App\Enums\ParishMatchKind;
 use App\Enums\PlaceMatchKind;
 use App\Enums\RepoKeyKind;
 use App\Models\Person;
 use App\Models\RepoSnapshot;
+use App\Models\Source;
 use App\Models\Tree;
 use App\Models\User;
 use App\Support\Import\CemeteryMatches;
@@ -26,13 +29,18 @@ use App\Support\Import\ImportDecisions;
 use App\Support\Import\ImportIssue;
 use App\Support\Import\ImportPlan;
 use App\Support\Import\ImportResult;
+use App\Support\Import\ParishMatches;
+use App\Support\Import\ParishRequest;
+use App\Support\Import\ParishVerdict;
 use App\Support\Import\PersonMatch;
 use App\Support\Import\PersonMatches;
 use App\Support\Import\PlaceDecisions;
 use App\Support\Import\PlaceMatches;
 use App\Support\Import\PlaceUse;
 use App\Support\Import\PlaceVerdict;
+use App\Support\Import\PlannedChange;
 use App\Support\Import\PlannedRemoval;
+use App\Support\Import\PlannedSourceUpdate;
 use App\Support\Import\RemovalImpact;
 use App\Support\Import\RepoRecord;
 use App\Support\Import\RepoRecordClasses;
@@ -40,6 +48,8 @@ use App\Support\Import\RepoValues;
 use App\Support\Import\ResearchDate;
 use App\Support\Import\ResearchPerson;
 use App\Support\Import\ResearchRepoReading;
+use App\Support\Import\SourceDecisions;
+use App\Support\Import\SourceMatches;
 use App\Support\Import\ValueConflict;
 use Illuminate\Console\Attributes\Description;
 use Illuminate\Console\Attributes\Signature;
@@ -62,7 +72,7 @@ class ImportResearch extends Command
      */
     private const OPTION_WIDTH = 74;
 
-    public function handle(ReadResearchRepo $readResearchRepo, ClassifyRepoRecords $classifyRepoRecords, MatchResearchPersons $matchResearchPersons, MatchResearchPlaces $matchResearchPlaces, PlanImport $planImport, ApplyImport $applyImport): int
+    public function handle(ReadResearchRepo $readResearchRepo, ClassifyRepoRecords $classifyRepoRecords, MatchResearchPersons $matchResearchPersons, MatchResearchPlaces $matchResearchPlaces, MatchResearchSources $matchResearchSources, PlanImport $planImport, ApplyImport $applyImport): int
     {
         $email = (string) $this->argument('email');
         $path = (string) $this->argument('path');
@@ -121,14 +131,17 @@ class ImportResearch extends Command
 
         $placeMatches = $matchResearchPlaces->handle($tree, $reading, $classes, new ImportDecisions($identity, $removals, $deletions));
 
-        if (! $this->input->isInteractive() && $this->needsPlaceAnswers($tree, $matchResearchPlaces, $placeMatches)) {
+        $sourceMatches = $matchResearchSources->handle($tree, $reading, $classes, new ImportDecisions($identity, $removals, $deletions));
+
+        if (! $this->input->isInteractive() && ($this->needsPlaceAnswers($tree, $matchResearchPlaces, $placeMatches) || $sourceMatches->matches !== [])) {
             return $this->needsTerminal();
         }
 
         $decisions = new ImportDecisions($identity, $removals, $deletions, $this->decidePlaces($tree, $matchResearchPlaces, $placeMatches, $reading));
+        $sources = $this->decideSourceMatches($sourceMatches);
 
         try {
-            $plan = $planImport->handle($tree, $reading, $classes, $decisions);
+            $plan = $planImport->handle($tree, $reading, $classes, $decisions, $sources);
         } catch (InvalidArgumentException $exception) {
             $this->error($exception->getMessage());
 
@@ -160,8 +173,14 @@ class ImportResearch extends Command
             + count(array_filter($plan->conflicts, fn (ValueConflict $conflict): bool => $resolutions->takesRepo($conflict->key)));
         $removalCount = count(array_filter($plan->removals, fn (PlannedRemoval $removal): bool => $removal->decision === ImportDecisions::DELETE));
         $memoryCount = count($plan->changedSnapshots($stored)) + count(array_filter($plan->forgottenSnapshots, fn (string $key): bool => isset($stored[$key])));
+        $sourceCount = count($plan->newSources) + count($plan->mergedSources);
+        $linkCount = $this->linkCount($plan);
+        $parishCount = count($plan->newParishes);
+        $sourcesText = $sourceCount + $linkCount + $parishCount > 0
+            ? sprintf(', źródła %d, powiązania z faktami %d, nowe parafie %d', $sourceCount, $linkCount, $parishCount)
+            : '';
 
-        if (! $this->confirm("Zapisać do drzewa konta {$email}: nowe osoby {$newCount}, dopasowane {$matchedCount}, zmiany {$changeCount}, usunięcia {$removalCount}, pamięć importu {$memoryCount}?", false)) {
+        if (! $this->confirm("Zapisać do drzewa konta {$email}: nowe osoby {$newCount}, dopasowane {$matchedCount}, zmiany {$changeCount}, usunięcia {$removalCount}, pamięć importu {$memoryCount}{$sourcesText}?", false)) {
             $this->info('Nic nie zostało zapisane.');
 
             return self::SUCCESS;
@@ -226,6 +245,7 @@ class ImportResearch extends Command
             && $plan->relations === []
             && $plan->marriages === []
             && $plan->aliases === []
+            && ! $this->hasSourceWork($plan)
             && $plan->forgottenSnapshots === []
             && $plan->changedSnapshots($stored) === [];
     }
@@ -252,7 +272,7 @@ class ImportResearch extends Command
             $this->newLine();
             $this->table(
                 ['Klucz', 'Skutki usunięcia', 'Dołączone klucze'],
-                [[$entry->key, $this->impactText($entry->impact), $this->memberKeys($entry)]],
+                [[$entry->key, $this->impactText($entry->impact, $entry->kind === RepoKeyKind::Source), $this->memberKeys($entry)]],
             );
 
             $decisions[$entry->key] = $this->choose(
@@ -290,7 +310,7 @@ class ImportResearch extends Command
     }
 
     /**
-     * Whether any place of the repo needs an answer: a new or doubtful locality, or a cemetery to choose.
+     * Whether any place of the repo needs an answer: a new or doubtful locality, a cemetery or a parish to choose, or a new parish.
      */
     private function needsPlaceAnswers(Tree $tree, MatchResearchPlaces $matcher, PlaceMatches $places): bool
     {
@@ -306,12 +326,19 @@ class ImportResearch extends Command
             }
         }
 
+        foreach ($matcher->parishes($tree, $places, new PlaceDecisions)->matches as $verdict) {
+            if (in_array($verdict->kind, [ParishMatchKind::New, ParishMatchKind::Choice], true)) {
+                return true;
+            }
+        }
+
         return false;
     }
 
     /**
      * Ask about the places of the repo, once per name: the new localities together or one by one, each doubtful one
-     * on its own, then the cemeteries with a choice. Sure matches and new cemeteries need no answer.
+     * on its own, then the cemeteries with a choice, the new parishes together or one by one and the parishes with a choice. Sure
+     * matches and new cemeteries need no answer.
      */
     private function decidePlaces(Tree $tree, MatchResearchPlaces $matcher, PlaceMatches $places, ResearchRepoReading $reading): PlaceDecisions
     {
@@ -388,8 +415,190 @@ class ImportResearch extends Command
         }
 
         $cemeteries = $this->decideCemeteries($matcher->cemeteries($tree, $places, new PlaceDecisions($localities, $aliases)), $places, $reading);
+        $parishes = $this->decideParishes($matcher->parishes($tree, $places, new PlaceDecisions($localities, $aliases, $cemeteries)), $places);
 
-        return new PlaceDecisions($localities, $aliases, $cemeteries);
+        return new PlaceDecisions($localities, $aliases, $cemeteries, $parishes);
+    }
+
+    /**
+     * Ask about the parishes and offices the sources name: the new ones together or one by one, then each one with
+     * several candidates. A sure match, or a seat left out, needs no answer.
+     *
+     * @return array<string, int|string> {@see PlaceDecisions::parishKey()} => id of a parish, `NEW` or `NONE`
+     */
+    private function decideParishes(ParishMatches $matches, PlaceMatches $places): array
+    {
+        $new = array_filter($matches->matches, fn (ParishVerdict $verdict): bool => $verdict->kind === ParishMatchKind::New);
+        $choices = array_filter($matches->matches, fn (ParishVerdict $verdict): bool => $verdict->kind === ParishMatchKind::Choice);
+        $decisions = [];
+
+        if ($new !== []) {
+            $rows = [];
+
+            foreach ($new as $verdict) {
+                $request = $verdict->request;
+                $rows[] = [
+                    $this->seatName($request, $places),
+                    $request->kind->label(),
+                    $request->religion?->label() ?? '—',
+                    $request->dedication ?? '—',
+                    $verdict->sourceCount(),
+                ];
+            }
+
+            $this->newLine();
+            $this->line('Nowe parafie i urzędy:');
+            $this->table(['Siedziba', 'Rodzaj', 'Wyznanie', 'Wezwanie', 'Źródeł'], $rows);
+
+            $mode = $this->choose(
+                sprintf('Nowe parafie i urzędy (%d): co zrobić?', count($new)),
+                ['all' => 'Zatwierdź wszystkie', 'each' => 'Przejrzyj pojedynczo'],
+                'all',
+            );
+
+            $position = 0;
+
+            foreach ($new as $key => $verdict) {
+                $position++;
+
+                $decisions[(string) $key] = $mode === 'all' ? PlaceDecisions::NEW : $this->choose(
+                    sprintf('Nowa parafia lub urząd %d/%d: %s (%s)', $position, count($new), $this->parishName($verdict->request, $places), $this->countText($verdict->sourceCount(), ['źródło', 'źródła', 'źródeł'])),
+                    [PlaceDecisions::NEW => 'Dodaj do spisu', PlaceDecisions::NONE => 'Bez parafii'],
+                    PlaceDecisions::NEW,
+                );
+            }
+        }
+
+        $position = 0;
+
+        foreach ($choices as $key => $verdict) {
+            $position++;
+            $name = $this->parishName($verdict->request, $places);
+
+            $this->newLine();
+            $this->line(sprintf('Parafia %d/%d: %s — %s', $position, count($choices), $name, $this->sourceNames($verdict->request->uses)));
+
+            $options = [];
+
+            foreach ($verdict->options as $parish) {
+                $options['parish:'.$parish->id] = $parish->label();
+            }
+
+            $options[PlaceDecisions::NEW] = 'Dodaj nową';
+            $options[PlaceDecisions::NONE] = 'Bez parafii';
+
+            $answer = $this->choose(
+                sprintf('Parafia %d/%d: %s (%s)', $position, count($choices), $name, $this->countText($verdict->sourceCount(), ['źródło', 'źródła', 'źródeł'])),
+                $options,
+                PlaceDecisions::NONE,
+            );
+
+            $decisions[(string) $key] = str_starts_with($answer, 'parish:') ? (int) substr($answer, strlen('parish:')) : $answer;
+        }
+
+        return $decisions;
+    }
+
+    private function seatName(ParishRequest $request, PlaceMatches $places): string
+    {
+        return $places->localities[$request->localityKey]->name ?? $request->localityKey;
+    }
+
+    /**
+     * A parish as the list of the app names it: the seat, the kind, the dedication and the religion.
+     */
+    private function parishName(ParishRequest $request, PlaceMatches $places): string
+    {
+        $label = implode(' ', array_filter(
+            [$this->seatName($request, $places), $request->kind->labelSuffix(), $request->dedication],
+            fn (?string $part): bool => $part !== null && $part !== '',
+        ));
+
+        return $request->religion === null ? $label : "{$label} ({$request->religion->shortLabel()})";
+    }
+
+    /**
+     * The sources that name a parish, e.g. "ZR-0001, ZR-0002", at most five.
+     *
+     * @param  list<PlaceUse>  $uses
+     */
+    private function sourceNames(array $uses): string
+    {
+        $ids = array_values(array_unique(array_map(fn (PlaceUse $use): string => $use->repoId, $uses)));
+
+        return implode(', ', array_slice($ids, 0, 5)).(count($ids) > 5 ? sprintf(' i %d innych', count($ids) - 5) : '');
+    }
+
+    /**
+     * Ask, for each new source of the repo that may hold the scan of a manual source, whether it is that source. The
+     * default is a new source.
+     */
+    private function decideSourceMatches(SourceMatches $matches): SourceDecisions
+    {
+        $merges = [];
+        $taken = [];
+        $position = 0;
+        $total = count($matches->matches);
+
+        foreach ($matches->matches as $repoId => $match) {
+            $position++;
+            $source = $match->source;
+            $name = PlannedSourceUpdate::labelOf($source);
+
+            $rows = [['Z repo', $source->id, PlanImport::cleanText($source->name) ?? '—', basename($source->scanPath), $source->recordType?->label() ?? '—', $source->year ?? '—', '—']];
+            $options = ['new' => 'Dodaj jako nowe'];
+            $labels = array_count_values(array_map(fn (Source $candidate): string => $candidate->original_name, $match->candidates));
+
+            foreach ($match->candidates as $candidate) {
+                $facts = $candidate->events->map(fn ($event): string => trim($event->type->label().' '.(ResearchDate::fromEvent($event)?->label() ?? '')))->implode(', ');
+                $rows[] = ['Ręczne', '#'.$candidate->id, $candidate->name ?? '—', $candidate->original_name, $candidate->record_type?->label() ?? '—', $candidate->year ?? '—', $facts === '' ? '—' : $facts];
+
+                if (! isset($taken[$candidate->id])) {
+                    $options['source:'.$candidate->id] = 'Połącz z '.$candidate->original_name.($labels[$candidate->original_name] > 1 ? ' (#'.$candidate->id.')' : '');
+                }
+            }
+
+            $this->newLine();
+            $this->line(sprintf('Źródło %d/%d: to ten sam skan?', $position, $total));
+            $this->table(['', 'ID', 'Nazwa', 'Plik', 'Typ', 'Rok', 'Fakt'], $rows);
+
+            $answer = $this->choose(sprintf('Źródło %d/%d: %s — to ten sam skan?', $position, $total, $name), $options, 'new');
+
+            if (str_starts_with($answer, 'source:')) {
+                $id = (int) substr($answer, strlen('source:'));
+                $merges[(string) $repoId] = $id;
+                $taken[$id] = true;
+            }
+        }
+
+        return new SourceDecisions($merges);
+    }
+
+    private function hasSourceWork(ImportPlan $plan): bool
+    {
+        return $plan->newSources !== [] || $plan->mergedSources !== [] || $plan->sourceUpdates !== [] || $plan->newParishes !== [];
+    }
+
+    /**
+     * The links of facts to sources that the plan creates together with records: the births and deaths of new, matched and known persons, new weddings and restored records and sources.
+     */
+    private function linkCount(ImportPlan $plan): int
+    {
+        $links = 0;
+
+        foreach ([...$plan->persons, ...$plan->matched, ...$plan->updates] as $planned) {
+            $links += count($planned->birthSources) + count($planned->deathSources);
+        }
+
+        foreach ($plan->marriages as $marriage) {
+            $links += count($marriage->sources);
+        }
+
+        foreach ($plan->restorations as $restoration) {
+            $links += count($restoration->sources) + ($restoration->source === null ? 0 : count($restoration->source->entries));
+        }
+
+        return $links;
     }
 
     /**
@@ -548,7 +757,7 @@ class ImportResearch extends Command
         return str_ends_with($field, '_place') ? $text : Str::limit($text, self::OPTION_WIDTH);
     }
 
-    private function impactText(?RemovalImpact $impact): string
+    private function impactText(?RemovalImpact $impact, bool $source = false): string
     {
         if ($impact === null || $impact->isEmpty()) {
             return 'brak';
@@ -556,12 +765,16 @@ class ImportResearch extends Command
 
         $parts = [];
 
+        if ($impact->scan) {
+            $parts[] = 'skan do usunięcia';
+        }
+
         if ($impact->photo) {
             $parts[] = 'zdjęcie';
         }
 
         if ($impact->sourceLinks > 0) {
-            $parts[] = "powiązania ze źródłami: {$impact->sourceLinks}";
+            $parts[] = ($source ? 'powiązania z faktami: ' : 'powiązania ze źródłami: ').$impact->sourceLinks;
         }
 
         if ($impact->burial) {
@@ -608,7 +821,7 @@ class ImportResearch extends Command
         $parts = [];
 
         foreach ([$entry, ...$entry->members] as $each) {
-            $values = array_filter(RepoValues::forKey($each->key, $reading) ?? [], fn (?string $value): bool => $value !== null);
+            $values = array_filter(RepoValues::forKey($each->key, $reading) ?? [], fn (?string $value, string $field): bool => $value !== null && $field !== 'plik_hash', ARRAY_FILTER_USE_BOTH);
             $pairs = array_map(
                 fn (string $field, string $value): string => $field.': '.Str::limit($field === 'warianty' ? str_replace("\n", ', ', $value) : (strtok($value, "\n") ?: '—'), 60),
                 array_keys($values),
@@ -638,8 +851,22 @@ class ImportResearch extends Command
             RepoKeyKind::Burial => 'Pochowanie: '.$name($entry->personIds[0]),
             RepoKeyKind::Relation => sprintf('Relacja: %s → %s', $name($entry->personIds[0]), $name($entry->personIds[1])),
             RepoKeyKind::Marriage => sprintf('Małżeństwo: %s i %s', $name($entry->personIds[0]), $name($entry->personIds[1])),
-            RepoKeyKind::Source => 'Źródło: '.$entry->key,
+            RepoKeyKind::Source => 'Źródło: '.$this->sourceName($entry, $reading),
         };
+    }
+
+    /**
+     * The name of a source for a question: its name, or the scan file when it has none; the repo id is in the question.
+     */
+    private function sourceName(RepoRecord $entry, ResearchRepoReading $reading): string
+    {
+        $research = $reading->sources[$entry->key] ?? null;
+
+        if ($entry->record instanceof Source) {
+            return PlanImport::cleanText($entry->record->name) ?? $entry->record->original_name;
+        }
+
+        return $research === null ? $entry->key : (PlanImport::cleanText($research->name) ?? basename($research->scanPath));
     }
 
     private function matchSummary(PersonMatches $matches): void
@@ -952,6 +1179,17 @@ class ImportResearch extends Command
         $this->line(sprintf('  poziomy pewności: %d (S-08)', $notes->levels));
         $this->line(sprintf('  notatki wydarzeń: %d', $notes->eventNotes));
 
+        if ($this->hasSourceWork($plan)) {
+            $this->line(sprintf(
+                'Źródła: %d nowych, %d połączone z ręcznymi, %d nowy plik skanu; powiązania z faktami: %d; nowe parafie: %d',
+                count($plan->newSources),
+                count($plan->mergedSources),
+                count(array_filter($plan->changes, fn (PlannedChange $change): bool => $change->field === 'file')),
+                $this->linkCount($plan),
+                count($plan->newParishes),
+            ));
+        }
+
         $this->issueTable('Pominięte osoby', ['Plik', 'Powód'], $plan->skippedPersons);
         $this->issueTable('Pominięte relacje', ['Plik', 'Powód'], $plan->skippedRelations);
         $this->issueTable('Pominięte małżeństwa', ['Plik', 'Powód'], $plan->skippedMarriages);
@@ -1034,6 +1272,19 @@ class ImportResearch extends Command
             $result->restored,
             $result->keptDeleted,
         ));
+
+        if ($result->newSources + $result->mergedSources + $result->changedSources + $result->removedSources + $result->detachedSources + $result->newParishes + $result->linksAdded + $result->linksRemoved > 0) {
+            $this->line(sprintf(
+                'Źródła: nowe %d, połączone z ręcznymi %d, zmienione %d (podmienione pliki: %d), usunięte %d, odłączone od repo %d',
+                $result->newSources,
+                $result->mergedSources,
+                $result->changedSources,
+                $result->replacedFiles,
+                $result->removedSources,
+                $result->detachedSources,
+            ));
+            $this->line(sprintf('Powiązania z faktami: dopięte %d, odpięte %d; nowe parafie: %d', $result->linksAdded, $result->linksRemoved, $result->newParishes));
+        }
 
         if ($tree->refresh()->root_person_id !== null) {
             return;

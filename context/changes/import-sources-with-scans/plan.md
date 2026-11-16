@@ -784,9 +784,9 @@ Odczyt liczy sha256 każdego skanu w blokach. Przy ok. 150 plikach i do 8 MB to 
 
 #### Automated
 
-- [ ] 5.1 Testy zapisu przechodzą
-- [ ] 5.2 Testy źródeł i parafii przechodzą
-- [ ] 5.3 Analiza statyczna i formatowanie
+- [x] 5.1 Testy zapisu przechodzą — 90b8665
+- [x] 5.2 Testy źródeł i parafii przechodzą — 90b8665
+- [x] 5.3 Analiza statyczna i formatowanie — 90b8665
 
 ### Phase 6: Komenda
 
