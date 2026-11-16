@@ -1458,8 +1458,8 @@ test('imports the sources of a repo after the questions about parishes and manua
         ->expectsChoice('Nowe parafie i urzędy (1): co zrobić?', 'all', PLACES_MODE_OPTIONS, true)
         ->expectsChoice('Parafia 1/1: Lipnica św. Jana (rzym.-kat.) (1 źródło)', PlaceDecisions::NONE, $parishOptions, true)
         ->expectsChoice('Źródło 1/1: Akt urodzenia 15/1837 (ZR-0001) — to ten sam skan?', 'new', ['new' => 'Dodaj jako nowe', "source:{$manual->id}" => "Połącz z {$manual->original_name}"], true)
-        ->expectsOutputToContain('Źródła: 2 nowych, 0 połączone z ręcznymi, 0 nowy plik skanu; powiązania z faktami: 1; nowe parafie: 1')
-        ->expectsConfirmation(saveQuestion(1, 1, 6, changes: 1, sources: '2, powiązania z faktami 1, nowe parafie 1'), 'yes')
+        ->expectsOutputToContain('Źródła: 2 nowych, 0 połączone z ręcznymi, 0 nowy plik skanu; powiązania z faktami: 2; nowe parafie: 1')
+        ->expectsConfirmation(saveQuestion(1, 1, 6, changes: 1, sources: '2, powiązania z faktami 2, nowe parafie 1'), 'yes')
         ->expectsOutputToContain('Źródła: nowe 2, połączone z ręcznymi 0, zmienione 0 (podmienione pliki: 0), usunięte 0, odłączone od repo 0')
         ->expectsOutputToContain('nowe parafie: 1')
         ->assertSuccessful();
@@ -1505,7 +1505,7 @@ test('takes a changed entry number of the repo as a change to approve', function
     $this->artisan('import:research', ['email' => $author->email, 'path' => $repo])
         ->expectsOutputToContain('Zmiany z repo:')
         ->expectsChoice('Zmiany z repo (1): co zrobić?', 'all', CHANGES_ALL, true)
-        ->expectsConfirmation(saveQuestion(0, 0, 1, changes: 1), 'yes')
+        ->expectsConfirmation(saveQuestion(0, 0, 1, changes: 1, sources: '0, powiązania z faktami 1, nowe parafie 0'), 'yes')
         ->assertSuccessful();
 
     $link = $author->tree->events()->where('repo_id', 'O-0001/urodzenie')->firstOrFail()->sources()->firstOrFail();

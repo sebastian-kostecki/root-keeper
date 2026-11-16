@@ -32,6 +32,7 @@ use App\Support\Import\SourceLinks;
 use App\Support\Import\SourcePlan;
 use App\Support\Import\ThreeWayValue;
 use App\Support\Import\ValueConflict;
+use Illuminate\Support\Facades\Storage;
 
 /**
  * @phpstan-type Item PlannedChange|PlannedFill|ValueConflict
@@ -53,6 +54,13 @@ class PlanResearchSources
     public function handle(Tree $tree, ResearchRepoReading $reading, RepoRecordClasses $classes, SourceDecisions $decisions, PlaceResolver $places, array $memory, ImportDecisions $import): SourcePlan
     {
         $skipped = array_fill_keys($reading->skippedSourceIds(), true);
+
+        foreach ($classes->unassessable as $entry) {
+            if ($entry->kind === RepoKeyKind::Source) {
+                $skipped[$entry->key] = true;
+            }
+        }
+
         $unavailable = $skipped;
         $restored = [];
 
@@ -255,6 +263,18 @@ class PlanResearchSources
     }
 
     /**
+     * The sha256 of the scan the app holds for a source, `null` when the file is missing. Read only when the repo brings a
+     * new scan: a copy the import made equals the remembered hash, the manual scan of a joined source does not, so it
+     * is never replaced without the author's answer.
+     */
+    private function storedHash(Source $source): ?string
+    {
+        $disk = Storage::disk('local');
+
+        return $disk->exists($source->path) ? (hash_file('sha256', $disk->path($source->path)) ?: null) : null;
+    }
+
+    /**
      * The values of the description the repo gives to the empty fields of the manual source it is joined to. The record
      * type and the parish belong to a metrical record only.
      *
@@ -338,9 +358,10 @@ class PlanResearchSources
         }
 
         [$hasLast, $last] = PlanImport::lastOf($snapshot, 'plik_hash');
-        $outcome = ThreeWayValue::compare($research->scanHash, $hasLast, $last, $hasLast ? $last : $research->scanHash);
+        $app = $hasLast && $last !== $research->scanHash ? $this->storedHash($source) : ($hasLast ? $last : $research->scanHash);
+        $outcome = ThreeWayValue::compare($research->scanHash, $hasLast, $last, $app);
         $previous = $snapshot !== null && is_string($snapshot->values['plik'] ?? null) ? $snapshot->values['plik'] : $source->original_name;
-        $item = PlanImport::itemFor($outcome, 'file', 'Plik skanu', "{$id}/plik", $who, $previous, $research->scanPath, $previous, $hasLast, $research->scanPath);
+        $item = PlanImport::itemFor($outcome, 'file', 'Plik skanu', "{$id}/plik", $who, $app === $last ? $previous : $source->original_name, $research->scanPath, $previous, $hasLast, $research->scanPath);
 
         if ($item !== null) {
             $items[] = $item;

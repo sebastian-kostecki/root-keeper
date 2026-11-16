@@ -667,6 +667,20 @@ test('warns about unknown keys, fields that only an act has and an archive that 
         ->and($messages)->toContain('archiwum wygląda na sygnaturę');
 });
 
+test('reads a source of another kind with a wrong record type or an incomplete parish, leaving both fields out with a warning', function () {
+    $run = readTemporaryRepo([
+        'zrodla/skany/a.jpg' => scanImage(),
+        'zrodla/z.md' => sourceBlock(sourceEntry('ZR-0001', extra: "    rodzaj: inne\n    typ: chrzest\n    parafia:\n      wezwanie: św. Jana\n")),
+    ]);
+    $messages = messagesFor($run['reading']->warnings, 'zrodla/z.md');
+
+    expect($run['reading']->skippedSources)->toBe([])
+        ->and($run['reading']->sources['ZR-0001']->recordType)->toBeNull()
+        ->and($run['reading']->sources['ZR-0001']->parish)->toBeNull()
+        ->and($messages)->toContain('pole typ dotyczy tylko aktu')
+        ->and($messages)->toContain('pole parafia dotyczy tylko aktu');
+});
+
 test('keeps the sources of an event sorted, as text, without repeated ids', function () {
     $run = readTemporaryRepo([
         'zrodla/skany/a.jpg' => scanImage(),

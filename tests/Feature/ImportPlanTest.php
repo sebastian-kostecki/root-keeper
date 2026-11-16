@@ -51,6 +51,7 @@ use App\Support\Import\SourceDecisions;
 use App\Support\Import\SourceLinks;
 use App\Support\Import\ValueConflict;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Storage;
 
 /**
  * An author with an empty tree and another account that holds persons named like the fixture ones.
@@ -2171,8 +2172,18 @@ test('keeps a source description changed by hand while the repo did not move and
 });
 
 test('plans a new scan as a change by its hash and a moved scan only in the memory', function () {
+    Storage::fake('local');
     $first = srcReading(['O-0001' => srcPerson(['ZR-0001' => '15/1837'])], SRC_ONE);
-    [$tree] = srcTwinTrees($first);
+    [$tree, , $built] = srcTwinTrees($first);
+    $image = imagecreatetruecolor(8, 8);
+    imagefill($image, 0, 0, imagecolorallocate($image, 20, 20, 20));
+    ob_start();
+    imagejpeg($image);
+    $importCopy = (string) ob_get_clean();
+    Storage::disk('local')->put($built['sources']['ZR-0001']->path, $importCopy);
+
+    expect(hash('sha256', $importCopy))->toBe($first->sources['ZR-0001']->scanHash);
+
     $newScan = srcReading(['O-0001' => srcPerson(['ZR-0001' => '15/1837'])], ['ZR-0001' => [...SRC_ONE['ZR-0001'], 'shade' => 200]]);
     $moved = srcReading(['O-0001' => srcPerson(['ZR-0001' => '15/1837'])], ['ZR-0001' => [...SRC_ONE['ZR-0001'], 'path' => 'zrodla/skany/inna.jpg']]);
 

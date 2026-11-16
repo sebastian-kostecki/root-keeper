@@ -20,7 +20,7 @@ final readonly class SourcePlan
      * @param  int  $kept  fields changed by hand while the repo did not move, left alone
      * @param  array<string, true>  $available  ids of the sources that have a record after the import: known, new, joined and restored
      * @param  array<string, true>  $unavailable  ids left out this run: skipped by the reading, left deleted, detached or removed
-     * @param  array<string, true>  $skipped  ids the reading skipped
+     * @param  array<string, true>  $skipped  ids the reading skipped, and ids of sources of the tree held back from removal because an entry or a file of zrodla/ could not be read: this run cannot tell what the repo says about them
      * @param  array<string, true>  $apart  ids joined or restored in this run: their links are written with the source, so the three values of an event leave them out
      */
     public function __construct(

@@ -49,6 +49,7 @@ use App\Support\Import\ResearchDate;
 use App\Support\Import\ResearchPerson;
 use App\Support\Import\ResearchRepoReading;
 use App\Support\Import\SourceDecisions;
+use App\Support\Import\SourceLinks;
 use App\Support\Import\SourceMatches;
 use App\Support\Import\ValueConflict;
 use Illuminate\Console\Attributes\Description;
@@ -580,7 +581,7 @@ class ImportResearch extends Command
     }
 
     /**
-     * The links of facts to sources that the plan creates together with records: the births and deaths of new, matched and known persons, new weddings and restored records and sources.
+     * The links of facts to sources the plan writes: the ones created together with records (the births and deaths of new, matched and known persons, new weddings, restored records and sources), the ones a joined source takes, and the links the repo gives to existing facts through fills and changes (counted as the links the fact ends with). A conflict is left out, because the author settles it later.
      */
     private function linkCount(ImportPlan $plan): int
     {
@@ -590,8 +591,22 @@ class ImportResearch extends Command
             $links += count($planned->birthSources) + count($planned->deathSources);
         }
 
+        foreach ([...$plan->matched, ...$plan->updates] as $planned) {
+            foreach ($planned->fills as $fill) {
+                $links += $fill->value instanceof SourceLinks ? count($fill->value->links) : 0;
+            }
+        }
+
         foreach ($plan->marriages as $marriage) {
-            $links += count($marriage->sources);
+            $links += count($marriage->sources) + ($marriage->sourceFill?->value instanceof SourceLinks ? count($marriage->sourceFill->value->links) : 0);
+        }
+
+        foreach ($plan->changes as $change) {
+            $links += $change->repoValue instanceof SourceLinks ? count($change->repoValue->links) : 0;
+        }
+
+        foreach ($plan->mergedSources as $merge) {
+            $links += count($merge->entries);
         }
 
         foreach ($plan->restorations as $restoration) {

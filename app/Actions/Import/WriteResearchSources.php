@@ -16,6 +16,8 @@ use App\Support\Import\ChangeApprovals;
 use App\Support\Import\ConflictResolutions;
 use App\Support\Import\CopiedFiles;
 use App\Support\Import\ImportPlan;
+use App\Support\Import\PlannedChange;
+use App\Support\Import\PlannedFill;
 use App\Support\Import\PlannedPlace;
 use App\Support\Import\PlannedRemoval;
 use App\Support\Import\PlannedSource;
@@ -25,6 +27,7 @@ use App\Support\Import\RepoKeys;
 use App\Support\Import\ResearchSource;
 use App\Support\Import\SourceLinks;
 use App\Support\Import\SourceWriteResult;
+use App\Support\Import\ValueConflict;
 use App\Support\Import\WrittenPlaces;
 use Illuminate\Http\File;
 use Illuminate\Support\Collection;
@@ -69,9 +72,13 @@ class WriteResearchSources
         $changed = 0;
         $replaced = 0;
 
-        foreach ([...$plan->newSources, ...$this->restoredSources($plan)] as $planned) {
+        foreach ($plan->newSources as $planned) {
             $this->create($tree, $planned, $written, $copied);
             $created++;
+        }
+
+        foreach ($this->restoredSources($plan) as $planned) {
+            $this->create($tree, $planned, $written, $copied);
         }
 
         foreach ($plan->mergedSources as $merge) {
@@ -123,19 +130,26 @@ class WriteResearchSources
             ...array_map(fn (PlannedSourceMerge $merge): int => $merge->sourceId, $plan->mergedSources),
         ];
 
-        /** @var array<int, string|null> $repoIds */
-        $repoIds = $ids === [] ? [] : $tree->sources()->whereIn('id', $ids)->orderBy('id')->lockForUpdate()->pluck('repo_id', 'id')->all();
+        $sources = $ids === [] ? new Collection : $tree->sources()->whereIn('id', $ids)->orderBy('id')->lockForUpdate()->get()->keyBy('id');
 
         foreach ($plan->sourceUpdates as $update) {
-            if (($repoIds[$update->sourceId] ?? null) !== $update->source->id) {
+            $source = $sources->get($update->sourceId);
+
+            if ($source === null || $source->repo_id !== $update->source->id) {
                 throw new RuntimeException("Źródło {$update->source->id} (#{$update->sourceId}) zmieniło się po planowaniu; nic nie zostało zapisane.");
             }
+
+            $this->guardFields($tree, $source, $this->takenItems($update, $approvals, $resolutions), $update->source->id);
         }
 
         foreach ($plan->mergedSources as $merge) {
-            if (! array_key_exists($merge->sourceId, $repoIds) || $repoIds[$merge->sourceId] !== null) {
+            $source = $sources->get($merge->sourceId);
+
+            if ($source === null || $source->repo_id !== null) {
                 throw new RuntimeException("Źródło #{$merge->sourceId}, które plan łączy z {$merge->source->id}, zmieniło się po planowaniu; nic nie zostało zapisane.");
             }
+
+            $this->guardFields($tree, $source, $merge->fills, "#{$merge->sourceId}");
         }
 
         foreach ($this->scansToCopy($plan, $approvals, $resolutions) as $research) {
@@ -535,23 +549,70 @@ class WriteResearchSources
     {
         $values = [];
 
-        foreach ($update->fills as $fill) {
-            $values[$fill->field] = $fill->value;
-        }
-
-        foreach ($update->changes as $change) {
-            if (! $approvals->rejects($change->key)) {
-                $values[$change->field] = $change->repoValue;
-            }
-        }
-
-        foreach ($update->conflicts as $conflict) {
-            if ($resolutions->takesRepo($conflict->key)) {
-                $values[$conflict->field] = $conflict->repoValue;
-            }
+        foreach ($this->takenItems($update, $approvals, $resolutions) as $item) {
+            $values[$item->field] = $item instanceof PlannedFill ? $item->value : $item->repoValue;
         }
 
         return $values;
+    }
+
+    /**
+     * The items of a known source the write takes: the fills, the changes the author did not reject and the conflicts
+     * settled for the repo.
+     *
+     * @return list<PlannedFill|PlannedChange|ValueConflict>
+     */
+    private function takenItems(PlannedSourceUpdate $update, ChangeApprovals $approvals, ConflictResolutions $resolutions): array
+    {
+        return [
+            ...$update->fills,
+            ...array_values(array_filter($update->changes, fn (PlannedChange $change): bool => ! $approvals->rejects($change->key))),
+            ...array_values(array_filter($update->conflicts, fn (ValueConflict $conflict): bool => $resolutions->takesRepo($conflict->key))),
+        ];
+    }
+
+    /**
+     * Check that every field of a source the write takes still holds what the plan saw: a fill an empty field, a change
+     * or a conflict the value the author was shown. The scan is left out, because the app cannot replace it.
+     *
+     * @param  list<PlannedFill|PlannedChange|ValueConflict>  $items
+     *
+     * @throws RuntimeException
+     */
+    private function guardFields(Tree $tree, Source $source, array $items, string $who): void
+    {
+        foreach ($items as $item) {
+            if ($item->field === 'file') {
+                continue;
+            }
+
+            $planned = $item instanceof PlannedFill || $item->appLabel !== PlanImport::EMPTY_LABEL ? $item->appLabel : null;
+
+            if ($this->fieldLabel($tree, $source, $item->field) !== $planned) {
+                throw new RuntimeException("Źródło {$who}: pole {$item->label} zmieniło się po planowaniu; nic nie zostało zapisane.");
+            }
+        }
+    }
+
+    /**
+     * A field of a source as the plan shows it to the author, `null` for an empty one.
+     *
+     * @throws RuntimeException
+     */
+    private function fieldLabel(Tree $tree, Source $source, string $field): ?string
+    {
+        return match ($field) {
+            'kind' => $source->kind->label(),
+            'record_type' => $source->record_type?->label(),
+            'name' => PlanImport::cleanText($source->name),
+            'year' => $source->year === null ? null : (string) $source->year,
+            'parish' => $source->parish_id === null ? null : $tree->parishes()->whereKey($source->parish_id)->first()?->label(),
+            'archive' => PlanImport::cleanText($source->archive),
+            'signature' => PlanImport::cleanText($source->signature),
+            'url' => PlanImport::cleanText($source->url),
+            'note' => PlanImport::cleanText($source->note),
+            default => throw new RuntimeException("Plan ma niewłaściwe pole {$field} dla źródła #{$source->id}."),
+        };
     }
 
     /**

@@ -123,6 +123,7 @@ Ten sam podział „decyzja / zapis” co w S-03 do S-05.
 - **Zmiana zawartości.** Aplikacja nie ma własnej podmiany pliku, więc A = S. Inny hash w repo to zawsze „zmiana” na liście zmian, a zatwierdzona podmienia plik i miniaturę przez `ReplaceSourceFile`.
 - **Sama zmiana ścieżki** przy tym samym hashu aktualizuje tylko pamięć.
 - **Źródło połączone z ręcznym** zapisuje hash pliku z repo. Późniejsza zmiana pliku w repo jest więc zmianą do zatwierdzenia, a autor może ją odrzucić i zachować swój skan.
+  - *Poprawka z przeglądu (2026-11-16, F2):* gdy repo zmienia skan, planer liczy A z pliku w aplikacji. Ręczny skan połączonego źródła daje więc konflikt (domyślnie zostaje skan z aplikacji), a nie zmianę w zbiorczym zatwierdzeniu, bo jego pliku nie ma ani w repo, ani w kopii bazy.
 
 **Powiązania to pole zdarzenia `zrodla`.** Pamięć zdarzenia dostaje `zrodla` jako kanoniczny tekst `ZR-0012=15/1837;ZR-0013=`, posortowany po ID, z pustym numerem po `=`. Klucz dochodzi tylko wtedy, gdy zdarzenie ma w repo powiązania albo miało je w pamięci. Reguła trzech wartości:
 - R = powiązania z repo tylko ze źródłami, które po tym imporcie będą miały rekord: znane, nowe, połączone, przywrócone,
@@ -134,6 +135,8 @@ Ten sam podział „decyzja / zapis” co w S-03 do S-05.
 - zostawione usunięte w aplikacji („Zostaw usunięte”),
 - odłączane („Zostaw — odłącz od repo”),
 - usuwane („Usuń z aplikacji”).
+
+*Poprawka z przeglądu (2026-11-16, F1):* źródło drzewa wstrzymane od usunięcia, bo plik albo wpis w `zrodla/` był nieczytelny, liczy się jak pominięte w odczycie. Zdarzenie, które je wskazuje, nie jest porównywane, a strażnik i zapis zostawiają jego powiązanie.
 
 Decyzje o usunięciach zapadają przed planem, więc planer zna ten zbiór od początku. R, S i A pomijają niedostępne ID tak samo, więc ich powiązania nie dają pozycji „odepnij”: odłączane zostają jako ręczne, a usuwane znikają kaskadą. Pamięć `zrodla` to R po tym filtrze. Buduje ją `PlanImport` (Faza 4), nie `RepoValues::event`, więc pamięć i R się nie rozjeżdżają.
 
@@ -752,7 +755,7 @@ Odczyt liczy sha256 każdego skanu w blokach. Przy ok. 150 plikach i do 8 MB to 
 
 #### Manual
 
-- [ ] 1.5 Pole „Sygnatura” w panelu aktu, brak przy nagrobku, filtr archiwum bez zmian
+- [x] 1.5 Pole „Sygnatura” w panelu aktu, brak przy nagrobku, filtr archiwum bez zmian — zaakceptowane przez autora
 
 ### Phase 2: Kontrakt i odczyt źródeł
 
@@ -763,7 +766,7 @@ Odczyt liczy sha256 każdego skanu w blokach. Przy ok. 150 plikach i do 8 MB to 
 
 #### Manual
 
-- [ ] 2.3 Raport na `test-pack-sources` z odpowiedzią „nie” i niezmieniona kopia repo
+- [x] 2.3 Raport na `test-pack-sources` z odpowiedzią „nie” i niezmieniona kopia repo — zaakceptowane przez autora
 
 ### Phase 3: Dopasowanie parafii i ręcznych źródeł
 
@@ -799,7 +802,7 @@ Odczyt liczy sha256 każdego skanu w blokach. Przy ok. 150 plikach i do 8 MB to 
 
 #### Manual
 
-- [ ] 6.5 Import `test-pack-sources`: raport, pytania, źródła w `/sources` z opisem i sygnaturą
-- [ ] 6.6 Panel osoby: źródła z numerem wpisu, rozkładówka przy dwóch faktach
-- [ ] 6.7 Drugi przebieg „Nic do zapisania.”, ręczny skan zostaje
-- [ ] 6.8 Kopia repo badawczego niezmieniona po imporcie
+- [x] 6.5 Import `test-pack-sources`: raport, pytania, źródła w `/sources` z opisem i sygnaturą — zaakceptowane przez autora
+- [x] 6.6 Panel osoby: źródła z numerem wpisu, rozkładówka przy dwóch faktach — zaakceptowane przez autora
+- [x] 6.7 Drugi przebieg „Nic do zapisania.”, ręczny skan zostaje — zaakceptowane przez autora
+- [x] 6.8 Kopia repo badawczego niezmieniona po imporcie — zaakceptowane przez autora
