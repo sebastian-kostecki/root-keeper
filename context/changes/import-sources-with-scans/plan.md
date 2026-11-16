@@ -776,9 +776,9 @@ Odczyt liczy sha256 każdego skanu w blokach. Przy ok. 150 plikach i do 8 MB to 
 
 #### Automated
 
-- [ ] 4.1 Testy planu i klasyfikacji przechodzą
-- [ ] 4.2 Istniejące testy importu przechodzą bez zmiany oczekiwanych pól pamięci
-- [ ] 4.3 Analiza statyczna i formatowanie
+- [x] 4.1 Testy planu i klasyfikacji przechodzą — d14b38b
+- [x] 4.2 Istniejące testy importu przechodzą bez zmiany oczekiwanych pól pamięci — d14b38b
+- [x] 4.3 Analiza statyczna i formatowanie — d14b38b
 
 ### Phase 5: Zapis źródeł
 
