@@ -27,6 +27,15 @@ final readonly class ImportResult
      * @param  int  $newLocalities  localities the write added to the gazetteer
      * @param  int  $newCemeteries  cemeteries the write added
      * @param  int  $aliases  variants of a locality name the write remembered
+     * @param  int  $newParishes  parishes and offices the write added
+     * @param  int  $newSources  sources added with a copy of their scan, restored ones included
+     * @param  int  $mergedSources  manual sources that became the source of the repo
+     * @param  int  $changedSources  known sources that got a value of the description or a new scan
+     * @param  int  $replacedFiles  scans replaced by a new file of the repo
+     * @param  int  $removedSources  sources the repo dropped and the author had removed with their scan
+     * @param  int  $detachedSources  sources the repo dropped that stay in the tree without a repo id
+     * @param  int  $linksAdded  links of events to sources the write added
+     * @param  int  $linksRemoved  links of events to sources of the repo the write removed
      */
     public function __construct(
         public int $persons,
@@ -51,5 +60,14 @@ final readonly class ImportResult
         public int $newLocalities = 0,
         public int $newCemeteries = 0,
         public int $aliases = 0,
+        public int $newParishes = 0,
+        public int $newSources = 0,
+        public int $mergedSources = 0,
+        public int $changedSources = 0,
+        public int $replacedFiles = 0,
+        public int $removedSources = 0,
+        public int $detachedSources = 0,
+        public int $linksAdded = 0,
+        public int $linksRemoved = 0,
     ) {}
 }

@@ -12,10 +12,12 @@ final readonly class WrittenPlaces
     /**
      * @param  array<string, int>  $localities  key of the name => id of the locality the write added
      * @param  array<string, int>  $cemeteries  {@see PlaceResolver::newCemeteryKey()} => id of the cemetery the write added
+     * @param  array<string, int>  $parishes  {@see PlaceResolver::newParishKey()} => id of the parish the write added
      */
     public function __construct(
         public array $localities = [],
         public array $cemeteries = [],
+        public array $parishes = [],
     ) {}
 
     /**
@@ -35,7 +37,15 @@ final readonly class WrittenPlaces
     }
 
     /**
-     * A token of the memory of an import with the id the write gave: `N:<key>` becomes `L:<id>` or `C:<id>`, and `null`
+     * The parish a planned place names: the one the plan names or the one the write added.
+     */
+    public function parishId(PlannedPlace $place): ?int
+    {
+        return $place->parishId ?? ($place->newParish === null ? null : ($this->parishes[$place->newParish] ?? null));
+    }
+
+    /**
+     * A token of the memory of an import with the id the write gave: `N:<key>` becomes `L:<id>`, `C:<id>` or `P:<id>`, and `null`
      * when the place was not added. Any other token stays as it is.
      */
     public function token(?string $token): ?string
@@ -48,6 +58,7 @@ final readonly class WrittenPlaces
 
         return match (true) {
             isset($this->cemeteries[$key]) => 'C:'.$this->cemeteries[$key],
+            isset($this->parishes[$key]) => 'P:'.$this->parishes[$key],
             isset($this->localities[$key]) => 'L:'.$this->localities[$key],
             default => null,
         };

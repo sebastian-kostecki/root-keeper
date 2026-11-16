@@ -7,15 +7,20 @@ use App\Actions\Import\ReadResearchRepo;
 use App\Actions\Persons\DeletePerson;
 use App\Actions\Relations\CreateMarriage;
 use App\Actions\Relations\CreateParentChildRelation;
+use App\Actions\Sources\DeleteSource;
 use App\Enums\DateQualifier;
 use App\Enums\EventType;
 use App\Enums\Gender;
 use App\Enums\MarriageForm;
+use App\Enums\ParishKind;
 use App\Enums\ParticipantRole;
+use App\Enums\Religion;
+use App\Enums\SourceRecordType;
 use App\Models\Cemetery;
 use App\Models\Event;
 use App\Models\Locality;
 use App\Models\ParentChildRelation;
+use App\Models\Parish;
 use App\Models\Person;
 use App\Models\PersonSurnameVariant;
 use App\Models\RepoSnapshot;
@@ -33,6 +38,7 @@ use App\Support\Import\NoteBlock;
 use App\Support\Import\PlaceDecisions;
 use App\Support\Import\PlannedMatch;
 use App\Support\Import\ResearchRepoReading;
+use App\Support\Import\SourceDecisions;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
@@ -1934,3 +1940,424 @@ function arrangeAuthorWithTwinPeople(): array
 
     return [$author->tree, ['jan' => Person::factory()->for($author->tree)->create(['first_name' => 'Jan', 'last_name' => 'Misiuk'])]];
 }
+
+afterEach(function (): void {
+    foreach (glob(sys_get_temp_dir().'/apply-src-repo-'.getmypid().'-*') ?: [] as $directory) {
+        File::deleteDirectory($directory);
+    }
+});
+
+const APPLY_SRC_FULL = "    typ: urodzenie\n    nazwa: Akt urodzenia 15/1837\n    rok: 1837\n    parafia:\n      miejscowosc: Lipnica\n      wyznanie: rzymskokatolickie\n      wezwanie: św. Jana\n    archiwum: AP Przykładowe\n    sygnatura: 35/1813/0/2.4/58\n    link: https://example.org/skan/34\n    notatka: skan 34\n";
+
+/**
+ * A throwaway repo of persons and sources with real scans that stays on disk until the test ends, because the write
+ * copies the scans from it.
+ *
+ * @param  array<string, string>  $blocks  repo id of a person => block body without id and version
+ * @param  array<string, array{extra?: string, shade?: int}>  $sources  repo id of a source => extra lines of its entry and the shade of its scan
+ * @return string the root of the repo
+ */
+function applySrcRepo(array $blocks, array $sources): string
+{
+    $repo = sys_get_temp_dir().'/apply-src-repo-'.getmypid().'-'.uniqid();
+    mkdir($repo.'/drzewo', 0777, true);
+    mkdir($repo.'/zrodla/skany', 0777, true);
+
+    foreach ($blocks as $id => $body) {
+        file_put_contents("{$repo}/drzewo/".strtolower($id).'.md', "---\nwersja: 1\nid: {$id}\n{$body}\n---\n");
+    }
+
+    $entries = '';
+
+    foreach ($sources as $id => $spec) {
+        $image = imagecreatetruecolor(40, 30);
+        imagefill($image, 0, 0, imagecolorallocate($image, $spec['shade'] ?? 20, 20, 20));
+        imagejpeg($image, "{$repo}/zrodla/skany/{$id}.jpg");
+        $entries .= "  - id: {$id}\n    plik: zrodla/skany/{$id}.jpg\n    rodzaj: akt\n".($spec['extra'] ?? '');
+    }
+
+    if ($sources !== []) {
+        file_put_contents("{$repo}/zrodla/akty.md", "---\nwersja: 1\nskany:\n{$entries}---\n");
+    }
+
+    return $repo;
+}
+
+/**
+ * The block of Jan Nowak born in 1837 with links to sources.
+ *
+ * @param  array<string, string|null>  $links  repo id of a source => the entry number
+ */
+function applySrcPerson(array $links = [], string $extra = ''): string
+{
+    $block = "imiona: Jan\nnazwisko: Nowak\nurodzenie:\n  data: \"1837\"";
+
+    if ($links !== []) {
+        $block .= "\n  zrodla:";
+
+        foreach ($links as $id => $entry) {
+            $block .= "\n    - id: {$id}".($entry === null ? '' : "\n      wpis: \"{$entry}\"");
+        }
+    }
+
+    return $block.$extra;
+}
+
+/**
+ * Plans the repo over the tree: every new repo person is new, the rest is decided by the arguments.
+ *
+ * @param  array<string, string>  $removals
+ * @param  array<string, string>  $deletions
+ */
+function applySrcPlan(Tree $tree, string $repo, array $removals = [], array $deletions = [], ?SourceDecisions $sources = null, ?PlaceDecisions $places = null): ImportPlan
+{
+    $reading = app(ReadResearchRepo::class)->handle($repo);
+    $classes = app(ClassifyRepoRecords::class)->handle($tree, $reading);
+
+    return app(PlanImport::class)->handle($tree, $reading, $classes, new ImportDecisions(new IdentityDecisions(new: $classes->newPersonIds), $removals, $deletions, $places ?? new PlaceDecisions), $sources ?? new SourceDecisions);
+}
+
+function applySrcImport(Tree $tree, string $repo): ImportResult
+{
+    return app(ApplyImport::class)->handle($tree, applySrcPlan($tree, $repo), new ChangeApprovals, new ConflictResolutions);
+}
+
+/**
+ * The hash of every file of a repo, to prove that an import only read it.
+ *
+ * @return array<string, string>
+ */
+function applySrcHashes(string $repo): array
+{
+    $hashes = [];
+
+    foreach (File::allFiles($repo) as $file) {
+        $hashes[$file->getRelativePathname()] = hash_file('sha256', $file->getPathname());
+    }
+
+    ksort($hashes);
+
+    return $hashes;
+}
+
+/**
+ * The tree of another account and the tree of the author, both with the locality Lipnica, and in the other one a Jan
+ * Nowak born in 1837 with a manual source and the parish the repo names.
+ *
+ * @return array{0: Tree, 1: Tree}
+ */
+function applySrcTrees(): array
+{
+    $other = User::factory()->create()->tree;
+    $author = User::factory()->create()->tree;
+    $seat = Locality::factory()->for($other)->create(['name' => 'Lipnica']);
+    Locality::factory()->for($author)->create(['name' => 'Lipnica']);
+    Parish::factory()->seatedIn($seat)->withReligion(Religion::RomanCatholic)->dedicatedTo('św. Jana')->create();
+    $jan = Person::factory()->for($other)->create(['first_name' => 'Jan', 'last_name' => 'Nowak']);
+    attachBirth($jan, 1837);
+    $other->events()->firstOrFail()->sources()->attach(Source::factory()->create(['tree_id' => $other->id]), ['entry_number' => '15/1837']);
+
+    return [$author, $other];
+}
+
+test('writes a new source with its scan, thumbnail, description, signature, parish and repo id and links it to the birth', function () {
+    Storage::fake('local');
+    [$tree, $other] = applySrcTrees();
+    $repo = applySrcRepo(['O-0001' => applySrcPerson(['ZR-0001' => '15/1837'])], ['ZR-0001' => ['extra' => APPLY_SRC_FULL]]);
+    $plan = applySrcPlan($tree, $repo);
+    $repoHashes = applySrcHashes($repo);
+    $eventIds = Event::query()->pluck('id')->all();
+    $before = databaseRows();
+
+    $result = app(ApplyImport::class)->handle($tree, $plan, new ChangeApprovals, new ConflictResolutions);
+
+    $source = $tree->sources()->where('repo_id', 'ZR-0001')->firstOrFail();
+    $parish = $tree->parishes()->firstOrFail();
+    $link = importedEvent($tree, 'O-0001/urodzenie')->sources()->firstOrFail();
+
+    expect($source->path)->toStartWith("sources/{$tree->id}/")
+        ->and(Storage::disk('local')->get($source->path))->toBe(file_get_contents("{$repo}/zrodla/skany/ZR-0001.jpg"))
+        ->and($source->thumbnail_path)->toStartWith("sources/{$tree->id}/thumbnails/")
+        ->and(Storage::disk('local')->exists((string) $source->thumbnail_path))->toBeTrue()
+        ->and($source->original_name)->toBe('ZR-0001.jpg')
+        ->and([$source->name, $source->record_type, $source->year, $source->archive, $source->signature, $source->url, $source->note])->toBe(['Akt urodzenia 15/1837', SourceRecordType::Birth, 1837, 'AP Przykładowe', '35/1813/0/2.4/58', 'https://example.org/skan/34', 'skan 34'])
+        ->and($source->parish_id)->toBe($parish->id)
+        ->and([$parish->dedication, $parish->religion, $parish->locality->name])->toBe(['św. Jana', Religion::RomanCatholic, 'Lipnica'])
+        ->and($link->id)->toBe($source->id)
+        ->and($link->pivot->entry_number)->toBe('15/1837')
+        ->and(snapshotValues($tree)['ZR-0001']['parafia_id'])->toBe("P:{$parish->id}")
+        ->and([$result->newSources, $result->newParishes, $result->linksAdded, $result->linksRemoved])->toBe([1, 1, 1, 0])
+        ->and(applySrcHashes($repo))->toBe($repoHashes);
+
+    $diff = rowDiff($before, databaseRows());
+    expectOnlyAuthorRowsChanged($diff, $tree, $eventIds);
+
+    expect($diff['files']['removed'])->toBe([])
+        ->and($diff['files']['added'])->toHaveCount(2)
+        ->and($other->sources()->count())->toBe(1);
+});
+
+test('links a spread to two facts under different entry numbers', function () {
+    Storage::fake('local');
+    [$tree] = applySrcTrees();
+    $repo = applySrcRepo([
+        'O-0001' => applySrcPerson(['ZR-0001' => '15/1837']),
+        'O-0002' => "imiona: Anna\nnazwisko: Wrona\nurodzenie:\n  data: \"1837\"\n  zrodla:\n    - id: ZR-0001\n      wpis: \"16/1837\"",
+    ], ['ZR-0001' => ['extra' => APPLY_SRC_FULL]]);
+
+    $result = applySrcImport($tree, $repo);
+
+    $source = $tree->sources()->where('repo_id', 'ZR-0001')->firstOrFail();
+    $entries = DB::table('event_source')->where('source_id', $source->id)->pluck('entry_number', 'event_id')->all();
+
+    expect($tree->sources()->count())->toBe(1)
+        ->and($entries)->toBe([importedEvent($tree, 'O-0001/urodzenie')->id => '15/1837', importedEvent($tree, 'O-0002/urodzenie')->id => '16/1837'])
+        ->and($result->linksAdded)->toBe(2);
+});
+
+test('joins a manual source: its scan stays, only the empty fields are filled and the empty entry number comes from the repo', function () {
+    Storage::fake('local');
+    [$tree, $other] = applySrcTrees();
+    applySrcImport($tree, applySrcRepo(['O-0001' => applySrcPerson()], []));
+    Storage::disk('local')->put("sources/{$tree->id}/manual.jpg", 'manual-bytes');
+    $manual = Source::factory()->create(['tree_id' => $tree->id, 'path' => "sources/{$tree->id}/manual.jpg", 'original_name' => 'moj.jpg', 'name' => 'Mój skan', 'note' => 'Moja notatka']);
+    importedEvent($tree, 'O-0001/urodzenie')->sources()->attach($manual, ['entry_number' => null]);
+    $repo = applySrcRepo(['O-0001' => applySrcPerson(['ZR-0001' => '15/1837'])], ['ZR-0001' => ['extra' => APPLY_SRC_FULL]]);
+    $plan = applySrcPlan($tree, $repo, sources: new SourceDecisions(['ZR-0001' => $manual->id]));
+    $repoHashes = applySrcHashes($repo);
+    $otherState = reimportTreeState($other);
+
+    $result = app(ApplyImport::class)->handle($tree, $plan, new ChangeApprovals, new ConflictResolutions);
+
+    $joined = $manual->fresh();
+    $parish = $tree->parishes()->firstOrFail();
+
+    expect($tree->sources()->count())->toBe(1)
+        ->and($joined->repo_id)->toBe('ZR-0001')
+        ->and([$joined->name, $joined->note])->toBe(['Mój skan', 'Moja notatka'])
+        ->and([$joined->record_type, $joined->year, $joined->archive, $joined->signature, $joined->url, $joined->parish_id])->toBe([SourceRecordType::Birth, 1837, 'AP Przykładowe', '35/1813/0/2.4/58', 'https://example.org/skan/34', $parish->id])
+        ->and($joined->path)->toBe("sources/{$tree->id}/manual.jpg")
+        ->and(Storage::disk('local')->get($joined->path))->toBe('manual-bytes')
+        ->and(Storage::disk('local')->allFiles())->toBe(["sources/{$tree->id}/manual.jpg"])
+        ->and(importedEvent($tree, 'O-0001/urodzenie')->sources()->get()->map(fn (Source $source): array => [$source->id, $source->pivot->entry_number])->all())->toBe([[$manual->id, '15/1837']])
+        ->and(snapshotValues($tree)['ZR-0001']['plik_hash'])->toBe(hash_file('sha256', "{$repo}/zrodla/skany/ZR-0001.jpg"))
+        ->and([$result->mergedSources, $result->newSources])->toBe([1, 0])
+        ->and(applySrcHashes($repo))->toBe($repoHashes)
+        ->and(reimportTreeState($other))->toBe($otherState);
+});
+
+test('replaces the scan of a known source for an approved change and deletes the old files only after the commit, and keeps it for a rejected one', function (bool $rejected) {
+    Storage::fake('local');
+    [$tree, $other] = applySrcTrees();
+    applySrcImport($tree, applySrcRepo(['O-0001' => applySrcPerson(['ZR-0001' => '15/1837'])], ['ZR-0001' => ['extra' => APPLY_SRC_FULL, 'shade' => 10]]));
+    $old = $tree->sources()->where('repo_id', 'ZR-0001')->firstOrFail();
+    $oldFiles = [$old->path, $old->thumbnail_path];
+    $repo = applySrcRepo(['O-0001' => applySrcPerson(['ZR-0001' => '15/1837'])], ['ZR-0001' => ['extra' => APPLY_SRC_FULL, 'shade' => 200]]);
+    $plan = applySrcPlan($tree, $repo);
+    $eventIds = Event::query()->pluck('id')->all();
+    $before = databaseRows();
+
+    expect(array_map(fn ($change): string => $change->key, $plan->changes))->toBe(['ZR-0001/plik']);
+
+    $result = app(ApplyImport::class)->handle($tree, $plan, new ChangeApprovals($rejected ? ['ZR-0001/plik'] : []), new ConflictResolutions);
+
+    $source = $old->fresh();
+    $diff = rowDiff($before, databaseRows());
+    expectOnlyAuthorRowsChanged($diff, $tree, $eventIds);
+
+    if ($rejected) {
+        expect($source->path)->toBe($oldFiles[0])
+            ->and(Storage::disk('local')->exists($oldFiles[0]))->toBeTrue()
+            ->and(Storage::disk('local')->exists((string) $oldFiles[1]))->toBeTrue()
+            ->and($diff['files'])->toBe(['removed' => [], 'added' => []])
+            ->and([$result->replacedFiles, $result->changedSources])->toBe([0, 0]);
+
+        return;
+    }
+
+    expect($source->path)->not->toBe($oldFiles[0])
+        ->and(Storage::disk('local')->get($source->path))->toBe(file_get_contents("{$repo}/zrodla/skany/ZR-0001.jpg"))
+        ->and(Storage::disk('local')->exists((string) $source->thumbnail_path))->toBeTrue()
+        ->and(Storage::disk('local')->exists($oldFiles[0]))->toBeFalse()
+        ->and(Storage::disk('local')->exists((string) $oldFiles[1]))->toBeFalse()
+        ->and($diff['files']['removed'])->toHaveCount(2)
+        ->and($diff['files']['added'])->toHaveCount(2)
+        ->and([$result->replacedFiles, $result->changedSources])->toBe([1, 1])
+        ->and($other->sources()->count())->toBe(1);
+})->with([[false], [true]]);
+
+test('removes a source the repo dropped with its links and files, or only detaches it from the repo', function (string $decision) {
+    Storage::fake('local');
+    [$tree, $other] = applySrcTrees();
+    applySrcImport($tree, applySrcRepo(['O-0001' => applySrcPerson(['ZR-0001' => '15/1837'])], ['ZR-0001' => ['extra' => APPLY_SRC_FULL]]));
+    $source = $tree->sources()->where('repo_id', 'ZR-0001')->firstOrFail();
+    $files = [$source->path, $source->thumbnail_path];
+    $plan = applySrcPlan($tree, applySrcRepo(['O-0001' => applySrcPerson()], []), removals: ['ZR-0001' => $decision]);
+    $eventIds = Event::query()->pluck('id')->all();
+    $before = databaseRows();
+
+    $result = app(ApplyImport::class)->handle($tree, $plan, new ChangeApprovals, new ConflictResolutions);
+
+    $diff = rowDiff($before, databaseRows());
+    expectOnlyAuthorRowsChanged($diff, $tree, $eventIds);
+
+    expect(importedEvent($tree, 'O-0001/urodzenie')->exists)->toBeTrue()
+        ->and($other->sources()->count())->toBe(1);
+
+    if ($decision === 'delete') {
+        expect($tree->sources()->count())->toBe(0)
+            ->and(DB::table('event_source')->where('source_id', $source->id)->exists())->toBeFalse()
+            ->and(Storage::disk('local')->exists($files[0]))->toBeFalse()
+            ->and(Storage::disk('local')->exists((string) $files[1]))->toBeFalse()
+            ->and($tree->repoSnapshots()->where('repo_id', 'ZR-0001')->exists())->toBeFalse()
+            ->and([$result->removedSources, $result->detachedSources])->toBe([1, 0]);
+
+        return;
+    }
+
+    expect($source->fresh()->repo_id)->toBeNull()
+        ->and(DB::table('event_source')->where('source_id', $source->id)->count())->toBe(1)
+        ->and(Storage::disk('local')->exists($files[0]))->toBeTrue()
+        ->and([$result->removedSources, $result->detachedSources])->toBe([0, 1]);
+})->with(['delete', 'detach']);
+
+test('brings a source deleted in the app back: the scan is copied again and the links return with their entry numbers', function () {
+    Storage::fake('local');
+    [$tree, $other] = applySrcTrees();
+    $repo = applySrcRepo(['O-0001' => applySrcPerson(['ZR-0001' => '15/1837'])], ['ZR-0001' => ['extra' => APPLY_SRC_FULL]]);
+    applySrcImport($tree, $repo);
+    app(DeleteSource::class)->handle($tree->sources()->where('repo_id', 'ZR-0001')->firstOrFail());
+    $plan = applySrcPlan($tree, $repo, deletions: ['ZR-0001' => 'restore']);
+    $otherState = reimportTreeState($other);
+
+    $result = app(ApplyImport::class)->handle($tree, $plan, new ChangeApprovals, new ConflictResolutions);
+
+    $source = $tree->sources()->where('repo_id', 'ZR-0001')->firstOrFail();
+
+    expect(Storage::disk('local')->get($source->path))->toBe(file_get_contents("{$repo}/zrodla/skany/ZR-0001.jpg"))
+        ->and(Storage::disk('local')->exists((string) $source->thumbnail_path))->toBeTrue()
+        ->and(importedEvent($tree, 'O-0001/urodzenie')->sources()->get()->map(fn (Source $each): array => [$each->id, $each->pivot->entry_number])->all())->toBe([[$source->id, '15/1837']])
+        ->and([$result->restored, $result->newSources, $result->linksAdded])->toBe([1, 1, 1])
+        ->and(reimportTreeState($other))->toBe($otherState);
+});
+
+test('leaves the disk without the new files and the database unchanged when the write fails after the scans are copied, and keeps the old scan', function () {
+    Storage::fake('local');
+    [$tree, $other] = applySrcTrees();
+    $blocks = fn (string $extra = ''): array => ['O-0001' => applySrcPerson(['ZR-0001' => '15/1837'], $extra), 'O-0002' => "imiona: Anna\nnazwisko: Wrona"];
+    applySrcImport($tree, applySrcRepo($blocks(), ['ZR-0001' => ['extra' => APPLY_SRC_FULL, 'shade' => 10]]));
+    $old = $tree->sources()->where('repo_id', 'ZR-0001')->firstOrFail();
+    $repo = applySrcRepo($blocks("\nmalzenstwa:\n  - z: O-0002\n    data: \"1860\""), ['ZR-0001' => ['extra' => APPLY_SRC_FULL, 'shade' => 200], 'ZR-0002' => ['extra' => APPLY_SRC_FULL]]);
+    $plan = applySrcPlan($tree, $repo);
+    $before = ownershipSnapshot();
+    $otherState = reimportTreeState($other);
+
+    expect($plan->marriages)->toHaveCount(1)
+        ->and($plan->newSources)->toHaveCount(1);
+
+    $this->mock(CreateMarriage::class, function ($mock): void {
+        $mock->shouldReceive('handle')->andThrow(ValidationException::withMessages(['spouse_id' => 'Ta para ma już małżeństwo.']));
+    });
+
+    expect(fn () => app(ApplyImport::class)->handle($tree, $plan, new ChangeApprovals, new ConflictResolutions))->toThrow(ValidationException::class)
+        ->and(ownershipSnapshot())->toBe($before)
+        ->and(Storage::disk('local')->exists($old->path))->toBeTrue()
+        ->and(Storage::disk('local')->exists((string) $old->thumbnail_path))->toBeTrue()
+        ->and($old->fresh()->path)->toBe($old->path)
+        ->and($tree->sources()->count())->toBe(1)
+        ->and(reimportTreeState($other))->toBe($otherState);
+});
+
+test('refuses to write when a scan of the repo changed or disappeared between the plan and the write', function (Closure $change) {
+    Storage::fake('local');
+    [$tree] = applySrcTrees();
+    $repo = applySrcRepo(['O-0001' => applySrcPerson(['ZR-0001' => '15/1837'])], ['ZR-0001' => ['extra' => APPLY_SRC_FULL]]);
+    $plan = applySrcPlan($tree, $repo);
+    $change("{$repo}/zrodla/skany/ZR-0001.jpg");
+    $before = ownershipSnapshot();
+
+    expect(fn () => app(ApplyImport::class)->handle($tree, $plan, new ChangeApprovals, new ConflictResolutions))->toThrow(RuntimeException::class, 'repo zmieniło się w trakcie importu')
+        ->and(ownershipSnapshot())->toBe($before)
+        ->and($tree->people()->count())->toBe(0);
+})->with([
+    'another content' => [fn (string $path) => file_put_contents($path, 'inna zawartość')],
+    'file gone' => [fn (string $path) => unlink($path)],
+]);
+
+test('refuses a plan whose source, parish, manual source or links changed since planning and writes nothing', function (Closure $change, string $message) {
+    Storage::fake('local');
+    [$tree] = applySrcTrees();
+    Parish::factory()->seatedIn($tree->localities()->firstOrFail())->withReligion(Religion::RomanCatholic)->dedicatedTo('św. Jana')->create();
+    $office = Parish::factory()->seatedIn($tree->localities()->firstOrFail())->ofKind(ParishKind::CivilRegistry)->create();
+    $first = applySrcRepo(['O-0001' => applySrcPerson(['ZR-0001' => '15/1837'])], ['ZR-0001' => ['extra' => APPLY_SRC_FULL, 'shade' => 10]]);
+    applySrcImport($tree, $first);
+    $manual = Source::factory()->create(['tree_id' => $tree->id]);
+    importedEvent($tree, 'O-0001/urodzenie')->sources()->attach($manual);
+    $repo = applySrcRepo(['O-0001' => applySrcPerson(['ZR-0001' => '16/1837', 'ZR-0002' => null])], [
+        'ZR-0001' => ['extra' => APPLY_SRC_FULL, 'shade' => 200],
+        'ZR-0002' => ['extra' => "    parafia:\n      miejscowosc: Lipnica\n      rodzaj: usc\n"],
+    ]);
+    $plan = applySrcPlan($tree, $repo, sources: new SourceDecisions(['ZR-0002' => $manual->id]), places: new PlaceDecisions(parishes: ['lipnica||civil_registry|' => $office->id]));
+    $change($tree, $manual);
+    $before = ownershipSnapshot();
+
+    expect(fn () => app(ApplyImport::class)->handle($tree, $plan, new ChangeApprovals, new ConflictResolutions))->toThrow(RuntimeException::class, $message)
+        ->and(ownershipSnapshot())->toBe($before);
+})->with([
+    'known source lost its repo id' => [fn (Tree $tree) => $tree->sources()->where('repo_id', 'ZR-0001')->update(['repo_id' => null]), 'po planowaniu; nic nie zostało zapisane'],
+    'manual source took a repo id' => [fn (Tree $tree, Source $manual) => $manual->update(['repo_id' => 'ZR-0099']), 'po planowaniu; nic nie zostało zapisane'],
+    'repo id taken in the tree' => [fn (Tree $tree, Source $manual) => Source::factory()->create(['tree_id' => $tree->id, 'repo_id' => 'ZR-0002']), 'pojawił się w drzewie po planowaniu'],
+    'parish gone' => [fn (Tree $tree) => $tree->parishes()->where('kind', ParishKind::CivilRegistry)->delete(), 'Miejsce'],
+    'entry number changed by hand' => [fn (Tree $tree) => DB::table('event_source')->where('source_id', $tree->sources()->where('repo_id', 'ZR-0001')->value('id'))->update(['entry_number' => '77']), 'zmieniła się po planowaniu'],
+]);
+
+test('writes the links of a wedding through the import, and corrects or keeps its entry number as the author answers', function (bool $rejected) {
+    Storage::fake('local');
+    [$tree, $other] = applySrcTrees();
+    $blocks = fn (string $entry): array => [
+        'O-0001' => applySrcPerson([], "\nmalzenstwa:\n  - z: O-0002\n    data: \"1860\"\n    zrodla:\n      - id: ZR-0001\n        wpis: \"{$entry}\""),
+        'O-0002' => "imiona: Anna\nnazwisko: Wrona\nplec: K",
+    ];
+    applySrcImport($tree, applySrcRepo($blocks('7/1860'), ['ZR-0001' => []]));
+    $wedding = importedEvent($tree, 'O-0001+O-0002/slub');
+    $source = $tree->sources()->where('repo_id', 'ZR-0001')->firstOrFail();
+
+    expect($wedding->sources()->get()->map(fn (Source $each): array => [$each->id, $each->pivot->entry_number])->all())->toBe([[$source->id, '7/1860']]);
+
+    $plan = applySrcPlan($tree, applySrcRepo($blocks('8/1860'), ['ZR-0001' => []]));
+    $otherState = reimportTreeState($other);
+
+    expect(array_map(fn ($change): string => $change->key, $plan->changes))->toContain('O-0001+O-0002/slub/zrodla');
+
+    app(ApplyImport::class)->handle($tree, $plan, new ChangeApprovals($rejected ? ['O-0001+O-0002/slub/zrodla'] : []), new ConflictResolutions);
+
+    expect($wedding->sources()->firstOrFail()->pivot->entry_number)->toBe($rejected ? '7/1860' : '8/1860')
+        ->and(reimportTreeState($other))->toBe($otherState);
+})->with([[false], [true]]);
+
+test('sets the links of a fact to exactly the sources of the repo, leaves a manual link alone and ends with nothing to write', function () {
+    Storage::fake('local');
+    [$tree, $other] = applySrcTrees();
+    $sources = ['ZR-0001' => [], 'ZR-0002' => []];
+    applySrcImport($tree, applySrcRepo(['O-0001' => applySrcPerson(['ZR-0001' => '15/1837'])], $sources));
+    $manual = Source::factory()->create(['tree_id' => $tree->id]);
+    $birth = importedEvent($tree, 'O-0001/urodzenie');
+    $birth->sources()->attach($manual, ['entry_number' => '3']);
+    $repo = applySrcRepo(['O-0001' => applySrcPerson(['ZR-0002' => '99'])], $sources);
+    $eventIds = Event::query()->pluck('id')->all();
+    $before = databaseRows();
+
+    $result = app(ApplyImport::class)->handle($tree, applySrcPlan($tree, $repo), new ChangeApprovals, new ConflictResolutions);
+
+    $linked = $birth->sources()->get()->mapWithKeys(fn (Source $source): array => [(string) ($source->repo_id ?? 'manual') => $source->pivot->entry_number])->all();
+    $diff = rowDiff($before, databaseRows());
+    expectOnlyAuthorRowsChanged($diff, $tree, $eventIds);
+
+    expect($linked)->toBe(['manual' => '3', 'ZR-0002' => '99'])
+        ->and([$result->linksAdded, $result->linksRemoved])->toBe([1, 1]);
+
+    $again = applySrcPlan($tree, $repo);
+
+    expect([$again->newSources, $again->mergedSources, $again->sourceUpdates, $again->changes, $again->conflicts, $again->removals, $again->restorations])->each->toBe([])
+        ->and($again->changedSnapshots(RepoSnapshot::where('tree_id', $tree->id)->get()->keyBy('repo_id')->all()))->toBe([]);
+});

@@ -606,6 +606,7 @@ class PlanImport
             mergedSources: array_map(fn (PlannedSourceMerge $merge): PlannedSourceMerge => $merge->withEntries($linked[$merge->source->id] ?? []), $sourcePlan->merges),
             sourceUpdates: $sourcePlan->updates,
             newParishes: $places->newParishes,
+            skippedSources: $sourcePlan->skipped,
         );
     }
 

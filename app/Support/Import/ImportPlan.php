@@ -38,6 +38,7 @@ final readonly class ImportPlan
      * @param  list<PlannedSourceMerge>  $mergedSources  manual sources that become the source of the repo
      * @param  list<PlannedSourceUpdate>  $sourceUpdates  known sources with something to write
      * @param  array<string, PlannedParish>  $newParishes  {@see PlaceResolver::newParishKey()} => each parish the plan adds, only the ones a plan item uses
+     * @param  array<string, true>  $skippedSources  ids of the sources the reading skipped: their links to events take no part in the three values and the write leaves them alone
      */
     public function __construct(
         public array $persons,
@@ -75,6 +76,7 @@ final readonly class ImportPlan
         public array $mergedSources = [],
         public array $sourceUpdates = [],
         public array $newParishes = [],
+        public array $skippedSources = [],
     ) {}
 
     /**
