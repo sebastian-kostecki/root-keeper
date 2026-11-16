@@ -1753,7 +1753,19 @@ test('persons index finds a person by a surname variant', function () {
     $response->assertInertia(fn ($page) => $page
         ->component('persons/index')
         ->has('persons', 1)
-        ->where('persons.0.id', $misiuk->id));
+        ->where('persons.0.id', $misiuk->id)
+        ->where('persons.0.surname_variants', ['Mysiuk']));
+});
+
+test('the person preview carries the surname variants in order', function () {
+    $user = User::factory()->create();
+    $person = Person::factory()->for($user->tree)->create(['first_name' => 'Jan', 'last_name' => 'Misiuk']);
+    PersonSurnameVariant::factory()->for($person)->create(['name' => 'Mysiuk', 'position' => 0]);
+    PersonSurnameVariant::factory()->for($person)->create(['name' => 'Myszuk', 'position' => 1]);
+
+    $this->actingAs($user)->get(personPreviewUrl($person))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page->where('personPreview.person.surname_variants', ['Mysiuk', 'Myszuk']));
 });
 
 test('persons index matches each query word against first name, surname or a surname variant', function () {

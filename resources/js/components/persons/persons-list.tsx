@@ -12,6 +12,7 @@ import {
     formatEventMeta,
     groupBySurnameInitial,
     peopleCount,
+    surnameVariantHint,
 } from '@/lib/persons-index';
 import { cn } from '@/lib/utils';
 import type { IndexPersonEvent, Person } from '@/types';
@@ -19,6 +20,7 @@ import type { IndexPersonEvent, Person } from '@/types';
 type Props = {
     persons: Person[];
     rootPersonId: number | null;
+    query: string;
 };
 
 function EventMeta({
@@ -50,12 +52,15 @@ function EventMeta({
 function PersonRow({
     person,
     isProband,
+    query,
 }: {
     person: Person;
     isProband: boolean;
+    query: string;
 }) {
     const birth = formatEventMeta('ur.', person.birth);
     const death = formatEventMeta('zm.', person.death);
+    const variants = surnameVariantHint(person, query);
 
     return (
         <PersonPreviewLink
@@ -79,6 +84,11 @@ function PersonRow({
                     </span>
                     {isProband && <ProbandBadge />}
                 </span>
+                {variants.length > 0 && (
+                    <span className="text-muted-foreground mt-0.5 block text-sm">
+                        zapis: {variants.join(', ')}
+                    </span>
+                )}
                 {(birth !== null || death !== null) && (
                     <span className="text-muted-foreground mt-0.5 flex flex-wrap gap-x-1.5 text-sm">
                         <EventMeta prefix="ur." event={person.birth} />
@@ -98,7 +108,7 @@ function PersonRow({
 }
 
 /** View A: people grouped under the first letter of the surname. */
-export function PersonsList({ persons, rootPersonId }: Props) {
+export function PersonsList({ persons, rootPersonId, query }: Props) {
     const groups = groupBySurnameInitial(persons);
 
     return (
@@ -144,6 +154,7 @@ export function PersonsList({ persons, rootPersonId }: Props) {
                                 key={person.id}
                                 person={person}
                                 isProband={person.id === rootPersonId}
+                                query={query}
                             />
                         ))}
                     </div>

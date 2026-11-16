@@ -367,9 +367,9 @@ Panel osoby pokazuje warianty, a wiersz listy i tabeli wyjaśnia trafienie po wa
 
 #### Automated
 
-- [ ] 2.1 Testy importu przechodzą: `vendor/bin/sail artisan test --compact tests/Feature/ImportPlanTest.php tests/Feature/ImportApplyTest.php tests/Feature/ImportResearchCommandTest.php tests/Unit/SurnameVariantsTest.php`
-- [ ] 2.2 Pełny zestaw Pest przechodzi: `vendor/bin/sail artisan test --compact`
-- [ ] 2.3 Pint i Larastan bez nowych błędów: `vendor/bin/sail bin pint --dirty --format agent` i `vendor/bin/sail composer types:check`
+- [x] 2.1 Testy importu przechodzą: `vendor/bin/sail artisan test --compact tests/Feature/ImportPlanTest.php tests/Feature/ImportApplyTest.php tests/Feature/ImportResearchCommandTest.php tests/Unit/SurnameVariantsTest.php` — b88afb5
+- [x] 2.2 Pełny zestaw Pest przechodzi: `vendor/bin/sail artisan test --compact` — b88afb5
+- [x] 2.3 Pint i Larastan bez nowych błędów: `vendor/bin/sail bin pint --dirty --format agent` i `vendor/bin/sail composer types:check` — b88afb5
 
 #### Manual
 

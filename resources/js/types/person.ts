@@ -104,6 +104,7 @@ export type Person = {
     last_name: string | null;
     display_name: string;
     gender: Gender | null;
+    surname_variants?: string[];
     residences?: PersonResidence[];
     gravestones?: PersonGravestone[];
     religion: Religion | null;

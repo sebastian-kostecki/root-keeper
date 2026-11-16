@@ -5,6 +5,7 @@ import {
     formatEventMeta,
     groupBySurnameInitial,
     sortPersons,
+    surnameVariantHint,
     withPersonsQuery,
 } from './persons-index';
 
@@ -295,5 +296,35 @@ describe('formatEventMeta', () => {
             'ur. Kraków',
         );
         expect(formatEventMeta('ur.', { date: null, place: null })).toBeNull();
+    });
+});
+
+describe('surnameVariantHint', () => {
+    const misiuk = person(1, 'Misiuk', 'Jan', {
+        surname_variants: ['Mysiuk', 'Myszuk'],
+    });
+
+    it('names the variant that explains the hit', () => {
+        expect(surnameVariantHint(misiuk, 'Mysiuk')).toEqual(['Mysiuk']);
+        expect(surnameVariantHint(misiuk, 'Jan Mysiuk')).toEqual(['Mysiuk']);
+    });
+
+    it('lists every variant containing the word', () => {
+        expect(surnameVariantHint(misiuk, 'My')).toEqual(['Mysiuk', 'Myszuk']);
+    });
+
+    it('gives no hint when the surname already matches', () => {
+        expect(surnameVariantHint(misiuk, 'siuk')).toEqual([]);
+    });
+
+    it('gives no hint for an empty query', () => {
+        expect(surnameVariantHint(misiuk, '')).toEqual([]);
+        expect(surnameVariantHint(misiuk, '   ')).toEqual([]);
+    });
+
+    it('gives no hint for a person without variants', () => {
+        expect(surnameVariantHint(person(2, 'Nowak', 'Jan'), 'Nowak')).toEqual(
+            [],
+        );
     });
 });

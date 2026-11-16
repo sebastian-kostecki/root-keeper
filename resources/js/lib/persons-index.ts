@@ -243,3 +243,35 @@ export function peopleCount(count: number): string {
 
     return `${count} osób`;
 }
+
+/** Words of a query, split on whitespace like the server does. */
+function queryWords(query: string): string[] {
+    return query.split(/\s+/).filter((word) => word !== '');
+}
+
+/**
+ * The surname variants that explain a hit the name does not: for every query word
+ * contained in neither the first name nor the surname, the variants containing it
+ * (case-insensitive, without repeats, in variant order). Empty when nothing is explained.
+ */
+export function surnameVariantHint(person: Person, query: string): string[] {
+    const variants = person.surname_variants ?? [];
+    const words = queryWords(query.toLocaleLowerCase('pl'));
+
+    if (variants.length === 0 || words.length === 0) {
+        return [];
+    }
+
+    const names = [person.first_name ?? '', person.last_name ?? ''].map(
+        (name) => name.toLocaleLowerCase('pl'),
+    );
+    const unexplained = words.filter(
+        (word) => !names.some((name) => name.includes(word)),
+    );
+
+    return variants.filter((variant) =>
+        unexplained.some((word) =>
+            variant.toLocaleLowerCase('pl').includes(word),
+        ),
+    );
+}

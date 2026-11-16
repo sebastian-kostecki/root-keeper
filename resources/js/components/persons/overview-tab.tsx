@@ -256,6 +256,7 @@ export function OverviewTab({ preview, availableSources }: Props) {
         useSectionSave(belongsToSection);
 
     const residences = person.residences ?? [];
+    const surnameVariants = person.surname_variants ?? [];
     const gravestones = person.gravestones ?? [];
 
     const hasBirth =
@@ -313,6 +314,12 @@ export function OverviewTab({ preview, availableSources }: Props) {
                                 label="Nazwisko rodowe"
                                 value={person.last_name}
                             />
+                            {surnameVariants.length > 0 && (
+                                <Field
+                                    label="Warianty nazwiska"
+                                    value={surnameVariants.join(', ')}
+                                />
+                            )}
                         </div>
                     }
                     edit={
