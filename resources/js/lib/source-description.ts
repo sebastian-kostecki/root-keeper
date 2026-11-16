@@ -182,7 +182,14 @@ function erasedGravestoneFields(
 
 type DescriptionFields = Pick<
     Source,
-    'name' | 'record_type' | 'year' | 'archive' | 'parish_id' | 'url' | 'note'
+    | 'name'
+    | 'record_type'
+    | 'year'
+    | 'archive'
+    | 'signature'
+    | 'parish_id'
+    | 'url'
+    | 'note'
 >;
 
 /** A source is undescribed only when all description columns are null; the kind does not count. */
@@ -192,6 +199,7 @@ export function isUndescribed(source: DescriptionFields): boolean {
         source.record_type === null &&
         source.year === null &&
         source.archive === null &&
+        source.signature === null &&
         source.parish_id === null &&
         source.url === null &&
         source.note === null

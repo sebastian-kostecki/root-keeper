@@ -12,7 +12,7 @@ trait SourceDescriptionValidationRules
     /**
      * Get the validation rules for the optional source description. The record
      * type and parish apply to a metrical record only; the cemetery and the buried
-     * people to a gravestone only. A gravestone has no year and no archive, so those
+     * people to a gravestone only. A gravestone has no year, archive and signature, so those
      * are dropped for it even when a hidden form field submits them.
      *
      * @return array<string, list<mixed>>
@@ -25,6 +25,7 @@ trait SourceDescriptionValidationRules
             'name' => ['nullable', 'string', 'max:255'],
             'year' => [Rule::excludeIf(fn (): bool => $this->input('kind') === SourceKind::Gravestone->value), 'nullable', 'integer', "between:1000,{$currentYear}"],
             'archive' => [Rule::excludeIf(fn (): bool => $this->input('kind') === SourceKind::Gravestone->value), 'nullable', 'string', 'max:255'],
+            'signature' => [Rule::excludeIf(fn (): bool => $this->input('kind') === SourceKind::Gravestone->value), 'nullable', 'string', 'max:255'],
             'url' => ['nullable', 'url:http,https', 'max:2048'],
             'note' => ['nullable', 'string', 'max:5000'],
             'record_type' => [Rule::excludeIf(fn (): bool => $this->input('kind') !== SourceKind::MetricalRecord->value), 'nullable', Rule::enum(SourceRecordType::class)],
@@ -63,6 +64,7 @@ trait SourceDescriptionValidationRules
             'name' => 'nazwa',
             'year' => 'rok',
             'archive' => 'archiwum',
+            'signature' => 'sygnatura',
             'url' => 'link',
             'note' => 'notatka',
             'record_type' => 'typ aktu',

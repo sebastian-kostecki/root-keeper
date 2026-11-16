@@ -362,6 +362,7 @@ class TreeViewDemoSeeder extends Seeder
         Source::factory()->for($this->tree)->described()->create([
             'original_name' => 'opisany-akt-lipnica-1878.jpg',
             'archive' => 'Archiwum Akt Dawnych w Warszawie',
+            'signature' => 'AP 35/1813/0/2.4/58',
             'parish_id' => $parish->id,
             'note' => "Wpis po prawej stronie rozkładówki, zapisany po łacinie.\n\nNazwisko matki odczytane z trudem, do sprawdzenia w księdze zgonów.",
             'url' => 'https://www.szukajwarchiwach.gov.pl/',
@@ -376,7 +377,8 @@ class TreeViewDemoSeeder extends Seeder
         Source::factory()->for($this->tree)->create([
             'original_name' => 'akt-z-dlugim-opisem.jpg',
             'name' => 'Akt urodzenia z parafii Świętego Jana Chrzciciela w Lipnicy Murowanej, księga urodzeń z lat 1875-1885',
-            'archive' => 'Archiwum Diecezjalne w Tarnowie, zespół akt parafialnych, sygnatura 1234/56/78',
+            'archive' => 'Archiwum Diecezjalne w Tarnowie, zespół akt parafialnych',
+            'signature' => '1234/56/78',
             'parish_id' => $parish->id,
         ]);
     }

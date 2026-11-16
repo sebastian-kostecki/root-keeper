@@ -72,6 +72,7 @@ type SourceFormData = {
     cemetery_id: string;
     buried_person_ids: string[];
     archive: string;
+    signature: string;
     url: string;
     note: string;
 };

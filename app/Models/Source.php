@@ -22,6 +22,8 @@ use Illuminate\Support\Carbon;
  * @property int|null $parish_id
  * @property int|null $cemetery_id
  * @property string|null $archive
+ * @property string|null $signature
+ * @property string|null $repo_id
  * @property string|null $url
  * @property string|null $note
  * @property string $original_name
@@ -34,7 +36,7 @@ use Illuminate\Support\Carbon;
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
-#[Fillable(['tree_id', 'kind', 'original_name', 'path', 'thumbnail_path', 'mime_type', 'size', 'width', 'height', 'name', 'record_type', 'year', 'parish_id', 'cemetery_id', 'archive', 'url', 'note'])]
+#[Fillable(['tree_id', 'kind', 'original_name', 'path', 'thumbnail_path', 'mime_type', 'size', 'width', 'height', 'name', 'record_type', 'year', 'parish_id', 'cemetery_id', 'archive', 'signature', 'repo_id', 'url', 'note'])]
 class Source extends Model
 {
     /** @use HasFactory<SourceFactory> */

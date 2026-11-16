@@ -40,6 +40,7 @@ class SourceResource extends JsonResource
      *     cemetery_locality_id: int|null,
      *     buried_people?: list<array{id: int, display_name: string}>,
      *     archive: string|null,
+     *     signature: string|null,
      *     url: string|null,
      *     note: string|null,
      *     original_name: string,
@@ -76,6 +77,7 @@ class SourceResource extends JsonResource
                 ->values()
                 ->all()),
             'archive' => $this->archive,
+            'signature' => $this->signature,
             'url' => $this->url,
             'note' => $this->note,
             'original_name' => $this->original_name,

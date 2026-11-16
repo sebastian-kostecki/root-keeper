@@ -24,6 +24,7 @@ export type Source = {
     record_type_label: string | null;
     year: number | null;
     archive: string | null;
+    signature: string | null;
     parish_id: number | null;
     parish_label: string | null;
     parish_locality_id: number | null;
