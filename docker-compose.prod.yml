@@ -22,13 +22,15 @@ services:
             - ./.env.prod:/var/www/html/.env:ro
         networks:
             - root-keeper-internal
-            - proxy
+            # Shared only with Traefik (kostecki-dev-infra), no internet; the app reaches the
+            # internet (mail) through its own network above.
+            - proxy-genealogy
         depends_on:
             pgsql:
                 condition: service_healthy
         labels:
             - traefik.enable=true
-            - traefik.docker.network=proxy
+            - traefik.docker.network=proxy-genealogy
             - traefik.http.routers.genealog.rule=Host(`genealogy.kostecki.dev`)
             - traefik.http.routers.genealog.entrypoints=websecure
             - traefik.http.routers.genealog.tls.certresolver=letsencrypt
@@ -74,7 +76,7 @@ services:
 networks:
     root-keeper-internal:
         driver: bridge
-    proxy:
+    proxy-genealogy:
         external: true
 
 volumes:
