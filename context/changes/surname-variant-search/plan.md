@@ -361,7 +361,7 @@ Panel osoby pokazuje warianty, a wiersz listy i tabeli wyjaśnia trafienie po wa
 
 #### Manual
 
-- [ ] 1.4 Na koncie deweloperskim osoba z wariantem dodanym w tinkerze pojawia się na `/persons` po wpisaniu wariantu
+- [x] 1.4 Na koncie deweloperskim osoba z wariantem dodanym w tinkerze pojawia się na `/persons` po wpisaniu wariantu — ręcznie 2026-11-16: „Nowakowski” na `/persons` konta testowego trafia Jana Nowaka (wariant z importu, ta sama ścieżka zapytania)
 
 ### Phase 2: Import zapisuje warianty
 
@@ -373,8 +373,8 @@ Panel osoby pokazuje warianty, a wiersz listy i tabeli wyjaśnia trafienie po wa
 
 #### Manual
 
-- [ ] 2.4 Import wymyślonego repo (`tests/Fixtures/research-repo`) na osobnym koncie testowym: podsumowanie pokazuje „Warianty nazwiska przy osobach”, a notatka Jana Nowaka nie ma linii wariantów
-- [ ] 2.5 Drugi przebieg bez zmian w repo kończy się „Nic do zapisania.”
+- [x] 2.4 Import wymyślonego repo (`tests/Fixtures/research-repo`) na osobnym koncie testowym: podsumowanie pokazuje „Warianty nazwiska przy osobach”, a notatka Jana Nowaka nie ma linii wariantów — ręcznie 2026-11-16: konto s09-test, linia bez wcięcia, notatka O-0001 bez wariantów
+- [x] 2.5 Drugi przebieg bez zmian w repo kończy się „Nic do zapisania.” — ręcznie 2026-11-16
 
 ### Phase 3: Warianty widoczne przy osobie i na liście
 
@@ -388,6 +388,6 @@ Panel osoby pokazuje warianty, a wiersz listy i tabeli wyjaśnia trafienie po wa
 
 #### Manual
 
-- [ ] 3.6 Na koncie testowym po imporcie wymyślonego repo: „Nowakowski” na `/persons` pokazuje Jana Nowaka z dopiskiem „zapis: Nowakowski” w widoku lista i tabela
-- [ ] 3.7 „Nowak” pokazuje Jana Nowaka bez dopisku, a lista bez wyszukiwania wygląda jak przed zmianą
-- [ ] 3.8 Panel Jana Nowaka pokazuje w „Dane osobowe” pole „Warianty nazwiska: Nowakowski”, a zapis sekcji „Dane osobowe” go nie usuwa
+- [x] 3.6 Na koncie testowym po imporcie wymyślonego repo: „Nowakowski” na `/persons` pokazuje Jana Nowaka z dopiskiem „zapis: Nowakowski” w widoku lista i tabela — ręcznie 2026-11-16 (lista i tabela)
+- [x] 3.7 „Nowak” pokazuje Jana Nowaka bez dopisku, a lista bez wyszukiwania wygląda jak przed zmianą — ręcznie 2026-11-16
+- [x] 3.8 Panel Jana Nowaka pokazuje w „Dane osobowe” pole „Warianty nazwiska: Nowakowski”, a zapis sekcji „Dane osobowe” go nie usuwa — ręcznie 2026-11-16 (PUT /persons/111 → 303, pole zostaje)
