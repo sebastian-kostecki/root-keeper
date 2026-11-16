@@ -17,6 +17,7 @@ use App\Models\Event;
 use App\Models\Locality;
 use App\Models\ParentChildRelation;
 use App\Models\Person;
+use App\Models\PersonSurnameVariant;
 use App\Models\RepoSnapshot;
 use App\Models\Residence;
 use App\Models\Source;
@@ -185,7 +186,7 @@ test('writes only into the author tree and leaves the other account untouched', 
 
     $diff = rowDiff($before, databaseRows());
 
-    expect(array_keys($diff['tables']))->toEqualCanonicalizing(['people', 'events', 'event_participants', 'parent_child_relations', 'repo_snapshots'])
+    expect(array_keys($diff['tables']))->toEqualCanonicalizing(['people', 'person_surname_variants', 'events', 'event_participants', 'parent_child_relations', 'repo_snapshots'])
         ->and($diff['files'])->toBe(['removed' => [], 'added' => []]);
 
     foreach ($diff['tables'] as $table => $changes) {
@@ -535,7 +536,7 @@ test('changes only rows of the author tree and removes nothing when it hooks the
     $authorPeople = $tree->people()->pluck('id')->all();
     $authorEvents = $tree->events()->pluck('id')->all();
 
-    expect(array_keys($diff['tables']))->toEqualCanonicalizing(['cemeteries', 'people', 'events', 'event_participants', 'parent_child_relations', 'repo_snapshots'])
+    expect(array_keys($diff['tables']))->toEqualCanonicalizing(['cemeteries', 'people', 'person_surname_variants', 'events', 'event_participants', 'parent_child_relations', 'repo_snapshots'])
         ->and($diff['files'])->toBe(['removed' => [], 'added' => []]);
 
     foreach ($diff['tables'] as $table => $changes) {
@@ -549,7 +550,7 @@ test('changes only rows of the author tree and removes nothing when it hooks the
             continue;
         }
 
-        if (in_array($table, ['repo_snapshots', 'cemeteries'], true)) {
+        if (in_array($table, ['repo_snapshots', 'cemeteries', 'person_surname_variants'], true)) {
             expect($changes['changed'])->toBe([])
                 ->and(collect($changes['added'])->pluck('tree_id')->unique()->all())->toBe([$tree->id]);
 
@@ -779,7 +780,7 @@ test('remembers the repo values of every person, birth, death, relation and marr
 
     expect(array_keys($snapshots))->toBe(collect([...$written, ...$withoutRecord])->sort()->values()->all())
         ->and($tree->repoSnapshots()->where('deletion_kept', true)->count())->toBe(0)
-        ->and($snapshots['O-0001'])->toEqual(['imiona' => 'Jan', 'nazwisko' => 'Nowak', 'plec' => 'male', 'notatka' => $note])
+        ->and($snapshots['O-0001'])->toEqual(['imiona' => 'Jan', 'nazwisko' => 'Nowak', 'plec' => 'male', 'warianty' => 'Nowakowski', 'notatka' => $note])
         ->and($snapshots['O-0008']['plec'])->toBeNull()
         ->and($snapshots['O-0001/urodzenie'])->toBe(['data' => '1801-05-12', 'miejsce' => 'Zalesie', 'miejsce_id' => null])
         ->and($snapshots['O-0002/urodzenie'])->toBe(['data' => 'między 1760 a 1765', 'miejsce' => null, 'miejsce_id' => null])
@@ -1801,3 +1802,135 @@ test('brings back a burial deleted in the app as a burial with its cemetery and 
         ->and([$result->restored, $result->burials])->toBe([1, 1])
         ->and($other->events()->where('type', EventType::Burial)->count())->toBe(0);
 });
+
+const REIMPORT_VARIANTS = "imiona: Jan\nnazwisko: Misiuk\nwarianty_nazwiska: [Mysiuk, Myszuk]";
+
+/**
+ * @return list<string>
+ */
+function variantNamesOf(Tree $tree, string $repoId): array
+{
+    return importedPerson($tree, $repoId)->surnameVariants()->pluck('name')->all();
+}
+
+/**
+ * @return list<array<string, mixed>>
+ */
+function variantRowsOf(Tree $tree): array
+{
+    return PersonSurnameVariant::where('tree_id', $tree->id)->orderBy('id')->get()->toArray();
+}
+
+test('writes the surname variants of new persons in the order of the repo without repeats and only in the own tree', function () {
+    [$tree, $other] = reimportTwins(['O-0001' => "imiona: Jan\nwarianty_nazwiska: [Mysiuk, Myszuk, MYSIUK]"]);
+
+    expect(variantNamesOf($tree, 'O-0001'))->toBe(['Mysiuk', 'Myszuk'])
+        ->and(variantNamesOf($other, 'O-0001'))->toBe(['Mysiuk', 'Myszuk'])
+        ->and(importedPerson($tree, 'O-0001')->surnameVariants->pluck('position')->all())->toBe([0, 1])
+        ->and(PersonSurnameVariant::where('tree_id', $tree->id)->count())->toBe(2)
+        ->and(PersonSurnameVariant::where('tree_id', $other->id)->count())->toBe(2)
+        ->and(snapshotValues($tree)['O-0001']['warianty'])->toBe("Mysiuk\nMyszuk");
+});
+
+test('replaces the surname variants for an approved change and keeps them for a rejected one, remembering the repo list either way', function (bool $rejected, array $expected) {
+    Storage::fake('local');
+    [$tree, $other] = reimportTwins(['O-0001' => REIMPORT_VARIANTS]);
+    $plan = reimportPlan($tree, ['O-0001' => "imiona: Jan\nnazwisko: Misiuk\nwarianty_nazwiska: [Mysiuk, Misiuk]"]);
+    $eventIds = $tree->events()->pluck('id')->all();
+    $otherVariants = variantRowsOf($other);
+    $before = databaseRows();
+
+    expect($plan->changes[0]->key)->toBe('O-0001/warianty');
+
+    app(ApplyImport::class)->handle($tree, $plan, new ChangeApprovals($rejected ? ['O-0001/warianty'] : []), new ConflictResolutions);
+
+    expect(variantNamesOf($tree, 'O-0001'))->toBe($expected)
+        ->and(snapshotValues($tree)['O-0001']['warianty'])->toBe("Mysiuk\nMisiuk")
+        ->and(variantRowsOf($other))->toBe($otherVariants)
+        ->and(variantNamesOf($other, 'O-0001'))->toBe(['Mysiuk', 'Myszuk']);
+
+    expectOnlyAuthorRowsChanged(rowDiff($before, databaseRows()), $tree, $eventIds);
+})->with([
+    'approved' => [false, ['Mysiuk', 'Misiuk']],
+    'rejected' => [true, ['Mysiuk', 'Myszuk']],
+]);
+
+test('clears the surname variants for an approved change to an empty list', function () {
+    [$tree, $other] = reimportTwins(['O-0001' => REIMPORT_VARIANTS]);
+
+    app(ApplyImport::class)->handle($tree, reimportPlan($tree, ['O-0001' => "imiona: Jan\nnazwisko: Misiuk"]), new ChangeApprovals, new ConflictResolutions);
+
+    expect(variantNamesOf($tree, 'O-0001'))->toBe([])
+        ->and(snapshotValues($tree)['O-0001']['warianty'])->toBeNull()
+        ->and(variantNamesOf($other, 'O-0001'))->toBe(['Mysiuk', 'Myszuk']);
+});
+
+test('refuses to write the surname variants when they changed since planning and writes nothing', function () {
+    Storage::fake('local');
+    [$tree, $other] = reimportTwins(['O-0001' => REIMPORT_VARIANTS]);
+    $plan = reimportPlan($tree, ['O-0001' => "imiona: Jan\nnazwisko: Misiuk\nwarianty_nazwiska: [Mysiuk, Misiuk]"]);
+
+    importedPerson($tree, 'O-0001')->surnameVariants()->where('name', 'Myszuk')->update(['name' => 'Mizuk']);
+    $before = ownershipSnapshot();
+    $otherVariants = variantRowsOf($other);
+
+    expect(fn () => app(ApplyImport::class)->handle($tree, $plan, new ChangeApprovals, new ConflictResolutions))->toThrow(RuntimeException::class, 'po planowaniu; nic nie zostało zapisane')
+        ->and(ownershipSnapshot())->toBe($before)
+        ->and(variantNamesOf($tree, 'O-0001'))->toBe(['Mysiuk', 'Mizuk'])
+        ->and(snapshotValues($tree)['O-0001']['warianty'])->toBe("Mysiuk\nMyszuk")
+        ->and(variantRowsOf($other))->toBe($otherVariants);
+});
+
+test('keeps the variants of a person detached by import and settles a different list at a new match as a conflict', function () {
+    Storage::fake('local');
+    $blocks = ['O-0001' => REIMPORT_VARIANTS, 'O-0002' => 'imiona: Anna'];
+    [$tree, $other] = reimportTwins($blocks);
+
+    app(ApplyImport::class)->handle($tree, reimportPlan($tree, ['O-0002' => 'imiona: Anna'], removals: ['O-0001' => 'detach']), new ChangeApprovals, new ConflictResolutions);
+
+    $jan = $tree->people()->where('first_name', 'Jan')->firstOrFail();
+
+    expect($jan->repo_id)->toBeNull()
+        ->and($jan->surnameVariants()->pluck('name')->all())->toBe(['Mysiuk', 'Myszuk']);
+
+    $plan = planBlocksForApply($tree, ['O-0002' => 'imiona: Anna', 'O-0009' => "imiona: Jan\nnazwisko: Misiuk\nwarianty_nazwiska: [Misiuk, Mysiuk]"], ['O-0009' => $jan]);
+    $conflict = $plan->matched[0]->conflicts[0];
+    $otherVariants = variantRowsOf($other);
+
+    expect($conflict->key)->toBe('O-0009/warianty')
+        ->and([$conflict->appLabel, $conflict->repoLabel])->toBe(['Mysiuk, Myszuk', 'Misiuk, Mysiuk']);
+
+    app(ApplyImport::class)->handle($tree, $plan, new ChangeApprovals, new ConflictResolutions(['O-0009/warianty' => ConflictResolutions::FROM_REPO]));
+
+    expect($jan->fresh()->surnameVariants()->pluck('name')->all())->toBe(['Misiuk', 'Mysiuk'])
+        ->and(variantRowsOf($other))->toBe($otherVariants);
+});
+
+test('fills the surname variants of a matched person who has none and leaves the same person of another account alone', function () {
+    Storage::fake('local');
+    [$tree, $people] = arrangeAuthorWithTwinPeople();
+    $other = Person::where('tree_id', '!=', $tree->id)->firstOrFail();
+    $plan = planBlocksForApply($tree, ['O-0001' => REIMPORT_VARIANTS], ['O-0001' => $people['jan']]);
+
+    expect(fieldsOfFills($plan))->toContain('surname_variants');
+
+    app(ApplyImport::class)->handle($tree, $plan, new ChangeApprovals, new ConflictResolutions);
+
+    expect($people['jan']->fresh()->surnameVariants()->pluck('name')->all())->toBe(['Mysiuk', 'Myszuk'])
+        ->and($other->surnameVariants()->count())->toBe(0)
+        ->and(PersonSurnameVariant::where('tree_id', '!=', $tree->id)->count())->toBe(0);
+});
+
+/**
+ * The same hand-entered Jan Misiuk in the tree of another account and in the tree of the author.
+ *
+ * @return array{0: Tree, 1: array{jan: Person}}
+ */
+function arrangeAuthorWithTwinPeople(): array
+{
+    $other = User::factory()->create();
+    $author = User::factory()->create();
+    Person::factory()->for($other->tree)->create(['first_name' => 'Jan', 'last_name' => 'Misiuk']);
+
+    return [$author->tree, ['jan' => Person::factory()->for($author->tree)->create(['first_name' => 'Jan', 'last_name' => 'Misiuk'])]];
+}

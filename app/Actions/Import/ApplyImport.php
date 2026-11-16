@@ -34,6 +34,7 @@ use App\Support\Import\PlannedUpdate;
 use App\Support\Import\RepoKeys;
 use App\Support\Import\ResearchDate;
 use App\Support\Import\ResearchEvent;
+use App\Support\Import\SurnameVariants;
 use App\Support\Import\ValueConflict;
 use App\Support\Import\WrittenPlaces;
 use Illuminate\Support\Arr;
@@ -774,6 +775,7 @@ class ApplyImport
             'repo_id' => $research->id,
         ]);
         $person->setRelation('tree', $tree);
+        $this->replaceSurnameVariants($person, SurnameVariants::fromResearch($research));
 
         if ($research->birth !== null) {
             $this->createEvent($tree, $person, EventType::Birth, $research->birth, $planned->birthRepoId, $planned->birthPlace, $written);
@@ -794,6 +796,24 @@ class ApplyImport
     }
 
     /**
+     * Replace the surname variants of a person with the list, in its order.
+     */
+    private function replaceSurnameVariants(Person $person, SurnameVariants $variants): void
+    {
+        $person->surnameVariants()->delete();
+
+        foreach ($variants->names as $position => $name) {
+            $person->surnameVariants()->create([
+                'tree_id' => $person->tree_id,
+                'name' => $name,
+                'position' => $position,
+            ]);
+        }
+
+        $person->unsetRelation('surnameVariants');
+    }
+
+    /**
      * Write the approved changes, the fills and the conflicts settled for the repo into a person an earlier import took,
      * and mark, create or change its birth, death and burial.
      *
@@ -804,7 +824,7 @@ class ApplyImport
      */
     private function writeUpdate(Tree $tree, Person $person, PlannedUpdate $update, ChangeApprovals $approvals, ConflictResolutions $resolutions, WrittenPlaces $written): array
     {
-        /** @var list<array{0: string, 1: string|Gender|ResearchDate|PlannedPlace|null}> $values */
+        /** @var list<array{0: string, 1: string|Gender|ResearchDate|PlannedPlace|SurnameVariants|null}> $values */
         $values = [];
         $fills = 0;
         $taken = 0;
@@ -830,9 +850,11 @@ class ApplyImport
         $attributes = [];
         $dates = [];
         $places = [];
+        $variants = null;
 
         foreach ($values as [$field, $value]) {
             match (true) {
+                $field === 'surname_variants' && ($value === null || $value instanceof SurnameVariants) => $variants = $value ?? SurnameVariants::empty(),
                 in_array($field, ['first_name', 'last_name'], true) && ($value === null || is_string($value)) => $attributes[$field] = $value,
                 $field === 'gender' && ($value === null || $value instanceof Gender) => $attributes[$field] = $value,
                 $field === 'note' && ($value === null || is_string($value)) => $attributes[$field] = NoteBlock::replace($person->note, $update->person->id, $value),
@@ -848,6 +870,10 @@ class ApplyImport
 
         if ($attributes !== []) {
             $person->update($attributes);
+        }
+
+        if ($variants !== null) {
+            $this->replaceSurnameVariants($person, $variants);
         }
 
         $counts = ['births' => 0, 'deaths' => 0, 'burials' => 0];
@@ -912,7 +938,7 @@ class ApplyImport
      */
     private function writeMatch(Tree $tree, Person $person, PlannedMatch $match, ConflictResolutions $resolutions, WrittenPlaces $written): array
     {
-        /** @var list<array{0: string, 1: string|Gender|ResearchDate|PlannedPlace|null, 2: bool}> $changes */
+        /** @var list<array{0: string, 1: string|Gender|ResearchDate|PlannedPlace|SurnameVariants|null, 2: bool}> $changes */
         $changes = [];
 
         foreach ($match->fills as $fill) {
@@ -928,11 +954,13 @@ class ApplyImport
         $attributes = ['repo_id' => $match->person->id];
         $dates = [];
         $places = [];
+        $variants = null;
         $fills = 0;
         $taken = 0;
 
         foreach ($changes as [$field, $value, $fromRepo]) {
             match (true) {
+                $field === 'surname_variants' && ($value === null || $value instanceof SurnameVariants) => $variants = $value ?? SurnameVariants::empty(),
                 in_array($field, ['first_name', 'last_name'], true) && is_string($value) => $attributes[$field] = $value,
                 $field === 'gender' && $value instanceof Gender => $attributes[$field] = $value,
                 in_array($field, ['birth_date', 'death_date', 'burial_date'], true) && $value instanceof ResearchDate => $dates[$field] = $value,
@@ -952,6 +980,10 @@ class ApplyImport
         }
 
         $person->update($attributes);
+
+        if ($variants !== null) {
+            $this->replaceSurnameVariants($person, $variants);
+        }
 
         foreach ([
             [EventType::Birth, $match->birthRepoId, $match->createBirth, 'birth_date', 'birth_place'],
@@ -1002,6 +1034,7 @@ class ApplyImport
             'first_name' => PlanImport::cleanText($person->first_name),
             'last_name' => PlanImport::cleanText($person->last_name),
             'gender' => $person->gender?->label(),
+            'surname_variants' => SurnameVariants::fromPerson($person)->label(),
             'note' => $person->repo_id === null ? null : NoteBlock::find($person->note, $person->repo_id),
             'birth_date' => ResearchDate::fromEvent($person->birth())?->label(),
             'death_date' => ResearchDate::fromEvent($person->death())?->label(),

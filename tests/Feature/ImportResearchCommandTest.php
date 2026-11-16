@@ -11,6 +11,7 @@ use App\Models\Event;
 use App\Models\Locality;
 use App\Models\ParentChildRelation;
 use App\Models\Person;
+use App\Models\PersonSurnameVariant;
 use App\Models\RepoSnapshot;
 use App\Models\Tree;
 use App\Models\User;
@@ -108,6 +109,8 @@ test('prints the report for the fixture repo and exits successfully', function (
         ->expectsOutputToContain('Nieznany klucz: kolor')
         ->expectsOutputToContain('Podsumowanie importu')
         ->expectsOutputToContain('Pominięte relacje:')
+        ->expectsOutputToContain('Warianty nazwiska przy osobach: 1')
+        ->doesntExpectOutputToContain('(S-09)')
         ->expectsChoice(newPlacesQuestion(2), 'all', PLACES_MODE_OPTIONS, true)
         ->expectsConfirmation(saveQuestion(13, 0, 27), 'no')
         ->expectsOutputToContain('Nic nie zostało zapisane.')
@@ -409,7 +412,7 @@ test('hooks the repo into the author hand-entered persons after sure, doubtful a
         ->expectsOutputToContain('Konflikty wartości do rozstrzygnięcia: 1')
         ->expectsChoice(newPlacesQuestion(2), 'all', PLACES_MODE_OPTIONS, true)
         ->expectsChoice(BIRTH_CONFLICT_QUESTION, 'repo', BIRTH_CONFLICT_OPTIONS, true)
-        ->expectsConfirmation(saveQuestion(11, 2, 27, changes: 2), 'yes')
+        ->expectsConfirmation(saveQuestion(11, 2, 27, changes: 3), 'yes')
         ->expectsOutputToContain('Osoby: nowe 11, dopasowane 2')
         ->expectsOutputToContain('Import nie ustawia probanta')
         ->assertSuccessful();
@@ -439,7 +442,7 @@ test('keeps the value from the app when the author settles the conflict that way
         ->expectsQuestion('Wątpliwe 1/1: Piotr Nowak (O-0002) — kto to?', "person:{$scene['piotr']->id}")
         ->expectsChoice(newPlacesQuestion(2), 'all', PLACES_MODE_OPTIONS, true)
         ->expectsQuestion(BIRTH_CONFLICT_QUESTION, 'app')
-        ->expectsConfirmation(saveQuestion(11, 2, 27, changes: 1), 'yes')
+        ->expectsConfirmation(saveQuestion(11, 2, 27, changes: 2), 'yes')
         ->assertSuccessful();
 
     $birth = $scene['jan']->fresh()->birth();
@@ -456,7 +459,7 @@ test('adds a doubtful repo person as a new person next to the hand-entered one',
         ->expectsQuestion('Wątpliwe 1/1: Piotr Nowak (O-0002) — kto to?', 'new')
         ->expectsChoice(newPlacesQuestion(2), 'all', PLACES_MODE_OPTIONS, true)
         ->expectsQuestion(BIRTH_CONFLICT_QUESTION, 'app')
-        ->expectsConfirmation(saveQuestion(12, 1, 26, changes: 1), 'yes')
+        ->expectsConfirmation(saveQuestion(12, 1, 26, changes: 2), 'yes')
         ->assertSuccessful();
 
     $piotrs = $author->tree->people()->where('first_name', 'Piotr')->orderBy('id')->get();
@@ -479,7 +482,7 @@ test('leaves out a doubtful repo person and its relations and lists it among the
         ->expectsOutputToContain('osoba pominięta przy dopasowaniu')
         ->expectsChoice(newPlacesQuestion(2), 'all', PLACES_MODE_OPTIONS, true)
         ->expectsQuestion(BIRTH_CONFLICT_QUESTION, 'repo')
-        ->expectsConfirmation(saveQuestion(11, 1, 21, changes: 2), 'yes')
+        ->expectsConfirmation(saveQuestion(11, 1, 21, changes: 3), 'yes')
         ->assertSuccessful();
 
     $tree = $author->tree;
@@ -506,7 +509,7 @@ test('walks through the sure match one by one before the doubtful ones', functio
         ->expectsQuestion('Wątpliwe 1/1: Piotr Nowak (O-0002) — kto to?', 'skip')
         ->expectsChoice(newPlacesQuestion(2), 'all', PLACES_MODE_OPTIONS, true)
         ->expectsQuestion(BIRTH_CONFLICT_QUESTION, 'app')
-        ->expectsConfirmation(saveQuestion(11, 1, 21, changes: 1), 'no')
+        ->expectsConfirmation(saveQuestion(11, 1, 21, changes: 2), 'no')
         ->assertSuccessful();
 });
 
@@ -630,7 +633,7 @@ test('stops after a yes when the database backup fails in production and the tre
         ->expectsQuestion('Wątpliwe 1/1: Piotr Nowak (O-0002) — kto to?', "person:{$scene['piotr']->id}")
         ->expectsChoice(newPlacesQuestion(2), 'all', PLACES_MODE_OPTIONS, true)
         ->expectsQuestion(BIRTH_CONFLICT_QUESTION, 'repo')
-        ->expectsConfirmation(saveQuestion(11, 2, 27, changes: 2), 'yes')
+        ->expectsConfirmation(saveQuestion(11, 2, 27, changes: 3), 'yes')
         ->expectsOutputToContain('Kopia bazy nie powiodła się, nic nie zostało zapisane.')
         ->assertFailed();
 
@@ -647,7 +650,7 @@ test('writes nothing after a no at the end of the match walkthrough', function (
         ->expectsQuestion('Wątpliwe 1/1: Piotr Nowak (O-0002) — kto to?', "person:{$scene['piotr']->id}")
         ->expectsChoice(newPlacesQuestion(2), 'all', PLACES_MODE_OPTIONS, true)
         ->expectsQuestion(BIRTH_CONFLICT_QUESTION, 'repo')
-        ->expectsConfirmation(saveQuestion(11, 2, 27, changes: 2), 'no')
+        ->expectsConfirmation(saveQuestion(11, 2, 27, changes: 3), 'no')
         ->expectsOutputToContain('Nic nie zostało zapisane.')
         ->assertSuccessful();
 
@@ -819,6 +822,25 @@ test('takes a changed date from the repo after approving all and leaves the othe
 
     expect(birthYearOf($author->tree, 'O-0001/urodzenie'))->toBe(1802)
         ->and(birthYearOf($other->tree, 'O-0001/urodzenie'))->toBe(1801)
+        ->and(treeState($other->tree))->toBe($otherBefore);
+});
+
+test('shows a changed list of surname variants in the table of changes and writes it only for the author', function () {
+    [$author, $other] = arrangeImportedAuthors();
+    $otherBefore = treeState($other->tree);
+    $otherVariants = PersonSurnameVariant::where('tree_id', $other->tree->id)->count();
+    $blocks = reimportBlocks();
+    $blocks['O-0001'] .= "\nwarianty_nazwiska: [Nowakowski, Nowacki]";
+
+    $this->artisan('import:research', ['email' => $author->email, 'path' => reimportRepo($blocks)])
+        ->expectsOutputToContain('Warianty nazwiska')
+        ->expectsTable(['Osoba', 'Pole', 'W aplikacji', 'Teraz w repo'], [['Jan Nowak (O-0001)', 'Warianty nazwiska', '—', 'Nowakowski, Nowacki']])
+        ->expectsChoice('Zmiany z repo (1): co zrobić?', 'all', CHANGES_ALL, true)
+        ->expectsConfirmation(saveQuestion(0, 0, 1, changes: 1), 'yes')
+        ->assertSuccessful();
+
+    expect($author->tree->people()->where('repo_id', 'O-0001')->firstOrFail()->surnameVariants()->pluck('name')->all())->toBe(['Nowakowski', 'Nowacki'])
+        ->and(PersonSurnameVariant::where('tree_id', $other->tree->id)->count())->toBe($otherVariants)
         ->and(treeState($other->tree))->toBe($otherBefore);
 });
 

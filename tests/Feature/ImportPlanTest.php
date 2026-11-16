@@ -240,8 +240,14 @@ test('writes the person note exactly as specified', function () {
         Urodzenie: Zalesie; poziom A; 24 IV 1801 st.st.
         Pochowanie: Zalesie
         Ślub z Anna Wrona (O-0004): Zalesie; poziom B
-        Warianty nazwiska: Nowakowski
         NOTE);
+});
+
+test('leaves the note empty for a person with only surname variants', function () {
+    $plan = planTemporaryRepo(arrangeEmptyAuthorAndOverlappingOther(), ['O-0001' => "imiona: Jan\nwarianty_nazwiska: [Nowakowski]"]);
+
+    expect(plannedPerson($plan, 'O-0001')->note)->toBeNull()
+        ->and($plan->snapshots['O-0001']['warianty'])->toBe('Nowakowski');
 });
 
 test('leaves the note empty for a person with nothing to carry over', function () {
@@ -1749,4 +1755,102 @@ test('puts the recognized place on a new wedding and drops its text from both no
         ->and($plan->snapshots['O-0001+O-0002/slub']['miejsce_id'])->toBe('L:'.$world['Zalesie']->id)
         ->and(plannedPerson($plan, 'O-0001')->note)->toBeNull()
         ->and(plannedPerson($plan, 'O-0002')->note)->toBeNull();
+});
+
+const REPLAN_VARIANTS = "imiona: Jan\nnazwisko: Misiuk\nwarianty_nazwiska: [Mysiuk, Myszuk]";
+
+/**
+ * Makes the tree look like one an earlier import filled before the variants had a memory: no variants, no `warianty` in the memory.
+ */
+function replanForgetVariants(Tree $tree): void
+{
+    $tree->people()->where('repo_id', 'O-0001')->firstOrFail()->surnameVariants()->delete();
+    $snapshot = $tree->repoSnapshots()->where('repo_id', 'O-0001')->firstOrFail();
+    $values = $snapshot->values;
+    unset($values['warianty']);
+    $snapshot->update(['values' => $values]);
+}
+
+test('fills the surname variants of a known person whose memory has no variants', function () {
+    [$tree, $other] = replanTwinTrees(['O-0001' => REPLAN_VARIANTS], fn (Tree $tree) => replanForgetVariants($tree));
+
+    $plan = replanBlocks($tree, ['O-0001' => REPLAN_VARIANTS]);
+    $fill = $plan->updates[0]->fills[0];
+
+    expect($plan->updates)->toHaveCount(1)
+        ->and($plan->conflicts)->toBe([])
+        ->and($fill)->toBeInstanceOf(PlannedFill::class)
+        ->and([$fill->field, $fill->label, $fill->appLabel, $fill->valueLabel()])->toBe(['surname_variants', 'Warianty nazwiska', null, 'Mysiuk, Myszuk'])
+        ->and($fill->value->names)->toBe(['Mysiuk', 'Myszuk'])
+        ->and($plan->snapshots['O-0001']['warianty'])->toBe("Mysiuk\nMyszuk");
+
+    expectPlanInside($plan, $tree);
+    expect(replanPlanOf($other)->updates)->toHaveCount(1);
+});
+
+/**
+ * The plan of the same repo over the other account, to prove that it is planned from its own data only.
+ */
+function replanPlanOf(Tree $tree): ImportPlan
+{
+    return replanBlocks($tree, ['O-0001' => REPLAN_VARIANTS]);
+}
+
+test('plans a changed list of surname variants as a change when the memory equals the app', function () {
+    [$tree] = replanTwinTrees(['O-0001' => REPLAN_VARIANTS]);
+
+    $plan = replanBlocks($tree, ['O-0001' => "imiona: Jan\nnazwisko: Misiuk\nwarianty_nazwiska: [Mysiuk, Myszuk, Misiuk]"]);
+    $change = $plan->changes[0];
+
+    expect($plan->changes)->toHaveCount(1)
+        ->and($change)->toBeInstanceOf(PlannedChange::class)
+        ->and([$change->key, $change->field, $change->label, $change->appLabel, $change->repoLabel])->toBe(['O-0001/warianty', 'surname_variants', 'Warianty nazwiska', 'Mysiuk, Myszuk', 'Mysiuk, Myszuk, Misiuk'])
+        ->and($change->repoValue->names)->toBe(['Mysiuk', 'Myszuk', 'Misiuk'])
+        ->and($plan->snapshots['O-0001']['warianty'])->toBe("Mysiuk\nMyszuk\nMisiuk");
+
+    expectPlanInside($plan, $tree);
+});
+
+test('clears the surname variants when the repo lists none', function () {
+    [$tree] = replanTwinTrees(['O-0001' => REPLAN_VARIANTS]);
+
+    $plan = replanBlocks($tree, ['O-0001' => "imiona: Jan\nnazwisko: Misiuk"]);
+    $change = $plan->changes[0];
+
+    expect($plan->changes)->toHaveCount(1)
+        ->and([$change->key, $change->appLabel, $change->repoLabel, $change->repoValue])->toBe(['O-0001/warianty', 'Mysiuk, Myszuk', '—', null])
+        ->and($plan->snapshots['O-0001']['warianty'])->toBeNull();
+});
+
+test('plans nothing for a list that equals the saved one after normalizing', function () {
+    [$tree] = replanTwinTrees(['O-0001' => REPLAN_VARIANTS]);
+
+    $plan = replanBlocks($tree, ['O-0001' => "imiona: Jan\nnazwisko: Misiuk\nwarianty_nazwiska: [' Mysiuk ', MYSIUK, ' ', Myszuk]"]);
+
+    expect($plan->changes)->toBe([])
+        ->and($plan->updates)->toBe([])
+        ->and($plan->conflicts)->toBe([]);
+});
+
+test('reads a variant that differs only in case as a change', function () {
+    [$tree] = replanTwinTrees(['O-0001' => REPLAN_VARIANTS]);
+
+    $plan = replanBlocks($tree, ['O-0001' => "imiona: Jan\nnazwisko: Misiuk\nwarianty_nazwiska: [MYSIUK, Myszuk]"]);
+
+    expect($plan->changes)->toHaveCount(1)
+        ->and([$plan->changes[0]->appLabel, $plan->changes[0]->repoLabel])->toBe(['Mysiuk, Myszuk', 'MYSIUK, Myszuk']);
+});
+
+test('keeps the memory of the surname variants when the gender is left out by the parent rule', function () {
+    $blocks = ['O-0001' => "imiona: Jan\nwarianty_nazwiska: [Mysiuk, Myszuk]", 'O-0002' => "imiona: Dziecko\nrodzice:\n  ojciec: O-0001"];
+    [$tree] = replanTwinTrees($blocks, function (Tree $tree): void {
+        $second = Person::factory()->for($tree)->male()->create(['first_name' => 'Adam']);
+        linkParent($second, replanPerson($tree, 'O-0002'));
+    });
+
+    $plan = replanBlocks($tree, ['O-0001' => "imiona: Jan\nplec: M\nwarianty_nazwiska: [Mysiuk, Myszuk]", 'O-0002' => $blocks['O-0002']]);
+
+    expect($plan->skippedValues)->toHaveCount(1)
+        ->and($plan->snapshots['O-0001']['plec'])->toBeNull()
+        ->and($plan->snapshots['O-0001']['warianty'])->toBe("Mysiuk\nMyszuk");
 });

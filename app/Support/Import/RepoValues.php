@@ -27,6 +27,7 @@ final class RepoValues
             $values['plec'] = $person->gender?->value;
         }
 
+        $values['warianty'] = SurnameVariants::fromResearch($person)->text();
         $values['notatka'] = $note;
 
         return $values;
@@ -144,10 +145,6 @@ final class RepoValues
             if ($details !== []) {
                 $lines[] = sprintf('Ślub z %s (%s): %s', isset($reading->persons[$partnerId]) ? self::nameOf($reading->persons[$partnerId]) : 'NN', $partnerId, implode('; ', $details));
             }
-        }
-
-        if ($person->surnameVariants !== []) {
-            $lines[] = 'Warianty nazwiska: '.implode(', ', $person->surnameVariants);
         }
 
         if ($lines === []) {

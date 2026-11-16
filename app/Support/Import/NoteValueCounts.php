@@ -4,7 +4,7 @@ namespace App\Support\Import;
 
 /**
  * How many places and burials the plan adds to the tree and how many values from the blocks go into the person note
- * instead of a column.
+ * instead of a column. `$surnameVariants` counts the variants written for new and first-time matched persons.
  */
 final readonly class NoteValueCounts
 {

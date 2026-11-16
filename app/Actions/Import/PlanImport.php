@@ -47,6 +47,7 @@ use App\Support\Import\ResearchPerson;
 use App\Support\Import\ResearchRepoReading;
 use App\Support\Import\ResolvedPlace;
 use App\Support\Import\SharedParentGraph;
+use App\Support\Import\SurnameVariants;
 use App\Support\Import\ThreeWayValue;
 use App\Support\Import\ValueConflict;
 use InvalidArgumentException;
@@ -74,7 +75,7 @@ class PlanImport
     /**
      * The fields of a person in the order they are listed.
      */
-    private const FIELDS = ['first_name', 'last_name', 'gender', 'note', 'birth_date', 'birth_place', 'death_date', 'death_place', 'burial_date', 'burial_place'];
+    private const FIELDS = ['first_name', 'last_name', 'gender', 'surname_variants', 'note', 'birth_date', 'birth_place', 'death_date', 'death_place', 'burial_date', 'burial_place'];
 
     public function __construct(private readonly MatchResearchPlaces $placeMatcher = new MatchResearchPlaces) {}
 
@@ -752,7 +753,7 @@ class PlanImport
             throw new InvalidArgumentException('Osoba drzewa może być dopasowana do najwyżej jednej osoby repo.');
         }
 
-        $people = $tree->people()->whereIn('id', $treeIds)->with('events.participants')->get()->keyBy('id');
+        $people = $tree->people()->whereIn('id', $treeIds)->with(['events.participants', 'surnameVariants'])->get()->keyBy('id');
 
         if ($people->count() !== count($treeIds)) {
             throw new InvalidArgumentException('Decyzje wskazują osobę spoza drzewa konta.');
@@ -783,7 +784,7 @@ class PlanImport
     private function knownPeople(Tree $tree, RepoRecordClasses $classes): array
     {
         $ids = array_values(array_map(fn (Person $person): int => $person->id, $classes->knownPersons));
-        $people = $tree->people()->whereIn('id', $ids)->with('events.participants')->get()->keyBy('id');
+        $people = $tree->people()->whereIn('id', $ids)->with(['events.participants', 'surnameVariants'])->get()->keyBy('id');
 
         if ($people->count() !== count($ids)) {
             throw new InvalidArgumentException('Klasyfikacja wskazuje osobę spoza drzewa konta.');
@@ -961,6 +962,18 @@ class PlanImport
             }
         }
 
+        $repoVariants = SurnameVariants::fromResearch($research);
+        $repoText = $repoVariants->text();
+        $appText = SurnameVariants::fromPerson($person)->text();
+        [$hasLast, $last] = $this->lastOf($snapshot, 'warianty');
+        $outcome = ThreeWayValue::compare($repoText, $hasLast, $last, $appText);
+        $kept += $outcome === ThreeWayOutcome::KeptManual ? 1 : 0;
+        $item = $this->itemFor($outcome, 'surname_variants', 'Warianty nazwiska', "{$research->id}/warianty", $who, SurnameVariants::fromPerson($person)->label(), $repoVariants->label(), $last === null ? null : str_replace("\n", ', ', $last), $hasLast, $repoText === null ? null : $repoVariants);
+
+        if ($item !== null) {
+            $items['surname_variants'] = $item;
+        }
+
         $repoGender = $research->gender;
         $appGender = $person->gender;
         [$hasLast, $last] = $this->lastOf($snapshot, 'plec');
@@ -1023,7 +1036,7 @@ class PlanImport
      * @param  string|null  $fillAppLabel  what the app holds when a fill refines a value (a date), `null` for an empty field
      * @return Item|null
      */
-    private function itemFor(ThreeWayOutcome $outcome, string $field, string $label, string $key, string $person, ?string $appLabel, ?string $repoLabel, ?string $lastLabel, bool $hasLast, string|Gender|ResearchDate|PlannedPlace|null $repoValue, ?string $fillAppLabel = null): PlannedChange|PlannedFill|ValueConflict|null
+    private function itemFor(ThreeWayOutcome $outcome, string $field, string $label, string $key, string $person, ?string $appLabel, ?string $repoLabel, ?string $lastLabel, bool $hasLast, string|Gender|ResearchDate|PlannedPlace|SurnameVariants|null $repoValue, ?string $fillAppLabel = null): PlannedChange|PlannedFill|ValueConflict|null
     {
         return match ($outcome) {
             ThreeWayOutcome::Same, ThreeWayOutcome::KeptManual => null,
@@ -1739,7 +1752,7 @@ class PlanImport
             return $values;
         }
 
-        return ['imiona' => $values['imiona'], 'nazwisko' => $values['nazwisko'], 'plec' => $old->values['plec'], 'notatka' => $values['notatka']];
+        return ['plec' => $old->values['plec']] + $values;
     }
 
     /**

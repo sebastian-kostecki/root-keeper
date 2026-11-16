@@ -2,7 +2,7 @@
 title: Kontrakt bloku osoby (repo badawcze → import)
 version: 1
 created: 2026-10-23
-updated: 2026-10-30
+updated: 2026-11-16
 ---
 
 # Kontrakt bloku osoby v1
@@ -48,7 +48,7 @@ malzenstwa:                     # opcjonalne; w plikach obojga małżonków, zgo
 | `id` | tak | `O-NNNN` (min. 4 cyfry). Stałe; nie zmienia się przy zmianie nazwy pliku; nie jest używane ponownie. |
 | `ahnentafel` | nie | Lista liczb dodatnich (implex: kilka numerów). |
 | `imiona`, `nazwisko` | co najmniej jedno | Nazwisko = rodowe. |
-| `warianty_nazwiska` | nie | Lista tekstów. |
+| `warianty_nazwiska` | nie | Lista tekstów. Import zapisuje je przy osobie (bez powtórzeń, bez względu na wielkość liter); wyszukiwarka osób znajduje osobę po każdym wariancie. |
 | `plec` | nie | `M` albo `K`. |
 | `rodzice.ojciec`, `rodzice.matka` | nie | `id` rodzica. |
 | `urodzenie`, `zgon`, `pochowek` | nie | Wydarzenie: `data`, `miejsce`, `poziom`, `notatka`. Obecność klucza (także `{}`) oznacza, że wydarzenie zaszło. |

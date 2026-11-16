@@ -355,9 +355,9 @@ Panel osoby pokazuje warianty, a wiersz listy i tabeli wyjaśnia trafienie po wa
 
 #### Automated
 
-- [ ] 1.1 Migracja przechodzi w obie strony: `vendor/bin/sail artisan migrate` i `vendor/bin/sail artisan migrate:rollback --step=1`, potem ponownie `migrate`
-- [ ] 1.2 Testy wyszukiwarki przechodzą: `vendor/bin/sail artisan test --compact tests/Feature/PersonsTest.php`
-- [ ] 1.3 Pint i Larastan bez nowych błędów: `vendor/bin/sail bin pint --dirty --format agent` i `vendor/bin/sail composer types:check`
+- [x] 1.1 Migracja przechodzi w obie strony: `vendor/bin/sail artisan migrate` i `vendor/bin/sail artisan migrate:rollback --step=1`, potem ponownie `migrate` — 6986784
+- [x] 1.2 Testy wyszukiwarki przechodzą: `vendor/bin/sail artisan test --compact tests/Feature/PersonsTest.php` — 6986784
+- [x] 1.3 Pint i Larastan bez nowych błędów: `vendor/bin/sail bin pint --dirty --format agent` i `vendor/bin/sail composer types:check` — 6986784
 
 #### Manual
 

@@ -610,7 +610,7 @@ class ImportResearch extends Command
         foreach ([$entry, ...$entry->members] as $each) {
             $values = array_filter(RepoValues::forKey($each->key, $reading) ?? [], fn (?string $value): bool => $value !== null);
             $pairs = array_map(
-                fn (string $field, string $value): string => $field.': '.Str::limit(strtok($value, "\n") ?: '—', 60),
+                fn (string $field, string $value): string => $field.': '.Str::limit($field === 'warianty' ? str_replace("\n", ', ', $value) : (strtok($value, "\n") ?: '—'), 60),
                 array_keys($values),
                 $values,
             );
@@ -945,11 +945,11 @@ class ImportResearch extends Command
         $this->line('Miejsca:');
         $this->line(sprintf('  nowe miejscowości: %d, nowe cmentarze: %d, zapamiętane warianty: %d', $notes->newLocalities, $notes->newCemeteries, $notes->aliases));
         $this->line(sprintf('  zdarzenia z miejscem: %d, pochowania: %d', $notes->placedEvents, $notes->burials));
+        $this->line(sprintf('  Warianty nazwiska przy osobach: %d', $notes->surnameVariants));
         $this->line('Do notatki osoby:');
         $this->line(sprintf('  zdarzenia bez miejsca: %d', $notes->unplacedEvents));
         $this->line(sprintf('  poziomy pewności: %d (S-08)', $notes->levels));
         $this->line(sprintf('  notatki wydarzeń: %d', $notes->eventNotes));
-        $this->line(sprintf('  warianty nazwiska: %d (S-09)', $notes->surnameVariants));
 
         $this->issueTable('Pominięte osoby', ['Plik', 'Powód'], $plan->skippedPersons);
         $this->issueTable('Pominięte relacje', ['Plik', 'Powód'], $plan->skippedRelations);
