@@ -1,0 +1,72 @@
+# Keep secrets, user data and local tooling out of the image. Dockerfile.prod copies the
+# whole context (COPY . .), so anything not listed here ends up in the production image.
+
+# Secrets: production reads .env.prod through a bind mount, never from the image
+.env
+.env.*
+!.env.example
+!.env.prod.example
+auth.json
+
+# User data: production bind-mounts ./storage, so the image needs none of it
+# (Dockerfile.prod creates the directories it needs)
+storage
+backups
+
+# Version control and local tooling
+.git
+.gitignore
+.gitattributes
+.github
+.idea
+.vscode
+.fleet
+.nova
+.zed
+.phpactor.json
+.npmrc
+.10x-cli.json
+.agents
+.ai
+.amp
+.claude
+.cursor
+.mcp.json
+AGENTS.md
+CLAUDE.md
+boost.json
+skills-lock.json
+context
+
+# Dev dependencies (reinstalled inside the image)
+node_modules
+vendor
+
+# Dev environment and compose
+compose.yaml
+compose.override.yaml
+docker-compose.prod.yml
+
+# Tests, static analysis and their output
+tests
+playwright
+playwright.config.ts
+playwright-report
+test-results
+blob-report
+.playwright
+.playwright-cli
+.vitest
+phpunit.xml
+phpstan.neon
+.phpunit.cache
+.phpunit.result.cache
+
+# Dev build artifacts
+public/hot
+public/build
+public/storage
+bootstrap/ssr
+
+# Deploy scripts (run on the host)
+scripts
