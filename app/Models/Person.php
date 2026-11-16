@@ -58,6 +58,14 @@ class Person extends Model
     }
 
     /**
+     * @return HasMany<PersonSurnameVariant, $this>
+     */
+    public function surnameVariants(): HasMany
+    {
+        return $this->hasMany(PersonSurnameVariant::class)->orderBy('position')->orderBy('id');
+    }
+
+    /**
      * @return HasMany<Residence, $this>
      */
     public function residences(): HasMany

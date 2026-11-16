@@ -9,6 +9,7 @@ use App\Models\Event;
 use App\Models\Locality;
 use App\Models\ParentChildRelation;
 use App\Models\Person;
+use App\Models\PersonSurnameVariant;
 use App\Models\Residence;
 use App\Models\Source;
 use App\Models\User;
@@ -1737,4 +1738,86 @@ test('the shared localityOptions prop lists only the own tree localities sorted 
         ['id' => $andrychow->id, 'name' => 'Andrychów', 'is_defunct' => false],
         ['id' => $zator->id, 'name' => 'Zator', 'is_defunct' => true],
     ]);
+});
+
+test('persons index finds a person by a surname variant', function () {
+    $user = User::factory()->create();
+
+    $misiuk = Person::factory()->for($user->tree)->create(['first_name' => 'Jan', 'last_name' => 'Misiuk']);
+    PersonSurnameVariant::factory()->for($misiuk)->create(['name' => 'Mysiuk']);
+    Person::factory()->for($user->tree)->create(['first_name' => 'Jan', 'last_name' => 'Nowak']);
+
+    $response = $this->actingAs($user)->get(route('persons.index', ['q' => 'Mysiuk']));
+
+    $response->assertOk();
+    $response->assertInertia(fn ($page) => $page
+        ->component('persons/index')
+        ->has('persons', 1)
+        ->where('persons.0.id', $misiuk->id));
+});
+
+test('persons index matches each query word against first name, surname or a surname variant', function () {
+    $user = User::factory()->create();
+
+    $misiuk = Person::factory()->for($user->tree)->create(['first_name' => 'Jan', 'last_name' => 'Misiuk']);
+    PersonSurnameVariant::factory()->for($misiuk)->create(['name' => 'Mysiuk']);
+
+    $response = $this->actingAs($user)->get(route('persons.index', ['q' => 'Jan Mysiuk']));
+
+    $response->assertOk();
+    $response->assertInertia(fn ($page) => $page
+        ->has('persons', 1)
+        ->where('persons.0.id', $misiuk->id));
+
+    $response = $this->actingAs($user)->get(route('persons.index', ['q' => 'Anna Mysiuk']));
+
+    $response->assertOk();
+    $response->assertInertia(fn ($page) => $page->has('persons', 0));
+});
+
+test('persons index matches a surname variant ignoring case but not polish diacritics', function () {
+    $user = User::factory()->create();
+
+    $person = Person::factory()->for($user->tree)->create(['first_name' => 'Jan', 'last_name' => 'Zielinski']);
+    PersonSurnameVariant::factory()->for($person)->create(['name' => 'Żółkowski']);
+
+    $response = $this->actingAs($user)->get(route('persons.index', ['q' => 'ŻÓŁKOW']));
+
+    $response->assertOk();
+    $response->assertInertia(fn ($page) => $page
+        ->has('persons', 1)
+        ->where('persons.0.id', $person->id));
+
+    $response = $this->actingAs($user)->get(route('persons.index', ['q' => 'zolkowski']));
+
+    $response->assertOk();
+    $response->assertInertia(fn ($page) => $page->has('persons', 0));
+});
+
+test('persons index never returns another users person by a surname variant', function () {
+    $user = User::factory()->create();
+    $otherUser = User::factory()->create();
+
+    $own = Person::factory()->for($user->tree)->create(['first_name' => 'Jan', 'last_name' => 'Misiuk']);
+    PersonSurnameVariant::factory()->for($own)->create(['name' => 'Mysiuk']);
+    $foreign = Person::factory()->for($otherUser->tree)->create(['first_name' => 'Jan', 'last_name' => 'Misiuk']);
+    PersonSurnameVariant::factory()->for($foreign)->create(['name' => 'Mysiuk']);
+
+    $response = $this->actingAs($user)->get(route('persons.index', ['q' => 'Mysiuk']));
+
+    $response->assertOk();
+    $response->assertInertia(fn ($page) => $page
+        ->has('persons', 1)
+        ->where('persons.0.id', $own->id));
+});
+
+test('deleting a person removes its surname variants', function () {
+    $user = User::factory()->create();
+
+    $person = Person::factory()->for($user->tree)->create();
+    PersonSurnameVariant::factory()->for($person)->count(2)->create();
+
+    $this->actingAs($user)->delete(route('persons.destroy', $person))->assertRedirect();
+
+    expect(PersonSurnameVariant::query()->where('person_id', $person->id)->count())->toBe(0);
 });
