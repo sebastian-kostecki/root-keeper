@@ -367,7 +367,10 @@ class ImportResearch extends Command
                 $options['locality:'.$candidate->id] = 'To '.$candidate->name.' (zapamiętaj wariant)';
             }
 
-            $options[PlaceDecisions::NEW] = 'Dodaj jako nową';
+            if (! $verdict->keyTaken()) {
+                $options[PlaceDecisions::NEW] = 'Dodaj jako nową';
+            }
+
             $options[PlaceDecisions::NONE] = 'Bez miejsca';
 
             $answer = $this->choose(
@@ -977,16 +980,18 @@ class ImportResearch extends Command
         }
 
         foreach ($plan->marriages as $planned) {
-            if ($planned->dateFill === null) {
+            if ($planned->dateFill === null && $planned->placeFill === null) {
                 continue;
             }
 
-            $spouses = array_map(
+            $spouses = implode(' i ', array_map(
                 fn (string $repoId): string => isset($reading->persons[$repoId]) ? sprintf('%s (%s)', $this->researchName($reading->persons[$repoId]), $repoId) : $repoId,
                 $planned->marriage->personIds,
-            );
+            ));
 
-            $rows[] = [implode(' i ', $spouses), $planned->dateFill->label, $planned->dateFill->valueLabel()];
+            foreach (array_filter([$planned->dateFill, $planned->placeFill]) as $fill) {
+                $rows[] = [$spouses, $fill->label, $fill->valueLabel()];
+            }
         }
 
         if ($rows === []) {

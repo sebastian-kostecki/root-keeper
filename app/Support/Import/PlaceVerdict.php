@@ -16,6 +16,7 @@ final readonly class PlaceVerdict
      * @param  Locality|null  $locality  the locality of a sure verdict
      * @param  list<Locality>  $candidates  the localities of a doubtful verdict, the closest first
      * @param  list<PlaceUse>  $uses  the events that name the place
+     * @param  list<int>  $holders  ids of the localities whose name or variant already has the key
      */
     public function __construct(
         public string $key,
@@ -24,7 +25,17 @@ final readonly class PlaceVerdict
         public array $uses,
         public ?Locality $locality = null,
         public array $candidates = [],
+        public array $holders = [],
     ) {}
+
+    /**
+     * Whether a locality or a variant of the tree already has the key, so that the name cannot be added as a new
+     * locality.
+     */
+    public function keyTaken(): bool
+    {
+        return $this->holders !== [];
+    }
 
     public function eventCount(): int
     {

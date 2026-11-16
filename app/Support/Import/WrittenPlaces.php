@@ -11,7 +11,7 @@ final readonly class WrittenPlaces
 {
     /**
      * @param  array<string, int>  $localities  key of the name => id of the locality the write added
-     * @param  array<string, int>  $cemeteries  {@see PlaceDecisions::cemeteryKey()} => id of the cemetery the write added
+     * @param  array<string, int>  $cemeteries  {@see PlaceResolver::newCemeteryKey()} => id of the cemetery the write added
      */
     public function __construct(
         public array $localities = [],

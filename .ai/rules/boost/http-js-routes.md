@@ -1,8 +1,8 @@
 ---
 paths:
-  - 'app/Http/**'
-  - 'resources/js/**'
-  - 'routes/**'
+    - 'app/Http/**'
+    - 'resources/js/**'
+    - 'routes/**'
 ---
 
 # Inertia

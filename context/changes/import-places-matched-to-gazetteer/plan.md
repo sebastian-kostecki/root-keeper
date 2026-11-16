@@ -531,7 +531,7 @@ Mapa „klucz nazwy => id” obsługuje odwołania do nowych miejsc. Błąd wali
 - Pochowanie ustawia `cemetery_id` i `locality_id` przez `burialPlaceFrom`, nigdy osobno, więc niezmiennik cmentarza zostaje w jednym miejscu. Pochowanie bez rozpoznanego cmentarza nie powstaje; zapisuje się tylko jego pamięć.
 - Ślub dostaje `locality_id` w `$input` `CreateMarriage`, a zmiana miejsca istniejącego ślubu idzie przez model.
 - Zastosowane zmiany i konflikty „weź z repo” zapisują miejsce.
-- Usunięcie `miejsce` w repo przy nietkniętym miejscu zeruje kolumny (przy pochowaniu oba pola).
+- Usunięcie `miejsce` w repo przy nietkniętym miejscu zeruje kolumnę urodzenia, zgonu albo ślubu. Pochowania nie czyści (przegląd implementacji, F7): pochowanie istnieje tylko z cmentarzem, a `UpdatePerson` skasowałby pochowanie bez cmentarza. Data i tekst zostają wtedy w notatce, a pamięć zapisuje się jak przy cmentarzu „bez miejsca”.
 - Pamięć zapisuje wartości z repo (`miejsce`, `cmentarz`) i ich rozpoznane id (`miejsce_id`, `cmentarz_id`, dla nowych miejsc id nadane w tym zapisie), nigdy wartości z aplikacji.
 
 **Contract**: `markEvent(Event, string $repoId, ?ResearchDate, bool $clear = false, ?PlannedPlace $place = null, bool $clearPlace = false)` lub osobna metoda `placeEvent`. Opis metody zmieniony: miejsce zmienia się tylko według planu.
@@ -687,7 +687,8 @@ Spis ma dziesiątki miejscowości, a repo ok. 70 różnych nazw, więc porównan
 - Nowa tabela `locality_aliases` bez przepisywania danych, więc bez `MigrationTest`. `down()` usuwa tabelę. Produkcja robi `backup:run --only-db` przed `migrate` (`scripts/deploy.sh`).
 - Drzewa po S-02 do S-04 (tylko dev i konta testowe; na produkcji importu jeszcze nie było) przy pierwszym imporcie po S-05:
   - dostaną miejsca jako uzupełnienia (pamięć bez `miejsce`),
-  - zobaczą raz zmianę bloku notatki (miejsca z niej znikają).
+  - zobaczą raz zmianę bloku notatki (miejsca z niej znikają),
+  - raz jeszcze dostaną pytanie „przywróć / zostaw” o każde urodzenie lub zgon zostawione jako usunięte w aplikacji, które ma w repo miejsce: pamięć takiego rekordu nie ma `miejsce`, więc wartości repo wyglądają na zmienione (przegląd implementacji, F7).
 - Po S-05 i S-03 nic z roadmapy nie blokuje już pierwszego importu na produkcji.
 
 ## References

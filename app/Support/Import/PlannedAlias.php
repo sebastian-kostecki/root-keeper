@@ -7,8 +7,12 @@ namespace App\Support\Import;
  */
 final readonly class PlannedAlias
 {
+    /**
+     * @param  list<int>  $holders  ids of the localities whose name or variant had the key of the spelling at planning
+     */
     public function __construct(
         public string $name,
         public int $localityId,
+        public array $holders = [],
     ) {}
 }

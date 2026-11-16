@@ -6,9 +6,9 @@ use App\Actions\Cemeteries\MergeCemetery;
 use App\Actions\Parishes\MergeParish;
 use App\Models\Cemetery;
 use App\Models\Locality;
-use App\Models\LocalityAlias;
 use App\Models\Parish;
 use App\Models\Residence;
+use App\Support\Import\PlaceName;
 use App\Support\MergedText;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -22,8 +22,8 @@ class MergeLocality
      * The target's own values win: its empty kind and coordinates (as a pair) are taken from the duplicate,
      * descriptions and historical affiliations are joined, and the target is defunct if either one was; when both
      * have a different defunct note, the target keeps its own and the duplicate's one is added to the description.
-     * The duplicate's name variants move to the target (one the target already has or one that equals the target's name
-     * is dropped) and the duplicate's own name becomes a variant of the target, so that the import recognises it later.
+     * The duplicate's name variants move to the target (one the tree already has or one that equals the target's name,
+     * letter case and Polish characters ignored, is dropped) and the duplicate's own name becomes a variant of the target, so that the import recognises it later.
      * Both localities must belong to the same tree.
      */
     public function handle(Locality $duplicate, Locality $target): Locality
@@ -72,7 +72,7 @@ class MergeLocality
 
     /**
      * Move the duplicate's name variants to the target and add the duplicate's name as one. A name equal (letter case
-     * ignored) to the target's name or to a variant the tree already has is skipped.
+     * and Polish characters ignored) to the target's name or to a variant the tree already has is skipped.
      */
     private function moveAliases(Locality $duplicate, Locality $target): void
     {
@@ -93,16 +93,18 @@ class MergeLocality
 
     /**
      * Whether the name is the target's own name or a variant already kept in the tree (other than `$exceptAliasId`),
-     * letter case ignored.
+     * compared by the key the import matches names with (letter case and Polish characters ignored), so that a merge
+     * never leaves two variants the import cannot tell apart.
      */
     private function nameIsTaken(Locality $target, string $name, ?int $exceptAliasId = null): bool
     {
-        return mb_strtolower($target->name) === mb_strtolower($name)
-            || LocalityAlias::query()
-                ->where('tree_id', $target->tree_id)
-                ->whereRaw('lower(name) = lower(?)', [$name])
+        $key = PlaceName::key($name);
+
+        return PlaceName::key($target->name) === $key
+            || $target->tree->localityAliases()
                 ->when($exceptAliasId !== null, fn ($query) => $query->whereKeyNot($exceptAliasId))
-                ->exists();
+                ->pluck('name')
+                ->contains(fn (string $variant): bool => PlaceName::key($variant) === $key);
     }
 
     /**

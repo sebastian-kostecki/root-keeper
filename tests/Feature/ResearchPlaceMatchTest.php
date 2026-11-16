@@ -9,6 +9,7 @@ use App\Models\Locality;
 use App\Models\LocalityAlias;
 use App\Models\Tree;
 use App\Models\User;
+use App\Support\Import\CemeteryVerdict;
 use App\Support\Import\IdentityDecisions;
 use App\Support\Import\ImportDecisions;
 use App\Support\Import\PlaceDecisions;
@@ -53,6 +54,46 @@ function matchTemporaryPlaces(Tree $tree, array $blocks, array $skipped = []): P
 }
 
 /**
+ * The tree of a new author, created after another account whose gazetteer has the same names the tests use, a variant
+ * and cemeteries, so that a match that leaves its tree would show up.
+ */
+function placeTwinTree(): Tree
+{
+    $other = User::factory()->create()->tree;
+
+    foreach (['Kolemczyce', 'Bukinia', 'Bokinka', 'Zalesie', 'Stary Majdan', 'Siedliszcze', 'Wola', 'Rostoka', 'Husynne'] as $name) {
+        Locality::factory()->create(['tree_id' => $other->id, 'name' => $name]);
+    }
+
+    $localities = $other->localities()->get()->keyBy('name');
+    LocalityAlias::factory()->create(['tree_id' => $other->id, 'locality_id' => $localities['Bukinia']->id, 'name' => 'Bokinia']);
+    Cemetery::factory()->in($localities['Zalesie'])->unnamed()->create();
+    Cemetery::factory()->in($localities['Zalesie'])->create(['name' => 'Cmentarz parafialny']);
+    Cemetery::factory()->in($localities['Husynne'])->create(['name' => 'Cmentarz wojenny']);
+    Cemetery::factory()->in($localities['Wola'])->unnamed()->create();
+
+    return User::factory()->create()->tree;
+}
+
+/**
+ * Settles the cemeteries of the burials against the tree. Fails when a cemetery of another tree shows up.
+ *
+ * @return array<string, CemeteryVerdict>
+ */
+function matchTemporaryCemeteries(Tree $tree, PlaceMatches $places, PlaceDecisions $decisions): array
+{
+    $matches = app(MatchResearchPlaces::class)->cemeteries($tree, $places, $decisions)->matches;
+
+    foreach ($matches as $verdict) {
+        foreach ([$verdict->cemetery, ...$verdict->options] as $cemetery) {
+            expect($cemetery === null || $cemetery->tree_id === $tree->id)->toBeTrue();
+        }
+    }
+
+    return $matches;
+}
+
+/**
  * A person block whose birth names the given place.
  */
 function bornIn(string $place, string $given = 'Jan'): string
@@ -74,7 +115,7 @@ function localityOf(Tree $tree, string $name): Locality
 }
 
 test('a name equal to a locality ignoring capitals and polish characters is sure', function () {
-    $tree = User::factory()->create()->tree;
+    $tree = placeTwinTree();
     $locality = localityOf($tree, 'Kołemczyce');
 
     $verdict = matchTemporaryPlaces($tree, ['O-0001' => bornIn('Kolemczyce')])->localities['kolemczyce'];
@@ -84,7 +125,7 @@ test('a name equal to a locality ignoring capitals and polish characters is sure
 });
 
 test('a remembered variant makes a name sure', function () {
-    $tree = User::factory()->create()->tree;
+    $tree = placeTwinTree();
     $locality = localityOf($tree, 'Bukinia');
     LocalityAlias::factory()->create(['tree_id' => $tree->id, 'locality_id' => $locality->id, 'name' => 'Bokinia']);
 
@@ -95,7 +136,7 @@ test('a remembered variant makes a name sure', function () {
 });
 
 test('a similar spelling is doubtful with the closest candidates first', function () {
-    $tree = User::factory()->create()->tree;
+    $tree = placeTwinTree();
     $far = localityOf($tree, 'Bokinka');
     $near = localityOf($tree, 'Bukinia');
     localityOf($tree, 'Zalesie');
@@ -107,7 +148,7 @@ test('a similar spelling is doubtful with the closest candidates first', functio
 });
 
 test('the same words in another order are doubtful', function () {
-    $tree = User::factory()->create()->tree;
+    $tree = placeTwinTree();
     $locality = localityOf($tree, 'Stary Majdan');
 
     $verdict = matchTemporaryPlaces($tree, ['O-0001' => bornIn('Majdan Stary')])->localities['majdan stary'];
@@ -117,7 +158,7 @@ test('the same words in another order are doubtful', function () {
 });
 
 test('a name that only contains another one is new', function () {
-    $tree = User::factory()->create()->tree;
+    $tree = placeTwinTree();
     localityOf($tree, 'Siedliszcze');
 
     $verdict = matchTemporaryPlaces($tree, ['O-0001' => bornIn('Siedliszcze Bramowe')])->localities['siedliszcze bramowe'];
@@ -127,7 +168,7 @@ test('a name that only contains another one is new', function () {
 });
 
 test('two localities with the same key are doubtful until a variant picks one', function () {
-    $tree = User::factory()->create()->tree;
+    $tree = placeTwinTree();
     $first = localityOf($tree, 'Wola');
     $second = localityOf($tree, 'Wóla');
 
@@ -145,7 +186,7 @@ test('two localities with the same key are doubtful until a variant picks one', 
 });
 
 test('one name from several events and spellings is one question with a polish spelling for the new locality', function () {
-    $tree = User::factory()->create()->tree;
+    $tree = placeTwinTree();
 
     $matches = matchTemporaryPlaces($tree, [
         'O-0001' => bornIn('Kolemczyce'),
@@ -165,7 +206,7 @@ test('one name from several events and spellings is one question with a polish s
 });
 
 test('the most frequent spelling wins when none has polish characters', function () {
-    $tree = User::factory()->create()->tree;
+    $tree = placeTwinTree();
 
     $matches = matchTemporaryPlaces($tree, [
         'O-0001' => bornIn('rostoka'),
@@ -177,7 +218,7 @@ test('the most frequent spelling wins when none has polish characters', function
 });
 
 test('a place the memory already holds with its id is not asked about again', function (array $values, bool $asked) {
-    $tree = User::factory()->create()->tree;
+    $tree = placeTwinTree();
     $tree->repoSnapshots()->create(['repo_id' => 'O-0001/urodzenie', 'values' => $values]);
 
     $matches = matchTemporaryPlaces($tree, ['O-0001' => bornIn('Zalesie')]);
@@ -192,7 +233,7 @@ test('a place the memory already holds with its id is not asked about again', fu
 ]);
 
 test('persons skipped at the identity step and events left deleted are not asked about', function () {
-    $tree = User::factory()->create()->tree;
+    $tree = placeTwinTree();
     $tree->repoSnapshots()->create(['repo_id' => 'O-0003/urodzenie', 'values' => ['data' => null], 'deletion_kept' => true]);
 
     $matches = matchTemporaryPlaces($tree, [
@@ -206,7 +247,7 @@ test('persons skipped at the identity step and events left deleted are not asked
 });
 
 test('a cemetery is sure when the name equals exactly one cemetery of the locality or the only one is meant', function () {
-    $tree = User::factory()->create()->tree;
+    $tree = placeTwinTree();
     $husynne = localityOf($tree, 'Husynne');
     $named = Cemetery::factory()->in($husynne)->create(['name' => 'Cmentarz parafialny']);
     Cemetery::factory()->in($husynne)->create(['name' => 'Cmentarz wojenny']);
@@ -217,7 +258,7 @@ test('a cemetery is sure when the name equals exactly one cemetery of the locali
         'O-0001' => buriedIn('Husynne', 'cmentarz Parafialny'),
         'O-0002' => buriedIn('Wola'),
     ]);
-    $matches = app(MatchResearchPlaces::class)->cemeteries($tree, $places, new PlaceDecisions)->matches;
+    $matches = matchTemporaryCemeteries($tree, $places, new PlaceDecisions);
 
     expect($matches['husynne|cmentarz parafialny']->kind)->toBe(CemeteryMatchKind::Sure)
         ->and($matches['husynne|cmentarz parafialny']->cemetery?->id)->toBe($named->id)
@@ -226,7 +267,7 @@ test('a cemetery is sure when the name equals exactly one cemetery of the locali
 });
 
 test('a cemetery is a choice when several fit or the name matches none', function () {
-    $tree = User::factory()->create()->tree;
+    $tree = placeTwinTree();
     $husynne = localityOf($tree, 'Husynne');
     Cemetery::factory()->in($husynne)->create(['name' => 'Cmentarz parafialny']);
     Cemetery::factory()->in($husynne)->create(['name' => 'Cmentarz wojenny']);
@@ -235,7 +276,7 @@ test('a cemetery is a choice when several fit or the name matches none', functio
         'O-0001' => buriedIn('Husynne'),
         'O-0002' => buriedIn('Husynne', 'Cmentarz żydowski'),
     ]);
-    $matches = app(MatchResearchPlaces::class)->cemeteries($tree, $places, new PlaceDecisions)->matches;
+    $matches = matchTemporaryCemeteries($tree, $places, new PlaceDecisions);
 
     expect($matches['husynne|']->kind)->toBe(CemeteryMatchKind::Choice)
         ->and($matches['husynne|']->options)->toHaveCount(2)
@@ -243,7 +284,7 @@ test('a cemetery is a choice when several fit or the name matches none', functio
 });
 
 test('a cemetery is new in a locality without cemeteries or in a new locality and none when the locality is left out', function () {
-    $tree = User::factory()->create()->tree;
+    $tree = placeTwinTree();
     localityOf($tree, 'Wola');
 
     $places = matchTemporaryPlaces($tree, [
@@ -252,7 +293,7 @@ test('a cemetery is new in a locality without cemeteries or in a new locality an
         'O-0003' => buriedIn('Zalesie'),
     ]);
     $decisions = new PlaceDecisions(localities: ['bokinia' => PlaceDecisions::NEW, 'zalesie' => PlaceDecisions::NONE]);
-    $matches = app(MatchResearchPlaces::class)->cemeteries($tree, $places, $decisions)->matches;
+    $matches = matchTemporaryCemeteries($tree, $places, $decisions);
 
     expect($matches['wola|']->kind)->toBe(CemeteryMatchKind::New)
         ->and($matches['wola|']->localityId)->not->toBeNull()
@@ -262,16 +303,16 @@ test('a cemetery is new in a locality without cemeteries or in a new locality an
 });
 
 test('a doubtful locality settled by the author decides its cemetery', function () {
-    $tree = User::factory()->create()->tree;
+    $tree = placeTwinTree();
     $locality = localityOf($tree, 'Bukinia');
     $cemetery = Cemetery::factory()->in($locality)->unnamed()->create();
 
     $places = matchTemporaryPlaces($tree, ['O-0001' => buriedIn('Bokinia')]);
 
-    expect(app(MatchResearchPlaces::class)->cemeteries($tree, $places, new PlaceDecisions)->matches)->toBe([]);
+    expect(matchTemporaryCemeteries($tree, $places, new PlaceDecisions))->toBe([]);
 
     $decisions = new PlaceDecisions(localities: ['bokinia' => $locality->id], aliases: ['bokinia' => true]);
-    $verdict = app(MatchResearchPlaces::class)->cemeteries($tree, $places, $decisions)->matches['bokinia|'];
+    $verdict = matchTemporaryCemeteries($tree, $places, $decisions)['bokinia|'];
 
     expect($verdict->kind)->toBe(CemeteryMatchKind::Sure)
         ->and($verdict->cemetery?->id)->toBe($cemetery->id);

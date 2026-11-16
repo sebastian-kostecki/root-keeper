@@ -2,11 +2,13 @@
 
 use App\Actions\Import\ApplyImport;
 use App\Actions\Import\ClassifyRepoRecords;
+use App\Actions\Import\MatchResearchPlaces;
 use App\Actions\Import\PlanImport;
 use App\Actions\Import\ReadResearchRepo;
 use App\Enums\EventType;
 use App\Enums\Gender;
 use App\Enums\ParticipantRole;
+use App\Enums\PlaceMatchKind;
 use App\Enums\RepoKeyKind;
 use App\Models\Cemetery;
 use App\Models\Event;
@@ -1092,6 +1094,37 @@ test('restores a death deleted in the app from the repo values or leaves it dele
     expectPlanInside($plan, $tree);
 })->with(['restore', 'keep']);
 
+test('asks about the places of a person brought back after a deletion in the app and keeps what the memory recognized', function () {
+    $v1 = ['O-0001' => "imiona: Jan\nurodzenie:\n  data: \"1801\"\n  miejsce: Zalesie\nzgon:\n  data: \"1870\"\n  miejsce: Bukinia"];
+    [$tree, $other] = replanTwinTrees([], function (Tree $tree) use ($v1): void {
+        Locality::factory()->for($tree)->create(['name' => 'Bukinia']);
+        $wola = Locality::factory()->for($tree)->create(['name' => 'Wola']);
+        replanFirstImport($tree, $v1);
+        $tree->repoSnapshots()->where('repo_id', 'O-0001/urodzenie')->update(['values' => json_encode(['data' => '1801', 'miejsce' => 'Zalesie', 'miejsce_id' => 'L:'.$wola->id])]);
+        replanPerson($tree, 'O-0001')->delete();
+    });
+    $bukinia = $tree->localities()->where('name', 'Bukinia')->firstOrFail();
+    $wola = $tree->localities()->where('name', 'Wola')->firstOrFail();
+    $v2 = ['O-0001' => str_replace('miejsce: Bukinia', 'miejsce: Bokinia', $v1['O-0001'])];
+    $reading = replanReading($v2);
+    $classes = app(ClassifyRepoRecords::class)->handle($tree, $reading);
+    $deletions = ['O-0001' => ImportDecisions::RESTORE];
+
+    $matches = app(MatchResearchPlaces::class)->handle($tree, $reading, $classes, new ImportDecisions(new IdentityDecisions, [], $deletions));
+    $plan = app(PlanImport::class)->handle($tree, $reading, $classes, new ImportDecisions(new IdentityDecisions, [], $deletions, new PlaceDecisions(
+        localities: ['bokinia' => $bukinia->id],
+        aliases: ['bokinia' => true],
+    )));
+    $restored = $plan->restorations[0]->person;
+
+    expect(array_keys($matches->localities))->toBe(['bokinia'])
+        ->and($matches->localities['bokinia']->kind)->toBe(PlaceMatchKind::Doubtful)
+        ->and(array_map(fn (Locality $locality): int => $locality->tree_id, $matches->localities['bokinia']->candidates))->each->toBe($tree->id)
+        ->and($restored->deathPlace?->localityId)->toBe($bukinia->id)
+        ->and($restored->birthPlace?->localityId)->toBe($wola->id)
+        ->and($other->localityAliases()->count())->toBe(0);
+});
+
 test('restores a person deleted in the app as a new person with its note and its events', function () {
     $v1 = ['O-0001' => "imiona: Jan\nurodzenie:\n  data: \"1801\"\n  miejsce: Zalesie"];
     [$tree] = replanTwinTrees($v1, function (Tree $tree): void {
@@ -1374,7 +1407,22 @@ test('rejects answers about places that import did not ask about or that point o
     expect(fn () => placePlan($tree, bornAt('Zalesie'), new PlaceDecisions(localities: ['zalesie' => PlaceDecisions::NEW])))->toThrow(InvalidArgumentException::class)
         ->and(fn () => placePlan($tree, bornAt('Bokinia'), new PlaceDecisions(localities: ['bokinia' => $foreign->id])))->toThrow(InvalidArgumentException::class)
         ->and(fn () => placePlan($tree, bornAt('Bokinia'), new PlaceDecisions(aliases: ['bokinia' => true])))->toThrow(InvalidArgumentException::class)
+        ->and(fn () => placePlan($tree, bornAt('Bokinia'), new PlaceDecisions))->toThrow(InvalidArgumentException::class, 'Brak decyzji o niepewnej miejscowości bokinia')
         ->and(fn () => placePlan($tree, bornAt('Bokinia'), new PlaceDecisions(localities: ['bokinia' => $world['Bukinia']->id])))->not->toThrow(InvalidArgumentException::class);
+});
+
+test('rejects a burial whose cemetery has to be chosen when the answers leave it out', function () {
+    [$tree, $world] = arrangeAuthorWithTwin(function (Tree $tree): array {
+        $world = placeWorld($tree, ['Zalesie']);
+        Cemetery::factory()->in($world['Zalesie'])->create(['name' => 'Stary']);
+        Cemetery::factory()->in($world['Zalesie'])->create(['name' => 'Nowy']);
+
+        return $world;
+    });
+    $blocks = ['O-0001' => "imiona: Jan\nnazwisko: Nowak\npochowek:\n  miejsce: Zalesie"];
+
+    expect(fn () => placePlan($tree, $blocks))->toThrow(InvalidArgumentException::class, 'Brak decyzji o cmentarzu zalesie|')
+        ->and(fn () => placePlan($tree, $blocks, new PlaceDecisions(cemeteries: ['zalesie|' => PlaceDecisions::NONE])))->not->toThrow(InvalidArgumentException::class);
 });
 
 test('plans a burial with the cemetery of a sure locality and a death without a date', function () {

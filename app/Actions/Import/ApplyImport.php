@@ -22,8 +22,8 @@ use App\Support\Import\ConflictResolutions;
 use App\Support\Import\ImportDecisions;
 use App\Support\Import\ImportPlan;
 use App\Support\Import\ImportResult;
-use App\Support\Import\NameKey;
 use App\Support\Import\NoteBlock;
+use App\Support\Import\PlaceName;
 use App\Support\Import\PlannedChange;
 use App\Support\Import\PlannedMatch;
 use App\Support\Import\PlannedPerson;
@@ -297,7 +297,8 @@ class ApplyImport
                 $newMarriages++;
             }
 
-            $this->rememberSnapshots($tree, $plan, $written);
+            $answeredNotes = $this->writeAnsweredNotes($tree, $plan, $approvals, $resolutions);
+            $this->rememberSnapshots($tree, $plan, $written, $answeredNotes);
 
             $changesRejected = count(array_filter($plan->changes, fn (PlannedChange $change): bool => $approvals->rejects($change->key)));
 
@@ -332,9 +333,11 @@ class ApplyImport
      * Leave the memory of this import: the repo values of every key the plan wrote or marked, the values of the keys the
      * author left deleted, and no memory of the keys it forgets. The query builder skips the casts of the model, so
      * `values` goes in as encoded JSON. A place the plan adds is remembered by the id the write gave it, and a place the
-     * write did not add by none.
+     * write did not add by none. A note block rendered again with the author's answers replaces the planned one.
+     *
+     * @param  array<string, string|null>  $answeredNotes  repo id => the note block the answers give, where it differs from the planned one
      */
-    private function rememberSnapshots(Tree $tree, ImportPlan $plan, WrittenPlaces $written): void
+    private function rememberSnapshots(Tree $tree, ImportPlan $plan, WrittenPlaces $written, array $answeredNotes = []): void
     {
         if ($plan->forgottenSnapshots !== []) {
             $tree->repoSnapshots()->whereIn('repo_id', $plan->forgottenSnapshots)->delete();
@@ -344,6 +347,10 @@ class ApplyImport
             $rows = [];
 
             foreach ($snapshots as $key => $values) {
+                if (array_key_exists((string) $key, $answeredNotes) && array_key_exists('notatka', $values)) {
+                    $values['notatka'] = $answeredNotes[(string) $key];
+                }
+
                 foreach (['miejsce_id', 'cmentarz_id'] as $idField) {
                     if (array_key_exists($idField, $values)) {
                         $values[$idField] = $written->token($values[$idField]);
@@ -361,6 +368,37 @@ class ApplyImport
                 $tree->repoSnapshots()->upsert($rows, ['tree_id', 'repo_id'], ['values', 'deletion_kept']);
             }
         }
+    }
+
+    /**
+     * Render again the note blocks whose place text waited for the author's answers: a rejected place change keeps the
+     * repo text, a conflict settled for the repo drops it. A person whose block is the one the plan showed (written by
+     * this import or already equal) gets the answered block; a block the author kept from the app stays.
+     *
+     * @return array<string, string|null> repo id => the answered block, only where it differs from the planned one
+     */
+    private function writeAnsweredNotes(Tree $tree, ImportPlan $plan, ChangeApprovals $approvals, ConflictResolutions $resolutions): array
+    {
+        $answered = [];
+
+        foreach ($plan->notes as $repoId => $note) {
+            $repoId = (string) $repoId;
+            $planned = $note->planned();
+            $block = $note->answered($approvals, $resolutions);
+
+            if ($block === $planned) {
+                continue;
+            }
+
+            $answered[$repoId] = $block;
+            $person = $tree->people()->where('repo_id', $repoId)->first();
+
+            if ($person !== null && NoteBlock::find($person->note, $repoId) === $planned) {
+                $person->update(['note' => NoteBlock::replace($person->note, $repoId, $block)]);
+            }
+        }
+
+        return $answered;
     }
 
     /**
@@ -590,7 +628,7 @@ class ApplyImport
 
         foreach ([...$plan->persons, ...array_filter(array_map(fn (PlannedRestoration $restoration): ?PlannedPerson => $restoration->person, $plan->restorations))] as $planned) {
             $people[] = $planned->person->id;
-            array_push($events, ...array_filter([$planned->birthRepoId, $planned->deathRepoId]));
+            array_push($events, ...array_filter([$planned->birthRepoId, $planned->deathRepoId, $planned->burialRepoId]));
         }
 
         foreach ([...$plan->matched, ...$plan->updates] as $planned) {
@@ -600,6 +638,10 @@ class ApplyImport
 
             if ($planned->createDeath && $planned->deathRepoId !== null) {
                 $events[] = $planned->deathRepoId;
+            }
+
+            if ($planned->createBurial && $planned->burialRepoId !== null) {
+                $events[] = $planned->burialRepoId;
             }
         }
 
@@ -1135,31 +1177,27 @@ class ApplyImport
             return;
         }
 
-        /** @var array<string, int> $taken */
-        $taken = [];
+        /** @var array<string, array<int, true>> $holders key of a name => ids of the localities whose name or variant has it */
+        $holders = [];
 
         foreach ($tree->localities()->get(['id', 'name']) as $locality) {
-            $taken[(string) NameKey::normalize($locality->name)] = $locality->id;
+            $holders[(string) PlaceName::key($locality->name)][$locality->id] = true;
         }
 
-        $variants = [];
-
         foreach ($tree->localityAliases()->get(['locality_id', 'name']) as $variant) {
-            $variants[(string) NameKey::normalize($variant->name)] = $variant->locality_id;
+            $holders[(string) PlaceName::key($variant->name)][$variant->locality_id] = true;
         }
 
         foreach ($plan->newLocalities as $name) {
-            $key = (string) NameKey::normalize($name);
-
-            if (isset($taken[$key]) || isset($variants[$key])) {
+            if (isset($holders[(string) PlaceName::key($name)])) {
                 throw new RuntimeException("Miejsce {$name} zmieniło się po planowaniu; nic nie zostało zapisane.");
             }
         }
 
         foreach ($plan->aliases as $alias) {
-            $key = (string) NameKey::normalize($alias->name);
+            $seen = array_fill_keys([...$alias->holders, $alias->localityId], true);
 
-            if ((isset($taken[$key]) && $taken[$key] !== $alias->localityId) || (isset($variants[$key]) && $variants[$key] !== $alias->localityId)) {
+            if (array_diff_key($holders[(string) PlaceName::key($alias->name)] ?? [], $seen) !== []) {
                 throw new RuntimeException("Miejsce {$alias->name} zmieniło się po planowaniu; nic nie zostało zapisane.");
             }
         }
@@ -1167,7 +1205,9 @@ class ApplyImport
 
     /**
      * Add to the gazetteer the new localities and cemeteries that an item of the write uses, and remember the variants the
-     * author chose. A variant that the tree already holds for that locality, or that is its name, is not added twice.
+     * author chose. A variant the tree already holds (letter case ignored, as its unique index does) is not added twice;
+     * one that only repeats the locality's name is still added when another locality shares its key, so that the next
+     * import recognizes it.
      *
      * @return array{0: WrittenPlaces, 1: int} the ids of the places added and the number of variants saved
      *
@@ -1223,19 +1263,18 @@ class ApplyImport
         $variants = [];
 
         foreach ($tree->localityAliases()->get(['name']) as $variant) {
-            $variants[(string) NameKey::normalize($variant->name)] = true;
+            $variants[mb_strtolower($variant->name)] = true;
         }
 
         foreach ($plan->aliases as $alias) {
-            $key = (string) NameKey::normalize($alias->name);
-            $own = $tree->localities()->whereKey($alias->localityId)->value('name');
+            $name = mb_strtolower($alias->name);
 
-            if (isset($variants[$key]) || NameKey::normalize($own) === $key) {
+            if (isset($variants[$name])) {
                 continue;
             }
 
             $tree->localityAliases()->create(['locality_id' => $alias->localityId, 'name' => $alias->name]);
-            $variants[$key] = true;
+            $variants[$name] = true;
             $aliases++;
         }
 

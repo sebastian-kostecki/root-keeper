@@ -2,13 +2,11 @@
 
 namespace App\Support\Import;
 
-use App\Actions\Import\MatchResearchPlaces;
 use App\Actions\Import\PlanImport;
 use App\Enums\CemeteryMatchKind;
 use App\Enums\PlaceMatchKind;
 use App\Models\Cemetery;
 use App\Models\Locality;
-use App\Models\LocalityAlias;
 
 /**
  * Turns the place texts of the repo into places of the tree, with the answers the author gave and the memory of the
@@ -26,20 +24,26 @@ final class PlaceResolver
     /** @var array<string, PlannedCemetery> */
     public array $newCemeteries = [];
 
+    /** @var array<int, list<array{0: Cemetery, 1: string|null}>> locality id => its cemeteries with the key of their name */
+    private array $cemeteriesByLocality = [];
+
     /**
+     * @param  PlaceMatcher  $matcher  the rules over the localities and variants of the same tree
      * @param  array<int, Locality>  $localities  by id
-     * @param  array<int, LocalityAlias>  $aliases
      * @param  array<int, Cemetery>  $cemeteries  by id, with the locality loaded
      */
     public function __construct(
-        private readonly MatchResearchPlaces $matcher,
+        private readonly PlaceMatcher $matcher,
         private readonly array $localities,
-        private readonly array $aliases,
         private readonly array $cemeteries,
         private readonly PlaceMatches $places,
         private readonly CemeteryMatches $cemeteryMatches,
         private readonly PlaceDecisions $decisions,
-    ) {}
+    ) {
+        foreach ($cemeteries as $cemetery) {
+            $this->cemeteriesByLocality[$cemetery->locality_id][] = [$cemetery, PlaceName::key($cemetery->name)];
+        }
+    }
 
     /**
      * @param  string|null  $remembered  the token of the last import for this text, used when the text is not asked about and not recognized by name
@@ -112,7 +116,7 @@ final class PlaceResolver
             return null;
         }
 
-        $verdict = $this->matcher->verdict($key, [$text => []], array_values($this->localities), $this->aliases);
+        $verdict = $this->matcher->verdict($key, [$text => []]);
 
         return $verdict->kind === PlaceMatchKind::Sure && $verdict->locality !== null ? $this->existingLocality($verdict->locality, $text) : null;
     }
@@ -131,16 +135,15 @@ final class PlaceResolver
 
         $cemeteryKey = PlaceName::key(PlanImport::cleanText($cemeteryText));
         $inLocality = array_values(array_filter(
-            $this->cemeteries,
-            fn (Cemetery $cemetery): bool => $cemetery->locality_id === $locality->place->localityId
-                && ($cemeteryKey === null || PlaceName::key($cemetery->name) === $cemeteryKey),
+            $this->cemeteriesByLocality[$locality->place->localityId] ?? [],
+            fn (array $entry): bool => $cemeteryKey === null || $entry[1] === $cemeteryKey,
         ));
 
         if (count($inLocality) !== 1) {
             return null;
         }
 
-        return $this->existingCemetery($inLocality[0], PlanImport::cleanText($localityText) ?? '');
+        return $this->existingCemetery($inLocality[0][0], PlanImport::cleanText($localityText) ?? '');
     }
 
     /**
@@ -223,8 +226,8 @@ final class PlaceResolver
             $localityName = $this->localities[$localityId]->name ?? '';
         }
 
-        $key = $request->decisionKey();
-        $this->newCemeteries[$key] = new PlannedCemetery($request->name, $localityId, $localityId === null ? $localityKey : null);
+        $key = self::newCemeteryKey($localityId, $localityKey, $request->cemeteryKey);
+        $this->newCemeteries[$key] ??= new PlannedCemetery($request->name, $localityId, $localityId === null ? $localityKey : null);
         $label = 'nowy: '.($request->name === null ? "cmentarz {$localityName}" : "{$request->name}, {$localityName}");
 
         return new ResolvedPlace(
@@ -232,6 +235,15 @@ final class PlaceResolver
             new PlannedPlace($label, localityId: $localityId, newLocality: $localityId === null ? $localityKey : null, newCemetery: $key),
             $localityId === null ? 'N:'.$localityKey : 'L:'.$localityId,
         );
+    }
+
+    /**
+     * The key a new cemetery has in the plan: its locality (the id of an existing one, the name key of a new one) and the
+     * key of its name. Two spellings of one locality name the same new cemetery, so the write adds it once.
+     */
+    public static function newCemeteryKey(?int $localityId, string $localityKey, ?string $cemeteryKey): string
+    {
+        return ($localityId === null ? $localityKey : "#{$localityId}").'|'.($cemeteryKey ?? '');
     }
 
     private function chosenCemetery(CemeteryVerdict $verdict, string $requestKey, string $localityKey, string $localityText): ?ResolvedPlace

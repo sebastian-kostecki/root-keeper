@@ -5,8 +5,8 @@ namespace App\Support\Import;
 /**
  * Where the place of a repo event goes: a locality or a cemetery of the tree, or a place the plan adds.
  *
- * A new locality is named by the key of its name (a key of {@see ImportPlan::$newLocalities}), a new cemetery by its key
- * in {@see PlaceDecisions::cemeteryKey()} (a key of {@see ImportPlan::$newCemeteries}). The write replaces both with ids.
+ * A new locality is named by the key of its name (a key of {@see ImportPlan::$newLocalities}), a new cemetery by the key
+ * {@see PlaceResolver::newCemeteryKey()} gives (a key of {@see ImportPlan::$newCemeteries}). The write replaces both with ids.
  */
 final readonly class PlannedPlace
 {

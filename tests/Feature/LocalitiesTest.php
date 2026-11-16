@@ -700,6 +700,20 @@ test('merging skips a variant that equals the target name or a variant the tree 
         ->and($third->aliases()->pluck('name')->all())->toBe(['bokinia']);
 });
 
+test('merging skips a variant that differs from the target name or a variant of the tree only by Polish characters', function () {
+    $user = User::factory()->create();
+    $duplicate = Locality::factory()->for($user->tree)->create(['name' => 'Bokinia']);
+    $target = Locality::factory()->for($user->tree)->create(['name' => 'Bukinia']);
+    $third = Locality::factory()->for($user->tree)->create();
+    LocalityAlias::factory()->create(['tree_id' => $user->tree->id, 'locality_id' => $duplicate->id, 'name' => 'Bukinią']);
+    LocalityAlias::factory()->create(['tree_id' => $user->tree->id, 'locality_id' => $third->id, 'name' => 'Bókinia']);
+
+    $this->actingAs($user)->post(route('localities.merge', $duplicate), ['target_id' => $target->id])->assertSessionHasNoErrors();
+
+    expect($target->aliases()->count())->toBe(0)
+        ->and($third->aliases()->pluck('name')->all())->toBe(['Bókinia']);
+});
+
 test('a locality with name variants can be deleted and its variants go with it', function () {
     $user = User::factory()->create();
     $locality = Locality::factory()->for($user->tree)->create();

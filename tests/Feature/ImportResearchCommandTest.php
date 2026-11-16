@@ -1182,6 +1182,33 @@ test('remembers a doubtful spelling as a variant of the chosen locality and then
         ->assertSuccessful();
 });
 
+test('offers no new locality for a name two localities share and remembers the chosen one, then asks nothing', function () {
+    [$author, $other] = arrangePlaceUsers(['Wola', 'Wóla', 'Zalesie']);
+    $wola = $author->tree->localities()->where('name', 'Wola')->firstOrFail();
+    $accented = $author->tree->localities()->where('name', 'Wóla')->firstOrFail();
+    $repo = reimportRepo(placeBlocks('Wola'));
+    $otherBefore = placeState($other);
+
+    $this->artisan('import:research', ['email' => $author->email, 'path' => $repo])
+        ->expectsChoice('Niepewne 1/1: Wola (2 zdarzenia)', "locality:{$accented->id}", [
+            "locality:{$wola->id}" => 'To Wola (zapamiętaj wariant)',
+            "locality:{$accented->id}" => 'To Wóla (zapamiętaj wariant)',
+            'none' => 'Bez miejsca',
+        ], true)
+        ->expectsConfirmation(saveQuestion(2, 0, 5), 'yes')
+        ->assertSuccessful();
+
+    $tree = $author->tree;
+
+    expect($tree->localityAliases()->pluck('name', 'locality_id')->all())->toBe([$accented->id => 'Wola'])
+        ->and($tree->events()->where('repo_id', 'O-0001/urodzenie')->firstOrFail()->locality_id)->toBe($accented->id)
+        ->and(placeState($other))->toBe($otherBefore);
+
+    $this->artisan('import:research', ['email' => $author->email, 'path' => $repo])
+        ->expectsOutputToContain('Nic do zapisania.')
+        ->assertSuccessful();
+});
+
 test('leaves a doubtful place out when the author keeps the default and the text stays in the note', function () {
     [$author, $other] = arrangePlaceUsers(['Bukinia', 'Zalesie']);
     $otherBefore = placeState($other);

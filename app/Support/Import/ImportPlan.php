@@ -32,7 +32,8 @@ final readonly class ImportPlan
      * @param  array<string, string>  $seenSnapshots  repo key => `RepoSnapshot::fingerprint()` of the memory entry the plan saw, for every key the write touches that had one
      * @param  array<string, string>  $newLocalities  key of the name => the name of each locality the plan adds, only the ones a plan item uses; the write decides after the rejected changes and conflicts
      * @param  array<string, PlannedAlias>  $aliases  key of the spelling => the variant to remember, always saved
-     * @param  array<string, PlannedCemetery>  $newCemeteries  {@see PlaceDecisions::cemeteryKey()} => each cemetery the plan adds, only the ones a plan item uses
+     * @param  array<string, PlannedCemetery>  $newCemeteries  {@see PlaceResolver::newCemeteryKey()} => each cemetery the plan adds, only the ones a plan item uses
+     * @param  array<string, PlannedNote>  $notes  repo id => the note block of a person whose place text waits for a place change or conflict; the write renders it with the answers
      */
     public function __construct(
         public array $persons,
@@ -65,6 +66,7 @@ final readonly class ImportPlan
         public array $newLocalities = [],
         public array $aliases = [],
         public array $newCemeteries = [],
+        public array $notes = [],
     ) {}
 
     /**
