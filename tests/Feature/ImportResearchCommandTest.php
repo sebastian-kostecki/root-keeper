@@ -118,7 +118,7 @@ test('prints the report for the fixture repo and exits successfully', function (
         ->expectsOutputToContain('Nieznany klucz: kolor')
         ->expectsOutputToContain('Podsumowanie importu')
         ->expectsOutputToContain('Pominięte relacje:')
-        ->expectsOutputToContain('Warianty nazwiska przy osobach: 1')
+        ->expectsOutput('Warianty nazwiska przy osobach: 1')
         ->doesntExpectOutputToContain('(S-09)')
         ->expectsChoice(newPlacesQuestion(2), 'all', PLACES_MODE_OPTIONS, true)
         ->expectsConfirmation(saveQuestion(13, 0, 27), 'no')

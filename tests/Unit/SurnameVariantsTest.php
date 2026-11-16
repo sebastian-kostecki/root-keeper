@@ -22,6 +22,10 @@ test('drops a repeat that differs only in case and keeps the first', function ()
     expect($variants->names)->toBe(['Mysiuk', 'Myszuk']);
 });
 
+test('folds case by simple case mapping, like the lower() of the unique index', function () {
+    expect(SurnameVariants::fromResearch(researchPersonWithVariants(['Iwański', 'İwański', 'ŁÓDŹ', 'łódź']))->names)->toBe(['Iwański', 'ŁÓDŹ']);
+});
+
 test('keeps the order of the repo', function () {
     expect(SurnameVariants::fromResearch(researchPersonWithVariants(['Zet', 'Aaa', 'Mmm']))->names)->toBe(['Zet', 'Aaa', 'Mmm']);
 });

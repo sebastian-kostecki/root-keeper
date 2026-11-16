@@ -187,7 +187,7 @@ class ParsePersonBlock
             'imiona' => ['nullable', 'string', 'required_without:nazwisko'],
             'nazwisko' => ['nullable', 'string'],
             'warianty_nazwiska' => ['nullable', 'array', $this->mustBeList()],
-            'warianty_nazwiska.*' => ['string'],
+            'warianty_nazwiska.*' => ['string', 'max:255'],
             'plec' => ['nullable', 'in:M,K'],
             'rodzice' => ['nullable', 'array'],
             'rodzice.ojciec' => ['nullable', 'string', 'regex:'.self::ID_PATTERN, $this->mustNotBe($ownId)],

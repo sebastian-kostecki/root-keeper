@@ -8,6 +8,7 @@ use App\Models\Person;
 /**
  * The surname variants of a person in the one form the import compares, remembers and writes: trimmed, spaces
  * collapsed, without empty entries and without repeats that differ only in case (the first one stays), in repo order.
+ * Case is folded by simple case mapping, like PostgreSQL `lower()` behind the unique index on the variants.
  */
 final readonly class SurnameVariants
 {
@@ -59,11 +60,17 @@ final readonly class SurnameVariants
         foreach ($names as $name) {
             $clean = PlanImport::cleanText($name);
 
-            if ($clean === null || isset($seen[mb_strtolower($clean)])) {
+            if ($clean === null) {
                 continue;
             }
 
-            $seen[mb_strtolower($clean)] = true;
+            $key = mb_convert_case($clean, MB_CASE_LOWER_SIMPLE);
+
+            if (isset($seen[$key])) {
+                continue;
+            }
+
+            $seen[$key] = true;
             $kept[] = $clean;
         }
 

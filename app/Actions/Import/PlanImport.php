@@ -374,7 +374,7 @@ class PlanImport
                     $this->plannedLinks($sourcePlan, $research->death),
                 );
                 $snapshots += $this->snapshotsOf($research, $note, $resolved['birth'], $resolved['death'], $burialPlace, $sourcePlan);
-                $totals->variants += count($research->surnameVariants);
+                $totals->variants += count(SurnameVariants::fromResearch($research)->names);
                 $totals->burials += $burialKey === null ? 0 : 1;
 
                 foreach ([[$research->birth, $resolved['birth']], [$research->death, $resolved['death']], [$research->burial, $burialPlace]] as [$event, $resolvedPlace]) {
@@ -473,7 +473,7 @@ class PlanImport
                     $eventPlan['birth']['create'] ? $eventPlan['birth']['links'] : [],
                     $eventPlan['death']['create'] ? $eventPlan['death']['links'] : [],
                 );
-                $totals->variants += count($research->surnameVariants);
+                $totals->variants += count(SurnameVariants::fromResearch($research)->names);
 
                 foreach (['birth' => $research->birth, 'death' => $research->death, 'burial' => $research->burial] as $kind => $event) {
                     $this->tallyNoteValues($event, $totals->levels, $totals->eventNotes);

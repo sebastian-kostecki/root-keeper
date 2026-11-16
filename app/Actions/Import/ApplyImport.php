@@ -492,7 +492,7 @@ class ApplyImport
         $ids = array_values(array_unique($ids));
         sort($ids);
 
-        $people = $tree->people()->whereIn('id', $ids)->orderBy('id')->lockForUpdate()->get()->keyBy('id');
+        $people = $tree->people()->with('surnameVariants')->whereIn('id', $ids)->orderBy('id')->lockForUpdate()->get()->keyBy('id');
 
         foreach ($people as $person) {
             $person->setRelation('tree', $tree);

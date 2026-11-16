@@ -1173,7 +1173,7 @@ class ImportResearch extends Command
         $this->line('Miejsca:');
         $this->line(sprintf('  nowe miejscowości: %d, nowe cmentarze: %d, zapamiętane warianty: %d', $notes->newLocalities, $notes->newCemeteries, $notes->aliases));
         $this->line(sprintf('  zdarzenia z miejscem: %d, pochowania: %d', $notes->placedEvents, $notes->burials));
-        $this->line(sprintf('  Warianty nazwiska przy osobach: %d', $notes->surnameVariants));
+        $this->line(sprintf('Warianty nazwiska przy osobach: %d', $notes->surnameVariants));
         $this->line('Do notatki osoby:');
         $this->line(sprintf('  zdarzenia bez miejsca: %d', $notes->unplacedEvents));
         $this->line(sprintf('  poziomy pewności: %d (S-08)', $notes->levels));

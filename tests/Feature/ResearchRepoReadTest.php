@@ -353,6 +353,18 @@ test('gives no id to an entry skipped for a YAML error, an unclosed block or a b
     'list' => ["---\n- a\n- b\n---\n"],
 ]);
 
+test('skips a person whose surname variant is longer than 255 characters and reads the rest', function () {
+    $long = str_repeat('a', 256);
+    $reading = readTemporaryFiles([
+        'jan.md' => "---\nwersja: 1\nid: O-0042\nimiona: Jan\nwarianty_nazwiska: [Nowak, {$long}]\n---\n",
+        'anna.md' => "---\nwersja: 1\nid: O-0043\nimiona: Anna\nwarianty_nazwiska: [Nowak]\n---\n",
+    ]);
+
+    expect(messagesFor($reading->skipped, 'jan.md'))->toContain('warianty_nazwiska.1')
+        ->and($reading->skippedRepoIds())->toBe(['O-0042'])
+        ->and(array_keys($reading->persons))->toBe(['O-0043']);
+});
+
 test('gives no id to an entry whose own id fails the validator', function () {
     $reading = readTemporaryFiles(['jan.md' => "---\nwersja: 1\nid: nie-id\nimiona: Jan\n---\n"]);
 

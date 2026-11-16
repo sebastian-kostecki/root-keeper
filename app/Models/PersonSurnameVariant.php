@@ -25,6 +25,14 @@ class PersonSurnameVariant extends Model
     use HasFactory;
 
     /**
+     * @return BelongsTo<Tree, $this>
+     */
+    public function tree(): BelongsTo
+    {
+        return $this->belongsTo(Tree::class);
+    }
+
+    /**
      * @return BelongsTo<Person, $this>
      */
     public function person(): BelongsTo

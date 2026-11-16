@@ -261,6 +261,12 @@ test('writes the person note exactly as specified', function () {
         NOTE);
 });
 
+test('counts the surname variants of a new person without repeats', function () {
+    $plan = planTemporaryRepo(arrangeEmptyAuthorAndOverlappingOther(), ['O-0001' => "imiona: Jan\nwarianty_nazwiska: [Nowakowski, NOWAKOWSKI, Nowacki, ' ']"]);
+
+    expect($plan->noteValues->surnameVariants)->toBe(2);
+});
+
 test('leaves the note empty for a person with only surname variants', function () {
     $plan = planTemporaryRepo(arrangeEmptyAuthorAndOverlappingOther(), ['O-0001' => "imiona: Jan\nwarianty_nazwiska: [Nowakowski]"]);
 
