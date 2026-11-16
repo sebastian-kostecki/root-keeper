@@ -16,6 +16,8 @@ final readonly class PlannedPlace
      * @param  string|null  $newLocality  the key of the name of a new locality
      * @param  int|null  $cemeteryId  a cemetery of the tree
      * @param  string|null  $newCemetery  the key of a new cemetery
+     * @param  int|null  $parishId  a parish of the tree
+     * @param  string|null  $newParish  the key of a new parish, see {@see PlaceResolver::newParishKey()}
      */
     public function __construct(
         public string $label,
@@ -23,5 +25,7 @@ final readonly class PlannedPlace
         public ?string $newLocality = null,
         public ?int $cemeteryId = null,
         public ?string $newCemetery = null,
+        public ?int $parishId = null,
+        public ?string $newParish = null,
     ) {}
 }

@@ -758,8 +758,8 @@ Odczyt liczy sha256 każdego skanu w blokach. Przy ok. 150 plikach i do 8 MB to 
 
 #### Automated
 
-- [ ] 2.1 Testy odczytu i istniejące testy importu przechodzą bez zmiany liczników
-- [ ] 2.2 Analiza statyczna i formatowanie
+- [x] 2.1 Testy odczytu i istniejące testy importu przechodzą bez zmiany liczników — 25aef2b
+- [x] 2.2 Analiza statyczna i formatowanie — 25aef2b
 
 #### Manual
 

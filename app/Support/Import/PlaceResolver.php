@@ -4,9 +4,11 @@ namespace App\Support\Import;
 
 use App\Actions\Import\PlanImport;
 use App\Enums\CemeteryMatchKind;
+use App\Enums\ParishMatchKind;
 use App\Enums\PlaceMatchKind;
 use App\Models\Cemetery;
 use App\Models\Locality;
+use App\Models\Parish;
 
 /**
  * Turns the place texts of the repo into places of the tree, with the answers the author gave and the memory of the
@@ -14,7 +16,7 @@ use App\Models\Locality;
  * recognized by the same rules the matcher uses (a sure match), and failing that by the id the last import remembered.
  *
  * A name the answers do not cover counts as "no place". The places it adds are collected in {@see $newLocalities} and
- * {@see $newCemeteries} when a text resolves to them.
+ * {@see $newCemeteries} and {@see $newParishes} when a text resolves to them.
  */
 final class PlaceResolver
 {
@@ -24,6 +26,9 @@ final class PlaceResolver
     /** @var array<string, PlannedCemetery> */
     public array $newCemeteries = [];
 
+    /** @var array<string, PlannedParish> */
+    public array $newParishes = [];
+
     /** @var array<int, list<array{0: Cemetery, 1: string|null}>> locality id => its cemeteries with the key of their name */
     private array $cemeteriesByLocality = [];
 
@@ -31,6 +36,7 @@ final class PlaceResolver
      * @param  PlaceMatcher  $matcher  the rules over the localities and variants of the same tree
      * @param  array<int, Locality>  $localities  by id
      * @param  array<int, Cemetery>  $cemeteries  by id, with the locality loaded
+     * @param  array<int, Parish>  $parishes  by id, with the locality loaded
      */
     public function __construct(
         private readonly PlaceMatcher $matcher,
@@ -39,6 +45,8 @@ final class PlaceResolver
         private readonly PlaceMatches $places,
         private readonly CemeteryMatches $cemeteryMatches,
         private readonly PlaceDecisions $decisions,
+        private readonly array $parishes = [],
+        private readonly ParishMatches $parishMatches = new ParishMatches,
     ) {
         foreach ($cemeteries as $cemetery) {
             $this->cemeteriesByLocality[$cemetery->locality_id][] = [$cemetery, PlaceName::key($cemetery->name)];
@@ -105,6 +113,33 @@ final class PlaceResolver
     }
 
     /**
+     * @param  string|null  $remembered  the parish token of the last import for this parish, used when the parish is not asked about
+     */
+    public function parish(?ResearchParish $parish, ?string $remembered): ?ResolvedPlace
+    {
+        $seat = $parish === null ? null : PlanImport::cleanText($parish->locality);
+        $localityKey = PlaceName::key($seat);
+
+        if ($parish === null || $seat === null || $localityKey === null) {
+            return null;
+        }
+
+        $requestKey = PlaceDecisions::parishKey($localityKey, $parish->religion, $parish->kind, PlaceName::key(PlanImport::cleanText($parish->dedication)));
+        $verdict = $this->parishMatches->matches[$requestKey] ?? null;
+
+        if ($verdict === null) {
+            return $this->existingFromToken($remembered, 'P:', $seat);
+        }
+
+        return match ($verdict->kind) {
+            ParishMatchKind::None => null,
+            ParishMatchKind::Sure => $verdict->parish === null ? null : $this->existingParish($verdict->parish, $seat),
+            ParishMatchKind::New => $this->newParish($verdict, $localityKey),
+            ParishMatchKind::Choice => $this->chosenParish($verdict, $requestKey, $localityKey, $seat),
+        };
+    }
+
+    /**
      * The locality a text names by a sure match with the tree, whatever the author answered.
      */
     public function known(?string $text): ?ResolvedPlace
@@ -158,6 +193,7 @@ final class PlaceResolver
         return match (true) {
             str_starts_with($token, 'L:') => isset($this->localities[(int) substr($token, 2)]),
             str_starts_with($token, 'C:') => isset($this->cemeteries[(int) substr($token, 2)]),
+            str_starts_with($token, 'P:') => isset($this->parishes[(int) substr($token, 2)]),
             default => false,
         };
     }
@@ -173,7 +209,11 @@ final class PlaceResolver
 
         $id = (int) substr($token, 2);
 
-        return str_starts_with($token, 'L:') ? $this->localities[$id]->name : $this->cemeteries[$id]->label();
+        return match (true) {
+            str_starts_with($token, 'L:') => $this->localities[$id]->name,
+            str_starts_with($token, 'C:') => $this->cemeteries[$id]->label(),
+            default => $this->parishes[$id]->label(),
+        };
     }
 
     private function existingLocality(Locality $locality, string $text): ResolvedPlace
@@ -190,6 +230,13 @@ final class PlaceResolver
         return new ResolvedPlace('C:'.$cemetery->id, new PlannedPlace($label, localityId: $cemetery->locality_id, cemeteryId: $cemetery->id), 'L:'.$cemetery->locality_id);
     }
 
+    private function existingParish(Parish $parish, string $seatText): ResolvedPlace
+    {
+        $label = PlaceName::key($parish->locality->name) === PlaceName::key($seatText) ? $parish->label() : "{$parish->label()} (w repo: {$seatText})";
+
+        return new ResolvedPlace('P:'.$parish->id, new PlannedPlace($label, localityId: $parish->locality_id, parishId: $parish->id), 'L:'.$parish->locality_id);
+    }
+
     private function existingFromToken(?string $token, string $prefix, string $text): ?ResolvedPlace
     {
         if ($token === null || ! str_starts_with($token, $prefix) || ! $this->tokenExists($token)) {
@@ -198,7 +245,11 @@ final class PlaceResolver
 
         $id = (int) substr($token, 2);
 
-        return $prefix === 'L:' ? $this->existingLocality($this->localities[$id], $text) : $this->existingCemetery($this->cemeteries[$id], $text);
+        return match ($prefix) {
+            'L:' => $this->existingLocality($this->localities[$id], $text),
+            'C:' => $this->existingCemetery($this->cemeteries[$id], $text),
+            default => $this->existingParish($this->parishes[$id], $text),
+        };
     }
 
     private function newLocality(string $key, string $name): ResolvedPlace
@@ -259,5 +310,60 @@ final class PlaceResolver
         }
 
         return $answer === PlaceDecisions::NEW ? $this->newCemetery($verdict, $localityKey) : null;
+    }
+
+    private function newParish(ParishVerdict $verdict, string $localityKey): ?ResolvedPlace
+    {
+        $request = $verdict->request;
+        $localityId = $verdict->localityId;
+
+        if ($localityId === null) {
+            $locality = $this->places->localities[$localityKey] ?? null;
+
+            if ($locality === null) {
+                return null;
+            }
+
+            $this->newLocalities[$localityKey] = $locality->name;
+            $localityName = $locality->name;
+        } else {
+            $localityName = $this->localities[$localityId]->name ?? '';
+        }
+
+        $key = self::newParishKey($localityId, $request);
+        $this->newParishes[$key] ??= new PlannedParish($request->kind, $request->religion, $request->dedication, $localityId, $localityId === null ? $localityKey : null);
+        $parts = array_filter([$localityName, $request->kind->labelSuffix(), $request->dedication], fn (?string $part): bool => $part !== null && $part !== '');
+        $label = 'nowa: '.implode(' ', $parts).($request->religion === null ? '' : " ({$request->religion->shortLabel()})");
+
+        return new ResolvedPlace(
+            'N:'.$key,
+            new PlannedPlace($label, localityId: $localityId, newLocality: $localityId === null ? $localityKey : null, newParish: $key),
+            $localityId === null ? 'N:'.$localityKey : 'L:'.$localityId,
+        );
+    }
+
+    /**
+     * The key a new parish has in the plan: its seat (the id of an existing locality, the name key of a new one), its
+     * religion, kind and the key of its dedication. Two spellings of one seat name the same new parish, so the write adds
+     * it once.
+     */
+    public static function newParishKey(?int $localityId, ParishRequest $request): string
+    {
+        return PlaceDecisions::parishKey($localityId === null ? $request->localityKey : "#{$localityId}", $request->religion, $request->kind, $request->dedicationKey);
+    }
+
+    private function chosenParish(ParishVerdict $verdict, string $requestKey, string $localityKey, string $seatText): ?ResolvedPlace
+    {
+        $answer = $this->decisions->parishes[$requestKey] ?? PlaceDecisions::NONE;
+
+        if (is_int($answer)) {
+            foreach ($verdict->options as $option) {
+                if ($option->id === $answer) {
+                    return $this->existingParish($option, $seatText);
+                }
+            }
+        }
+
+        return $answer === PlaceDecisions::NEW ? $this->newParish($verdict, $localityKey) : null;
     }
 }

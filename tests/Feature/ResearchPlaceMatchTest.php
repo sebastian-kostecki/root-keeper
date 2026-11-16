@@ -3,15 +3,20 @@
 use App\Actions\Import\MatchResearchPlaces;
 use App\Actions\Import\ReadResearchRepo;
 use App\Enums\CemeteryMatchKind;
+use App\Enums\ParishKind;
+use App\Enums\ParishMatchKind;
 use App\Enums\PlaceMatchKind;
+use App\Enums\Religion;
 use App\Models\Cemetery;
 use App\Models\Locality;
 use App\Models\LocalityAlias;
+use App\Models\Parish;
 use App\Models\Tree;
 use App\Models\User;
 use App\Support\Import\CemeteryVerdict;
 use App\Support\Import\IdentityDecisions;
 use App\Support\Import\ImportDecisions;
+use App\Support\Import\ParishMatches;
 use App\Support\Import\PlaceDecisions;
 use App\Support\Import\PlaceMatches;
 use App\Support\Import\RepoRecordClasses;
@@ -343,4 +348,271 @@ test('the places of another account never take part', function () {
     expect($places->localities['bokinia']->locality?->tree_id)->toBe($author->id)
         ->and($cemeteries['zalesie|']->cemetery?->tree_id)->toBe($author->id)
         ->and($cemeteries['zalesie|']->cemetery?->id)->not->toBe($other->cemeteries()->first()->id);
+});
+
+/**
+ * Reads a throwaway repo whose sources name the given parishes and settles them against the tree. Fails when a
+ * locality or parish of another tree shows up.
+ *
+ * @param  array<string, array<string, string>>  $parishes  repo id of a source => fields of its `parafia` block (`miejscowosc`, `wyznanie`, `rodzaj`, `wezwanie`)
+ * @return array{0: PlaceMatches, 1: ParishMatches}
+ */
+function matchTemporaryParishes(Tree $tree, array $parishes, ?PlaceDecisions $decisions = null): array
+{
+    $repo = sys_get_temp_dir().'/parish-repo-'.uniqid();
+    mkdir($repo.'/drzewo', 0777, true);
+    mkdir($repo.'/zrodla/skany', 0777, true);
+
+    $entries = '';
+
+    foreach (array_values($parishes) as $index => $fields) {
+        $id = array_keys($parishes)[$index];
+        $image = imagecreatetruecolor(8, 8);
+        imagefill($image, 0, 0, imagecolorallocate($image, 20 + $index, 20, 20));
+        imagejpeg($image, "{$repo}/zrodla/skany/{$id}.jpg");
+
+        $entries .= "  - id: {$id}\n    plik: zrodla/skany/{$id}.jpg\n    rodzaj: akt\n    parafia:\n";
+
+        foreach ($fields as $field => $value) {
+            $entries .= "      {$field}: \"{$value}\"\n";
+        }
+    }
+
+    file_put_contents("{$repo}/zrodla/akty.md", "---\nwersja: 1\nskany:\n{$entries}---\n");
+
+    try {
+        $reading = app(ReadResearchRepo::class)->handle($repo);
+    } finally {
+        File::deleteDirectory($repo);
+    }
+
+    expect($reading->skippedSources)->toBe([])->and($reading->sources)->toHaveCount(count($parishes));
+
+    $decisions ??= new PlaceDecisions;
+    $places = app(MatchResearchPlaces::class)->handle($tree, $reading, new RepoRecordClasses, new ImportDecisions(new IdentityDecisions, places: $decisions));
+    $matches = app(MatchResearchPlaces::class)->parishes($tree, $places, $decisions);
+
+    foreach ($places->localities as $verdict) {
+        foreach ([$verdict->locality, ...$verdict->candidates] as $locality) {
+            expect($locality === null || $locality->tree_id === $tree->id)->toBeTrue();
+        }
+    }
+
+    foreach ($matches->matches as $verdict) {
+        foreach ([$verdict->parish, ...$verdict->options] as $parish) {
+            expect($parish === null || $parish->tree_id === $tree->id)->toBeTrue();
+        }
+    }
+
+    return [$places, $matches];
+}
+
+/**
+ * The tree of a new author, created after another account that has the seat Lipnica with parishes of every religion
+ * and dedication the parish tests use, so that a match that leaves its tree would show up.
+ */
+function parishTwinTree(): Tree
+{
+    $other = User::factory()->create()->tree;
+    $seat = Locality::factory()->create(['tree_id' => $other->id, 'name' => 'Lipnica']);
+
+    foreach ([Religion::RomanCatholic, Religion::GreekCatholic, null] as $religion) {
+        Parish::factory()->seatedIn($seat)->create(['religion' => $religion, 'dedication' => 'św. Jana']);
+        Parish::factory()->seatedIn($seat)->create(['religion' => $religion, 'dedication' => null]);
+    }
+
+    return User::factory()->create()->tree;
+}
+
+function parishAt(Tree $tree, Locality $seat, ?Religion $religion, ?string $dedication = null, ParishKind $kind = ParishKind::Parish): Parish
+{
+    return Parish::factory()->seatedIn($seat)->create(['tree_id' => $tree->id, 'religion' => $religion, 'dedication' => $dedication, 'kind' => $kind]);
+}
+
+test('a parish is sure when one candidate of the seat has the same kind and religion and the block gives no dedication', function () {
+    $tree = parishTwinTree();
+    $seat = localityOf($tree, 'Lipnica');
+    $parish = parishAt($tree, $seat, Religion::RomanCatholic, 'św. Jana');
+    parishAt($tree, $seat, Religion::GreekCatholic);
+    parishAt($tree, $seat, Religion::RomanCatholic, null, ParishKind::CivilRegistry);
+
+    [, $matches] = matchTemporaryParishes($tree, ['ZR-0001' => ['miejscowosc' => 'lipnica', 'wyznanie' => 'rzymskokatolickie']]);
+    $verdict = $matches->matches['lipnica|roman_catholic|parish|'];
+
+    expect($verdict->kind)->toBe(ParishMatchKind::Sure)
+        ->and($verdict->parish?->id)->toBe($parish->id)
+        ->and($verdict->localityId)->toBe($seat->id);
+});
+
+test('a parish is sure by its dedication among several candidates, ignoring capitals and polish characters', function () {
+    $tree = parishTwinTree();
+    $seat = localityOf($tree, 'Lipnica');
+    parishAt($tree, $seat, Religion::RomanCatholic, 'św. Jana');
+    $match = parishAt($tree, $seat, Religion::RomanCatholic, 'Św. Michała');
+
+    [, $matches] = matchTemporaryParishes($tree, ['ZR-0001' => ['miejscowosc' => 'Lipnica', 'wyznanie' => 'rzymskokatolickie', 'wezwanie' => 'sw. michala']]);
+    $verdict = $matches->matches['lipnica|roman_catholic|parish|sw. michala'];
+
+    expect($verdict->kind)->toBe(ParishMatchKind::Sure)
+        ->and($verdict->parish?->id)->toBe($match->id);
+});
+
+test('a parish is a choice when several candidates fit and the block gives no dedication or none matches', function () {
+    $tree = parishTwinTree();
+    $seat = localityOf($tree, 'Lipnica');
+    $first = parishAt($tree, $seat, Religion::RomanCatholic, 'św. Jana');
+    $second = parishAt($tree, $seat, Religion::RomanCatholic, 'św. Michała');
+
+    [, $matches] = matchTemporaryParishes($tree, [
+        'ZR-0001' => ['miejscowosc' => 'Lipnica', 'wyznanie' => 'rzymskokatolickie'],
+        'ZR-0002' => ['miejscowosc' => 'Lipnica', 'wyznanie' => 'rzymskokatolickie', 'wezwanie' => 'św. Piotra'],
+    ]);
+
+    expect($matches->matches['lipnica|roman_catholic|parish|']->kind)->toBe(ParishMatchKind::Choice)
+        ->and(array_map(fn (Parish $parish): int => $parish->id, $matches->matches['lipnica|roman_catholic|parish|']->options))->toBe([$first->id, $second->id])
+        ->and($matches->matches['lipnica|roman_catholic|parish|sw. piotra']->kind)->toBe(ParishMatchKind::Choice);
+});
+
+test('a parish is new when no parish of the seat has the kind and religion', function () {
+    $tree = parishTwinTree();
+    $seat = localityOf($tree, 'Lipnica');
+    parishAt($tree, $seat, Religion::GreekCatholic, 'św. Jana');
+    parishAt($tree, $seat, Religion::RomanCatholic, null, ParishKind::CivilRegistry);
+    localityOf($tree, 'Wola');
+
+    [, $matches] = matchTemporaryParishes($tree, [
+        'ZR-0001' => ['miejscowosc' => 'Lipnica', 'wyznanie' => 'rzymskokatolickie'],
+        'ZR-0002' => ['miejscowosc' => 'Wola', 'wyznanie' => 'rzymskokatolickie'],
+    ]);
+
+    expect($matches->matches['lipnica|roman_catholic|parish|']->kind)->toBe(ParishMatchKind::New)
+        ->and($matches->matches['lipnica|roman_catholic|parish|']->localityId)->toBe($seat->id)
+        ->and($matches->matches['wola|roman_catholic|parish|']->kind)->toBe(ParishMatchKind::New);
+});
+
+test('a parish without a religion in the tree is an unsure candidate', function () {
+    $tree = parishTwinTree();
+    $seat = localityOf($tree, 'Lipnica');
+    $unknown = parishAt($tree, $seat, null, 'św. Jana');
+
+    [, $matches] = matchTemporaryParishes($tree, ['ZR-0001' => ['miejscowosc' => 'Lipnica', 'wyznanie' => 'rzymskokatolickie', 'wezwanie' => 'św. Jana']]);
+    $verdict = $matches->matches['lipnica|roman_catholic|parish|sw. jana'];
+
+    expect($verdict->kind)->toBe(ParishMatchKind::Choice)
+        ->and($verdict->parish)->toBeNull()
+        ->and(array_map(fn (Parish $parish): int => $parish->id, $verdict->options))->toBe([$unknown->id]);
+});
+
+test('a block without a religion offers the parishes of every religion and is never sure', function () {
+    $tree = parishTwinTree();
+    $seat = localityOf($tree, 'Lipnica');
+    $roman = parishAt($tree, $seat, Religion::RomanCatholic);
+
+    [, $matches] = matchTemporaryParishes($tree, ['ZR-0001' => ['miejscowosc' => 'Lipnica']]);
+    $verdict = $matches->matches['lipnica||parish|'];
+
+    expect($verdict->kind)->toBe(ParishMatchKind::Choice)
+        ->and(array_map(fn (Parish $parish): int => $parish->id, $verdict->options))->toBe([$roman->id]);
+
+    [, $matches] = matchTemporaryParishes(parishTwinTree(), ['ZR-0001' => ['miejscowosc' => 'Lipnica']]);
+
+    expect(isset($matches->matches['lipnica||parish|']))->toBeFalse();
+});
+
+test('a block without a religion makes a new parish only when the seat has no candidate', function () {
+    $tree = parishTwinTree();
+    $seat = localityOf($tree, 'Lipnica');
+    parishAt($tree, $seat, Religion::RomanCatholic, null, ParishKind::CivilRegistry);
+
+    [, $matches] = matchTemporaryParishes($tree, ['ZR-0001' => ['miejscowosc' => 'Lipnica']], new PlaceDecisions);
+
+    expect($matches->matches['lipnica||parish|']->kind)->toBe(ParishMatchKind::New);
+});
+
+test('a doubtful seat leaves its parish out until it is decided and the decision settles the parish', function () {
+    $tree = parishTwinTree();
+    $seat = localityOf($tree, 'Bukinia');
+    $parish = parishAt($tree, $seat, Religion::RomanCatholic);
+    $blocks = ['ZR-0001' => ['miejscowosc' => 'Bokinia', 'wyznanie' => 'rzymskokatolickie']];
+
+    [$places, $matches] = matchTemporaryParishes($tree, $blocks);
+
+    expect($places->localities['bokinia']->kind)->toBe(PlaceMatchKind::Doubtful)
+        ->and($places->localities['bokinia']->repoIds())->toBe(['ZR-0001'])
+        ->and($places->parishRequests)->toHaveCount(1)
+        ->and($matches->matches)->toBe([]);
+
+    [, $matches] = matchTemporaryParishes($tree, $blocks, new PlaceDecisions(localities: ['bokinia' => $seat->id], aliases: ['bokinia' => true]));
+
+    expect($matches->matches['bokinia|roman_catholic|parish|']->kind)->toBe(ParishMatchKind::Sure)
+        ->and($matches->matches['bokinia|roman_catholic|parish|']->parish?->id)->toBe($parish->id);
+});
+
+test('a source with no place gets no parish and a new seat gets a new parish', function () {
+    $tree = parishTwinTree();
+    $blocks = [
+        'ZR-0001' => ['miejscowosc' => 'Bokinia', 'wyznanie' => 'rzymskokatolickie'],
+        'ZR-0002' => ['miejscowosc' => 'Kolemczyce', 'wezwanie' => 'św. Jana'],
+    ];
+
+    [, $matches] = matchTemporaryParishes($tree, $blocks, new PlaceDecisions(localities: ['bokinia' => PlaceDecisions::NONE, 'kolemczyce' => PlaceDecisions::NEW]));
+
+    expect($matches->matches['bokinia|roman_catholic|parish|']->kind)->toBe(ParishMatchKind::None)
+        ->and($matches->matches['kolemczyce||parish|sw. jana']->kind)->toBe(ParishMatchKind::New)
+        ->and($matches->matches['kolemczyce||parish|sw. jana']->localityId)->toBeNull();
+});
+
+test('a parish the memory holds with its text and id is not asked about, a changed text is', function (array $values, bool $asked) {
+    $tree = parishTwinTree();
+    localityOf($tree, 'Lipnica');
+    $tree->repoSnapshots()->create(['repo_id' => 'ZR-0001', 'values' => $values]);
+
+    [$places, $matches] = matchTemporaryParishes($tree, ['ZR-0001' => ['miejscowosc' => 'Lipnica', 'wyznanie' => 'rzymskokatolickie', 'wezwanie' => 'św. Jana']]);
+
+    expect($places->parishRequests !== [])->toBe($asked)
+        ->and(isset($places->localities['lipnica']))->toBe($asked)
+        ->and($matches->matches !== [])->toBe($asked);
+})->with([
+    'the same text and id' => [['parafia' => 'Lipnica|roman_catholic|parish|św. Jana', 'parafia_id' => 'P:1'], false],
+    'the same text without a recognized parish' => [['parafia' => 'Lipnica|roman_catholic|parish|św. Jana', 'parafia_id' => null], false],
+    'a memory from before parishes' => [['nazwa' => 'Akt'], true],
+    'a memory without the id' => [['parafia' => 'Lipnica|roman_catholic|parish|św. Jana'], true],
+    'another text' => [['parafia' => 'Lipnica|roman_catholic|parish|św. Michała', 'parafia_id' => 'P:1'], true],
+]);
+
+test('one parish named by several sources is one question that counts them all', function () {
+    $tree = parishTwinTree();
+    $seat = localityOf($tree, 'Lipnica');
+    parishAt($tree, $seat, Religion::RomanCatholic, 'św. Jana');
+    parishAt($tree, $seat, Religion::RomanCatholic, 'św. Michała');
+
+    [$places, $matches] = matchTemporaryParishes($tree, [
+        'ZR-0001' => ['miejscowosc' => 'Lipnica', 'wyznanie' => 'rzymskokatolickie'],
+        'ZR-0002' => ['miejscowosc' => 'lipnica', 'wyznanie' => 'rzymskokatolickie'],
+        'ZR-0003' => ['miejscowosc' => 'Lipnica', 'wyznanie' => 'rzymskokatolickie'],
+    ]);
+
+    expect($places->parishRequests)->toHaveCount(1)
+        ->and($matches->matches)->toHaveCount(1)
+        ->and($matches->matches['lipnica|roman_catholic|parish|']->sourceCount())->toBe(3)
+        ->and($places->localities['lipnica']->repoIds())->toEqualCanonicalizing(['ZR-0001', 'ZR-0002', 'ZR-0003']);
+});
+
+test('the parishes of another account never take part', function () {
+    $other = User::factory()->create()->tree;
+    $author = User::factory()->create()->tree;
+    $blocks = ['ZR-0001' => ['miejscowosc' => 'Lipnica', 'wyznanie' => 'rzymskokatolickie', 'wezwanie' => 'św. Jana']];
+    $arrange = fn (Tree $tree): Parish => parishAt($tree, localityOf($tree, 'Lipnica'), Religion::RomanCatholic, 'św. Jana');
+    $arrange($other);
+
+    [$places, $matches] = matchTemporaryParishes($author, $blocks);
+
+    expect($places->localities['lipnica']->kind)->toBe(PlaceMatchKind::New)
+        ->and($matches->matches)->toBe([]);
+
+    $mine = $arrange($author);
+
+    [, $matches] = matchTemporaryParishes($author, $blocks);
+
+    expect($matches->matches['lipnica|roman_catholic|parish|sw. jana']->parish?->id)->toBe($mine->id);
 });
