@@ -1,7 +1,8 @@
 ---
 change_id: surname-variant-search
 title: Surname variant search
-status: impl_reviewed
+status: archived
+archived_at: 2026-11-16T12:49:32Z
 created: 2026-11-16
 updated: 2026-11-16
 ---
