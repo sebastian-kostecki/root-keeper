@@ -792,10 +792,10 @@ Odczyt liczy sha256 każdego skanu w blokach. Przy ok. 150 plikach i do 8 MB to 
 
 #### Automated
 
-- [ ] 6.1 Testy komendy przechodzą
-- [ ] 6.2 Pełny zestaw testów PHP przechodzi
-- [ ] 6.3 Analiza statyczna i formatowanie
-- [ ] 6.4 Frontend: check, types:check, test:js
+- [x] 6.1 Testy komendy przechodzą — 7d4c936
+- [x] 6.2 Pełny zestaw testów PHP przechodzi — 7d4c936
+- [x] 6.3 Analiza statyczna i formatowanie — 7d4c936
+- [x] 6.4 Frontend: check, types:check, test:js — 7d4c936
 
 #### Manual
 
