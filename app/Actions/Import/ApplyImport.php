@@ -601,6 +601,7 @@ class ApplyImport
         $query = match ($removal->kind) {
             RepoKeyKind::Person => $tree->people(),
             RepoKeyKind::Relation => $tree->parentChildRelations(),
+            RepoKeyKind::Source => $tree->sources(),
             default => $tree->events(),
         };
 
@@ -731,6 +732,8 @@ class ApplyImport
                 $burial?->delete();
 
                 return $burial !== null;
+            case RepoKeyKind::Source:
+                throw new RuntimeException("Usuwanie źródła {$removal->key} nie jest jeszcze obsługiwane; nic nie zostało zapisane.");
             default:
                 $event = $tree->events()->whereKey($removal->recordId)->first();
 

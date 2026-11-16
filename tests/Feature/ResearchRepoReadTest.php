@@ -5,7 +5,12 @@ use App\Actions\Import\ReadResearchRepo;
 use App\Enums\ConfidenceLevel;
 use App\Enums\DateQualifier;
 use App\Enums\Gender;
+use App\Enums\ParishKind;
+use App\Enums\Religion;
+use App\Enums\SourceKind;
+use App\Enums\SourceRecordType;
 use App\Support\Import\ImportIssue;
+use App\Support\Import\RepoValues;
 use App\Support\Import\ResearchRepoReading;
 use Illuminate\Support\Facades\File;
 
@@ -411,4 +416,370 @@ test('reports an unreadable person file as skipped without an id and reads the r
         ->and($reading->skipped[0]->file)->toBe('O-0002.md')
         ->and($reading->skipped[0]->repoId)->toBeNull()
         ->and($reading->hasSkippedWithoutId())->toBeTrue();
+});
+
+/**
+ * Build a temporary repo with a drzewo/ and the given files (path => contents, relative to the repo root), read it and
+ * return the reading with a hash of every file in the repo before and after.
+ *
+ * @param  array<string, string>  $files
+ * @return array{reading: ResearchRepoReading, before: array<string, string>, after: array<string, string>, root: string}
+ */
+function readTemporaryRepo(array $files, ?Closure $prepare = null): array
+{
+    $repo = sys_get_temp_dir().'/source-repo-'.uniqid();
+    mkdir($repo.'/drzewo', 0777, true);
+
+    foreach ($files as $path => $contents) {
+        File::ensureDirectoryExists(dirname("{$repo}/{$path}"));
+        file_put_contents("{$repo}/{$path}", $contents);
+    }
+
+    if ($prepare !== null) {
+        $prepare($repo);
+    }
+
+    $hashes = function () use ($repo): array {
+        $result = [];
+
+        foreach (File::allFiles($repo, true) as $file) {
+            $result[$file->getRelativePathname()] = hash_file('sha256', $file->getPathname());
+        }
+
+        ksort($result);
+
+        return $result;
+    };
+
+    try {
+        $before = $hashes();
+        $reading = app(ReadResearchRepo::class)->handle($repo);
+
+        return ['reading' => $reading, 'before' => $before, 'after' => $hashes(), 'root' => $repo];
+    } finally {
+        File::deleteDirectory($repo);
+    }
+}
+
+function scanImage(string $type = 'jpeg', int $shade = 100): string
+{
+    $image = imagecreatetruecolor(8, 8);
+    imagefill($image, 0, 0, imagecolorallocate($image, $shade, 20, 20));
+    ob_start();
+    match ($type) {
+        'png' => imagepng($image),
+        'webp' => imagewebp($image),
+        'gif' => imagegif($image),
+        default => imagejpeg($image),
+    };
+
+    return (string) ob_get_clean();
+}
+
+function sourceBlock(string $entries, string $version = '1'): string
+{
+    return "---\nwersja: {$version}\nskany:\n{$entries}---\n# Opis\n";
+}
+
+function sourceEntry(string $id, string $scan = 'zrodla/skany/a.jpg', string $extra = "    rodzaj: akt\n"): string
+{
+    return "  - id: {$id}\n".($scan === '' ? '' : "    plik: {$scan}\n").$extra;
+}
+
+test('reads a source block with two entries on one scan and hashes the file', function () {
+    $jpeg = scanImage();
+    $run = readTemporaryRepo([
+        'zrodla/skany/a.jpg' => $jpeg,
+        'zrodla/akty.md' => sourceBlock(
+            sourceEntry('ZR-0002', extra: "    rodzaj: akt\n    typ: slub\n    nazwa: Akt 2\n    rok: 1837\n    parafia:\n      miejscowosc: Wieś Przykładowa\n      wyznanie: grekokatolickie\n      rodzaj: usc\n      wezwanie: św. Jana\n    archiwum: AP Przykładowe\n    sygnatura: 35/1\n    link: https://example.org/s\n    notatka: skan 34\n").
+            sourceEntry('ZR-0001', extra: "    rodzaj: inne\n"),
+        ),
+    ]);
+    $reading = $run['reading'];
+    $source = $reading->sources['ZR-0002'];
+
+    expect(array_keys($reading->sources))->toBe(['ZR-0001', 'ZR-0002'])
+        ->and($reading->skippedSources)->toBe([])
+        ->and($source->scanHash)->toBe(hash('sha256', $jpeg))
+        ->and($source->scanPath)->toBe('zrodla/skany/a.jpg')
+        ->and($source->file)->toBe('zrodla/akty.md')
+        ->and($source->kind)->toBe(SourceKind::MetricalRecord)
+        ->and($source->recordType)->toBe(SourceRecordType::Marriage)
+        ->and($source->parish->religion)->toBe(Religion::GreekCatholic)
+        ->and($source->parish->kind)->toBe(ParishKind::CivilRegistry)
+        ->and([$source->parish->locality, $source->parish->dedication])->toBe(['Wieś Przykładowa', 'św. Jana'])
+        ->and([$source->name, $source->year, $source->archive, $source->signature, $source->url, $source->note])->toBe(['Akt 2', 1837, 'AP Przykładowe', '35/1', 'https://example.org/s', 'skan 34'])
+        ->and($reading->sources['ZR-0001']->kind)->toBe(SourceKind::Other)
+        ->and(messagesFor($reading->warnings, 'zrodla/akty.md'))->toContain('Ten sam plik skanu zrodla/skany/a.jpg mają źródła: ZR-0001, ZR-0002')
+        ->and($reading->sourceFilesScanned)->toBe(1)
+        ->and($reading->sourceScanEntries)->toBe(2)
+        ->and($run['after'])->toBe($run['before']);
+});
+
+test('skips a scan entry with the reason and keeps the rest of the file', function (string $entry, ?string $scanName, ?string $scanContents, string $reason, ?Closure $prepare = null) {
+    $files = ['zrodla/z.md' => sourceBlock($entry.sourceEntry('ZR-0099', 'zrodla/skany/ok.jpg')), 'zrodla/skany/ok.jpg' => scanImage()];
+
+    if ($scanName !== null) {
+        $files[$scanName] = $scanContents ?? '';
+    }
+
+    $run = readTemporaryRepo($files, $prepare);
+    $reading = $run['reading'];
+
+    expect(array_keys($reading->sources))->toBe(['ZR-0099'])
+        ->and($reading->skippedSources)->toHaveCount(1)
+        ->and($reading->skippedSources[0]->repoId)->toBe('ZR-0001')
+        ->and($reading->skippedSources[0]->file)->toBe('zrodla/z.md')
+        ->and($reading->skippedSources[0]->message)->toContain($reason)
+        ->and($reading->skippedSourceIds())->toBe(['ZR-0001'])
+        ->and($reading->hasSkippedSourceWithoutId())->toBeFalse()
+        ->and($run['after'])->toBe($run['before']);
+})->with([
+    'no scan field' => [sourceEntry('ZR-0001', ''), null, null, 'brak skanu'],
+    'missing file' => [sourceEntry('ZR-0001', 'zrodla/skany/brak.jpg'), null, null, 'plik skanu nie istnieje: zrodla/skany/brak.jpg'],
+    'parent directory' => [sourceEntry('ZR-0001', '../poza.jpg'), null, null, 'plik skanu poza repo'],
+    'absolute path' => [sourceEntry('ZR-0001', '/etc/passwd'), null, null, 'plik skanu poza repo'],
+    'pdf' => [sourceEntry('ZR-0001', 'zrodla/skany/a.pdf'), 'zrodla/skany/a.pdf', "%PDF-1.4\n", 'PDF nie jest obsługiwany'],
+    'pdf named jpg' => [sourceEntry('ZR-0001', 'zrodla/skany/a.jpg'), 'zrodla/skany/a.jpg', "%PDF-1.4\n%%EOF\n", 'PDF nie jest obsługiwany'],
+    'gif' => [sourceEntry('ZR-0001', 'zrodla/skany/a.gif'), 'zrodla/skany/a.gif', null, 'nieobsługiwany format pliku'],
+    'gif content named jpg' => [sourceEntry('ZR-0001', 'zrodla/skany/b.jpg'), 'zrodla/skany/b.jpg', null, 'nieobsługiwany format pliku'],
+    'tombstone' => [sourceEntry('ZR-0001', 'zrodla/skany/ok.jpg', "    rodzaj: nagrobek\n"), null, null, 'nagrobki: osobna zmiana'],
+    'unknown religion' => [sourceEntry('ZR-0001', 'zrodla/skany/ok.jpg', "    rodzaj: akt\n    parafia:\n      miejscowosc: Wieś\n      wyznanie: greckokatolickie\n"), null, null, 'parafia.wyznanie'],
+    'unknown record type' => [sourceEntry('ZR-0001', 'zrodla/skany/ok.jpg', "    rodzaj: akt\n    typ: chrzest\n"), null, null, 'typ'],
+    'unknown kind' => [sourceEntry('ZR-0001', 'zrodla/skany/ok.jpg', "    rodzaj: pamiatka\n"), null, null, 'rodzaj'],
+    'unknown parish kind' => [sourceEntry('ZR-0001', 'zrodla/skany/ok.jpg', "    rodzaj: akt\n    parafia:\n      miejscowosc: Wieś\n      rodzaj: cerkiew\n"), null, null, 'parafia.rodzaj'],
+]);
+
+test('skips a scan over 20 MB and a symlink that leaves the repo', function () {
+    $outside = sys_get_temp_dir().'/outside-scan-'.uniqid().'.jpg';
+    file_put_contents($outside, scanImage());
+
+    try {
+        $run = readTemporaryRepo([
+            'zrodla/z.md' => sourceBlock(
+                sourceEntry('ZR-0001', 'zrodla/skany/duzy.jpg').sourceEntry('ZR-0002', 'zrodla/skany/link.jpg'),
+            ),
+        ], function (string $repo) use ($outside): void {
+            mkdir($repo.'/zrodla/skany');
+            $handle = fopen($repo.'/zrodla/skany/duzy.jpg', 'wb');
+            ftruncate($handle, 20 * 1024 * 1024 + 1);
+            fclose($handle);
+            symlink($outside, $repo.'/zrodla/skany/link.jpg');
+        });
+    } finally {
+        unlink($outside);
+    }
+
+    expect($run['reading']->sources)->toBe([])
+        ->and(array_map(fn (ImportIssue $issue): string => $issue->message, $run['reading']->skippedSources))->toBe(['plik skanu większy niż 20 MB', 'plik skanu poza repo']);
+});
+
+test('accepts jpg, png and webp scans', function () {
+    $run = readTemporaryRepo([
+        'zrodla/skany/a.jpg' => scanImage(),
+        'zrodla/skany/b.png' => scanImage('png'),
+        'zrodla/skany/c.webp' => scanImage('webp'),
+        'zrodla/z.md' => sourceBlock(sourceEntry('ZR-0001').sourceEntry('ZR-0002', 'zrodla/skany/b.png').sourceEntry('ZR-0003', 'zrodla/skany/c.webp')),
+    ]);
+
+    expect(array_keys($run['reading']->sources))->toBe(['ZR-0001', 'ZR-0002', 'ZR-0003']);
+});
+
+test('skips every entry of an id that is written twice, in one file and across files', function () {
+    $run = readTemporaryRepo([
+        'zrodla/skany/a.jpg' => scanImage(),
+        'zrodla/a.md' => sourceBlock(sourceEntry('ZR-0001').sourceEntry('ZR-0001').sourceEntry('ZR-0002')),
+        'zrodla/b/b.md' => sourceBlock(sourceEntry('ZR-0002').sourceEntry('ZR-0003')),
+    ]);
+    $reading = $run['reading'];
+
+    expect(array_keys($reading->sources))->toBe(['ZR-0003'])
+        ->and($reading->skippedSourceIds())->toBe(['ZR-0001', 'ZR-0002'])
+        ->and(messagesFor($reading->skippedSources, 'zrodla/b/b.md'))->toContain('Powtórzony id ZR-0002 w plikach: zrodla/a.md, zrodla/b/b.md')
+        ->and($reading->sourceFilesScanned)->toBe(2)
+        ->and($reading->sourceScanEntries)->toBe(5);
+});
+
+test('skips a whole source file with a YAML error, a bad version or skany that is not a list', function (string $contents, string $reason) {
+    $run = readTemporaryRepo(['zrodla/z.md' => $contents]);
+    $reading = $run['reading'];
+
+    expect($reading->sources)->toBe([])
+        ->and($reading->skippedSources)->toHaveCount(1)
+        ->and($reading->skippedSources[0]->message)->toContain($reason)
+        ->and($reading->hasSkippedSourceWithoutId())->toBeTrue();
+})->with([
+    'yaml error' => ["---\nwersja: 1\nskany: [a, : b\n---\n", 'Błąd składni YAML'],
+    'version 2' => ["---\nwersja: 2\nskany: []\n---\n", 'wersja'],
+    'missing version' => ["---\nskany: []\n---\n", 'Brak pola wersja'],
+    'skany a map' => ["---\nwersja: 1\nskany:\n  id: ZR-0001\n---\n", 'musi być listą'],
+]);
+
+test('reads zrodla recursively, ignores underscore files and counts files without a block', function () {
+    $run = readTemporaryRepo([
+        'zrodla/skany/a.jpg' => scanImage(),
+        'zrodla/glebiej/jeszcze/z.md' => sourceBlock(sourceEntry('ZR-0001')),
+        'zrodla/_indeks.md' => sourceBlock(sourceEntry('ZR-0009')),
+        'zrodla/proza.md' => "# Tylko proza\n",
+        'zrodla/notatki.txt' => sourceBlock(sourceEntry('ZR-0008')),
+    ]);
+    $reading = $run['reading'];
+
+    expect(array_keys($reading->sources))->toBe(['ZR-0001'])
+        ->and($reading->sources['ZR-0001']->file)->toBe('zrodla/glebiej/jeszcze/z.md')
+        ->and($reading->sourceFilesScanned)->toBe(2)
+        ->and($reading->sourceFilesWithoutBlock)->toBe(['zrodla/proza.md']);
+});
+
+test('reads no sources and no error when zrodla is missing', function () {
+    $reading = readTemporaryRepo([])['reading'];
+
+    expect($reading->sources)->toBe([])
+        ->and($reading->sourceFilesScanned)->toBe(0)
+        ->and($reading->skippedSources)->toBe([]);
+});
+
+test('warns about unknown keys, fields that only an act has and an archive that looks like a signature', function () {
+    $run = readTemporaryRepo([
+        'zrodla/skany/a.jpg' => scanImage(),
+        'zrodla/z.md' => "---\nwersja: 1\nextra: 1\nskany:\n".sourceEntry('ZR-0001', extra: "    rodzaj: inne\n    typ: zgon\n    parafia:\n      miejscowosc: Wieś\n    kolor: zielony\n    archiwum: AP Lublin, 35/1813\n")."---\n",
+    ]);
+    $messages = messagesFor($run['reading']->warnings, 'zrodla/z.md');
+
+    expect($run['reading']->sources['ZR-0001']->recordType)->toBeNull()
+        ->and($run['reading']->sources['ZR-0001']->parish)->toBeNull()
+        ->and($messages)->toContain('Nieznany klucz: extra')
+        ->and($messages)->toContain('Nieznany klucz: ZR-0001.kolor')
+        ->and($messages)->toContain('pole typ dotyczy tylko aktu')
+        ->and($messages)->toContain('pole parafia dotyczy tylko aktu')
+        ->and($messages)->toContain('archiwum wygląda na sygnaturę');
+});
+
+test('keeps the sources of an event sorted, as text, without repeated ids', function () {
+    $run = readTemporaryRepo([
+        'zrodla/skany/a.jpg' => scanImage(),
+        'zrodla/z.md' => sourceBlock(sourceEntry('ZR-0001').sourceEntry('ZR-0002')),
+        'drzewo/jan.md' => "---\nwersja: 1\nid: O-0001\nimiona: Jan\nurodzenie:\n  zrodla:\n    - {id: ZR-0002, wpis: 15}\n    - {id: ZR-0001, wpis: \"15/1837\"}\n    - {id: ZR-0002, wpis: \"inny\"}\nzgon:\n  zrodla: [{id: ZR-0001}]\n---\n",
+    ]);
+    $reading = $run['reading'];
+    $links = $reading->persons['O-0001']->birth->sources;
+
+    expect(array_map(fn ($link): array => [$link->id, $link->entry], $links))->toBe([['ZR-0001', '15/1837'], ['ZR-0002', '15']])
+        ->and($reading->persons['O-0001']->death->sources[0]->entry)->toBeNull()
+        ->and(messagesFor($reading->warnings, 'jan.md'))->toContain('źródło ZR-0002 wpisane więcej niż raz');
+});
+
+test('skips a person with a bad source reference', function (string $zrodla) {
+    $reading = readTemporaryRepo(['drzewo/jan.md' => "---\nwersja: 1\nid: O-0001\nimiona: Jan\nurodzenie:\n  zrodla: {$zrodla}\n---\n"])['reading'];
+
+    expect($reading->persons)->toBe([])
+        ->and($reading->skipped)->toHaveCount(1)
+        ->and($reading->skipped[0]->repoId)->toBe('O-0001');
+})->with([
+    'bad id' => ['[{id: Z-0001}]'],
+    'no id' => ['[{wpis: "1"}]'],
+    'entry over 50 characters' => ['[{id: ZR-0001, wpis: "'.str_repeat('1', 51).'"}]'],
+    'not a list' => ['{id: ZR-0001}'],
+]);
+
+test('keeps a reference to an unknown or skipped source and warns', function () {
+    $run = readTemporaryRepo([
+        'zrodla/z.md' => sourceBlock(sourceEntry('ZR-0001', '')),
+        'drzewo/jan.md' => "---\nwersja: 1\nid: O-0001\nimiona: Jan\nurodzenie:\n  zrodla: [{id: ZR-0001, wpis: \"1\"}, {id: ZR-0777}]\n---\n",
+    ]);
+    $reading = $run['reading'];
+
+    expect(array_map(fn ($link): string => $link->id, $reading->persons['O-0001']->birth->sources))->toBe(['ZR-0001', 'ZR-0777'])
+        ->and(messagesFor($reading->warnings, 'jan.md'))->toContain('źródło ZR-0001 nie istnieje albo zostało pominięte')
+        ->and(messagesFor($reading->warnings, 'jan.md'))->toContain('źródło ZR-0777 nie istnieje albo zostało pominięte');
+});
+
+test('warns about zrodla in a burial as an unknown key', function () {
+    $reading = readTemporaryRepo(['drzewo/jan.md' => "---\nwersja: 1\nid: O-0001\nimiona: Jan\nzgon: {}\npochowek:\n  zrodla: [{id: ZR-0001}]\n---\n"])['reading'];
+
+    expect($reading->persons['O-0001']->burial->sources)->toBe([])
+        ->and(messagesFor($reading->warnings, 'jan.md'))->toContain('Nieznany klucz: pochowek.zrodla');
+});
+
+test('merges the sources of a wedding written in both files', function (string $first, string $second, ?array $expected) {
+    $person = fn (string $id, string $partner, string $zrodla): string => "---\nwersja: 1\nid: {$id}\nimiona: X\nmalzenstwa:\n  - z: {$partner}\n    data: \"1830\"\n    zrodla: {$zrodla}\n---\n";
+    $reading = readTemporaryRepo([
+        'drzewo/a.md' => $person('O-0001', 'O-0002', $first),
+        'drzewo/b.md' => $person('O-0002', 'O-0001', $second),
+    ])['reading'];
+
+    if ($expected === null) {
+        expect($reading->marriages)->toBe([])
+            ->and($reading->droppedMarriageKeys)->toBe(['O-0001+O-0002/slub'])
+            ->and(messagesFor($reading->warnings, 'a.md'))->toContain('[ZR-0001 (1), ZR-0002] oraz [ZR-0003]');
+
+        return;
+    }
+
+    expect($reading->marriages)->toHaveCount(1)
+        ->and(array_map(fn ($link): string => $link->id, $reading->marriages[0]->event->sources))->toBe($expected);
+})->with([
+    'same sources in another order' => ['[{id: ZR-0002}, {id: ZR-0001}]', '[{id: ZR-0001}, {id: ZR-0002}]', ['ZR-0001', 'ZR-0002']],
+    'only the first spouse' => ['[{id: ZR-0001}]', '[]', ['ZR-0001']],
+    'only the second spouse' => ['[]', '[{id: ZR-0002}]', ['ZR-0002']],
+    'two different lists' => ['[{id: ZR-0001, wpis: "1"}, {id: ZR-0002}]', '[{id: ZR-0003}]', null],
+]);
+
+test('maps every value of rodzaj, typ, wyznanie and parafia rodzaj onto the enum case', function () {
+    $entries = '';
+    $expected = [];
+    $number = 1;
+
+    foreach (['akt' => SourceKind::MetricalRecord, 'inne' => SourceKind::Other] as $kind => $kindCase) {
+        $id = sprintf('ZR-%04d', $number++);
+        $entries .= sourceEntry($id, extra: "    rodzaj: {$kind}\n");
+        $expected[$id] = [$kindCase, null, null, null];
+    }
+
+    foreach (['urodzenie' => SourceRecordType::Birth, 'slub' => SourceRecordType::Marriage, 'zgon' => SourceRecordType::Death, 'inne' => SourceRecordType::Other] as $type => $case) {
+        $id = sprintf('ZR-%04d', $number++);
+        $entries .= sourceEntry($id, extra: "    rodzaj: akt\n    typ: {$type}\n");
+        $expected[$id] = [SourceKind::MetricalRecord, $case, null, null];
+    }
+
+    $religions = ['rzymskokatolickie' => Religion::RomanCatholic, 'grekokatolickie' => Religion::GreekCatholic, 'ewangelickie' => Religion::Evangelical, 'prawoslawne' => Religion::Orthodox, 'mojzeszowe' => Religion::Jewish, 'inne' => Religion::Other];
+
+    foreach ($religions as $religion => $case) {
+        $id = sprintf('ZR-%04d', $number++);
+        $entries .= sourceEntry($id, extra: "    rodzaj: akt\n    parafia:\n      miejscowosc: Wieś\n      wyznanie: {$religion}\n");
+        $expected[$id] = [SourceKind::MetricalRecord, null, $case, ParishKind::Parish];
+    }
+
+    foreach (['parafia' => ParishKind::Parish, 'usc' => ParishKind::CivilRegistry, 'okreg_bozniczy' => ParishKind::JewishDistrict, 'inny' => ParishKind::Other] as $kind => $case) {
+        $id = sprintf('ZR-%04d', $number++);
+        $entries .= sourceEntry($id, extra: "    rodzaj: akt\n    parafia:\n      miejscowosc: Wieś\n      rodzaj: {$kind}\n");
+        $expected[$id] = [SourceKind::MetricalRecord, null, null, $case];
+    }
+
+    $reading = readTemporaryRepo(['zrodla/skany/a.jpg' => scanImage(), 'zrodla/z.md' => sourceBlock($entries)])['reading'];
+
+    expect($reading->skippedSources)->toBe([])
+        ->and(array_map(fn ($source): array => [$source->kind, $source->recordType, $source->parish?->religion, $source->parish?->kind], $reading->sources))->toBe($expected);
+});
+
+test('builds the memory values of a source and the key of a source', function () {
+    $reading = readTemporaryRepo([
+        'zrodla/skany/a.jpg' => scanImage(),
+        'zrodla/z.md' => sourceBlock(sourceEntry('ZR-0001', extra: "    rodzaj: akt\n    typ: zgon\n    rok: 1840\n    parafia:\n      miejscowosc: Wieś\n      wyznanie: rzymskokatolickie\n      wezwanie: św. Jana\n    sygnatura: 12/3\n")),
+    ])['reading'];
+    $values = RepoValues::forKey('ZR-0001', $reading);
+
+    expect($values)->toMatchArray(['rodzaj' => 'metrical_record', 'typ' => 'death', 'rok' => '1840', 'parafia' => 'Wieś|roman_catholic|parish|św. Jana', 'sygnatura' => '12/3', 'plik' => 'zrodla/skany/a.jpg', 'archiwum' => null])
+        ->and($values['plik_hash'])->toHaveLength(64)
+        ->and(RepoValues::forKey('ZR-0404', $reading))->toBeNull();
+});
+
+test('leaves the fixture repo without sources', function () {
+    $reading = readFixtureRepo();
+
+    expect($reading->sources)->toBe([])
+        ->and($reading->sourceFilesScanned)->toBe(0)
+        ->and($reading->skippedSources)->toBe([])
+        ->and($reading->skippedSourceIds())->toBe([])
+        ->and($reading->hasSkippedSourceWithoutId())->toBeFalse();
 });

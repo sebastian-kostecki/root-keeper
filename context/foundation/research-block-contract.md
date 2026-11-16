@@ -53,9 +53,82 @@ malzenstwa:                     # opcjonalne; w plikach obojga małżonków, zgo
 | `rodzice.ojciec`, `rodzice.matka` | nie | `id` rodzica. |
 | `urodzenie`, `zgon`, `pochowek` | nie | Wydarzenie: `data`, `miejsce`, `poziom`, `notatka`. Obecność klucza (także `{}`) oznacza, że wydarzenie zaszło. |
 | `pochowek.cmentarz` | nie | Nazwa cmentarza, gdy w miejscowości jest ich kilka. Znany tylko w `pochowek`; w innych zdarzeniach to nieznany klucz (ostrzeżenie). |
-| `malzenstwa` | nie | Lista: `z` (id współmałżonka) oraz `data`, `miejsce`, `poziom`, `notatka`. Zapis w plikach obojga małżonków, zgodny. |
+| `malzenstwa` | nie | Lista: `z` (id współmałżonka) oraz `data`, `miejsce`, `poziom`, `notatka`, `zrodla`. Zapis w plikach obojga małżonków, zgodny (poza `zrodla`, zob. niżej). |
+| `urodzenie.zrodla`, `zgon.zrodla`, `malzenstwa[].zrodla` | nie | Lista `{id: ZR-NNNN, wpis: "15/1837"}`: źródła, które potwierdzają fakt. `id` wskazuje wpis w bloku źródła, `wpis` (opcjonalny, do 50 znaków, liczba zamienia się na tekst) to numer wpisu w akcie. Powtórzone `id` w jednym zdarzeniu: ostrzeżenie, zostaje pierwsze. W `pochowek` to nieznany klucz (pochowanie nie przyjmuje źródeł). |
+
+`zrodla` ślubu wystarczy wpisać u jednego małżonka. Gdy są u obojga, muszą być takie same (kolejność bez znaczenia); dwie różne niepuste listy pomijają małżeństwo z ostrzeżeniem. Pusta lista u jednego małżonka bierze listę drugiego.
 
 Poziom pewności `poziom`: `A`–`D`, jak w prozie repo.
+
+## Blok źródła
+
+Blok źródła to frontmatter YAML na samej górze pliku w `zrodla/` (rekurencyjnie, bez plików `_*`). Jeden plik może opisywać kilka skanów. Import przenosi tylko źródła ze skanem: wpis bez pliku albo z plikiem, którego aplikacja nie przyjmie, jest pomijany z powodem w raporcie, a kolejny import doda źródło, gdy skan pojawi się w repo.
+
+### Przykład (dane wymyślone)
+
+```yaml
+---
+wersja: 1                         # wymagane, tylko 1
+skany:                            # wymagane, lista
+  - id: ZR-0012                   # wymagane, ^ZR-\d{4,}$, stałe, nigdy nie używane ponownie
+    plik: zrodla/skany/wies_1837_akt15.jpg   # ścieżka od korzenia repo; brak = wpis pominięty („brak skanu”)
+    rodzaj: akt                   # wymagane: akt | inne
+    typ: urodzenie                # tylko przy akt: urodzenie | slub | zgon | inne
+    nazwa: Akt urodzenia 15/1837  # opcjonalne
+    rok: 1837                     # opcjonalne, 1000…bieżący
+    parafia:                      # tylko przy akt
+      miejscowosc: Wieś Przykładowa   # wymagane w parafii; siedziba, mianownik
+      wyznanie: rzymskokatolickie     # opcjonalne
+      rodzaj: parafia                 # opcjonalne, domyślnie parafia
+      wezwanie: św. Jana              # opcjonalne
+    archiwum: AP Przykładowe      # opcjonalne, sama nazwa archiwum
+    sygnatura: 35/1813/0/2.4/58   # opcjonalne
+    link: https://example.org/skan/34   # opcjonalne, http(s)
+    notatka: "skan 34, prawa strona"    # opcjonalne
+---
+```
+
+Fakt w bloku osoby wskazuje źródło po `id`: `urodzenie: {zrodla: [{id: ZR-0012, wpis: "15/1837"}]}`.
+
+### Pola
+
+| Pole | Wymagane | Opis |
+|---|---|---|
+| `wersja` | tak | Liczba `1`. Inna wartość = cały plik pominięty. |
+| `skany` | tak | Lista wpisów. Nie lista = cały plik pominięty. |
+| `id` | tak | `ZR-NNNN` (min. 4 cyfry). Stałe, nie używane ponownie. Ten sam `id` w dwóch wpisach (w jednym pliku albo w różnych) pomija wszystkie te wpisy. |
+| `plik` | tak (bez niego wpis jest pomijany) | Ścieżka względna od korzenia repo do skanu: jpg, png albo webp, do 20 MB. |
+| `rodzaj` | tak | `akt` albo `inne`. `nagrobek` jest pomijany („nagrobki: osobna zmiana”). |
+| `typ` | nie | Tylko przy `rodzaj: akt`. Przy `inne` pole jest pomijane z ostrzeżeniem. |
+| `nazwa`, `rok`, `archiwum`, `sygnatura`, `link`, `notatka` | nie | `rok` 1000…bieżący, `link` to http(s). |
+| `parafia` | nie | Tylko przy `rodzaj: akt` (przy `inne` pomijana z ostrzeżeniem): `miejscowosc` (wymagane), `wyznanie`, `rodzaj`, `wezwanie`. |
+
+### Mapowanie wartości na aplikację
+
+| Pole bloku | Wartość | Aplikacja |
+|---|---|---|
+| `rodzaj` | `akt` | `SourceKind::MetricalRecord` (`metrical_record`) |
+| `rodzaj` | `inne` | `SourceKind::Other` (`other`) |
+| `typ` | `urodzenie` / `slub` / `zgon` / `inne` | `SourceRecordType` `birth` / `marriage` / `death` / `other` |
+| `parafia.wyznanie` | `rzymskokatolickie` | `Religion::RomanCatholic` (`roman_catholic`) |
+| `parafia.wyznanie` | `grekokatolickie` | `Religion::GreekCatholic` (`greek_catholic`) |
+| `parafia.wyznanie` | `ewangelickie` | `Religion::Evangelical` (`evangelical`) |
+| `parafia.wyznanie` | `prawoslawne` | `Religion::Orthodox` (`orthodox`) |
+| `parafia.wyznanie` | `mojzeszowe` | `Religion::Jewish` (`jewish`) |
+| `parafia.wyznanie` | `inne` | `Religion::Other` (`other`) |
+| `parafia.rodzaj` | `parafia` / `usc` / `okreg_bozniczy` / `inny` | `ParishKind` `parish` / `civil_registry` / `jewish_district` / `other` |
+
+Wartość spoza listy (np. „greckokatolickie”) pomija wpis z powodem.
+
+### Pominięcie a ostrzeżenie (źródła)
+
+**Pominięcie wpisu** (reszta pliku idzie dalej): brak `plik` („brak skanu — źródło wejdzie, gdy skan pojawi się w repo”), plik nie istnieje, plik poza repo (ścieżka bezwzględna, `..`, dowiązanie poza repo), PDF („zapisz skan jako JPG”), inny format niż jpg, png, webp (rozszerzenie i zawartość), plik większy niż 20 MB, `rodzaj: nagrobek`, zły `id`, zła wartość `rodzaj`, `typ`, `wyznanie`, `parafia.rodzaj`, zły `rok` albo `link`, duplikat `id`.
+
+**Pominięcie pliku**: błąd składni YAML, brak albo zła `wersja`, `skany` niebędące listą.
+
+**Ostrzeżenie**: nieznany klucz, `typ` lub `parafia` przy `rodzaj: inne` (pole pominięte), `archiwum` wygląda na sygnaturę (cyfra po przecinku), ten sam plik skanu pod dwoma `id`, odwołanie `zrodla` do `id` bez poprawnego wpisu („źródło ZR-… nie istnieje albo zostało pominięte”), powtórzone `id` w `zrodla` jednego zdarzenia, rozbieżne `zrodla` ślubu u obojga małżonków (małżeństwo pominięte).
+
+Plik w `zrodla/` bez frontmattera to „bez bloku”, nie błąd. Aplikacja tylko czyta skan i kopiuje go do własnego magazynu; nigdy nie przenosi ani nie usuwa pliku w repo.
 
 ## Miejsca
 
@@ -83,11 +156,11 @@ Data z miesiącem i dniem stoi w cudzysłowie (`data: "1801-05-12"`). Bez cudzys
 
 **Ostrzeżenie** (osoba przeczytana): nieznany klucz, odwołanie do `id` bez poprawnego bloku, rodzic o niezgodnej płci, ten sam numer `ahnentafel` u dwóch osób, małżeństwo zapisane tylko po jednej stronie, rozbieżne dane małżeństwa po obu stronach (małżeństwo pominięte), ta sama para dwa razy w jednym pliku, blok niezaczynający się w pierwszej linii pliku, `miejsce` z nawiasem, przecinkiem albo `par.` / `parafi` („miejsce wygląda na opis, nie nazwę miejscowości”; wartość zostaje), `pochowek` bez `zgon` („pochowanie bez zgonu: dodano zgon bez daty”).
 
-Pliki `_*.md` (indeksy) i podkatalogi `drzewo/` są ignorowane. Plik bez frontmattera to „brak bloku”, nie błąd.
+Pliki `_*.md` (indeksy) i podkatalogi `drzewo/` są ignorowane (w `zrodla/` podkatalogi są czytane). Plik bez frontmattera to „brak bloku”, nie błąd.
 
 ## Wersjonowanie
 
-Nowe opcjonalne klucze dochodzą w v1 razem z aktualizacją aplikacji. Zmiana znaczenia lub nazwy pola to `wersja: 2`. Komenda zna tylko wersje, które obsługuje.
+Nowe opcjonalne klucze dochodzą w v1 razem z aktualizacją aplikacji. Tak weszły blok źródła i klucz `zrodla` (2026-11-16): to nowe opcjonalne klucze, bez zmiany znaczenia istniejących. Zmiana znaczenia lub nazwy pola to `wersja: 2`. Komenda zna tylko wersje, które obsługuje.
 
 ## Reguła do wklejenia w `CLAUDE.md` repo badawczego
 
@@ -102,6 +175,7 @@ Nowe opcjonalne klucze dochodzą w v1 razem z aktualizacją aplikacji. Zmiana zn
 - Nie zmieniaj `id` przy zmianie nazwy pliku.
 - Pełną datę (`RRRR-MM-DD`) zawsze ujmuj w cudzysłów. Daty w kalendarzu gregoriańskim; styl juliański w `notatka`.
 - Małżeństwo zapisuj w plikach obojga małżonków, z tymi samymi danymi.
+- Źródła: plik w `zrodla/` zaczyna się blokiem `skany:` (zob. „Blok źródła” w kontrakcie). Jeden skan to jeden wpis z własnym `ZR-NNNN`. Rozkładówka z kilkoma aktami to jeden wpis, a numery aktów stoją przy faktach w `zrodla: [{id, wpis}]`; ten sam plik pod dwoma `id` daje ostrzeżenie. ID `ZR-` nigdy nie jest używane ponownie, także po usunięciu źródła. Skan leży w `zrodla/skany/` jako jpg, png albo webp do 20 MB; PDF zapisz jako JPG. `zrodla` ślubu wystarczy wpisać u jednego małżonka; jeśli są u obojga, muszą być takie same. Pochowanie nie ma `zrodla`.
 - Sprawdź: `vendor/bin/sail artisan import:research <e-mail> <ścieżka-repo>` (pokazuje raport i podsumowanie, a zapisuje dopiero po odpowiedzi „tak”; do samego sprawdzenia bloku odpowiedz „nie”).
 - Sprawdź nowe miejsca w podglądzie: import pyta raz o każdą nową miejscowość („Nowe miejscowości”), o każdą niepewną pisownię („Niepewne”, np. Bokinia przy Bukini w spisie) i o cmentarz, gdy w miejscowości jest ich kilka. Literówka w bloku wychodzi tu jako nowa miejscowość albo niepewne dopasowanie: popraw blok i uruchom ponownie zamiast dodawać miejscowość do spisu.
 ```

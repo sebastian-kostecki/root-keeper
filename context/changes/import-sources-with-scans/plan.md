@@ -745,10 +745,10 @@ Odczyt liczy sha256 każdego skanu w blokach. Przy ok. 150 plikach i do 8 MB to 
 
 #### Automated
 
-- [ ] 1.1 Migracja przechodzi i da się ją cofnąć
-- [ ] 1.2 Testy źródeł przechodzą
-- [ ] 1.3 Analiza statyczna i formatowanie
-- [ ] 1.4 Frontend: check, types:check, test:js
+- [x] 1.1 Migracja przechodzi i da się ją cofnąć — e4f0633
+- [x] 1.2 Testy źródeł przechodzą — e4f0633
+- [x] 1.3 Analiza statyczna i formatowanie — e4f0633
+- [x] 1.4 Frontend: check, types:check, test:js — e4f0633
 
 #### Manual
 

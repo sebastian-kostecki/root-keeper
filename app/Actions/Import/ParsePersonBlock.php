@@ -4,12 +4,14 @@ namespace App\Actions\Import;
 
 use App\Enums\ConfidenceLevel;
 use App\Enums\Gender;
+use App\Support\Import\Frontmatter;
 use App\Support\Import\ImportIssue;
 use App\Support\Import\ParsedPersonBlock;
 use App\Support\Import\ResearchDate;
 use App\Support\Import\ResearchEvent;
 use App\Support\Import\ResearchMarriage;
 use App\Support\Import\ResearchPerson;
+use App\Support\Import\ResearchSourceLink;
 use Closure;
 use DateTimeInterface;
 use Illuminate\Support\Facades\Validator;
@@ -22,9 +24,11 @@ class ParsePersonBlock
 
     private const ID_PATTERN = '/^O-\d{4,}$/';
 
-    private const EVENT_KEYS = ['data', 'miejsce', 'poziom', 'notatka'];
+    private const EVENT_KEYS = ['data', 'miejsce', 'poziom', 'notatka', 'zrodla'];
 
     private const BURIAL_KEYS = ['data', 'miejsce', 'cmentarz', 'poziom', 'notatka'];
+
+    private const SOURCE_ID_PATTERN = '/^ZR-\d{4,}$/';
 
     private const PLACE_DESCRIPTION_PATTERN = '/[(),]|(?<!\p{L})par\.|parafi/iu';
 
@@ -37,13 +41,13 @@ class ParsePersonBlock
 
     public function handle(string $file, string $contents): ParsedPersonBlock
     {
-        $contents = str_replace("\r\n", "\n", preg_replace('/^\xEF\xBB\xBF/', '', $contents) ?? $contents);
+        $contents = Frontmatter::normalize($contents);
 
-        if (preg_match('/\A---[ \t]*\n/', $contents) !== 1) {
+        if (! Frontmatter::starts($contents)) {
             return ParsedPersonBlock::withoutBlock($file, $this->misplacedBlockWarnings($file, $contents));
         }
 
-        $yaml = $this->extractFrontmatter($contents);
+        $yaml = Frontmatter::extract($contents);
 
         if ($yaml === null) {
             return ParsedPersonBlock::skipped($file, 'Niezamknięty frontmatter: brak zamykającej linii "---"');
@@ -84,23 +88,13 @@ class ParsePersonBlock
         );
 
         array_push($warnings, ...$this->placeWarnings($file, $block));
+        array_push($warnings, ...$this->duplicateSourceWarnings($file, $block));
 
         if (array_key_exists('pochowek', $block) && ! array_key_exists('zgon', $block)) {
             $warnings[] = new ImportIssue($file, 'pochowanie bez zgonu: dodano zgon bez daty');
         }
 
         return ParsedPersonBlock::person($this->buildPerson($file, $block), $warnings);
-    }
-
-    private function extractFrontmatter(string $contents): ?string
-    {
-        $body = preg_replace('/\A---[ \t]*\n/', '', $contents);
-
-        if (preg_match('/^---[ \t]*$/m', (string) $body, $closing, PREG_OFFSET_CAPTURE) !== 1) {
-            return null;
-        }
-
-        return substr((string) $body, 0, $closing[0][1]);
     }
 
     /**
@@ -169,6 +163,14 @@ class ParsePersonBlock
             $event['data'] = (string) $event['data'];
         }
 
+        if (is_array($event['zrodla'] ?? null)) {
+            foreach ($event['zrodla'] as $index => $link) {
+                if (is_array($link) && (is_int($link['wpis'] ?? null) || is_float($link['wpis'] ?? null))) {
+                    $event['zrodla'][$index]['wpis'] = (string) $link['wpis'];
+                }
+            }
+        }
+
         return $event;
     }
 
@@ -209,6 +211,13 @@ class ParsePersonBlock
 
             $rules["{$path}.poziom"] = ['nullable', 'in:A,B,C,D'];
             $rules["{$path}.notatka"] = ['nullable', 'string'];
+
+            if ($path !== 'pochowek') {
+                $rules["{$path}.zrodla"] = ['nullable', 'array', $this->mustBeList()];
+                $rules["{$path}.zrodla.*"] = ['array'];
+                $rules["{$path}.zrodla.*.id"] = ['required', 'string', 'regex:'.self::SOURCE_ID_PATTERN];
+                $rules["{$path}.zrodla.*.wpis"] = ['nullable', 'string', 'max:50'];
+            }
         }
 
         return $rules;
@@ -228,6 +237,8 @@ class ParsePersonBlock
             'min' => 'Pole :attribute musi być liczbą dodatnią',
             'in' => 'Pole :attribute ma niedozwoloną wartość',
             'regex' => 'Pole :attribute ma niewłaściwy format',
+            'max' => 'Pole :attribute jest za długie (najwyżej :max znaków)',
+            '*.zrodla.*.id.regex' => 'Pole :attribute musi mieć postać ZR-NNNN',
             'wersja.in' => 'Obsługiwana jest tylko wersja bloku 1',
             'id.regex' => 'Pole id musi mieć postać O-NNNN (np. O-0042)',
             'rodzice.ojciec.regex' => 'Pole rodzice.ojciec musi mieć postać O-NNNN',
@@ -335,6 +346,66 @@ class ParsePersonBlock
     }
 
     /**
+     * A source listed twice in one event stays once, the first entry; the warning tells the author.
+     *
+     * @param  array<mixed>  $block
+     * @return list<ImportIssue>
+     */
+    private function duplicateSourceWarnings(string $file, array $block): array
+    {
+        $events = [];
+
+        foreach (['urodzenie', 'zgon'] as $field) {
+            if (is_array($block[$field] ?? null)) {
+                $events[$field] = $block[$field];
+            }
+        }
+
+        foreach ($block['malzenstwa'] ?? [] as $index => $marriage) {
+            $events["malzenstwa.{$index}"] = $marriage;
+        }
+
+        $warnings = [];
+
+        foreach ($events as $path => $event) {
+            $seen = [];
+
+            foreach ($event['zrodla'] ?? [] as $link) {
+                $id = (string) $link['id'];
+
+                if (isset($seen[$id])) {
+                    $warnings[] = new ImportIssue($file, "Pole {$path}.zrodla: źródło {$id} wpisane więcej niż raz; zostaje pierwsze");
+                }
+
+                $seen[$id] = true;
+            }
+        }
+
+        return $warnings;
+    }
+
+    /**
+     * @param  mixed  $links  the `zrodla` list of an event
+     * @return list<ResearchSourceLink>
+     */
+    private function buildSourceLinks(mixed $links): array
+    {
+        $built = [];
+
+        foreach (is_array($links) ? $links : [] as $link) {
+            $id = (string) $link['id'];
+
+            if (! isset($built[$id])) {
+                $built[$id] = new ResearchSourceLink($id, $this->text($link['wpis'] ?? null));
+            }
+        }
+
+        ksort($built);
+
+        return array_values($built);
+    }
+
+    /**
      * @param  array<mixed>  $block
      */
     private function buildPerson(string $file, array $block): ResearchPerson
@@ -400,6 +471,7 @@ class ParsePersonBlock
             level: $level === null ? null : ConfidenceLevel::from($level),
             note: $this->text($event['notatka'] ?? null),
             cemetery: $withCemetery ? $this->text($event['cmentarz'] ?? null) : null,
+            sources: $withCemetery ? [] : $this->buildSourceLinks($event['zrodla'] ?? null),
         );
     }
 

@@ -55,6 +55,36 @@ final class RepoValues
     }
 
     /**
+     * The memory of a source: its description, the scan path and the hash of the scan. The parish is one canonical
+     * text, `locality|religion|kind|dedication` (an empty part stays empty); `parafia_id` comes from the planner.
+     *
+     * @return array<string, string|null>
+     */
+    public static function source(ResearchSource $source): array
+    {
+        $parish = $source->parish;
+
+        return [
+            'rodzaj' => $source->kind->value,
+            'typ' => $source->recordType?->value,
+            'nazwa' => PlanImport::cleanText($source->name),
+            'rok' => $source->year === null ? null : (string) $source->year,
+            'parafia' => $parish === null ? null : implode('|', [
+                PlanImport::cleanText($parish->locality),
+                $parish->religion?->value,
+                $parish->kind->value,
+                PlanImport::cleanText($parish->dedication),
+            ]),
+            'archiwum' => PlanImport::cleanText($source->archive),
+            'sygnatura' => PlanImport::cleanText($source->signature),
+            'link' => PlanImport::cleanText($source->url),
+            'notatka' => PlanImport::cleanText($source->note),
+            'plik' => $source->scanPath,
+            'plik_hash' => $source->scanHash,
+        ];
+    }
+
+    /**
      * The values the repo holds for a key, `null` when the reading has no such key.
      *
      * @return array<string, string|null>|null
@@ -90,6 +120,10 @@ final class RepoValues
                 }
 
                 return null;
+            case RepoKeyKind::Source:
+                $source = $reading->sources[$key] ?? null;
+
+                return $source === null ? null : self::source($source);
         }
     }
 

@@ -10,4 +10,5 @@ enum RepoKeyKind: string
     case Burial = 'burial';
     case Relation = 'relation';
     case Marriage = 'marriage';
+    case Source = 'source';
 }

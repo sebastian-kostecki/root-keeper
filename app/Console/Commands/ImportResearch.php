@@ -638,6 +638,7 @@ class ImportResearch extends Command
             RepoKeyKind::Burial => 'Pochowanie: '.$name($entry->personIds[0]),
             RepoKeyKind::Relation => sprintf('Relacja: %s → %s', $name($entry->personIds[0]), $name($entry->personIds[1])),
             RepoKeyKind::Marriage => sprintf('Małżeństwo: %s i %s', $name($entry->personIds[0]), $name($entry->personIds[1])),
+            RepoKeyKind::Source => 'Źródło: '.$entry->key,
         };
     }
 
@@ -1065,6 +1066,8 @@ class ImportResearch extends Command
         $this->issueTable('Pominięte wpisy', ['Plik', 'Powód'], $reading->skipped);
         $this->issueTable('Ostrzeżenia', ['Plik', 'Opis'], $reading->warnings);
 
+        $this->sourceReport($reading);
+
         if ($this->output->isVerbose() && $reading->filesWithoutBlock !== []) {
             $this->newLine();
             $this->line('Pliki bez bloku:');
@@ -1074,6 +1077,39 @@ class ImportResearch extends Command
             }
         }
 
+        if ($this->output->isVerbose() && $reading->sourceFilesWithoutBlock !== []) {
+            $this->newLine();
+            $this->line('Pliki źródeł bez bloku:');
+
+            foreach ($reading->sourceFilesWithoutBlock as $file) {
+                $this->line("  {$file}");
+            }
+        }
+    }
+
+    /**
+     * The lines about zrodla/ and the table of the scans that were left out. A repo without zrodla/ prints nothing.
+     */
+    private function sourceReport(ResearchRepoReading $reading): void
+    {
+        if ($reading->sourceFilesScanned === 0 && $reading->skippedSources === []) {
+            return;
+        }
+
+        $withoutBlock = count($reading->sourceFilesWithoutBlock);
+
+        $this->newLine();
+        $this->line(sprintf('Pliki źródeł przejrzane: %d (z blokiem: %d, bez bloku: %d)', $reading->sourceFilesScanned, $reading->sourceFilesScanned - $withoutBlock, $withoutBlock));
+        $this->line(sprintf('Skany w blokach: %d, pominięte: %d', $reading->sourceScanEntries, $reading->sourceScanEntries - count($reading->sources)));
+
+        if ($reading->skippedSources !== []) {
+            $this->newLine();
+            $this->line('Pominięte skany:');
+            $this->table(
+                ['Plik', 'ID', 'Powód'],
+                array_map(fn (ImportIssue $issue): array => [$issue->file, $issue->repoId ?? '—', $issue->message], $reading->skippedSources),
+            );
+        }
     }
 
     /**
