@@ -380,11 +380,11 @@ Panel osoby pokazuje warianty, a wiersz listy i tabeli wyjaśnia trafienie po wa
 
 #### Automated
 
-- [ ] 3.1 Testy JS przechodzą (w tym `view-tokens.test.ts`): `vendor/bin/sail npm run test:js`
-- [ ] 3.2 Format, lint i typy przechodzą: `vendor/bin/sail npm run check` i `vendor/bin/sail npm run types:check`
-- [ ] 3.3 Build przechodzi: `vendor/bin/sail npm run build`
-- [ ] 3.4 Pest przechodzi: `vendor/bin/sail artisan test --compact`
-- [ ] 3.5 Pint i Larastan bez nowych błędów: `vendor/bin/sail bin pint --dirty --format agent` i `vendor/bin/sail composer types:check`
+- [x] 3.1 Testy JS przechodzą (w tym `view-tokens.test.ts`): `vendor/bin/sail npm run test:js` — 32f97d0
+- [x] 3.2 Format, lint i typy przechodzą: `vendor/bin/sail npm run check` i `vendor/bin/sail npm run types:check` — 32f97d0
+- [x] 3.3 Build przechodzi: `vendor/bin/sail npm run build` — 32f97d0
+- [x] 3.4 Pest przechodzi: `vendor/bin/sail artisan test --compact` — 32f97d0
+- [x] 3.5 Pint i Larastan bez nowych błędów: `vendor/bin/sail bin pint --dirty --format agent` i `vendor/bin/sail composer types:check` — 32f97d0
 
 #### Manual
 
