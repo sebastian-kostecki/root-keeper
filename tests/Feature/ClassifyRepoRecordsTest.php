@@ -14,6 +14,8 @@ use App\Models\Tree;
 use App\Models\User;
 use App\Support\Import\RepoRecord;
 use App\Support\Import\RepoRecordClasses;
+use App\Support\Import\RepoValues;
+use App\Support\Import\ResearchRepoReading;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
 
@@ -543,4 +545,166 @@ test('does not ask again about a deleted birth when only the remembered place id
 
     expect($classes->deletedInApp)->toBe([])
         ->and($classes->keptDeleted)->toBe(['O-0001/urodzenie']);
+});
+
+/**
+ * Reads a throwaway repo of persons and source entries with real scans.
+ *
+ * @param  list<string>  $sourceIds  ids of the entries that get a scan
+ * @param  list<string>  $entriesWithoutScan  ids of entries without a scan, which the reading skips with a readable id
+ * @param  array<string, string>  $blocks  repo id of a person => block body without id and version
+ * @param  array<string, string>  $files  further files, path from the repo root => contents
+ */
+function readSourcesRepo(array $sourceIds, array $entriesWithoutScan = [], array $blocks = [], array $files = []): ResearchRepoReading
+{
+    $repo = sys_get_temp_dir().'/classify-sources-repo-'.uniqid();
+    mkdir($repo.'/drzewo', 0777, true);
+    mkdir($repo.'/zrodla/skany', 0777, true);
+
+    foreach ($blocks as $id => $body) {
+        file_put_contents("{$repo}/drzewo/".strtolower($id).'.md', "---\nwersja: 1\nid: {$id}\n{$body}\n---\n");
+    }
+
+    $entries = '';
+
+    foreach ($sourceIds as $index => $id) {
+        $image = imagecreatetruecolor(8, 8);
+        imagefill($image, 0, 0, imagecolorallocate($image, 20 + $index, 20, 20));
+        imagejpeg($image, "{$repo}/zrodla/skany/{$id}.jpg");
+        $entries .= "  - id: {$id}\n    plik: zrodla/skany/{$id}.jpg\n    rodzaj: akt\n";
+    }
+
+    foreach ($entriesWithoutScan as $id) {
+        $entries .= "  - id: {$id}\n    rodzaj: akt\n";
+    }
+
+    if ($entries !== '') {
+        file_put_contents("{$repo}/zrodla/akty.md", "---\nwersja: 1\nskany:\n{$entries}---\n");
+    }
+
+    foreach ($files as $name => $contents) {
+        file_put_contents("{$repo}/{$name}", $contents);
+    }
+
+    try {
+        return app(ReadResearchRepo::class)->handle($repo);
+    } finally {
+        File::deleteDirectory($repo);
+    }
+}
+
+/**
+ * Classifies a throwaway repo of persons and source entries against the tree and checks that nothing of another tree is
+ * in the result. The arguments are the ones of {@see readSourcesRepo()}.
+ *
+ * @param  list<string>  $sourceIds
+ * @param  list<string>  $entriesWithoutScan
+ * @param  array<string, string>  $blocks
+ * @param  array<string, string>  $files
+ */
+function classifySourcesRepo(Tree $tree, array $sourceIds, array $entriesWithoutScan = [], array $blocks = [], array $files = []): RepoRecordClasses
+{
+    $classes = app(ClassifyRepoRecords::class)->handle($tree, readSourcesRepo($sourceIds, $entriesWithoutScan, $blocks, $files));
+
+    foreach ($classes->knownSources as $source) {
+        expect($source->tree_id)->toBe($tree->id);
+    }
+
+    foreach ([...$classes->deletedInApp, ...$classes->removedInRepo, ...$classes->unassessable] as $entry) {
+        expect($entry->record?->tree_id ?? $tree->id)->toBe($tree->id)
+            ->and($entry->snapshot?->tree_id ?? $tree->id)->toBe($tree->id);
+    }
+
+    return $classes;
+}
+
+function recordedSource(Tree $tree, string $repoId): Source
+{
+    return Source::factory()->create(['tree_id' => $tree->id, 'repo_id' => $repoId]);
+}
+
+test('sorts a source with a record as known, one without a record or memory as new and one in the repo with a memory as deleted in the app', function () {
+    [$tree, $known] = arrangeTwinTrees(function (Tree $tree) {
+        rememberRepoValues($tree, 'ZR-0003', ['plik_hash' => 'x']);
+
+        return recordedSource($tree, 'ZR-0001');
+    });
+
+    $classes = classifySourcesRepo($tree, ['ZR-0001', 'ZR-0002', 'ZR-0003']);
+
+    expect(array_keys($classes->knownSources))->toBe(['ZR-0001'])
+        ->and($classes->knownSources['ZR-0001']->id)->toBe($known->id)
+        ->and($classes->newSourceIds)->toBe(['ZR-0002'])
+        ->and(repoKeysOf($classes->deletedInApp))->toBe(['ZR-0003'])
+        ->and($classes->deletedInApp[0]->kind)->toBe(RepoKeyKind::Source)
+        ->and($classes->newPersonIds)->toBe([]);
+});
+
+test('keeps a source left deleted quiet while the repo is unchanged and asks again when its scan or description changed', function () {
+    $reading = readSourcesRepo(['ZR-0001', 'ZR-0002', 'ZR-0003']);
+    [$tree] = arrangeTwinTrees(function (Tree $tree) use ($reading) {
+        rememberRepoValues($tree, 'ZR-0001', RepoValues::source($reading->sources['ZR-0001']), deletionKept: true);
+        rememberRepoValues($tree, 'ZR-0002', [...RepoValues::source($reading->sources['ZR-0002']), 'plik_hash' => 'old'], deletionKept: true);
+        rememberRepoValues($tree, 'ZR-0003', RepoValues::source($reading->sources['ZR-0003']));
+    });
+
+    $classes = app(ClassifyRepoRecords::class)->handle($tree, $reading);
+
+    expect($classes->keptDeleted)->toBe(['ZR-0001'])
+        ->and(repoKeysOf($classes->deletedInApp))->toBe(['ZR-0002', 'ZR-0003']);
+});
+
+test('lists a source the repo dropped with its links and its scan, and forgets one that neither has', function () {
+    [$tree, $source] = arrangeTwinTrees(function (Tree $tree) {
+        $person = recordedPerson($tree, 'O-0001');
+        $birth = recordedEvent($person, EventType::Birth, 'O-0001/urodzenie');
+        $source = recordedSource($tree, 'ZR-0001');
+        $birth->sources()->attach($source, ['entry_number' => '1']);
+        $birth->sources()->attach(recordedSource($tree, 'ZR-0004'));
+        rememberRepoValues($tree, 'ZR-0009', ['plik_hash' => 'x']);
+
+        return $source;
+    });
+
+    $classes = classifySourcesRepo($tree, [], blocks: ['O-0001' => 'imiona: Jan']);
+    $removed = collect($classes->removedInRepo)->keyBy('key');
+
+    expect($removed->keys()->all())->toBe(['O-0001/urodzenie', 'ZR-0001', 'ZR-0004'])
+        ->and($removed['ZR-0001']->record->id)->toBe($source->id)
+        ->and($removed['ZR-0001']->impact->sourceLinks)->toBe(1)
+        ->and($removed['ZR-0001']->impact->scan)->toBeTrue()
+        ->and($removed['ZR-0001']->impact->isEmpty())->toBeFalse()
+        ->and($removed['ZR-0001']->members)->toBe([])
+        ->and($classes->goneBoth)->toBe(['ZR-0009']);
+});
+
+test('does not read a skipped source as removed in the repo and holds back only source removals when an entry has no readable id', function () {
+    [$tree] = arrangeTwinTrees(function (Tree $tree) {
+        recordedSource($tree, 'ZR-0001');
+        recordedSource($tree, 'ZR-0002');
+        recordedPerson($tree, 'O-0009');
+        rememberRepoValues($tree, 'ZR-0005', ['plik_hash' => 'x']);
+    });
+
+    $skippedWithId = classifySourcesRepo($tree, [], ['ZR-0001']);
+    $heldBack = classifySourcesRepo($tree, [], [], files: ['zrodla/zepsute.md' => "---\nwersja: 1\nskany: [\n---\n"]);
+
+    expect(repoKeysOf($skippedWithId->removedInRepo))->toBe(['O-0009', 'ZR-0002'])
+        ->and($skippedWithId->knownSources)->toBe([])
+        ->and($skippedWithId->goneBoth)->toBe(['ZR-0005'])
+        ->and(repoKeysOf($heldBack->removedInRepo))->toBe(['O-0009'])
+        ->and(repoKeysOf($heldBack->unassessable))->toBe(['ZR-0001', 'ZR-0002'])
+        ->and($heldBack->goneBoth)->toBe([]);
+});
+
+test('does not hold back sources when a person entry was skipped without a readable id', function () {
+    [$tree] = arrangeTwinTrees(function (Tree $tree) {
+        recordedSource($tree, 'ZR-0002');
+        recordedPerson($tree, 'O-0009');
+    });
+
+    $classes = classifySourcesRepo($tree, [], files: ['drzewo/zepsuta.md' => "---\nwersja: 1\nimiona: [\n---\n"]);
+
+    expect(repoKeysOf($classes->removedInRepo))->toBe(['ZR-0002'])
+        ->and(repoKeysOf($classes->unassessable))->toBe(['O-0009']);
 });

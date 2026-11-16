@@ -769,8 +769,8 @@ Odczyt liczy sha256 każdego skanu w blokach. Przy ok. 150 plikach i do 8 MB to 
 
 #### Automated
 
-- [ ] 3.1 Testy dopasowań przechodzą
-- [ ] 3.2 Analiza statyczna i formatowanie
+- [x] 3.1 Testy dopasowań przechodzą — 70fbc4d
+- [x] 3.2 Analiza statyczna i formatowanie — 70fbc4d
 
 ### Phase 4: Plan importu źródeł
 

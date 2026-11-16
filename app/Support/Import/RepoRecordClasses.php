@@ -3,11 +3,12 @@
 namespace App\Support\Import;
 
 use App\Models\Person;
+use App\Models\Source;
 
 /**
  * Every key of the repo, the tree and the memory of the last import sorted into the one group it belongs to.
  *
- * A key of a person that is removed in the repo, deleted in the app or kept deleted is not listed apart: it is a member
+ * A source key is never a member of a person: it is decided on its own. A key of a person that is removed in the repo, deleted in the app or kept deleted is not listed apart: it is a member
  * of the person's entry. A key that names a person whose repo entry was skipped is in no group.
  */
 final readonly class RepoRecordClasses
@@ -19,7 +20,9 @@ final readonly class RepoRecordClasses
      * @param  list<string>  $keptDeleted  keys the author already chose to leave deleted, with the repo unchanged since
      * @param  list<RepoRecord>  $removedInRepo  records of the tree whose key the repo no longer has
      * @param  list<string>  $goneBoth  keys with a memory that neither the repo nor the tree has any more
-     * @param  list<RepoRecord>  $unassessable  records that could be removed in the repo, held back because an entry was skipped without a readable id
+     * @param  list<RepoRecord>  $unassessable  records that could be removed in the repo, held back because an entry was skipped without a readable id (a source: an entry or a file of zrodla/)
+     * @param  array<string, Source>  $knownSources  repo id => the tree source that holds it
+     * @param  list<string>  $newSourceIds  sources the repo has and the tree never held
      */
     public function __construct(
         public array $knownPersons = [],
@@ -29,5 +32,7 @@ final readonly class RepoRecordClasses
         public array $removedInRepo = [],
         public array $goneBoth = [],
         public array $unassessable = [],
+        public array $knownSources = [],
+        public array $newSourceIds = [],
     ) {}
 }

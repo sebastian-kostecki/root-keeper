@@ -14,6 +14,10 @@ final readonly class PlannedMarriage
      * @param  PlannedFill|null  $placeFill  the place the repo adds to the existing wedding
      * @param  ValueConflict|null  $placeConflict  the place that differs in the existing wedding
      * @param  PlannedChange|null  $placeChange  the place the repo changed since the last import in a wedding nobody touched
+     * @param  list<ResearchSourceLink>  $sources  the links the new wedding gets to sources of the repo
+     * @param  PlannedFill|null  $sourceFill  the links the repo adds to the existing wedding
+     * @param  ValueConflict|null  $sourceConflict  the links that differ in the existing wedding
+     * @param  PlannedChange|null  $sourceChange  the links the repo changed since the last import in a wedding nobody touched
      */
     public function __construct(
         public ResearchMarriage $marriage,
@@ -27,5 +31,9 @@ final readonly class PlannedMarriage
         public ?PlannedFill $placeFill = null,
         public ?ValueConflict $placeConflict = null,
         public ?PlannedChange $placeChange = null,
+        public array $sources = [],
+        public ?PlannedFill $sourceFill = null,
+        public ?ValueConflict $sourceConflict = null,
+        public ?PlannedChange $sourceChange = null,
     ) {}
 }

@@ -34,6 +34,10 @@ final readonly class ImportPlan
      * @param  array<string, PlannedAlias>  $aliases  key of the spelling => the variant to remember, always saved
      * @param  array<string, PlannedCemetery>  $newCemeteries  {@see PlaceResolver::newCemeteryKey()} => each cemetery the plan adds, only the ones a plan item uses
      * @param  array<string, PlannedNote>  $notes  repo id => the note block of a person whose place text waits for a place change or conflict; the write renders it with the answers
+     * @param  list<PlannedSource>  $newSources  sources of the repo added with a copy of their scan
+     * @param  list<PlannedSourceMerge>  $mergedSources  manual sources that become the source of the repo
+     * @param  list<PlannedSourceUpdate>  $sourceUpdates  known sources with something to write
+     * @param  array<string, PlannedParish>  $newParishes  {@see PlaceResolver::newParishKey()} => each parish the plan adds, only the ones a plan item uses
      */
     public function __construct(
         public array $persons,
@@ -67,10 +71,14 @@ final readonly class ImportPlan
         public array $aliases = [],
         public array $newCemeteries = [],
         public array $notes = [],
+        public array $newSources = [],
+        public array $mergedSources = [],
+        public array $sourceUpdates = [],
+        public array $newParishes = [],
     ) {}
 
     /**
-     * Values the repo adds to empty fields of matched and known persons and of existing weddings.
+     * Values the repo adds to empty fields of matched and known persons, of existing weddings and of known and joined sources.
      */
     public function fillCount(): int
     {
@@ -85,7 +93,15 @@ final readonly class ImportPlan
         }
 
         foreach ($this->marriages as $marriage) {
-            $fills += ($marriage->dateFill === null ? 0 : 1) + ($marriage->placeFill === null ? 0 : 1);
+            $fills += ($marriage->dateFill === null ? 0 : 1) + ($marriage->placeFill === null ? 0 : 1) + ($marriage->sourceFill === null ? 0 : 1);
+        }
+
+        foreach ($this->sourceUpdates as $update) {
+            $fills += count($update->fills);
+        }
+
+        foreach ($this->mergedSources as $merge) {
+            $fills += count($merge->fills);
         }
 
         return $fills;

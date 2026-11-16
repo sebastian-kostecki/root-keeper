@@ -7,22 +7,36 @@ use App\Actions\Import\PlanImport;
 use App\Actions\Import\ReadResearchRepo;
 use App\Enums\EventType;
 use App\Enums\Gender;
+use App\Enums\ParishKind;
+use App\Enums\ParishMatchKind;
 use App\Enums\ParticipantRole;
 use App\Enums\PlaceMatchKind;
+use App\Enums\Religion;
 use App\Enums\RepoKeyKind;
+use App\Enums\SourceRecordType;
 use App\Models\Cemetery;
 use App\Models\Event;
 use App\Models\Locality;
+use App\Models\Parish;
 use App\Models\Person;
+use App\Models\Source;
 use App\Models\Tree;
 use App\Models\User;
+use App\Support\Import\CemeteryMatches;
 use App\Support\Import\ChangeApprovals;
 use App\Support\Import\ConflictResolutions;
 use App\Support\Import\IdentityDecisions;
 use App\Support\Import\ImportDecisions;
 use App\Support\Import\ImportIssue;
 use App\Support\Import\ImportPlan;
+use App\Support\Import\ParishMatches;
+use App\Support\Import\ParishRequest;
+use App\Support\Import\ParishVerdict;
 use App\Support\Import\PlaceDecisions;
+use App\Support\Import\PlaceMatcher;
+use App\Support\Import\PlaceMatches;
+use App\Support\Import\PlaceName;
+use App\Support\Import\PlaceResolver;
 use App\Support\Import\PlannedAlias;
 use App\Support\Import\PlannedChange;
 use App\Support\Import\PlannedFill;
@@ -30,7 +44,11 @@ use App\Support\Import\PlannedMatch;
 use App\Support\Import\PlannedPerson;
 use App\Support\Import\PlannedPlace;
 use App\Support\Import\PlannedRelation;
+use App\Support\Import\RepoValues;
+use App\Support\Import\ResearchParish;
 use App\Support\Import\ResearchRepoReading;
+use App\Support\Import\SourceDecisions;
+use App\Support\Import\SourceLinks;
 use App\Support\Import\ValueConflict;
 use Illuminate\Support\Facades\File;
 
@@ -1853,4 +1871,506 @@ test('keeps the memory of the surname variants when the gender is left out by th
     expect($plan->skippedValues)->toHaveCount(1)
         ->and($plan->snapshots['O-0001']['plec'])->toBeNull()
         ->and($plan->snapshots['O-0001']['warianty'])->toBe("Mysiuk\nMyszuk");
+});
+
+/**
+ * Reads a throwaway repo of persons and sources with real image files.
+ *
+ * @param  array<string, string>  $blocks  repo id of a person => block body without id and version
+ * @param  array<string, array{extra?: string, shade?: int, path?: string}>  $sources  repo id of a source => extra lines of its entry (indented by four spaces, ending with a new line), the shade of its scan and its path; an empty path writes an entry without a scan
+ * @param  array<string, string>  $files  further files, path from the repo root => contents
+ */
+function srcReading(array $blocks, array $sources, array $files = []): ResearchRepoReading
+{
+    $repo = sys_get_temp_dir().'/src-plan-repo-'.uniqid();
+    mkdir($repo.'/drzewo', 0777, true);
+    mkdir($repo.'/zrodla/skany', 0777, true);
+
+    foreach ($blocks as $id => $body) {
+        file_put_contents("{$repo}/drzewo/".strtolower($id).'.md', "---\nwersja: 1\nid: {$id}\n{$body}\n---\n");
+    }
+
+    $entries = '';
+
+    foreach (array_keys($sources) as $index => $id) {
+        $spec = $sources[$id];
+        $path = $spec['path'] ?? "zrodla/skany/{$id}.jpg";
+        $image = imagecreatetruecolor(8, 8);
+        imagefill($image, 0, 0, imagecolorallocate($image, $spec['shade'] ?? 20 + $index, 20, 20));
+
+        if ($path !== '') {
+            imagejpeg($image, "{$repo}/{$path}");
+        }
+
+        $entries .= "  - id: {$id}\n".($path === '' ? '' : "    plik: {$path}\n")."    rodzaj: akt\n".($spec['extra'] ?? '');
+    }
+
+    if ($sources !== []) {
+        file_put_contents("{$repo}/zrodla/akty.md", "---\nwersja: 1\nskany:\n{$entries}---\n");
+    }
+
+    foreach ($files as $name => $contents) {
+        file_put_contents("{$repo}/{$name}", $contents);
+    }
+
+    try {
+        return app(ReadResearchRepo::class)->handle($repo);
+    } finally {
+        File::deleteDirectory($repo);
+    }
+}
+
+/**
+ * The block of Jan Nowak born in 1837 with links to sources.
+ *
+ * @param  array<string, string|null>  $links  repo id of a source => the entry number
+ */
+function srcPerson(array $links = [], string $extra = ''): string
+{
+    $block = "imiona: Jan\nnazwisko: Nowak\nurodzenie:\n  data: \"1837\"";
+
+    if ($links !== []) {
+        $block .= "\n  zrodla:";
+
+        foreach ($links as $id => $entry) {
+            $block .= "\n    - id: {$id}".($entry === null ? '' : "\n      wpis: \"{$entry}\"");
+        }
+    }
+
+    return $block.$extra;
+}
+
+/**
+ * The tree as an earlier import of the reading left it: Jan Nowak with a birth, the sources of the reading with their
+ * memory, the links of the birth and the memory of all of it.
+ *
+ * @return array{person: Person, birth: Event, sources: array<string, Source>}
+ */
+function srcKnownTree(Tree $tree, ResearchRepoReading $reading, bool $rememberLinks = true): array
+{
+    $research = $reading->persons['O-0001'];
+    $person = Person::factory()->for($tree)->create(['first_name' => 'Jan', 'last_name' => 'Nowak', 'gender' => null, 'note' => null, 'repo_id' => 'O-0001']);
+    $birth = Event::factory()->birth()->for($tree)->create(['repo_id' => 'O-0001/urodzenie', 'date_year' => 1837, 'date_month' => null, 'date_day' => null, 'locality_id' => null]);
+    $birth->participants()->attach($person, ['role' => ParticipantRole::Subject]);
+
+    $memory = ['data' => '1837', 'miejsce' => null, 'miejsce_id' => null];
+
+    if ($rememberLinks && $research->birth?->sources !== []) {
+        $memory['zrodla'] = (new SourceLinks($research->birth->sources))->text();
+    }
+
+    $tree->repoSnapshots()->create(['repo_id' => 'O-0001', 'values' => RepoValues::person($research, null)]);
+    $tree->repoSnapshots()->create(['repo_id' => 'O-0001/urodzenie', 'values' => $memory]);
+
+    $sources = [];
+
+    foreach ($reading->sources as $id => $source) {
+        $sources[(string) $id] = Source::factory()->create([
+            'tree_id' => $tree->id,
+            'repo_id' => $id,
+            'kind' => $source->kind,
+            'record_type' => $source->recordType,
+            'name' => $source->name,
+            'year' => $source->year,
+            'archive' => $source->archive,
+            'signature' => $source->signature,
+            'url' => $source->url,
+            'note' => $source->note,
+        ]);
+        $tree->repoSnapshots()->create(['repo_id' => $id, 'values' => [...RepoValues::source($source), 'parafia_id' => null]]);
+    }
+
+    foreach ($research->birth?->sources ?? [] as $link) {
+        $birth->sources()->attach($sources[$link->id], ['entry_number' => $link->entry]);
+    }
+
+    return ['person' => $person, 'birth' => $birth, 'sources' => $sources];
+}
+
+/**
+ * Plans a reading over a tree; every repo person that is not matched is new.
+ *
+ * @param  array<string, string>  $removals
+ * @param  array<string, string>  $deletions
+ * @param  array<string, Person>  $matched
+ */
+function srcPlan(Tree $tree, ResearchRepoReading $reading, array $removals = [], array $deletions = [], ?SourceDecisions $sources = null, ?PlaceDecisions $places = null, array $matched = []): ImportPlan
+{
+    $classes = app(ClassifyRepoRecords::class)->handle($tree, $reading);
+    $identity = new IdentityDecisions(
+        array_map(fn (Person $person): int => $person->id, $matched),
+        [],
+        array_values(array_diff($classes->newPersonIds, array_keys($matched))),
+    );
+
+    return app(PlanImport::class)->handle($tree, $reading, $classes, new ImportDecisions($identity, $removals, $deletions, $places ?? new PlaceDecisions), $sources ?? new SourceDecisions);
+}
+
+/**
+ * @return list<string>
+ */
+function srcKeysOf(ImportPlan $plan): array
+{
+    $keys = array_map(fn ($item): string => $item->key, [...$plan->changes, ...$plan->conflicts]);
+    sort($keys);
+
+    return $keys;
+}
+
+/**
+ * The same earlier import in the tree of another account and then in the tree of the author.
+ *
+ * @return array{0: Tree, 1: Tree, 2: array{person: Person, birth: Event, sources: array<string, Source>}}
+ */
+function srcTwinTrees(ResearchRepoReading $reading, bool $rememberLinks = true): array
+{
+    $other = User::factory()->create()->tree;
+    srcKnownTree($other, $reading, $rememberLinks);
+    $author = User::factory()->create()->tree;
+
+    return [$author, $other, srcKnownTree($author, $reading, $rememberLinks)];
+}
+
+const SRC_ONE = ['ZR-0001' => ['extra' => "    nazwa: Akt urodzenia 15/1837\n    rok: 1837\n    archiwum: AP Przykładowe\n"]];
+
+test('plans new sources with a sure, a new and no parish and with the links of a birth and a wedding', function () {
+    $tree = User::factory()->create()->tree;
+    $seat = Locality::factory()->for($tree)->create(['name' => 'Lipnica']);
+    $sure = Parish::factory()->seatedIn($seat)->create(['religion' => Religion::RomanCatholic]);
+    $reading = srcReading([
+        'O-0001' => srcPerson(['ZR-0001' => '15/1837', 'ZR-0002' => null], "\nmalzenstwa:\n  - z: O-0002\n    data: \"1860\"\n    zrodla:\n      - id: ZR-0003\n        wpis: \"7/1860\""),
+        'O-0002' => "imiona: Anna\nplec: K",
+    ], [
+        'ZR-0001' => ['extra' => "    parafia:\n      miejscowosc: Lipnica\n      wyznanie: rzymskokatolickie\n"],
+        'ZR-0002' => ['extra' => "    parafia:\n      miejscowosc: Lipnica\n      rodzaj: usc\n"],
+        'ZR-0003' => [],
+    ]);
+
+    $plan = srcPlan($tree, $reading);
+    $bySource = collect($plan->newSources)->keyBy(fn ($planned): string => $planned->source->id);
+
+    expect($plan->newSources)->toHaveCount(3)
+        ->and($bySource['ZR-0001']->parish->parishId)->toBe($sure->id)
+        ->and($bySource['ZR-0002']->parish->newParish)->not->toBeNull()
+        ->and($bySource['ZR-0003']->parish)->toBeNull()
+        ->and($plan->newParishes)->toHaveCount(1)
+        ->and(array_values($plan->newParishes)[0]->kind)->toBe(ParishKind::CivilRegistry)
+        ->and(array_map(fn ($link): string => $link->id, plannedPerson($plan, 'O-0001')->birthSources))->toBe(['ZR-0001', 'ZR-0002'])
+        ->and($plan->marriages[0]->sources[0]->entry)->toBe('7/1860')
+        ->and($plan->snapshots['ZR-0001']['parafia_id'])->toBe('P:'.$sure->id)
+        ->and($plan->snapshots['ZR-0001']['plik_hash'])->toBe($reading->sources['ZR-0001']->scanHash)
+        ->and($plan->snapshots['ZR-0003']['parafia_id'])->toBeNull()
+        ->and($plan->snapshots['O-0001/urodzenie']['zrodla'])->toBe('ZR-0001=15/1837;ZR-0002=')
+        ->and($plan->snapshots['O-0001+O-0002/slub']['zrodla'])->toBe('ZR-0003=7/1860');
+});
+
+test('leaves out a new parish the author answered with no parish', function () {
+    $tree = User::factory()->create()->tree;
+    Locality::factory()->for($tree)->create(['name' => 'Lipnica']);
+    $reading = srcReading([], ['ZR-0001' => ['extra' => "    parafia:\n      miejscowosc: Lipnica\n"]]);
+    $key = PlaceDecisions::parishKey(PlaceName::key('Lipnica'), null, ParishKind::Parish, null);
+
+    $plan = srcPlan($tree, $reading, places: new PlaceDecisions(parishes: [$key => PlaceDecisions::NONE]));
+
+    expect($plan->newSources[0]->parish)->toBeNull()
+        ->and($plan->newParishes)->toBe([]);
+});
+
+test('rejects decisions about parishes and sources that import did not ask about', function () {
+    $tree = User::factory()->create()->tree;
+    Locality::factory()->for($tree)->create(['name' => 'Lipnica']);
+    $reading = srcReading([], ['ZR-0001' => ['extra' => "    parafia:\n      miejscowosc: Lipnica\n"]]);
+    $other = Source::factory()->create(['tree_id' => $tree->id]);
+
+    expect(fn () => srcPlan($tree, $reading, places: new PlaceDecisions(parishes: ['nie|ma||' => PlaceDecisions::NEW])))->toThrow(InvalidArgumentException::class)
+        ->and(fn () => srcPlan($tree, $reading, sources: new SourceDecisions(['ZR-0001' => $other->id])))->toThrow(InvalidArgumentException::class)
+        ->and(fn () => srcPlan($tree, $reading, sources: new SourceDecisions(['ZR-0009' => $other->id])))->toThrow(InvalidArgumentException::class);
+});
+
+test('joins a manual source to a source of the repo, fills its empty fields and keeps the other ones', function () {
+    $other = User::factory()->create()->tree;
+    $tree = User::factory()->create()->tree;
+    $reading = srcReading(
+        ['O-0001' => srcPerson(['ZR-0001' => '15/1837'])],
+        ['ZR-0001' => ['extra' => "    typ: urodzenie\n    nazwa: Nazwa z repo\n    rok: 1837\n    archiwum: AP Przykładowe\n    sygnatura: 35/1\n"]],
+    );
+
+    foreach ([$other, $tree] as $each) {
+        $person = Person::factory()->for($each)->create(['first_name' => 'Jan', 'last_name' => 'Nowak']);
+        $birth = Event::factory()->birth()->for($each)->create(['date_year' => 1837, 'date_month' => null, 'date_day' => null]);
+        $birth->participants()->attach($person, ['role' => ParticipantRole::Subject]);
+        $manual = Source::factory()->create(['tree_id' => $each->id, 'name' => 'Mój skan', 'record_type' => SourceRecordType::Birth, 'archive' => null, 'year' => null]);
+        $birth->sources()->attach($manual);
+    }
+
+    $plan = srcPlan($tree, $reading, sources: new SourceDecisions(['ZR-0001' => $manual->id]), matched: ['O-0001' => $person]);
+    $merge = $plan->mergedSources[0];
+
+    expect($plan->newSources)->toBe([])
+        ->and($merge->sourceId)->toBe($manual->id)
+        ->and(fieldsOf($merge->fills))->toBe(['year', 'archive', 'signature'])
+        ->and($merge->entries)->toBe(['O-0001/urodzenie' => '15/1837'])
+        ->and(fieldsOf(plannedMatch($plan, 'O-0001')->fills))->not->toContain('birth_sources')
+        ->and($plan->snapshots['ZR-0001']['nazwa'])->toBe('Nazwa z repo')
+        ->and($plan->snapshots['O-0001/urodzenie']['zrodla'])->toBe('ZR-0001=15/1837')
+        ->and($tree->sources()->pluck('id')->all())->toContain($merge->sourceId);
+});
+
+test('plans nothing for sources and links that neither the repo nor the tree changed', function () {
+    $reading = srcReading(['O-0001' => srcPerson(['ZR-0001' => '15/1837'])], SRC_ONE);
+    [$tree] = srcTwinTrees($reading);
+
+    $plan = srcPlan($tree, $reading);
+
+    expect($plan->sourceUpdates)->toBe([])
+        ->and($plan->newSources)->toBe([])
+        ->and($plan->changes)->toBe([])
+        ->and($plan->conflicts)->toBe([])
+        ->and($plan->updates)->toBe([])
+        ->and($plan->keptManual)->toBe(0)
+        ->and($plan->changedSnapshots($tree->repoSnapshots()->get()->keyBy('repo_id')->all()))->toBe([]);
+});
+
+test('plans a changed description of a source nobody touched as a change and ignores the sources of another account', function () {
+    $first = srcReading(['O-0001' => srcPerson(['ZR-0001' => '15/1837'])], SRC_ONE);
+    [$tree, $other, $built] = srcTwinTrees($first);
+    $second = srcReading(['O-0001' => srcPerson(['ZR-0001' => '15/1837'])], ['ZR-0001' => ['extra' => "    nazwa: Nowa nazwa\n    rok: 1837\n    archiwum: AP Przykładowe\n"]]);
+
+    $plan = srcPlan($tree, $second);
+
+    expect(srcKeysOf($plan))->toBe(['ZR-0001/nazwa'])
+        ->and($plan->changes[0]->appLabel)->toBe('Akt urodzenia 15/1837')
+        ->and($plan->changes[0]->repoLabel)->toBe('Nowa nazwa')
+        ->and($plan->sourceUpdates)->toHaveCount(1)
+        ->and($plan->sourceUpdates[0]->sourceId)->toBe($built['sources']['ZR-0001']->id)
+        ->and($plan->sourceUpdates[0]->sourceId)->not->toBe($other->sources()->first()->id)
+        ->and($plan->snapshots['ZR-0001']['nazwa'])->toBe('Nowa nazwa');
+});
+
+test('keeps a source description changed by hand while the repo did not move and reports a conflict when both moved', function () {
+    $first = srcReading(['O-0001' => srcPerson(['ZR-0001' => '15/1837'])], SRC_ONE);
+    [$tree, , $built] = srcTwinTrees($first);
+    $built['sources']['ZR-0001']->update(['name' => 'Ręczna nazwa']);
+
+    $kept = srcPlan($tree, $first);
+    $second = srcReading(['O-0001' => srcPerson(['ZR-0001' => '15/1837'])], ['ZR-0001' => ['extra' => "    nazwa: Nowa nazwa\n    rok: 1837\n    archiwum: AP Przykładowe\n"]]);
+    $conflict = srcPlan($tree, $second);
+
+    expect($kept->sourceUpdates)->toBe([])
+        ->and($kept->keptManual)->toBe(1)
+        ->and($conflict->conflicts)->toHaveCount(1)
+        ->and($conflict->conflicts[0]->key)->toBe('ZR-0001/nazwa')
+        ->and($conflict->conflicts[0]->appLabel)->toBe('Ręczna nazwa')
+        ->and($conflict->conflicts[0]->lastRepoLabel)->toBe('Akt urodzenia 15/1837');
+});
+
+test('plans a new scan as a change by its hash and a moved scan only in the memory', function () {
+    $first = srcReading(['O-0001' => srcPerson(['ZR-0001' => '15/1837'])], SRC_ONE);
+    [$tree] = srcTwinTrees($first);
+    $newScan = srcReading(['O-0001' => srcPerson(['ZR-0001' => '15/1837'])], ['ZR-0001' => [...SRC_ONE['ZR-0001'], 'shade' => 200]]);
+    $moved = srcReading(['O-0001' => srcPerson(['ZR-0001' => '15/1837'])], ['ZR-0001' => [...SRC_ONE['ZR-0001'], 'path' => 'zrodla/skany/inna.jpg']]);
+
+    $changed = srcPlan($tree, $newScan);
+    $same = srcPlan($tree, $moved);
+
+    expect($changed->changes)->toHaveCount(1)
+        ->and($changed->changes[0]->key)->toBe('ZR-0001/plik')
+        ->and($changed->changes[0]->field)->toBe('file')
+        ->and($changed->changes[0]->repoValue)->toBe('zrodla/skany/ZR-0001.jpg')
+        ->and($changed->snapshots['ZR-0001']['plik_hash'])->toBe($newScan->sources['ZR-0001']->scanHash)
+        ->and($same->changes)->toBe([])
+        ->and($same->sourceUpdates)->toBe([])
+        ->and($same->snapshots['ZR-0001']['plik'])->toBe('zrodla/skany/inna.jpg')
+        ->and($same->snapshots['ZR-0001']['plik_hash'])->toBe($moved->sources['ZR-0001']->scanHash);
+});
+
+test('plans a new, a removed and a changed link of a birth as a change of one field', function (array $links, string $repoLabel) {
+    $sources = [...SRC_ONE, 'ZR-0002' => ['extra' => "    nazwa: Drugi akt\n"]];
+    $first = srcReading(['O-0001' => srcPerson(['ZR-0001' => '15/1837'])], $sources);
+    [$tree] = srcTwinTrees($first);
+    $second = srcReading(['O-0001' => srcPerson($links)], $sources);
+
+    $plan = srcPlan($tree, $second);
+
+    expect(srcKeysOf($plan))->toBe(['O-0001/urodzenie/zrodla'])
+        ->and($plan->changes[0]->field)->toBe('birth_sources')
+        ->and($plan->changes[0]->appLabel)->toBe('ZR-0001 (wpis 15/1837)')
+        ->and($plan->changes[0]->repoLabel)->toBe($repoLabel)
+        ->and($plan->changes[0]->repoValue)->toBeInstanceOf(SourceLinks::class)
+        ->and($plan->snapshots['O-0001/urodzenie']['zrodla'])->toBe($plan->changes[0]->repoValue->text());
+})->with([
+    'a new link' => [['ZR-0001' => '15/1837', 'ZR-0002' => null], 'ZR-0001 (wpis 15/1837), ZR-0002'],
+    'a removed link' => [[], PlanImport::EMPTY_LABEL],
+    'a changed entry' => [['ZR-0001' => '16/1837'], 'ZR-0001 (wpis 16/1837)'],
+]);
+
+test('never reports a link the author added by hand as a conflict and never removes it', function () {
+    $reading = srcReading(['O-0001' => srcPerson(['ZR-0001' => '15/1837'])], SRC_ONE);
+    [$tree, , $built] = srcTwinTrees($reading);
+    $manual = Source::factory()->create(['tree_id' => $tree->id]);
+    $built['birth']->sources()->attach($manual, ['entry_number' => '99']);
+
+    $plan = srcPlan($tree, $reading);
+
+    expect($plan->changes)->toBe([])
+        ->and($plan->conflicts)->toBe([])
+        ->and($plan->snapshots['O-0001/urodzenie']['zrodla'])->toBe('ZR-0001=15/1837')
+        ->and($built['birth']->sources()->count())->toBe(2);
+});
+
+test('fills the links of a birth that has none from the repo when the memory has no links', function () {
+    $first = srcReading(['O-0001' => srcPerson()], SRC_ONE);
+    [$tree] = srcTwinTrees($first);
+
+    $plan = srcPlan($tree, srcReading(['O-0001' => srcPerson(['ZR-0001' => '15/1837'])], SRC_ONE));
+
+    expect($plan->updates[0]->fills[0]->field)->toBe('birth_sources')
+        ->and($plan->updates[0]->fills[0]->valueLabel())->toBe('ZR-0001 (wpis 15/1837)');
+});
+
+test('does not compare the links of an event that names a skipped source and keeps its memory', function () {
+    $first = srcReading(['O-0001' => srcPerson(['ZR-0001' => '15/1837'])], SRC_ONE);
+    [$tree] = srcTwinTrees($first);
+    $second = srcReading(['O-0001' => srcPerson(['ZR-0001' => '16/1837', 'ZR-0002' => null])], [...SRC_ONE, 'ZR-0002' => ['path' => '']]);
+
+    $plan = srcPlan($tree, $second);
+
+    expect($second->skippedSourceIds())->toBe(['ZR-0002'])
+        ->and(srcKeysOf($plan))->toBe([])
+        ->and($plan->removals)->toBe([])
+        ->and($plan->snapshots['O-0001/urodzenie']['zrodla'])->toBe('ZR-0001=15/1837');
+});
+
+test('leaves the links of a detached, a removed and a kept deleted source out of the plan', function (string $mode) {
+    $sources = [...SRC_ONE, 'ZR-0002' => ['extra' => "    nazwa: Drugi akt\n"]];
+    $first = srcReading(['O-0001' => srcPerson(['ZR-0001' => '15/1837', 'ZR-0002' => '2'])], $sources);
+    [$tree, $other, $built] = srcTwinTrees($first);
+    $removals = [];
+    $deletions = [];
+
+    if ($mode === 'kept deleted') {
+        $built['sources']['ZR-0002']->delete();
+        $deletions = ['ZR-0002' => ImportDecisions::KEEP];
+        $second = $first;
+    } else {
+        $removals = ['ZR-0002' => $mode === 'detached' ? ImportDecisions::DETACH : ImportDecisions::DELETE];
+        $second = srcReading(['O-0001' => srcPerson(['ZR-0001' => '15/1837'])], SRC_ONE);
+    }
+
+    $plan = srcPlan($tree, $second, $removals, $deletions);
+
+    expect($plan->changes)->toBe([])
+        ->and($plan->conflicts)->toBe([])
+        ->and($plan->restorations)->toBe([])
+        ->and($plan->snapshots['O-0001/urodzenie']['zrodla'])->toBe('ZR-0001=15/1837');
+
+    if ($mode !== 'kept deleted') {
+        expect($plan->removals)->toHaveCount(1)
+            ->and($plan->removals[0]->key)->toBe('ZR-0002')
+            ->and($plan->removals[0]->kind)->toBe(RepoKeyKind::Source)
+            ->and($plan->removals[0]->impact?->sourceLinks)->toBe($mode === 'removed' ? 1 : null)
+            ->and($plan->forgottenSnapshots)->toContain('ZR-0002')
+            ->and($other->sources()->where('repo_id', 'ZR-0002')->exists())->toBeTrue();
+    } else {
+        expect($plan->keptDeletedSnapshots)->toHaveKey('ZR-0002');
+    }
+})->with(['detached', 'removed', 'kept deleted']);
+
+test('brings back a source deleted in the app with the links of the events that cite it', function () {
+    $sources = [...SRC_ONE, 'ZR-0002' => ['extra' => "    nazwa: Drugi akt\n"]];
+    $reading = srcReading(['O-0001' => srcPerson(['ZR-0001' => '15/1837', 'ZR-0002' => '2'])], $sources);
+    [$tree, , $built] = srcTwinTrees($reading);
+    $built['sources']['ZR-0002']->delete();
+
+    $plan = srcPlan($tree, $reading, deletions: ['ZR-0002' => ImportDecisions::RESTORE]);
+
+    expect($plan->restorations)->toHaveCount(1)
+        ->and($plan->restorations[0]->kind)->toBe(RepoKeyKind::Source)
+        ->and($plan->restorations[0]->source->source->id)->toBe('ZR-0002')
+        ->and($plan->restorations[0]->source->entries)->toBe(['O-0001/urodzenie' => '2'])
+        ->and($plan->changes)->toBe([])
+        ->and($plan->snapshots['O-0001/urodzenie']['zrodla'])->toBe('ZR-0001=15/1837;ZR-0002=2');
+});
+
+test('adds no memory of links to a tree whose repo has no sources', function () {
+    $reading = srcReading(['O-0001' => srcPerson()], []);
+    [$tree] = srcTwinTrees($reading);
+
+    $plan = srcPlan($tree, $reading);
+
+    expect($plan->snapshots['O-0001/urodzenie'])->toBe(['data' => '1837', 'miejsce' => null, 'miejsce_id' => null])
+        ->and($plan->changedSnapshots($tree->repoSnapshots()->get()->keyBy('repo_id')->all()))->toBe([]);
+});
+
+test('plans the links of a wedding and compares them with the three values', function () {
+    $wedding = fn (array $links): string => srcPerson([], "\nmalzenstwa:\n  - z: O-0002\n    data: \"1860\"\n    zrodla:".implode('', array_map(fn ($id, $entry): string => "\n      - id: {$id}\n        wpis: \"{$entry}\"", array_keys($links), $links)));
+    $sources = ['ZR-0001' => []];
+    $first = srcReading(['O-0001' => $wedding(['ZR-0001' => '7/1860']), 'O-0002' => "imiona: Anna\nplec: K"], $sources);
+    [$tree, , $built] = srcTwinTrees($first);
+    $marriage = Event::factory()->for($tree)->create(['type' => EventType::Marriage, 'repo_id' => 'O-0001+O-0002/slub', 'date_year' => 1860, 'date_month' => null, 'date_day' => null, 'locality_id' => null]);
+    $spouse = Person::factory()->for($tree)->create(['first_name' => 'Anna', 'last_name' => null, 'gender' => Gender::Female, 'repo_id' => 'O-0002']);
+    $marriage->participants()->attach([$built['person']->id => ['role' => ParticipantRole::Spouse], $spouse->id => ['role' => ParticipantRole::Spouse]]);
+    $marriage->sources()->attach($built['sources']['ZR-0001'], ['entry_number' => '7/1860']);
+    $tree->repoSnapshots()->create(['repo_id' => 'O-0001+O-0002/slub', 'values' => ['data' => '1860', 'miejsce' => null, 'miejsce_id' => null, 'zrodla' => 'ZR-0001=7/1860']]);
+    $tree->repoSnapshots()->create(['repo_id' => 'O-0002', 'values' => RepoValues::person($first->persons['O-0002'], null)]);
+
+    $same = srcPlan($tree, $first);
+    $changed = srcPlan($tree, srcReading(['O-0001' => $wedding(['ZR-0001' => '8/1860']), 'O-0002' => "imiona: Anna\nplec: K"], $sources));
+
+    expect(srcKeysOf($same))->toBe([])
+        ->and($same->marriages)->toBe([])
+        ->and(srcKeysOf($changed))->toBe(['O-0001+O-0002/slub/zrodla'])
+        ->and($changed->marriages[0]->sourceChange->field)->toBe('marriage_sources');
+});
+
+test('resolves a parish by token, by the answers and by the memory without leaving the tree', function () {
+    $other = User::factory()->create()->tree;
+    $otherSeat = Locality::factory()->for($other)->create(['name' => 'Lipnica']);
+    $foreign = Parish::factory()->seatedIn($otherSeat)->create(['religion' => Religion::RomanCatholic]);
+
+    $tree = User::factory()->create()->tree;
+    $seat = Locality::factory()->for($tree)->create(['name' => 'Lipnica']);
+    $own = Parish::factory()->seatedIn($seat)->create(['religion' => Religion::RomanCatholic, 'dedication' => 'św. Jana']);
+    $second = Parish::factory()->seatedIn($seat)->create(['religion' => Religion::RomanCatholic, 'dedication' => 'św. Anny']);
+    $localities = $tree->localities()->get()->keyBy('id')->all();
+    $parishes = $tree->parishes()->with('locality')->get()->keyBy('id')->all();
+
+    $parish = fn (?Religion $religion = Religion::RomanCatholic, ?string $dedication = null): ResearchParish => new ResearchParish('Lipnica', $religion, ParishKind::Parish, $dedication);
+    $key = fn (?Religion $religion, ?string $dedication = null): string => PlaceDecisions::parishKey(PlaceName::key('Lipnica'), $religion, ParishKind::Parish, PlaceName::key($dedication));
+    $request = fn (?Religion $religion, ?string $dedication = null): ParishRequest => new ParishRequest(PlaceName::key('Lipnica'), $religion, ParishKind::Parish, PlaceName::key($dedication), $dedication, []);
+    $resolver = fn (array $verdicts, PlaceDecisions $decisions = new PlaceDecisions): PlaceResolver => new PlaceResolver(
+        new PlaceMatcher($localities, []),
+        $localities,
+        [],
+        new PlaceMatches,
+        new CemeteryMatches,
+        $decisions,
+        $parishes,
+        new ParishMatches($verdicts),
+    );
+
+    $sure = $resolver([$key(Religion::RomanCatholic, 'św. Jana') => new ParishVerdict($request(Religion::RomanCatholic, 'św. Jana'), ParishMatchKind::Sure, $seat->id, $own)]);
+    $choice = new ParishVerdict($request(Religion::RomanCatholic), ParishMatchKind::Choice, $seat->id, null, [$own, $second]);
+    $chosen = $resolver([$key(Religion::RomanCatholic) => $choice], new PlaceDecisions(parishes: [$key(Religion::RomanCatholic) => $second->id]));
+    $unanswered = $resolver([$key(Religion::RomanCatholic) => $choice]);
+    $newVerdict = new ParishVerdict($request(Religion::GreekCatholic), ParishMatchKind::New, $seat->id);
+    $added = $resolver([$key(Religion::GreekCatholic) => $newVerdict]);
+    $declined = $resolver([$key(Religion::GreekCatholic) => $newVerdict], new PlaceDecisions(parishes: [$key(Religion::GreekCatholic) => PlaceDecisions::NONE]));
+    $remembering = $resolver([]);
+
+    expect($sure->parish($parish(Religion::RomanCatholic, 'św. Jana'), null)->token)->toBe('P:'.$own->id)
+        ->and($sure->parish($parish(Religion::RomanCatholic, 'św. Jana'), null)->place->parishId)->toBe($own->id)
+        ->and($chosen->parish($parish(), null)->token)->toBe('P:'.$second->id)
+        ->and($unanswered->parish($parish(), null))->toBeNull()
+        ->and($added->parish($parish(Religion::GreekCatholic), null)->isNew())->toBeTrue()
+        ->and($added->newParishes)->toHaveCount(1)
+        ->and($declined->parish($parish(Religion::GreekCatholic), null))->toBeNull()
+        ->and($declined->newParishes)->toBe([])
+        ->and($remembering->parish($parish(), 'P:'.$own->id)->token)->toBe('P:'.$own->id)
+        ->and($remembering->parish($parish(), 'P:'.$foreign->id))->toBeNull()
+        ->and($remembering->parish(null, 'P:'.$own->id))->toBeNull()
+        ->and($remembering->tokenExists('P:'.$own->id))->toBeTrue()
+        ->and($remembering->tokenExists('P:'.$foreign->id))->toBeFalse()
+        ->and($remembering->tokenLabel('P:'.$own->id))->toBe($own->label())
+        ->and($remembering->tokenLabel('P:'.$foreign->id))->toBeNull();
 });

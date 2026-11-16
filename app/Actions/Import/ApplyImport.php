@@ -14,6 +14,8 @@ use App\Enums\EventType;
 use App\Enums\Gender;
 use App\Enums\ParticipantRole;
 use App\Enums\RepoKeyKind;
+use App\Enums\SourceKind;
+use App\Enums\SourceRecordType;
 use App\Models\Event;
 use App\Models\Person;
 use App\Models\Tree;
@@ -34,6 +36,7 @@ use App\Support\Import\PlannedUpdate;
 use App\Support\Import\RepoKeys;
 use App\Support\Import\ResearchDate;
 use App\Support\Import\ResearchEvent;
+use App\Support\Import\SourceLinks;
 use App\Support\Import\SurnameVariants;
 use App\Support\Import\ValueConflict;
 use App\Support\Import\WrittenPlaces;
@@ -827,7 +830,7 @@ class ApplyImport
      */
     private function writeUpdate(Tree $tree, Person $person, PlannedUpdate $update, ChangeApprovals $approvals, ConflictResolutions $resolutions, WrittenPlaces $written): array
     {
-        /** @var list<array{0: string, 1: string|Gender|ResearchDate|PlannedPlace|SurnameVariants|null}> $values */
+        /** @var list<array{0: string, 1: string|Gender|ResearchDate|PlannedPlace|SurnameVariants|SourceLinks|SourceKind|SourceRecordType|null}> $values */
         $values = [];
         $fills = 0;
         $taken = 0;
@@ -941,7 +944,7 @@ class ApplyImport
      */
     private function writeMatch(Tree $tree, Person $person, PlannedMatch $match, ConflictResolutions $resolutions, WrittenPlaces $written): array
     {
-        /** @var list<array{0: string, 1: string|Gender|ResearchDate|PlannedPlace|SurnameVariants|null, 2: bool}> $changes */
+        /** @var list<array{0: string, 1: string|Gender|ResearchDate|PlannedPlace|SurnameVariants|SourceLinks|SourceKind|SourceRecordType|null, 2: bool}> $changes */
         $changes = [];
 
         foreach ($match->fills as $fill) {

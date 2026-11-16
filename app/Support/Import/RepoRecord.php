@@ -12,7 +12,7 @@ use Illuminate\Database\Eloquent\Model;
 final readonly class RepoRecord
 {
     /**
-     * @param  Model|null  $record  the record of the tree with this `repo_id` (a person, an event or a parent-child pair), `null` when it was deleted in the app
+     * @param  Model|null  $record  the record of the tree with this `repo_id` (a person, an event, a parent-child pair or a source), `null` when it was deleted in the app
      * @param  list<string>  $personIds  the repo ids of the persons the key names
      * @param  RemovalImpact|null  $impact  what a removal takes with it; set for a record removed in the repo, except a birth
      * @param  list<RepoRecord>  $members  the other keys of the same person that are decided together with it

@@ -8,6 +8,7 @@ use App\Models\Event;
 use App\Models\ParentChildRelation;
 use App\Models\Person;
 use App\Models\RepoSnapshot;
+use App\Models\Source;
 use App\Models\Tree;
 use App\Support\Import\RemovalImpact;
 use App\Support\Import\RepoKeys;
@@ -39,6 +40,11 @@ class ClassifyRepoRecords
      * the key of a wedding the reading dropped with a warning (the repo still has it, only unreadable); when an entry
      * was skipped without a readable id, nothing is removed or forgotten and the removal candidates are held back.
      *
+     * A source (`ZR-0012`) names no person, so it is decided apart: known, new, deleted in the app, kept deleted or removed
+     * in the repo. A source entry that was skipped is not one removed in the repo. An entry skipped without a readable id
+     * (or a whole file of `zrodla/` that could not be read) holds back only the removal of sources, never of persons, and
+     * a skipped person without a readable id never holds back sources.
+     *
      * The other keys of a person that is removed in the repo, deleted in the app or kept deleted are decided with the
      * person, so they are members of its entry instead of entries of their own.
      */
@@ -49,6 +55,8 @@ class ClassifyRepoRecords
         $snapshots = $tree->repoSnapshots()->get()->keyBy('repo_id')->all();
         $skippedIds = array_flip($reading->skippedRepoIds());
         $holdBack = $reading->hasSkippedWithoutId();
+        $holdBackSources = $reading->hasSkippedSourceWithoutId();
+        $skippedSources = array_flip($reading->skippedSourceIds());
         $dropped = array_flip($reading->droppedMarriageKeys);
 
         $keys = array_map(strval(...), array_unique([...array_keys($inRepo), ...array_keys($records), ...array_keys($snapshots)]));
@@ -56,6 +64,7 @@ class ClassifyRepoRecords
         $keys = array_values(array_filter(
             $keys,
             fn (string $key): bool => ! isset($dropped[$key])
+                && ! isset($skippedSources[$key])
                 && array_intersect_key($skippedIds, array_flip(RepoKeys::personIdsOf($key))) === []
                 && ! $this->isBurialWithoutRecord($key, $inRepo, $records, $snapshots),
         ));
@@ -78,6 +87,9 @@ class ClassifyRepoRecords
         $entries = ['deleted' => [], 'removed' => []];
         $kept = [];
         $goneBoth = [];
+        $knownSources = [];
+        $newSources = [];
+        $goneSources = [];
 
         foreach ($states as $id => $state) {
             switch ($state) {
@@ -103,9 +115,28 @@ class ClassifyRepoRecords
         }
 
         foreach ($loose as $key) {
+            $isSource = RepoKeys::kindOf($key) === RepoKeyKind::Source;
+
             switch ($this->stateOf(isset($inRepo[$key]), isset($records[$key]), isset($snapshots[$key]))) {
+                case self::KNOWN:
+                    if ($isSource && $records[$key] instanceof Source) {
+                        $knownSources[$key] = $records[$key];
+                    }
+
+                    break;
+                case self::NEW:
+                    if ($isSource) {
+                        $newSources[] = $key;
+                    }
+
+                    break;
                 case self::GONE:
-                    $goneBoth[] = $key;
+                    if ($isSource) {
+                        $goneSources[] = $key;
+                    } else {
+                        $goneBoth[] = $key;
+                    }
+
                     break;
                 case self::DELETED:
                     $this->classifyDeleted($key, [], $reading, $records, $snapshots, $entries['deleted'], $kept);
@@ -119,18 +150,36 @@ class ClassifyRepoRecords
         ksort($entries['deleted']);
         ksort($entries['removed']);
         ksort($known);
+        ksort($knownSources);
         sort($new);
+        sort($newSources);
         sort($kept);
         sort($goneBoth);
+        sort($goneSources);
+
+        $removed = [];
+        $held = [];
+        $gone = [...($holdBack ? [] : $goneBoth), ...($holdBackSources ? [] : $goneSources)];
+        sort($gone);
+
+        foreach ($entries['removed'] as $entry) {
+            if ($entry->kind === RepoKeyKind::Source ? $holdBackSources : $holdBack) {
+                $held[] = $entry;
+            } else {
+                $removed[] = $entry;
+            }
+        }
 
         return new RepoRecordClasses(
             knownPersons: $known,
             newPersonIds: $new,
             deletedInApp: array_values($entries['deleted']),
             keptDeleted: $kept,
-            removedInRepo: $holdBack ? [] : array_values($entries['removed']),
-            goneBoth: $holdBack ? [] : $goneBoth,
-            unassessable: $holdBack ? array_values($entries['removed']) : [],
+            removedInRepo: $removed,
+            goneBoth: $gone,
+            unassessable: $held,
+            knownSources: $knownSources,
+            newSourceIds: $newSources,
         );
     }
 
@@ -156,7 +205,7 @@ class ClassifyRepoRecords
 
     /**
      * Every key the reading holds: each person, its birth, death and burial when the block names them, each parent-child pair
-     * whose two ends are in the reading and each wedding.
+     * whose two ends are in the reading, each wedding and each source with a scan.
      *
      * @return array<string, true>
      */
@@ -190,6 +239,10 @@ class ClassifyRepoRecords
             $keys[RepoKeys::marriage($marriage->personIds[0], $marriage->personIds[1])] = true;
         }
 
+        foreach (array_keys($reading->sources) as $sourceId) {
+            $keys[RepoKeys::source((string) $sourceId)] = true;
+        }
+
         return $keys;
     }
 
@@ -217,6 +270,12 @@ class ClassifyRepoRecords
         foreach ($tree->parentChildRelations()->whereNotNull('repo_id')->get() as $relation) {
             if (RepoKeys::kindOf((string) $relation->repo_id) === RepoKeyKind::Relation) {
                 $records[(string) $relation->repo_id] = $relation;
+            }
+        }
+
+        foreach ($tree->sources()->whereNotNull('repo_id')->get() as $source) {
+            if (RepoKeys::kindOf((string) $source->repo_id) === RepoKeyKind::Source) {
+                $records[(string) $source->repo_id] = $source;
             }
         }
 
@@ -350,13 +409,15 @@ class ClassifyRepoRecords
     }
 
     /**
-     * What a removal takes with it. A birth is only detached, so it has no impact; a burial takes nothing else with it.
+     * What a removal takes with it. A birth is only detached, so it has no impact; a burial takes nothing else with it; a
+     * source takes its links to events and its scan file.
      */
     public function impactOf(Tree $tree, string $key, Model $record): ?RemovalImpact
     {
         return match (true) {
             $record instanceof Person => $this->personImpact($tree, $record),
             $record instanceof ParentChildRelation => new RemovalImpact,
+            $record instanceof Source => new RemovalImpact(sourceLinks: DB::table('event_source')->where('source_id', $record->id)->count(), scan: true),
             $record instanceof Event && RepoKeys::kindOf($key) === RepoKeyKind::Death => $this->deathImpact($tree, $record),
             $record instanceof Event && RepoKeys::kindOf($key) === RepoKeyKind::Burial => new RemovalImpact,
             $record instanceof Event && RepoKeys::kindOf($key) === RepoKeyKind::Marriage => new RemovalImpact(sourceLinks: $this->sourceLinks([$record->id])),

@@ -19,6 +19,8 @@ final readonly class PlannedRestoration
      * @param  int|null  $personId  the tree person that gets a restored birth or death
      * @param  ResearchEvent|null  $event  the repo birth, death or burial to create
      * @param  PlannedPlace|null  $place  where the restored event stands
+     * @param  list<ResearchSourceLink>  $sources  the links a restored birth, death or wedding gets to sources of the repo
+     * @param  PlannedSource|null  $source  a restored source, copied from its scan again
      */
     public function __construct(
         public string $key,
@@ -31,5 +33,7 @@ final readonly class PlannedRestoration
         public ?PlannedRelation $relation = null,
         public ?PlannedMarriage $marriage = null,
         public ?PlannedPlace $place = null,
+        public array $sources = [],
+        public ?PlannedSource $source = null,
     ) {}
 }

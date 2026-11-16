@@ -113,7 +113,7 @@ final class PlaceResolver
     }
 
     /**
-     * @param  string|null  $remembered  the parish token of the last import for this parish, used when the parish is not asked about
+     * @param  string|null  $remembered  the parish token of the last import for this parish, used when the parish is not asked about; a new parish the author answered "none" is left out
      */
     public function parish(?ResearchParish $parish, ?string $remembered): ?ResolvedPlace
     {
@@ -134,7 +134,7 @@ final class PlaceResolver
         return match ($verdict->kind) {
             ParishMatchKind::None => null,
             ParishMatchKind::Sure => $verdict->parish === null ? null : $this->existingParish($verdict->parish, $seat),
-            ParishMatchKind::New => $this->newParish($verdict, $localityKey),
+            ParishMatchKind::New => ($this->decisions->parishes[$requestKey] ?? PlaceDecisions::NEW) === PlaceDecisions::NONE ? null : $this->newParish($verdict, $localityKey),
             ParishMatchKind::Choice => $this->chosenParish($verdict, $requestKey, $localityKey, $seat),
         };
     }
