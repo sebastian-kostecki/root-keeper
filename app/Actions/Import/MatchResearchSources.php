@@ -55,20 +55,26 @@ class MatchResearchSources
             ->orderBy('id')
             ->get();
 
-        $matches = [];
+        $candidatesBySource = [];
 
         foreach ($pending as $repoId => $source) {
-            $candidates = [];
-
             foreach ($manual as $candidate) {
                 if ($this->compatible($source, $candidate) && $candidate->events->contains(fn (Event $event): bool => isset($eventIdsBySource[$repoId][$event->id]))) {
-                    $candidates[] = $candidate;
+                    $candidatesBySource[$repoId][] = $candidate;
                 }
             }
+        }
 
-            if ($candidates !== []) {
-                $matches[$repoId] = new SourceMatch($source, $candidates);
-            }
+        if ($candidatesBySource === []) {
+            return new SourceMatches;
+        }
+
+        $events = $tree->events()->whereIn('id', $allEventIds)->orderBy('id')->get();
+        $matches = [];
+
+        foreach ($candidatesBySource as $repoId => $candidates) {
+            $cited = array_values($events->filter(fn (Event $event): bool => isset($eventIdsBySource[$repoId][$event->id]))->all());
+            $matches[$repoId] = new SourceMatch($pending[$repoId], $candidates, $cited);
         }
 
         return new SourceMatches($matches);

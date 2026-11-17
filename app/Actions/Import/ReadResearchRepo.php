@@ -103,6 +103,7 @@ class ReadResearchRepo
             sourceFilesScanned: $sourceReading['scanned'],
             sourceFilesWithoutBlock: $sourceReading['withoutBlock'],
             sourceScanEntries: $sourceReading['entries'],
+            hasSourcesDirectory: is_dir(rtrim($repoPath, '/').'/zrodla'),
         );
     }
 
@@ -115,6 +116,7 @@ class ReadResearchRepo
     private function readSources(string $repoPath, array &$warnings): array
     {
         $root = rtrim($repoPath, '/');
+        $realRoot = realpath($root) ?: $root;
         $files = $this->sourceFiles($root.'/zrodla');
         $skipped = [];
         $withoutBlock = [];
@@ -123,6 +125,13 @@ class ReadResearchRepo
 
         foreach ($files as $path) {
             $file = substr($path, strlen($root) + 1);
+            $real = realpath($path);
+
+            if ($real === false || ! str_starts_with($real, $realRoot.'/')) {
+                $skipped[] = new ImportIssue($file, 'Plik poza repo');
+
+                continue;
+            }
 
             if (! is_readable($path)) {
                 $skipped[] = new ImportIssue($file, 'Nie udało się odczytać pliku');
@@ -145,20 +154,31 @@ class ReadResearchRepo
         }
 
         $filesById = [];
+        $entryIds = [];
 
         foreach ($parsed as $source) {
             $filesById[$source->id][$source->file] = true;
+            $entryIds[] = $source->id;
         }
 
-        $countById = array_count_values(array_map(fn (ResearchSource $source): string => $source->id, $parsed));
+        foreach ($skipped as $issue) {
+            if ($issue->repoId !== null) {
+                $filesById[$issue->repoId][$issue->file] = true;
+                $entryIds[] = $issue->repoId;
+            }
+        }
+
+        $countById = array_count_values($entryIds);
         $sources = [];
 
         foreach ($parsed as $source) {
             if ($countById[$source->id] > 1) {
+                $files = array_keys($filesById[$source->id]);
+                sort($files);
                 $skipped[] = new ImportIssue($source->file, sprintf(
                     'Powtórzony id %s w plikach: %s',
                     $source->id,
-                    implode(', ', array_keys($filesById[$source->id])),
+                    implode(', ', $files),
                 ), $source->id);
 
                 continue;

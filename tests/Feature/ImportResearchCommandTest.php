@@ -1518,6 +1518,21 @@ test('takes a changed entry number of the repo as a change to approve', function
         ->assertSuccessful();
 });
 
+test('does not count the links of a change the author rejects one by one', function () {
+    [$author, $other, $repo] = cmdSrcImported();
+    $otherBefore = cmdSrcState($other->tree);
+    cmdSrcRepo(cmdSrcBlocks('16/1837'), cmdSrcSources(), $repo);
+
+    $this->artisan('import:research', ['email' => $author->email, 'path' => $repo])
+        ->expectsChoice('Zmiany z repo (1): co zrobić?', 'each', CHANGES_ALL, true)
+        ->expectsQuestion('Zmiana 1/1: Jan Nowak (O-0001) — Źródła urodzenia', 'app')
+        ->expectsConfirmation(saveQuestion(0, 0, 1), 'yes')
+        ->assertSuccessful();
+
+    expect($author->tree->events()->where('repo_id', 'O-0001/urodzenie')->firstOrFail()->sources()->firstOrFail()->pivot->entry_number)->toBe('15/1837')
+        ->and(cmdSrcState($other->tree))->toBe($otherBefore);
+});
+
 test('keeps the old scan when the author rejects the new file of a source one by one', function () {
     [$author, $other, $repo] = cmdSrcImported();
     $otherBefore = cmdSrcState($other->tree);
@@ -1557,6 +1572,24 @@ test('removes a source the repo dropped with its scan after delete and shows wha
     expect($author->tree->sources()->where('repo_id', 'ZR-0003')->exists())->toBeFalse()
         ->and(Storage::disk('local')->exists($source->path))->toBeFalse()
         ->and($author->tree->sources()->where('repo_id', 'ZR-0001')->exists())->toBeTrue()
+        ->and(cmdSrcState($other->tree))->toBe($otherBefore);
+});
+
+test('holds back the removal of every source when the repo has no zrodla directory', function () {
+    [$author, $other, $repo] = cmdSrcImported();
+    $otherBefore = cmdSrcState($other->tree);
+    File::deleteDirectory($repo.'/zrodla');
+
+    $this->artisan('import:research', ['email' => $author->email, 'path' => $repo])
+        ->expectsOutputToContain('Brak katalogu zrodla/, a drzewo ma źródła z importu: usunięcia źródeł wstrzymane.')
+        ->expectsOutputToContain('Usunięte w repo: 0')
+        ->expectsOutputToContain('Nie do oceny: 2')
+        ->expectsOutputToContain('nie do oceny: brak katalogu zrodla/')
+        ->expectsOutputToContain('Nic do zapisania.')
+        ->assertSuccessful();
+
+    expect($author->tree->sources()->whereNotNull('repo_id')->orderBy('repo_id')->pluck('repo_id')->all())->toBe(['ZR-0001', 'ZR-0003'])
+        ->and($author->tree->events()->where('repo_id', 'O-0001/urodzenie')->firstOrFail()->sources()->count())->toBe(1)
         ->and(cmdSrcState($other->tree))->toBe($otherBefore);
 });
 

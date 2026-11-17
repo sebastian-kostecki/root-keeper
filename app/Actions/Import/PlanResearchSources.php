@@ -316,8 +316,12 @@ class PlanResearchSources
         $items = [];
         $kept = 0;
 
+        $kindLabel = $source->kind === SourceKind::MetricalRecord && $research->kind !== SourceKind::MetricalRecord
+            ? 'Rodzaj (typ aktu i parafia zostaną wyczyszczone)'
+            : 'Rodzaj';
+
         foreach ([
-            ['kind', 'Rodzaj', 'rodzaj', $research->kind->value, $source->kind->value, SourceKind::class, $research->kind],
+            ['kind', $kindLabel, 'rodzaj', $research->kind->value, $source->kind->value, SourceKind::class, $research->kind],
             ['record_type', 'Typ aktu', 'typ', $research->recordType?->value, $source->record_type?->value, SourceRecordType::class, $research->recordType],
             ['name', 'Nazwa', 'nazwa', PlanImport::cleanText($research->name), PlanImport::cleanText($source->name), null, PlanImport::cleanText($research->name)],
             ['year', 'Rok', 'rok', $research->year === null ? null : (string) $research->year, $source->year === null ? null : (string) $source->year, null, $research->year === null ? null : (string) $research->year],

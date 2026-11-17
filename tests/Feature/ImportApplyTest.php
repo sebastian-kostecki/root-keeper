@@ -15,6 +15,7 @@ use App\Enums\MarriageForm;
 use App\Enums\ParishKind;
 use App\Enums\ParticipantRole;
 use App\Enums\Religion;
+use App\Enums\SourceKind;
 use App\Enums\SourceRecordType;
 use App\Models\Cemetery;
 use App\Models\Event;
@@ -1954,7 +1955,7 @@ const APPLY_SRC_FULL = "    typ: urodzenie\n    nazwa: Akt urodzenia 15/1837\n  
  * copies the scans from it.
  *
  * @param  array<string, string>  $blocks  repo id of a person => block body without id and version
- * @param  array<string, array{extra?: string, shade?: int}>  $sources  repo id of a source => extra lines of its entry and the shade of its scan
+ * @param  array<string, array{extra?: string, shade?: int, kind?: string}>  $sources  repo id of a source => extra lines of its entry, the shade of its scan and its `rodzaj` (akt by default)
  * @return string the root of the repo
  */
 function applySrcRepo(array $blocks, array $sources): string
@@ -1973,7 +1974,7 @@ function applySrcRepo(array $blocks, array $sources): string
         $image = imagecreatetruecolor(40, 30);
         imagefill($image, 0, 0, imagecolorallocate($image, $spec['shade'] ?? 20, 20, 20));
         imagejpeg($image, "{$repo}/zrodla/skany/{$id}.jpg");
-        $entries .= "  - id: {$id}\n    plik: zrodla/skany/{$id}.jpg\n    rodzaj: akt\n".($spec['extra'] ?? '');
+        $entries .= "  - id: {$id}\n    plik: zrodla/skany/{$id}.jpg\n    rodzaj: ".($spec['kind'] ?? 'akt')."\n".($spec['extra'] ?? '');
     }
 
     if ($sources !== []) {
@@ -2214,6 +2215,67 @@ test('replaces the scan of a known source for an approved change and deletes the
         ->and($other->sources()->count())->toBe(1);
 })->with([[false], [true]]);
 
+test('writes the approved description changes of a known source that turns into a metrical record', function () {
+    Storage::fake('local');
+    [$tree, $other] = applySrcTrees();
+    $blocks = ['O-0001' => applySrcPerson(['ZR-0001' => '15/1837'])];
+    applySrcImport($tree, applySrcRepo($blocks, ['ZR-0001' => ['kind' => 'inne', 'extra' => "    nazwa: Akt urodzenia 15/1837\n"]]));
+    $repo = applySrcRepo($blocks, ['ZR-0001' => ['extra' => APPLY_SRC_FULL]]);
+    $plan = applySrcPlan($tree, $repo);
+    $otherState = reimportTreeState($other);
+
+    $result = app(ApplyImport::class)->handle($tree, $plan, new ChangeApprovals, new ConflictResolutions);
+
+    $source = $tree->sources()->where('repo_id', 'ZR-0001')->firstOrFail();
+
+    expect([$source->kind, $source->record_type, $source->year, $source->archive, $source->signature, $source->parish?->dedication])->toBe([SourceKind::MetricalRecord, SourceRecordType::Birth, 1837, 'AP Przykładowe', '35/1813/0/2.4/58', 'św. Jana'])
+        ->and($result->changedSources)->toBe(1)
+        ->and([applySrcPlan($tree, $repo)->changes, applySrcPlan($tree, $repo)->sourceUpdates])->each->toBe([])
+        ->and(reimportTreeState($other))->toBe($otherState);
+});
+
+test('writes neither the record type nor the parish the author approved when the author keeps a source of another kind', function () {
+    Storage::fake('local');
+    [$tree, $other] = applySrcTrees();
+    $blocks = ['O-0001' => applySrcPerson(['ZR-0001' => '15/1837'])];
+    $sameText = "    nazwa: Akt urodzenia 15/1837\n    rok: 1837\n    archiwum: AP Przykładowe\n    sygnatura: 35/1813/0/2.4/58\n    link: https://example.org/skan/34\n    notatka: skan 34\n";
+    applySrcImport($tree, applySrcRepo($blocks, ['ZR-0001' => ['kind' => 'inne', 'extra' => $sameText]]));
+    $repo = applySrcRepo($blocks, ['ZR-0001' => ['extra' => APPLY_SRC_FULL]]);
+    $plan = applySrcPlan($tree, $repo);
+    $sourceBefore = $tree->sources()->where('repo_id', 'ZR-0001')->firstOrFail()->toArray();
+    $otherState = reimportTreeState($other);
+
+    $result = app(ApplyImport::class)->handle($tree, $plan, new ChangeApprovals(['ZR-0001/rodzaj']), new ConflictResolutions);
+
+    expect(array_map(fn ($change): string => $change->key, $plan->changes))->toBe(['ZR-0001/rodzaj', 'ZR-0001/typ', 'ZR-0001/parafia'])
+        ->and($tree->sources()->where('repo_id', 'ZR-0001')->firstOrFail()->toArray())->toBe($sourceBefore)
+        ->and($result->changedSources)->toBe(0)
+        ->and(reimportTreeState($other))->toBe($otherState);
+});
+
+test('clears the record type and the parish of a metrical record the repo turns into another kind and says so in the change', function (array $rejected) {
+    Storage::fake('local');
+    [$tree, $other] = applySrcTrees();
+    $blocks = ['O-0001' => applySrcPerson(['ZR-0001' => '15/1837'])];
+    applySrcImport($tree, applySrcRepo($blocks, ['ZR-0001' => ['extra' => APPLY_SRC_FULL]]));
+    $repo = applySrcRepo($blocks, ['ZR-0001' => ['kind' => 'inne', 'extra' => "    nazwa: Akt urodzenia 15/1837\n"]]);
+    $plan = applySrcPlan($tree, $repo);
+    $otherState = reimportTreeState($other);
+
+    $result = app(ApplyImport::class)->handle($tree, $plan, new ChangeApprovals($rejected), new ConflictResolutions);
+
+    $source = $tree->sources()->where('repo_id', 'ZR-0001')->firstOrFail();
+    $kindChange = collect($plan->changes)->firstOrFail(fn ($change): bool => $change->key === 'ZR-0001/rodzaj');
+
+    expect($kindChange->label)->toBe('Rodzaj (typ aktu i parafia zostaną wyczyszczone)')
+        ->and([$source->kind, $source->record_type, $source->parish_id, $source->year, $source->archive])->toBe([SourceKind::Other, null, null, null, null])
+        ->and($result->changedSources)->toBe(1)
+        ->and(reimportTreeState($other))->toBe($otherState);
+})->with([
+    'every change approved' => [[]],
+    'the parish kept from the app' => [['ZR-0001/parafia']],
+]);
+
 test('removes a source the repo dropped with its links and files, or only detaches it from the repo', function (string $decision) {
     Storage::fake('local');
     [$tree, $other] = applySrcTrees();
@@ -2293,6 +2355,29 @@ test('leaves the disk without the new files and the database unchanged when the 
         ->and(Storage::disk('local')->exists((string) $old->thumbnail_path))->toBeTrue()
         ->and($old->fresh()->path)->toBe($old->path)
         ->and($tree->sources()->count())->toBe(1)
+        ->and(reimportTreeState($other))->toBe($otherState);
+});
+
+test('keeps the copied scans when the import fails only after the commit', function () {
+    Storage::fake('local');
+    [$tree, $other] = applySrcTrees();
+    $repo = applySrcRepo(['O-0001' => applySrcPerson(['ZR-0001' => '15/1837'])], ['ZR-0001' => ['extra' => APPLY_SRC_FULL]]);
+    $plan = applySrcPlan($tree, $repo);
+    $otherState = reimportTreeState($other);
+    Source::created(function (): void {
+        DB::afterCommit(fn () => throw new RuntimeException('Po zapisie.'));
+    });
+
+    try {
+        expect(fn () => app(ApplyImport::class)->handle($tree, $plan, new ChangeApprovals, new ConflictResolutions))->toThrow(RuntimeException::class, 'Po zapisie.');
+    } finally {
+        Source::flushEventListeners();
+    }
+
+    $source = $tree->sources()->where('repo_id', 'ZR-0001')->firstOrFail();
+
+    expect(Storage::disk('local')->exists($source->path))->toBeTrue()
+        ->and(Storage::disk('local')->exists((string) $source->thumbnail_path))->toBeTrue()
         ->and(reimportTreeState($other))->toBe($otherState);
 });
 

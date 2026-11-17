@@ -97,7 +97,7 @@ class ApplyImport
         try {
             return $this->write($tree, $plan, $approvals, $resolutions, $copied);
         } catch (Throwable $exception) {
-            if ($copied->paths() !== [] && ! Storage::disk('local')->delete($copied->paths())) {
+            if ($copied->rolledBack() && $copied->paths() !== [] && ! Storage::disk('local')->delete($copied->paths())) {
                 report(new RuntimeException('Unable to delete copied source file(s) ['.implode(', ', $copied->paths()).'].'));
             }
 
@@ -350,6 +350,7 @@ class ApplyImport
             $this->rememberSnapshots($tree, $plan, $written, $answeredNotes);
 
             $changesRejected = count(array_filter($plan->changes, fn (PlannedChange $change): bool => $approvals->rejects($change->key)));
+            $copied->bodyFinished();
 
             return new ImportResult(
                 persons: count($newPersons),

@@ -42,7 +42,8 @@ class ClassifyRepoRecords
      *
      * A source (`ZR-0012`) names no person, so it is decided apart: known, new, deleted in the app, kept deleted or removed
      * in the repo. A source entry that was skipped is not one removed in the repo. An entry skipped without a readable id
-     * (or a whole file of `zrodla/` that could not be read) holds back only the removal of sources, never of persons, and
+     * (or a whole file of `zrodla/` that could not be read, or a repo without `zrodla/`) holds back only the removal of
+     * sources, never of persons, and
      * a skipped person without a readable id never holds back sources.
      *
      * The other keys of a person that is removed in the repo, deleted in the app or kept deleted are decided with the
@@ -55,7 +56,7 @@ class ClassifyRepoRecords
         $snapshots = $tree->repoSnapshots()->get()->keyBy('repo_id')->all();
         $skippedIds = array_flip($reading->skippedRepoIds());
         $holdBack = $reading->hasSkippedWithoutId();
-        $holdBackSources = $reading->hasSkippedSourceWithoutId();
+        $holdBackSources = $reading->holdsBackSourceRemovals();
         $skippedSources = array_flip($reading->skippedSourceIds());
         $dropped = array_flip($reading->droppedMarriageKeys);
 

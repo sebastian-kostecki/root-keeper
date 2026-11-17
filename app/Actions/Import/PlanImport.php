@@ -553,7 +553,9 @@ class PlanImport
         [$removals, $detachedBirths, $forgotten] = $this->planRemovals($classes, $decisions);
         $keptDeleted = $this->keptDeletedSnapshots($classes, $decisions, $reading);
         $unassessable = array_map(
-            fn (RepoRecord $entry): ImportIssue => new ImportIssue($entry->key, 'nie do oceny: popraw pominięte wpisy repo'),
+            fn (RepoRecord $entry): ImportIssue => new ImportIssue($entry->key, $entry->kind === RepoKeyKind::Source && ! $reading->hasSourcesDirectory
+                ? 'nie do oceny: brak katalogu zrodla/'
+                : 'nie do oceny: popraw pominięte wpisy repo'),
             $classes->unassessable,
         );
 

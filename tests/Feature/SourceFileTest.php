@@ -6,6 +6,7 @@ use App\Actions\Sources\StoreSource;
 use App\Enums\SourceKind;
 use App\Models\Source;
 use App\Models\Tree;
+use Illuminate\Filesystem\Filesystem;
 use Illuminate\Http\File;
 use Illuminate\Support\Facades\Storage;
 
@@ -15,6 +16,10 @@ beforeEach(function () {
 
 afterEach(function () {
     Source::flushEventListeners();
+
+    foreach (glob(sys_get_temp_dir().'/source-file-test-'.getmypid().'-*') ?: [] as $directory) {
+        (new Filesystem)->deleteDirectory($directory);
+    }
 });
 
 /**
@@ -22,7 +27,7 @@ afterEach(function () {
  */
 function diskScan(int $width, int $height, string $name = 'skan-repo.jpg'): File
 {
-    $directory = sys_get_temp_dir().'/source-file-test-'.bin2hex(random_bytes(6));
+    $directory = sys_get_temp_dir().'/source-file-test-'.getmypid().'-'.bin2hex(random_bytes(6));
     mkdir($directory);
 
     $image = imagecreatetruecolor($width, $height);

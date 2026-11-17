@@ -126,13 +126,14 @@ function candidateIds(SourceMatches $matches, string $repoId): array
 test('a manual source on the matched birth is a candidate for the source the person cites', function () {
     $tree = sourceTwinTree();
     $scan = manualScan($tree, ['record_type' => SourceRecordType::Birth, 'year' => 1837]);
-    [$person] = personWithBirth($tree, [$scan]);
+    [$person, $birth] = personWithBirth($tree, [$scan]);
 
     $matches = matchTemporarySources($tree, ['O-0001' => bornCiting(['ZR-0001'])], ['ZR-0001' => "    typ: urodzenie\n    rok: 1837\n"], matched: ['O-0001' => $person->id]);
 
     expect(array_keys($matches->matches))->toBe(['ZR-0001'])
         ->and(candidateIds($matches, 'ZR-0001'))->toBe([$scan->id])
-        ->and($matches->matches['ZR-0001']->source->id)->toBe('ZR-0001');
+        ->and($matches->matches['ZR-0001']->source->id)->toBe('ZR-0001')
+        ->and(array_map(fn (Event $event): int => $event->id, $matches->matches['ZR-0001']->events))->toBe([$birth->id]);
 });
 
 test('a manual source on an event found by its repo id is a candidate for a person the tree already holds', function () {

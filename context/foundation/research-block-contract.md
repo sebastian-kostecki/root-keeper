@@ -122,13 +122,15 @@ Wartość spoza listy (np. „greckokatolickie”) pomija wpis z powodem.
 
 ### Pominięcie a ostrzeżenie (źródła)
 
-**Pominięcie wpisu** (reszta pliku idzie dalej): brak `plik` („brak skanu — źródło wejdzie, gdy skan pojawi się w repo”), plik nie istnieje, plik poza repo (ścieżka bezwzględna, `..`, dowiązanie poza repo), PDF („zapisz skan jako JPG”), inny format niż jpg, png, webp (rozszerzenie i zawartość), plik większy niż 20 MB, `rodzaj: nagrobek`, zły `id`, zła wartość `rodzaj`, `typ`, `wyznanie`, `parafia.rodzaj`, zły `rok` albo `link`, duplikat `id`.
+**Pominięcie wpisu** (reszta pliku idzie dalej): brak `plik` („brak skanu — źródło wejdzie, gdy skan pojawi się w repo”), plik nie istnieje, plik poza repo (ścieżka bezwzględna, `..`, dowiązanie poza repo), PDF („zapisz skan jako JPG”), inny format niż jpg, png, webp (rozszerzenie i zawartość), plik większy niż 20 MB, `rodzaj: nagrobek`, zły `id`, zła wartość `rodzaj`, `typ`, `wyznanie`, `parafia.rodzaj`, zły `rok` albo `link`, duplikat `id` (pominięte są wszystkie wpisy z tym `id`, także poprawny, gdy drugi został pominięty z innego powodu).
 
-**Pominięcie pliku**: błąd składni YAML, brak albo zła `wersja`, `skany` niebędące listą.
+**Pominięcie pliku**: błąd składni YAML, brak albo zła `wersja`, `skany` niebędące listą, plik `.md` będący dowiązaniem poza repo („Plik poza repo”).
 
 **Ostrzeżenie**: nieznany klucz, `typ` lub `parafia` przy `rodzaj: inne` (pole pominięte), `archiwum` wygląda na sygnaturę (cyfra po przecinku), ten sam plik skanu pod dwoma `id`, odwołanie `zrodla` do `id` bez poprawnego wpisu („źródło ZR-… nie istnieje albo zostało pominięte”), powtórzone `id` w `zrodla` jednego zdarzenia, rozbieżne `zrodla` ślubu u obojga małżonków (małżeństwo pominięte).
 
 Plik w `zrodla/` bez frontmattera to „bez bloku”, nie błąd. Aplikacja tylko czyta skan i kopiuje go do własnego magazynu; nigdy nie przenosi ani nie usuwa pliku w repo.
+
+Brak katalogu `zrodla/` to zero źródeł w raporcie, ale nie „wszystkie źródła usunięte w repo”: gdy drzewo ma źródła z importu, usunięcia źródeł są wstrzymane z ostrzeżeniem, bo katalog mógł zostać przeniesiony albo niezsynchronizowany. Żeby usunąć z aplikacji wszystkie źródła z repo, zostaw pusty katalog `zrodla/`.
 
 ## Miejsca
 

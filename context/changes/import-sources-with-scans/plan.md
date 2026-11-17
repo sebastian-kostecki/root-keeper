@@ -161,6 +161,9 @@ Wyjątki:
 Nowe parafie wchodzą przez tabelę „Zatwierdź wszystkie / Przejrzyj pojedynczo” („Dodaj do spisu / Bez parafii”). Pamięć źródła trzyma `parafia` (kanoniczny tekst `miejscowość|wyznanie|rodzaj|wezwanie`) i `parafia_id` (token), a porównanie idzie tokenami, jak `miejsce_id`.
 
 **Wstrzymanie usunięć tylko dla źródeł.** Plik w `zrodla/` z błędem YAML albo wpis bez czytelnego ID wstrzymuje tylko usuwanie źródeł („usunięte w repo” dla kluczy `ZR-`). Osób nie wstrzymuje. Wpis pominięty z czytelnym ID chroni tylko swoje źródło.
+- *Poprawka z przeglądu (2026-11-16, runda 2, F1):* brak katalogu `zrodla/` też wstrzymuje usunięcia źródeł, z ostrzeżeniem w komendzie, gdy drzewo ma źródła z importu. Inaczej przeniesiony albo niezsynchronizowany katalog dawałby „usunięte w repo” dla każdego źródła, domyślne „odłącz”, a przy kolejnym imporcie drugą kopię każdego skanu. Usunięcie wszystkich źródeł wymaga pustego katalogu `zrodla/`.
+
+**Pola tylko dla aktu.** *Poprawka z przeglądu (2026-11-16, runda 2, F2):* `UpdateSource` zeruje typ i parafię źródła, które nie jest aktem. Gdy po odpowiedziach autora znane źródło nie jest aktem, zapis pomija zmiany typu i parafii (jak „Zostaw”) i ich nie liczy. Zmiana rodzaju z aktu na inny ma etykietę „Rodzaj (typ aktu i parafia zostaną wyczyszczone)”.
 
 ## Faza 1: Źródło gotowe na import
 

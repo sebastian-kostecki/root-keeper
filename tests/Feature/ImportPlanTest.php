@@ -2040,7 +2040,25 @@ function srcTwinTrees(ResearchRepoReading $reading, bool $rememberLinks = true):
 
 const SRC_ONE = ['ZR-0001' => ['extra' => "    nazwa: Akt urodzenia 15/1837\n    rok: 1837\n    archiwum: AP Przykładowe\n"]];
 
+/**
+ * Another account with the locality Lipnica, its Roman Catholic parish and its civil registry office, as the repo
+ * names them.
+ *
+ * @return array{0: Parish, 1: Parish}
+ */
+function srcOtherLipnica(): array
+{
+    $other = User::factory()->create()->tree;
+    $seat = Locality::factory()->for($other)->create(['name' => 'Lipnica']);
+
+    return [
+        Parish::factory()->seatedIn($seat)->create(['religion' => Religion::RomanCatholic]),
+        Parish::factory()->seatedIn($seat)->create(['kind' => ParishKind::CivilRegistry]),
+    ];
+}
+
 test('plans new sources with a sure, a new and no parish and with the links of a birth and a wedding', function () {
+    $foreign = srcOtherLipnica();
     $tree = User::factory()->create()->tree;
     $seat = Locality::factory()->for($tree)->create(['name' => 'Lipnica']);
     $sure = Parish::factory()->seatedIn($seat)->create(['religion' => Religion::RomanCatholic]);
@@ -2068,10 +2086,13 @@ test('plans new sources with a sure, a new and no parish and with the links of a
         ->and($plan->snapshots['ZR-0001']['plik_hash'])->toBe($reading->sources['ZR-0001']->scanHash)
         ->and($plan->snapshots['ZR-0003']['parafia_id'])->toBeNull()
         ->and($plan->snapshots['O-0001/urodzenie']['zrodla'])->toBe('ZR-0001=15/1837;ZR-0002=')
-        ->and($plan->snapshots['O-0001+O-0002/slub']['zrodla'])->toBe('ZR-0003=7/1860');
+        ->and($plan->snapshots['O-0001+O-0002/slub']['zrodla'])->toBe('ZR-0003=7/1860')
+        ->and(array_values($plan->newParishes)[0]->localityId)->toBe($seat->id)
+        ->and(collect($foreign)->pluck('id')->all())->not->toContain($bySource['ZR-0001']->parish->parishId);
 });
 
 test('leaves out a new parish the author answered with no parish', function () {
+    srcOtherLipnica();
     $tree = User::factory()->create()->tree;
     Locality::factory()->for($tree)->create(['name' => 'Lipnica']);
     $reading = srcReading([], ['ZR-0001' => ['extra' => "    parafia:\n      miejscowosc: Lipnica\n"]]);
@@ -2084,6 +2105,8 @@ test('leaves out a new parish the author answered with no parish', function () {
 });
 
 test('rejects decisions about parishes and sources that import did not ask about', function () {
+    [$foreignParish] = srcOtherLipnica();
+    $foreignSource = Source::factory()->create(['tree_id' => $foreignParish->tree_id]);
     $tree = User::factory()->create()->tree;
     Locality::factory()->for($tree)->create(['name' => 'Lipnica']);
     $reading = srcReading([], ['ZR-0001' => ['extra' => "    parafia:\n      miejscowosc: Lipnica\n"]]);
@@ -2091,6 +2114,7 @@ test('rejects decisions about parishes and sources that import did not ask about
 
     expect(fn () => srcPlan($tree, $reading, places: new PlaceDecisions(parishes: ['nie|ma||' => PlaceDecisions::NEW])))->toThrow(InvalidArgumentException::class)
         ->and(fn () => srcPlan($tree, $reading, sources: new SourceDecisions(['ZR-0001' => $other->id])))->toThrow(InvalidArgumentException::class)
+        ->and(fn () => srcPlan($tree, $reading, sources: new SourceDecisions(['ZR-0001' => $foreignSource->id])))->toThrow(InvalidArgumentException::class)
         ->and(fn () => srcPlan($tree, $reading, sources: new SourceDecisions(['ZR-0009' => $other->id])))->toThrow(InvalidArgumentException::class);
 });
 

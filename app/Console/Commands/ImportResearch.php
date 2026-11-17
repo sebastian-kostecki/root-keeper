@@ -9,12 +9,14 @@ use App\Actions\Import\MatchResearchPlaces;
 use App\Actions\Import\MatchResearchSources;
 use App\Actions\Import\PlanImport;
 use App\Actions\Import\ReadResearchRepo;
+use App\Actions\Import\WriteResearchSources;
 use App\Enums\CemeteryMatchKind;
 use App\Enums\DateQualifier;
 use App\Enums\MatchVerdict;
 use App\Enums\ParishMatchKind;
 use App\Enums\PlaceMatchKind;
 use App\Enums\RepoKeyKind;
+use App\Models\Event;
 use App\Models\Person;
 use App\Models\RepoSnapshot;
 use App\Models\Source;
@@ -49,7 +51,6 @@ use App\Support\Import\ResearchDate;
 use App\Support\Import\ResearchPerson;
 use App\Support\Import\ResearchRepoReading;
 use App\Support\Import\SourceDecisions;
-use App\Support\Import\SourceLinks;
 use App\Support\Import\SourceMatches;
 use App\Support\Import\ValueConflict;
 use Illuminate\Console\Attributes\Description;
@@ -111,6 +112,10 @@ class ImportResearch extends Command
         }
 
         $classes = $classifyRepoRecords->handle($tree, $reading);
+
+        if (! $reading->hasSourcesDirectory && $tree->sources()->whereNotNull('repo_id')->exists()) {
+            $this->warn('Brak katalogu zrodla/, a drzewo ma źródła z importu: usunięcia źródeł wstrzymane. Sprawdź ścieżkę i czy repo jest zsynchronizowane.');
+        }
 
         $this->stateSummary($classes);
 
@@ -175,7 +180,7 @@ class ImportResearch extends Command
         $removalCount = count(array_filter($plan->removals, fn (PlannedRemoval $removal): bool => $removal->decision === ImportDecisions::DELETE));
         $memoryCount = count($plan->changedSnapshots($stored)) + count(array_filter($plan->forgottenSnapshots, fn (string $key): bool => isset($stored[$key])));
         $sourceCount = count($plan->newSources) + count($plan->mergedSources);
-        $linkCount = $this->linkCount($plan);
+        $linkCount = $this->linkCount($plan, $approvals, $resolutions);
         $parishCount = count($plan->newParishes);
         $sourcesText = $sourceCount + $linkCount + $parishCount > 0
             ? sprintf(', źródła %d, powiązania z faktami %d, nowe parafie %d', $sourceCount, $linkCount, $parishCount)
@@ -546,13 +551,13 @@ class ImportResearch extends Command
             $source = $match->source;
             $name = PlannedSourceUpdate::labelOf($source);
 
-            $rows = [['Z repo', $source->id, PlanImport::cleanText($source->name) ?? '—', basename($source->scanPath), $source->recordType?->label() ?? '—', $source->year ?? '—', '—']];
+            $repoFacts = $this->factsText($match->events);
+            $rows = [['Z repo', $source->id, PlanImport::cleanText($source->name) ?? '—', basename($source->scanPath), $source->recordType?->label() ?? '—', $source->year ?? '—', $repoFacts]];
             $options = ['new' => 'Dodaj jako nowe'];
             $labels = array_count_values(array_map(fn (Source $candidate): string => $candidate->original_name, $match->candidates));
 
             foreach ($match->candidates as $candidate) {
-                $facts = $candidate->events->map(fn ($event): string => trim($event->type->label().' '.(ResearchDate::fromEvent($event)?->label() ?? '')))->implode(', ');
-                $rows[] = ['Ręczne', '#'.$candidate->id, $candidate->name ?? '—', $candidate->original_name, $candidate->record_type?->label() ?? '—', $candidate->year ?? '—', $facts === '' ? '—' : $facts];
+                $rows[] = ['Ręczne', '#'.$candidate->id, $candidate->name ?? '—', $candidate->original_name, $candidate->record_type?->label() ?? '—', $candidate->year ?? '—', $this->factsText($candidate->events->all())];
 
                 if (! isset($taken[$candidate->id])) {
                     $options['source:'.$candidate->id] = 'Połącz z '.$candidate->original_name.($labels[$candidate->original_name] > 1 ? ' (#'.$candidate->id.')' : '');
@@ -575,45 +580,30 @@ class ImportResearch extends Command
         return new SourceDecisions($merges);
     }
 
+    /**
+     * The facts of a source in the question about the same scan: the type and the date of each event, or a dash.
+     *
+     * @param  array<int, Event>  $events
+     */
+    private function factsText(array $events): string
+    {
+        $facts = implode(', ', array_map(fn (Event $event): string => trim($event->type->label().' '.(ResearchDate::fromEvent($event)?->label() ?? '')), $events));
+
+        return $facts === '' ? '—' : $facts;
+    }
+
     private function hasSourceWork(ImportPlan $plan): bool
     {
         return $plan->newSources !== [] || $plan->mergedSources !== [] || $plan->sourceUpdates !== [] || $plan->newParishes !== [];
     }
 
     /**
-     * The links of facts to sources the plan writes: the ones created together with records (the births and deaths of new, matched and known persons, new weddings, restored records and sources), the ones a joined source takes, and the links the repo gives to existing facts through fills and changes (counted as the links the fact ends with). A conflict is left out, because the author settles it later.
+     * The links of facts to sources the write leaves set for these answers, counted by the same link plan the write
+     * follows ({@see WriteResearchSources::plannedLinkCount()}).
      */
-    private function linkCount(ImportPlan $plan): int
+    private function linkCount(ImportPlan $plan, ChangeApprovals $approvals, ConflictResolutions $resolutions): int
     {
-        $links = 0;
-
-        foreach ([...$plan->persons, ...$plan->matched, ...$plan->updates] as $planned) {
-            $links += count($planned->birthSources) + count($planned->deathSources);
-        }
-
-        foreach ([...$plan->matched, ...$plan->updates] as $planned) {
-            foreach ($planned->fills as $fill) {
-                $links += $fill->value instanceof SourceLinks ? count($fill->value->links) : 0;
-            }
-        }
-
-        foreach ($plan->marriages as $marriage) {
-            $links += count($marriage->sources) + ($marriage->sourceFill?->value instanceof SourceLinks ? count($marriage->sourceFill->value->links) : 0);
-        }
-
-        foreach ($plan->changes as $change) {
-            $links += $change->repoValue instanceof SourceLinks ? count($change->repoValue->links) : 0;
-        }
-
-        foreach ($plan->mergedSources as $merge) {
-            $links += count($merge->entries);
-        }
-
-        foreach ($plan->restorations as $restoration) {
-            $links += count($restoration->sources) + ($restoration->source === null ? 0 : count($restoration->source->entries));
-        }
-
-        return $links;
+        return app(WriteResearchSources::class)->plannedLinkCount($plan, $approvals, $resolutions);
     }
 
     /**
@@ -1200,7 +1190,7 @@ class ImportResearch extends Command
                 count($plan->newSources),
                 count($plan->mergedSources),
                 count(array_filter($plan->changes, fn (PlannedChange $change): bool => $change->field === 'file')),
-                $this->linkCount($plan),
+                $this->linkCount($plan, new ChangeApprovals, new ConflictResolutions),
                 count($plan->newParishes),
             ));
         }

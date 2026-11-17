@@ -17,6 +17,7 @@ final readonly class ResearchRepoReading
      * @param  int  $sourceFilesScanned  the .md files under zrodla/
      * @param  list<string>  $sourceFilesWithoutBlock
      * @param  int  $sourceScanEntries  the scan entries the blocks list, read or skipped
+     * @param  bool  $hasSourcesDirectory  whether the repo has zrodla/ at all; without it no source can be judged removed
      */
     public function __construct(
         public array $persons,
@@ -33,7 +34,17 @@ final readonly class ResearchRepoReading
         public int $sourceFilesScanned = 0,
         public array $sourceFilesWithoutBlock = [],
         public int $sourceScanEntries = 0,
+        public bool $hasSourcesDirectory = true,
     ) {}
+
+    /**
+     * Whether the removal of sources must wait: zrodla/ is missing (moved, renamed or not synced, which would make every
+     * imported source look removed) or an entry or file under it was skipped without a readable id.
+     */
+    public function holdsBackSourceRemovals(): bool
+    {
+        return ! $this->hasSourcesDirectory || $this->hasSkippedSourceWithoutId();
+    }
 
     /**
      * The repo ids of source entries that were skipped, so that their source is not a removed one. Sorted.

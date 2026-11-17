@@ -263,6 +263,26 @@ class WriteResearchSources
     }
 
     /**
+     * How many links of facts to sources the write leaves set for these answers, each pair of an event and a source
+     * once: the links of the facts and sources it creates, joins or restores, and the whole set of links of the facts
+     * whose links it takes from the repo. Links the author kept from the app are not counted.
+     */
+    public function plannedLinkCount(ImportPlan $plan, ChangeApprovals $approvals, ConflictResolutions $resolutions): int
+    {
+        $pairs = [];
+
+        foreach ($this->linkPlan($plan, $approvals, $resolutions) as $links) {
+            foreach ($links as $eventKey => $sources) {
+                foreach (array_keys($sources) as $sourceId) {
+                    $pairs["{$eventKey}|{$sourceId}"] = true;
+                }
+            }
+        }
+
+        return count($pairs);
+    }
+
+    /**
      * The sources the write copies a scan for: new, restored and joined ones (the repo scan is remembered by its hash) and
      * the known ones whose new scan the author takes.
      *
@@ -507,7 +527,9 @@ class WriteResearchSources
     }
 
     /**
-     * Write the approved changes, the fills and the conflicts settled for the repo into a known source.
+     * Write the approved changes, the fills and the conflicts settled for the repo into a known source. The record type
+     * and the parish belong to a metrical record only, so when the kind the source ends with is another one they are
+     * not taken (as if kept from the app), whatever the author answered about them.
      *
      * @return array{0: bool, 1: bool} whether the source changed and whether its scan was replaced
      */
@@ -522,6 +544,15 @@ class WriteResearchSources
         $source = $tree->sources()->whereKey($update->sourceId)->where('repo_id', $update->source->id)->first()
             ?? throw new RuntimeException("Źródło {$update->source->id} (#{$update->sourceId}) zmieniło się po planowaniu; nic nie zostało zapisane.");
         $source->setRelation('tree', $tree);
+
+        if (($values['kind'] ?? $source->kind) !== SourceKind::MetricalRecord) {
+            unset($values['record_type'], $values['parish']);
+
+            if ($values === []) {
+                return [false, false];
+            }
+        }
+
         $replaceFile = array_key_exists('file', $values);
         unset($values['file']);
 

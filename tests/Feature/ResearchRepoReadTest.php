@@ -586,6 +586,24 @@ test('skips a scan over 20 MB and a symlink that leaves the repo', function () {
         ->and(array_map(fn (ImportIssue $issue): string => $issue->message, $run['reading']->skippedSources))->toBe(['plik skanu większy niż 20 MB', 'plik skanu poza repo']);
 });
 
+test('skips a source file that is a symlink leaving the repo without reading it', function () {
+    $outside = sys_get_temp_dir().'/outside-block-'.uniqid().'.md';
+    file_put_contents($outside, sourceBlock(sourceEntry('ZR-0001')));
+
+    try {
+        $run = readTemporaryRepo([
+            'zrodla/skany/a.jpg' => scanImage(),
+        ], function (string $repo) use ($outside): void {
+            symlink($outside, $repo.'/zrodla/obcy.md');
+        });
+    } finally {
+        unlink($outside);
+    }
+
+    expect($run['reading']->sources)->toBe([])
+        ->and(messagesFor($run['reading']->skippedSources, 'zrodla/obcy.md'))->toBe('Plik poza repo');
+});
+
 test('accepts jpg, png and webp scans', function () {
     $run = readTemporaryRepo([
         'zrodla/skany/a.jpg' => scanImage(),
@@ -610,6 +628,19 @@ test('skips every entry of an id that is written twice, in one file and across f
         ->and(messagesFor($reading->skippedSources, 'zrodla/b/b.md'))->toContain('Powtórzony id ZR-0002 w plikach: zrodla/a.md, zrodla/b/b.md')
         ->and($reading->sourceFilesScanned)->toBe(2)
         ->and($reading->sourceScanEntries)->toBe(5);
+});
+
+test('skips the valid entry of an id whose other entry is skipped', function () {
+    $run = readTemporaryRepo([
+        'zrodla/skany/a.jpg' => scanImage(),
+        'zrodla/a.md' => sourceBlock(sourceEntry('ZR-0001').sourceEntry('ZR-0002')),
+        'zrodla/b.md' => sourceBlock(sourceEntry('ZR-0001', scan: '')),
+    ]);
+    $reading = $run['reading'];
+
+    expect(array_keys($reading->sources))->toBe(['ZR-0002'])
+        ->and($reading->skippedSourceIds())->toBe(['ZR-0001'])
+        ->and(messagesFor($reading->skippedSources, 'zrodla/a.md'))->toBe('Powtórzony id ZR-0001 w plikach: zrodla/a.md, zrodla/b.md');
 });
 
 test('skips a whole source file with a YAML error, a bad version or skany that is not a list', function (string $contents, string $reason) {
