@@ -9,7 +9,7 @@ main_goal: market-feedback
 top_blocker: decisions
 milestone_id: research-in-the-tree
 milestone_seq: 3
-milestone_status: open
+milestone_status: done
 ---
 
 # Roadmap: root-keeper
@@ -21,7 +21,7 @@ milestone_status: open
 
 ## Milestone
 
-**M-3: Badania z repo widoczne w drzewie** — Status: open
+**M-3: Badania z repo widoczne w drzewie** — Status: done
 
 - **Intent:** Autor przenosi swoich przodków z repo badawczego do drzewa komendą importu zamiast przepisywać ich ręcznie: komenda czyta bloki danych z plików, pokazuje podsumowanie, dopasowania i konflikty, zapisuje tylko to, co autor zatwierdził, a kolejny import aktualizuje zamiast dublować. Ręczne poprawki, dane dodane tylko w aplikacji i cudze drzewa zostają nietknięte.
 - **Source materials:** `context/foundation/prd.md` (v1 z 2026-10-23, zmiana brownfield; poprzednie PRD w `context/foundation/archive/prd-v1.md` – `prd-v5.md`), `context/foundation/shape-notes.md` (blok „Forward: technical-roadmap”).
@@ -252,6 +252,7 @@ Brak. Każdy element przekrojowy wchodzi w pierwszym wycinku, który go używa: 
 
 - **M-1: Drzewo potwierdzone źródłami** (`sourced-family-tree`) — closed 2026-10-04. Fakty urodzenia, małżeństwa i zgonu prowadzą do źródeł każdego rodzaju, podgląd osoby w modalu, relacje dodawane z drzewa (prd-v1 – prd-v4; spis miejscowości odłożony).
 - **M-2: Opisane źródła, spis miejscowości i czytelne drzewo** (`described-sources-and-places`) — closed 2026-10-11. Akt opisany parafią, rokiem, typem i archiwum; spis miejscowości używany w faktach, nagrobkach i zamieszkaniu; drzewo dopasowane do ekranu z panelami bocznymi osoby, źródła i małżeństwa, widok przodków oraz zdjęcie osoby na karcie (prd-v1, FR-001 – FR-029).
+- **M-3: Badania z repo widoczne w drzewie** (`research-in-the-tree`) — closed 2026-11-17. Komenda importu przenosi przodków z numerem Ahnentafel z repo badawczego: osoby, relacje, daty nieostre, miejsca dopasowane do spisu, źródła ze skanami, poziom pewności A–D i warianty nazwiska; dopasowanie do ręcznych wpisów, ponowny import z podglądem zmian i konfliktów, import „od zera” poza produkcją (prd v1 z 2026-10-23, FR-001 – FR-011, FR-014 – FR-020).
 
 ## Done
 
