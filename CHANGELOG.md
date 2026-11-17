@@ -6,6 +6,10 @@ Numeracja wersji: wersja minor odpowiada kamieniowi milowemu z `context/foundati
 
 ## [Unreleased]
 
+### Dodane
+
+- Repo badawcze na produkcji: klon git na hoście zamontowany w kontenerze tylko do odczytu pod `/research` (`RESEARCH_REPO_HOST_DIR`), więc `import:research <email> /research` działa na produkcji.
+
 ## [0.3.0] - 2026-11-17
 
 Kamień milowy M-3 „Badania z repo widoczne w drzewie” oraz zmiany od 0.2.0: odświeżony wygląd drzewa, list i miejsc, cmentarze i urzędy w spisie miejsc, a także poprawki produkcyjne.
