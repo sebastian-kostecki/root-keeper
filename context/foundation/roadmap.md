@@ -46,12 +46,12 @@ Autor prowadzi badania genealogiczne w repo markdown (dziś 283 pliki osób, dzi
 | S-02 | first-import-into-empty-tree       | zaimportować przodków do pustego drzewa po podsumowaniu i zatwierdzeniu i zobaczyć ich z relacjami i datami      | S-01, S-07    | US-01, FR-003, FR-005, FR-006, FR-008, FR-009, FR-016 | done |
 | S-03 | first-import-matches-hand-entered  | przy pierwszym imporcie dopasować osoby z repo do ręcznie wpisanych i rozstrzygnąć przypadki wątpliwe            | S-02          | US-01, FR-005, FR-006, FR-007, FR-014                 | done |
 | S-04 | reimport-changes-and-conflicts     | ponowić import i w podglądzie zatwierdzać nowe, zmienione, konflikty z ręcznymi zmianami i usunięte w repo        | S-02          | US-02, FR-005, FR-006, FR-008, FR-014, FR-015         | done |
-| S-05 | import-places-matched-to-gazetteer | dostać miejsca wydarzeń (także pochowanie na cmentarzu) dopasowane do spisu i potwierdzić nowe w podglądzie      | S-02          | FR-009, FR-010, FR-017                                | proposed |
-| S-06 | import-sources-with-scans          | dostać źródła z opisem i skanem podpięte do faktów z numerem wpisu                                             | S-05          | FR-001, FR-011, US-01                                 | blocked  |
+| S-05 | import-places-matched-to-gazetteer | dostać miejsca wydarzeń (także pochowanie na cmentarzu) dopasowane do spisu i potwierdzić nowe w podglądzie      | S-02          | FR-009, FR-010, FR-017                                | done     |
+| S-06 | import-sources-with-scans          | dostać źródła z opisem i skanem podpięte do faktów z numerem wpisu                                             | S-05          | FR-001, FR-011, US-01                                 | done        |
 | S-07 | fuzzy-event-dates                  | zapisać i zobaczyć datę wydarzenia jako zakres lat, „przed” albo „po” — ręcznie i z importu                      | —             | FR-009, FR-015                                        | done |
-| S-08 | fact-confidence-level              | zobaczyć i ustawić przy fakcie poziom pewności A–D — ręcznie i z importu                                        | S-02          | FR-018, FR-015                                        | proposed |
-| S-09 | surname-variant-search             | dostać warianty zapisu nazwiska z importu i znaleźć osobę w wyszukiwarce po każdym wariancie                     | S-02          | US-03, FR-019                                         | proposed |
-| S-10 | import-from-scratch-outside-prod   | poza produkcją zaimportować „od zera”, czyszcząc najpierw osoby i fakty drzewa konta (z potwierdzeniem)          | S-02          | FR-020                                                | done        |
+| S-08 | fact-confidence-level              | zobaczyć i ustawić przy fakcie poziom pewności A–D — ręcznie i z importu                                        | S-02          | FR-018, FR-015                                        | ready    |
+| S-09 | surname-variant-search             | dostać warianty zapisu nazwiska z importu i znaleźć osobę w wyszukiwarce po każdym wariancie                     | S-02          | US-03, FR-019                                         | done |
+| S-10 | import-from-scratch-outside-prod   | poza produkcją zaimportować „od zera”, czyszcząc najpierw osoby i fakty drzewa konta (z potwierdzeniem)          | S-02          | FR-020                                                | done     |
 
 ## Streams
 
@@ -59,8 +59,8 @@ Navigation aid — groups items that share a Prerequisites chain. Canonical orde
 
 | Stream | Theme                         | Chain                                       | Note                                                                                                                              |
 | ------ | ----------------------------- | ------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| A      | Tor importu i tożsamość osób  | `S-01` → `S-02` → `S-03`, `S-04`            | Rdzeń: najpierw prawdziwe pliki, potem gwiazda przewodnia `S-02`; `S-03` i `S-04` czekają na decyzję o podglądzie w terminalu.     |
-| B      | Miejsca i źródła              | `S-05` → `S-06`                             | Dołącza do A w `S-02`; warunek pierwszego importu na produkcji (spis miejsc bez duplikatów), `S-06` czeka na decyzję o źródłach bez skanu. |
+| A      | Tor importu i tożsamość osób  | `S-01` → `S-02` → `S-03`, `S-04`            | Rdzeń: najpierw prawdziwe pliki, potem gwiazda przewodnia `S-02`; cały strumień zrobiony (`S-01` – `S-04`).                          |
+| B      | Miejsca i źródła              | `S-05` → `S-06`                             | Dołącza do A w `S-02`; warunek pierwszego importu na produkcji (spis miejsc bez duplikatów), `S-06` importuje tylko źródła ze skanem (decyzja 2026-11-15). |
 | C      | Szczegóły faktów i osób       | `S-07`, `S-08`, `S-09`, `S-10`              | `S-07` idzie przed `S-02` (decyzja autora 2026-10-23); `S-08` – `S-10` dołączają do A w `S-02`; każda gałąź dodaje jedno pole lub tryb. |
 
 ## Baseline
@@ -151,7 +151,7 @@ Brak. Każdy element przekrojowy wchodzi w pierwszym wycinku, który go używa: 
 - **Unknowns:**
   - Jak miejsce jest zapisane w bloku (sama nazwa, czy z parafią / jednostką nadrzędną), żeby warianty typu Bukinia/Bokinia dały się rozpoznać? Owner: autor. Block: no.
 - **Risk:** Spis miejsc ma dziś tylko dokładne dopasowanie nazw, a repo ma warianty polskie i rosyjskie — każde niepewne dopasowanie idzie do autora zamiast tworzyć duplikat. Razem z `S-03` warunek pierwszego importu na produkcji.
-- **Status:** proposed
+- **Status:** done
 
 ### S-06: Źródła ze skanami podpięte do faktów
 
@@ -162,9 +162,9 @@ Brak. Każdy element przekrojowy wchodzi w pierwszym wycinku, który go używa: 
 - **Parallel with:** S-04, S-07, S-08, S-09, S-10
 - **Blockers:** —
 - **Unknowns:**
-  - Co z opisami źródeł w repo bez skanu (ok. 55 opisów na ok. 21 skanów), skoro źródło w aplikacji zawsze ma plik? Owner: autor. Block: yes.
+  - ~~Co z opisami źródeł w repo bez skanu (ok. 55 opisów na ok. 21 skanów), skoro źródło w aplikacji zawsze ma plik?~~ Rozstrzygnięte przez autora (2026-11-15): import przenosi tylko źródła ze skanem (PRD FR-011 bez zmian); opis bez skanu jest pomijany i wypisany w raporcie z powodem, a kolejny import doda go, gdy skan pojawi się w repo.
 - **Risk:** Najszerszy blok danych (format bloku źródła dochodzi tu, nie w `S-01`) i jedyny wycinek kopiujący pliki; czeka na parafie ze spisu (`S-05`), bo opis aktu wskazuje parafię.
-- **Status:** blocked
+- **Status:** done
 
 ### S-07: Daty nieostre: zakres, przed, po
 
@@ -189,7 +189,7 @@ Brak. Każdy element przekrojowy wchodzi w pierwszym wycinku, który go używa: 
 - **Blockers:** —
 - **Unknowns:** —
 - **Risk:** Nowe puste pole bez przepisywania danych; osobno od `S-07`, bo dotyczy faktu, a nie daty, i może iść równolegle.
-- **Status:** proposed
+- **Status:** ready
 
 ### S-09: Wyszukiwanie po wariantach nazwiska
 
@@ -201,7 +201,7 @@ Brak. Każdy element przekrojowy wchodzi w pierwszym wycinku, który go używa: 
 - **Blockers:** —
 - **Unknowns:** —
 - **Risk:** Mały, samodzielny wycinek; wyszukiwanie dziś obejmuje tylko imię i nazwisko, więc zmienia się zapytanie listy osób, nie jej wygląd.
-- **Status:** proposed
+- **Status:** done
 
 ### S-10: Import „od zera” poza produkcją
 
@@ -219,20 +219,20 @@ Brak. Każdy element przekrojowy wchodzi w pierwszym wycinku, który go używa: 
 
 | Roadmap ID | Change ID                          | Suggested issue title                                        | Ready for `/10x-plan` | Notes |
 | ---------- | ---------------------------------- | ------------------------------------------------------------ | --------------------- | ----- |
-| S-01       | research-blocks-read-and-report    | Import: odczyt bloków danych z repo badawczego i raport      | yes                   | Run `/10x-plan research-blocks-read-and-report`; decyzja o `symfony/yaml` w planie. |
-| S-02       | first-import-into-empty-tree       | Import: pierwszy import przodków do pustego drzewa           | planned               | Gwiazda przewodnia; plan gotowy, implementacja czeka na S-07. |
-| S-03       | first-import-matches-hand-entered  | Import: dopasowanie do osób wpisanych ręcznie                | no                    | Czeka na S-02 i decyzję o podglądzie w terminalu (PRD OQ 4). |
-| S-04       | reimport-changes-and-conflicts     | Import: kolejny import z podglądem zmian i konfliktów        | no                    | Czeka na S-02 i decyzję o podglądzie w terminalu (PRD OQ 4). |
-| S-05       | import-places-matched-to-gazetteer | Import: miejsca dopasowane do spisu                          | no                    | Czeka na S-02. |
-| S-06       | import-sources-with-scans          | Import: źródła ze skanami podpięte do faktów                 | no                    | Czeka na S-05 i decyzję o źródłach bez skanu. |
-| S-07       | fuzzy-event-dates                  | Daty nieostre: zakres, przed, po                             | yes                   | Idzie przed S-02 (decyzja autora 2026-10-23); import dat robi S-02. Run `/10x-new fuzzy-event-dates`. |
-| S-08       | fact-confidence-level              | Poziom pewności A–D przy fakcie                              | no                    | Czeka na S-02. |
-| S-09       | surname-variant-search             | Wyszukiwanie osób po wariantach nazwiska                     | no                    | Czeka na S-02. |
-| S-10       | import-from-scratch-outside-prod   | Import „od zera” poza produkcją                              | no                    | Nice-to-have; czeka na S-02. |
+| S-01       | research-blocks-read-and-report    | Import: odczyt bloków danych z repo badawczego i raport      | done                  | Zarchiwizowane 2026-10-23. |
+| S-02       | first-import-into-empty-tree       | Import: pierwszy import przodków do pustego drzewa           | done                  | Gwiazda przewodnia; zarchiwizowane 2026-10-24. |
+| S-03       | first-import-matches-hand-entered  | Import: dopasowanie do osób wpisanych ręcznie                | done                  | Zarchiwizowane 2026-10-24. |
+| S-04       | reimport-changes-and-conflicts     | Import: kolejny import z podglądem zmian i konfliktów        | done                  | Zarchiwizowane 2026-10-30. |
+| S-05       | import-places-matched-to-gazetteer | Import: miejsca dopasowane do spisu                          | done                  | Zarchiwizowane 2026-11-16. |
+| S-06       | import-sources-with-scans          | Import: źródła ze skanami podpięte do faktów                 | done                  | Zarchiwizowane 2026-11-17. |
+| S-07       | fuzzy-event-dates                  | Daty nieostre: zakres, przed, po                             | done                  | Zarchiwizowane 2026-10-23. |
+| S-08       | fact-confidence-level              | Poziom pewności A–D przy fakcie                              | yes                   | Run `/10x-plan fact-confidence-level`. |
+| S-09       | surname-variant-search             | Wyszukiwanie osób po wariantach nazwiska                     | done                  | Zarchiwizowane 2026-11-16. |
+| S-10       | import-from-scratch-outside-prod   | Import „od zera” poza produkcją                              | done                  | Zarchiwizowane 2026-11-17. |
 
 ## Open Roadmap Questions
 
-1. **Jak wygląda podgląd w terminalu przy dziesiątkach konfliktów, żeby zatwierdzanie per zmiana było wykonalne?** (PRD Otwarte pytania 4, FR-005 / FR-006) — Owner: autor. Block: S-03, S-04.
+1. ~~**Jak wygląda podgląd w terminalu przy dziesiątkach konfliktów, żeby zatwierdzanie per zmiana było wykonalne?** (PRD Otwarte pytania 4, FR-005 / FR-006) — Owner: autor. Block: S-03, S-04.~~ Rozstrzygnięte w planach `S-03` i `S-04` (oba zarchiwizowane).
 2. **Historyczne jednostki administracyjne (gubernie, powiaty, zmiany nazw w czasie) — czy i kiedy?** (PRD Otwarte pytania 1) — Owner: autor. Block: — (poza M-3; dziś jeden rekord miejscowości).
 3. **Kiedy linie boczne (pliki bez numeru Ahnentafel) dostaną bloki danych i wejdą do importu?** (PRD Otwarte pytania 2) — Owner: autor. Block: roadmap-wide (kandydat na kolejny kamień milowy).
 4. **Gdzie trafią pozostałe notatki z repo (otwarte pytania, ciekawostki)?** (PRD Otwarte pytania 3) — Owner: autor. Block: — (później, bez decyzji).
@@ -260,4 +260,7 @@ Brak. Każdy element przekrojowy wchodzi w pierwszym wycinku, który go używa: 
 - **S-02: autor importuje przodków do drzewa bez ręcznych wpisów (np. konta testowego): komenda pokazuje podsumowanie, po zatwierdzeniu zapisuje osoby (imiona, nazwisko, płeć), relacje rodzic–dziecko, małżeństwa oraz urodzenia, śluby i zgony z każdym rodzajem daty z `S-07` (dokładna, „ok.”, zakres, „przed”, „po”), każdy rekord z identyfikatorem z repo; na produkcji przed zapisem powstaje kopia bazy; zapis trafia wyłącznie do drzewa wskazanego konta; autor widzi przodków w drzewie i w widoku przodków.** — Archived 2026-10-24 → `context/archive/2026-10-23-first-import-into-empty-tree/`. Lesson: —.
 - **S-03: przy pierwszym imporcie do drzewa z ręcznie wpisanymi osobami komenda dopasowuje osobę z repo do istniejącej, gdy zgadzają się co najmniej dwa niezależne elementy poza imieniem i nazwiskiem, pokazuje przypadki wątpliwe i konflikty do rozstrzygnięcia pojedynczo, a dopasowana osoba zachowuje zdjęcie, skany, notatkę i dane dodane tylko w aplikacji — bez duplikatów.** — Archived 2026-10-24 → `context/archive/2026-10-24-first-import-matches-hand-entered/`. Lesson: —.
 - **S-04: autor ponawia import zaktualizowanej kopii repo; rekordy rozpoznane po identyfikatorze z repo, podgląd pokazuje nowe, zmienione, konflikty z ręcznymi zmianami (obie wartości) i rekordy usunięte w repo (usuń albo zostaw); wartość z repo zastępuje wartość w aplikacji bez pytania tylko wtedy, gdy nikt jej w aplikacji nie zmienił od ostatniego importu; rekordy bez identyfikatora repo nigdy nie są ruszane; ręczna edycja działa jak dotąd.** — Archived 2026-10-30 → `context/archive/2026-10-24-reimport-changes-and-conflicts/`. Lesson: —.
+- **S-05: import przypisuje wydarzeniom miejsca ze spisu drzewa — miejscowości, parafie i cmentarze (pochowanie wchodzi jako wydarzenie na cmentarzu) — dopasowując je do istniejących wpisów; nowe miejsca i niepewne dopasowania (warianty pisowni) autor potwierdza w podglądzie, a spis nie dubluje miejscowości, parafii ani cmentarzy.** — Archived 2026-11-16 → `context/archive/2026-10-30-import-places-matched-to-gazetteer/`. Lesson: —.
+- **S-09: import przenosi warianty zapisu nazwiska osoby, autor widzi je przy osobie, a wyszukiwarka osób znajduje osobę po każdym wariancie (np. Misiuk po „Mysiuk”).** — Archived 2026-11-16 → `context/archive/2026-11-16-surname-variant-search/`. Lesson: —.
+- **S-06: import przenosi źródła z bloków źródeł repo (opis: parafia, rok, typ aktu, archiwum, sygnatura, link; plik skanu kopiowany z repo do magazynu aplikacji) i podpina je do faktów z numerem wpisu; repo badawcze pozostaje tylko czytane; ręcznie wgrane skany zostają.** — Archived 2026-11-17 → `context/archive/2026-11-16-import-sources-with-scans/`. Lesson: —.
 - **S-10: autor poza produkcją uruchamia import z opcją „od zera”, która po potwierdzeniu usuwa osoby i fakty drzewa wskazanego konta przed importem; na produkcji opcja jest niedostępna.** — Archived 2026-11-17 → `context/archive/2026-11-17-import-from-scratch-outside-prod/`. Lesson: —.
