@@ -34,17 +34,18 @@ final class RepoValues
     }
 
     /**
-     * The memory of an event: the date and the place text. A burial also keeps the cemetery name. The ids of the
+     * The memory of an event: the date, the place text and the confidence level. A burial also keeps the cemetery name. The ids of the
      * recognized place (`miejsce_id`, `cmentarz_id`) come from the planner, which knows the tree.
      *
      * @param  bool  $burial  true adds the `cmentarz` field
-     * @return array{data: string|null, miejsce: string|null, cmentarz?: string|null}
+     * @return array{data: string|null, miejsce: string|null, poziom: string|null, cmentarz?: string|null}
      */
     public static function event(ResearchEvent $event, bool $burial = false): array
     {
         $values = [
             'data' => $event->date?->label(),
             'miejsce' => PlanImport::cleanText($event->place),
+            'poziom' => $event->level?->value,
         ];
 
         if ($burial) {
@@ -197,7 +198,6 @@ final class RepoValues
             $withDate ? $event->date?->label() : null,
             $placed ? null : $event->place,
             $placed ? null : $event->cemetery,
-            $event->level === null ? null : 'poziom '.$event->level->value,
             $event->note,
         ], fn (?string $part): bool => $part !== null));
     }

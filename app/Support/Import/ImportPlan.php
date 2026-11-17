@@ -95,7 +95,7 @@ final readonly class ImportPlan
         }
 
         foreach ($this->marriages as $marriage) {
-            $fills += ($marriage->dateFill === null ? 0 : 1) + ($marriage->placeFill === null ? 0 : 1) + ($marriage->sourceFill === null ? 0 : 1);
+            $fills += ($marriage->dateFill === null ? 0 : 1) + ($marriage->placeFill === null ? 0 : 1) + ($marriage->sourceFill === null ? 0 : 1) + ($marriage->confidenceFill === null ? 0 : 1);
         }
 
         foreach ($this->sourceUpdates as $update) {

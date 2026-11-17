@@ -4,7 +4,7 @@ namespace App\Support\Import;
 
 /**
  * How many places and burials the plan adds to the tree and how many values from the blocks go into the person note
- * instead of a column. `$surnameVariants` counts the variants from the repo (after removing repeats) of new and
+ * or into a column of a fact (`$levels`, the confidence levels). `$surnameVariants` counts the variants from the repo (after removing repeats) of new and
  * first-time matched persons; for a first-time match the author still decides whether they are written.
  */
 final readonly class NoteValueCounts

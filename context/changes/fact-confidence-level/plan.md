@@ -409,11 +409,11 @@ Nowa nullable kolumna bez kopiowania danych. Produkcja robi `backup:run --only-d
 
 #### Automated
 
-- [x] 2.1 Vitest przechodzi
-- [x] 2.2 Format i lint przechodzą
-- [x] 2.3 Typy przechodzą
-- [x] 2.4 Build przechodzi
-- [x] 2.5 Testy Pest z Fazy 1 nadal przechodzą
+- [x] 2.1 Vitest przechodzi — 0f38961
+- [x] 2.2 Format i lint przechodzą — 0f38961
+- [x] 2.3 Typy przechodzą — 0f38961
+- [x] 2.4 Build przechodzi — 0f38961
+- [x] 2.5 Testy Pest z Fazy 1 nadal przechodzą — 0f38961
 
 #### Manual
 

@@ -3,6 +3,7 @@
 namespace App\Actions\Import;
 
 use App\Enums\CemeteryMatchKind;
+use App\Enums\ConfidenceLevel;
 use App\Enums\EventType;
 use App\Enums\Gender;
 use App\Enums\ParishMatchKind;
@@ -85,7 +86,7 @@ class PlanImport
     /**
      * The fields of a person in the order they are listed.
      */
-    private const FIELDS = ['first_name', 'last_name', 'gender', 'surname_variants', 'note', 'birth_date', 'birth_place', 'death_date', 'death_place', 'burial_date', 'burial_place', 'birth_sources', 'death_sources'];
+    private const FIELDS = ['first_name', 'last_name', 'gender', 'surname_variants', 'note', 'birth_date', 'birth_place', 'death_date', 'death_place', 'burial_date', 'burial_place', 'birth_sources', 'death_sources', 'birth_confidence', 'death_confidence', 'burial_confidence'];
 
     public function __construct(
         private readonly MatchResearchPlaces $placeMatcher = new MatchResearchPlaces,
@@ -1191,7 +1192,7 @@ class PlanImport
      * @param  string|null  $fillAppLabel  what the app holds when a fill refines a value (a date), `null` for an empty field
      * @return Item|null
      */
-    public static function itemFor(ThreeWayOutcome $outcome, string $field, string $label, string $key, string $person, ?string $appLabel, ?string $repoLabel, ?string $lastLabel, bool $hasLast, string|Gender|ResearchDate|PlannedPlace|SurnameVariants|SourceLinks|SourceKind|SourceRecordType|null $repoValue, ?string $fillAppLabel = null): PlannedChange|PlannedFill|ValueConflict|null
+    public static function itemFor(ThreeWayOutcome $outcome, string $field, string $label, string $key, string $person, ?string $appLabel, ?string $repoLabel, ?string $lastLabel, bool $hasLast, string|Gender|ResearchDate|PlannedPlace|SurnameVariants|SourceLinks|SourceKind|SourceRecordType|ConfidenceLevel|null $repoValue, ?string $fillAppLabel = null): PlannedChange|PlannedFill|ValueConflict|null
     {
         return match ($outcome) {
             ThreeWayOutcome::Same, ThreeWayOutcome::KeptManual => null,
@@ -1222,6 +1223,24 @@ class PlanImport
 
         return [
             $this->itemFor($outcome, $field, $label, $key, $who, $app?->label(), $repo?->label(), $last, $hasLast, $repo, $app?->label()),
+            $outcome === ThreeWayOutcome::KeptManual,
+        ];
+    }
+
+    /**
+     * The three values of the confidence level of an event: the repo level, the one at the last import and the one of the
+     * event, compared as letters. A level never refines another one.
+     *
+     * @return array{0: Item|null, 1: bool} the item to plan and whether a change of the app value was left alone
+     */
+    private function confidenceItem(string $field, string $label, string $key, string $who, ?ConfidenceLevel $repo, ?Event $event, ?RepoSnapshot $snapshot): array
+    {
+        $app = $event?->confidence;
+        [$hasLast, $last] = $this->lastOf($snapshot, 'poziom');
+        $outcome = ThreeWayValue::compare($repo?->value, $hasLast, $last, $app?->value);
+
+        return [
+            $this->itemFor($outcome, $field, $label, "{$key}/poziom", $who, $app?->value, $repo?->value, $last, $hasLast, $repo),
             $outcome === ThreeWayOutcome::KeptManual,
         ];
     }
@@ -1306,6 +1325,12 @@ class PlanImport
     private function planCompared(PlaceResolver $places, array $none, ResearchEvent $repoEvent, Event $event, ?RepoSnapshot $snapshot, string $key, string $field, string $label, string $placeField, string $placeLabel, string $who, bool $burial, SourcePlan $sources): array
     {
         [$dateItem, $dateKept] = $this->dateItem($field, $label, "{$key}/data", $who, $repoEvent->date, $event, $snapshot);
+        $confidenceField = str_replace('_date', '_confidence', $field);
+        [$confidenceItem, $confidenceKept] = $this->confidenceItem($confidenceField, 'Poziom pewności '.match ($field) {
+            'birth_date' => 'urodzenia',
+            'death_date' => 'zgonu',
+            default => 'pochowania',
+        }, $key, $who, $repoEvent->level, $event, $snapshot);
         $place = $this->placeItem($places, $placeField, $placeLabel, $key, $who, $repoEvent, $event, $snapshot, $burial);
         $items = [];
 
@@ -1315,6 +1340,10 @@ class PlanImport
 
         if ($place['item'] !== null) {
             $items[$placeField] = $place['item'];
+        }
+
+        if ($confidenceItem !== null) {
+            $items[$confidenceField] = $confidenceItem;
         }
 
         $links = ['item' => null, 'kept' => false, 'values' => [], 'links' => []];
@@ -1329,7 +1358,7 @@ class PlanImport
             }
         }
 
-        return [...$none, 'items' => $items, 'kept' => ($dateKept ? 1 : 0) + ($place['kept'] ? 1 : 0) + ($links['kept'] ? 1 : 0), 'values' => [...$place['values'], ...$links['values']], 'placed' => $place['placed'], 'waits' => $place['waits'], 'resolved' => $place['resolved'], 'links' => $links['links'], 'linkKey' => $key];
+        return [...$none, 'items' => $items, 'kept' => ($dateKept ? 1 : 0) + ($confidenceKept ? 1 : 0) + ($place['kept'] ? 1 : 0) + ($links['kept'] ? 1 : 0), 'values' => [...$place['values'], ...$links['values']], 'placed' => $place['placed'], 'waits' => $place['waits'], 'resolved' => $place['resolved'], 'links' => $links['links'], 'linkKey' => $key];
     }
 
     /**
@@ -1782,8 +1811,9 @@ class PlanImport
                 $snapshot = $memory[$repoId] ?? null;
                 [$item, $keptHere] = $this->dateItem('marriage_date', 'Data ślubu', "{$repoId}/data", $who, $marriage->event->date, $own, $snapshot);
                 $place = $this->placeItem($places, 'marriage_place', 'Miejsce ślubu', $repoId, $who, $marriage->event, $own, $snapshot, false);
+                [$confidence, $confidenceKept] = $this->confidenceItem('marriage_confidence', 'Poziom pewności ślubu', $repoId, $who, $marriage->event->level, $own, $snapshot);
                 $links = $this->sourcePlanner->eventLinks($sources, $marriage->event, $own, $snapshot, $repoId, 'marriage_sources', 'Źródła ślubu', $who);
-                $kept += ($keptHere ? 1 : 0) + ($place['kept'] ? 1 : 0) + ($links['kept'] ? 1 : 0);
+                $kept += ($keptHere ? 1 : 0) + ($confidenceKept ? 1 : 0) + ($place['kept'] ? 1 : 0) + ($links['kept'] ? 1 : 0);
                 $values[$repoId] = [...$place['values'], ...$links['values']];
                 $linked[$repoId] = $links['links'];
 
@@ -1795,8 +1825,8 @@ class PlanImport
                     $waiting[$repoId] = $place['waits'];
                 }
 
-                if ($item !== null || $place['item'] !== null || $links['item'] !== null) {
-                    $planned[] = $this->plannedWedding($marriage, $repoId, $own->id, $item, $place['item'], $links['item'], [], $conflicts, $changes, true);
+                if ($item !== null || $place['item'] !== null || $links['item'] !== null || $confidence !== null) {
+                    $planned[] = $this->plannedWedding($marriage, $repoId, $own->id, $item, $place['item'], $links['item'], $confidence, [], $conflicts, $changes, true);
                 }
 
                 continue;
@@ -1828,6 +1858,7 @@ class PlanImport
 
             [$item] = $this->dateItem('marriage_date', 'Data ślubu', "{$repoId}/data", $who, $marriage->event->date, $existing, null);
             $place = $this->placeItem($places, 'marriage_place', 'Miejsce ślubu', $repoId, $who, $marriage->event, $existing, null, false);
+            [$confidence] = $this->confidenceItem('marriage_confidence', 'Poziom pewności ślubu', $repoId, $who, $marriage->event->level, $existing, null);
             $links = $this->sourcePlanner->eventLinks($sources, $marriage->event, $existing, null, $repoId, 'marriage_sources', 'Źródła ślubu', $who);
             $values[$repoId] = [...$place['values'], ...$links['values']];
             $linked[$repoId] = $links['links'];
@@ -1841,7 +1872,7 @@ class PlanImport
                 $waiting[$repoId] = $place['waits'];
             }
 
-            $planned[] = $this->plannedWedding($marriage, $repoId, $existing->id, $item, $place['item'], $links['item'], [], $conflicts, $changes, false);
+            $planned[] = $this->plannedWedding($marriage, $repoId, $existing->id, $item, $place['item'], $links['item'], $confidence, [], $conflicts, $changes, false);
         }
 
         return ['planned' => $planned, 'skipped' => $skipped, 'conflicts' => $conflicts, 'changes' => $changes, 'restorations' => $restorations, 'kept' => $kept, 'values' => $values, 'placed' => $placed, 'waiting' => $waiting, 'resolved' => $resolvedPlaces, 'links' => $linked];
@@ -1853,13 +1884,14 @@ class PlanImport
      * @param  Item|null  $date
      * @param  Item|null  $place
      * @param  Item|null  $sourceLinks
+     * @param  Item|null  $confidence
      * @param  list<ResearchSourceLink>  $sources
      * @param  list<ValueConflict>  $conflicts
      * @param  list<PlannedChange>  $changes
      */
-    private function plannedWedding(ResearchMarriage $marriage, string $repoId, int $eventId, PlannedChange|PlannedFill|ValueConflict|null $date, PlannedChange|PlannedFill|ValueConflict|null $place, PlannedChange|PlannedFill|ValueConflict|null $sourceLinks, array $sources, array &$conflicts, array &$changes, bool $known): PlannedMarriage
+    private function plannedWedding(ResearchMarriage $marriage, string $repoId, int $eventId, PlannedChange|PlannedFill|ValueConflict|null $date, PlannedChange|PlannedFill|ValueConflict|null $place, PlannedChange|PlannedFill|ValueConflict|null $sourceLinks, PlannedChange|PlannedFill|ValueConflict|null $confidence, array $sources, array &$conflicts, array &$changes, bool $known): PlannedMarriage
     {
-        foreach ([$date, $place, $sourceLinks] as $item) {
+        foreach ([$date, $place, $sourceLinks, $confidence] as $item) {
             if ($item instanceof ValueConflict) {
                 $conflicts[] = $item;
             } elseif ($item instanceof PlannedChange) {
@@ -1882,6 +1914,9 @@ class PlanImport
             sourceFill: $sourceLinks instanceof PlannedFill ? $sourceLinks : null,
             sourceConflict: $sourceLinks instanceof ValueConflict ? $sourceLinks : null,
             sourceChange: $sourceLinks instanceof PlannedChange ? $sourceLinks : null,
+            confidenceFill: $confidence instanceof PlannedFill ? $confidence : null,
+            confidenceConflict: $confidence instanceof ValueConflict ? $confidence : null,
+            confidenceChange: $confidence instanceof PlannedChange ? $confidence : null,
         );
     }
 

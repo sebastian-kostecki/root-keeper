@@ -8,6 +8,7 @@ use App\Actions\Persons\DeletePerson;
 use App\Actions\Relations\CreateMarriage;
 use App\Actions\Relations\CreateParentChildRelation;
 use App\Actions\Sources\DeleteSource;
+use App\Enums\ConfidenceLevel;
 use App\Enums\DateQualifier;
 use App\Enums\EventType;
 use App\Enums\Gender;
@@ -410,7 +411,7 @@ test('hooks the repo into a hand-entered person and keeps what the app holds', f
         ->and([$birth->date_year, $birth->date_month, $birth->date_day])->toBe([1801, 5, 12])
         ->and($birth->locality_id)->toBe($scene['zalesie']->id)
         ->and($birth->sources()->get()->map(fn (Source $source) => [$source->id, $source->pivot->entry_number])->all())->toBe([[$scene['source']->id, '47']])
-        ->and($anna->note)->toStartWith("Nazwisko po mężu: Kowalska\n\nZ repo badawczego (O-0004):")
+        ->and($anna->note)->toBe('Nazwisko po mężu: Kowalska')
         ->and($anna->repo_id)->toBe('O-0004')
         ->and($result->matched)->toBe(3)
         ->and($result->fills)->toBe($plan->fillCount());
@@ -789,12 +790,12 @@ test('remembers the repo values of every person, birth, death, relation and marr
         ->and($tree->repoSnapshots()->where('deletion_kept', true)->count())->toBe(0)
         ->and($snapshots['O-0001'])->toEqual(['imiona' => 'Jan', 'nazwisko' => 'Nowak', 'plec' => 'male', 'warianty' => 'Nowakowski', 'notatka' => $note])
         ->and($snapshots['O-0008']['plec'])->toBeNull()
-        ->and($snapshots['O-0001/urodzenie'])->toBe(['data' => '1801-05-12', 'miejsce' => 'Zalesie', 'miejsce_id' => null])
-        ->and($snapshots['O-0002/urodzenie'])->toBe(['data' => 'między 1760 a 1765', 'miejsce' => null, 'miejsce_id' => null])
-        ->and($snapshots['O-0001/zgon'])->toBe(['data' => '1870', 'miejsce' => null, 'miejsce_id' => null])
-        ->and($snapshots['O-0002/zgon'])->toBe(['data' => null, 'miejsce' => null, 'miejsce_id' => null])
+        ->and($snapshots['O-0001/urodzenie'])->toBe(['data' => '1801-05-12', 'poziom' => 'A', 'miejsce' => 'Zalesie', 'miejsce_id' => null])
+        ->and($snapshots['O-0002/urodzenie'])->toBe(['data' => 'między 1760 a 1765', 'poziom' => null, 'miejsce' => null, 'miejsce_id' => null])
+        ->and($snapshots['O-0001/zgon'])->toBe(['data' => '1870', 'poziom' => null, 'miejsce' => null, 'miejsce_id' => null])
+        ->and($snapshots['O-0002/zgon'])->toBe(['data' => null, 'poziom' => null, 'miejsce' => null, 'miejsce_id' => null])
         ->and($snapshots['O-0002>O-0001'])->toBe([])
-        ->and($snapshots['O-0001+O-0004/slub'])->toBe(['data' => 'ok. 1825', 'miejsce' => 'Zalesie', 'miejsce_id' => null])
+        ->and($snapshots['O-0001+O-0004/slub'])->toBe(['data' => 'ok. 1825', 'poziom' => 'B', 'miejsce' => 'Zalesie', 'miejsce_id' => null])
         ->and(RepoSnapshot::where('tree_id', '!=', $tree->id)->count())->toBe(0);
 });
 
@@ -812,7 +813,7 @@ test('remembers the repo value and keeps the app value when the author leaves a 
     expect($scene['anna']->fresh()->gender)->toBe(Gender::Male)
         ->and($snapshots['O-0004']['plec'])->toBe('female')
         ->and($scene['piotr']->birth()->date_year)->toBe(1762)
-        ->and($snapshots['O-0002/urodzenie'])->toBe(['data' => 'między 1760 a 1765', 'miejsce' => null, 'miejsce_id' => null])
+        ->and($snapshots['O-0002/urodzenie'])->toBe(['data' => 'między 1760 a 1765', 'poziom' => null, 'miejsce' => null, 'miejsce_id' => null])
         ->and(RepoSnapshot::where('tree_id', '!=', $tree->id)->count())->toBe(0);
 });
 
@@ -954,7 +955,7 @@ test('writes an approved change of a date, keeps the derived flag in line and re
     $birth = $tree->events()->where('repo_id', 'O-0001/urodzenie')->firstOrFail();
 
     expect([$birth->date_year, $birth->date_qualifier, $birth->date_is_approximate])->toBe([1802, DateQualifier::Approximate, true])
-        ->and(snapshotValues($tree)['O-0001/urodzenie'])->toBe(['data' => 'ok. 1802', 'miejsce' => null, 'miejsce_id' => null])
+        ->and(snapshotValues($tree)['O-0001/urodzenie'])->toBe(['data' => 'ok. 1802', 'poziom' => null, 'miejsce' => null, 'miejsce_id' => null])
         ->and([$result->changesTaken, $result->changesRejected])->toBe([1, 0])
         ->and(reimportTreeState($other))->toBe($otherState);
 
@@ -972,7 +973,7 @@ test('keeps the date of the app for a rejected change and still remembers the re
     $result = app(ApplyImport::class)->handle($tree, $plan, new ChangeApprovals(['O-0001/urodzenie/data']), new ConflictResolutions);
 
     expect($tree->events()->where('repo_id', 'O-0001/urodzenie')->firstOrFail()->date_year)->toBe(1801)
-        ->and(snapshotValues($tree)['O-0001/urodzenie'])->toBe(['data' => '1802', 'miejsce' => null, 'miejsce_id' => null])
+        ->and(snapshotValues($tree)['O-0001/urodzenie'])->toBe(['data' => '1802', 'poziom' => null, 'miejsce' => null, 'miejsce_id' => null])
         ->and([$result->changesTaken, $result->changesRejected])->toBe([0, 1])
         ->and(reimportTreeState($other))->toBe($otherState);
 
@@ -992,7 +993,7 @@ test('settles a conflict of a date for the app or for the repo and remembers the
     app(ApplyImport::class)->handle($tree, $plan, new ChangeApprovals, new ConflictResolutions(['O-0001/urodzenie/data' => $choice]));
 
     expect($tree->events()->where('repo_id', 'O-0001/urodzenie')->firstOrFail()->date_year)->toBe($year)
-        ->and(snapshotValues($tree)['O-0001/urodzenie'])->toBe(['data' => '1802', 'miejsce' => null, 'miejsce_id' => null])
+        ->and(snapshotValues($tree)['O-0001/urodzenie'])->toBe(['data' => '1802', 'poziom' => null, 'miejsce' => null, 'miejsce_id' => null])
         ->and(reimportTreeState($other))->toBe($otherState);
 
     expectOnlyAuthorRowsChanged(rowDiff($before, databaseRows()), $tree, $eventIds);
@@ -1194,7 +1195,7 @@ test('brings a death deleted in the app back from the repo or leaves it deleted'
     } else {
         expect($death)->toBeNull()
             ->and($snapshot->deletion_kept)->toBeTrue()
-            ->and($snapshot->values)->toBe(['data' => '1870', 'miejsce' => null])
+            ->and($snapshot->values)->toBe(['data' => '1870', 'poziom' => null, 'miejsce' => null])
             ->and([$result->restored, $result->keptDeleted])->toBe([0, 1]);
     }
 
@@ -1358,7 +1359,7 @@ test('takes a changed wedding date and clears a date the repo dropped', function
     $wedding = $tree->events()->where('repo_id', 'O-0001+O-0002/slub')->firstOrFail();
 
     expect($wedding->date_year)->toBe(1826)
-        ->and(snapshotValues($tree)['O-0001+O-0002/slub'])->toBe(['data' => '1826', 'miejsce' => null, 'miejsce_id' => null])
+        ->and(snapshotValues($tree)['O-0001+O-0002/slub'])->toBe(['data' => '1826', 'poziom' => null, 'miejsce' => null, 'miejsce_id' => null])
         ->and([$result->changesTaken, $result->markedMarriages])->toBe([1, 0])
         ->and(reimportTreeState($other))->toBe($otherState);
 });
@@ -1694,7 +1695,7 @@ test('leaves the locality of the event and the repo text in the note for a place
         ->and(importedPerson($tree, 'O-0001')->note)->toContain('Urodzenie: Bindyga')
         ->and($tree->localities()->count())->toBe(2)
         ->and($result->newLocalities)->toBe(0)
-        ->and(snapshotValues($tree)['O-0001/urodzenie'])->toBe(['data' => '1801', 'miejsce' => 'Bindyga', 'miejsce_id' => null]);
+        ->and(snapshotValues($tree)['O-0001/urodzenie'])->toBe(['data' => '1801', 'poziom' => null, 'miejsce' => 'Bindyga', 'miejsce_id' => null]);
 
     expectOnlyAuthorRowsChanged(rowDiff($before, databaseRows()), $tree, $eventIds);
 });
@@ -1709,7 +1710,7 @@ test('creates no burial for a cemetery the author left out but adds the death an
     expect($tree->events()->pluck('type')->all())->toBe([EventType::Death])
         ->and($tree->cemeteries()->count())->toBe(1)
         ->and($result->burials)->toBe(0)
-        ->and(snapshotValues($tree)['O-0001/pochowek'])->toBe(['data' => '1900', 'miejsce' => 'Bindyga', 'cmentarz' => null, 'miejsce_id' => null, 'cmentarz_id' => null])
+        ->and(snapshotValues($tree)['O-0001/pochowek'])->toBe(['data' => '1900', 'poziom' => null, 'miejsce' => 'Bindyga', 'cmentarz' => null, 'miejsce_id' => null, 'cmentarz_id' => null])
         ->and(importedPerson($tree, 'O-0001')->note)->toContain('Pochowanie: 1900; Bindyga')
         ->and($other->events()->count())->toBe(0);
 });
@@ -2497,4 +2498,187 @@ test('sets the links of a fact to exactly the sources of the repo, leaves a manu
 
     expect([$again->newSources, $again->mergedSources, $again->sourceUpdates, $again->changes, $again->conflicts, $again->removals, $again->restorations])->each->toBe([])
         ->and($again->changedSnapshots(RepoSnapshot::where('tree_id', $tree->id)->get()->keyBy('repo_id')->all()))->toBe([]);
+});
+
+const APPLY_LEVEL_JAN = "imiona: Jan\nnazwisko: Nowak\nplec: M\nurodzenie:\n  data: \"1801\"\n  poziom: A";
+
+/**
+ * The blocks of a married pair with a confidence level of the wedding.
+ *
+ * @return array<string, string>
+ */
+function applyLevelWedding(string $level): array
+{
+    return [
+        'O-0001' => "imiona: Jan\nmalzenstwa:\n  - z: O-0002\n    data: \"1830\"\n    poziom: {$level}",
+        'O-0002' => "imiona: Anna\nmalzenstwa:\n  - z: O-0001\n    data: \"1830\"\n    poziom: {$level}",
+    ];
+}
+
+test('writes the confidence levels of the repo to the facts of a first import', function () {
+    $tree = arrangeApplyUsers();
+    $plan = planFixtureForApply($tree);
+
+    app(ApplyImport::class)->handle($tree, $plan, new ChangeApprovals, new ConflictResolutions);
+
+    expect(importedEvent($tree, 'O-0001/urodzenie')->confidence)->toBe(ConfidenceLevel::A)
+        ->and(importedEvent($tree, 'O-0001+O-0004/slub')->confidence)->toBe(ConfidenceLevel::B)
+        ->and(importedEvent($tree, 'O-0001/zgon')->confidence)->toBeNull()
+        ->and(importedPerson($tree, 'O-0001')->note)->not->toContain('poziom')
+        ->and(snapshotValues($tree)['O-0001/urodzenie']['poziom'])->toBe('A')
+        ->and(snapshotValues($tree)['O-0001+O-0004/slub']['poziom'])->toBe('B')
+        ->and($tree->events()->whereNotNull('confidence')->count())->toBe(2);
+});
+
+test('fills the level of the repo into the hand-entered facts of a matched person and a wedding without touching the other account', function () {
+    Storage::fake('local');
+    [$tree, $scene, $other] = (function (): array {
+        $other = User::factory()->create();
+        $author = User::factory()->create();
+        arrangeHandEnteredTree($other->tree);
+        $scene = arrangeHandEnteredTree($author->tree);
+
+        return [$author->tree, $scene, $other->tree];
+    })();
+    $plan = planFixtureWithMatches($tree, $scene);
+    $otherState = reimportTreeState($other);
+
+    expect(fieldsOfFills($plan))->toContain('birth_confidence');
+
+    $result = app(ApplyImport::class)->handle($tree, $plan, new ChangeApprovals, new ConflictResolutions);
+
+    expect($scene['birth']->fresh()->confidence)->toBe(ConfidenceLevel::A)
+        ->and($scene['wedding']->fresh()->confidence)->toBe(ConfidenceLevel::B)
+        ->and($result->fills)->toBe($plan->fillCount())
+        ->and(reimportTreeState($other))->toBe($otherState)
+        ->and($other->events()->whereNotNull('confidence')->count())->toBe(0);
+});
+
+test('writes the level a known birth gets, the one the repo drops and keeps it for a rejected change', function (string $repoLevel, ?ConfidenceLevel $expected, bool $rejected) {
+    Storage::fake('local');
+    [$tree, $other] = reimportTwins(['O-0001' => APPLY_LEVEL_JAN]);
+    $block = $repoLevel === '' ? "imiona: Jan\nnazwisko: Nowak\nplec: M\nurodzenie:\n  data: \"1801\"" : "imiona: Jan\nnazwisko: Nowak\nplec: M\nurodzenie:\n  data: \"1801\"\n  poziom: {$repoLevel}";
+    $plan = reimportPlan($tree, ['O-0001' => $block]);
+    $eventIds = $tree->events()->pluck('id')->all();
+    $otherState = reimportTreeState($other);
+    $before = databaseRows();
+
+    $result = app(ApplyImport::class)->handle($tree, $plan, new ChangeApprovals($rejected ? ['O-0001/urodzenie/poziom'] : []), new ConflictResolutions);
+
+    $birth = $tree->events()->where('repo_id', 'O-0001/urodzenie')->firstOrFail();
+
+    expect($birth->confidence)->toBe($expected)
+        ->and([$birth->date_year, $birth->locality_id])->toBe([1801, null])
+        ->and(snapshotValues($tree)['O-0001/urodzenie']['poziom'])->toBe($repoLevel === '' ? null : $repoLevel)
+        ->and([$result->changesTaken, $result->changesRejected])->toBe($rejected ? [0, 1] : [1, 0])
+        ->and(reimportTreeState($other))->toBe($otherState);
+
+    expectOnlyAuthorRowsChanged(rowDiff($before, databaseRows()), $tree, $eventIds);
+})->with([
+    'another level' => ['B', ConfidenceLevel::B, false],
+    'dropped by the repo' => ['', null, false],
+    'rejected' => ['B', ConfidenceLevel::A, true],
+]);
+
+test('settles a conflict of a confidence level for the app or for the repo and remembers the repo level either way', function (string $choice, ConfidenceLevel $expected) {
+    Storage::fake('local');
+    [$tree, $other] = reimportTwins(['O-0001' => APPLY_LEVEL_JAN], fn (Tree $tree) => $tree->events()->where('repo_id', 'O-0001/urodzenie')->firstOrFail()->update(['confidence' => ConfidenceLevel::C]));
+    $plan = reimportPlan($tree, ['O-0001' => str_replace('poziom: A', 'poziom: B', APPLY_LEVEL_JAN)]);
+    $otherState = reimportTreeState($other);
+
+    expect($plan->conflicts[0]->key)->toBe('O-0001/urodzenie/poziom');
+
+    app(ApplyImport::class)->handle($tree, $plan, new ChangeApprovals, new ConflictResolutions(['O-0001/urodzenie/poziom' => $choice]));
+
+    expect($tree->events()->where('repo_id', 'O-0001/urodzenie')->firstOrFail()->confidence)->toBe($expected)
+        ->and(snapshotValues($tree)['O-0001/urodzenie']['poziom'])->toBe('B')
+        ->and(reimportTreeState($other))->toBe($otherState);
+})->with([
+    'for the app' => [ConflictResolutions::FROM_APP, ConfidenceLevel::C],
+    'for the repo' => [ConflictResolutions::FROM_REPO, ConfidenceLevel::B],
+]);
+
+test('writes the level of a known wedding when only the level changed and keeps the date', function (bool $rejected) {
+    Storage::fake('local');
+    [$tree, $other] = reimportTwins(applyLevelWedding('B'));
+    $plan = reimportPlan($tree, applyLevelWedding('C'));
+    $otherState = reimportTreeState($other);
+
+    expect($plan->marriages)->toHaveCount(1)
+        ->and($plan->marriages[0]->confidenceChange)->not->toBeNull();
+
+    app(ApplyImport::class)->handle($tree, $plan, new ChangeApprovals($rejected ? ['O-0001+O-0002/slub/poziom'] : []), new ConflictResolutions);
+
+    $wedding = $tree->events()->where('repo_id', 'O-0001+O-0002/slub')->firstOrFail();
+
+    expect($wedding->confidence)->toBe($rejected ? ConfidenceLevel::B : ConfidenceLevel::C)
+        ->and($wedding->date_year)->toBe(1830)
+        ->and(snapshotValues($tree)['O-0001+O-0002/slub']['poziom'])->toBe('C')
+        ->and(reimportTreeState($other))->toBe($otherState);
+})->with([false, true]);
+
+test('creates the births with their level when a deleted birth comes back', function () {
+    Storage::fake('local');
+    [$tree] = reimportTwins(['O-0001' => APPLY_LEVEL_JAN], fn (Tree $tree) => $tree->events()->where('repo_id', 'O-0001/urodzenie')->firstOrFail()->delete());
+    $plan = reimportPlan($tree, ['O-0001' => APPLY_LEVEL_JAN], deletions: ['O-0001/urodzenie' => ImportDecisions::RESTORE]);
+
+    app(ApplyImport::class)->handle($tree, $plan, new ChangeApprovals, new ConflictResolutions);
+
+    expect($tree->events()->where('repo_id', 'O-0001/urodzenie')->firstOrFail()->confidence)->toBe(ConfidenceLevel::A);
+});
+
+test('writes the level of a burial and keeps it when the import moves the burial to another cemetery', function () {
+    Storage::fake('local');
+    $blocks = fn (string $cemetery): array => ['O-0001' => "imiona: Jan\nnazwisko: Nowak\nzgon:\n  data: \"1870\"\npochowek:\n  miejsce: Zalesie{$cemetery}\n  poziom: C"];
+    [$tree, $other, $world] = applyPlaceTwins($blocks(''), fn (Tree $tree, array $world) => Cemetery::factory()->in($world['zalesie'])->create(['name' => 'Wojenny']));
+    $second = $tree->cemeteries()->where('name', 'Wojenny')->firstOrFail();
+    $otherState = reimportTreeState($other);
+
+    expect(importedEvent($tree, 'O-0001/pochowek')->confidence)->toBe(ConfidenceLevel::C);
+
+    $plan = applyPlacePlan($tree, $blocks("\n  cmentarz: Wojenny"));
+    expect(array_map(fn ($change): string => $change->field, $plan->changes))->toBe(['burial_place']);
+
+    app(ApplyImport::class)->handle($tree, $plan, new ChangeApprovals, new ConflictResolutions);
+
+    $burial = importedEvent($tree, 'O-0001/pochowek');
+
+    expect([$burial->cemetery_id, $burial->locality_id, $burial->confidence])->toBe([$second->id, $world['zalesie']->id, ConfidenceLevel::C])
+        ->and(reimportTreeState($other))->toBe($otherState);
+});
+
+test('refuses a confidence level changed by hand since planning and writes nothing', function (Closure $change, string $message) {
+    Storage::fake('local');
+    [$tree, $other] = reimportTwins(['O-0001' => APPLY_LEVEL_JAN]);
+    $plan = reimportPlan($tree, ['O-0001' => str_replace('poziom: A', 'poziom: B', APPLY_LEVEL_JAN)]);
+    $change($tree);
+    $before = ownershipSnapshot();
+
+    expect(fn () => app(ApplyImport::class)->handle($tree, $plan, new ChangeApprovals, new ConflictResolutions))->toThrow(RuntimeException::class, $message)
+        ->and(ownershipSnapshot())->toBe($before);
+})->with([
+    'person' => [fn (Tree $tree) => $tree->events()->where('repo_id', 'O-0001/urodzenie')->firstOrFail()->update(['confidence' => ConfidenceLevel::D]), 'zmieniła się po planowaniu'],
+]);
+
+test('refuses a wedding level changed by hand since planning and writes nothing', function () {
+    Storage::fake('local');
+    [$tree] = reimportTwins(applyLevelWedding('B'));
+    $plan = reimportPlan($tree, applyLevelWedding('C'));
+    $tree->events()->where('repo_id', 'O-0001+O-0002/slub')->firstOrFail()->update(['confidence' => ConfidenceLevel::D]);
+    $before = ownershipSnapshot();
+
+    expect(fn () => app(ApplyImport::class)->handle($tree, $plan, new ChangeApprovals, new ConflictResolutions))->toThrow(RuntimeException::class, 'Małżeństwo O-0001+O-0002/slub zmieniło się po planowaniu')
+        ->and(ownershipSnapshot())->toBe($before);
+});
+
+test('writes the level of a new wedding and of a wedding of a matched pair', function () {
+    Storage::fake('local');
+    $tree = User::factory()->create()->tree;
+    $jan = Person::factory()->for($tree)->create(['first_name' => 'Jan', 'last_name' => 'Nowak']);
+    $anna = Person::factory()->for($tree)->create(['first_name' => 'Anna', 'last_name' => 'Wrona']);
+    $plan = planBlocksForApply($tree, applyLevelWedding('D'), ['O-0001' => $jan, 'O-0002' => $anna]);
+
+    app(ApplyImport::class)->handle($tree, $plan, new ChangeApprovals, new ConflictResolutions);
+
+    expect($tree->events()->where('repo_id', 'O-0001+O-0002/slub')->firstOrFail()->confidence)->toBe(ConfidenceLevel::D);
 });

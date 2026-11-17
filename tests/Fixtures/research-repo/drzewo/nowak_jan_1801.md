@@ -18,6 +18,7 @@ zgon:
   data: 1870
 pochowek:
   miejsce: Zalesie
+  poziom: C
 malzenstwa:
   - z: O-0004
     data: ok. 1825
