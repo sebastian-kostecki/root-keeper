@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use App\Concerns\PartialDateValidationRules;
+use App\Enums\ConfidenceLevel;
 use App\Enums\EventType;
 use App\Enums\MarriageForm;
 use App\Models\Event;
@@ -42,6 +43,7 @@ class MarriageUpdateRequest extends FormRequest
         return [
             ...$this->partialDateRules('marriage'),
             'marriage.form' => ['nullable', Rule::enum(MarriageForm::class)],
+            'marriage.confidence' => ['nullable', Rule::enum(ConfidenceLevel::class)],
         ];
     }
 
@@ -60,6 +62,7 @@ class MarriageUpdateRequest extends FormRequest
             'marriage.qualifier' => 'rodzaj daty',
             'marriage.until_year' => 'rok końca zakresu',
             'marriage.form' => 'forma ślubu',
+            'marriage.confidence' => 'poziom pewności ślubu',
         ];
     }
 

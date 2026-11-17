@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\ConfidenceLevel;
 use App\Enums\DateQualifier;
 use App\Enums\EventType;
 use App\Enums\MarriageForm;
@@ -28,12 +29,13 @@ use Illuminate\Support\Carbon;
  * @property int|null $locality_id
  * @property int|null $cemetery_id
  * @property MarriageForm|null $marriage_form
+ * @property ConfidenceLevel|null $confidence
  * @property-read PartialDate $date
  * @property string|null $repo_id
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
-#[Fillable(['tree_id', 'type', 'date_year', 'date_month', 'date_day', 'date_until_year', 'date_qualifier', 'locality_id', 'cemetery_id', 'marriage_form', 'repo_id'])]
+#[Fillable(['tree_id', 'type', 'date_year', 'date_month', 'date_day', 'date_until_year', 'date_qualifier', 'locality_id', 'cemetery_id', 'marriage_form', 'confidence', 'repo_id'])]
 class Event extends Model
 {
     /** @use HasFactory<EventFactory> */
@@ -64,6 +66,7 @@ class Event extends Model
             'date_until_year' => 'integer',
             'date_is_approximate' => 'boolean',
             'marriage_form' => MarriageForm::class,
+            'confidence' => ConfidenceLevel::class,
         ];
     }
 

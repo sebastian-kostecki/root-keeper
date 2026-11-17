@@ -2,6 +2,7 @@
 
 namespace App\Actions\Persons;
 
+use App\Enums\ConfidenceLevel;
 use App\Enums\DateQualifier;
 use App\Enums\EventType;
 use App\Enums\ParticipantRole;
@@ -32,6 +33,7 @@ class UpdatePerson
      *         qualifier?: DateQualifier|string|null,
      *         until_year?: int|string|null,
      *         locality_id?: int|string|null,
+     *         confidence?: ConfidenceLevel|string|null,
      *     },
      *     death?: array{
      *         year?: int|string|null,
@@ -40,8 +42,9 @@ class UpdatePerson
      *         qualifier?: DateQualifier|string|null,
      *         until_year?: int|string|null,
      *         locality_id?: int|string|null,
+     *         confidence?: ConfidenceLevel|string|null,
      *     },
-     *     burial?: array{cemetery_id?: int|string|null},
+     *     burial?: array{cemetery_id?: int|string|null, confidence?: ConfidenceLevel|string|null},
      *     residences?: array<int, array{locality_id: int|string, year_from?: int|string|null, year_to?: int|string|null}>,
      * }  $data
      */
@@ -68,7 +71,7 @@ class UpdatePerson
                 $burialPlace = $this->burialPlaceFrom($person->tree, $data['burial'] ?? []);
 
                 if ($burialPlace !== null) {
-                    $this->putEvent($person, EventType::Burial, ['locality_id' => $burialPlace['locality_id']], ['cemetery_id' => $burialPlace['cemetery_id']]);
+                    $this->putEvent($person, EventType::Burial, ['locality_id' => $burialPlace['locality_id'], 'confidence' => $burialPlace['confidence']], ['cemetery_id' => $burialPlace['cemetery_id']]);
                 } else {
                     $person->burial()?->delete();
                 }
@@ -121,7 +124,7 @@ class UpdatePerson
     }
 
     /**
-     * @param  array{year?: int|string|null, month?: int|string|null, day?: int|string|null, qualifier?: DateQualifier|string|null, until_year?: int|string|null, locality_id?: int|string|null}  $date
+     * @param  array{year?: int|string|null, month?: int|string|null, day?: int|string|null, qualifier?: DateQualifier|string|null, until_year?: int|string|null, locality_id?: int|string|null, confidence?: ConfidenceLevel|string|null}  $date
      * @param  array{cemetery_id: int|string|null}|array{}  $extra
      */
     private function putEvent(Person $person, EventType $type, array $date, array $extra = []): void

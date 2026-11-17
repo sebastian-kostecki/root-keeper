@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\ConfidenceLevel;
 use App\Enums\DateQualifier;
 use App\Enums\EventType;
 use App\Enums\MarriageForm;
@@ -810,4 +811,120 @@ test('destroy from a referer carrying only the person key keeps it unchanged', f
         ->actingAs($user)
         ->delete(route('marriages.destroy', $marriage))
         ->assertRedirect(personPreviewUrl($focus, 'tree.show', [$focus]));
+});
+
+test('update saves the confidence level and both the marriage panel and the person overview return it with its label', function () {
+    $user = User::factory()->create();
+    $person = Person::factory()->for($user->tree)->create();
+    $spouse = Person::factory()->for($user->tree)->create();
+    $marriage = attachMarriage($person, $spouse, year: 1850);
+
+    $this->actingAs($user)
+        ->put(route('marriages.update', $marriage), ['marriage' => ['year' => 1850, 'confidence' => 'B']])
+        ->assertSessionHasNoErrors();
+
+    expect($marriage->refresh()->confidence)->toBe(ConfidenceLevel::B);
+
+    $this->actingAs($user)->get(marriagePanelUrl($marriage))
+        ->assertInertia(fn ($page) => $page
+            ->where('marriagePanel.marriage.confidence', 'B')
+            ->where('marriagePanel.marriage.confidence_label', 'indeks / źródło wtórne'));
+
+    $this->actingAs($user)->get(personPreviewUrl($person))
+        ->assertInertia(fn ($page) => $page
+            ->where('personPreview.person.marriages.0.confidence', 'B')
+            ->where('personPreview.person.marriages.0.confidence_label', 'indeks / źródło wtórne'));
+});
+
+test('update without the confidence key, or with a null level, resets the level to undetermined', function (array $marriageInput) {
+    $user = User::factory()->create();
+    $person = Person::factory()->for($user->tree)->create();
+    $spouse = Person::factory()->for($user->tree)->create();
+    $marriage = attachMarriage($person, $spouse, year: 1850);
+    $marriage->update(['confidence' => ConfidenceLevel::A]);
+
+    $this->actingAs($user)
+        ->put(route('marriages.update', $marriage), ['marriage' => $marriageInput])
+        ->assertSessionHasNoErrors();
+
+    expect($marriage->refresh()->confidence)->toBeNull();
+
+    $this->actingAs($user)->get(marriagePanelUrl($marriage))
+        ->assertInertia(fn ($page) => $page
+            ->where('marriagePanel.marriage.confidence', null)
+            ->where('marriagePanel.marriage.confidence_label', null));
+})->with([
+    'key missing' => [['year' => 1851]],
+    'null level' => [['year' => 1851, 'confidence' => null]],
+]);
+
+test('an unknown confidence level is rejected on marriage.confidence and changes nothing', function () {
+    $user = User::factory()->create();
+    $person = Person::factory()->for($user->tree)->create();
+    $spouse = Person::factory()->for($user->tree)->create();
+    $marriage = attachMarriage($person, $spouse, year: 1850);
+    $marriage->update(['confidence' => ConfidenceLevel::C]);
+
+    $this->actingAs($user)
+        ->put(route('marriages.update', $marriage), ['marriage' => ['year' => 1851, 'confidence' => 'E']])
+        ->assertSessionHasErrors('marriage.confidence');
+
+    expect($marriage->refresh()->confidence)->toBe(ConfidenceLevel::C)
+        ->and($marriage->date_year)->toBe(1850);
+
+    $this->actingAs($user)
+        ->post(route('marriages.store'), [
+            'person_id' => $person->id,
+            'spouse_id' => Person::factory()->for($user->tree)->create()->id,
+            'marriage' => ['confidence' => 'E'],
+        ])
+        ->assertSessionHasErrors('marriage.confidence');
+
+    $this->assertDatabaseCount('events', 1);
+});
+
+test('store saves the confidence level while attach and spouse store leave it undetermined', function () {
+    $user = User::factory()->create();
+    $person = Person::factory()->for($user->tree)->male()->create();
+    $spouse = Person::factory()->for($user->tree)->female()->create();
+
+    $this->actingAs($user)->post(route('marriages.store'), [
+        'person_id' => $person->id,
+        'spouse_id' => $spouse->id,
+        'marriage' => ['confidence' => 'D'],
+    ])->assertSessionHasNoErrors();
+
+    $marriageWith = fn (Person $other): Event => Event::where('type', EventType::Marriage)
+        ->whereHas('participants', fn ($query) => $query->whereKey($other->id))
+        ->sole();
+
+    expect($marriageWith($spouse)->confidence)->toBe(ConfidenceLevel::D);
+
+    $attached = Person::factory()->for($user->tree)->female()->create();
+    $this->actingAs($user)
+        ->post(route('persons.spouses.attach', $person), ['spouse_id' => $attached->id])
+        ->assertSessionHasNoErrors();
+
+    expect($marriageWith($attached)->confidence)->toBeNull();
+
+    $this->actingAs($user)
+        ->post(route('persons.spouses.store', $person), ['first_name' => 'Anna', 'last_name' => 'Nowak', 'gender' => 'female'])
+        ->assertSessionHasNoErrors();
+
+    $created = Person::whereKeyNot([$person->id, $spouse->id, $attached->id])->sole();
+    expect($marriageWith($created)->confidence)->toBeNull();
+});
+
+test('updating another users marriage with a confidence level is not found and changes nothing', function () {
+    $user = User::factory()->create();
+    $otherUser = User::factory()->create();
+    $person = Person::factory()->for($otherUser->tree)->create();
+    $spouse = Person::factory()->for($otherUser->tree)->create();
+    $marriage = attachMarriage($person, $spouse, year: 1850);
+
+    $this->actingAs($user)
+        ->put(route('marriages.update', $marriage), ['marriage' => ['year' => 1850, 'confidence' => 'A']])
+        ->assertNotFound();
+
+    expect($marriage->refresh()->confidence)->toBeNull();
 });

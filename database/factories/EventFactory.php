@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Enums\ConfidenceLevel;
 use App\Enums\DateQualifier;
 use App\Enums\EventType;
 use App\Models\Cemetery;
@@ -129,6 +130,16 @@ class EventFactory extends Factory
             'date_month' => null,
             'date_day' => null,
             'date_until_year' => $until,
+        ]);
+    }
+
+    /**
+     * Indicate that the event carries the given confidence level.
+     */
+    public function confidence(ConfidenceLevel $level): static
+    {
+        return $this->state(fn (array $attributes): array => [
+            'confidence' => $level,
         ]);
     }
 

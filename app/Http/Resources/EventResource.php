@@ -30,6 +30,8 @@ class EventResource extends JsonResource
      *     place: string|null,
      *     locality_id: int|null,
      *     date_parts: array{year: int|null, month: int|null, day: int|null, qualifier: string, until_year: int|null},
+     *     confidence: string|null,
+     *     confidence_label: string|null,
      *     marriage_form?: string|null,
      *     marriage_form_label?: string|null,
      *     is_confirmed?: bool,
@@ -52,6 +54,8 @@ class EventResource extends JsonResource
                 'qualifier' => $this->date_qualifier->value,
                 'until_year' => $this->date_until_year,
             ],
+            'confidence' => $this->confidence?->value,
+            'confidence_label' => $this->confidence?->label(),
             'marriage_form' => $this->when($this->type === EventType::Marriage, fn (): ?string => $this->marriage_form?->value),
             'marriage_form_label' => $this->when($this->type === EventType::Marriage, fn (): ?string => $this->marriage_form?->label()),
             'is_confirmed' => $this->when(
