@@ -81,8 +81,10 @@ class ImportResearch extends Command
 
     public function handle(ReadResearchRepo $readResearchRepo, ClassifyRepoRecords $classifyRepoRecords, MatchResearchPersons $matchResearchPersons, MatchResearchPlaces $matchResearchPlaces, MatchResearchSources $matchResearchSources, PlanImport $planImport, ApplyImport $applyImport, PlanTreeClearance $planTreeClearance, ClearTree $clearTree): int
     {
-        $email = (string) $this->argument('email');
-        $path = (string) $this->argument('path');
+        $email = $this->argument('email');
+        $email = is_string($email) ? $email : '';
+        $path = $this->argument('path');
+        $path = is_string($path) ? $path : '';
 
         $user = User::where('email', $email)->first();
 
