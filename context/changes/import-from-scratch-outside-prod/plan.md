@@ -351,20 +351,20 @@ Brak migracji i zmian schematu. Opcja jest dodatkowa; bez niej komenda działa j
 
 #### Automated
 
-- [x] 1.1 Testy Akcji przechodzą: `$WT php artisan test --compact tests/Feature/ImportClearTreeTest.php`
-- [x] 1.2 Istniejące testy importu przechodzą: `$WT php artisan test --compact tests/Feature/ImportPlanTest.php tests/Feature/ImportApplyTest.php`
-- [x] 1.3 Pint bez zmian do zrobienia: `$WT vendor/bin/pint --dirty --format agent`
-- [x] 1.4 Larastan bez nowych błędów: `$WT composer types:check`
+- [x] 1.1 Testy Akcji przechodzą: `$WT php artisan test --compact tests/Feature/ImportClearTreeTest.php` — 2ec3efb
+- [x] 1.2 Istniejące testy importu przechodzą: `$WT php artisan test --compact tests/Feature/ImportPlanTest.php tests/Feature/ImportApplyTest.php` — 2ec3efb
+- [x] 1.3 Pint bez zmian do zrobienia: `$WT vendor/bin/pint --dirty --format agent` — 2ec3efb
+- [x] 1.4 Larastan bez nowych błędów: `$WT composer types:check` — 2ec3efb
 
 ### Phase 2: Opcja `--from-scratch` w komendzie
 
 #### Automated
 
-- [ ] 2.1 Testy komendy przechodzą: `$WT php artisan test --compact tests/Feature/ImportResearchCommandTest.php`
-- [ ] 2.2 Wszystkie testy importu przechodzą: `$WT php artisan test --compact --filter=Import`
-- [ ] 2.3 Pełny zestaw testów przechodzi: `$WT php artisan test --compact`
-- [ ] 2.4 Pint bez zmian do zrobienia: `$WT vendor/bin/pint --dirty --format agent`
-- [ ] 2.5 Larastan bez nowych błędów: `$WT composer types:check`
+- [x] 2.1 Testy komendy przechodzą: `$WT php artisan test --compact tests/Feature/ImportResearchCommandTest.php`
+- [x] 2.2 Wszystkie testy importu przechodzą: `$WT php artisan test --compact --filter=Import`
+- [x] 2.3 Pełny zestaw testów przechodzi: `$WT php artisan test --compact`
+- [x] 2.4 Pint bez zmian do zrobienia: `$WT vendor/bin/pint --dirty --format agent`
+- [x] 2.5 Larastan bez nowych błędów: `$WT composer types:check`
 
 #### Manual
 

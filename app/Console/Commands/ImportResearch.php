@@ -4,10 +4,12 @@ namespace App\Console\Commands;
 
 use App\Actions\Import\ApplyImport;
 use App\Actions\Import\ClassifyRepoRecords;
+use App\Actions\Import\ClearTree;
 use App\Actions\Import\MatchResearchPersons;
 use App\Actions\Import\MatchResearchPlaces;
 use App\Actions\Import\MatchResearchSources;
 use App\Actions\Import\PlanImport;
+use App\Actions\Import\PlanTreeClearance;
 use App\Actions\Import\ReadResearchRepo;
 use App\Actions\Import\WriteResearchSources;
 use App\Enums\CemeteryMatchKind;
@@ -52,6 +54,7 @@ use App\Support\Import\ResearchPerson;
 use App\Support\Import\ResearchRepoReading;
 use App\Support\Import\SourceDecisions;
 use App\Support\Import\SourceMatches;
+use App\Support\Import\TreeClearance;
 use App\Support\Import\ValueConflict;
 use Illuminate\Console\Attributes\Description;
 use Illuminate\Console\Attributes\Signature;
@@ -65,7 +68,8 @@ use function Laravel\Prompts\select;
 
 #[Signature('import:research
     {email : E-mail konta, do którego drzewa trafi import}
-    {path : Katalog repo badawczego}')]
+    {path : Katalog repo badawczego}
+    {--from-scratch : Poza produkcją najpierw usuń osoby i fakty drzewa konta (z potwierdzeniem)}')]
 #[Description('Zaimportuj przodków z repo badawczego do drzewa konta')]
 class ImportResearch extends Command
 {
@@ -74,7 +78,7 @@ class ImportResearch extends Command
      */
     private const OPTION_WIDTH = 74;
 
-    public function handle(ReadResearchRepo $readResearchRepo, ClassifyRepoRecords $classifyRepoRecords, MatchResearchPersons $matchResearchPersons, MatchResearchPlaces $matchResearchPlaces, MatchResearchSources $matchResearchSources, PlanImport $planImport, ApplyImport $applyImport): int
+    public function handle(ReadResearchRepo $readResearchRepo, ClassifyRepoRecords $classifyRepoRecords, MatchResearchPersons $matchResearchPersons, MatchResearchPlaces $matchResearchPlaces, MatchResearchSources $matchResearchSources, PlanImport $planImport, ApplyImport $applyImport, PlanTreeClearance $planTreeClearance, ClearTree $clearTree): int
     {
         $email = (string) $this->argument('email');
         $path = (string) $this->argument('path');
@@ -95,6 +99,15 @@ class ImportResearch extends Command
             return self::FAILURE;
         }
 
+        $fromScratch = (bool) $this->option('from-scratch');
+        $cleared = false;
+
+        if ($fromScratch && app()->isProduction()) {
+            $this->error('Import od zera jest niedostępny na produkcji; nic nie zostało zmienione.');
+
+            return self::FAILURE;
+        }
+
         try {
             $reading = $readResearchRepo->handle($path);
         } catch (RuntimeException $exception) {
@@ -104,6 +117,38 @@ class ImportResearch extends Command
         }
 
         $this->report($email, $path, $reading);
+
+        if ($fromScratch) {
+            if (! $this->input->isInteractive()) {
+                return $this->needsTerminal();
+            }
+
+            if ($reading->persons === []) {
+                $this->error('Repo nie zawiera żadnej poprawnej osoby; nic nie zostało usunięte. Sprawdź ścieżkę i czy dysk jest zamontowany.');
+
+                return self::FAILURE;
+            }
+
+            $clearance = $planTreeClearance->handle($tree);
+
+            if (! $clearance->hasRecords()) {
+                $this->info("Drzewo konta {$email} nie ma osób ani faktów — nie ma czego usuwać.");
+                $clearTree->handle($tree);
+                $cleared = true;
+            } else {
+                $this->clearanceTable($clearance);
+
+                if (! $this->confirm("Usunąć z drzewa konta {$email} wszystkie osoby i fakty przed importem?", false)) {
+                    $this->info('Nic nie zostało usunięte ani zapisane.');
+
+                    return self::SUCCESS;
+                }
+
+                $removed = $clearTree->handle($tree);
+                $cleared = true;
+                $this->info(sprintf('Usunięto z drzewa konta %s: osoby %d, fakty %d, relacje %d, zdjęcia %d, pamięć importu %d.', $email, $removed->persons, $removed->events, $removed->relations, $removed->photos, $removed->snapshots));
+            }
+        }
 
         if ($reading->persons === [] && $tree->people()->whereNotNull('repo_id')->exists()) {
             $this->error('Repo nie zawiera żadnej poprawnej osoby, a drzewo ma osoby z importu. Sprawdź ścieżkę i czy dysk jest zamontowany; nic nie zostało zapisane.');
@@ -128,7 +173,7 @@ class ImportResearch extends Command
         $askedRemovals = array_values(array_filter($classes->removedInRepo, fn (RepoRecord $entry): bool => ! $entry->detachOnly()));
 
         if (($this->needsAnswers($matches) || $askedRemovals !== [] || $classes->deletedInApp !== []) && ! $this->input->isInteractive()) {
-            return $this->needsTerminal();
+            return $this->needsTerminal($cleared);
         }
 
         $identity = $this->decideIdentities($matches);
@@ -140,7 +185,7 @@ class ImportResearch extends Command
         $sourceMatches = $matchResearchSources->handle($tree, $reading, $classes, new ImportDecisions($identity, $removals, $deletions));
 
         if (! $this->input->isInteractive() && ($this->needsPlaceAnswers($tree, $matchResearchPlaces, $placeMatches) || $sourceMatches->matches !== [])) {
-            return $this->needsTerminal();
+            return $this->needsTerminal($cleared);
         }
 
         $decisions = new ImportDecisions($identity, $removals, $deletions, $this->decidePlaces($tree, $matchResearchPlaces, $placeMatches, $reading));
@@ -149,7 +194,7 @@ class ImportResearch extends Command
         try {
             $plan = $planImport->handle($tree, $reading, $classes, $decisions, $sources);
         } catch (InvalidArgumentException $exception) {
-            $this->error($exception->getMessage());
+            $this->error($this->withClearedNote($exception->getMessage(), $cleared));
 
             return self::FAILURE;
         }
@@ -165,7 +210,7 @@ class ImportResearch extends Command
         }
 
         if (($plan->changes !== [] || $plan->conflicts !== []) && ! $this->input->isInteractive()) {
-            return $this->needsTerminal();
+            return $this->needsTerminal($cleared);
         }
 
         $approvals = $this->decideChanges($plan);
@@ -187,14 +232,14 @@ class ImportResearch extends Command
             : '';
 
         if (! $this->confirm("Zapisać do drzewa konta {$email}: nowe osoby {$newCount}, dopasowane {$matchedCount}, zmiany {$changeCount}, usunięcia {$removalCount}, pamięć importu {$memoryCount}{$sourcesText}?", false)) {
-            $this->info('Nic nie zostało zapisane.');
+            $this->info($this->withClearedNote('Nic nie zostało zapisane.', $cleared));
 
             return self::SUCCESS;
         }
 
         if (app()->isProduction()
             && $this->call('backup:run', ['--only-db' => true, '--disable-notifications' => true]) !== self::SUCCESS) {
-            $this->error('Kopia bazy nie powiodła się, nic nie zostało zapisane.');
+            $this->error($this->withClearedNote('Kopia bazy nie powiodła się, nic nie zostało zapisane.', $cleared));
 
             return self::FAILURE;
         }
@@ -204,7 +249,7 @@ class ImportResearch extends Command
         } catch (Throwable $exception) {
             report($exception);
             $this->error($exception->getMessage());
-            $this->error('Nic nie zostało zapisane.');
+            $this->error($this->withClearedNote('Nic nie zostało zapisane.', $cleared));
 
             return self::FAILURE;
         }
@@ -214,11 +259,38 @@ class ImportResearch extends Command
         return self::SUCCESS;
     }
 
-    private function needsTerminal(): int
+    private function needsTerminal(bool $cleared = false): int
     {
-        $this->error('Import wymaga odpowiedzi w terminalu; nic nie zostało zapisane.');
+        $this->error($this->withClearedNote('Import wymaga odpowiedzi w terminalu; nic nie zostało zapisane.', $cleared));
 
         return self::FAILURE;
+    }
+
+    /**
+     * Append the note that the tree was already cleared, when the clearing ran in this command.
+     */
+    private function withClearedNote(string $message, bool $cleared): string
+    {
+        return $cleared ? $message.' Osoby i fakty drzewa zostały już usunięte.' : $message;
+    }
+
+    /**
+     * Print what clearing the tree removes and what stays.
+     */
+    private function clearanceTable(TreeClearance $clearance): void
+    {
+        $this->newLine();
+        $this->table(['Do usunięcia', 'Liczba'], [
+            ['Osoby', $clearance->persons],
+            ['Fakty', $clearance->events],
+            ['Relacje rodzic–dziecko', $clearance->relations],
+            ['Zamieszkania', $clearance->residences],
+            ['Zdjęcia osób', $clearance->photos],
+            ['Powiązania faktów ze źródłami', $clearance->sourceLinks],
+            ['Pochowani na nagrobkach (nie wrócą z importu)', $clearance->buriedLinks],
+            ['Pamięć importu (osoby i fakty)', $clearance->snapshots],
+        ]);
+        $this->line('Zostają: źródła ze skanami i miejsca.');
     }
 
     private function stateSummary(RepoRecordClasses $classes): void

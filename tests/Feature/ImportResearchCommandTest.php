@@ -92,6 +92,14 @@ function saveQuestion(int $new, int $matched, int $memory, int $changes = 0, int
     return "Zapisać do drzewa konta autor@example.com: nowe osoby {$new}, dopasowane {$matched}, zmiany {$changes}, usunięcia {$removals}, pamięć importu {$memory}{$sourcesText}?";
 }
 
+/**
+ * The question that asks whether the tree of the author is cleared before the import.
+ */
+function clearQuestion(string $email): string
+{
+    return "Usunąć z drzewa konta {$email} wszystkie osoby i fakty przed importem?";
+}
+
 const PLACES_MODE_OPTIONS = ['all' => 'Zatwierdź wszystkie', 'each' => 'Przejrzyj pojedynczo'];
 
 function newPlacesQuestion(int $count): string
@@ -1649,4 +1657,166 @@ test('refuses a new parish when run with --no-interaction and writes nothing', f
     expect($exitCode)->toBe(1)
         ->and(Artisan::output())->toContain('Import wymaga odpowiedzi w terminalu; nic nie zostało zapisane.')
         ->and(ownershipSnapshot())->toBe($before);
+});
+
+/**
+ * A tree without ids and timestamps, so that two imports of the same repo into the same tree can be compared.
+ *
+ * @return array<string, mixed>
+ */
+function normalizedTreeState(Tree $tree): array
+{
+    $strip = fn (array $row): array => array_diff_key($row, array_flip(['id', 'tree_id', 'created_at', 'updated_at']));
+    $repoIds = fn (string $table): array => DB::table($table)->where('tree_id', $tree->id)->pluck('repo_id', 'id')->all();
+    $personIds = $tree->people()->pluck('repo_id', 'id')->all();
+    $eventIds = $tree->events()->pluck('repo_id', 'id')->all();
+    $sourceIds = $repoIds('sources');
+
+    $relations = $tree->parentChildRelations()->get()->map(fn ($relation): string => $personIds[$relation->parent_id].'>'.$personIds[$relation->child_id])->sort()->values()->all();
+    $links = DB::table('event_source')->whereIn('event_id', array_keys($eventIds))->get()->map(fn (object $row): string => $eventIds[$row->event_id].'|'.$sourceIds[$row->source_id])->sort()->values()->all();
+
+    return [
+        'people' => $tree->people()->get()->mapWithKeys(fn (Person $person): array => [$person->repo_id => $strip($person->toArray())])->sortKeys()->all(),
+        'events' => $tree->events()->get()->mapWithKeys(fn (Event $event): array => [$event->repo_id => $strip($event->toArray())])->sortKeys()->all(),
+        'relations' => $relations,
+        'links' => $links,
+        'memory' => $tree->repoSnapshots()->get()->mapWithKeys(fn (RepoSnapshot $snapshot): array => [$snapshot->repo_id => ['values' => $snapshot->values, 'deletion_kept' => $snapshot->deletion_kept]])->sortKeys()->all(),
+    ];
+}
+
+test('refuses --from-scratch in production before reading the repo and writes nothing', function () {
+    Storage::fake('local');
+    $calls = fakeBackupRun(0);
+    app()->detectEnvironment(fn (): string => 'production');
+    $author = arrangeOverlappingUsers();
+    $before = ownershipSnapshot();
+
+    $this->artisan('import:research', [...importArguments($author), '--from-scratch' => true])
+        ->expectsOutputToContain('Import od zera jest niedostępny na produkcji; nic nie zostało zmienione.')
+        ->doesntExpectOutputToContain('Raport')
+        ->assertFailed();
+
+    expect($calls->getArrayCopy())->toBe([])
+        ->and(ownershipSnapshot())->toBe($before);
+});
+
+test('refuses --from-scratch with --no-interaction before deleting anything', function () {
+    [$author] = arrangeImportedAuthors();
+    $before = ownershipSnapshot();
+
+    $exitCode = Artisan::call('import:research', [...importArguments($author), '--from-scratch' => true, '--no-interaction' => true]);
+
+    expect($exitCode)->toBe(1)
+        ->and(Artisan::output())->toContain('Import wymaga odpowiedzi w terminalu; nic nie zostało zapisane.')
+        ->and(Artisan::output())->not->toContain('Osoby i fakty drzewa zostały już usunięte.')
+        ->and(ownershipSnapshot())->toBe($before);
+});
+
+test('refuses --from-scratch for a repo without a valid person before deleting anything', function () {
+    [$author] = arrangeImportedAuthors();
+    $before = ownershipSnapshot();
+    $repo = sys_get_temp_dir().'/empty-repo-'.uniqid();
+    mkdir($repo.'/drzewo', 0777, true);
+    reimportRepos($repo);
+
+    $this->artisan('import:research', ['email' => $author->email, 'path' => $repo, '--from-scratch' => true])
+        ->expectsOutputToContain('Repo nie zawiera żadnej poprawnej osoby; nic nie zostało usunięte.')
+        ->assertFailed();
+
+    expect(ownershipSnapshot())->toBe($before);
+});
+
+test('deletes nothing when the author answers no to the clearing question', function () {
+    [$author] = arrangeImportedAuthors();
+    $before = ownershipSnapshot();
+
+    $this->artisan('import:research', [...importArguments($author), '--from-scratch' => true])
+        ->expectsConfirmation(clearQuestion($author->email), 'no')
+        ->expectsOutputToContain('Nic nie zostało usunięte ani zapisane.')
+        ->assertSuccessful();
+
+    expect(ownershipSnapshot())->toBe($before);
+});
+
+test('clears the tree and imports the repo again as a first import, leaving sources, scans and the other account alone', function () {
+    [$author, $other, $repo] = cmdSrcImported();
+    $tree = $author->tree;
+    $pattern = normalizedTreeState($tree);
+    $sourceRows = $tree->sources()->orderBy('id')->get()->toArray();
+    $sourceFiles = $tree->sources()->pluck('path')->all();
+
+    $manual = Person::factory()->for($tree)->create(['first_name' => 'Ręczny', 'last_name' => 'Wpis', 'photo_path' => "persons/{$tree->id}/reczny.jpg"]);
+    attachBirth($manual, 1900);
+    Storage::disk('local')->put($manual->photo_path, 'photo');
+    $tree->sources()->orderBy('id')->firstOrFail()->buriedPeople()->attach($manual);
+
+    $otherPerson = $other->tree->people()->firstOrFail();
+    $otherPerson->update(['photo_path' => "persons/{$other->tree->id}/jan.jpg"]);
+    Storage::disk('local')->put($otherPerson->photo_path, 'other photo');
+    $otherBefore = cmdSrcState($other->tree);
+    $otherFiles = Storage::disk('local')->allFiles("persons/{$other->tree->id}");
+
+    $persons = $tree->people()->count();
+    $events = $tree->events()->count();
+
+    $this->artisan('import:research', [...['email' => $author->email, 'path' => $repo], '--from-scratch' => true])
+        ->expectsTable(['Do usunięcia', 'Liczba'], [
+            ['Osoby', $persons],
+            ['Fakty', $events],
+            ['Relacje rodzic–dziecko', 0],
+            ['Zamieszkania', 0],
+            ['Zdjęcia osób', 1],
+            ['Powiązania faktów ze źródłami', 2],
+            ['Pochowani na nagrobkach (nie wrócą z importu)', 1],
+            ['Pamięć importu (osoby i fakty)', $tree->repoSnapshots()->where('repo_id', 'not like', 'ZR-%')->count()],
+        ])
+        ->expectsConfirmation(clearQuestion($author->email), 'yes')
+        ->expectsOutputToContain('Usunięto z drzewa konta autor@example.com:')
+        ->doesntExpectOutputToContain('Usunięte w aplikacji 1/')
+        ->expectsConfirmation(saveQuestion(2, 0, 4, sources: '0, powiązania z faktami 2, nowe parafie 0'), 'yes')
+        ->assertSuccessful();
+
+    expect(normalizedTreeState($tree))->toBe($pattern)
+        ->and($tree->people()->where('first_name', 'Ręczny')->exists())->toBeFalse()
+        ->and(Storage::disk('local')->exists("persons/{$tree->id}/reczny.jpg"))->toBeFalse()
+        ->and(DB::table('buried_people')->whereIn('source_id', $tree->sources()->select('id'))->count())->toBe(0)
+        ->and($tree->sources()->orderBy('id')->get()->toArray())->toBe($sourceRows)
+        ->and(array_filter($sourceFiles, fn (string $file): bool => ! Storage::disk('local')->exists($file)))->toBe([])
+        ->and(cmdSrcState($other->tree))->toBe($otherBefore)
+        ->and(Storage::disk('local')->allFiles("persons/{$other->tree->id}"))->toBe($otherFiles);
+});
+
+test('says the tree is already cleared when the author refuses the final save', function () {
+    [$author, $other, $repo] = cmdSrcImported();
+    $tree = $author->tree;
+    $otherBefore = cmdSrcState($other->tree);
+    $sourceCount = $tree->sources()->count();
+
+    $this->artisan('import:research', ['email' => $author->email, 'path' => $repo, '--from-scratch' => true])
+        ->expectsConfirmation(clearQuestion($author->email), 'yes')
+        ->expectsConfirmation(saveQuestion(2, 0, 4, sources: '0, powiązania z faktami 2, nowe parafie 0'), 'no')
+        ->expectsOutputToContain('Nic nie zostało zapisane. Osoby i fakty drzewa zostały już usunięte.')
+        ->assertSuccessful();
+
+    expect($tree->people()->count())->toBe(0)
+        ->and($tree->events()->count())->toBe(0)
+        ->and($tree->sources()->count())->toBe($sourceCount)
+        ->and(cmdSrcState($other->tree))->toBe($otherBefore);
+});
+
+test('does not ask about clearing a tree without persons and facts and imports as a first import', function () {
+    Storage::fake('local');
+    $author = arrangeEmptyAuthorWithOverlappingOther();
+    $author->tree->repoSnapshots()->create(['repo_id' => 'O-0001', 'values' => [], 'deletion_kept' => true]);
+    $otherBefore = treeState(User::where('email', 'inny@example.com')->firstOrFail()->tree);
+
+    $this->artisan('import:research', [...importArguments($author), '--from-scratch' => true])
+        ->expectsOutputToContain('Drzewo konta autor@example.com nie ma osób ani faktów — nie ma czego usuwać.')
+        ->expectsChoice(newPlacesQuestion(2), 'all', PLACES_MODE_OPTIONS, true)
+        ->expectsConfirmation(saveQuestion(13, 0, 27), 'yes')
+        ->assertSuccessful();
+
+    expect($author->tree->people()->count())->toBe(13)
+        ->and($author->tree->repoSnapshots()->where('deletion_kept', true)->exists())->toBeFalse()
+        ->and(treeState(User::where('email', 'inny@example.com')->firstOrFail()->tree))->toBe($otherBefore);
 });
