@@ -20,6 +20,9 @@ services:
             - ./storage:/var/www/html/storage
             - ${BACKUP_HOST_DIR:-/storage/root-keeper-backups}:/var/www/html/storage/app/backups
             - ./.env.prod:/var/www/html/.env:ro
+            # The research repo (a git clone on the host, updated with git pull) for
+            # `import:research <email> /research`. Read-only: the import never writes there.
+            - ${RESEARCH_REPO_HOST_DIR:-/srv/research/my-gen-tree}:/research:ro
         networks:
             - root-keeper-internal
             # Shared only with Traefik (kostecki-dev-infra), no internet; the app reaches the
