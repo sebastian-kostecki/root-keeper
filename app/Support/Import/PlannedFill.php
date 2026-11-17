@@ -35,7 +35,7 @@ final readonly class PlannedFill
             $this->value instanceof SurnameVariants => $this->value->label() ?? PlanImport::EMPTY_LABEL,
             $this->value instanceof SourceLinks => $this->value->label() ?? PlanImport::EMPTY_LABEL,
             $this->value instanceof SourceKind, $this->value instanceof SourceRecordType => $this->value->label(),
-            $this->value instanceof ConfidenceLevel => $this->value->value,
+            $this->value instanceof ConfidenceLevel => "{$this->value->value} — {$this->value->label()}",
             default => $this->value,
         };
     }

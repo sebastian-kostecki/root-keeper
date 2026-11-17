@@ -1888,6 +1888,31 @@ test('update saves the confidence level of every fact and a payload without the 
         ->and(Event::where('type', EventType::Burial)->sole()->confidence)->toBeNull();
 });
 
+test('a burial confidence without a cemetery creates no burial and clearing the cemetery drops the level with the burial', function () {
+    $user = User::factory()->create();
+    $person = Person::factory()->for($user->tree)->create();
+    $cemetery = Cemetery::factory()->for($user->tree)->create();
+    $save = fn (array $burial) => $this->actingAs($user)->put(route('persons.update', $person), [
+        'first_name' => 'Jan',
+        'is_deceased' => '1',
+        'death' => ['year' => 1920],
+        'burial' => $burial,
+    ])->assertSessionHasNoErrors();
+
+    $save(['confidence' => 'C']);
+
+    expect(Event::where('type', EventType::Burial)->exists())->toBeFalse();
+
+    $save(['cemetery_id' => $cemetery->id, 'confidence' => 'C']);
+
+    expect(Event::where('type', EventType::Burial)->sole()->confidence)->toBe(ConfidenceLevel::C);
+
+    $save(['cemetery_id' => '', 'confidence' => 'C']);
+
+    expect(Event::where('type', EventType::Burial)->exists())->toBeFalse()
+        ->and(Event::whereNotNull('confidence')->exists())->toBeFalse();
+});
+
 test('a confidence level outside A to D is rejected and changes nothing', function (string $field) {
     $user = User::factory()->create();
     $person = Person::factory()->for($user->tree)->create();

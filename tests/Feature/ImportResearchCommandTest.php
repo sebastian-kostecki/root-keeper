@@ -863,7 +863,7 @@ test('shows a changed confidence level in the table of changes and writes it onl
     $blocks['O-0001'] = str_replace("urodzenie:\n  data: \"1801\"", "urodzenie:\n  data: \"1801\"\n  poziom: A", $blocks['O-0001']);
 
     $this->artisan('import:research', ['email' => $author->email, 'path' => reimportRepo($blocks)])
-        ->expectsTable(['Osoba', 'Pole', 'W aplikacji', 'Teraz w repo'], [['Jan Nowak (O-0001)', 'Poziom pewności urodzenia', '—', 'A']])
+        ->expectsTable(['Osoba', 'Pole', 'W aplikacji', 'Teraz w repo'], [['Jan Nowak (O-0001)', 'Poziom pewności urodzenia', '—', 'A — akt pierwotny']])
         ->expectsChoice('Zmiany z repo (1): co zrobić?', 'all', CHANGES_ALL, true)
         ->expectsConfirmation(saveQuestion(0, 0, 1, changes: 1), 'yes')
         ->assertSuccessful();

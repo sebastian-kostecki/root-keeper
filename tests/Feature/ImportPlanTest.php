@@ -258,7 +258,7 @@ test('writes the person note exactly as specified', function () {
     expect(plannedPerson($plan, 'O-0001')->note)->toBe(<<<'NOTE'
         Z repo badawczego (O-0001):
         Urodzenie: Zalesie; 24 IV 1801 st.st.
-        Pochowanie: Zalesie
+        Pochowanie: Zalesie; poziom C
         Ślub z Anna Wrona (O-0004): Zalesie
         NOTE);
 });
@@ -309,7 +309,7 @@ test('counts dates by qualifier and events without a date', function () {
 test('counts the values that go into the person note', function () {
     $counts = planFixtureImport(arrangeEmptyAuthorAndOverlappingOther())->noteValues;
 
-    expect([$counts->unplacedEvents, $counts->burials, $counts->levels, $counts->eventNotes, $counts->surnameVariants])->toBe([4, 0, 3, 1, 1]);
+    expect([$counts->unplacedEvents, $counts->burials, $counts->levels, $counts->eventNotes, $counts->surnameVariants])->toBe([4, 0, 2, 1, 1]);
 });
 
 test('derives the repo ids of persons, events, relations and marriages', function () {
@@ -2518,7 +2518,7 @@ test('fills an empty confidence level and asks about another one when the memory
         $fill = $plan->updates[0]->fills[0];
 
         expect($plan->conflicts)->toBe([])
-            ->and([$fill->field, $fill->label, $fill->valueLabel(), $fill->appLabel])->toBe(['birth_confidence', 'Poziom pewności urodzenia', 'B', null])
+            ->and([$fill->field, $fill->label, $fill->valueLabel(), $fill->appLabel])->toBe(['birth_confidence', 'Poziom pewności urodzenia', 'B — indeks / źródło wtórne', null])
             ->and($plan->fillCount())->toBe(1);
     } else {
         expect($plan->updates[0]->fills)->toBe([])
@@ -2572,7 +2572,7 @@ test('plans the confidence level of a known wedding as a change, a fill or a con
             ->and([$wedding->confidenceChange->key, $wedding->confidenceChange->field, $wedding->confidenceChange->label, $wedding->confidenceChange->appLabel, $wedding->confidenceChange->repoLabel])->toBe(['O-0001+O-0002/slub/poziom', 'marriage_confidence', 'Poziom pewności ślubu', 'B', 'C'])
             ->and($plan->changes)->toHaveCount(1)
             ->and($plan->fillCount())->toBe(0),
-        'fill' => expect($wedding->confidenceFill?->valueLabel())->toBe('C')
+        'fill' => expect($wedding->confidenceFill?->valueLabel())->toBe('C — wskazówka')
             ->and($plan->fillCount())->toBe(1)
             ->and($plan->conflicts)->toBe([]),
         default => expect($wedding->confidenceConflict)->toBeInstanceOf(ValueConflict::class)
@@ -2599,7 +2599,7 @@ test('plans the confidence level of a wedding the tree holds without a repo id',
 
     expect($plan->marriages)->toHaveCount(1)
         ->and($plan->marriages[0]->existingEventId)->not->toBeNull()
-        ->and($plan->marriages[0]->confidenceFill?->valueLabel())->toBe('B')
+        ->and($plan->marriages[0]->confidenceFill?->valueLabel())->toBe('B — indeks / źródło wtórne')
         ->and($plan->fillCount())->toBe(1);
 });
 
@@ -2626,7 +2626,7 @@ test('compares the confidence level of a known burial with the three values', fu
 
     match ($outcome) {
         'change' => expect($item)->toBeInstanceOf(PlannedChange::class)->and([$item->key, $item->label, $item->appLabel, $item->repoLabel])->toBe(['O-0001/pochowek/poziom', 'Poziom pewności pochowania', '—', 'D']),
-        'fill' => expect($item)->toBeInstanceOf(PlannedFill::class)->and($item->valueLabel())->toBe('D'),
+        'fill' => expect($item)->toBeInstanceOf(PlannedFill::class)->and($item->valueLabel())->toBe('D — hipoteza'),
         default => expect($item)->toBeInstanceOf(ValueConflict::class)->and([$item->appLabel, $item->repoLabel, $item->lastRepoLabel])->toBe(['A', 'D', null]),
     };
 

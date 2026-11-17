@@ -45,12 +45,17 @@ test('fact-confidence-level: a birth level survives saving another section and a
     await personal.getByRole('button', { name: 'Zapisz' }).click();
     await expect(personal.getByText(`${suffix}x`)).toBeVisible();
 
-    // 3. A fresh open: the badge is on the sources tab, the birth field still reads the level.
+    // 3. A fresh open: the badge is on the sources tab and on the overview card, the view and the edit field still read the level.
     const reopened = await openPerson(page, personId, personName);
     const birthSources = await sourcesGroup(reopened, 'Urodzenie');
     await expect(birthSources.getByText('Poziom B')).toBeVisible();
 
     await reopened.getByRole('tab', { name: 'Przegląd' }).click();
+    const birthCard = reopened.getByRole('region', { name: 'Urodzenie' });
+    await expect(birthCard.getByText('Poziom B')).toBeVisible();
+    await expect(
+        birthCard.getByText('B — indeks / źródło wtórne', { exact: true }),
+    ).toBeVisible();
     await reopened.getByRole('button', { name: 'Edytuj Urodzenie' }).click();
     await expect(
         reopened

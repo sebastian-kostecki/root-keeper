@@ -19,8 +19,9 @@ class CreateMarriage
 
     /**
      * Create a marriage as one event with both people attached as spouses,
-     * rejecting a duplicate pair atomically. The date, locality and wedding
-     * form come from the input; a missing key leaves its value unknown.
+     * rejecting a duplicate pair atomically. The date, locality, confidence
+     * level and wedding form come from the input; a missing key leaves its
+     * value unknown.
      *
      * @param  array{year?: int|string|null, month?: int|string|null, day?: int|string|null, qualifier?: DateQualifier|string|null, until_year?: int|string|null, locality_id?: int|string|null, confidence?: ConfidenceLevel|string|null, form?: string|null}  $input
      */

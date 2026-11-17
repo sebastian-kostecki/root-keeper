@@ -183,6 +183,8 @@ class PlanImport
         $eventPlans = [];
 
         $placed = [];
+        /** @var array<string, true> $outside repo keys of the burials of the repo the tree does not hold after the import (no cemetery found, no death, a kept deletion) */
+        $outside = [];
         /** @var array<string, array<string, string|null>> $linked source id => repo key of each event it is linked to => the entry number, for the sources written with their links */
         $linked = [];
         /** @var array<string, array{0: string, 1: bool}> $waiting */
@@ -202,6 +204,13 @@ class PlanImport
             $burialPlan = $this->planEvent(EventType::Burial, $research, $person, $inMemory, $decisions, $settled, $places, $sourcePlan, $personDies);
 
             $eventPlans[$repoId] = ['birth' => $birthPlan, 'death' => $deathPlan, 'burial' => $burialPlan];
+
+            $holdsBurial = $person->events->contains(fn (Event $event): bool => $event->type === EventType::Burial)
+                || $burialPlan['create'] || $burialPlan['restoration'] !== null;
+
+            if ($research->burial !== null && ! $holdsBurial) {
+                $outside[RepoKeys::burial($repoId)] = true;
+            }
 
             foreach ([RepoKeys::birth($repoId) => $birthPlan, RepoKeys::death($repoId) => $deathPlan, RepoKeys::burial($repoId) => $burialPlan] as $key => $plan) {
                 $this->collectLinks($linked, $sourcePlan, $plan['linkKey'], $plan['links']);
@@ -248,6 +257,8 @@ class PlanImport
 
                 if ($newPlaces[$repoId]['burial'] !== null && $research->death !== null) {
                     $placed[RepoKeys::burial($repoId)] = true;
+                } elseif ($research->burial !== null) {
+                    $outside[RepoKeys::burial($repoId)] = true;
                 }
             }
         }
@@ -256,11 +267,11 @@ class PlanImport
         $answeredNotes = [];
 
         foreach ($persons as $repoId => $research) {
-            $notes[$repoId] = RepoValues::note($research, $reading, $noteSkipped, $placed);
+            $notes[$repoId] = RepoValues::note($research, $reading, $noteSkipped, $placed, $outside);
             $personWaiting = array_intersect_key($waiting, array_fill_keys($this->noteEventKeys($research, $reading), true));
 
             if ($personWaiting !== []) {
-                $answeredNotes[$repoId] = new PlannedNote($research, $reading, $noteSkipped, $placed, $personWaiting);
+                $answeredNotes[$repoId] = new PlannedNote($research, $reading, $noteSkipped, $placed, $personWaiting, $outside);
             }
         }
 
@@ -378,8 +389,8 @@ class PlanImport
                 $totals->variants += count(SurnameVariants::fromResearch($research)->names);
                 $totals->burials += $burialKey === null ? 0 : 1;
 
-                foreach ([[$research->birth, $resolved['birth']], [$research->death, $resolved['death']], [$research->burial, $burialPlace]] as [$event, $resolvedPlace]) {
-                    $this->tallyNoteValues($event, $totals->levels, $totals->eventNotes);
+                foreach ([[$research->birth, $resolved['birth'], true], [$research->death, $resolved['death'], true], [$research->burial, $burialPlace, $burialKey !== null]] as [$event, $resolvedPlace, $onFact]) {
+                    $this->tallyNoteValues($event, $totals->levels, $totals->eventNotes, $onFact);
                     $this->tallyPlace($event, $resolvedPlace, $totals->placed, $totals->unplaced);
                 }
 
@@ -477,7 +488,7 @@ class PlanImport
                 $totals->variants += count(SurnameVariants::fromResearch($research)->names);
 
                 foreach (['birth' => $research->birth, 'death' => $research->death, 'burial' => $research->burial] as $kind => $event) {
-                    $this->tallyNoteValues($event, $totals->levels, $totals->eventNotes);
+                    $this->tallyNoteValues($event, $totals->levels, $totals->eventNotes, $kind !== 'burial' || ! isset($outside[RepoKeys::burial($repoId)]));
                     $this->tallyPlace($event, $eventPlan[$kind]['resolved'], $totals->placed, $totals->unplaced);
                 }
 
@@ -2138,13 +2149,16 @@ class PlanImport
         }
     }
 
-    private function tallyNoteValues(?ResearchEvent $event, int &$levels, int &$eventNotes): void
+    /**
+     * @param  bool  $levelOnFact  false for an event the tree does not hold after the import: its level stays in the note, so it is not counted
+     */
+    private function tallyNoteValues(?ResearchEvent $event, int &$levels, int &$eventNotes, bool $levelOnFact = true): void
     {
         if ($event === null) {
             return;
         }
 
-        $levels += $event->level === null ? 0 : 1;
+        $levels += $event->level === null || ! $levelOnFact ? 0 : 1;
         $eventNotes += $event->note === null ? 0 : 1;
     }
 

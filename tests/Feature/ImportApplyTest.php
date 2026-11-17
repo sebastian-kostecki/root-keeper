@@ -2515,7 +2515,7 @@ function applyLevelWedding(string $level): array
     ];
 }
 
-test('writes the confidence levels of the repo to the facts of a first import', function () {
+test('writes the confidence levels of the repo to the facts of a first import and keeps the level of a burial without a cemetery in the note', function () {
     $tree = arrangeApplyUsers();
     $plan = planFixtureForApply($tree);
 
@@ -2524,10 +2524,31 @@ test('writes the confidence levels of the repo to the facts of a first import', 
     expect(importedEvent($tree, 'O-0001/urodzenie')->confidence)->toBe(ConfidenceLevel::A)
         ->and(importedEvent($tree, 'O-0001+O-0004/slub')->confidence)->toBe(ConfidenceLevel::B)
         ->and(importedEvent($tree, 'O-0001/zgon')->confidence)->toBeNull()
-        ->and(importedPerson($tree, 'O-0001')->note)->not->toContain('poziom')
+        ->and(importedPerson($tree, 'O-0001')->note)->toContain('Pochowanie: Zalesie; poziom C')
+        ->and(importedPerson($tree, 'O-0001')->note)->not->toContain('poziom A')
+        ->and(importedPerson($tree, 'O-0001')->note)->not->toContain('poziom B')
         ->and(snapshotValues($tree)['O-0001/urodzenie']['poziom'])->toBe('A')
         ->and(snapshotValues($tree)['O-0001+O-0004/slub']['poziom'])->toBe('B')
-        ->and($tree->events()->whereNotNull('confidence')->count())->toBe(2);
+        ->and(snapshotValues($tree)['O-0001/pochowek']['poziom'])->toBe('C')
+        ->and($tree->events()->whereNotNull('confidence')->count())->toBe(2)
+        ->and(Event::query()->whereNotNull('confidence')->count())->toBe(2);
+});
+
+test('drops the level of a burial from the note once the import creates the burial', function () {
+    Storage::fake('local');
+    $blocks = ['O-0001' => "imiona: Jan\nnazwisko: Nowak\nzgon:\n  data: \"1870\"\npochowek:\n  miejsce: Zalesie\n  poziom: C"];
+    [$tree, $other] = reimportTwins($blocks);
+    $otherState = reimportTreeState($other);
+
+    expect($tree->events()->where('repo_id', 'O-0001/pochowek')->exists())->toBeFalse()
+        ->and(importedPerson($tree, 'O-0001')->note)->toContain('Pochowanie: Zalesie; poziom C');
+
+    Cemetery::factory()->in(Locality::factory()->for($tree)->create(['name' => 'Zalesie']))->unnamed()->create();
+    app(ApplyImport::class)->handle($tree, reimportPlan($tree, $blocks), new ChangeApprovals, new ConflictResolutions);
+
+    expect(importedEvent($tree, 'O-0001/pochowek')->confidence)->toBe(ConfidenceLevel::C)
+        ->and((string) importedPerson($tree, 'O-0001')->note)->not->toContain('poziom')
+        ->and(reimportTreeState($other))->toBe($otherState);
 });
 
 test('fills the level of the repo into the hand-entered facts of a matched person and a wedding without touching the other account', function () {
@@ -2647,17 +2668,20 @@ test('writes the level of a burial and keeps it when the import moves the burial
         ->and(reimportTreeState($other))->toBe($otherState);
 });
 
-test('refuses a confidence level changed by hand since planning and writes nothing', function (Closure $change, string $message) {
+test('refuses a confidence level changed by hand since planning and writes nothing', function (string $repoKey) {
     Storage::fake('local');
-    [$tree, $other] = reimportTwins(['O-0001' => APPLY_LEVEL_JAN]);
-    $plan = reimportPlan($tree, ['O-0001' => str_replace('poziom: A', 'poziom: B', APPLY_LEVEL_JAN)]);
-    $change($tree);
+    $blocks = fn (string $level): array => ['O-0001' => "imiona: Jan\nnazwisko: Nowak\nplec: M\nurodzenie:\n  data: \"1801\"\n  poziom: {$level}\nzgon:\n  data: \"1870\"\n  poziom: {$level}\npochowek:\n  miejsce: Zalesie\n  poziom: {$level}"];
+    [$tree] = applyPlaceTwins($blocks('A'));
+    $plan = applyPlacePlan($tree, $blocks('B'));
+    $tree->events()->where('repo_id', $repoKey)->firstOrFail()->update(['confidence' => ConfidenceLevel::D]);
     $before = ownershipSnapshot();
 
-    expect(fn () => app(ApplyImport::class)->handle($tree, $plan, new ChangeApprovals, new ConflictResolutions))->toThrow(RuntimeException::class, $message)
+    expect(fn () => app(ApplyImport::class)->handle($tree, $plan, new ChangeApprovals, new ConflictResolutions))->toThrow(RuntimeException::class, 'zmieniła się po planowaniu')
         ->and(ownershipSnapshot())->toBe($before);
 })->with([
-    'person' => [fn (Tree $tree) => $tree->events()->where('repo_id', 'O-0001/urodzenie')->firstOrFail()->update(['confidence' => ConfidenceLevel::D]), 'zmieniła się po planowaniu'],
+    'birth' => ['O-0001/urodzenie'],
+    'death' => ['O-0001/zgon'],
+    'burial' => ['O-0001/pochowek'],
 ]);
 
 test('refuses a wedding level changed by hand since planning and writes nothing', function () {
@@ -2671,14 +2695,28 @@ test('refuses a wedding level changed by hand since planning and writes nothing'
         ->and(ownershipSnapshot())->toBe($before);
 });
 
-test('writes the level of a new wedding and of a wedding of a matched pair', function () {
+test('writes the level of a new wedding and of a wedding of a matched pair without touching the other account', function (bool $matched) {
     Storage::fake('local');
+    $other = User::factory()->create()->tree;
     $tree = User::factory()->create()->tree;
-    $jan = Person::factory()->for($tree)->create(['first_name' => 'Jan', 'last_name' => 'Nowak']);
-    $anna = Person::factory()->for($tree)->create(['first_name' => 'Anna', 'last_name' => 'Wrona']);
-    $plan = planBlocksForApply($tree, applyLevelWedding('D'), ['O-0001' => $jan, 'O-0002' => $anna]);
+    $pair = [];
+
+    foreach ([$other, $tree] as $owner) {
+        $pair = [
+            'O-0001' => Person::factory()->for($owner)->create(['first_name' => 'Jan', 'last_name' => 'Nowak']),
+            'O-0002' => Person::factory()->for($owner)->create(['first_name' => 'Anna', 'last_name' => 'Wrona']),
+        ];
+    }
+
+    $otherState = reimportTreeState($other);
+    $plan = planBlocksForApply($tree, applyLevelWedding('D'), $matched ? $pair : []);
 
     app(ApplyImport::class)->handle($tree, $plan, new ChangeApprovals, new ConflictResolutions);
 
-    expect($tree->events()->where('repo_id', 'O-0001+O-0002/slub')->firstOrFail()->confidence)->toBe(ConfidenceLevel::D);
-});
+    expect($tree->events()->where('repo_id', 'O-0001+O-0002/slub')->firstOrFail()->confidence)->toBe(ConfidenceLevel::D)
+        ->and($tree->people()->count())->toBe($matched ? 2 : 4)
+        ->and(reimportTreeState($other))->toBe($otherState);
+})->with([
+    'new pair' => [false],
+    'matched pair' => [true],
+]);
