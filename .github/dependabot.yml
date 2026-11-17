@@ -10,3 +10,20 @@ updates:
       github-actions:
         patterns:
           - "*"
+  - package-ecosystem: "composer"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    cooldown:
+      default-days: 5
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    cooldown:
+      default-days: 5
+    # The platform builds of rollup should stay on the same version: one PR for all of them.
+    groups:
+      rollup-platform-builds:
+        patterns:
+          - "@rollup/rollup-*"
