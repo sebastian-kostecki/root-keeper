@@ -107,6 +107,7 @@ Weryfikacja: testy Akcji i komendy (niżej), Pint, Larastan oraz ręczny przebie
 - Nie dajemy `--force` ani innego sposobu pominięcia potwierdzenia; opcja wymaga terminala.
 - Nie wymagamy przepisywania e-maila jako potwierdzenia.
 - Nie robimy kopii bazy poza produkcją (na produkcji opcja jest niedostępna).
+- Nie bronimy się przed świadomym `--env=local` na serwerze produkcyjnym. Strażnik opiera się na `app()->isProduction()` i chroni przed pomyłką, nie przed celowym obejściem. Ta sama flaga omija już dziś kopię bazy przed zapisem zwykłego importu.
 - Nie robimy usunięcia „wirtualnego” (podgląd na udawanym pustym drzewie i usunięcie razem z zapisem). Odmowa końcowego zapisu zostawia puste drzewo.
 - Nie zmieniamy klasyfikacji, dopasowania, planowania ani zapisu importu (`ClassifyRepoRecords`, `Match*`, `PlanImport`, `ApplyImport`).
 - Bez zmian w UI, trasach i migracjach.
@@ -142,7 +143,12 @@ $WT composer install --no-interaction
 
 - Zmiana nie dodaje paczek, więc `composer.lock` jest ten sam co na `develop`.
 - `.env` jest w `.gitignore`.
-- Baza `testing` jest wspólna z głównym checkoutem: nie uruchamiaj testów równolegle w obu miejscach.
+- Baza `testing` jest wspólna z głównym checkoutem i innymi worktree; równoległe przebiegi psują sobie schemat (brak tabel lub kolumn, deadlocki). Pełny zestaw w worktree uruchamiaj na osobnej bazie. `phpunit.xml` ustawia `DB_DATABASE` bez `force`, więc zmienna z `docker exec -e` wygrywa:
+  ```bash
+  docker exec root-keeper-pgsql-1 psql -U sail -d postgres -c "CREATE DATABASE testing_import_from_scratch"
+  docker exec -e DB_DATABASE=testing_import_from_scratch -u sail -w /var/www/html/.claude/worktrees/import-from-scratch-outside-prod root-keeper-laravel.test-1 php artisan test --compact
+  ```
+  Po zamknięciu worktree: `DROP DATABASE testing_import_from_scratch`.
 - `node_modules/` nie jest potrzebne, bo zmiana nie dotyka frontendu.
 
 ## Faza 1: Akcje czyszczenia drzewa
@@ -342,6 +348,16 @@ Brak migracji i zmian schematu. Opcja jest dodatkowa; bez niej komenda działa j
 - Wzorce usuwania: `app/Actions/Persons/DeletePerson.php:25-49`, `app/Http/Controllers/Settings/ProfileController.php:58-61`, `app/Console/Commands/RestoreBackup.php:132-143`
 - Testy: `tests/Feature/ImportResearchCommandTest.php` (helpery `:40-102`, `:674-777`; produkcja `:259-274`), `tests/Pest.php:148`
 - Poprzedni plan importu: `context/archive/2026-10-23-first-import-into-empty-tree/plan.md`
+
+## Poprawki z przeglądu implementacji
+
+Raport: `reviews/impl-review.md` (2026-11-17). Odstępstwa od opisu wyżej:
+- `TreeClearance` ma dwa nowe pola: `surnameVariants` i `hasProband`.
+  - Tabela przed pytaniem ma wiersz „Warianty nazwisk”, a gdy drzewo ma probanta, linię „Probant zostanie odpięty (osoby znikają razem z nim).”.
+  - Linia „Usunięto…” wymienia te same pozycje co tabela, a po niej pada „Probant został odpięty; wybierz go ponownie po imporcie.”.
+- `PlanTreeClearance::handle()` przyjmuje opcjonalnie gotowe id snapshotów. `ClearTree` liczy je raz i używa ich do liczby i do usunięcia.
+- Drzewo bez osób i faktów, ale ze starą pamięcią importu: zamiast „nie ma czego usuwać” komunikat „…; usunięto tylko pamięć importu osób i faktów: N.”, bez dopisku „już usunięte” przy dalszych odmowach.
+- Wyjątek, który wyleci po usunięciu, a przed zapisem, drukuje „Import przerwany błędem; nic nie zostało zapisane. Osoby i fakty drzewa zostały już usunięte.” i leci dalej.
 
 ## Progress
 

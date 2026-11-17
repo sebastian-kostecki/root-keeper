@@ -1693,7 +1693,7 @@ test('refuses --from-scratch in production before reading the repo and writes no
 
     $this->artisan('import:research', [...importArguments($author), '--from-scratch' => true])
         ->expectsOutputToContain('Import od zera jest niedostępny na produkcji; nic nie zostało zmienione.')
-        ->doesntExpectOutputToContain('Raport')
+        ->doesntExpectOutputToContain('Odczyt repo badawczego')
         ->assertFailed();
 
     expect($calls->getArrayCopy())->toBe([])
@@ -1749,6 +1749,8 @@ test('clears the tree and imports the repo again as a first import, leaving sour
     attachBirth($manual, 1900);
     Storage::disk('local')->put($manual->photo_path, 'photo');
     $tree->sources()->orderBy('id')->firstOrFail()->buriedPeople()->attach($manual);
+    PersonSurnameVariant::factory()->create(['person_id' => $manual->id]);
+    $tree->update(['root_person_id' => $manual->id]);
 
     $otherPerson = $other->tree->people()->firstOrFail();
     $otherPerson->update(['photo_path' => "persons/{$other->tree->id}/jan.jpg"]);
@@ -1758,6 +1760,7 @@ test('clears the tree and imports the repo again as a first import, leaving sour
 
     $persons = $tree->people()->count();
     $events = $tree->events()->count();
+    $memory = $tree->repoSnapshots()->where('repo_id', 'not like', 'ZR-%')->count();
 
     $this->artisan('import:research', [...['email' => $author->email, 'path' => $repo], '--from-scratch' => true])
         ->expectsTable(['Do usunięcia', 'Liczba'], [
@@ -1765,18 +1768,22 @@ test('clears the tree and imports the repo again as a first import, leaving sour
             ['Fakty', $events],
             ['Relacje rodzic–dziecko', 0],
             ['Zamieszkania', 0],
+            ['Warianty nazwisk', 1],
             ['Zdjęcia osób', 1],
             ['Powiązania faktów ze źródłami', 2],
             ['Pochowani na nagrobkach (nie wrócą z importu)', 1],
-            ['Pamięć importu (osoby i fakty)', $tree->repoSnapshots()->where('repo_id', 'not like', 'ZR-%')->count()],
+            ['Pamięć importu (osoby i fakty)', $memory],
         ])
+        ->expectsOutputToContain('Probant zostanie odpięty (osoby znikają razem z nim).')
         ->expectsConfirmation(clearQuestion($author->email), 'yes')
-        ->expectsOutputToContain('Usunięto z drzewa konta autor@example.com:')
-        ->doesntExpectOutputToContain('Usunięte w aplikacji 1/')
+        ->expectsOutputToContain("Usunięto z drzewa konta autor@example.com: osoby {$persons}, fakty {$events}, relacje 0, zamieszkania 0, warianty nazwisk 1, zdjęcia 1, powiązania ze źródłami 2, pochowani na nagrobkach 1, pamięć importu {$memory}.")
+        ->expectsOutputToContain('Probant został odpięty; wybierz go ponownie po imporcie.')
+        ->expectsOutputToContain('Usunięte w aplikacji: 0 (do decyzji), 0 (zostawione wcześniej)')
         ->expectsConfirmation(saveQuestion(2, 0, 4, sources: '0, powiązania z faktami 2, nowe parafie 0'), 'yes')
         ->assertSuccessful();
 
     expect(normalizedTreeState($tree))->toBe($pattern)
+        ->and($tree->fresh()->root_person_id)->toBeNull()
         ->and($tree->people()->where('first_name', 'Ręczny')->exists())->toBeFalse()
         ->and(Storage::disk('local')->exists("persons/{$tree->id}/reczny.jpg"))->toBeFalse()
         ->and(DB::table('buried_people')->whereIn('source_id', $tree->sources()->select('id'))->count())->toBe(0)
@@ -1804,14 +1811,31 @@ test('says the tree is already cleared when the author refuses the final save', 
         ->and(cmdSrcState($other->tree))->toBe($otherBefore);
 });
 
-test('does not ask about clearing a tree without persons and facts and imports as a first import', function () {
+test('says the tree is already cleared when the import fails after the clearing', function () {
+    [$author, $other, $repo] = cmdSrcImported();
+    $otherBefore = cmdSrcState($other->tree);
+    $this->mock(ClassifyRepoRecords::class, function ($mock): void {
+        $mock->shouldReceive('handle')->andThrow(new RuntimeException('Klasyfikacja nie powiodła się.'));
+    });
+    $command = $this->artisan('import:research', ['email' => $author->email, 'path' => $repo, '--from-scratch' => true])
+        ->expectsConfirmation(clearQuestion($author->email), 'yes')
+        ->expectsOutputToContain('Import przerwany błędem; nic nie zostało zapisane. Osoby i fakty drzewa zostały już usunięte.');
+
+    expect(fn () => $command->run())->toThrow(RuntimeException::class, 'Klasyfikacja nie powiodła się.');
+
+    expect($this->expectedOutputSubstrings)->toBe([])
+        ->and($author->tree->people()->count())->toBe(0)
+        ->and(cmdSrcState($other->tree))->toBe($otherBefore);
+});
+
+test('does not ask about clearing a tree without persons and facts, clears its old import memory and imports as a first import', function () {
     Storage::fake('local');
     $author = arrangeEmptyAuthorWithOverlappingOther();
     $author->tree->repoSnapshots()->create(['repo_id' => 'O-0001', 'values' => [], 'deletion_kept' => true]);
     $otherBefore = treeState(User::where('email', 'inny@example.com')->firstOrFail()->tree);
 
     $this->artisan('import:research', [...importArguments($author), '--from-scratch' => true])
-        ->expectsOutputToContain('Drzewo konta autor@example.com nie ma osób ani faktów — nie ma czego usuwać.')
+        ->expectsOutputToContain('Drzewo konta autor@example.com nie ma osób ani faktów; usunięto tylko pamięć importu osób i faktów: 1.')
         ->expectsChoice(newPlacesQuestion(2), 'all', PLACES_MODE_OPTIONS, true)
         ->expectsConfirmation(saveQuestion(13, 0, 27), 'yes')
         ->assertSuccessful();

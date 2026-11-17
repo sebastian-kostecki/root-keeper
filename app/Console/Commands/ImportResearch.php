@@ -132,9 +132,10 @@ class ImportResearch extends Command
             $clearance = $planTreeClearance->handle($tree);
 
             if (! $clearance->hasRecords()) {
-                $this->info("Drzewo konta {$email} nie ma osób ani faktów — nie ma czego usuwać.");
-                $clearTree->handle($tree);
-                $cleared = true;
+                $removed = $clearTree->handle($tree);
+                $this->info($removed->snapshots > 0
+                    ? "Drzewo konta {$email} nie ma osób ani faktów; usunięto tylko pamięć importu osób i faktów: {$removed->snapshots}."
+                    : "Drzewo konta {$email} nie ma osób ani faktów — nie ma czego usuwać.");
             } else {
                 $this->clearanceTable($clearance);
 
@@ -146,112 +147,128 @@ class ImportResearch extends Command
 
                 $removed = $clearTree->handle($tree);
                 $cleared = true;
-                $this->info(sprintf('Usunięto z drzewa konta %s: osoby %d, fakty %d, relacje %d, zdjęcia %d, pamięć importu %d.', $email, $removed->persons, $removed->events, $removed->relations, $removed->photos, $removed->snapshots));
+                $this->info(sprintf(
+                    'Usunięto z drzewa konta %s: osoby %d, fakty %d, relacje %d, zamieszkania %d, warianty nazwisk %d, zdjęcia %d, powiązania ze źródłami %d, pochowani na nagrobkach %d, pamięć importu %d.',
+                    $email, $removed->persons, $removed->events, $removed->relations, $removed->residences, $removed->surnameVariants,
+                    $removed->photos, $removed->sourceLinks, $removed->buriedLinks, $removed->snapshots,
+                ));
+
+                if ($removed->hasProband) {
+                    $this->info('Probant został odpięty; wybierz go ponownie po imporcie.');
+                }
             }
         }
 
-        if ($reading->persons === [] && $tree->people()->whereNotNull('repo_id')->exists()) {
-            $this->error('Repo nie zawiera żadnej poprawnej osoby, a drzewo ma osoby z importu. Sprawdź ścieżkę i czy dysk jest zamontowany; nic nie zostało zapisane.');
-
-            return self::FAILURE;
-        }
-
-        $classes = $classifyRepoRecords->handle($tree, $reading);
-
-        if (! $reading->hasSourcesDirectory && $tree->sources()->whereNotNull('repo_id')->exists()) {
-            $this->warn('Brak katalogu zrodla/, a drzewo ma źródła z importu: usunięcia źródeł wstrzymane. Sprawdź ścieżkę i czy repo jest zsynchronizowane.');
-        }
-
-        $this->stateSummary($classes);
-
-        $matches = $matchResearchPersons->handle($tree, $reading, $classes->newPersonIds);
-
-        if ($classes->newPersonIds !== []) {
-            $this->matchSummary($matches);
-        }
-
-        $askedRemovals = array_values(array_filter($classes->removedInRepo, fn (RepoRecord $entry): bool => ! $entry->detachOnly()));
-
-        if (($this->needsAnswers($matches) || $askedRemovals !== [] || $classes->deletedInApp !== []) && ! $this->input->isInteractive()) {
-            return $this->needsTerminal($cleared);
-        }
-
-        $identity = $this->decideIdentities($matches);
-        $removals = $this->decideRemovals($classes, $askedRemovals, $reading);
-        $deletions = $this->decideDeletions($classes, $reading);
-
-        $placeMatches = $matchResearchPlaces->handle($tree, $reading, $classes, new ImportDecisions($identity, $removals, $deletions));
-
-        $sourceMatches = $matchResearchSources->handle($tree, $reading, $classes, new ImportDecisions($identity, $removals, $deletions));
-
-        if (! $this->input->isInteractive() && ($this->needsPlaceAnswers($tree, $matchResearchPlaces, $placeMatches) || $sourceMatches->matches !== [])) {
-            return $this->needsTerminal($cleared);
-        }
-
-        $decisions = new ImportDecisions($identity, $removals, $deletions, $this->decidePlaces($tree, $matchResearchPlaces, $placeMatches, $reading));
-        $sources = $this->decideSourceMatches($sourceMatches);
-
         try {
-            $plan = $planImport->handle($tree, $reading, $classes, $decisions, $sources);
-        } catch (InvalidArgumentException $exception) {
-            $this->error($this->withClearedNote($exception->getMessage(), $cleared));
+            if ($reading->persons === [] && $tree->people()->whereNotNull('repo_id')->exists()) {
+                $this->error('Repo nie zawiera żadnej poprawnej osoby, a drzewo ma osoby z importu. Sprawdź ścieżkę i czy dysk jest zamontowany; nic nie zostało zapisane.');
 
-            return self::FAILURE;
-        }
+                return self::FAILURE;
+            }
 
-        $this->summary($plan, $reading);
+            $classes = $classifyRepoRecords->handle($tree, $reading);
 
-        $stored = $tree->repoSnapshots()->get()->keyBy('repo_id')->all();
+            if (! $reading->hasSourcesDirectory && $tree->sources()->whereNotNull('repo_id')->exists()) {
+                $this->warn('Brak katalogu zrodla/, a drzewo ma źródła z importu: usunięcia źródeł wstrzymane. Sprawdź ścieżkę i czy repo jest zsynchronizowane.');
+            }
 
-        if ($this->nothingToWrite($plan, $stored)) {
-            $this->info('Nic do zapisania.');
+            $this->stateSummary($classes);
 
-            return self::SUCCESS;
-        }
+            $matches = $matchResearchPersons->handle($tree, $reading, $classes->newPersonIds);
 
-        if (($plan->changes !== [] || $plan->conflicts !== []) && ! $this->input->isInteractive()) {
-            return $this->needsTerminal($cleared);
-        }
+            if ($classes->newPersonIds !== []) {
+                $this->matchSummary($matches);
+            }
 
-        $approvals = $this->decideChanges($plan);
-        $resolutions = $this->resolveConflicts($plan);
+            $askedRemovals = array_values(array_filter($classes->removedInRepo, fn (RepoRecord $entry): bool => ! $entry->detachOnly()));
 
-        $this->newLine();
+            if (($this->needsAnswers($matches) || $askedRemovals !== [] || $classes->deletedInApp !== []) && ! $this->input->isInteractive()) {
+                return $this->needsTerminal($cleared);
+            }
 
-        $newCount = count($plan->persons);
-        $matchedCount = count($plan->matched);
-        $changeCount = count($plan->changes) - count($approvals->rejected) + $plan->fillCount()
-            + count(array_filter($plan->conflicts, fn (ValueConflict $conflict): bool => $resolutions->takesRepo($conflict->key)));
-        $removalCount = count(array_filter($plan->removals, fn (PlannedRemoval $removal): bool => $removal->decision === ImportDecisions::DELETE));
-        $memoryCount = count($plan->changedSnapshots($stored)) + count(array_filter($plan->forgottenSnapshots, fn (string $key): bool => isset($stored[$key])));
-        $sourceCount = count($plan->newSources) + count($plan->mergedSources);
-        $linkCount = $this->linkCount($plan, $approvals, $resolutions);
-        $parishCount = count($plan->newParishes);
-        $sourcesText = $sourceCount + $linkCount + $parishCount > 0
-            ? sprintf(', źródła %d, powiązania z faktami %d, nowe parafie %d', $sourceCount, $linkCount, $parishCount)
-            : '';
+            $identity = $this->decideIdentities($matches);
+            $removals = $this->decideRemovals($classes, $askedRemovals, $reading);
+            $deletions = $this->decideDeletions($classes, $reading);
 
-        if (! $this->confirm("Zapisać do drzewa konta {$email}: nowe osoby {$newCount}, dopasowane {$matchedCount}, zmiany {$changeCount}, usunięcia {$removalCount}, pamięć importu {$memoryCount}{$sourcesText}?", false)) {
-            $this->info($this->withClearedNote('Nic nie zostało zapisane.', $cleared));
+            $placeMatches = $matchResearchPlaces->handle($tree, $reading, $classes, new ImportDecisions($identity, $removals, $deletions));
 
-            return self::SUCCESS;
-        }
+            $sourceMatches = $matchResearchSources->handle($tree, $reading, $classes, new ImportDecisions($identity, $removals, $deletions));
 
-        if (app()->isProduction()
-            && $this->call('backup:run', ['--only-db' => true, '--disable-notifications' => true]) !== self::SUCCESS) {
-            $this->error($this->withClearedNote('Kopia bazy nie powiodła się, nic nie zostało zapisane.', $cleared));
+            if (! $this->input->isInteractive() && ($this->needsPlaceAnswers($tree, $matchResearchPlaces, $placeMatches) || $sourceMatches->matches !== [])) {
+                return $this->needsTerminal($cleared);
+            }
 
-            return self::FAILURE;
-        }
+            $decisions = new ImportDecisions($identity, $removals, $deletions, $this->decidePlaces($tree, $matchResearchPlaces, $placeMatches, $reading));
+            $sources = $this->decideSourceMatches($sourceMatches);
 
-        try {
-            $result = $applyImport->handle($tree, $plan, $approvals, $resolutions);
+            try {
+                $plan = $planImport->handle($tree, $reading, $classes, $decisions, $sources);
+            } catch (InvalidArgumentException $exception) {
+                $this->error($this->withClearedNote($exception->getMessage(), $cleared));
+
+                return self::FAILURE;
+            }
+
+            $this->summary($plan, $reading);
+
+            $stored = $tree->repoSnapshots()->get()->keyBy('repo_id')->all();
+
+            if ($this->nothingToWrite($plan, $stored)) {
+                $this->info('Nic do zapisania.');
+
+                return self::SUCCESS;
+            }
+
+            if (($plan->changes !== [] || $plan->conflicts !== []) && ! $this->input->isInteractive()) {
+                return $this->needsTerminal($cleared);
+            }
+
+            $approvals = $this->decideChanges($plan);
+            $resolutions = $this->resolveConflicts($plan);
+
+            $this->newLine();
+
+            $newCount = count($plan->persons);
+            $matchedCount = count($plan->matched);
+            $changeCount = count($plan->changes) - count($approvals->rejected) + $plan->fillCount()
+                + count(array_filter($plan->conflicts, fn (ValueConflict $conflict): bool => $resolutions->takesRepo($conflict->key)));
+            $removalCount = count(array_filter($plan->removals, fn (PlannedRemoval $removal): bool => $removal->decision === ImportDecisions::DELETE));
+            $memoryCount = count($plan->changedSnapshots($stored)) + count(array_filter($plan->forgottenSnapshots, fn (string $key): bool => isset($stored[$key])));
+            $sourceCount = count($plan->newSources) + count($plan->mergedSources);
+            $linkCount = $this->linkCount($plan, $approvals, $resolutions);
+            $parishCount = count($plan->newParishes);
+            $sourcesText = $sourceCount + $linkCount + $parishCount > 0
+                ? sprintf(', źródła %d, powiązania z faktami %d, nowe parafie %d', $sourceCount, $linkCount, $parishCount)
+                : '';
+
+            if (! $this->confirm("Zapisać do drzewa konta {$email}: nowe osoby {$newCount}, dopasowane {$matchedCount}, zmiany {$changeCount}, usunięcia {$removalCount}, pamięć importu {$memoryCount}{$sourcesText}?", false)) {
+                $this->info($this->withClearedNote('Nic nie zostało zapisane.', $cleared));
+
+                return self::SUCCESS;
+            }
+
+            if (app()->isProduction()
+                && $this->call('backup:run', ['--only-db' => true, '--disable-notifications' => true]) !== self::SUCCESS) {
+                $this->error($this->withClearedNote('Kopia bazy nie powiodła się, nic nie zostało zapisane.', $cleared));
+
+                return self::FAILURE;
+            }
+
+            try {
+                $result = $applyImport->handle($tree, $plan, $approvals, $resolutions);
+            } catch (Throwable $exception) {
+                report($exception);
+                $this->error($exception->getMessage());
+                $this->error($this->withClearedNote('Nic nie zostało zapisane.', $cleared));
+
+                return self::FAILURE;
+            }
         } catch (Throwable $exception) {
-            report($exception);
-            $this->error($exception->getMessage());
-            $this->error($this->withClearedNote('Nic nie zostało zapisane.', $cleared));
+            if ($cleared) {
+                $this->error($this->withClearedNote('Import przerwany błędem; nic nie zostało zapisane.', $cleared));
+            }
 
-            return self::FAILURE;
+            throw $exception;
         }
 
         $this->written($result, $plan, $tree);
@@ -285,11 +302,17 @@ class ImportResearch extends Command
             ['Fakty', $clearance->events],
             ['Relacje rodzic–dziecko', $clearance->relations],
             ['Zamieszkania', $clearance->residences],
+            ['Warianty nazwisk', $clearance->surnameVariants],
             ['Zdjęcia osób', $clearance->photos],
             ['Powiązania faktów ze źródłami', $clearance->sourceLinks],
             ['Pochowani na nagrobkach (nie wrócą z importu)', $clearance->buriedLinks],
             ['Pamięć importu (osoby i fakty)', $clearance->snapshots],
         ]);
+
+        if ($clearance->hasProband) {
+            $this->line('Probant zostanie odpięty (osoby znikają razem z nim).');
+        }
+
         $this->line('Zostają: źródła ze skanami i miejsca.');
     }
 

@@ -24,8 +24,8 @@ class ClearTree
     public function handle(Tree $tree): TreeClearance
     {
         return DB::transaction(function () use ($tree): TreeClearance {
-            $clearance = $this->plan->handle($tree);
             $snapshotIds = $this->plan->clearableSnapshotIds($tree);
+            $clearance = $this->plan->handle($tree, $snapshotIds);
 
             $tree->events()->delete();
             $tree->people()->delete();

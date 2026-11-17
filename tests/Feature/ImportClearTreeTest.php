@@ -95,28 +95,39 @@ test('plans the counts of what clearing removes without writing anything', funct
         ->and($clearance->events)->toBe(3)
         ->and($clearance->relations)->toBe(1)
         ->and($clearance->residences)->toBe(1)
+        ->and($clearance->surnameVariants)->toBe(1)
         ->and($clearance->photos)->toBe(1)
         ->and($clearance->sourceLinks)->toBe(2)
         ->and($clearance->buriedLinks)->toBe(2)
         ->and($clearance->snapshots)->toBe(5)
+        ->and($clearance->hasProband)->toBeTrue()
         ->and($clearance->hasRecords())->toBeTrue()
         ->and(ownershipSnapshot())->toBe($before);
 });
 
 test('a tree without persons and facts has nothing to clear', function () {
-    $user = User::factory()->create();
-    RepoSnapshot::create(['tree_id' => $user->tree->id, 'repo_id' => 'O-0009', 'values' => [], 'deletion_kept' => true]);
+    $user = User::factory()->create(['email' => 'autor@example.com']);
+    arrangeOverlappingClearableTree();
+    RepoSnapshot::create(['tree_id' => $user->tree->id, 'repo_id' => 'O-0001', 'values' => [], 'deletion_kept' => true]);
 
     $clearance = app(PlanTreeClearance::class)->handle($user->tree);
 
     expect($clearance->hasRecords())->toBeFalse()
-        ->and($clearance->snapshots)->toBe(1);
+        ->and($clearance->snapshots)->toBe(1)
+        ->and($clearance->hasProband)->toBeFalse();
 });
 
 test('clearing removes the persons, facts and import memory of people and facts of the tree', function () {
     $author = arrangeClearableTree(User::factory()->create(['email' => 'autor@example.com']));
+    $other = arrangeOverlappingClearableTree();
     $tree = $author['tree'];
     $expected = app(PlanTreeClearance::class)->handle($tree);
+    $otherPeople = $other['tree']->people()->select('id');
+    $otherRows = [
+        'event_source' => DB::table('event_source')->whereIn('event_id', $other['tree']->events()->select('id'))->count(),
+        'event_participants' => DB::table('event_participants')->whereIn('person_id', $otherPeople)->count(),
+        'buried_people' => DB::table('buried_people')->whereIn('person_id', $otherPeople)->count(),
+    ];
 
     $clearance = app(ClearTree::class)->handle($tree);
 
@@ -126,9 +137,9 @@ test('clearing removes the persons, facts and import memory of people and facts 
         ->and($tree->parentChildRelations()->count())->toBe(0)
         ->and(Residence::query()->where('tree_id', $tree->id)->count())->toBe(0)
         ->and(PersonSurnameVariant::query()->where('tree_id', $tree->id)->count())->toBe(0)
-        ->and(DB::table('event_source')->count())->toBe(0)
-        ->and(DB::table('event_participants')->count())->toBe(0)
-        ->and(DB::table('buried_people')->count())->toBe(0)
+        ->and(DB::table('event_source')->count())->toBe($otherRows['event_source'])
+        ->and(DB::table('event_participants')->count())->toBe($otherRows['event_participants'])
+        ->and(DB::table('buried_people')->count())->toBe($otherRows['buried_people'])
         ->and($tree->repoSnapshots()->pluck('repo_id')->all())->toBe(['ZR-0001'])
         ->and($tree->fresh()->root_person_id)->toBeNull()
         ->and(Storage::disk('local')->exists("persons/{$tree->id}/jan.jpg"))->toBeFalse()
@@ -137,6 +148,7 @@ test('clearing removes the persons, facts and import memory of people and facts 
 
 test('clearing keeps sources with their scans, source memory and places', function () {
     $author = arrangeClearableTree(User::factory()->create(['email' => 'autor@example.com']));
+    arrangeOverlappingClearableTree();
 
     app(ClearTree::class)->handle($author['tree']);
 
@@ -177,6 +189,7 @@ test('clearing leaves the other account untouched', function () {
 
 test('a rolled back transaction keeps the rows and the photo files', function () {
     $author = arrangeClearableTree(User::factory()->create(['email' => 'autor@example.com']));
+    arrangeOverlappingClearableTree();
     $tree = $author['tree'];
 
     try {
