@@ -408,10 +408,11 @@ test('creating a parent from a slot stores the person with a birth event and the
             'birth' => ['year' => 1900],
         ]);
 
-    $response->assertRedirect($treeUrl.'&person='.Person::where('first_name', 'Józef')->value('id'));
-    $response->assertSessionHas('inertia.flash_data.toast', ['type' => 'success', 'message' => 'Dodano rodzica']);
+    // The factory names come from faker (pl_PL), so the child or the spouse can be a Józef too.
+    $father = Person::where('first_name', 'Józef')->whereKeyNot([$child->id, $spouse->id])->sole();
 
-    $father = Person::where('first_name', 'Józef')->firstOrFail();
+    $response->assertRedirect($treeUrl.'&person='.$father->id);
+    $response->assertSessionHas('inertia.flash_data.toast', ['type' => 'success', 'message' => 'Dodano rodzica']);
 
     $this->assertDatabaseHas('parent_child_relations', [
         'tree_id' => $user->tree->id,
