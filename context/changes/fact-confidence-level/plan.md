@@ -428,9 +428,9 @@ Nowa nullable kolumna bez kopiowania danych. Produkcja robi `backup:run --only-d
 
 #### Automated
 
-- [ ] 3.1 Testy importu przechodzą
-- [ ] 3.2 Pint bez zmian po uruchomieniu
-- [ ] 3.3 Larastan bez nowych błędów
+- [x] 3.1 Testy importu przechodzą — c2bcf13
+- [x] 3.2 Pint bez zmian po uruchomieniu — c2bcf13
+- [x] 3.3 Larastan bez nowych błędów — c2bcf13
 
 #### Manual
 
@@ -441,6 +441,6 @@ Nowa nullable kolumna bez kopiowania danych. Produkcja robi `backup:run --only-d
 
 #### Automated
 
-- [ ] 4.1 Spec przechodzi
-- [ ] 4.2 Celowe zepsucie eventToPayload daje czerwony spec
-- [ ] 4.3 Format, lint i typy przechodzą
+- [x] 4.1 Spec przechodzi
+- [x] 4.2 Celowe zepsucie eventToPayload daje czerwony spec
+- [x] 4.3 Format, lint i typy przechodzą
