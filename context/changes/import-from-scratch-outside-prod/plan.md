@@ -360,11 +360,11 @@ Brak migracji i zmian schematu. Opcja jest dodatkowa; bez niej komenda działa j
 
 #### Automated
 
-- [x] 2.1 Testy komendy przechodzą: `$WT php artisan test --compact tests/Feature/ImportResearchCommandTest.php`
-- [x] 2.2 Wszystkie testy importu przechodzą: `$WT php artisan test --compact --filter=Import`
-- [x] 2.3 Pełny zestaw testów przechodzi: `$WT php artisan test --compact`
-- [x] 2.4 Pint bez zmian do zrobienia: `$WT vendor/bin/pint --dirty --format agent`
-- [x] 2.5 Larastan bez nowych błędów: `$WT composer types:check`
+- [x] 2.1 Testy komendy przechodzą: `$WT php artisan test --compact tests/Feature/ImportResearchCommandTest.php` — 5e13329
+- [x] 2.2 Wszystkie testy importu przechodzą: `$WT php artisan test --compact --filter=Import` — 5e13329
+- [x] 2.3 Pełny zestaw testów przechodzi: `$WT php artisan test --compact` — 5e13329
+- [x] 2.4 Pint bez zmian do zrobienia: `$WT vendor/bin/pint --dirty --format agent` — 5e13329
+- [x] 2.5 Larastan bez nowych błędów: `$WT composer types:check` — 5e13329
 
 #### Manual
 
