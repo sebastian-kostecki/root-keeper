@@ -441,6 +441,6 @@ Nowa nullable kolumna bez kopiowania danych. Produkcja robi `backup:run --only-d
 
 #### Automated
 
-- [x] 4.1 Spec przechodzi
-- [x] 4.2 Celowe zepsucie eventToPayload daje czerwony spec
-- [x] 4.3 Format, lint i typy przechodzą
+- [x] 4.1 Spec przechodzi — 06ab7b1
+- [x] 4.2 Celowe zepsucie eventToPayload daje czerwony spec — 06ab7b1
+- [x] 4.3 Format, lint i typy przechodzą — 06ab7b1
