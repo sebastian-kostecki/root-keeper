@@ -32,6 +32,7 @@ use Illuminate\Support\Facades\Exceptions;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Testing\PendingCommand;
+use Laravel\Prompts\Prompt;
 
 const RESEARCH_FIXTURE = 'tests/Fixtures/research-repo';
 
@@ -81,6 +82,18 @@ function fakeBackupRun(int $exitCode): ArrayObject
     });
 
     return $calls;
+}
+
+/**
+ * Run the command as on production while its questions stay answerable from the test. Laravel
+ * Prompts fall back to the questions that expectsChoice() / expectsConfirmation() answer only in
+ * the testing environment, and the framework flushes the Prompts state after every test, so the
+ * fallback is switched on here explicitly (the command can only add to it, never turn it off).
+ */
+function pretendProduction(): void
+{
+    app()->detectEnvironment(fn (): string => 'production');
+    Prompt::fallbackWhen(true);
 }
 
 /**
@@ -270,7 +283,7 @@ test('reports a plan that no longer fits the tree and writes nothing', function 
 test('stops when the database backup fails in production', function () {
     Storage::fake('local');
     $calls = fakeBackupRun(1);
-    app()->detectEnvironment(fn (): string => 'production');
+    pretendProduction();
     $author = arrangeEmptyAuthorWithOverlappingOther();
     $before = ownershipSnapshot();
 
@@ -287,7 +300,7 @@ test('stops when the database backup fails in production', function () {
 test('saves after a successful database backup in production', function () {
     Storage::fake('local');
     $calls = fakeBackupRun(0);
-    app()->detectEnvironment(fn (): string => 'production');
+    pretendProduction();
     $author = arrangeEmptyAuthorWithOverlappingOther();
 
     $this->artisan('import:research', importArguments($author))
@@ -645,7 +658,7 @@ test('does not offer a tree person who was chosen before for another repo person
 test('stops after a yes when the database backup fails in production and the tree has matches', function () {
     Storage::fake('local');
     $calls = fakeBackupRun(1);
-    app()->detectEnvironment(fn (): string => 'production');
+    pretendProduction();
     [$author, $scene] = arrangeCommandMatchAuthor();
     $before = ownershipSnapshot();
 
@@ -1098,7 +1111,7 @@ test('refuses a re-import with changes when run with --no-interaction and writes
 test('writes nothing when the database backup fails after the consent to a re-import in production', function () {
     [$author, $other] = arrangeImportedAuthors();
     $calls = fakeBackupRun(1);
-    app()->detectEnvironment(fn (): string => 'production');
+    pretendProduction();
     $blocks = reimportBlocks();
     $blocks['O-0001'] = str_replace('1801', '1802', $blocks['O-0001']);
     $repo = reimportRepo($blocks);
@@ -1707,7 +1720,7 @@ function normalizedTreeState(Tree $tree): array
 test('refuses --from-scratch in production before reading the repo and writes nothing', function () {
     Storage::fake('local');
     $calls = fakeBackupRun(0);
-    app()->detectEnvironment(fn (): string => 'production');
+    pretendProduction();
     $author = arrangeOverlappingUsers();
     $before = ownershipSnapshot();
 
