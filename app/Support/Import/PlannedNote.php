@@ -14,6 +14,7 @@ final readonly class PlannedNote
      * @param  array<string, true>  $skipped  repo ids of persons left out
      * @param  array<string, true>  $placed  repo keys of the events that have the repo place after the import with the default answers
      * @param  array<string, array{0: string, 1: bool}>  $waiting  repo key of an event => the key of the place question it waits for and whether it is a conflict (otherwise a change)
+     * @param  array<string, true>  $outside  repo keys of the burials the tree does not hold after the import
      */
     public function __construct(
         public ResearchPerson $person,
@@ -21,6 +22,7 @@ final readonly class PlannedNote
         public array $skipped,
         public array $placed,
         public array $waiting,
+        public array $outside = [],
     ) {}
 
     /**
@@ -28,7 +30,7 @@ final readonly class PlannedNote
      */
     public function planned(): ?string
     {
-        return RepoValues::note($this->person, $this->reading, $this->skipped, $this->placed);
+        return RepoValues::note($this->person, $this->reading, $this->skipped, $this->placed, $this->outside);
     }
 
     /**
@@ -47,6 +49,6 @@ final readonly class PlannedNote
             }
         }
 
-        return RepoValues::note($this->person, $this->reading, $this->skipped, $placed);
+        return RepoValues::note($this->person, $this->reading, $this->skipped, $placed, $this->outside);
     }
 }

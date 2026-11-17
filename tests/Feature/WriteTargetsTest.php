@@ -527,3 +527,33 @@ test('saving a gravestone touches only its source row, its buried list and the b
     expect($diff['tables']['buried_people']['changed'])->toBe([]);
     expect($diff['files'])->toBe(['removed' => [], 'added' => []]);
 });
+
+test('changing the confidence level of a birth changes only the birth row', function () {
+    $user = User::factory()->create();
+    $scene = familyScene($user);
+    extract($scene);
+
+    $form = readInertiaProp($this, $user, personPreviewUrl($focus), 'personPreview')['personForm'];
+    $event = fn (?array $fact, array $overrides = []): array => $fact === null ? [] : [
+        ...array_intersect_key($fact, array_flip(['year', 'month', 'day', 'qualifier', 'until_year'])),
+        'locality_id' => $fact['locality']['id'] ?? null,
+        ...$overrides,
+    ];
+
+    $before = databaseRows();
+
+    $this->actingAs($user)->put(route('persons.update', $focus), [
+        ...array_intersect_key($form, array_flip(['first_name', 'last_name', 'gender', 'religion', 'is_deceased'])),
+        'birth' => $event($form['birth'], ['confidence' => 'B']),
+        'death' => $event($form['death']),
+    ])->assertSessionHasNoErrors()->assertRedirect();
+
+    $diff = rowDiff($before, databaseRows());
+
+    expect(array_keys($diff['tables']))->toBe(['events']);
+    expect(array_column(array_column($diff['tables']['events']['changed'], 'after'), 'id'))->toBe([$focusBirth->id]);
+    expect($diff['tables']['events']['changed'][0]['before']['confidence'])->toBeNull();
+    expect($diff['tables']['events']['changed'][0]['after']['confidence'])->toBe('B');
+    expect($diff['tables']['events']['added'])->toBe([]);
+    expect($diff['tables']['events']['removed'])->toBe([]);
+});

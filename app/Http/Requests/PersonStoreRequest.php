@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use App\Concerns\PartialDateValidationRules;
+use App\Enums\ConfidenceLevel;
 use App\Enums\Gender;
 use App\Enums\Religion;
 use Illuminate\Contracts\Validation\ValidationRule;
@@ -23,7 +24,10 @@ class PersonStoreRequest extends FormRequest
     {
         $deathRules = array_map(
             fn (array $rule): array => [...$rule, 'prohibited_unless:is_deceased,1,true'],
-            $this->partialDateRules('death'),
+            [
+                ...$this->partialDateRules('death'),
+                'death.confidence' => ['nullable', Rule::enum(ConfidenceLevel::class)],
+            ],
         );
 
         $burialRules = [
@@ -33,6 +37,7 @@ class PersonStoreRequest extends FormRequest
                 Rule::exists('cemeteries', 'id')->where('tree_id', $this->user()->tree->id),
                 'prohibited_unless:is_deceased,1,true',
             ],
+            'burial.confidence' => ['nullable', Rule::enum(ConfidenceLevel::class), 'prohibited_unless:is_deceased,1,true'],
         ];
 
         return [
@@ -43,6 +48,7 @@ class PersonStoreRequest extends FormRequest
             'is_deceased' => ['sometimes', 'boolean'],
 
             ...$this->partialDateRules('birth'),
+            'birth.confidence' => ['nullable', Rule::enum(ConfidenceLevel::class)],
             ...$deathRules,
             ...$burialRules,
         ];
@@ -74,6 +80,9 @@ class PersonStoreRequest extends FormRequest
             'death.until_year' => 'rok końca zakresu',
             'death.locality_id' => 'miejsce zgonu',
             'burial.cemetery_id' => 'miejsce pochowania',
+            'birth.confidence' => 'poziom pewności urodzenia',
+            'death.confidence' => 'poziom pewności zgonu',
+            'burial.confidence' => 'poziom pewności pochowania',
         ];
     }
 

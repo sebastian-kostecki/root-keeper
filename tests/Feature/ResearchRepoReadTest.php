@@ -57,7 +57,8 @@ test('maps the block fields onto the person', function () {
         ->and($jan->death->date->year)->toBe(1870)
         ->and($jan->burial->date)->toBeNull()
         ->and($jan->burial->place)->toBe('Zalesie')
-        ->and($jan->burial->cemetery)->toBeNull();
+        ->and($jan->burial->cemetery)->toBeNull()
+        ->and($jan->burial->level)->toBe(ConfidenceLevel::C);
 });
 
 test('keeps an implex person with two ahnentafel numbers and a death without a date', function () {

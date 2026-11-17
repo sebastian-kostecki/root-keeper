@@ -49,7 +49,7 @@ Autor prowadzi badania genealogiczne w repo markdown (dziś 283 pliki osób, dzi
 | S-05 | import-places-matched-to-gazetteer | dostać miejsca wydarzeń (także pochowanie na cmentarzu) dopasowane do spisu i potwierdzić nowe w podglądzie      | S-02          | FR-009, FR-010, FR-017                                | done     |
 | S-06 | import-sources-with-scans          | dostać źródła z opisem i skanem podpięte do faktów z numerem wpisu                                             | S-05          | FR-001, FR-011, US-01                                 | done        |
 | S-07 | fuzzy-event-dates                  | zapisać i zobaczyć datę wydarzenia jako zakres lat, „przed” albo „po” — ręcznie i z importu                      | —             | FR-009, FR-015                                        | done |
-| S-08 | fact-confidence-level              | zobaczyć i ustawić przy fakcie poziom pewności A–D — ręcznie i z importu                                        | S-02          | FR-018, FR-015                                        | ready    |
+| S-08 | fact-confidence-level              | zobaczyć i ustawić przy fakcie poziom pewności A–D — ręcznie i z importu                                        | S-02          | FR-018, FR-015                                        | done     |
 | S-09 | surname-variant-search             | dostać warianty zapisu nazwiska z importu i znaleźć osobę w wyszukiwarce po każdym wariancie                     | S-02          | US-03, FR-019                                         | done |
 | S-10 | import-from-scratch-outside-prod   | poza produkcją zaimportować „od zera”, czyszcząc najpierw osoby i fakty drzewa konta (z potwierdzeniem)          | S-02          | FR-020                                                | done     |
 
@@ -189,7 +189,7 @@ Brak. Każdy element przekrojowy wchodzi w pierwszym wycinku, który go używa: 
 - **Blockers:** —
 - **Unknowns:** —
 - **Risk:** Nowe puste pole bez przepisywania danych; osobno od `S-07`, bo dotyczy faktu, a nie daty, i może iść równolegle.
-- **Status:** ready
+- **Status:** done
 
 ### S-09: Wyszukiwanie po wariantach nazwiska
 
@@ -226,7 +226,7 @@ Brak. Każdy element przekrojowy wchodzi w pierwszym wycinku, który go używa: 
 | S-05       | import-places-matched-to-gazetteer | Import: miejsca dopasowane do spisu                          | done                  | Zarchiwizowane 2026-11-16. |
 | S-06       | import-sources-with-scans          | Import: źródła ze skanami podpięte do faktów                 | done                  | Zarchiwizowane 2026-11-17. |
 | S-07       | fuzzy-event-dates                  | Daty nieostre: zakres, przed, po                             | done                  | Zarchiwizowane 2026-10-23. |
-| S-08       | fact-confidence-level              | Poziom pewności A–D przy fakcie                              | yes                   | Run `/10x-plan fact-confidence-level`. |
+| S-08       | fact-confidence-level              | Poziom pewności A–D przy fakcie                              | done                  | Zarchiwizowane 2026-11-17. |
 | S-09       | surname-variant-search             | Wyszukiwanie osób po wariantach nazwiska                     | done                  | Zarchiwizowane 2026-11-16. |
 | S-10       | import-from-scratch-outside-prod   | Import „od zera” poza produkcją                              | done                  | Zarchiwizowane 2026-11-17. |
 
@@ -264,3 +264,4 @@ Brak. Każdy element przekrojowy wchodzi w pierwszym wycinku, który go używa: 
 - **S-09: import przenosi warianty zapisu nazwiska osoby, autor widzi je przy osobie, a wyszukiwarka osób znajduje osobę po każdym wariancie (np. Misiuk po „Mysiuk”).** — Archived 2026-11-16 → `context/archive/2026-11-16-surname-variant-search/`. Lesson: —.
 - **S-06: import przenosi źródła z bloków źródeł repo (opis: parafia, rok, typ aktu, archiwum, sygnatura, link; plik skanu kopiowany z repo do magazynu aplikacji) i podpina je do faktów z numerem wpisu; repo badawcze pozostaje tylko czytane; ręcznie wgrane skany zostają.** — Archived 2026-11-17 → `context/archive/2026-11-16-import-sources-with-scans/`. Lesson: —.
 - **S-10: autor poza produkcją uruchamia import z opcją „od zera”, która po potwierdzeniu usuwa osoby i fakty drzewa wskazanego konta przed importem; na produkcji opcja jest niedostępna.** — Archived 2026-11-17 → `context/archive/2026-11-17-import-from-scratch-outside-prod/`. Lesson: —.
+- **S-08: autor widzi przy fakcie poziom pewności A–D (A akt pierwotny, B indeks / źródło wtórne, C wskazówka, D hipoteza) niezależny od źródeł i może go ustawić ręcznie; import przenosi poziom z repo; istniejące fakty mają poziom nieokreślony.** — Archived 2026-11-17 → `context/archive/2026-11-17-fact-confidence-level/`. Lesson: —.

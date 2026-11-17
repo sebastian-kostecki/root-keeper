@@ -2,6 +2,7 @@ import { usePage } from '@inertiajs/react';
 import { useState } from 'react';
 import { CemeteryPicker } from '@/components/cemeteries/cemetery-picker';
 import InputError from '@/components/input-error';
+import { ConfidenceField } from '@/components/persons/confidence-field';
 import { PartialDateInput } from '@/components/persons/partial-date-input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
@@ -14,7 +15,12 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
-import type { PersonFormData, PersonFormEvent, Religion } from '@/types';
+import type {
+    ConfidenceLevel,
+    PersonFormData,
+    PersonFormEvent,
+    Religion,
+} from '@/types';
 
 type Errors = Partial<Record<string, string>>;
 
@@ -141,7 +147,7 @@ export function PersonalFields({
     );
 }
 
-/** Confirmed hint plus the birth date and place. */
+/** Confirmed hint plus the birth date, place and confidence level. */
 export function BirthFields({
     errors,
     birth,
@@ -160,6 +166,11 @@ export function BirthFields({
                 prefix="birth"
                 errors={errors}
                 defaultValue={birth ?? undefined}
+            />
+            <ConfidenceField
+                name="birth.confidence"
+                defaultValue={birth?.confidence ?? null}
+                error={errors['birth.confidence']}
             />
         </div>
     );
@@ -220,6 +231,11 @@ export function DeathFields({
                         errors={errors}
                         defaultValue={death ?? undefined}
                     />
+                    <ConfidenceField
+                        name="death.confidence"
+                        defaultValue={death?.confidence ?? null}
+                        error={errors['death.confidence']}
+                    />
                     <CemeteryPicker
                         id="burial-cemetery"
                         name="burial.cemetery_id"
@@ -236,13 +252,20 @@ export function DeathFields({
                             Podpowiedź z nagrobka
                         </p>
                     )}
+                    <ConfidenceField
+                        name="burial.confidence"
+                        label="Poziom pewności pochowania"
+                        defaultValue={burial?.confidence ?? null}
+                        disabled={cemeteryId === null}
+                        error={errors['burial.confidence']}
+                    />
                 </>
             )}
         </div>
     );
 }
 
-/** Marriage date, place and form. */
+/** Marriage date, place, form and confidence level. */
 export function MarriageFields({
     errors,
     defaultValue,
@@ -250,10 +273,14 @@ export function MarriageFields({
     errors: Errors;
     defaultValue: NonNullable<
         React.ComponentProps<typeof PartialDateInput>['defaultValue']
-    > & { form: string | null };
+    > & { form: string | null; confidence: ConfidenceLevel | null };
 }) {
     const { marriageForms } = usePage().props;
-    const { form: storedForm, ...dateDefaults } = defaultValue;
+    const {
+        form: storedForm,
+        confidence: storedConfidence,
+        ...dateDefaults
+    } = defaultValue;
     const [form, setForm] = useState(storedForm ?? '');
 
     return (
@@ -287,6 +314,12 @@ export function MarriageFields({
                 <input type="hidden" name="marriage.form" value={form} />
                 <InputError message={errors['marriage.form']} />
             </div>
+
+            <ConfidenceField
+                name="marriage.confidence"
+                defaultValue={storedConfidence}
+                error={errors['marriage.confidence']}
+            />
         </div>
     );
 }

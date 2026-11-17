@@ -31,6 +31,8 @@ class MarriageResource extends JsonResource
      *     date: string|null,
      *     place: string|null,
      *     locality_id: int|null,
+     *     confidence: string|null,
+     *     confidence_label: string|null,
      *     marriage_form?: string|null,
      *     marriage_form_label?: string|null,
      *     is_confirmed?: bool,

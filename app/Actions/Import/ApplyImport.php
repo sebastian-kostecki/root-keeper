@@ -10,6 +10,7 @@ use App\Actions\Persons\GuardsParentSexChange;
 use App\Actions\Persons\MapsEventInput;
 use App\Actions\Relations\CreateMarriage;
 use App\Actions\Relations\CreateParentChildRelation;
+use App\Enums\ConfidenceLevel;
 use App\Enums\DateQualifier;
 use App\Enums\EventType;
 use App\Enums\Gender;
@@ -290,6 +291,8 @@ class ApplyImport
                     $clear = false;
                     $place = null;
                     $setPlace = false;
+                    $level = null;
+                    $setLevel = false;
 
                     if ($planned->dateFill !== null) {
                         $date = $planned->dateFill->value;
@@ -313,6 +316,23 @@ class ApplyImport
                         $fills++;
                     }
 
+                    if ($planned->confidenceFill !== null) {
+                        $level = $planned->confidenceFill->value;
+                        $setLevel = true;
+                        $fills++;
+                    }
+
+                    if ($planned->confidenceConflict !== null && $resolutions->takesRepo($planned->confidenceConflict->key)) {
+                        $level = $planned->confidenceConflict->repoValue;
+                        $setLevel = true;
+                        $taken++;
+                    }
+
+                    if ($planned->confidenceChange !== null && ! $approvals->rejects($planned->confidenceChange->key)) {
+                        $level = $planned->confidenceChange->repoValue;
+                        $setLevel = true;
+                    }
+
                     $fills += $planned->sourceFill === null ? 0 : 1;
                     $taken += $planned->sourceConflict !== null && $resolutions->takesRepo($planned->sourceConflict->key) ? 1 : 0;
 
@@ -329,7 +349,7 @@ class ApplyImport
 
                     $placeAttributes = $setPlace ? $this->placeAttributes($tree, false, $place instanceof PlannedPlace ? $place : null, $place === null, $written) : [];
 
-                    $this->markEvent($event, $planned->repoId, $date instanceof ResearchDate ? $date : null, $clear, $placeAttributes);
+                    $this->markEvent($event, $planned->repoId, $date instanceof ResearchDate ? $date : null, $clear, $placeAttributes, $setLevel, $level instanceof ConfidenceLevel ? $level : null);
                     $markedMarriages += $planned->known ? 0 : 1;
 
                     continue;
@@ -339,7 +359,7 @@ class ApplyImport
                     $tree,
                     $spouse,
                     $partner,
-                    [...$this->dateInput($planned->marriage->event->date), 'locality_id' => $planned->place === null ? null : $written->localityId($planned->place)],
+                    [...$this->dateInput($planned->marriage->event->date), 'locality_id' => $planned->place === null ? null : $written->localityId($planned->place), 'confidence' => $planned->marriage->event->level],
                 );
                 $event->update(['repo_id' => $planned->repoId]);
                 $newMarriages++;
@@ -640,6 +660,18 @@ class ApplyImport
                 $this->guardWeddingPlace($tree, $event, $planned->repoId, $planned->placeChange->appLabel);
             }
 
+            if ($planned->confidenceFill !== null) {
+                $this->guardWeddingConfidence($event, $planned->repoId, $planned->confidenceFill->appLabel);
+            }
+
+            if ($planned->confidenceConflict !== null && $resolutions->takesRepo($planned->confidenceConflict->key)) {
+                $this->guardWeddingConfidence($event, $planned->repoId, $planned->confidenceConflict->appLabel);
+            }
+
+            if ($planned->confidenceChange !== null && ! $approvals->rejects($planned->confidenceChange->key)) {
+                $this->guardWeddingConfidence($event, $planned->repoId, $planned->confidenceChange->appLabel);
+            }
+
             if ($planned->sourceFill !== null) {
                 $this->guardWeddingSources($event, $planned->repoId, $planned->sourceFill->appLabel, $skip);
             }
@@ -905,7 +937,7 @@ class ApplyImport
      */
     private function writeUpdate(Tree $tree, Person $person, PlannedUpdate $update, ChangeApprovals $approvals, ConflictResolutions $resolutions, WrittenPlaces $written): array
     {
-        /** @var list<array{0: string, 1: string|Gender|ResearchDate|PlannedPlace|SurnameVariants|SourceLinks|SourceKind|SourceRecordType|null}> $values */
+        /** @var list<array{0: string, 1: string|Gender|ResearchDate|PlannedPlace|SurnameVariants|SourceLinks|SourceKind|SourceRecordType|ConfidenceLevel|null}> $values */
         $values = [];
         $fills = 0;
         $taken = 0;
@@ -931,6 +963,7 @@ class ApplyImport
         $attributes = [];
         $dates = [];
         $places = [];
+        $levels = [];
         $variants = null;
 
         foreach ($values as [$field, $value]) {
@@ -941,6 +974,7 @@ class ApplyImport
                 $field === 'note' && ($value === null || is_string($value)) => $attributes[$field] = NoteBlock::replace($person->note, $update->person->id, $value),
                 in_array($field, ['birth_date', 'death_date', 'burial_date'], true) && ($value === null || $value instanceof ResearchDate) => $dates[$field] = $value,
                 in_array($field, ['birth_place', 'death_place', 'burial_place'], true) && ($value === null || $value instanceof PlannedPlace) => $places[$field] = $value,
+                in_array($field, ['birth_confidence', 'death_confidence', 'burial_confidence'], true) && ($value === null || $value instanceof ConfidenceLevel) => $levels[$field] = $value,
                 in_array($field, ['birth_sources', 'death_sources'], true) && ($value === null || $value instanceof SourceLinks) => null,
                 default => throw new RuntimeException("Plan ma niewłaściwą wartość pola {$field} dla osoby #{$person->id}."),
             };
@@ -962,10 +996,10 @@ class ApplyImport
         $research = $update->person;
 
         foreach ([
-            [EventType::Birth, $research->birth, RepoKeys::birth($research->id), $update->birthRepoId, $update->createBirth, 'birth_date', 'birth_place', $update->birthPlace, 'births'],
-            [EventType::Death, $research->death, RepoKeys::death($research->id), $update->deathRepoId, $update->createDeath, 'death_date', 'death_place', $update->deathPlace, 'deaths'],
-            [EventType::Burial, $research->burial, RepoKeys::burial($research->id), $update->burialRepoId, $update->createBurial, 'burial_date', 'burial_place', $update->burialPlace, 'burials'],
-        ] as [$type, $repoEvent, $key, $markKey, $create, $dateField, $placeField, $createPlace, $counter]) {
+            [EventType::Birth, $research->birth, RepoKeys::birth($research->id), $update->birthRepoId, $update->createBirth, 'birth_date', 'birth_place', $update->birthPlace, 'births', 'birth_confidence'],
+            [EventType::Death, $research->death, RepoKeys::death($research->id), $update->deathRepoId, $update->createDeath, 'death_date', 'death_place', $update->deathPlace, 'deaths', 'death_confidence'],
+            [EventType::Burial, $research->burial, RepoKeys::burial($research->id), $update->burialRepoId, $update->createBurial, 'burial_date', 'burial_place', $update->burialPlace, 'burials', 'burial_confidence'],
+        ] as [$type, $repoEvent, $key, $markKey, $create, $dateField, $placeField, $createPlace, $counter, $levelField]) {
             if ($create) {
                 if ($person->events->contains(fn (Event $event): bool => $event->type === $type)) {
                     throw new RuntimeException("Osoba {$person->displayName()} (#{$person->id}) dostała wydarzenie po planowaniu; nic nie zostało zapisane.");
@@ -990,19 +1024,19 @@ class ApplyImport
                     throw new RuntimeException("Osobie {$person->displayName()} (#{$person->id}) zniknęło wydarzenie po planowaniu; nic nie zostało zapisane.");
                 }
 
-                $this->markEvent($event, $markKey, $dates[$dateField] ?? null, false, $placeAttributes);
+                $this->markEvent($event, $markKey, $dates[$dateField] ?? null, false, $placeAttributes, array_key_exists($levelField, $levels), $levels[$levelField] ?? null);
 
                 continue;
             }
 
-            if (array_key_exists($dateField, $dates) || $placeAttributes !== []) {
+            if (array_key_exists($dateField, $dates) || $placeAttributes !== [] || array_key_exists($levelField, $levels)) {
                 $event = $person->events->first(fn (Event $each): bool => $each->type === $type && $each->repo_id === $key);
 
                 if ($event === null) {
                     throw new RuntimeException("Osobie {$person->displayName()} (#{$person->id}) zniknęło wydarzenie po planowaniu; nic nie zostało zapisane.");
                 }
 
-                $this->markEvent($event, $key, $dates[$dateField] ?? null, array_key_exists($dateField, $dates) && $dates[$dateField] === null, $placeAttributes);
+                $this->markEvent($event, $key, $dates[$dateField] ?? null, array_key_exists($dateField, $dates) && $dates[$dateField] === null, $placeAttributes, array_key_exists($levelField, $levels), $levels[$levelField] ?? null);
             }
         }
 
@@ -1020,7 +1054,7 @@ class ApplyImport
      */
     private function writeMatch(Tree $tree, Person $person, PlannedMatch $match, ConflictResolutions $resolutions, WrittenPlaces $written): array
     {
-        /** @var list<array{0: string, 1: string|Gender|ResearchDate|PlannedPlace|SurnameVariants|SourceLinks|SourceKind|SourceRecordType|null, 2: bool}> $changes */
+        /** @var list<array{0: string, 1: string|Gender|ResearchDate|PlannedPlace|SurnameVariants|SourceLinks|SourceKind|SourceRecordType|ConfidenceLevel|null, 2: bool}> $changes */
         $changes = [];
 
         foreach ($match->fills as $fill) {
@@ -1036,6 +1070,7 @@ class ApplyImport
         $attributes = ['repo_id' => $match->person->id];
         $dates = [];
         $places = [];
+        $levels = [];
         $variants = null;
         $fills = 0;
         $taken = 0;
@@ -1047,6 +1082,7 @@ class ApplyImport
                 $field === 'gender' && $value instanceof Gender => $attributes[$field] = $value,
                 in_array($field, ['birth_date', 'death_date', 'burial_date'], true) && $value instanceof ResearchDate => $dates[$field] = $value,
                 in_array($field, ['birth_place', 'death_place', 'burial_place'], true) && ($value === null || $value instanceof PlannedPlace) => $places[$field] = $value,
+                in_array($field, ['birth_confidence', 'death_confidence', 'burial_confidence'], true) && ($value === null || $value instanceof ConfidenceLevel) => $levels[$field] = $value,
                 in_array($field, ['birth_sources', 'death_sources'], true) && ($value === null || $value instanceof SourceLinks) => null,
                 default => throw new RuntimeException("Plan ma niewłaściwą wartość pola {$field} dla osoby #{$person->id}."),
             };
@@ -1069,10 +1105,10 @@ class ApplyImport
         }
 
         foreach ([
-            [EventType::Birth, $match->birthRepoId, $match->createBirth, 'birth_date', 'birth_place'],
-            [EventType::Death, $match->deathRepoId, $match->createDeath, 'death_date', 'death_place'],
-            [EventType::Burial, $match->burialRepoId, $match->createBurial, 'burial_date', 'burial_place'],
-        ] as [$type, $repoId, $create, $dateField, $placeField]) {
+            [EventType::Birth, $match->birthRepoId, $match->createBirth, 'birth_date', 'birth_place', 'birth_confidence'],
+            [EventType::Death, $match->deathRepoId, $match->createDeath, 'death_date', 'death_place', 'death_confidence'],
+            [EventType::Burial, $match->burialRepoId, $match->createBurial, 'burial_date', 'burial_place', 'burial_confidence'],
+        ] as [$type, $repoId, $create, $dateField, $placeField, $levelField]) {
             $event = $person->events->first(fn (Event $each): bool => $each->type === $type);
 
             if ($create) {
@@ -1095,7 +1131,7 @@ class ApplyImport
                 ? $this->placeAttributes($tree, $type === EventType::Burial, $places[$placeField], $places[$placeField] === null, $written)
                 : [];
 
-            $this->markEvent($event, $repoId, $dates[$dateField] ?? null, false, $placeAttributes);
+            $this->markEvent($event, $repoId, $dates[$dateField] ?? null, false, $placeAttributes, array_key_exists($levelField, $levels), $levels[$levelField] ?? null);
         }
 
         return ['fills' => $fills, 'taken' => $taken];
@@ -1126,6 +1162,9 @@ class ApplyImport
             'birth_place' => $this->localityName($tree, $person->birth()?->locality_id),
             'death_place' => $this->localityName($tree, $person->death()?->locality_id),
             'burial_place' => $this->cemeteryLabel($tree, $person->burial()?->cemetery_id),
+            'birth_confidence' => $person->birth()?->confidence?->value,
+            'death_confidence' => $person->death()?->confidence?->value,
+            'burial_confidence' => $person->burial()?->confidence?->value,
             'birth_sources' => $this->sourceLinksLabel($person->birth(), $skip),
             'death_sources' => $this->sourceLinksLabel($person->death(), $skip),
             default => throw new RuntimeException("Plan ma niewłaściwe pole {$field} dla osoby #{$person->id}."),
@@ -1164,6 +1203,22 @@ class ApplyImport
         $planned = $planned === PlanImport::EMPTY_LABEL ? null : $planned;
 
         if ($this->localityName($tree, $event->locality_id) !== $planned) {
+            throw new RuntimeException("Małżeństwo {$repoId} zmieniło się po planowaniu; nic nie zostało zapisane.");
+        }
+    }
+
+    /**
+     * Check that the confidence level of an existing wedding is still the one the plan saw.
+     *
+     * @param  string|null  $planned  the letter the plan recorded, `null` for a wedding without a level
+     *
+     * @throws RuntimeException
+     */
+    private function guardWeddingConfidence(Event $event, string $repoId, ?string $planned): void
+    {
+        $planned = $planned === PlanImport::EMPTY_LABEL ? null : $planned;
+
+        if ($event->confidence?->value !== $planned) {
             throw new RuntimeException("Małżeństwo {$repoId} zmieniło się po planowaniu; nic nie zostało zapisane.");
         }
     }
@@ -1592,7 +1647,9 @@ class ApplyImport
         if ($burial) {
             $cemeteryId = $written->cemeteryId($place);
 
-            return ($cemeteryId === null ? null : $this->burialPlaceFrom($tree, ['cemetery_id' => $cemeteryId]))
+            $columns = $cemeteryId === null ? null : $this->burialPlaceFrom($tree, ['cemetery_id' => $cemeteryId]);
+
+            return ($columns === null ? null : Arr::only($columns, ['locality_id', 'cemetery_id']))
                 ?? throw new RuntimeException("Cmentarz {$place->label} nie należy do drzewa; nic nie zostało zapisane.");
         }
 
@@ -1610,13 +1667,18 @@ class ApplyImport
     /**
      * Give an existing event its repo id and, when given, its date, or empty its date when the repo cleared it. The place
      * changes only as the plan says, through `$place` (the columns of {@see placeAttributes()}); the wedding form and the
-     * linked sources stay. Saved through the model so that the derived flag follows.
+     * linked sources stay. The confidence level changes only with `$setConfidence`, to `$confidence` or to none. Saved
+     * through the model so that the derived flag follows.
      *
      * @param  array{locality_id?: int|null, cemetery_id?: int|null}  $place
      */
-    private function markEvent(Event $event, string $repoId, ?ResearchDate $date, bool $clear = false, array $place = []): void
+    private function markEvent(Event $event, string $repoId, ?ResearchDate $date, bool $clear = false, array $place = [], bool $setConfidence = false, ?ConfidenceLevel $confidence = null): void
     {
         $attributes = ['repo_id' => $repoId, ...$place];
+
+        if ($setConfidence) {
+            $attributes['confidence'] = $confidence;
+        }
 
         if ($clear) {
             $attributes += Arr::only(
@@ -1649,7 +1711,7 @@ class ApplyImport
 
         $event = $tree->events()->create([
             'type' => $type,
-            ...$this->eventAttributesFrom([...$this->dateInput($research->date), 'locality_id' => $place === null || $burial ? null : $written->localityId($place)]),
+            ...$this->eventAttributesFrom([...$this->dateInput($research->date), 'locality_id' => $place === null || $burial ? null : $written->localityId($place), 'confidence' => $research->level]),
             ...($place === null ? [] : $this->placeAttributes($tree, $burial, $place, false, $written)),
             'repo_id' => $repoId,
         ]);

@@ -5,6 +5,7 @@ use App\Actions\Import\ClassifyRepoRecords;
 use App\Actions\Import\MatchResearchPlaces;
 use App\Actions\Import\PlanImport;
 use App\Actions\Import\ReadResearchRepo;
+use App\Enums\ConfidenceLevel;
 use App\Enums\EventType;
 use App\Enums\Gender;
 use App\Enums\ParishKind;
@@ -256,9 +257,9 @@ test('writes the person note exactly as specified', function () {
 
     expect(plannedPerson($plan, 'O-0001')->note)->toBe(<<<'NOTE'
         Z repo badawczego (O-0001):
-        Urodzenie: Zalesie; poziom A; 24 IV 1801 st.st.
-        Pochowanie: Zalesie
-        Ślub z Anna Wrona (O-0004): Zalesie; poziom B
+        Urodzenie: Zalesie; 24 IV 1801 st.st.
+        Pochowanie: Zalesie; poziom C
+        Ślub z Anna Wrona (O-0004): Zalesie
         NOTE);
 });
 
@@ -288,14 +289,14 @@ test('writes the details of an empty burial, a death and a one-sided marriage', 
         'O-0002' => 'imiona: Ewa',
     ]);
 
-    expect(plannedPerson($plan, 'O-0001')->note)->toBe("Z repo badawczego (O-0001):\nZgon: poziom C\nŚlub z Ewa (O-0002): Zalesie")
+    expect(plannedPerson($plan, 'O-0001')->note)->toBe("Z repo badawczego (O-0001):\nŚlub z Ewa (O-0002): Zalesie")
         ->and(plannedPerson($plan, 'O-0002')->note)->toBe("Z repo badawczego (O-0002):\nŚlub z Jan (O-0001): Zalesie");
 });
 
 test('puts the marriage line in the notes of both spouses', function () {
     $plan = planFixtureImport(arrangeEmptyAuthorAndOverlappingOther());
 
-    expect(plannedPerson($plan, 'O-0004')->note)->toBe("Z repo badawczego (O-0004):\nŚlub z Jan Nowak (O-0001): Zalesie; poziom B");
+    expect(plannedPerson($plan, 'O-0004')->note)->toBe("Z repo badawczego (O-0004):\nŚlub z Jan Nowak (O-0001): Zalesie");
 });
 
 test('counts dates by qualifier and events without a date', function () {
@@ -681,7 +682,7 @@ test('appends the repo block to the note of a matched person', function () {
         'O-0001' => "imiona: Jan\nnazwisko: Nowak\nurodzenie:\n  miejsce: Zalesie\n  poziom: A",
     ], ['O-0001' => $people['jan']]);
 
-    expect(plannedMatch($plan, 'O-0001')->note)->toBe("Z repo badawczego (O-0001):\nUrodzenie: Zalesie; poziom A");
+    expect(plannedMatch($plan, 'O-0001')->note)->toBe("Z repo badawczego (O-0001):\nUrodzenie: Zalesie");
 });
 
 test('rejects decisions that point outside the tree or use a tree person twice or miss a repo person', function () {
@@ -868,7 +869,7 @@ test('plans nothing for a repo and a tree that neither moved since the last impo
         ->and($plan->forgottenSnapshots)->toBe([])
         ->and($plan->keptDeletedSnapshots)->toBe([])
         ->and($plan->snapshots)->toHaveKeys(['O-0001', 'O-0001/urodzenie', 'O-0002', 'O-0003', 'O-0001>O-0002', 'O-0001+O-0003/slub'])
-        ->and($plan->snapshots['O-0001/urodzenie'])->toBe(['data' => '1801', 'miejsce' => null, 'miejsce_id' => null]);
+        ->and($plan->snapshots['O-0001/urodzenie'])->toBe(['data' => '1801', 'miejsce' => null, 'poziom' => null, 'miejsce_id' => null]);
 
     expectPlanInside($plan, $tree);
     expect($other->repoSnapshots()->count())->toBe($tree->repoSnapshots()->count());
@@ -888,7 +889,7 @@ test('plans a birth date the repo changed and nobody touched in the app as a cha
         ->and($plan->updates)->toHaveCount(1)
         ->and($plan->updates[0]->changes)->toBe([$change])
         ->and($plan->conflicts)->toBe([])
-        ->and($plan->snapshots['O-0001/urodzenie'])->toBe(['data' => '1802', 'miejsce' => null, 'miejsce_id' => null]);
+        ->and($plan->snapshots['O-0001/urodzenie'])->toBe(['data' => '1802', 'miejsce' => null, 'poziom' => null, 'miejsce_id' => null]);
 
     expectPlanInside($plan, $tree);
 });
@@ -934,7 +935,7 @@ test('keeps a value changed only in the app and counts it', function () {
         ->and($plan->conflicts)->toBe([])
         ->and($plan->updates)->toBe([])
         ->and($plan->keptManual)->toBe(2)
-        ->and($plan->snapshots['O-0001/urodzenie'])->toBe(['data' => '1801', 'miejsce' => null, 'miejsce_id' => null]);
+        ->and($plan->snapshots['O-0001/urodzenie'])->toBe(['data' => '1801', 'miejsce' => null, 'poziom' => null, 'miejsce_id' => null]);
 });
 
 test('reads a record without a memory of the last import as a conflict without a previous value', function () {
@@ -1111,12 +1112,12 @@ test('restores a death deleted in the app from the repo values or leaves it dele
         expect($plan->restorations)->toHaveCount(1)
             ->and([$restoration->key, $restoration->kind, $restoration->personId])->toBe(['O-0001/zgon', RepoKeyKind::Death, replanPerson($tree, 'O-0001')->id])
             ->and($restoration->event->date->year)->toBe(1870)
-            ->and($plan->snapshots['O-0001/zgon'])->toBe(['data' => '1870', 'miejsce' => null, 'miejsce_id' => null])
+            ->and($plan->snapshots['O-0001/zgon'])->toBe(['data' => '1870', 'miejsce' => null, 'poziom' => null, 'miejsce_id' => null])
             ->and($plan->keptDeletedSnapshots)->toBe([])
             ->and($plan->deaths)->toBe(1);
     } else {
         expect($plan->restorations)->toBe([])
-            ->and($plan->keptDeletedSnapshots)->toBe(['O-0001/zgon' => ['data' => '1870', 'miejsce' => null]])
+            ->and($plan->keptDeletedSnapshots)->toBe(['O-0001/zgon' => ['data' => '1870', 'miejsce' => null, 'poziom' => null]])
             ->and($plan->snapshots)->not->toHaveKey('O-0001/zgon')
             ->and($plan->deaths)->toBe(0);
     }
@@ -1131,7 +1132,7 @@ test('asks about the places of a person brought back after a deletion in the app
         Locality::factory()->for($tree)->create(['name' => 'Bukinia']);
         $wola = Locality::factory()->for($tree)->create(['name' => 'Wola']);
         replanFirstImport($tree, $v1);
-        $tree->repoSnapshots()->where('repo_id', 'O-0001/urodzenie')->update(['values' => json_encode(['data' => '1801', 'miejsce' => 'Zalesie', 'miejsce_id' => 'L:'.$wola->id])]);
+        $tree->repoSnapshots()->where('repo_id', 'O-0001/urodzenie')->update(['values' => json_encode(['data' => '1801', 'miejsce' => 'Zalesie', 'poziom' => null, 'miejsce_id' => 'L:'.$wola->id])]);
         replanPerson($tree, 'O-0001')->delete();
     });
     $bukinia = $tree->localities()->where('name', 'Bukinia')->firstOrFail();
@@ -1384,7 +1385,7 @@ test('puts a sure locality on the created birth and drops its text from the note
 
     expect($planned->birthPlace->localityId)->toBe($world['Zalesie']->id)
         ->and($planned->note)->toBeNull()
-        ->and($plan->snapshots['O-0001/urodzenie'])->toBe(['data' => null, 'miejsce' => 'Zalesie', 'miejsce_id' => 'L:'.$world['Zalesie']->id])
+        ->and($plan->snapshots['O-0001/urodzenie'])->toBe(['data' => null, 'miejsce' => 'Zalesie', 'poziom' => null, 'miejsce_id' => 'L:'.$world['Zalesie']->id])
         ->and([$plan->noteValues->placedEvents, $plan->noteValues->unplacedEvents, $plan->noteValues->newLocalities])->toBe([1, 0, 0])
         ->and($plan->newLocalities)->toBe([]);
 });
@@ -1473,6 +1474,7 @@ test('plans a burial with the cemetery of a sure locality and a death without a 
         ->and($plan->snapshots['O-0001/pochowek'])->toBe([
             'data' => '1900',
             'miejsce' => 'Zalesie',
+            'poziom' => null,
             'cmentarz' => null,
             'miejsce_id' => 'L:'.$world['Zalesie']->id,
             'cmentarz_id' => 'C:'.$world['cemetery']->id,
@@ -1713,8 +1715,8 @@ test('brings back a burial deleted in the app with its cemetery or leaves it del
         $death = Event::factory()->death()->for($tree)->create(['repo_id' => 'O-0001/zgon', 'date_year' => 1900]);
         $death->participants()->attach($person, ['role' => ParticipantRole::Subject]);
         $tree->repoSnapshots()->create(['repo_id' => 'O-0001', 'values' => ['imiona' => 'Jan', 'nazwisko' => 'Nowak', 'plec' => null, 'notatka' => null]]);
-        $tree->repoSnapshots()->create(['repo_id' => 'O-0001/zgon', 'values' => ['data' => '1900', 'miejsce' => null, 'miejsce_id' => null]]);
-        $tree->repoSnapshots()->create(['repo_id' => 'O-0001/pochowek', 'values' => ['data' => null, 'miejsce' => 'Zalesie', 'miejsce_id' => 'L:'.$world['Zalesie']->id, 'cmentarz' => null, 'cmentarz_id' => 'C:'.$cemetery->id]]);
+        $tree->repoSnapshots()->create(['repo_id' => 'O-0001/zgon', 'values' => ['data' => '1900', 'miejsce' => null, 'poziom' => null, 'miejsce_id' => null]]);
+        $tree->repoSnapshots()->create(['repo_id' => 'O-0001/pochowek', 'values' => ['data' => null, 'miejsce' => 'Zalesie', 'poziom' => null, 'miejsce_id' => 'L:'.$world['Zalesie']->id, 'cmentarz' => null, 'cmentarz_id' => 'C:'.$cemetery->id]]);
     }, ['Zalesie']);
     $blocks = ['O-0001' => "imiona: Jan\nnazwisko: Nowak\nzgon:\n  data: \"1900\"\npochowek:\n  miejsce: Zalesie"];
 
@@ -1733,7 +1735,7 @@ test('brings back a burial deleted in the app with its cemetery or leaves it del
     $burial = Event::factory()->burial()->for($tree)->create(['repo_id' => 'O-0001/pochowek', 'cemetery_id' => $cemetery->id, 'locality_id' => $cemetery->locality_id]);
     $burial->participants()->attach($tree->people()->firstOrFail(), ['role' => ParticipantRole::Subject]);
     $tree->repoSnapshots()->where('repo_id', 'O-0001/pochowek')->delete();
-    $tree->repoSnapshots()->create(['repo_id' => 'O-0001/pochowek', 'values' => ['data' => null, 'miejsce' => 'Zalesie', 'miejsce_id' => 'L:'.$world['Zalesie']->id, 'cmentarz' => null, 'cmentarz_id' => 'C:'.$cemetery->id]]);
+    $tree->repoSnapshots()->create(['repo_id' => 'O-0001/pochowek', 'values' => ['data' => null, 'miejsce' => 'Zalesie', 'poziom' => null, 'miejsce_id' => 'L:'.$world['Zalesie']->id, 'cmentarz' => null, 'cmentarz_id' => 'C:'.$cemetery->id]]);
 
     $removed = placePlan($tree, ['O-0001' => "imiona: Jan\nnazwisko: Nowak\nzgon:\n  data: \"1900\""], removals: ['O-0001/pochowek' => ImportDecisions::DELETE]);
 
@@ -1754,8 +1756,8 @@ test('compares the cemetery of a known burial with the three values', function (
         }
 
         $tree->repoSnapshots()->create(['repo_id' => 'O-0001', 'values' => ['imiona' => 'Jan', 'nazwisko' => 'Nowak', 'plec' => null, 'notatka' => null]]);
-        $tree->repoSnapshots()->create(['repo_id' => 'O-0001/zgon', 'values' => ['data' => '1900', 'miejsce' => null, 'miejsce_id' => null]]);
-        $tree->repoSnapshots()->create(['repo_id' => 'O-0001/pochowek', 'values' => ['data' => null, 'miejsce' => 'Zalesie', 'miejsce_id' => 'L:'.$world['Zalesie']->id, 'cmentarz' => 'Parafialny', 'cmentarz_id' => 'C:'.$first->id]]);
+        $tree->repoSnapshots()->create(['repo_id' => 'O-0001/zgon', 'values' => ['data' => '1900', 'miejsce' => null, 'poziom' => null, 'miejsce_id' => null]]);
+        $tree->repoSnapshots()->create(['repo_id' => 'O-0001/pochowek', 'values' => ['data' => null, 'miejsce' => 'Zalesie', 'poziom' => null, 'miejsce_id' => 'L:'.$world['Zalesie']->id, 'cmentarz' => 'Parafialny', 'cmentarz_id' => 'C:'.$first->id]]);
     }, ['Zalesie']);
     $second = $tree->cemeteries()->where('name', 'Wojenny')->firstOrFail();
 
@@ -1960,7 +1962,7 @@ function srcKnownTree(Tree $tree, ResearchRepoReading $reading, bool $rememberLi
     $birth = Event::factory()->birth()->for($tree)->create(['repo_id' => 'O-0001/urodzenie', 'date_year' => 1837, 'date_month' => null, 'date_day' => null, 'locality_id' => null]);
     $birth->participants()->attach($person, ['role' => ParticipantRole::Subject]);
 
-    $memory = ['data' => '1837', 'miejsce' => null, 'miejsce_id' => null];
+    $memory = ['data' => '1837', 'miejsce' => null, 'poziom' => null, 'miejsce_id' => null];
 
     if ($rememberLinks && $research->birth?->sources !== []) {
         $memory['zrodla'] = (new SourceLinks($research->birth->sources))->text();
@@ -2339,7 +2341,7 @@ test('adds no memory of links to a tree whose repo has no sources', function () 
 
     $plan = srcPlan($tree, $reading);
 
-    expect($plan->snapshots['O-0001/urodzenie'])->toBe(['data' => '1837', 'miejsce' => null, 'miejsce_id' => null])
+    expect($plan->snapshots['O-0001/urodzenie'])->toBe(['data' => '1837', 'miejsce' => null, 'poziom' => null, 'miejsce_id' => null])
         ->and($plan->changedSnapshots($tree->repoSnapshots()->get()->keyBy('repo_id')->all()))->toBe([]);
 });
 
@@ -2352,7 +2354,7 @@ test('plans the links of a wedding and compares them with the three values', fun
     $spouse = Person::factory()->for($tree)->create(['first_name' => 'Anna', 'last_name' => null, 'gender' => Gender::Female, 'repo_id' => 'O-0002']);
     $marriage->participants()->attach([$built['person']->id => ['role' => ParticipantRole::Spouse], $spouse->id => ['role' => ParticipantRole::Spouse]]);
     $marriage->sources()->attach($built['sources']['ZR-0001'], ['entry_number' => '7/1860']);
-    $tree->repoSnapshots()->create(['repo_id' => 'O-0001+O-0002/slub', 'values' => ['data' => '1860', 'miejsce' => null, 'miejsce_id' => null, 'zrodla' => 'ZR-0001=7/1860']]);
+    $tree->repoSnapshots()->create(['repo_id' => 'O-0001+O-0002/slub', 'values' => ['data' => '1860', 'miejsce' => null, 'poziom' => null, 'miejsce_id' => null, 'zrodla' => 'ZR-0001=7/1860']]);
     $tree->repoSnapshots()->create(['repo_id' => 'O-0002', 'values' => RepoValues::person($first->persons['O-0002'], null)]);
 
     $same = srcPlan($tree, $first);
@@ -2415,3 +2417,239 @@ test('resolves a parish by token, by the answers and by the memory without leavi
         ->and($remembering->tokenLabel('P:'.$own->id))->toBe($own->label())
         ->and($remembering->tokenLabel('P:'.$foreign->id))->toBeNull();
 });
+
+/**
+ * A person whose birth carries a confidence level in the repo.
+ */
+function levelBlock(?string $birthLevel = 'A'): string
+{
+    return "imiona: Jan\nnazwisko: Nowak\nurodzenie:\n  data: \"1801\"".($birthLevel === null ? '' : "\n  poziom: {$birthLevel}");
+}
+
+/**
+ * The blocks of a married pair with a confidence level of the wedding in the repo.
+ *
+ * @return array<string, string>
+ */
+function levelWedding(?string $level = 'B'): array
+{
+    $line = $level === null ? '' : "\n    poziom: {$level}";
+
+    return [
+        'O-0001' => "imiona: Jan\nmalzenstwa:\n  - z: O-0002\n    data: \"1830\"{$line}",
+        'O-0002' => "imiona: Ewa\nmalzenstwa:\n  - z: O-0001\n    data: \"1830\"{$line}",
+    ];
+}
+
+/**
+ * Makes the memory of a key look like one an earlier import left before the confidence level had a memory.
+ */
+function levelForgetMemory(Tree $tree, string $key): void
+{
+    $snapshot = $tree->repoSnapshots()->where('repo_id', $key)->firstOrFail();
+    $values = $snapshot->values;
+    unset($values['poziom']);
+    $snapshot->update(['values' => $values]);
+}
+
+test('plans a confidence level the repo changed and nobody touched in the app as a change', function () {
+    [$tree, $other] = replanTwinTrees(['O-0001' => levelBlock('A')]);
+
+    $plan = replanBlocks($tree, ['O-0001' => levelBlock('B')]);
+    $change = $plan->changes[0];
+
+    expect($plan->changes)->toHaveCount(1)
+        ->and($change)->toBeInstanceOf(PlannedChange::class)
+        ->and([$change->key, $change->field, $change->label, $change->appLabel, $change->repoLabel])->toBe(['O-0001/urodzenie/poziom', 'birth_confidence', 'Poziom pewności urodzenia', 'A', 'B'])
+        ->and($change->repoValue)->toBe(ConfidenceLevel::B)
+        ->and($plan->snapshots['O-0001/urodzenie']['poziom'])->toBe('B')
+        ->and($plan->updates[0]->changes)->toBe([$change]);
+
+    expectPlanInside($plan, $tree);
+    expect(replanBlocks($other, ['O-0001' => levelBlock('A')])->changes)->toBe([]);
+});
+
+test('plans a confidence level the repo dropped as a change to none', function () {
+    [$tree] = replanTwinTrees(['O-0001' => levelBlock('A')]);
+
+    $plan = replanBlocks($tree, ['O-0001' => levelBlock(null)]);
+    $change = $plan->changes[0];
+
+    expect($plan->changes)->toHaveCount(1)
+        ->and([$change->key, $change->appLabel, $change->repoLabel, $change->repoValue])->toBe(['O-0001/urodzenie/poziom', 'A', '—', null])
+        ->and($plan->snapshots['O-0001/urodzenie']['poziom'])->toBeNull();
+});
+
+test('keeps a confidence level changed only in the app and counts it', function () {
+    [$tree] = replanTwinTrees(['O-0001' => levelBlock('A')], fn (Tree $tree) => replanEvent($tree, 'O-0001/urodzenie')->update(['confidence' => ConfidenceLevel::C]));
+
+    $plan = replanBlocks($tree, ['O-0001' => levelBlock('A')]);
+
+    expect($plan->changes)->toBe([])
+        ->and($plan->conflicts)->toBe([])
+        ->and($plan->updates)->toBe([])
+        ->and($plan->keptManual)->toBe(1)
+        ->and($plan->snapshots['O-0001/urodzenie']['poziom'])->toBe('A');
+});
+
+test('asks about a confidence level changed on both sides and shows the previous repo value', function () {
+    [$tree, $other] = replanTwinTrees(['O-0001' => levelBlock('A')], fn (Tree $tree) => replanEvent($tree, 'O-0001/urodzenie')->update(['confidence' => ConfidenceLevel::C]));
+
+    $plan = replanBlocks($tree, ['O-0001' => levelBlock('B')]);
+    $conflict = $plan->conflicts[0];
+
+    expect($plan->conflicts)->toHaveCount(1)
+        ->and([$conflict->key, $conflict->field, $conflict->appLabel, $conflict->repoLabel, $conflict->lastRepoLabel])->toBe(['O-0001/urodzenie/poziom', 'birth_confidence', 'C', 'B', 'A'])
+        ->and($conflict->repoValue)->toBe(ConfidenceLevel::B);
+
+    expectPlanInside($plan, $tree);
+    expect(replanEvent($other, 'O-0001/urodzenie')->confidence)->toBe(ConfidenceLevel::C);
+});
+
+test('fills an empty confidence level and asks about another one when the memory has no level', function (?ConfidenceLevel $app, string $outcome) {
+    [$tree] = replanTwinTrees(['O-0001' => levelBlock('A')], function (Tree $tree) use ($app): void {
+        replanEvent($tree, 'O-0001/urodzenie')->update(['confidence' => $app]);
+        levelForgetMemory($tree, 'O-0001/urodzenie');
+    });
+
+    $plan = replanBlocks($tree, ['O-0001' => levelBlock('B')]);
+
+    if ($outcome === 'fill') {
+        $fill = $plan->updates[0]->fills[0];
+
+        expect($plan->conflicts)->toBe([])
+            ->and([$fill->field, $fill->label, $fill->valueLabel(), $fill->appLabel])->toBe(['birth_confidence', 'Poziom pewności urodzenia', 'B — indeks / źródło wtórne', null])
+            ->and($plan->fillCount())->toBe(1);
+    } else {
+        expect($plan->updates[0]->fills)->toBe([])
+            ->and([$plan->conflicts[0]->appLabel, $plan->conflicts[0]->repoLabel, $plan->conflicts[0]->lastRepoLabel])->toBe(['C', 'B', null]);
+    }
+
+    expect($plan->snapshots['O-0001/urodzenie']['poziom'])->toBe('B');
+    expectPlanInside($plan, $tree);
+})->with([
+    'empty column' => [null, 'fill'],
+    'another level' => [ConfidenceLevel::C, 'conflict'],
+]);
+
+test('reads a level of a hand-entered birth as a fill, a conflict or nothing', function (?ConfidenceLevel $app, string $outcome) {
+    [$tree, $people] = arrangeAuthorWithTwin(function (Tree $tree) use ($app): array {
+        $jan = Person::factory()->for($tree)->create(['first_name' => 'Jan', 'last_name' => 'Nowak']);
+        attachBirth($jan, 1801);
+        $jan->birth()->update(['confidence' => $app]);
+
+        return ['jan' => $jan];
+    });
+
+    $plan = planTemporaryRepo($tree, ['O-0001' => levelBlock('A')], ['O-0001' => $people['jan']]);
+    $match = plannedMatch($plan, 'O-0001');
+
+    expect(fieldsOf($match->fills))->toBe($outcome === 'fill' ? ['birth_confidence'] : [])
+        ->and(array_map(fn (ValueConflict $conflict): string => $conflict->field, $match->conflicts))->toBe($outcome === 'conflict' ? ['birth_confidence'] : [])
+        ->and($plan->snapshots['O-0001/urodzenie']['poziom'])->toBe('A');
+})->with([
+    'empty column' => [null, 'fill'],
+    'another level' => [ConfidenceLevel::D, 'conflict'],
+    'the same level' => [ConfidenceLevel::A, 'none'],
+]);
+
+test('plans the confidence level of a known wedding as a change, a fill or a conflict', function (string $case) {
+    [$tree, $other] = replanTwinTrees(levelWedding('B'), function (Tree $tree) use ($case): void {
+        if ($case !== 'change') {
+            levelForgetMemory($tree, 'O-0001+O-0002/slub');
+            replanEvent($tree, 'O-0001+O-0002/slub')->update(['confidence' => $case === 'fill' ? null : ConfidenceLevel::D]);
+        }
+    });
+
+    $plan = replanBlocks($tree, levelWedding('C'));
+    $wedding = $plan->marriages[0];
+
+    expect($plan->marriages)->toHaveCount(1)
+        ->and($plan->snapshots['O-0001+O-0002/slub']['poziom'])->toBe('C');
+
+    match ($case) {
+        'change' => expect($wedding->confidenceChange)->toBeInstanceOf(PlannedChange::class)
+            ->and([$wedding->confidenceChange->key, $wedding->confidenceChange->field, $wedding->confidenceChange->label, $wedding->confidenceChange->appLabel, $wedding->confidenceChange->repoLabel])->toBe(['O-0001+O-0002/slub/poziom', 'marriage_confidence', 'Poziom pewności ślubu', 'B', 'C'])
+            ->and($plan->changes)->toHaveCount(1)
+            ->and($plan->fillCount())->toBe(0),
+        'fill' => expect($wedding->confidenceFill?->valueLabel())->toBe('C — wskazówka')
+            ->and($plan->fillCount())->toBe(1)
+            ->and($plan->conflicts)->toBe([]),
+        default => expect($wedding->confidenceConflict)->toBeInstanceOf(ValueConflict::class)
+            ->and([$wedding->confidenceConflict->appLabel, $wedding->confidenceConflict->repoLabel, $wedding->confidenceConflict->lastRepoLabel])->toBe(['D', 'C', null])
+            ->and($plan->conflicts)->toHaveCount(1),
+    };
+
+    expectPlanInside($plan, $tree);
+    expect(replanEvent($other, 'O-0001+O-0002/slub')->confidence)->toBe($case === 'change' ? ConfidenceLevel::B : ($case === 'fill' ? null : ConfidenceLevel::D));
+})->with(['change', 'fill', 'conflict']);
+
+test('plans the confidence level of a wedding the tree holds without a repo id', function () {
+    [$tree] = arrangeAuthorWithTwin(function (Tree $tree): array {
+        $jan = Person::factory()->for($tree)->create(['first_name' => 'Jan']);
+        $ewa = Person::factory()->for($tree)->create(['first_name' => 'Ewa']);
+        $wedding = Event::factory()->for($tree)->create(['type' => EventType::Marriage, 'date_year' => 1830, 'date_month' => null, 'date_day' => null, 'locality_id' => null, 'confidence' => null]);
+        $wedding->participants()->attach([$jan->id => ['role' => ParticipantRole::Spouse], $ewa->id => ['role' => ParticipantRole::Spouse]]);
+
+        return ['jan' => $jan, 'ewa' => $ewa];
+    });
+    $people = $tree->people()->orderBy('id')->get();
+
+    $plan = planTemporaryRepo($tree, levelWedding('B'), ['O-0001' => $people[0], 'O-0002' => $people[1]]);
+
+    expect($plan->marriages)->toHaveCount(1)
+        ->and($plan->marriages[0]->existingEventId)->not->toBeNull()
+        ->and($plan->marriages[0]->confidenceFill?->valueLabel())->toBe('B — indeks / źródło wtórne')
+        ->and($plan->fillCount())->toBe(1);
+});
+
+test('compares the confidence level of a known burial with the three values', function (?ConfidenceLevel $app, bool $remembered, string $outcome) {
+    [$tree] = replanPlaceTwin(function (Tree $tree, array $world) use ($app, $remembered): void {
+        $cemetery = Cemetery::factory()->in($world['Zalesie'])->unnamed()->create();
+        $person = Person::factory()->for($tree)->create(['first_name' => 'Jan', 'last_name' => 'Nowak', 'gender' => null, 'note' => null, 'repo_id' => 'O-0001']);
+        $death = Event::factory()->death()->for($tree)->create(['repo_id' => 'O-0001/zgon', 'date_year' => 1900, 'date_month' => null, 'date_day' => null]);
+        $burial = Event::factory()->burial()->for($tree)->create(['repo_id' => 'O-0001/pochowek', 'cemetery_id' => $cemetery->id, 'locality_id' => $world['Zalesie']->id, 'confidence' => $app]);
+
+        foreach ([$death, $burial] as $event) {
+            $event->participants()->attach($person, ['role' => ParticipantRole::Subject]);
+        }
+
+        $memory = ['data' => null, 'miejsce' => 'Zalesie', 'miejsce_id' => 'L:'.$world['Zalesie']->id, 'cmentarz' => null, 'cmentarz_id' => 'C:'.$cemetery->id];
+
+        $tree->repoSnapshots()->create(['repo_id' => 'O-0001', 'values' => ['imiona' => 'Jan', 'nazwisko' => 'Nowak', 'plec' => null, 'notatka' => null]]);
+        $tree->repoSnapshots()->create(['repo_id' => 'O-0001/zgon', 'values' => ['data' => '1900', 'miejsce' => null, 'poziom' => null, 'miejsce_id' => null]]);
+        $tree->repoSnapshots()->create(['repo_id' => 'O-0001/pochowek', 'values' => $remembered ? [...$memory, 'poziom' => null] : $memory]);
+    }, ['Zalesie']);
+
+    $plan = placePlan($tree, ['O-0001' => "imiona: Jan\nnazwisko: Nowak\nzgon:\n  data: \"1900\"\npochowek:\n  miejsce: Zalesie\n  poziom: D"]);
+    $item = collect([...$plan->changes, ...$plan->conflicts, ...($plan->updates[0]->fills ?? [])])->first(fn ($item): bool => $item->field === 'burial_confidence');
+
+    match ($outcome) {
+        'change' => expect($item)->toBeInstanceOf(PlannedChange::class)->and([$item->key, $item->label, $item->appLabel, $item->repoLabel])->toBe(['O-0001/pochowek/poziom', 'Poziom pewności pochowania', '—', 'D']),
+        'fill' => expect($item)->toBeInstanceOf(PlannedFill::class)->and($item->valueLabel())->toBe('D — hipoteza'),
+        default => expect($item)->toBeInstanceOf(ValueConflict::class)->and([$item->appLabel, $item->repoLabel, $item->lastRepoLabel])->toBe(['A', 'D', null]),
+    };
+
+    expect($plan->snapshots['O-0001/pochowek']['poziom'])->toBe('D');
+})->with([
+    'remembered empty level' => [null, true, 'change'],
+    'no memory of the level, empty column' => [null, false, 'fill'],
+    'no memory of the level, another level' => [ConfidenceLevel::A, false, 'conflict'],
+]);
+
+test('asks again about a deletion the author kept when the repo now holds a level the memory lacks', function (bool $remembered) {
+    [$tree] = replanTwinTrees(['O-0001' => levelBlock('A')], function (Tree $tree) use ($remembered): void {
+        replanEvent($tree, 'O-0001/urodzenie')->delete();
+        $tree->repoSnapshots()->where('repo_id', 'O-0001/urodzenie')->update(['deletion_kept' => true]);
+
+        if (! $remembered) {
+            levelForgetMemory($tree, 'O-0001/urodzenie');
+        }
+    });
+
+    $reading = replanReading(['O-0001' => levelBlock('A')]);
+    $classes = app(ClassifyRepoRecords::class)->handle($tree, $reading);
+
+    expect(array_map(fn ($record): string => $record->key, $classes->deletedInApp))->toBe($remembered ? [] : ['O-0001/urodzenie'])
+        ->and($classes->keptDeleted)->toBe($remembered ? ['O-0001/urodzenie'] : []);
+})->with([true, false]);

@@ -13,6 +13,7 @@ use App\Actions\Import\PlanTreeClearance;
 use App\Actions\Import\ReadResearchRepo;
 use App\Actions\Import\WriteResearchSources;
 use App\Enums\CemeteryMatchKind;
+use App\Enums\ConfidenceLevel;
 use App\Enums\DateQualifier;
 use App\Enums\MatchVerdict;
 use App\Enums\ParishMatchKind;
@@ -827,12 +828,17 @@ class ImportResearch extends Command
     }
 
     /**
-     * The two values as the author sees them in a table or an option. A note block is cut to its first differing line.
+     * The two values as the author sees them in a table or an option. A note block is cut to its first differing line;
+     * a confidence level carries its meaning.
      *
      * @return array{0: string, 1: string} the app value, then the repo value
      */
     private function shown(string $field, string $app, string $repo): array
     {
+        if (str_ends_with($field, '_confidence')) {
+            return [$this->levelShown($app), $this->levelShown($repo)];
+        }
+
         if ($field !== 'note') {
             return [$app, $repo];
         }
@@ -847,6 +853,16 @@ class ImportResearch extends Command
         }
 
         return [$app, $repo];
+    }
+
+    /**
+     * A confidence level letter with its meaning ("B — indeks / źródło wtórne"); the empty label stays as it is.
+     */
+    private function levelShown(string $label): string
+    {
+        $level = ConfidenceLevel::tryFrom($label);
+
+        return $level === null ? $label : "{$level->value} — {$level->label()}";
     }
 
     /**
@@ -1182,7 +1198,8 @@ class ImportResearch extends Command
             }
 
             if ($conflict->lastRepoLabel !== null) {
-                $this->line("poprzednio w repo: {$conflict->lastRepoLabel}");
+                $last = str_ends_with($conflict->field, '_confidence') ? $this->levelShown($conflict->lastRepoLabel) : $conflict->lastRepoLabel;
+                $this->line("poprzednio w repo: {$last}");
             }
 
             [$app, $repo] = $this->shown($conflict->field, $conflict->appLabel, $conflict->repoLabel);
@@ -1274,9 +1291,9 @@ class ImportResearch extends Command
         $this->line(sprintf('  nowe miejscowości: %d, nowe cmentarze: %d, zapamiętane warianty: %d', $notes->newLocalities, $notes->newCemeteries, $notes->aliases));
         $this->line(sprintf('  zdarzenia z miejscem: %d, pochowania: %d', $notes->placedEvents, $notes->burials));
         $this->line(sprintf('Warianty nazwiska przy osobach: %d', $notes->surnameVariants));
+        $this->line(sprintf('Poziomy pewności przy faktach: %d', $notes->levels));
         $this->line('Do notatki osoby:');
         $this->line(sprintf('  zdarzenia bez miejsca: %d', $notes->unplacedEvents));
-        $this->line(sprintf('  poziomy pewności: %d (S-08)', $notes->levels));
         $this->line(sprintf('  notatki wydarzeń: %d', $notes->eventNotes));
 
         if ($this->hasSourceWork($plan)) {
@@ -1319,7 +1336,7 @@ class ImportResearch extends Command
         }
 
         foreach ($plan->marriages as $planned) {
-            if ($planned->dateFill === null && $planned->placeFill === null) {
+            if ($planned->dateFill === null && $planned->placeFill === null && $planned->confidenceFill === null) {
                 continue;
             }
 
@@ -1328,7 +1345,7 @@ class ImportResearch extends Command
                 $planned->marriage->personIds,
             ));
 
-            foreach (array_filter([$planned->dateFill, $planned->placeFill]) as $fill) {
+            foreach (array_filter([$planned->dateFill, $planned->placeFill, $planned->confidenceFill]) as $fill) {
                 $rows[] = [$spouses, $fill->label, $fill->valueLabel()];
             }
         }

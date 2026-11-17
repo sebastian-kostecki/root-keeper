@@ -13,9 +13,17 @@ export type Gender = {
     label: string;
 };
 
+/** Poziom pewności faktu: A akt pierwotny, B indeks / źródło wtórne, C wskazówka, D hipoteza. */
+export type ConfidenceLevel = 'A' | 'B' | 'C' | 'D';
+
+/** One confidence option as the shared `confidenceLevels` prop carries it. */
+export type ConfidenceLevelOption = { value: ConfidenceLevel; label: string };
+
 export type PersonEvent = {
     id: number;
     type: 'birth' | 'death' | 'marriage';
+    confidence: ConfidenceLevel | null;
+    confidence_label: string | null;
     date: string | null;
     place: string | null;
     locality_id: number | null;
@@ -109,6 +117,8 @@ export type Person = {
     gravestones?: PersonGravestone[];
     religion: Religion | null;
     burial_place: string | null;
+    burial_confidence: ConfidenceLevel | null;
+    burial_confidence_label: string | null;
     birth: IndexPersonEvent | null;
     death: IndexPersonEvent | null;
     age: PersonAge | null;
@@ -167,6 +177,7 @@ export type PersonFormEvent = {
     qualifier: DateQualifier;
     until_year: number | null;
     locality: LocalityOption | null;
+    confidence: ConfidenceLevel | null;
     is_confirmed: boolean;
 };
 
@@ -181,7 +192,10 @@ export type PersonFormData = {
     is_deceased: boolean;
     birth: PersonFormEvent | null;
     death: PersonFormEvent | null;
-    burial: { cemetery: CemeteryOption | null } | null;
+    burial: {
+        cemetery: CemeteryOption | null;
+        confidence: ConfidenceLevel | null;
+    } | null;
     /** The one cemetery of the person's gravestones; preselects an empty burial place. */
     burial_suggestion?: CemeteryOption | null;
 };

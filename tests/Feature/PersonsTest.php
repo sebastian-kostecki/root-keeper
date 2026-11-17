@@ -1,6 +1,7 @@
 <?php
 
 use App\Actions\Persons\DeletePerson;
+use App\Enums\ConfidenceLevel;
 use App\Enums\DateQualifier;
 use App\Enums\EventType;
 use App\Enums\ParticipantRole;
@@ -1676,7 +1677,7 @@ test('the preview exposes the burial cemetery for the form and its label for the
     $this->actingAs($user)->get(personPreviewUrl($person))
         ->assertInertia(fn ($page) => $page
             ->where('personPreview.person.burial_place', "cmentarz {$cemetery->locality->name}")
-            ->where('personPreview.personForm.burial', ['cemetery' => $cemetery->toOption()]));
+            ->where('personPreview.personForm.burial', ['cemetery' => $cemetery->toOption(), 'confidence' => null]));
 });
 
 test('a foreign or missing locality in any fact place field fails with the same error and writes nothing', function (string $field) {
@@ -1832,4 +1833,171 @@ test('deleting a person removes its surname variants', function () {
     $this->actingAs($user)->delete(route('persons.destroy', $person))->assertRedirect();
 
     expect(PersonSurnameVariant::query()->where('person_id', $person->id)->count())->toBe(0);
+});
+
+test('store saves the confidence level of the birth, the death and the burial', function () {
+    $user = User::factory()->create();
+    $cemetery = Cemetery::factory()->for($user->tree)->create();
+
+    $this->actingAs($user)->post(route('persons.store'), [
+        'first_name' => 'Jan',
+        'is_deceased' => '1',
+        'birth' => ['year' => 1850, 'confidence' => 'A'],
+        'death' => ['year' => 1920, 'confidence' => 'B'],
+        'burial' => ['cemetery_id' => $cemetery->id, 'confidence' => 'C'],
+    ])->assertSessionHasNoErrors();
+
+    $confidenceOf = fn (EventType $type): ?ConfidenceLevel => Event::where('type', $type)->sole()->confidence;
+
+    expect($confidenceOf(EventType::Birth))->toBe(ConfidenceLevel::A)
+        ->and($confidenceOf(EventType::Death))->toBe(ConfidenceLevel::B)
+        ->and($confidenceOf(EventType::Burial))->toBe(ConfidenceLevel::C);
+});
+
+test('update saves the confidence level of every fact and a payload without the key clears it', function () {
+    $user = User::factory()->create();
+    $person = Person::factory()->for($user->tree)->create();
+    $birth = Event::factory()->for($user->tree)->birth()->confidence(ConfidenceLevel::D)->create();
+    $birth->participants()->attach($person, ['role' => ParticipantRole::Subject]);
+    $death = Event::factory()->for($user->tree)->death()->create();
+    $death->participants()->attach($person, ['role' => ParticipantRole::Subject]);
+    $cemetery = Cemetery::factory()->for($user->tree)->create();
+
+    $this->actingAs($user)->put(route('persons.update', $person), [
+        'first_name' => 'Jan',
+        'is_deceased' => '1',
+        'birth' => ['year' => 1850, 'confidence' => 'B'],
+        'death' => ['year' => 1920, 'confidence' => 'A'],
+        'burial' => ['cemetery_id' => $cemetery->id, 'confidence' => 'D'],
+    ])->assertSessionHasNoErrors();
+
+    expect($birth->refresh()->confidence)->toBe(ConfidenceLevel::B)
+        ->and($death->refresh()->confidence)->toBe(ConfidenceLevel::A)
+        ->and(Event::where('type', EventType::Burial)->sole()->confidence)->toBe(ConfidenceLevel::D);
+
+    $this->actingAs($user)->put(route('persons.update', $person), [
+        'first_name' => 'Jan',
+        'is_deceased' => '1',
+        'birth' => ['year' => 1850, 'confidence' => ''],
+        'death' => ['year' => 1920],
+        'burial' => ['cemetery_id' => $cemetery->id],
+    ])->assertSessionHasNoErrors();
+
+    expect($birth->refresh()->confidence)->toBeNull()
+        ->and($death->refresh()->confidence)->toBeNull()
+        ->and(Event::where('type', EventType::Burial)->sole()->confidence)->toBeNull();
+});
+
+test('a burial confidence without a cemetery creates no burial and clearing the cemetery drops the level with the burial', function () {
+    $user = User::factory()->create();
+    $person = Person::factory()->for($user->tree)->create();
+    $cemetery = Cemetery::factory()->for($user->tree)->create();
+    $save = fn (array $burial) => $this->actingAs($user)->put(route('persons.update', $person), [
+        'first_name' => 'Jan',
+        'is_deceased' => '1',
+        'death' => ['year' => 1920],
+        'burial' => $burial,
+    ])->assertSessionHasNoErrors();
+
+    $save(['confidence' => 'C']);
+
+    expect(Event::where('type', EventType::Burial)->exists())->toBeFalse();
+
+    $save(['cemetery_id' => $cemetery->id, 'confidence' => 'C']);
+
+    expect(Event::where('type', EventType::Burial)->sole()->confidence)->toBe(ConfidenceLevel::C);
+
+    $save(['cemetery_id' => '', 'confidence' => 'C']);
+
+    expect(Event::where('type', EventType::Burial)->exists())->toBeFalse()
+        ->and(Event::whereNotNull('confidence')->exists())->toBeFalse();
+});
+
+test('a confidence level outside A to D is rejected and changes nothing', function (string $field) {
+    $user = User::factory()->create();
+    $person = Person::factory()->for($user->tree)->create();
+    $birth = Event::factory()->for($user->tree)->birth()->confidence(ConfidenceLevel::A)->create();
+    $birth->participants()->attach($person, ['role' => ParticipantRole::Subject]);
+    $cemetery = Cemetery::factory()->for($user->tree)->create();
+    [$key] = explode('.', $field);
+
+    $this->actingAs($user)->put(route('persons.update', $person), [
+        'first_name' => 'Jan',
+        'is_deceased' => '1',
+        $key => ['cemetery_id' => $cemetery->id, 'confidence' => 'E'],
+    ])->assertSessionHasErrors($field);
+
+    expect($birth->refresh()->confidence)->toBe(ConfidenceLevel::A);
+})->with(['birth.confidence', 'death.confidence', 'burial.confidence']);
+
+test('a death or burial confidence is rejected for a person who is not deceased', function (string $key) {
+    $user = User::factory()->create();
+    $person = Person::factory()->for($user->tree)->create();
+
+    $this->actingAs($user)->put(route('persons.update', $person), [
+        'first_name' => 'Jan',
+        $key => ['confidence' => 'A'],
+    ])->assertSessionHasErrors("{$key}.confidence");
+})->with(['death', 'burial']);
+
+test('the person form and the overview return the confidence level with its label', function () {
+    $user = User::factory()->create();
+    $person = deceasedPersonForBurial($user);
+    $person->death()->update(['confidence' => ConfidenceLevel::B]);
+    $birth = Event::factory()->for($user->tree)->birth()->confidence(ConfidenceLevel::A)->create();
+    $birth->participants()->attach($person, ['role' => ParticipantRole::Subject]);
+    $cemetery = Cemetery::factory()->for($user->tree)->create();
+    $burial = Event::factory()->for($user->tree)->burial()->atCemetery($cemetery)->confidence(ConfidenceLevel::C)->create();
+    $burial->participants()->attach($person, ['role' => ParticipantRole::Subject]);
+
+    $this->actingAs($user)->get(personPreviewUrl($person))
+        ->assertInertia(fn ($page) => $page
+            ->where('personPreview.person.birth.confidence', 'A')
+            ->where('personPreview.person.birth.confidence_label', 'akt pierwotny')
+            ->where('personPreview.person.death.confidence', 'B')
+            ->where('personPreview.person.death.confidence_label', 'indeks / źródło wtórne')
+            ->where('personPreview.person.burial_confidence', 'C')
+            ->where('personPreview.person.burial_confidence_label', 'wskazówka')
+            ->where('personPreview.personForm.birth.confidence', 'A')
+            ->where('personPreview.personForm.death.confidence', 'B')
+            ->where('personPreview.personForm.burial.confidence', 'C'));
+});
+
+test('a fact without a confidence level reads as undetermined', function () {
+    $user = User::factory()->create();
+    $person = Person::factory()->for($user->tree)->create();
+    attachBirth($person, 1850);
+
+    $this->actingAs($user)->get(personPreviewUrl($person))
+        ->assertInertia(fn ($page) => $page
+            ->where('personPreview.person.birth.confidence', null)
+            ->where('personPreview.person.birth.confidence_label', null)
+            ->where('personPreview.person.burial_confidence', null)
+            ->where('personPreview.personForm.birth.confidence', null));
+});
+
+test('updating another users person with a confidence level is not found and changes nothing', function () {
+    $user = User::factory()->create();
+    $other = Person::factory()->for(User::factory()->create()->tree)->create();
+    $birth = Event::factory()->for($other->tree)->birth()->create();
+    $birth->participants()->attach($other, ['role' => ParticipantRole::Subject]);
+
+    $this->actingAs($user)->put(route('persons.update', $other), [
+        'first_name' => 'Jan',
+        'birth' => ['year' => 1850, 'confidence' => 'A'],
+    ])->assertNotFound();
+
+    expect($birth->refresh()->confidence)->toBeNull();
+});
+
+test('the shared confidenceLevels prop lists the four levels with their labels', function () {
+    $user = User::factory()->create();
+
+    $this->actingAs($user)->get(route('persons.index'))
+        ->assertInertia(fn ($page) => $page->where('confidenceLevels', [
+            ['value' => 'A', 'label' => 'akt pierwotny'],
+            ['value' => 'B', 'label' => 'indeks / źródło wtórne'],
+            ['value' => 'C', 'label' => 'wskazówka'],
+            ['value' => 'D', 'label' => 'hipoteza'],
+        ]));
 });

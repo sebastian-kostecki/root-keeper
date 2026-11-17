@@ -2,7 +2,7 @@
 title: Kontrakt bloku osoby (repo badawcze → import)
 version: 1
 created: 2026-10-23
-updated: 2026-11-16
+updated: 2026-11-17
 ---
 
 # Kontrakt bloku osoby v1
@@ -51,14 +51,14 @@ malzenstwa:                     # opcjonalne; w plikach obojga małżonków, zgo
 | `warianty_nazwiska` | nie | Lista tekstów. Import zapisuje je przy osobie (bez powtórzeń, bez względu na wielkość liter); wyszukiwarka osób znajduje osobę po każdym wariancie. |
 | `plec` | nie | `M` albo `K`. |
 | `rodzice.ojciec`, `rodzice.matka` | nie | `id` rodzica. |
-| `urodzenie`, `zgon`, `pochowek` | nie | Wydarzenie: `data`, `miejsce`, `poziom`, `notatka`. Obecność klucza (także `{}`) oznacza, że wydarzenie zaszło. |
+| `urodzenie`, `zgon`, `pochowek` | nie | Wydarzenie: `data`, `miejsce`, `poziom` (import zapisuje go przy fakcie i porównuje przy ponownym imporcie), `notatka`. Obecność klucza (także `{}`) oznacza, że wydarzenie zaszło. |
 | `pochowek.cmentarz` | nie | Nazwa cmentarza, gdy w miejscowości jest ich kilka. Znany tylko w `pochowek`; w innych zdarzeniach to nieznany klucz (ostrzeżenie). |
 | `malzenstwa` | nie | Lista: `z` (id współmałżonka) oraz `data`, `miejsce`, `poziom`, `notatka`, `zrodla`. Zapis w plikach obojga małżonków, zgodny (poza `zrodla`, zob. niżej). |
 | `urodzenie.zrodla`, `zgon.zrodla`, `malzenstwa[].zrodla` | nie | Lista `{id: ZR-NNNN, wpis: "15/1837"}`: źródła, które potwierdzają fakt. `id` wskazuje wpis w bloku źródła, `wpis` (opcjonalny, do 50 znaków, liczba zamienia się na tekst) to numer wpisu w akcie. Powtórzone `id` w jednym zdarzeniu: ostrzeżenie, zostaje pierwsze. W `pochowek` to nieznany klucz (pochowanie nie przyjmuje źródeł). |
 
 `zrodla` ślubu wystarczy wpisać u jednego małżonka. Gdy są u obojga, muszą być takie same (kolejność bez znaczenia); dwie różne niepuste listy pomijają małżeństwo z ostrzeżeniem. Pusta lista u jednego małżonka bierze listę drugiego.
 
-Poziom pewności `poziom`: `A`–`D`, jak w prozie repo.
+Poziom pewności `poziom`: `A`–`D`, jak w prozie repo. Import zapisuje go w polu „Poziom pewności” faktu (urodzenie, zgon, pochowanie, ślub), a nie w notatce osoby. Przy ponownym imporcie porównuje go jak datę i miejsce: zmiana w repo trafia do aplikacji, gdy nikt nie zmienił poziomu ręcznie, a rozbieżność obu stron zostaje konfliktem do rozstrzygnięcia.
 
 ## Blok źródła
 

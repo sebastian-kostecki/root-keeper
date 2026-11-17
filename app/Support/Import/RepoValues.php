@@ -34,17 +34,18 @@ final class RepoValues
     }
 
     /**
-     * The memory of an event: the date and the place text. A burial also keeps the cemetery name. The ids of the
+     * The memory of an event: the date, the place text and the confidence level. A burial also keeps the cemetery name. The ids of the
      * recognized place (`miejsce_id`, `cmentarz_id`) come from the planner, which knows the tree.
      *
      * @param  bool  $burial  true adds the `cmentarz` field
-     * @return array{data: string|null, miejsce: string|null, cmentarz?: string|null}
+     * @return array{data: string|null, miejsce: string|null, poziom: string|null, cmentarz?: string|null}
      */
     public static function event(ResearchEvent $event, bool $burial = false): array
     {
         $values = [
             'data' => $event->date?->label(),
             'miejsce' => PlanImport::cleanText($event->place),
+            'poziom' => $event->level?->value,
         ];
 
         if ($burial) {
@@ -132,12 +133,14 @@ final class RepoValues
      * Its lines hold no empty line, so that the block ends at the first empty line of the note.
      *
      * An event whose place the tree holds after the import does not repeat the place text. A burial line stays only
-     * when it has something to say.
+     * when it has something to say. A burial the import does not put in the tree keeps its confidence level in the
+     * note, because no fact holds it.
      *
      * @param  array<string, true>  $skipped  repo ids of persons left out; no wedding line mentions them
      * @param  array<string, true>  $placed  repo keys of the events (and weddings) that have the place the repo names after the import
+     * @param  array<string, true>  $outside  repo keys of the burials the tree does not hold after the import
      */
-    public static function note(ResearchPerson $person, ResearchRepoReading $reading, array $skipped = [], array $placed = []): ?string
+    public static function note(ResearchPerson $person, ResearchRepoReading $reading, array $skipped = [], array $placed = [], array $outside = []): ?string
     {
         $lines = [];
 
@@ -150,7 +153,8 @@ final class RepoValues
         }
 
         if ($person->burial !== null) {
-            $details = self::eventDetails($person->burial, withDate: true, placed: isset($placed[RepoKeys::burial($person->id)]));
+            $key = RepoKeys::burial($person->id);
+            $details = self::eventDetails($person->burial, withDate: true, placed: isset($placed[$key]), withLevel: isset($outside[$key]));
 
             if ($details !== []) {
                 $lines[] = 'Pochowanie: '.implode('; ', $details);
@@ -191,13 +195,13 @@ final class RepoValues
     /**
      * @return list<string>
      */
-    private static function eventDetails(ResearchEvent $event, bool $withDate = false, bool $placed = false): array
+    private static function eventDetails(ResearchEvent $event, bool $withDate = false, bool $placed = false, bool $withLevel = false): array
     {
         return array_values(array_filter([
             $withDate ? $event->date?->label() : null,
             $placed ? null : $event->place,
             $placed ? null : $event->cemetery,
-            $event->level === null ? null : 'poziom '.$event->level->value,
+            $withLevel && $event->level !== null ? "poziom {$event->level->value}" : null,
             $event->note,
         ], fn (?string $part): bool => $part !== null));
     }

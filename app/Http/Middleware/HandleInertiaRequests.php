@@ -5,6 +5,7 @@ namespace App\Http\Middleware;
 use App\Actions\Persons\BuildPersonPreview;
 use App\Actions\Relations\BuildMarriagePanel;
 use App\Enums\CemeteryManager;
+use App\Enums\ConfidenceLevel;
 use App\Enums\EventType;
 use App\Enums\MarriageForm;
 use App\Http\Resources\SourceResource;
@@ -78,6 +79,7 @@ class HandleInertiaRequests extends Middleware
                 ->all()),
             'cemeteryManagers' => fn (): array => CemeteryManager::options(),
             'marriageForms' => fn (): array => MarriageForm::options(),
+            'confidenceLevels' => fn (): array => ConfidenceLevel::options(),
             'cemeteryOptions' => Inertia::optional(fn (): array => $request->user() === null ? [] : $request->user()->tree->cemeteries()
                 ->with('locality')
                 ->get()
