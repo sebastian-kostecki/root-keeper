@@ -49,7 +49,7 @@ Autor prowadzi badania genealogiczne w repo markdown (dziś 283 pliki osób, dzi
 | S-05 | import-places-matched-to-gazetteer | dostać miejsca wydarzeń (także pochowanie na cmentarzu) dopasowane do spisu i potwierdzić nowe w podglądzie      | S-02          | FR-009, FR-010, FR-017                                | proposed |
 | S-06 | import-sources-with-scans          | dostać źródła z opisem i skanem podpięte do faktów z numerem wpisu                                             | S-05          | FR-001, FR-011, US-01                                 | blocked  |
 | S-07 | fuzzy-event-dates                  | zapisać i zobaczyć datę wydarzenia jako zakres lat, „przed” albo „po” — ręcznie i z importu                      | —             | FR-009, FR-015                                        | done |
-| S-08 | fact-confidence-level              | zobaczyć i ustawić przy fakcie poziom pewności A–D — ręcznie i z importu                                        | S-02          | FR-018, FR-015                                        | in-progress |
+| S-08 | fact-confidence-level              | zobaczyć i ustawić przy fakcie poziom pewności A–D — ręcznie i z importu                                        | S-02          | FR-018, FR-015                                        | done |
 | S-09 | surname-variant-search             | dostać warianty zapisu nazwiska z importu i znaleźć osobę w wyszukiwarce po każdym wariancie                     | S-02          | US-03, FR-019                                         | proposed |
 | S-10 | import-from-scratch-outside-prod   | poza produkcją zaimportować „od zera”, czyszcząc najpierw osoby i fakty drzewa konta (z potwierdzeniem)          | S-02          | FR-020                                                | proposed |
 
@@ -189,7 +189,7 @@ Brak. Każdy element przekrojowy wchodzi w pierwszym wycinku, który go używa: 
 - **Blockers:** —
 - **Unknowns:** —
 - **Risk:** Nowe puste pole bez przepisywania danych; osobno od `S-07`, bo dotyczy faktu, a nie daty, i może iść równolegle.
-- **Status:** in-progress
+- **Status:** done
 
 ### S-09: Wyszukiwanie po wariantach nazwiska
 
@@ -260,3 +260,4 @@ Brak. Każdy element przekrojowy wchodzi w pierwszym wycinku, który go używa: 
 - **S-02: autor importuje przodków do drzewa bez ręcznych wpisów (np. konta testowego): komenda pokazuje podsumowanie, po zatwierdzeniu zapisuje osoby (imiona, nazwisko, płeć), relacje rodzic–dziecko, małżeństwa oraz urodzenia, śluby i zgony z każdym rodzajem daty z `S-07` (dokładna, „ok.”, zakres, „przed”, „po”), każdy rekord z identyfikatorem z repo; na produkcji przed zapisem powstaje kopia bazy; zapis trafia wyłącznie do drzewa wskazanego konta; autor widzi przodków w drzewie i w widoku przodków.** — Archived 2026-10-24 → `context/archive/2026-10-23-first-import-into-empty-tree/`. Lesson: —.
 - **S-03: przy pierwszym imporcie do drzewa z ręcznie wpisanymi osobami komenda dopasowuje osobę z repo do istniejącej, gdy zgadzają się co najmniej dwa niezależne elementy poza imieniem i nazwiskiem, pokazuje przypadki wątpliwe i konflikty do rozstrzygnięcia pojedynczo, a dopasowana osoba zachowuje zdjęcie, skany, notatkę i dane dodane tylko w aplikacji — bez duplikatów.** — Archived 2026-10-24 → `context/archive/2026-10-24-first-import-matches-hand-entered/`. Lesson: —.
 - **S-04: autor ponawia import zaktualizowanej kopii repo; rekordy rozpoznane po identyfikatorze z repo, podgląd pokazuje nowe, zmienione, konflikty z ręcznymi zmianami (obie wartości) i rekordy usunięte w repo (usuń albo zostaw); wartość z repo zastępuje wartość w aplikacji bez pytania tylko wtedy, gdy nikt jej w aplikacji nie zmienił od ostatniego importu; rekordy bez identyfikatora repo nigdy nie są ruszane; ręczna edycja działa jak dotąd.** — Archived 2026-10-30 → `context/archive/2026-10-24-reimport-changes-and-conflicts/`. Lesson: —.
+- **S-08: autor widzi przy fakcie poziom pewności A–D (A akt pierwotny, B indeks / źródło wtórne, C wskazówka, D hipoteza) niezależny od źródeł i może go ustawić ręcznie; import przenosi poziom z repo; istniejące fakty mają poziom nieokreślony.** — Archived 2026-11-17 → `context/archive/2026-11-17-fact-confidence-level/`. Lesson: —.
