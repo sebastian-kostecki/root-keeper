@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Enums\ConfidenceLevel;
+use App\Enums\DateQualifier;
 use App\Enums\EventType;
 use App\Enums\MarriageForm;
 use App\Support\PartialDate;
@@ -21,19 +23,35 @@ use Illuminate\Support\Carbon;
  * @property int|null $date_year
  * @property int|null $date_month
  * @property int|null $date_day
+ * @property int|null $date_until_year
+ * @property DateQualifier $date_qualifier
  * @property bool $date_is_approximate
  * @property int|null $locality_id
  * @property int|null $cemetery_id
  * @property MarriageForm|null $marriage_form
+ * @property ConfidenceLevel|null $confidence
  * @property-read PartialDate $date
+ * @property string|null $repo_id
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
-#[Fillable(['tree_id', 'type', 'date_year', 'date_month', 'date_day', 'date_is_approximate', 'locality_id', 'cemetery_id', 'marriage_form'])]
+#[Fillable(['tree_id', 'type', 'date_year', 'date_month', 'date_day', 'date_until_year', 'date_qualifier', 'locality_id', 'cemetery_id', 'marriage_form', 'confidence', 'repo_id'])]
 class Event extends Model
 {
     /** @use HasFactory<EventFactory> */
     use HasFactory;
+
+    /**
+     * `date_is_approximate` is derived from `date_qualifier` on model save only; a bulk query-builder
+     * update of `date_qualifier` would leave it stale, so change the qualifier through the model
+     * until the flag is dropped.
+     */
+    protected static function booted(): void
+    {
+        static::saving(function (Event $event): void {
+            $event->date_is_approximate = $event->date_qualifier === DateQualifier::Approximate;
+        });
+    }
 
     /**
      * Get the attributes that should be cast.
@@ -44,8 +62,11 @@ class Event extends Model
     {
         return [
             'type' => EventType::class,
+            'date_qualifier' => DateQualifier::class,
+            'date_until_year' => 'integer',
             'date_is_approximate' => 'boolean',
             'marriage_form' => MarriageForm::class,
+            'confidence' => ConfidenceLevel::class,
         ];
     }
 
@@ -106,7 +127,8 @@ class Event extends Model
                 year: $this->date_year,
                 month: $this->date_month,
                 day: $this->date_day,
-                isApproximate: $this->date_is_approximate,
+                qualifier: $this->date_qualifier,
+                untilYear: $this->date_until_year,
             ),
         );
     }

@@ -23,7 +23,8 @@ describe('parsePartialDate: board examples', () => {
             year: 1948,
             month: null,
             day: null,
-            is_approximate: false,
+            qualifier: 'exact',
+            until_year: null,
         });
         expect(formatPartialDate(result.parts, 'short')).toBe('1948');
         expect(describePrecision(result.precision)).toBe('tylko rok');
@@ -43,7 +44,8 @@ describe('parsePartialDate: board examples', () => {
             year: 1948,
             month: 3,
             day: 12,
-            is_approximate: false,
+            qualifier: 'exact',
+            until_year: null,
         });
         expect(formatPartialDate(result.parts, 'short')).toBe('12.03.1948');
         expect(describePrecision(result.precision)).toBe('dokładna data');
@@ -52,7 +54,7 @@ describe('parsePartialDate: board examples', () => {
     it('reads an approximate year', () => {
         const result = ok('ok. 1948');
 
-        expect(result.parts.is_approximate).toBe(true);
+        expect(result.parts.qualifier).toBe('approximate');
         expect(formatPartialDate(result.parts, 'short')).toBe('ok. 1948');
     });
 
@@ -153,7 +155,7 @@ describe('parsePartialDate: month names', () => {
         expect(ok('pazdziernik 1948').parts.month).toBe(10);
         expect(ok('12 wrzesnia 1948').parts.month).toBe(9);
         expect(ok('styczen 1948').parts.month).toBe(1);
-        expect(ok('okolo 1948').parts.is_approximate).toBe(true);
+        expect(ok('okolo 1948').parts.qualifier).toBe('approximate');
     });
 });
 
@@ -187,7 +189,8 @@ describe('parsePartialDate: approximate markers', () => {
     ])('marks %s as approximate', (text) => {
         expect(ok(text).parts).toMatchObject({
             year: 1948,
-            is_approximate: true,
+            qualifier: 'approximate',
+            until_year: null,
         });
     });
 
@@ -196,7 +199,8 @@ describe('parsePartialDate: approximate markers', () => {
             year: 1948,
             month: 3,
             day: 12,
-            is_approximate: true,
+            qualifier: 'approximate',
+            until_year: null,
         });
     });
 
@@ -208,10 +212,11 @@ describe('parsePartialDate: approximate markers', () => {
 
 describe('parsePartialDate: rejections', () => {
     it.each([
-        '1948-1950',
-        '1948 - 1950',
-        'przed 1948',
-        'po 1948',
+        'pon. 1948',
+        'pozno 1948',
+        'przed',
+        'po',
+        '1948-1950-1952',
         'zima 1948',
         'lato 2015',
         '32.3.1948',
@@ -234,19 +239,43 @@ describe('parsePartialDate: rejections', () => {
 });
 
 describe('formatPartialDate', () => {
-    const day = { year: 1948, month: 3, day: 12, is_approximate: false };
-    const month = { year: 1948, month: 3, day: null, is_approximate: false };
-    const year = { year: 2015, month: null, day: null, is_approximate: false };
+    const day = {
+        year: 1948,
+        month: 3,
+        day: 12,
+        qualifier: 'exact' as const,
+        until_year: null,
+    };
+    const month = {
+        year: 1948,
+        month: 3,
+        day: null,
+        qualifier: 'exact' as const,
+        until_year: null,
+    };
+    const year = {
+        year: 2015,
+        month: null,
+        day: null,
+        qualifier: 'exact' as const,
+        until_year: null,
+    };
 
     it('formats short like PartialDate::format', () => {
         expect(formatPartialDate(day, 'short')).toBe('12.03.1948');
         expect(formatPartialDate(month, 'short')).toBe('03.1948');
         expect(formatPartialDate(year, 'short')).toBe('2015');
         expect(
-            formatPartialDate({ ...year, is_approximate: true }, 'short'),
+            formatPartialDate(
+                { ...year, qualifier: 'approximate' as const },
+                'short',
+            ),
         ).toBe('ok. 2015');
         expect(
-            formatPartialDate({ ...day, is_approximate: true }, 'short'),
+            formatPartialDate(
+                { ...day, qualifier: 'approximate' as const },
+                'short',
+            ),
         ).toBe('ok. 12.03.1948');
     });
 
@@ -255,14 +284,23 @@ describe('formatPartialDate', () => {
         expect(formatPartialDate(month, 'long')).toBe('marzec 1948');
         expect(formatPartialDate(year, 'long')).toBe('2015');
         expect(
-            formatPartialDate({ ...year, is_approximate: true }, 'long'),
+            formatPartialDate(
+                { ...year, qualifier: 'approximate' as const },
+                'long',
+            ),
         ).toBe('około 2015');
     });
 
     it('returns an empty string without a year', () => {
         expect(
             formatPartialDate(
-                { year: null, month: null, day: null, is_approximate: false },
+                {
+                    year: null,
+                    month: null,
+                    day: null,
+                    qualifier: 'exact' as const,
+                    until_year: null,
+                },
                 'short',
             ),
         ).toBe('');
@@ -272,8 +310,115 @@ describe('formatPartialDate', () => {
         expect(ok(formatPartialDate(day, 'short')).parts).toEqual(day);
         expect(ok('ok. 03.1948').parts).toEqual({
             ...month,
-            is_approximate: true,
+            qualifier: 'approximate',
         });
+    });
+});
+
+describe('parsePartialDate: before and after', () => {
+    it.each([
+        ['przed 1809', 'before', 1809, null, null],
+        ['PRZED 12.05.1809', 'before', 1809, 5, 12],
+        ['po 1801', 'after', 1801, null, null],
+        ['po 12.05.1801', 'after', 1801, 5, 12],
+    ] as const)('reads %s', (text, qualifier, year, month, day) => {
+        expect(ok(text).parts).toEqual({
+            year,
+            month,
+            day,
+            qualifier,
+            until_year: null,
+        });
+    });
+
+    it('keeps the "przed wojną" rejection', () => {
+        expect(parsePartialDate('przed wojną')).toEqual({ kind: 'invalid' });
+    });
+
+    it('does not read "po" at the start of other words', () => {
+        expect(parsePartialDate('pon. 1948')).toEqual({ kind: 'invalid' });
+        expect(parsePartialDate('po1948')).toEqual({ kind: 'invalid' });
+    });
+});
+
+describe('parsePartialDate: ranges', () => {
+    it.each([
+        '1805–1811',
+        '1805-1811',
+        '1805 - 1811',
+        '1805 – 1811',
+        'między 1805 a 1811',
+        'miedzy 1805 a 1811',
+        'Między 1805 i 1811',
+    ])('reads %s', (text) => {
+        const result = ok(text);
+
+        expect(result.parts).toEqual({
+            year: 1805,
+            month: null,
+            day: null,
+            qualifier: 'range',
+            until_year: 1811,
+        });
+        expect(result.precision).toBe('range');
+        expect(describePrecision(result.precision)).toBe('zakres lat');
+    });
+
+    it.each(['1811–1805', '1805-1805', 'między 1811 a 1805'])(
+        'rejects %s as out of order',
+        (text) => {
+            expect(parsePartialDate(text)).toEqual({ kind: 'range-order' });
+        },
+    );
+
+    it('does not turn a month-year date into a range', () => {
+        expect(ok('12-3-1948').parts).toMatchObject({
+            qualifier: 'exact',
+            month: 3,
+            day: 12,
+        });
+    });
+});
+
+describe('formatPartialDate: fuzzy kinds', () => {
+    const before = {
+        year: 1809,
+        month: 5,
+        day: 12,
+        qualifier: 'before' as const,
+        until_year: null,
+    };
+    const after = {
+        year: 1801,
+        month: null,
+        day: null,
+        qualifier: 'after' as const,
+        until_year: null,
+    };
+    const range = {
+        year: 1805,
+        month: null,
+        day: null,
+        qualifier: 'range' as const,
+        until_year: 1811,
+    };
+
+    it('formats short like PartialDate::format', () => {
+        expect(formatPartialDate(before, 'short')).toBe('przed 12.05.1809');
+        expect(formatPartialDate(after, 'short')).toBe('po 1801');
+        expect(formatPartialDate(range, 'short')).toBe('1805\u20131811');
+    });
+
+    it('formats long for cards', () => {
+        expect(formatPartialDate(before, 'long')).toBe('przed 12 maja 1809');
+        expect(formatPartialDate(after, 'long')).toBe('po 1801');
+        expect(formatPartialDate(range, 'long')).toBe('między 1805 a 1811');
+    });
+
+    it('round-trips short output through the parser', () => {
+        for (const parts of [before, after, range]) {
+            expect(ok(formatPartialDate(parts, 'short')).parts).toEqual(parts);
+        }
     });
 });
 

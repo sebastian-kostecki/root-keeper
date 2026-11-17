@@ -6,6 +6,7 @@ use App\Actions\Relations\CreateMarriage;
 use App\Actions\Relations\CreateParentChildRelation;
 use App\Actions\Sources\GenerateSourceThumbnail;
 use App\Actions\Trees\SetTreeRootPerson;
+use App\Enums\DateQualifier;
 use App\Enums\EventType;
 use App\Enums\MarriageForm;
 use App\Enums\ParticipantRole;
@@ -198,7 +199,7 @@ class TreeViewDemoSeeder extends Seeder
         $this->attachSource($janAnnaMarriage, 'akt-slubu-jan-anna.jpg');
 
         $leon = $this->person('Leon', 'Kowalski', 'male', 1940, deceased: 2015);
-        $this->eventOf($leon, EventType::Death)->update(['date_is_approximate' => true]);
+        $this->eventOf($leon, EventType::Death)->update(['date_qualifier' => DateQualifier::Approximate]);
 
         $nina = $this->sparsePerson('Nina', 'Rzadka', 'female');
         $this->parents($nina, [$leon]);
@@ -217,7 +218,7 @@ class TreeViewDemoSeeder extends Seeder
         // Ancestor couples, appended last so the earlier event ids stay put: a dated marriage (year node), an
         // approximate one ("ok. …") and an undated one (rings only). Anna's parents stay unmarried.
         $this->marry($adam, $maria, ['year' => 1970]);
-        $this->marry($jozef, $helena, ['year' => 1945, 'is_approximate' => true]);
+        $this->marry($jozef, $helena, ['year' => 1945, 'qualifier' => 'approximate']);
         $this->marry($stanislaw, $zofia, []);
 
         (new SetTreeRootPerson)->handle($this->tree, $jan);
@@ -284,7 +285,7 @@ class TreeViewDemoSeeder extends Seeder
             'date_year' => 1932,
             'date_month' => 3,
             'date_day' => 14,
-            'date_is_approximate' => false,
+            'date_qualifier' => DateQualifier::Exact,
             'locality_id' => $this->localityId('Nowy Targ'),
         ]);
         $birth->participants()->attach($person, ['role' => ParticipantRole::Subject]);
@@ -294,7 +295,7 @@ class TreeViewDemoSeeder extends Seeder
             'date_year' => 2011,
             'date_month' => 11,
             'date_day' => 2,
-            'date_is_approximate' => false,
+            'date_qualifier' => DateQualifier::Exact,
             'locality_id' => $this->localityId('Kraków'),
         ]);
         $death->participants()->attach($person, ['role' => ParticipantRole::Subject]);
@@ -361,6 +362,7 @@ class TreeViewDemoSeeder extends Seeder
         Source::factory()->for($this->tree)->described()->create([
             'original_name' => 'opisany-akt-lipnica-1878.jpg',
             'archive' => 'Archiwum Akt Dawnych w Warszawie',
+            'signature' => 'AP 35/1813/0/2.4/58',
             'parish_id' => $parish->id,
             'note' => "Wpis po prawej stronie rozkładówki, zapisany po łacinie.\n\nNazwisko matki odczytane z trudem, do sprawdzenia w księdze zgonów.",
             'url' => 'https://www.szukajwarchiwach.gov.pl/',
@@ -375,7 +377,8 @@ class TreeViewDemoSeeder extends Seeder
         Source::factory()->for($this->tree)->create([
             'original_name' => 'akt-z-dlugim-opisem.jpg',
             'name' => 'Akt urodzenia z parafii Świętego Jana Chrzciciela w Lipnicy Murowanej, księga urodzeń z lat 1875-1885',
-            'archive' => 'Archiwum Diecezjalne w Tarnowie, zespół akt parafialnych, sygnatura 1234/56/78',
+            'archive' => 'Archiwum Diecezjalne w Tarnowie, zespół akt parafialnych',
+            'signature' => '1234/56/78',
             'parish_id' => $parish->id,
         ]);
     }
@@ -546,7 +549,7 @@ class TreeViewDemoSeeder extends Seeder
 
         $birth = Event::factory()->for($this->tree)->birth()->withoutDate()->create([
             'date_year' => $birthYear,
-            'date_is_approximate' => $approximate,
+            'date_qualifier' => $approximate ? DateQualifier::Approximate : DateQualifier::Exact,
         ]);
         $birth->participants()->attach($person, ['role' => ParticipantRole::Subject]);
 
@@ -576,7 +579,7 @@ class TreeViewDemoSeeder extends Seeder
     }
 
     /**
-     * @param  array{year?: int, month?: int, day?: int, locality_id?: int, is_approximate?: bool}  $date
+     * @param  array{year?: int, month?: int, day?: int, locality_id?: int, qualifier?: string}  $date
      */
     private function marry(Person $person, Person $spouse, array $date): Event
     {

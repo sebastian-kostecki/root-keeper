@@ -312,6 +312,7 @@ describe('isUndescribed', () => {
         record_type: null,
         year: null,
         archive: null,
+        signature: null,
         parish_id: null,
         url: null,
         note: null,
@@ -327,6 +328,12 @@ describe('isUndescribed', () => {
 
     it('is false with only an archive', () => {
         expect(isUndescribed({ ...none, archive: 'Archiwum w Tarnowie' })).toBe(
+            false,
+        );
+    });
+
+    it('is false with only a signature', () => {
+        expect(isUndescribed({ ...none, signature: '35/1813/0/2.4/58' })).toBe(
             false,
         );
     });

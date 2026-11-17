@@ -18,14 +18,15 @@ class DeletePerson
      * relations where this person is a parent or a child are removed
      * automatically by the foreign key cascade on people.
      *
-     * The photo and thumbnail files are removed after the transaction commits; a file that cannot be
-     * deleted is reported, not thrown, because the rows are already gone.
+     * The photo and thumbnail files are removed after the outermost transaction commits, so a caller that
+     * rolls back keeps them; a file that cannot be deleted is reported, not thrown, because the rows are
+     * already gone.
      */
     public function handle(Person $person): void
     {
         $photoFiles = array_values(array_filter([$person->photo_path, $person->photo_thumbnail_path]));
 
-        DB::transaction(function () use ($person): void {
+        DB::transaction(function () use ($person, $photoFiles): void {
             $person->marriages()
                 ->get()
                 ->each(fn ($event) => $event->delete());
@@ -36,10 +37,14 @@ class DeletePerson
                 ->each(fn ($event) => $event->delete());
 
             $person->delete();
-        });
 
-        if ($photoFiles !== [] && ! Storage::disk('local')->delete($photoFiles)) {
-            report(new RuntimeException('Unable to delete person photo file(s) ['.implode(', ', $photoFiles).'].'));
-        }
+            if ($photoFiles !== []) {
+                DB::afterCommit(function () use ($photoFiles): void {
+                    if (! Storage::disk('local')->delete($photoFiles)) {
+                        report(new RuntimeException('Unable to delete person photo file(s) ['.implode(', ', $photoFiles).'].'));
+                    }
+                });
+            }
+        });
     }
 }

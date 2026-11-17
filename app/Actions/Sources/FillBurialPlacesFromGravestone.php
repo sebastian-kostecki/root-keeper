@@ -2,6 +2,7 @@
 
 namespace App\Actions\Sources;
 
+use App\Enums\DateQualifier;
 use App\Enums\EventType;
 use App\Enums\ParticipantRole;
 use App\Enums\SourceKind;
@@ -40,7 +41,7 @@ class FillBurialPlacesFromGravestone
 
             $burial = $gravestone->tree->events()->create([
                 'type' => EventType::Burial,
-                'date_is_approximate' => false,
+                'date_qualifier' => DateQualifier::Exact,
                 'cemetery_id' => $gravestone->cemetery->id,
                 'locality_id' => $gravestone->cemetery->locality_id,
             ]);

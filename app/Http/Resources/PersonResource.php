@@ -29,8 +29,11 @@ class PersonResource extends JsonResource
      *     birth: array<string, mixed>|null,
      *     death: array<string, mixed>|null,
      *     burial_place: string|null,
+     *     burial_confidence: string|null,
+     *     burial_confidence_label: string|null,
      *     age: array{unit: 'years'|'months'|'days'|'under_year', value: int|null}|null,
      *     photo_version: string|null,
+     *     surname_variants?: list<string>,
      *     parents?: list<array<string, mixed>>,
      *     children?: list<array<string, mixed>>,
      *     marriages?: list<array<string, mixed>>,
@@ -56,8 +59,11 @@ class PersonResource extends JsonResource
             'birth' => $this->birth() === null ? null : EventResource::make($this->birth())->resolve(),
             'death' => $this->death() === null ? null : EventResource::make($this->death())->resolve(),
             'burial_place' => $this->burial()?->cemetery?->label() ?? $this->burial()?->locality?->name,
+            'burial_confidence' => $this->burial()?->confidence?->value,
+            'burial_confidence_label' => $this->burial()?->confidence?->label(),
             'age' => $this->age()?->toArray(),
             'photo_version' => $this->photo_thumbnail_path === null ? null : pathinfo($this->photo_thumbnail_path, PATHINFO_FILENAME),
+            'surname_variants' => $this->whenLoaded('surnameVariants', fn (): array => $this->surnameVariants->pluck('name')->values()->all()),
             'parents' => $this->whenLoaded('parents', fn (): array => RelativeResource::collection(
                 PersonOrdering::relatives($this->parents)
             )->resolve()),

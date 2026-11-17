@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use App\Concerns\PartialDateValidationRules;
+use App\Enums\ConfidenceLevel;
 use App\Enums\Gender;
 use App\Enums\Religion;
 use Illuminate\Contracts\Validation\ValidationRule;
@@ -23,7 +24,10 @@ class PersonStoreRequest extends FormRequest
     {
         $deathRules = array_map(
             fn (array $rule): array => [...$rule, 'prohibited_unless:is_deceased,1,true'],
-            $this->partialDateRules('death'),
+            [
+                ...$this->partialDateRules('death'),
+                'death.confidence' => ['nullable', Rule::enum(ConfidenceLevel::class)],
+            ],
         );
 
         $burialRules = [
@@ -33,6 +37,7 @@ class PersonStoreRequest extends FormRequest
                 Rule::exists('cemeteries', 'id')->where('tree_id', $this->user()->tree->id),
                 'prohibited_unless:is_deceased,1,true',
             ],
+            'burial.confidence' => ['nullable', Rule::enum(ConfidenceLevel::class), 'prohibited_unless:is_deceased,1,true'],
         ];
 
         return [
@@ -43,6 +48,7 @@ class PersonStoreRequest extends FormRequest
             'is_deceased' => ['sometimes', 'boolean'],
 
             ...$this->partialDateRules('birth'),
+            'birth.confidence' => ['nullable', Rule::enum(ConfidenceLevel::class)],
             ...$deathRules,
             ...$burialRules,
         ];
@@ -64,14 +70,19 @@ class PersonStoreRequest extends FormRequest
             'birth.year' => 'rok urodzenia',
             'birth.month' => 'miesiąc urodzenia',
             'birth.day' => 'dzień urodzenia',
-            'birth.is_approximate' => 'przybliżona data urodzenia',
+            'birth.qualifier' => 'rodzaj daty',
+            'birth.until_year' => 'rok końca zakresu',
             'birth.locality_id' => 'miejsce urodzenia',
             'death.year' => 'rok zgonu',
             'death.month' => 'miesiąc zgonu',
             'death.day' => 'dzień zgonu',
-            'death.is_approximate' => 'przybliżona data zgonu',
+            'death.qualifier' => 'rodzaj daty',
+            'death.until_year' => 'rok końca zakresu',
             'death.locality_id' => 'miejsce zgonu',
             'burial.cemetery_id' => 'miejsce pochowania',
+            'birth.confidence' => 'poziom pewności urodzenia',
+            'death.confidence' => 'poziom pewności zgonu',
+            'burial.confidence' => 'poziom pewności pochowania',
         ];
     }
 
@@ -82,7 +93,9 @@ class PersonStoreRequest extends FormRequest
     {
         $validator->after(function (Validator $validator): void {
             $this->validateFullDate($validator, 'birth');
+            $this->validateRange($validator, 'birth');
             $this->validateFullDate($validator, 'death');
+            $this->validateRange($validator, 'death');
         });
     }
 }

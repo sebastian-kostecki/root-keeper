@@ -8,6 +8,7 @@ use App\Models\Cemetery;
 use App\Models\Locality;
 use App\Models\Parish;
 use App\Models\Residence;
+use App\Support\Import\PlaceName;
 use App\Support\MergedText;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -21,6 +22,8 @@ class MergeLocality
      * The target's own values win: its empty kind and coordinates (as a pair) are taken from the duplicate,
      * descriptions and historical affiliations are joined, and the target is defunct if either one was; when both
      * have a different defunct note, the target keeps its own and the duplicate's one is added to the description.
+     * The duplicate's name variants move to the target (one the tree already has or one that equals the target's name,
+     * letter case and Polish characters ignored, is dropped) and the duplicate's own name becomes a variant of the target, so that the import recognises it later.
      * Both localities must belong to the same tree.
      */
     public function handle(Locality $duplicate, Locality $target): Locality
@@ -57,12 +60,51 @@ class MergeLocality
 
             $this->dropMovedResidencesAlreadyAtTarget($lockedTarget, $movedResidenceIds);
 
+            $this->moveAliases($lockedDuplicate, $lockedTarget);
+
             $lockedDuplicate->delete();
 
             $this->fillTargetFromDuplicate($lockedTarget, $lockedDuplicate);
         });
 
         return $target->refresh();
+    }
+
+    /**
+     * Move the duplicate's name variants to the target and add the duplicate's name as one. A name equal (letter case
+     * and Polish characters ignored) to the target's name or to a variant the tree already has is skipped.
+     */
+    private function moveAliases(Locality $duplicate, Locality $target): void
+    {
+        foreach ($duplicate->aliases()->get() as $alias) {
+            if ($this->nameIsTaken($target, $alias->name, $alias->id)) {
+                $alias->delete();
+
+                continue;
+            }
+
+            $alias->update(['locality_id' => $target->id]);
+        }
+
+        if (! $this->nameIsTaken($target, $duplicate->name)) {
+            $target->aliases()->create(['tree_id' => $target->tree_id, 'name' => $duplicate->name]);
+        }
+    }
+
+    /**
+     * Whether the name is the target's own name or a variant already kept in the tree (other than `$exceptAliasId`),
+     * compared by the key the import matches names with (letter case and Polish characters ignored), so that a merge
+     * never leaves two variants the import cannot tell apart.
+     */
+    private function nameIsTaken(Locality $target, string $name, ?int $exceptAliasId = null): bool
+    {
+        $key = PlaceName::key($name);
+
+        return PlaceName::key($target->name) === $key
+            || $target->tree->localityAliases()
+                ->when($exceptAliasId !== null, fn ($query) => $query->whereKeyNot($exceptAliasId))
+                ->pluck('name')
+                ->contains(fn (string $variant): bool => PlaceName::key($variant) === $key);
     }
 
     /**

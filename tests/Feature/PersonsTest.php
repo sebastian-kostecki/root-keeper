@@ -1,5 +1,8 @@
 <?php
 
+use App\Actions\Persons\DeletePerson;
+use App\Enums\ConfidenceLevel;
+use App\Enums\DateQualifier;
 use App\Enums\EventType;
 use App\Enums\ParticipantRole;
 use App\Models\Cemetery;
@@ -7,6 +10,7 @@ use App\Models\Event;
 use App\Models\Locality;
 use App\Models\ParentChildRelation;
 use App\Models\Person;
+use App\Models\PersonSurnameVariant;
 use App\Models\Residence;
 use App\Models\Source;
 use App\Models\User;
@@ -222,7 +226,8 @@ test('persons index exposes date_parts on birth and death events', function () {
             'year' => $birth->date_year,
             'month' => $birth->date_month,
             'day' => $birth->date_day,
-            'is_approximate' => (bool) $birth->date_is_approximate,
+            'qualifier' => $birth->date_qualifier->value,
+            'until_year' => $birth->date_until_year,
         ])
         ->has('persons.0.death.date_parts.year'));
 });
@@ -570,11 +575,81 @@ test('store rejects an approximate date without a year', function () {
 
     $response = $this->actingAs($user)->post(route('persons.store'), [
         'first_name' => 'Jan',
-        'birth' => ['is_approximate' => '1'],
+        'birth' => ['qualifier' => 'approximate'],
     ]);
 
     $response->assertSessionHasErrors('birth.year');
 });
+
+test('store saves a before date and a range with the qualifier and a false approximate flag', function () {
+    $user = User::factory()->create();
+
+    $this->actingAs($user)->post(route('persons.store'), [
+        'first_name' => 'Jan',
+        'is_deceased' => '1',
+        'birth' => ['year' => 1809, 'month' => 5, 'day' => 12, 'qualifier' => 'before'],
+        'death' => ['year' => 1805, 'qualifier' => 'range', 'until_year' => 1811],
+    ])->assertSessionHasNoErrors();
+
+    $birth = Event::where('type', EventType::Birth)->sole();
+    expect($birth->date_qualifier)->toBe(DateQualifier::Before)
+        ->and([$birth->date_year, $birth->date_month, $birth->date_day, $birth->date_until_year])->toBe([1809, 5, 12, null])
+        ->and($birth->date_is_approximate)->toBeFalse();
+
+    $death = Event::where('type', EventType::Death)->sole();
+    expect($death->date_qualifier)->toBe(DateQualifier::Range)
+        ->and([$death->date_year, $death->date_until_year])->toBe([1805, 1811])
+        ->and($death->date_is_approximate)->toBeFalse();
+});
+
+test('store without a qualifier saves an exact date', function () {
+    $user = User::factory()->create();
+
+    $this->actingAs($user)->post(route('persons.store'), ['first_name' => 'Jan', 'birth' => ['year' => 1850]])
+        ->assertSessionHasNoErrors();
+
+    $birth = Event::where('type', EventType::Birth)->sole();
+    expect($birth->date_qualifier)->toBe(DateQualifier::Exact)->and($birth->date_until_year)->toBeNull();
+});
+
+test('update switches a birth between exact, a before date and a range and drops the end year again', function () {
+    $user = User::factory()->create();
+    $person = Person::factory()->for($user->tree)->create();
+    $birth = Event::factory()->for($user->tree)->birth()->create(['date_year' => 1850, 'date_month' => null, 'date_day' => null]);
+    $birth->participants()->attach($person, ['role' => ParticipantRole::Subject]);
+
+    $this->actingAs($user)->put(route('persons.update', $person), ['first_name' => 'Jan', 'birth' => ['year' => 1809, 'month' => 5, 'day' => 12, 'qualifier' => 'before']])
+        ->assertSessionHasNoErrors();
+    expect($birth->refresh()->date_qualifier)->toBe(DateQualifier::Before)->and($birth->date_day)->toBe(12);
+
+    $this->actingAs($user)->put(route('persons.update', $person), ['first_name' => 'Jan', 'birth' => ['year' => 1805, 'qualifier' => 'range', 'until_year' => 1811]])
+        ->assertSessionHasNoErrors();
+    expect($birth->refresh()->date_qualifier)->toBe(DateQualifier::Range)
+        ->and([$birth->date_year, $birth->date_month, $birth->date_until_year])->toBe([1805, null, 1811]);
+
+    $this->actingAs($user)->put(route('persons.update', $person), ['first_name' => 'Jan', 'birth' => ['year' => 1806]])
+        ->assertSessionHasNoErrors();
+    expect($birth->refresh()->date_qualifier)->toBe(DateQualifier::Exact)->and($birth->date_until_year)->toBeNull();
+});
+
+test('store rejects invalid qualifier combinations', function (array $birth, string $errorKey) {
+    $user = User::factory()->create();
+
+    $this->actingAs($user)->post(route('persons.store'), ['first_name' => 'Jan', 'birth' => $birth])
+        ->assertSessionHasErrors($errorKey);
+
+    expect(Event::count())->toBe(0);
+})->with([
+    'before without a year' => [['qualifier' => 'before'], 'birth.year'],
+    'range without a year' => [['qualifier' => 'range', 'until_year' => 1811], 'birth.year'],
+    'range without an end year' => [['qualifier' => 'range', 'year' => 1805], 'birth.until_year'],
+    'range ending in the start year' => [['qualifier' => 'range', 'year' => 1805, 'until_year' => 1805], 'birth.until_year'],
+    'range ending before the start year' => [['qualifier' => 'range', 'year' => 1811, 'until_year' => 1805], 'birth.until_year'],
+    'range with a month' => [['qualifier' => 'range', 'year' => 1805, 'month' => 3, 'until_year' => 1811], 'birth.month'],
+    'end year with a before date' => [['qualifier' => 'before', 'year' => 1805, 'until_year' => 1811], 'birth.until_year'],
+    'end year without a qualifier' => [['year' => 1805, 'until_year' => 1811], 'birth.until_year'],
+    'unknown qualifier' => [['qualifier' => 'circa', 'year' => 1805], 'birth.qualifier'],
+]);
 
 test('store rejects an unknown religion', function () {
     $user = User::factory()->create();
@@ -1069,6 +1144,27 @@ test('destroy of a person deletes the photo and thumbnail files of that person',
     expect(Storage::disk('local')->exists("persons/{$user->tree->id}/foto.jpg"))->toBeFalse()
         ->and(Storage::disk('local')->exists("persons/{$user->tree->id}/thumbnails/foto.jpg"))->toBeFalse()
         ->and(Storage::disk('local')->exists($other->photo_path))->toBeTrue();
+});
+
+test('deleting a person inside an outer transaction that rolls back keeps the photo files', function () {
+    Storage::fake('local');
+    $user = User::factory()->create();
+    $person = Person::factory()->for($user->tree)->create([
+        'photo_path' => "persons/{$user->tree->id}/foto.jpg",
+        'photo_thumbnail_path' => "persons/{$user->tree->id}/thumbnails/foto.jpg",
+    ]);
+    Storage::disk('local')->put($person->photo_path, 'original');
+    Storage::disk('local')->put($person->photo_thumbnail_path, 'thumbnail');
+
+    expect(fn () => DB::transaction(function () use ($person): void {
+        app(DeletePerson::class)->handle($person);
+
+        throw new RuntimeException('rollback');
+    }))->toThrow(RuntimeException::class, 'rollback');
+
+    expect(Person::find($person->id))->not->toBeNull()
+        ->and(Storage::disk('local')->exists("persons/{$user->tree->id}/foto.jpg"))->toBeTrue()
+        ->and(Storage::disk('local')->exists("persons/{$user->tree->id}/thumbnails/foto.jpg"))->toBeTrue();
 });
 
 test('persons index carries the preview props of the person named by the person query parameter', function () {
@@ -1581,7 +1677,7 @@ test('the preview exposes the burial cemetery for the form and its label for the
     $this->actingAs($user)->get(personPreviewUrl($person))
         ->assertInertia(fn ($page) => $page
             ->where('personPreview.person.burial_place', "cmentarz {$cemetery->locality->name}")
-            ->where('personPreview.personForm.burial', ['cemetery' => $cemetery->toOption()]));
+            ->where('personPreview.personForm.burial', ['cemetery' => $cemetery->toOption(), 'confidence' => null]));
 });
 
 test('a foreign or missing locality in any fact place field fails with the same error and writes nothing', function (string $field) {
@@ -1643,4 +1739,265 @@ test('the shared localityOptions prop lists only the own tree localities sorted 
         ['id' => $andrychow->id, 'name' => 'Andrychów', 'is_defunct' => false],
         ['id' => $zator->id, 'name' => 'Zator', 'is_defunct' => true],
     ]);
+});
+
+test('persons index finds a person by a surname variant', function () {
+    $user = User::factory()->create();
+
+    $misiuk = Person::factory()->for($user->tree)->create(['first_name' => 'Jan', 'last_name' => 'Misiuk']);
+    PersonSurnameVariant::factory()->for($misiuk)->create(['name' => 'Mysiuk']);
+    Person::factory()->for($user->tree)->create(['first_name' => 'Jan', 'last_name' => 'Nowak']);
+
+    $response = $this->actingAs($user)->get(route('persons.index', ['q' => 'Mysiuk']));
+
+    $response->assertOk();
+    $response->assertInertia(fn ($page) => $page
+        ->component('persons/index')
+        ->has('persons', 1)
+        ->where('persons.0.id', $misiuk->id)
+        ->where('persons.0.surname_variants', ['Mysiuk']));
+});
+
+test('the person preview carries the surname variants in order', function () {
+    $user = User::factory()->create();
+    $person = Person::factory()->for($user->tree)->create(['first_name' => 'Jan', 'last_name' => 'Misiuk']);
+    PersonSurnameVariant::factory()->for($person)->create(['name' => 'Mysiuk', 'position' => 0]);
+    PersonSurnameVariant::factory()->for($person)->create(['name' => 'Myszuk', 'position' => 1]);
+
+    $this->actingAs($user)->get(personPreviewUrl($person))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page->where('personPreview.person.surname_variants', ['Mysiuk', 'Myszuk']));
+});
+
+test('persons index matches each query word against first name, surname or a surname variant', function () {
+    $user = User::factory()->create();
+
+    $misiuk = Person::factory()->for($user->tree)->create(['first_name' => 'Jan', 'last_name' => 'Misiuk']);
+    PersonSurnameVariant::factory()->for($misiuk)->create(['name' => 'Mysiuk']);
+
+    $response = $this->actingAs($user)->get(route('persons.index', ['q' => 'Jan Mysiuk']));
+
+    $response->assertOk();
+    $response->assertInertia(fn ($page) => $page
+        ->has('persons', 1)
+        ->where('persons.0.id', $misiuk->id));
+
+    $response = $this->actingAs($user)->get(route('persons.index', ['q' => 'Anna Mysiuk']));
+
+    $response->assertOk();
+    $response->assertInertia(fn ($page) => $page->has('persons', 0));
+});
+
+test('persons index matches a surname variant ignoring case but not polish diacritics', function () {
+    $user = User::factory()->create();
+
+    $person = Person::factory()->for($user->tree)->create(['first_name' => 'Jan', 'last_name' => 'Zielinski']);
+    PersonSurnameVariant::factory()->for($person)->create(['name' => 'Żółkowski']);
+
+    $response = $this->actingAs($user)->get(route('persons.index', ['q' => 'ŻÓŁKOW']));
+
+    $response->assertOk();
+    $response->assertInertia(fn ($page) => $page
+        ->has('persons', 1)
+        ->where('persons.0.id', $person->id));
+
+    $response = $this->actingAs($user)->get(route('persons.index', ['q' => 'zolkowski']));
+
+    $response->assertOk();
+    $response->assertInertia(fn ($page) => $page->has('persons', 0));
+});
+
+test('persons index never returns another users person by a surname variant', function () {
+    $user = User::factory()->create();
+    $otherUser = User::factory()->create();
+
+    $own = Person::factory()->for($user->tree)->create(['first_name' => 'Jan', 'last_name' => 'Misiuk']);
+    PersonSurnameVariant::factory()->for($own)->create(['name' => 'Mysiuk']);
+    $foreign = Person::factory()->for($otherUser->tree)->create(['first_name' => 'Jan', 'last_name' => 'Misiuk']);
+    PersonSurnameVariant::factory()->for($foreign)->create(['name' => 'Mysiuk']);
+
+    $response = $this->actingAs($user)->get(route('persons.index', ['q' => 'Mysiuk']));
+
+    $response->assertOk();
+    $response->assertInertia(fn ($page) => $page
+        ->has('persons', 1)
+        ->where('persons.0.id', $own->id));
+});
+
+test('deleting a person removes its surname variants', function () {
+    $user = User::factory()->create();
+
+    $person = Person::factory()->for($user->tree)->create();
+    PersonSurnameVariant::factory()->for($person)->count(2)->create();
+
+    $this->actingAs($user)->delete(route('persons.destroy', $person))->assertRedirect();
+
+    expect(PersonSurnameVariant::query()->where('person_id', $person->id)->count())->toBe(0);
+});
+
+test('store saves the confidence level of the birth, the death and the burial', function () {
+    $user = User::factory()->create();
+    $cemetery = Cemetery::factory()->for($user->tree)->create();
+
+    $this->actingAs($user)->post(route('persons.store'), [
+        'first_name' => 'Jan',
+        'is_deceased' => '1',
+        'birth' => ['year' => 1850, 'confidence' => 'A'],
+        'death' => ['year' => 1920, 'confidence' => 'B'],
+        'burial' => ['cemetery_id' => $cemetery->id, 'confidence' => 'C'],
+    ])->assertSessionHasNoErrors();
+
+    $confidenceOf = fn (EventType $type): ?ConfidenceLevel => Event::where('type', $type)->sole()->confidence;
+
+    expect($confidenceOf(EventType::Birth))->toBe(ConfidenceLevel::A)
+        ->and($confidenceOf(EventType::Death))->toBe(ConfidenceLevel::B)
+        ->and($confidenceOf(EventType::Burial))->toBe(ConfidenceLevel::C);
+});
+
+test('update saves the confidence level of every fact and a payload without the key clears it', function () {
+    $user = User::factory()->create();
+    $person = Person::factory()->for($user->tree)->create();
+    $birth = Event::factory()->for($user->tree)->birth()->confidence(ConfidenceLevel::D)->create();
+    $birth->participants()->attach($person, ['role' => ParticipantRole::Subject]);
+    $death = Event::factory()->for($user->tree)->death()->create();
+    $death->participants()->attach($person, ['role' => ParticipantRole::Subject]);
+    $cemetery = Cemetery::factory()->for($user->tree)->create();
+
+    $this->actingAs($user)->put(route('persons.update', $person), [
+        'first_name' => 'Jan',
+        'is_deceased' => '1',
+        'birth' => ['year' => 1850, 'confidence' => 'B'],
+        'death' => ['year' => 1920, 'confidence' => 'A'],
+        'burial' => ['cemetery_id' => $cemetery->id, 'confidence' => 'D'],
+    ])->assertSessionHasNoErrors();
+
+    expect($birth->refresh()->confidence)->toBe(ConfidenceLevel::B)
+        ->and($death->refresh()->confidence)->toBe(ConfidenceLevel::A)
+        ->and(Event::where('type', EventType::Burial)->sole()->confidence)->toBe(ConfidenceLevel::D);
+
+    $this->actingAs($user)->put(route('persons.update', $person), [
+        'first_name' => 'Jan',
+        'is_deceased' => '1',
+        'birth' => ['year' => 1850, 'confidence' => ''],
+        'death' => ['year' => 1920],
+        'burial' => ['cemetery_id' => $cemetery->id],
+    ])->assertSessionHasNoErrors();
+
+    expect($birth->refresh()->confidence)->toBeNull()
+        ->and($death->refresh()->confidence)->toBeNull()
+        ->and(Event::where('type', EventType::Burial)->sole()->confidence)->toBeNull();
+});
+
+test('a burial confidence without a cemetery creates no burial and clearing the cemetery drops the level with the burial', function () {
+    $user = User::factory()->create();
+    $person = Person::factory()->for($user->tree)->create();
+    $cemetery = Cemetery::factory()->for($user->tree)->create();
+    $save = fn (array $burial) => $this->actingAs($user)->put(route('persons.update', $person), [
+        'first_name' => 'Jan',
+        'is_deceased' => '1',
+        'death' => ['year' => 1920],
+        'burial' => $burial,
+    ])->assertSessionHasNoErrors();
+
+    $save(['confidence' => 'C']);
+
+    expect(Event::where('type', EventType::Burial)->exists())->toBeFalse();
+
+    $save(['cemetery_id' => $cemetery->id, 'confidence' => 'C']);
+
+    expect(Event::where('type', EventType::Burial)->sole()->confidence)->toBe(ConfidenceLevel::C);
+
+    $save(['cemetery_id' => '', 'confidence' => 'C']);
+
+    expect(Event::where('type', EventType::Burial)->exists())->toBeFalse()
+        ->and(Event::whereNotNull('confidence')->exists())->toBeFalse();
+});
+
+test('a confidence level outside A to D is rejected and changes nothing', function (string $field) {
+    $user = User::factory()->create();
+    $person = Person::factory()->for($user->tree)->create();
+    $birth = Event::factory()->for($user->tree)->birth()->confidence(ConfidenceLevel::A)->create();
+    $birth->participants()->attach($person, ['role' => ParticipantRole::Subject]);
+    $cemetery = Cemetery::factory()->for($user->tree)->create();
+    [$key] = explode('.', $field);
+
+    $this->actingAs($user)->put(route('persons.update', $person), [
+        'first_name' => 'Jan',
+        'is_deceased' => '1',
+        $key => ['cemetery_id' => $cemetery->id, 'confidence' => 'E'],
+    ])->assertSessionHasErrors($field);
+
+    expect($birth->refresh()->confidence)->toBe(ConfidenceLevel::A);
+})->with(['birth.confidence', 'death.confidence', 'burial.confidence']);
+
+test('a death or burial confidence is rejected for a person who is not deceased', function (string $key) {
+    $user = User::factory()->create();
+    $person = Person::factory()->for($user->tree)->create();
+
+    $this->actingAs($user)->put(route('persons.update', $person), [
+        'first_name' => 'Jan',
+        $key => ['confidence' => 'A'],
+    ])->assertSessionHasErrors("{$key}.confidence");
+})->with(['death', 'burial']);
+
+test('the person form and the overview return the confidence level with its label', function () {
+    $user = User::factory()->create();
+    $person = deceasedPersonForBurial($user);
+    $person->death()->update(['confidence' => ConfidenceLevel::B]);
+    $birth = Event::factory()->for($user->tree)->birth()->confidence(ConfidenceLevel::A)->create();
+    $birth->participants()->attach($person, ['role' => ParticipantRole::Subject]);
+    $cemetery = Cemetery::factory()->for($user->tree)->create();
+    $burial = Event::factory()->for($user->tree)->burial()->atCemetery($cemetery)->confidence(ConfidenceLevel::C)->create();
+    $burial->participants()->attach($person, ['role' => ParticipantRole::Subject]);
+
+    $this->actingAs($user)->get(personPreviewUrl($person))
+        ->assertInertia(fn ($page) => $page
+            ->where('personPreview.person.birth.confidence', 'A')
+            ->where('personPreview.person.birth.confidence_label', 'akt pierwotny')
+            ->where('personPreview.person.death.confidence', 'B')
+            ->where('personPreview.person.death.confidence_label', 'indeks / źródło wtórne')
+            ->where('personPreview.person.burial_confidence', 'C')
+            ->where('personPreview.person.burial_confidence_label', 'wskazówka')
+            ->where('personPreview.personForm.birth.confidence', 'A')
+            ->where('personPreview.personForm.death.confidence', 'B')
+            ->where('personPreview.personForm.burial.confidence', 'C'));
+});
+
+test('a fact without a confidence level reads as undetermined', function () {
+    $user = User::factory()->create();
+    $person = Person::factory()->for($user->tree)->create();
+    attachBirth($person, 1850);
+
+    $this->actingAs($user)->get(personPreviewUrl($person))
+        ->assertInertia(fn ($page) => $page
+            ->where('personPreview.person.birth.confidence', null)
+            ->where('personPreview.person.birth.confidence_label', null)
+            ->where('personPreview.person.burial_confidence', null)
+            ->where('personPreview.personForm.birth.confidence', null));
+});
+
+test('updating another users person with a confidence level is not found and changes nothing', function () {
+    $user = User::factory()->create();
+    $other = Person::factory()->for(User::factory()->create()->tree)->create();
+    $birth = Event::factory()->for($other->tree)->birth()->create();
+    $birth->participants()->attach($other, ['role' => ParticipantRole::Subject]);
+
+    $this->actingAs($user)->put(route('persons.update', $other), [
+        'first_name' => 'Jan',
+        'birth' => ['year' => 1850, 'confidence' => 'A'],
+    ])->assertNotFound();
+
+    expect($birth->refresh()->confidence)->toBeNull();
+});
+
+test('the shared confidenceLevels prop lists the four levels with their labels', function () {
+    $user = User::factory()->create();
+
+    $this->actingAs($user)->get(route('persons.index'))
+        ->assertInertia(fn ($page) => $page->where('confidenceLevels', [
+            ['value' => 'A', 'label' => 'akt pierwotny'],
+            ['value' => 'B', 'label' => 'indeks / źródło wtórne'],
+            ['value' => 'C', 'label' => 'wskazówka'],
+            ['value' => 'D', 'label' => 'hipoteza'],
+        ]));
 });

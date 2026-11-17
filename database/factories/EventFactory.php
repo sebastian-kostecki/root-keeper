@@ -2,6 +2,8 @@
 
 namespace Database\Factories;
 
+use App\Enums\ConfidenceLevel;
+use App\Enums\DateQualifier;
 use App\Enums\EventType;
 use App\Models\Cemetery;
 use App\Models\Event;
@@ -27,7 +29,7 @@ class EventFactory extends Factory
             'date_year' => fake()->numberBetween(1700, 2020),
             'date_month' => fake()->numberBetween(1, 12),
             'date_day' => fake()->numberBetween(1, 28),
-            'date_is_approximate' => false,
+            'date_qualifier' => DateQualifier::Exact,
         ];
     }
 
@@ -61,7 +63,7 @@ class EventFactory extends Factory
             'date_year' => null,
             'date_month' => null,
             'date_day' => null,
-            'date_is_approximate' => false,
+            'date_qualifier' => DateQualifier::Exact,
         ]);
     }
 
@@ -93,7 +95,51 @@ class EventFactory extends Factory
     public function approximate(): static
     {
         return $this->state(fn (array $attributes): array => [
-            'date_is_approximate' => true,
+            'date_qualifier' => DateQualifier::Approximate,
+        ]);
+    }
+
+    /**
+     * Indicate that the event's date is before the given year.
+     */
+    public function before(): static
+    {
+        return $this->state(fn (array $attributes): array => [
+            'date_qualifier' => DateQualifier::Before,
+        ]);
+    }
+
+    /**
+     * Indicate that the event's date is after the given year.
+     */
+    public function after(): static
+    {
+        return $this->state(fn (array $attributes): array => [
+            'date_qualifier' => DateQualifier::After,
+        ]);
+    }
+
+    /**
+     * Indicate that the event's date is a range of years, with no month or day.
+     */
+    public function range(int $from, int $until): static
+    {
+        return $this->state(fn (array $attributes): array => [
+            'date_qualifier' => DateQualifier::Range,
+            'date_year' => $from,
+            'date_month' => null,
+            'date_day' => null,
+            'date_until_year' => $until,
+        ]);
+    }
+
+    /**
+     * Indicate that the event carries the given confidence level.
+     */
+    public function confidence(ConfidenceLevel $level): static
+    {
+        return $this->state(fn (array $attributes): array => [
+            'confidence' => $level,
         ]);
     }
 
@@ -106,7 +152,7 @@ class EventFactory extends Factory
             'date_year' => null,
             'date_month' => null,
             'date_day' => null,
-            'date_is_approximate' => false,
+            'date_qualifier' => DateQualifier::Exact,
         ]);
     }
 }

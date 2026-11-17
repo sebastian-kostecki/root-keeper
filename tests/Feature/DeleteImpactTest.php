@@ -71,7 +71,8 @@ test('merging a locality removes exactly the duplicate and its redundant residen
 
     $diff = rowDiff($before, databaseRows());
 
-    expect(array_keys($diff['tables']))->toBe(['cemeteries', 'events', 'localities', 'parishes', 'residences']);
+    expect(array_keys($diff['tables']))->toBe(['cemeteries', 'events', 'localities', 'locality_aliases', 'parishes', 'residences']);
+    expect($diff['tables']['locality_aliases']['added'])->toHaveCount(1);
     expect(rowIds($diff['tables']['localities']['removed']))->toBe([$duplicate->id]);
     expect(collect($diff['tables']['localities']['changed'])->pluck('after.id')->all())->toBe([$target->id]);
     expect($diff['tables']['localities']['changed'][0]['after']['description'])->toBe('Opis duplikatu');

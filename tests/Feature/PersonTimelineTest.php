@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\DateQualifier;
 use App\Enums\EventType;
 use App\Enums\ParticipantRole;
 use App\Models\Cemetery;
@@ -23,7 +24,7 @@ function attachTimelineEvent(Person $person, EventType $type, array $attributes 
         'date_year' => null,
         'date_month' => null,
         'date_day' => null,
-        'date_is_approximate' => false,
+        'date_qualifier' => DateQualifier::Exact,
         ...$attributes,
     ]);
 
@@ -215,7 +216,7 @@ test('an approximate year sorts like its plain year', function () {
     $spouse = Person::factory()->for($user->tree)->create();
     $son = Person::factory()->for($user->tree)->male()->create(['first_name' => 'Jan', 'last_name' => 'Nowak']);
     attachMarriage($person, $spouse, 1849);
-    attachTimelineEvent($son, EventType::Birth, ['date_year' => 1850, 'date_is_approximate' => true]);
+    attachTimelineEvent($son, EventType::Birth, ['date_year' => 1850, 'date_qualifier' => DateQualifier::Approximate]);
     linkParent($person, $son);
 
     expect(timelineRows($this, $user, $person))->toBe([
@@ -426,28 +427,58 @@ test('an approximate date does not change the age', function () {
     $person = Person::factory()->for($user->tree)->create();
     $spouse = Person::factory()->for($user->tree)->create();
     attachTimelineEvent($person, EventType::Birth, ['date_year' => 1900]);
-    attachMarriage($person, $spouse, 1920)->update(['date_is_approximate' => true]);
+    attachMarriage($person, $spouse, 1920)->update(['date_qualifier' => DateQualifier::Approximate]);
 
     expect(timelineAges($this, $user, $person)[1])->toBe(['Małżeństwo', yearsOld(20)]);
 });
 
-test('the payload gives the year, the approximation flag and whether the date has a month', function () {
+test('the payload gives the year, the date qualifier and whether the date has a month', function () {
     $user = User::factory()->create();
     $person = Person::factory()->for($user->tree)->create();
     attachTimelineEvent($person, EventType::Birth, ['date_year' => 1900, 'date_month' => 5, 'date_day' => 3]);
     attachTimelineEvent($person, EventType::Death, ['date_year' => 1960]);
     $spouse = Person::factory()->for($user->tree)->create();
-    attachMarriage($person, $spouse, 1920)->update(['date_is_approximate' => true]);
+    attachMarriage($person, $spouse, 1920)->update(['date_qualifier' => DateQualifier::Approximate]);
 
     $timeline = $this->actingAs($user)
         ->get(personPreviewUrl($person))
         ->viewData('page')['props']['personPreview']['person']['timeline'];
 
-    expect(array_map(fn (array $row): array => [$row['year'], $row['is_approximate'], $row['date_has_month']], $timeline))->toBe([
-        [1900, false, true],
-        [1920, true, false],
-        [1960, false, false],
+    expect(array_map(fn (array $row): array => [$row['year'], $row['qualifier'], $row['date_has_month']], $timeline))->toBe([
+        [1900, 'exact', true],
+        [1920, 'approximate', false],
+        [1960, 'exact', false],
     ]);
+});
+
+test('the payload gives the qualifier and end year and drops the qualifier word from a date with a month', function () {
+    $user = User::factory()->create();
+    $person = Person::factory()->for($user->tree)->create();
+    attachTimelineEvent($person, EventType::Birth, ['date_year' => 1805, 'date_qualifier' => DateQualifier::Range, 'date_until_year' => 1811]);
+    attachTimelineEvent($person, EventType::Death, ['date_year' => 1870, 'date_month' => 3, 'date_qualifier' => DateQualifier::Approximate]);
+
+    $timeline = $this->actingAs($user)
+        ->get(personPreviewUrl($person))
+        ->viewData('page')['props']['personPreview']['person']['timeline'];
+
+    expect(array_map(fn (array $row): array => [$row['date'], $row['qualifier'], $row['until_year']], $timeline))->toBe([
+        ['1805–1811', 'range', 1811],
+        ['03.1870', 'approximate', null],
+    ]);
+});
+
+test('a before or range birth gives no age to later events', function () {
+    $user = User::factory()->create();
+    $person = Person::factory()->for($user->tree)->create();
+    $spouse = Person::factory()->for($user->tree)->create();
+    attachTimelineEvent($person, EventType::Birth, ['date_year' => 1900, 'date_qualifier' => DateQualifier::Before]);
+    attachMarriage($person, $spouse, 1920);
+    expect(timelineAges($this, $user, $person)[1])->toBe(['Małżeństwo', null]);
+
+    $other = Person::factory()->for($user->tree)->create();
+    attachTimelineEvent($other, EventType::Birth, ['date_year' => 1900, 'date_qualifier' => DateQualifier::Range, 'date_until_year' => 1903]);
+    attachMarriage($other, $spouse, 1920);
+    expect(timelineAges($this, $user, $other)[1])->toBe(['Małżeństwo', null]);
 });
 
 test('the burial place of a timeline row is the label of the cemetery, or the locality without one', function () {

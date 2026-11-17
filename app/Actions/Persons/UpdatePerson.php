@@ -2,18 +2,18 @@
 
 namespace App\Actions\Persons;
 
+use App\Enums\ConfidenceLevel;
+use App\Enums\DateQualifier;
 use App\Enums\EventType;
-use App\Enums\Gender;
 use App\Enums\ParticipantRole;
 use App\Models\Person;
 use App\Models\Residence;
-use App\Support\ParentChildGraph;
 use App\Support\PersonOrdering;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Validation\ValidationException;
 
 class UpdatePerson
 {
+    use GuardsParentSexChange;
     use MapsEventInput;
 
     /**
@@ -30,17 +30,21 @@ class UpdatePerson
      *         year?: int|string|null,
      *         month?: int|string|null,
      *         day?: int|string|null,
-     *         is_approximate?: bool|int|string|null,
+     *         qualifier?: DateQualifier|string|null,
+     *         until_year?: int|string|null,
      *         locality_id?: int|string|null,
+     *         confidence?: ConfidenceLevel|string|null,
      *     },
      *     death?: array{
      *         year?: int|string|null,
      *         month?: int|string|null,
      *         day?: int|string|null,
-     *         is_approximate?: bool|int|string|null,
+     *         qualifier?: DateQualifier|string|null,
+     *         until_year?: int|string|null,
      *         locality_id?: int|string|null,
+     *         confidence?: ConfidenceLevel|string|null,
      *     },
-     *     burial?: array{cemetery_id?: int|string|null},
+     *     burial?: array{cemetery_id?: int|string|null, confidence?: ConfidenceLevel|string|null},
      *     residences?: array<int, array{locality_id: int|string, year_from?: int|string|null, year_to?: int|string|null}>,
      * }  $data
      */
@@ -67,7 +71,7 @@ class UpdatePerson
                 $burialPlace = $this->burialPlaceFrom($person->tree, $data['burial'] ?? []);
 
                 if ($burialPlace !== null) {
-                    $this->putEvent($person, EventType::Burial, ['locality_id' => $burialPlace['locality_id']], ['cemetery_id' => $burialPlace['cemetery_id']]);
+                    $this->putEvent($person, EventType::Burial, ['locality_id' => $burialPlace['locality_id'], 'confidence' => $burialPlace['confidence']], ['cemetery_id' => $burialPlace['cemetery_id']]);
                 } else {
                     $person->burial()?->delete();
                 }
@@ -120,43 +124,7 @@ class UpdatePerson
     }
 
     /**
-     * Changing the sex to a known one must not give any child of the person
-     * a second parent of that sex. Clearing the sex or keeping it never
-     * checks relations, so older inconsistent pairs do not block other edits.
-     */
-    private function guardParentSexChange(Person $person, ?string $newGender): void
-    {
-        $new = $newGender === null ? null : Gender::tryFrom($newGender);
-        $stored = Person::query()->whereKey($person->id)->lockForUpdate()->firstOrFail()->gender;
-
-        if ($new === null || $new === $stored) {
-            return;
-        }
-
-        $graph = ParentChildGraph::forTree($person->tree);
-
-        $otherParentIds = collect($graph->childrenOf($person->id))
-            ->flatMap(fn (int $childId): array => $graph->parentsOf($childId))
-            ->reject(fn (int $parentId): bool => $parentId === $person->id)
-            ->unique()
-            ->all();
-
-        $conflicts = $person->tree->people()
-            ->whereIn('id', $otherParentIds)
-            ->where('gender', $new)
-            ->exists();
-
-        if ($conflicts) {
-            throw ValidationException::withMessages([
-                'gender' => $new === Gender::Male
-                    ? 'Ta osoba jest rodzicem dziecka, które ma już ojca.'
-                    : 'Ta osoba jest rodzicem dziecka, które ma już matkę.',
-            ]);
-        }
-    }
-
-    /**
-     * @param  array{year?: int|string|null, month?: int|string|null, day?: int|string|null, is_approximate?: bool|int|string|null, locality_id?: int|string|null}  $date
+     * @param  array{year?: int|string|null, month?: int|string|null, day?: int|string|null, qualifier?: DateQualifier|string|null, until_year?: int|string|null, locality_id?: int|string|null, confidence?: ConfidenceLevel|string|null}  $date
      * @param  array{cemetery_id: int|string|null}|array{}  $extra
      */
     private function putEvent(Person $person, EventType $type, array $date, array $extra = []): void

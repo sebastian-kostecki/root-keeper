@@ -83,4 +83,12 @@ class Locality extends Model
     {
         return $this->hasMany(Residence::class);
     }
+
+    /**
+     * @return HasMany<LocalityAlias, $this>
+     */
+    public function aliases(): HasMany
+    {
+        return $this->hasMany(LocalityAlias::class);
+    }
 }

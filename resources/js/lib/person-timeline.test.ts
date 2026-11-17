@@ -9,7 +9,8 @@ function entry(overrides: Partial<TimelineEntry> = {}): TimelineEntry {
         label: 'Urodzenie',
         date: '1900',
         year: 1900,
-        is_approximate: false,
+        qualifier: 'exact',
+        until_year: null,
         date_has_month: false,
         age: null,
         place: null,
@@ -51,18 +52,40 @@ describe('personTimelineRows', () => {
         expect(burial.year).toBeNull();
     });
 
-    it('passes the year, the approximation flag and the formatted age', () => {
+    it('passes the year, the qualifier label and the formatted age', () => {
         const [row] = personTimelineRows([
             entry({
                 year: 1920,
-                is_approximate: true,
+                qualifier: 'approximate',
                 age: { unit: 'years', value: 20 },
             }),
         ]);
 
         expect(row.year).toBe('1920');
-        expect(row.approximate).toBe(true);
+        expect(row.qualifierLabel).toBe('ok.');
         expect(row.age).toBe('20 lat');
+    });
+
+    it.each([
+        ['before', 'przed'],
+        ['after', 'po'],
+    ] as const)('labels a %s date above the year', (qualifier, label) => {
+        const [row] = personTimelineRows([entry({ qualifier })]);
+
+        expect(row.qualifierLabel).toBe(label);
+        expect(row.year).toBe('1900');
+        expect(row.yearEnd).toBeNull();
+    });
+
+    it('splits a range into two year lines with a spoken date', () => {
+        const [row] = personTimelineRows([
+            entry({ year: 1805, qualifier: 'range', until_year: 1811 }),
+        ]);
+
+        expect(row.year).toBe('1805\u2013');
+        expect(row.yearEnd).toBe('1811');
+        expect(row.qualifierLabel).toBeNull();
+        expect(row.spokenDate).toBe('między 1805 a 1811');
     });
 
     it('has no age text when the server sent none', () => {

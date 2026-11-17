@@ -303,6 +303,7 @@ export default function Index({
                                 persons={persons}
                                 rootPersonId={rootPersonId}
                                 sort={filters.sort}
+                                query={filters.q}
                                 onSortChange={(sort: PersonsSort) =>
                                     visitDisplay({ sort })
                                 }
@@ -311,6 +312,7 @@ export default function Index({
                             <PersonsList
                                 persons={persons}
                                 rootPersonId={rootPersonId}
+                                query={filters.q}
                             />
                         )}
                     </div>

@@ -6,8 +6,10 @@ use App\Enums\EventType;
 use App\Models\Cemetery;
 use App\Models\Event;
 use App\Models\Locality;
+use App\Models\LocalityAlias;
 use App\Models\Parish;
 use App\Models\Person;
+use App\Models\PersonSurnameVariant;
 use App\Models\Residence;
 use App\Models\Source;
 use App\Models\User;
@@ -125,9 +127,9 @@ abstract class BackupTestCase extends TestCase
     }
 
     /**
-     * Create a two-factor user with a tree, people, events, relations, a passkey, a locality, a parish seated in it and two
-     * uploaded sources of different bytes, one linked to an event and the other turned into a gravestone with that
-     * locality as cemetery and the parent as buried person.
+     * Create a two-factor user with a tree, people, events, relations, a passkey, a locality, a parish seated in it, a repo
+     * import snapshot and two uploaded sources of different bytes, one linked to an event and the other turned into a
+     * gravestone with that locality as cemetery and the parent as buried person.
      */
     protected function arrangeBackupData(): Person
     {
@@ -147,14 +149,18 @@ abstract class BackupTestCase extends TestCase
 
         $parent = Person::factory()->for($tree)->create(['first_name' => 'Zygmunt', 'last_name' => 'Backupowski']);
         $child = Person::factory()->for($tree)->create();
+        PersonSurnameVariant::factory()->for($parent)->create(['name' => 'Bakupowski']);
 
         attachBirth($child, 1950, 3, 14);
         attachMarriage($parent, Person::factory()->for($tree)->create(), 1945);
         linkParent($parent, $child);
 
         $seat = Locality::factory()->for($tree)->create(['name' => 'Lipnica Murowana']);
+        LocalityAlias::factory()->for($tree)->create(['locality_id' => $seat->id, 'name' => 'Lipnica']);
         Parish::factory()->for($tree)->seatedIn($seat)->dedicatedTo('Św. Leonarda')->create();
         Residence::factory()->for($parent)->create(['tree_id' => $tree->id, 'locality_id' => $seat->id]);
+
+        $tree->repoSnapshots()->create(['repo_id' => 'O-0001', 'values' => ['imiona' => 'Zygmunt', 'nazwisko' => 'Backupowski', 'plec' => 'm', 'warianty' => 'Bakupowski', 'notatka' => null]]);
 
         $this->uploadedSourceHashes = [];
 

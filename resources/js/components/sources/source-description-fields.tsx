@@ -240,9 +240,23 @@ export function SourceDescriptionFields({
                     aria-invalid={errors.archive ? true : undefined}
                 />
                 <p className="text-muted-foreground text-sm">
-                    Np. Archiwum Diecezjalne w Tarnowie, sygnatura
+                    Np. Archiwum Diecezjalne w Tarnowie
                 </p>
                 <InputError message={errors.archive} />
+            </div>
+
+            <div className={cn('grid gap-2', isGravestone && 'hidden')}>
+                <Label htmlFor="signature">Sygnatura</Label>
+                <Input
+                    id="signature"
+                    name="signature"
+                    defaultValue={defaults?.signature ?? ''}
+                    aria-invalid={errors.signature ? true : undefined}
+                />
+                <p className="text-muted-foreground text-sm">
+                    Np. 35/1813/0/2.4/58, k. 558
+                </p>
+                <InputError message={errors.signature} />
             </div>
 
             <div className="grid gap-2">

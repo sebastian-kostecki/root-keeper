@@ -49,7 +49,7 @@ test('sources index shows only the authenticated user own sources, newest first'
         ->component('sources/index')
         ->has('sources', 2)
         ->has('sources.0', fn ($source) => $source->hasAll([
-            'id', 'kind', 'kind_label', 'kind_short_label', 'name', 'display_name', 'record_type', 'record_type_label', 'year', 'parish_id', 'parish_label', 'parish_locality_id', 'locality_name', 'cemetery_id', 'cemetery_label', 'cemetery_locality_id', 'archive', 'url', 'note', 'original_name', 'mime_type', 'size', 'width', 'height', 'has_thumbnail', 'uploaded_at', 'events_count',
+            'id', 'kind', 'kind_label', 'kind_short_label', 'name', 'display_name', 'record_type', 'record_type_label', 'year', 'parish_id', 'parish_label', 'parish_locality_id', 'locality_name', 'cemetery_id', 'cemetery_label', 'cemetery_locality_id', 'archive', 'signature', 'url', 'note', 'original_name', 'mime_type', 'size', 'width', 'height', 'has_thumbnail', 'uploaded_at', 'events_count',
         ]))
         ->where('sources.0.id', $newer->id)
         ->where('sources.1.id', $older->id));
@@ -549,6 +549,7 @@ test('storing with a full description persists every field', function () {
         'year' => '1878',
         'parish_id' => $parish->id,
         'archive' => 'Archiwum w Krakowie',
+        'signature' => '35/1813/0/2.4/58',
         'url' => 'https://example.com/akt',
         'note' => "Pierwszy akapit.\n\nDrugi akapit.",
     ])->assertSessionHasNoErrors();
@@ -560,6 +561,7 @@ test('storing with a full description persists every field', function () {
     expect($source->year)->toBe(1878);
     expect($source->parish_id)->toBe($parish->id);
     expect($source->archive)->toBe('Archiwum w Krakowie');
+    expect($source->signature)->toBe('35/1813/0/2.4/58');
     expect($source->url)->toBe('https://example.com/akt');
     expect($source->note)->toBe("Pierwszy akapit.\n\nDrugi akapit.");
 });
@@ -600,6 +602,7 @@ test('store rejects an invalid description with polish messages', function (arra
     'unknown record type' => [['record_type' => 'baptism'], 'record_type', 'typ aktu'],
     'long name' => [['name' => str_repeat('a', 256)], 'name', 'nazwa'],
     'long archive' => [['archive' => str_repeat('a', 256)], 'archive', 'archiwum'],
+    'long signature' => [['signature' => str_repeat('a', 256)], 'signature', 'sygnatura'],
     'long note' => [['note' => str_repeat('a', 5001)], 'note', 'notatka'],
 ]);
 
@@ -1456,9 +1459,10 @@ test('changing an akt with entry numbers to a gravestone moves year, archive and
 
     $source->refresh();
 
-    expect($source->note)->toBe("Nowa notatka.\n\nRok: 1878\nArchiwum: Archiwum Państwowe w Krakowie\nNumer wpisu: 12\nNumer wpisu: 47/3")
+    expect($source->note)->toBe("Nowa notatka.\n\nRok: 1878\nArchiwum: Archiwum Państwowe w Krakowie\nSygnatura: 35/1813/0/2.4/58\nNumer wpisu: 12\nNumer wpisu: 47/3")
         ->and($source->year)->toBeNull()
-        ->and($source->archive)->toBeNull();
+        ->and($source->archive)->toBeNull()
+        ->and($source->signature)->toBeNull();
     expect(DB::table('event_source')->where('source_id', $source->id)->whereNotNull('entry_number')->count())->toBe(0);
     expect(DB::table('event_source')->where('source_id', $source->id)->count())->toBe(2);
 });
@@ -1567,4 +1571,67 @@ test('a gravestone carries its cemetery as the locality name and the panel lists
 
     $this->actingAs($user)->get(route('persons.index'))->assertInertia(fn ($page) => $page
         ->missing('availableSources'));
+});
+
+test('storing a gravestone ignores a submitted signature', function () {
+    Storage::fake('local');
+
+    $this->actingAs(User::factory()->create())->post(route('sources.store'), [
+        'kind' => 'gravestone',
+        'file' => UploadedFile::fake()->image('nagrobek.jpg'),
+        'signature' => '35/1813',
+    ])->assertSessionHasNoErrors();
+
+    expect(Source::firstOrFail()->signature)->toBeNull();
+});
+
+test('updating saves the signature, shows it in the resource and clears it when the key is missing', function () {
+    $user = User::factory()->create();
+    $source = Source::factory()->for($user->tree)->create();
+
+    $this->actingAs($user)->put(route('sources.update', $source), [
+        'kind' => 'metrical_record',
+        'signature' => 'AGAD 1/436/852, k. 558',
+    ])->assertSessionHasNoErrors();
+
+    expect($source->fresh()->signature)->toBe('AGAD 1/436/852, k. 558');
+
+    $this->actingAs($user)->get(route('sources.index', ['source' => $source->id]))
+        ->assertInertia(fn ($page) => $page
+            ->where('sources.0.signature', 'AGAD 1/436/852, k. 558')
+            ->where('sourcePanel.source.signature', 'AGAD 1/436/852, k. 558'));
+
+    $this->actingAs($user)->put(route('sources.update', $source), ['kind' => 'metrical_record'])
+        ->assertSessionHasNoErrors();
+
+    expect($source->fresh()->signature)->toBeNull();
+});
+
+test('updating rejects a signature longer than 255 characters', function () {
+    $user = User::factory()->create();
+    $source = Source::factory()->for($user->tree)->create();
+
+    $response = $this->actingAs($user)->put(route('sources.update', $source), [
+        'kind' => 'metrical_record',
+        'signature' => str_repeat('a', 256),
+    ]);
+
+    $response->assertInvalid('signature');
+    expect($response->getSession()->get('errors')->getBag('default')->first('signature'))->toContain('sygnatura');
+});
+
+test('changing an akt with a signature to a gravestone moves it to the note next to the archive', function () {
+    $user = User::factory()->create();
+    $source = Source::factory()->for($user->tree)->create(['archive' => 'AP Lublin', 'signature' => '35/1813']);
+
+    $this->actingAs($user)->put(route('sources.update', $source), [
+        'kind' => 'gravestone',
+        'discard_record_fields' => '1',
+        'signature' => 'ignorowana',
+    ])->assertSessionHasNoErrors();
+
+    $source->refresh();
+
+    expect($source->note)->toBe("Archiwum: AP Lublin\nSygnatura: 35/1813")
+        ->and($source->signature)->toBeNull();
 });

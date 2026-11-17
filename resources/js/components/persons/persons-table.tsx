@@ -25,7 +25,7 @@ import {
 } from '@/components/ui/table';
 import { focusRing } from '@/lib/focus-ring';
 import { personPhotoUrl } from '@/lib/person-photo';
-import { sortPersons } from '@/lib/persons-index';
+import { sortPersons, surnameVariantHint } from '@/lib/persons-index';
 import type { PersonsSort } from '@/lib/persons-index';
 import { columnOf } from '@/lib/table-sort';
 import { stickyCell, stickyHeadCell } from '@/lib/table-styles';
@@ -39,6 +39,7 @@ type Props = {
     persons: Person[];
     rootPersonId: number | null;
     sort: PersonsSort;
+    query: string;
     onSortChange: (sort: PersonsSort) => void;
 };
 
@@ -92,6 +93,7 @@ export function PersonsTable({
     persons,
     rootPersonId,
     sort,
+    query,
     onSortChange,
 }: Props) {
     const rows = sortPersons(persons, sort);
@@ -134,76 +136,93 @@ export function PersonsTable({
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                    {rows.map((person) => (
-                        <TableRow key={person.id} className="group">
-                            <TableCell className={cn(stickyCell, 'px-4 py-3')}>
-                                <PersonPreviewLink
-                                    personId={person.id}
-                                    className={cn(
-                                        focusRing,
-                                        '-m-1 flex items-center gap-3 rounded-md p-1',
-                                    )}
+                    {rows.map((person) => {
+                        const variants = surnameVariantHint(person, query);
+
+                        return (
+                            <TableRow key={person.id} className="group">
+                                <TableCell
+                                    className={cn(stickyCell, 'px-4 py-3')}
                                 >
-                                    <PersonAvatar
-                                        name={person.display_name}
-                                        gender={person.gender?.value ?? null}
-                                        size="sm"
-                                        announceGender={false}
-                                        photoUrl={personPhotoUrl(
-                                            person.id,
-                                            person.photo_version,
+                                    <PersonPreviewLink
+                                        personId={person.id}
+                                        className={cn(
+                                            focusRing,
+                                            '-m-1 flex items-center gap-3 rounded-md p-1',
                                         )}
-                                    />
-                                    <span className="min-w-0 font-medium whitespace-normal">
-                                        {person.display_name}
-                                    </span>
-                                    {person.id === rootPersonId && (
-                                        <ProbandBadge />
+                                    >
+                                        <PersonAvatar
+                                            name={person.display_name}
+                                            gender={
+                                                person.gender?.value ?? null
+                                            }
+                                            size="sm"
+                                            announceGender={false}
+                                            photoUrl={personPhotoUrl(
+                                                person.id,
+                                                person.photo_version,
+                                            )}
+                                        />
+                                        <span className="min-w-0 whitespace-normal">
+                                            <span className="font-medium">
+                                                {person.display_name}
+                                            </span>
+                                            {variants.length > 0 && (
+                                                <span className="text-muted-foreground block text-xs">
+                                                    zapis: {variants.join(', ')}
+                                                </span>
+                                            )}
+                                        </span>
+                                        {person.id === rootPersonId && (
+                                            <ProbandBadge />
+                                        )}
+                                    </PersonPreviewLink>
+                                </TableCell>
+                                <TableCell>
+                                    <EventCell event={person.birth} />
+                                </TableCell>
+                                <TableCell>
+                                    <EventCell event={person.death} isDeath />
+                                </TableCell>
+                                <TableCell>
+                                    {person.religion ? (
+                                        person.religion.label
+                                    ) : (
+                                        <EmptyCell />
                                     )}
-                                </PersonPreviewLink>
-                            </TableCell>
-                            <TableCell>
-                                <EventCell event={person.birth} />
-                            </TableCell>
-                            <TableCell>
-                                <EventCell event={person.death} isDeath />
-                            </TableCell>
-                            <TableCell>
-                                {person.religion ? (
-                                    person.religion.label
-                                ) : (
-                                    <EmptyCell />
-                                )}
-                            </TableCell>
-                            <TableCell className="text-right">
-                                <DropdownMenu>
-                                    <DropdownMenuTrigger asChild>
-                                        <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            aria-label={`Akcje: ${person.display_name}`}
-                                        >
-                                            <EllipsisIcon />
-                                        </Button>
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent align="end">
-                                        <DropdownMenuItem asChild>
-                                            <PersonPreviewLink
-                                                personId={person.id}
+                                </TableCell>
+                                <TableCell className="text-right">
+                                    <DropdownMenu>
+                                        <DropdownMenuTrigger asChild>
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                aria-label={`Akcje: ${person.display_name}`}
                                             >
-                                                Otwórz podgląd
-                                            </PersonPreviewLink>
-                                        </DropdownMenuItem>
-                                        <DropdownMenuItem asChild>
-                                            <Link href={treeShow(person.id)}>
-                                                Pokaż na drzewie
-                                            </Link>
-                                        </DropdownMenuItem>
-                                    </DropdownMenuContent>
-                                </DropdownMenu>
-                            </TableCell>
-                        </TableRow>
-                    ))}
+                                                <EllipsisIcon />
+                                            </Button>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent align="end">
+                                            <DropdownMenuItem asChild>
+                                                <PersonPreviewLink
+                                                    personId={person.id}
+                                                >
+                                                    Otwórz podgląd
+                                                </PersonPreviewLink>
+                                            </DropdownMenuItem>
+                                            <DropdownMenuItem asChild>
+                                                <Link
+                                                    href={treeShow(person.id)}
+                                                >
+                                                    Pokaż na drzewie
+                                                </Link>
+                                            </DropdownMenuItem>
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
+                                </TableCell>
+                            </TableRow>
+                        );
+                    })}
                 </TableBody>
             </Table>
         </div>

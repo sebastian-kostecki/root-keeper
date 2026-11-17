@@ -44,8 +44,8 @@ class SheetPersonResource extends JsonResource
      *     age: array{unit: 'years'|'months'|'days'|'under_year', value: int|null}|null,
      *     photo_version: string|null,
      *     details?: array{
-     *         birth: array{date_parts: array{year: int|null, month: int|null, day: int|null, is_approximate: bool}, place: string|null}|null,
-     *         death: array{date_parts: array{year: int|null, month: int|null, day: int|null, is_approximate: bool}, place: string|null}|null,
+     *         birth: array{date_parts: array{year: int|null, month: int|null, day: int|null, qualifier: string, until_year: int|null}, place: string|null}|null,
+     *         death: array{date_parts: array{year: int|null, month: int|null, day: int|null, qualifier: string, until_year: int|null}, place: string|null}|null,
      *         burial_place: string|null,
      *     },
      * }
@@ -83,7 +83,7 @@ class SheetPersonResource extends JsonResource
     }
 
     /**
-     * @return array{date_parts: array{year: int|null, month: int|null, day: int|null, is_approximate: bool}, place: string|null}|null
+     * @return array{date_parts: array{year: int|null, month: int|null, day: int|null, qualifier: string, until_year: int|null}, place: string|null}|null
      */
     private function eventDetails(?Event $event): ?array
     {
@@ -96,7 +96,8 @@ class SheetPersonResource extends JsonResource
                 'year' => $event->date_year,
                 'month' => $event->date_month,
                 'day' => $event->date_day,
-                'is_approximate' => $event->date_is_approximate,
+                'qualifier' => $event->date_qualifier->value,
+                'until_year' => $event->date_until_year,
             ],
             'place' => $event->locality?->name,
         ];

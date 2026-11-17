@@ -79,6 +79,7 @@ export default defineConfig({
             'skills-lock.json',
             'resources/js/components/ui/*',
             'resources/views/mail/*',
+            'tests/Fixtures/**',
         ],
         sortTailwindcss: {
             functions: ['clsx', 'cn', 'cva'],

@@ -71,6 +71,7 @@ class SourceFactory extends Factory
             'record_type' => SourceRecordType::Birth,
             'year' => 1878,
             'archive' => 'Archiwum Państwowe w Krakowie',
+            'signature' => '35/1813/0/2.4/58',
             'url' => 'https://example.com/akt',
             'note' => 'Wpis po prawej stronie rozkładówki.',
         ]);

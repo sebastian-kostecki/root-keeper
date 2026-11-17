@@ -1,6 +1,7 @@
 import { Link, router } from '@inertiajs/react';
 import PersonController from '@/actions/App/Http/Controllers/PersonController';
 import SourceController from '@/actions/App/Http/Controllers/SourceController';
+import { ConfidenceBadge } from '@/components/persons/confidence-badge';
 import { EventSourceStatus } from '@/components/persons/event-source-status';
 import { Field } from '@/components/persons/fact-field';
 import {
@@ -87,6 +88,8 @@ type FactViewProps = {
     availableSources: Source[] | undefined;
     /** Shown as „Miejsce pochowania” (the death section only). */
     burialPlace?: string | null;
+    /** Shown as „Poziom pewności pochowania” next to a known burial place. */
+    burialConfidence?: string | null;
     /** Shown as „Forma ślubu” (the marriage cards only). */
     marriageForm?: string | null;
     /** Gravestones linked from the death card. */
@@ -98,6 +101,7 @@ function FactView({
     parts,
     availableSources,
     burialPlace,
+    burialConfidence,
     marriageForm,
     gravestones,
 }: FactViewProps) {
@@ -109,8 +113,24 @@ function FactView({
             <div className="grid gap-3 sm:grid-cols-2">
                 <Field label="Data" value={date === '' ? null : date} />
                 <Field label="Miejsce" value={event.place} />
+                <Field
+                    label="Poziom pewności"
+                    value={
+                        event.confidence === null
+                            ? null
+                            : `${event.confidence} — ${event.confidence_label}`
+                    }
+                    emptyText="nieokreślony"
+                />
                 {burialPlace !== undefined && (
                     <Field label="Miejsce pochowania" value={burialPlace} />
+                )}
+                {burialPlace && burialConfidence !== undefined && (
+                    <Field
+                        label="Poziom pewności pochowania"
+                        value={burialConfidence}
+                        emptyText="nieokreślony"
+                    />
                 )}
                 {marriageForm !== undefined && (
                     <Field
@@ -256,6 +276,7 @@ export function OverviewTab({ preview, availableSources }: Props) {
         useSectionSave(belongsToSection);
 
     const residences = person.residences ?? [];
+    const surnameVariants = person.surname_variants ?? [];
     const gravestones = person.gravestones ?? [];
 
     const hasBirth =
@@ -313,6 +334,12 @@ export function OverviewTab({ preview, availableSources }: Props) {
                                 label="Nazwisko rodowe"
                                 value={person.last_name}
                             />
+                            {surnameVariants.length > 0 && (
+                                <Field
+                                    label="Warianty nazwiska"
+                                    value={surnameVariants.join(', ')}
+                                />
+                            )}
                         </div>
                     }
                     edit={
@@ -373,9 +400,15 @@ export function OverviewTab({ preview, availableSources }: Props) {
                         title="Urodzenie"
                         badge={
                             person.birth && (
-                                <EventSourceStatus
-                                    kinds={person.birth.confirmed_kinds}
-                                />
+                                <>
+                                    <ConfidenceBadge
+                                        level={person.birth.confidence}
+                                        label={person.birth.confidence_label}
+                                    />
+                                    <EventSourceStatus
+                                        kinds={person.birth.confirmed_kinds}
+                                    />
+                                </>
                             )
                         }
                         view={
@@ -415,9 +448,15 @@ export function OverviewTab({ preview, availableSources }: Props) {
                                 {...cardProps(id)}
                                 title={`Małżeństwo z ${marriage.spouse?.display_name ?? 'nieznanym małżonkiem'}`}
                                 badge={
-                                    <EventSourceStatus
-                                        kinds={marriage.confirmed_kinds}
-                                    />
+                                    <>
+                                        <ConfidenceBadge
+                                            level={marriage.confidence}
+                                            label={marriage.confidence_label}
+                                        />
+                                        <EventSourceStatus
+                                            kinds={marriage.confirmed_kinds}
+                                        />
+                                    </>
                                 }
                                 view={
                                     <FactView
@@ -451,9 +490,15 @@ export function OverviewTab({ preview, availableSources }: Props) {
                         title="Zgon"
                         badge={
                             person.death && (
-                                <EventSourceStatus
-                                    kinds={person.death.confirmed_kinds}
-                                />
+                                <>
+                                    <ConfidenceBadge
+                                        level={person.death.confidence}
+                                        label={person.death.confidence_label}
+                                    />
+                                    <EventSourceStatus
+                                        kinds={person.death.confirmed_kinds}
+                                    />
+                                </>
                             )
                         }
                         view={
@@ -463,6 +508,11 @@ export function OverviewTab({ preview, availableSources }: Props) {
                                     parts={personForm.death}
                                     availableSources={availableSources}
                                     burialPlace={person.burial_place}
+                                    burialConfidence={
+                                        person.burial_confidence === null
+                                            ? null
+                                            : `${person.burial_confidence} — ${person.burial_confidence_label}`
+                                    }
                                     gravestones={gravestones}
                                 />
                             )

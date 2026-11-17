@@ -2,18 +2,24 @@
 
 namespace App\Support;
 
+use App\Enums\DateQualifier;
+
 final readonly class PartialDate
 {
     public function __construct(
         public ?int $year,
         public ?int $month,
         public ?int $day,
-        public bool $isApproximate,
+        public DateQualifier $qualifier = DateQualifier::Exact,
+        public ?int $untilYear = null,
     ) {}
 
-    public function isEmpty(): bool
+    /**
+     * Before, after and range dates are too loose to compute an age from.
+     */
+    public function isFuzzy(): bool
     {
-        return $this->year === null && $this->month === null && $this->day === null;
+        return in_array($this->qualifier, [DateQualifier::Before, DateQualifier::After, DateQualifier::Range], true);
     }
 
     public function format(): ?string
@@ -22,15 +28,11 @@ final readonly class PartialDate
             return null;
         }
 
-        if ($this->month !== null && $this->day !== null) {
-            $formatted = sprintf('%02d.%02d.%04d', $this->day, $this->month, $this->year);
-        } elseif ($this->month !== null) {
-            $formatted = sprintf('%02d.%04d', $this->month, $this->year);
-        } else {
-            $formatted = sprintf('%04d', $this->year);
+        if ($this->qualifier === DateQualifier::Range && $this->untilYear !== null) {
+            return sprintf('%04d–%04d', $this->year, $this->untilYear);
         }
 
-        return $this->isApproximate ? "ok. {$formatted}" : $formatted;
+        return $this->withQualifier($this->formatWithoutQualifier());
     }
 
     public function formatYear(): ?string
@@ -39,8 +41,40 @@ final readonly class PartialDate
             return null;
         }
 
-        $formatted = sprintf('%04d', $this->year);
+        if ($this->qualifier === DateQualifier::Range && $this->untilYear !== null) {
+            return sprintf('%04d–%04d', $this->year, $this->untilYear);
+        }
 
-        return $this->isApproximate ? "ok. {$formatted}" : $formatted;
+        return $this->withQualifier(sprintf('%04d', $this->year));
+    }
+
+    /**
+     * The date at its own precision without the qualifier word, for places where the qualifier is shown separately.
+     */
+    public function formatWithoutQualifier(): ?string
+    {
+        if ($this->year === null) {
+            return null;
+        }
+
+        if ($this->month !== null && $this->day !== null) {
+            return sprintf('%02d.%02d.%04d', $this->day, $this->month, $this->year);
+        }
+
+        if ($this->month !== null) {
+            return sprintf('%02d.%04d', $this->month, $this->year);
+        }
+
+        return sprintf('%04d', $this->year);
+    }
+
+    private function withQualifier(?string $formatted): ?string
+    {
+        return match ($this->qualifier) {
+            DateQualifier::Approximate => "ok. {$formatted}",
+            DateQualifier::Before => "przed {$formatted}",
+            DateQualifier::After => "po {$formatted}",
+            DateQualifier::Exact, DateQualifier::Range => $formatted,
+        };
     }
 }

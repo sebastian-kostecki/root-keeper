@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\DateQualifier;
 use App\Enums\EventType;
 use App\Enums\ParticipantRole;
 use App\Models\Event;
@@ -75,7 +76,7 @@ function attachMarriage(Person $person, Person $spouse, ?int $year = null, ?int 
         'date_year' => $year,
         'date_month' => $month,
         'date_day' => $day,
-        'date_is_approximate' => false,
+        'date_qualifier' => DateQualifier::Exact,
         'locality_id' => $locality?->id,
     ]);
 
@@ -108,7 +109,7 @@ function attachDeath(Person $person, ?int $year, bool $approximate = false): voi
         'date_year' => $year,
         'date_month' => null,
         'date_day' => null,
-        'date_is_approximate' => $approximate,
+        'date_qualifier' => $approximate ? DateQualifier::Approximate : DateQualifier::Exact,
     ]);
 
     $event->participants()->attach($person, ['role' => ParticipantRole::Subject]);

@@ -1,12 +1,13 @@
 <?php
 
+use App\Enums\DateQualifier;
 use App\Support\Age;
 use App\Support\PartialDate;
 use Carbon\CarbonImmutable;
 
 function ageDate(?int $year, ?int $month = null, ?int $day = null, bool $approximate = false): PartialDate
 {
-    return new PartialDate($year, $month, $day, $approximate);
+    return new PartialDate($year, $month, $day, $approximate ? DateQualifier::Approximate : DateQualifier::Exact);
 }
 
 /**
@@ -84,6 +85,19 @@ test('a negative result hides the age', function () {
 test('the approximate flag does not change the result', function () {
     expect(ageOf(ageDate(1850, null, null, true), ageDate(1922, 3, 15, true)))
         ->toBe(ageOf(ageDate(1850), ageDate(1922, 3, 15)));
+});
+
+test('a before, after or range date on either side hides the age', function (DateQualifier $qualifier) {
+    $fuzzy = fn (int $year): PartialDate => new PartialDate($year, null, null, $qualifier, $qualifier === DateQualifier::Range ? $year + 3 : null);
+
+    expect(ageOf($fuzzy(1850), ageDate(1922)))->toBeNull()
+        ->and(ageOf(ageDate(1850), $fuzzy(1922)))->toBeNull()
+        ->and(Age::at($fuzzy(1850), ageDate(1922)))->toBeNull()
+        ->and(Age::at(ageDate(1850), $fuzzy(1922)))->toBeNull();
+})->with([DateQualifier::Before, DateQualifier::After, DateQualifier::Range]);
+
+test('an exact birth of a living person keeps the age', function () {
+    expect(Age::from(ageDate(1950), null, false, CarbonImmutable::parse('2026-10-05'))?->toArray())->toBe(['unit' => 'years', 'value' => 76]);
 });
 
 test('Age::at gives the same result as from() for a deceased person', function () {

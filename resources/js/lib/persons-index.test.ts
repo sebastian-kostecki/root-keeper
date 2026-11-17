@@ -5,6 +5,7 @@ import {
     formatEventMeta,
     groupBySurnameInitial,
     sortPersons,
+    surnameVariantHint,
     withPersonsQuery,
 } from './persons-index';
 
@@ -17,10 +18,12 @@ function event(
     return {
         id: 1,
         type: 'birth',
+        confidence: null,
+        confidence_label: null,
         date: year === null ? null : String(year),
         place,
         locality_id: null,
-        date_parts: { year, month, day, is_approximate: false },
+        date_parts: { year, month, day, qualifier: 'exact', until_year: null },
         is_confirmed: false,
     };
 }
@@ -39,6 +42,8 @@ function person(
         gender: null,
         religion: null,
         burial_place: null,
+        burial_confidence: null,
+        burial_confidence_label: null,
         birth: null,
         death: null,
         age: null,
@@ -220,6 +225,36 @@ describe('sortPersons: dates', () => {
         ]);
     });
 
+    it('sorts a range by its start year and ignores the qualifier', () => {
+        const fuzzy = (
+            year: number,
+            qualifier: 'before' | 'range',
+        ): Person['birth'] => ({
+            id: 1,
+            type: 'birth',
+            confidence: null,
+            confidence_label: null,
+            date: String(year),
+            place: null,
+            locality_id: null,
+            is_confirmed: false,
+            date_parts: {
+                year,
+                month: null,
+                day: null,
+                qualifier,
+                until_year: qualifier === 'range' ? year + 6 : null,
+            },
+        });
+        const people = [
+            person(1, 'A', 'A', { birth: event(1810) }),
+            person(2, 'B', 'A', { birth: fuzzy(1805, 'range') }),
+            person(3, 'C', 'A', { birth: fuzzy(1809, 'before') }),
+        ];
+
+        expect(ids(sortPersons(people, 'urodzenie'))).toEqual([2, 3, 1]);
+    });
+
     it('sorts by death date', () => {
         const dead = [
             person(1, 'A', 'A', { death: event(2000) }),
@@ -267,5 +302,35 @@ describe('formatEventMeta', () => {
             'ur. Kraków',
         );
         expect(formatEventMeta('ur.', { date: null, place: null })).toBeNull();
+    });
+});
+
+describe('surnameVariantHint', () => {
+    const misiuk = person(1, 'Misiuk', 'Jan', {
+        surname_variants: ['Mysiuk', 'Myszuk'],
+    });
+
+    it('names the variant that explains the hit', () => {
+        expect(surnameVariantHint(misiuk, 'Mysiuk')).toEqual(['Mysiuk']);
+        expect(surnameVariantHint(misiuk, 'Jan Mysiuk')).toEqual(['Mysiuk']);
+    });
+
+    it('lists every variant containing the word', () => {
+        expect(surnameVariantHint(misiuk, 'My')).toEqual(['Mysiuk', 'Myszuk']);
+    });
+
+    it('gives no hint when the surname already matches', () => {
+        expect(surnameVariantHint(misiuk, 'siuk')).toEqual([]);
+    });
+
+    it('gives no hint for an empty query', () => {
+        expect(surnameVariantHint(misiuk, '')).toEqual([]);
+        expect(surnameVariantHint(misiuk, '   ')).toEqual([]);
+    });
+
+    it('gives no hint for a person without variants', () => {
+        expect(surnameVariantHint(person(2, 'Nowak', 'Jan'), 'Nowak')).toEqual(
+            [],
+        );
     });
 });

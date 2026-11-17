@@ -14,10 +14,11 @@ use Illuminate\Support\Carbon;
  * @property int $tree_id
  * @property int $parent_id
  * @property int $child_id
+ * @property string|null $repo_id
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
-#[Fillable(['tree_id', 'parent_id', 'child_id'])]
+#[Fillable(['tree_id', 'parent_id', 'child_id', 'repo_id'])]
 class ParentChildRelation extends Model
 {
     /** @use HasFactory<ParentChildRelationFactory> */

@@ -1,5 +1,7 @@
 import MarriageController from '@/actions/App/Http/Controllers/MarriageController';
+import type { DateQualifier } from '@/lib/partial-date';
 import type {
+    ConfidenceLevel,
     LocalityOption,
     MarriageEvent,
     PersonFormData,
@@ -24,14 +26,21 @@ export type PartialDatePayload = {
     year: number | null;
     month: number | null;
     day: number | null;
-    is_approximate: boolean;
+    qualifier: DateQualifier;
+    until_year: number | null;
     locality_id: number | null;
+    confidence: ConfidenceLevel | null;
 };
 
 export type ResidencePayload = {
     locality_id: number | null;
     year_from: number | null;
     year_to: number | null;
+};
+
+export type BurialPayload = {
+    cemetery_id: number | null;
+    confidence: ConfidenceLevel | null;
 };
 
 export type PersonPayload = {
@@ -43,7 +52,7 @@ export type PersonPayload = {
     is_deceased: boolean;
     birth: PartialDatePayload;
     death?: PartialDatePayload;
-    burial?: { cemetery_id: number | null };
+    burial?: BurialPayload;
 };
 
 function blankToNull(value: string | undefined): string | null {
@@ -60,17 +69,40 @@ function toNumber(value: string | undefined): number | null {
     return Number.isFinite(parsed) ? parsed : null;
 }
 
+const QUALIFIERS: readonly DateQualifier[] = [
+    'exact',
+    'approximate',
+    'before',
+    'after',
+    'range',
+];
+
+function qualifierFromValue(value: string | undefined): DateQualifier {
+    return QUALIFIERS.find((qualifier) => qualifier === value) ?? 'exact';
+}
+
+const CONFIDENCE_LEVELS: readonly ConfidenceLevel[] = ['A', 'B', 'C', 'D'];
+
+/** A–D, anything else (`''`, `'none'`, junk) is „nieokreślony”. */
+function confidenceFromValue(
+    value: string | undefined,
+): ConfidenceLevel | null {
+    return CONFIDENCE_LEVELS.find((level) => level === value) ?? null;
+}
+
 function eventToPayload(event: PersonFormEvent | null): PartialDatePayload {
     return {
         year: event?.year ?? null,
         month: event?.month ?? null,
         day: event?.day ?? null,
-        is_approximate: event?.is_approximate ?? false,
+        qualifier: event?.qualifier ?? 'exact',
+        until_year: event?.until_year ?? null,
         locality_id: event?.locality?.id ?? null,
+        confidence: event?.confidence ?? null,
     };
 }
 
-/** Reads `{prefix}.year|month|day|is_approximate|locality_id` out of form values. */
+/** Reads `{prefix}.year|month|day|qualifier|until_year|locality_id|confidence` out of form values. */
 export function eventPayloadFromValues(
     prefix: 'birth' | 'death' | 'marriage',
     values: SectionValues,
@@ -79,8 +111,10 @@ export function eventPayloadFromValues(
         year: toNumber(values[`${prefix}.year`]),
         month: toNumber(values[`${prefix}.month`]),
         day: toNumber(values[`${prefix}.day`]),
-        is_approximate: values[`${prefix}.is_approximate`] === '1',
+        qualifier: qualifierFromValue(values[`${prefix}.qualifier`]),
+        until_year: toNumber(values[`${prefix}.until_year`]),
         locality_id: toNumber(values[`${prefix}.locality_id`]),
+        confidence: confidenceFromValue(values[`${prefix}.confidence`]),
     };
 }
 
@@ -139,6 +173,7 @@ export function personFormToPayload(personForm: PersonFormData): PersonPayload {
         payload.death = eventToPayload(personForm.death);
         payload.burial = {
             cemetery_id: personForm.burial?.cemetery?.id ?? null,
+            confidence: personForm.burial?.confidence ?? null,
         };
     }
 
@@ -172,6 +207,7 @@ export function mergeSectionIntoPayload(
             payload.death = eventPayloadFromValues('death', values);
             payload.burial = {
                 cemetery_id: toNumber(values['burial.cemetery_id']),
+                confidence: confidenceFromValue(values['burial.confidence']),
             };
         } else {
             delete payload.death;
@@ -186,19 +222,22 @@ export function mergeSectionIntoPayload(
 export function marriageFieldDefaults(
     marriage: Pick<
         MarriageEvent,
-        'date_parts' | 'locality_id' | 'place' | 'marriage_form'
+        'date_parts' | 'locality_id' | 'place' | 'marriage_form' | 'confidence'
     >,
 ): {
     year: number | null;
     month: number | null;
     day: number | null;
-    is_approximate: boolean;
+    qualifier: DateQualifier;
+    until_year: number | null;
     locality: LocalityOption | null;
     form: string | null;
+    confidence: ConfidenceLevel | null;
 } {
     return {
         ...marriage.date_parts,
         form: marriage.marriage_form,
+        confidence: marriage.confidence,
         locality:
             marriage.locality_id === null
                 ? null
