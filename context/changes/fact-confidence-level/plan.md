@@ -400,20 +400,20 @@ Nowa nullable kolumna bez kopiowania danych. Produkcja robi `backup:run --only-d
 
 #### Automated
 
-- [ ] 1.1 Migracja przechodzi w obie strony
-- [ ] 1.2 Testy osób, małżeństw i celów zapisu przechodzą
-- [ ] 1.3 Pint bez zmian po uruchomieniu
-- [ ] 1.4 Larastan bez nowych błędów
+- [x] 1.1 Migracja przechodzi w obie strony — 9f8bff1
+- [x] 1.2 Testy osób, małżeństw i celów zapisu przechodzą — 9f8bff1
+- [x] 1.3 Pint bez zmian po uruchomieniu — 9f8bff1
+- [x] 1.4 Larastan bez nowych błędów — 9f8bff1
 
 ### Phase 2: Frontend — wybór i wyświetlanie
 
 #### Automated
 
-- [ ] 2.1 Vitest przechodzi
-- [ ] 2.2 Format i lint przechodzą
-- [ ] 2.3 Typy przechodzą
-- [ ] 2.4 Build przechodzi
-- [ ] 2.5 Testy Pest z Fazy 1 nadal przechodzą
+- [x] 2.1 Vitest przechodzi
+- [x] 2.2 Format i lint przechodzą
+- [x] 2.3 Typy przechodzą
+- [x] 2.4 Build przechodzi
+- [x] 2.5 Testy Pest z Fazy 1 nadal przechodzą
 
 #### Manual
 

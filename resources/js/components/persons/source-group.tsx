@@ -1,6 +1,7 @@
 import { Link, router } from '@inertiajs/react';
 import { useId } from 'react';
 import SourceController from '@/actions/App/Http/Controllers/SourceController';
+import { ConfidenceBadge } from '@/components/persons/confidence-badge';
 import { EventSourceStatus } from '@/components/persons/event-source-status';
 import { useGuardedClick } from '@/components/persons/section-editor';
 import { EntryNumberDialog } from '@/components/sources/entry-number-dialog';
@@ -59,7 +60,13 @@ export function SourceGroup({
                         </p>
                     )}
                 </div>
-                <EventSourceStatus kinds={event.confirmed_kinds} />
+                <div className="flex flex-wrap items-center gap-2">
+                    <ConfidenceBadge
+                        level={event.confidence}
+                        label={event.confidence_label}
+                    />
+                    <EventSourceStatus kinds={event.confirmed_kinds} />
+                </div>
             </div>
 
             {hasSources ? (

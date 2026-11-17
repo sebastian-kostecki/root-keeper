@@ -18,6 +18,8 @@ function event(
     return {
         id: 1,
         type: 'birth',
+        confidence: null,
+        confidence_label: null,
         date: year === null ? null : String(year),
         place,
         locality_id: null,
@@ -40,6 +42,8 @@ function person(
         gender: null,
         religion: null,
         burial_place: null,
+        burial_confidence: null,
+        burial_confidence_label: null,
         birth: null,
         death: null,
         age: null,
@@ -228,6 +232,8 @@ describe('sortPersons: dates', () => {
         ): Person['birth'] => ({
             id: 1,
             type: 'birth',
+            confidence: null,
+            confidence_label: null,
             date: String(year),
             place: null,
             locality_id: null,

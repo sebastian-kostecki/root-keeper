@@ -5,6 +5,7 @@ import {
     marriageFieldDefaults,
     marriageSaveRequest,
     mergeSectionIntoPayload,
+    personFormToPayload,
 } from './person-payload';
 
 function personForm(): PersonFormData {
@@ -26,6 +27,7 @@ function personForm(): PersonFormData {
                 locality_id: 7,
                 locality_name: 'Luboml',
             },
+            confidence: null,
         },
     };
 }
@@ -61,7 +63,10 @@ describe('mergeSectionIntoPayload: burial place', () => {
                 'birth.year': '1950',
             });
 
-            expect(payload.burial).toEqual({ cemetery_id: 4 });
+            expect(payload.burial).toEqual({
+                cemetery_id: 4,
+                confidence: null,
+            });
         },
     );
 
@@ -73,7 +78,7 @@ describe('mergeSectionIntoPayload: burial place', () => {
         });
 
         expect(payload.death?.locality_id).toBe(3);
-        expect(payload.burial).toEqual({ cemetery_id: 12 });
+        expect(payload.burial).toEqual({ cemetery_id: 12, confidence: null });
     });
 
     it('clears the burial cemetery when the death section has none', () => {
@@ -82,7 +87,7 @@ describe('mergeSectionIntoPayload: burial place', () => {
             'burial.cemetery_id': '',
         });
 
-        expect(payload.burial).toEqual({ cemetery_id: null });
+        expect(payload.burial).toEqual({ cemetery_id: null, confidence: null });
     });
 
     it('sends neither death nor burial when the death is unchecked', () => {
@@ -135,6 +140,7 @@ describe('eventPayloadFromValues', () => {
             qualifier: 'range',
             until_year: 1811,
             locality: null,
+            confidence: null,
             is_confirmed: false,
         };
 
@@ -220,8 +226,98 @@ describe('marriage card', () => {
             locality_id: null,
             place: null,
             marriage_form: 'religious',
+            confidence: 'B',
         });
 
         expect(defaults.form).toBe('religious');
+        expect(defaults.confidence).toBe('B');
+    });
+
+    it('always sends the confidence, null when empty or unknown', () => {
+        const level = (values: Record<string, string>) =>
+            marriageSaveRequest(5, values)[1].marriage.confidence;
+
+        expect(level({ 'marriage.confidence': 'C' })).toBe('C');
+        expect(level({ 'marriage.confidence': 'none' })).toBeNull();
+        expect(level({ 'marriage.confidence': '' })).toBeNull();
+        expect(level({})).toBeNull();
+    });
+});
+
+describe('confidence level', () => {
+    const sourcedEvent = (
+        confidence: 'A' | 'B' | 'C' | 'D' | null,
+    ): NonNullable<PersonFormData['birth']> => ({
+        year: 1900,
+        month: null,
+        day: null,
+        qualifier: 'exact',
+        until_year: null,
+        locality: null,
+        confidence,
+        is_confirmed: false,
+    });
+
+    const withLevels = (): PersonFormData => ({
+        ...personForm(),
+        birth: sourcedEvent('B'),
+        death: sourcedEvent('D'),
+        burial: {
+            cemetery: personForm().burial?.cemetery ?? null,
+            confidence: 'C',
+        },
+    });
+
+    it('carries the level of birth, death and burial in the full payload', () => {
+        const payload = personFormToPayload(withLevels());
+
+        expect(payload.birth.confidence).toBe('B');
+        expect(payload.death?.confidence).toBe('D');
+        expect(payload.burial?.confidence).toBe('C');
+    });
+
+    it('keeps every level when the personal section is saved', () => {
+        const payload = mergeSectionIntoPayload(withLevels(), 'personal', {
+            first_name: 'Anna',
+        });
+
+        expect(payload.birth.confidence).toBe('B');
+        expect(payload.death?.confidence).toBe('D');
+        expect(payload.burial?.confidence).toBe('C');
+    });
+
+    it('takes the birth level from the birth section values only', () => {
+        const payload = mergeSectionIntoPayload(withLevels(), 'birth', {
+            'birth.confidence': 'A',
+        });
+
+        expect(payload.birth.confidence).toBe('A');
+        expect(payload.death?.confidence).toBe('D');
+        expect(payload.burial?.confidence).toBe('C');
+    });
+
+    it('takes death and burial levels from the death section values', () => {
+        const payload = mergeSectionIntoPayload(withLevels(), 'death', {
+            is_deceased: '1',
+            'death.confidence': 'A',
+            'burial.confidence': 'B',
+        });
+
+        expect(payload.birth.confidence).toBe('B');
+        expect(payload.death?.confidence).toBe('A');
+        expect(payload.burial?.confidence).toBe('B');
+    });
+
+    it.each(['none', '', 'E'])('turns "%s" into null', (value) => {
+        expect(
+            eventPayloadFromValues('birth', { 'birth.confidence': value })
+                .confidence,
+        ).toBeNull();
+        expect(
+            mergeSectionIntoPayload(withLevels(), 'death', {
+                is_deceased: '1',
+                'burial.confidence': value,
+            }).burial?.confidence,
+        ).toBeNull();
     });
 });

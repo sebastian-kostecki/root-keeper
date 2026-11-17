@@ -2,6 +2,7 @@ import type { Auth } from '@/types/auth';
 import type { CemeteryManagerOption, CemeteryOption } from '@/types/cemetery';
 import type { LocalityOption } from '@/types/parish';
 import type {
+    ConfidenceLevelOption,
     MarriageFormOption,
     MarriagePanelPayload,
     PersonPreviewPayload,
@@ -34,6 +35,7 @@ declare module '@inertiajs/core' {
             cemeteryOptions?: CemeteryOption[];
             cemeteryManagers: CemeteryManagerOption[];
             marriageForms: MarriageFormOption[];
+            confidenceLevels: ConfidenceLevelOption[];
             [key: string]: unknown;
         };
     }

@@ -1,6 +1,7 @@
 import { usePage } from '@inertiajs/react';
 import { useId } from 'react';
 import type { ReactNode } from 'react';
+import { ConfidenceBadge } from '@/components/persons/confidence-badge';
 import { EventSourceStatus } from '@/components/persons/event-source-status';
 import { Field } from '@/components/persons/fact-field';
 import { MarriageFields } from '@/components/persons/person-section-fields';
@@ -169,9 +170,15 @@ function MarriagePanelContent({
                         id={cardId}
                         title="Ślub"
                         badge={
-                            <EventSourceStatus
-                                kinds={marriage.confirmed_kinds}
-                            />
+                            <>
+                                <ConfidenceBadge
+                                    level={marriage.confidence}
+                                    label={marriage.confidence_label}
+                                />
+                                <EventSourceStatus
+                                    kinds={marriage.confirmed_kinds}
+                                />
+                            </>
                         }
                         processing={savingId === cardId}
                         error={strayErrorFor(cardId)}
@@ -187,6 +194,15 @@ function MarriagePanelContent({
                                     label="Forma ślubu"
                                     value={marriage.marriage_form_label}
                                     emptyText="nieznana"
+                                />
+                                <Field
+                                    label="Poziom pewności"
+                                    value={
+                                        marriage.confidence === null
+                                            ? null
+                                            : `${marriage.confidence} — ${marriage.confidence_label}`
+                                    }
+                                    emptyText="nieokreślony"
                                 />
                             </div>
                         }
