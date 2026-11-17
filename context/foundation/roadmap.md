@@ -3,7 +3,7 @@ project: root-keeper
 version: 6
 status: draft
 created: 2026-10-04
-updated: 2026-10-30
+updated: 2026-11-17
 prd_version: 1
 main_goal: market-feedback
 top_blocker: decisions
@@ -51,7 +51,7 @@ Autor prowadzi badania genealogiczne w repo markdown (dziś 283 pliki osób, dzi
 | S-07 | fuzzy-event-dates                  | zapisać i zobaczyć datę wydarzenia jako zakres lat, „przed” albo „po” — ręcznie i z importu                      | —             | FR-009, FR-015                                        | done |
 | S-08 | fact-confidence-level              | zobaczyć i ustawić przy fakcie poziom pewności A–D — ręcznie i z importu                                        | S-02          | FR-018, FR-015                                        | proposed |
 | S-09 | surname-variant-search             | dostać warianty zapisu nazwiska z importu i znaleźć osobę w wyszukiwarce po każdym wariancie                     | S-02          | US-03, FR-019                                         | proposed |
-| S-10 | import-from-scratch-outside-prod   | poza produkcją zaimportować „od zera”, czyszcząc najpierw osoby i fakty drzewa konta (z potwierdzeniem)          | S-02          | FR-020                                                | proposed |
+| S-10 | import-from-scratch-outside-prod   | poza produkcją zaimportować „od zera”, czyszcząc najpierw osoby i fakty drzewa konta (z potwierdzeniem)          | S-02          | FR-020                                                | in-progress |
 
 ## Streams
 
@@ -213,7 +213,7 @@ Brak. Każdy element przekrojowy wchodzi w pierwszym wycinku, który go używa: 
 - **Blockers:** —
 - **Unknowns:** —
 - **Risk:** Jedyny wycinek odcinalny (nice-to-have); przy celu `market-feedback` przydaje się wcześnie do powtarzania importu na koncie testowym, ale niczego nie odblokowuje.
-- **Status:** proposed
+- **Status:** in-progress
 
 ## Backlog Handoff
 
