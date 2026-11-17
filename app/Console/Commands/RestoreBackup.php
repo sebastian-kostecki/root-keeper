@@ -48,10 +48,12 @@ class RestoreBackup extends Command
 
     public function handle(): int
     {
-        $archivePath = $this->resolveArchivePath((string) $this->argument('archive'));
+        $archive = $this->argument('archive');
+        $archive = is_string($archive) ? $archive : '';
+        $archivePath = $this->resolveArchivePath($archive);
 
         if ($archivePath === null) {
-            $this->error('Nie znaleziono archiwum: '.$this->argument('archive'));
+            $this->error('Nie znaleziono archiwum: '.$archive);
 
             return self::FAILURE;
         }

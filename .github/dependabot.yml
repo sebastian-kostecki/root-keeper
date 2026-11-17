@@ -1,7 +1,10 @@
 version: 2
+# Every entry targets develop: updates go through develop -> main like other work
+# (Dependabot reads this file from main, so the change takes effect after a release).
 updates:
   - package-ecosystem: "github-actions"
     directory: "/"
+    target-branch: "develop"
     schedule:
       interval: "weekly"
     cooldown:
@@ -10,3 +13,22 @@ updates:
       github-actions:
         patterns:
           - "*"
+  - package-ecosystem: "composer"
+    directory: "/"
+    target-branch: "develop"
+    schedule:
+      interval: "weekly"
+    cooldown:
+      default-days: 5
+  - package-ecosystem: "npm"
+    directory: "/"
+    target-branch: "develop"
+    schedule:
+      interval: "weekly"
+    cooldown:
+      default-days: 5
+    # The platform builds of rollup should stay on the same version: one PR for all of them.
+    groups:
+      rollup-platform-builds:
+        patterns:
+          - "@rollup/rollup-*"

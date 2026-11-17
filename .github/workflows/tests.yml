@@ -62,10 +62,16 @@ jobs:
         run: composer setup
 
       - name: Install PostgreSQL 18 client (pg_dump/psql for backup tests)
+        # ubuntu-latest already ships PostgreSQL 18 from PGDG. Installing on top of it upgrades
+        # libpq-dev, which fails on a file conflict with postgresql-common (/usr/bin/pg_config).
         run: |
-          sudo apt-get install -y postgresql-common
-          sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y
-          sudo apt-get install -y postgresql-client-18
+          if /usr/lib/postgresql/18/bin/pg_dump --version 2>/dev/null | grep -q ' 18\.'; then
+            echo "PostgreSQL 18 client already installed on the runner"
+          else
+            sudo apt-get install -y postgresql-common
+            sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y
+            sudo apt-get install -y --no-upgrade postgresql-client-18
+          fi
           echo "/usr/lib/postgresql/18/bin" >> "$GITHUB_PATH"
 
       - name: Check pg_dump version
