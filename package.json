@@ -13,7 +13,7 @@
         "test:js": "vp test"
     },
     "dependencies": {
-        "@inertiajs/react": "^3.0.0",
+        "@inertiajs/react": "^3.11.0",
         "@inertiajs/vite": "^3.0.0",
         "@laravel/passkeys": "^0.4.0",
         "@radix-ui/react-avatar": "^1.1.3",
