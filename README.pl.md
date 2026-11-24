@@ -58,13 +58,13 @@ Root Keeper to prywatne, samodzielnie hostowane drzewo genealogiczne do badań p
 
 ## Stos technologiczny
 
-| Warstwa | Technologia |
-| --- | --- |
-| Backend | PHP 8.5, Laravel 13, Inertia 3, Fortify (hasła i klucze dostępu), Wayfinder |
-| Frontend | React 19 z React Compilerem, TypeScript, Tailwind CSS 4, shadcn/ui, Vite+ (Oxlint, Oxfmt) |
-| Baza danych | PostgreSQL 18 |
-| Jakość | Pest 5 / PHPUnit 13, Larastan poziom 7, Laravel Pint, Vitest, Playwright |
-| Infrastruktura | Laravel Sail lokalnie; Docker Compose za Traefikiem na VPS, szyfrowane kopie Spatie |
+| Warstwa        | Technologia                                                                               |
+| -------------- | ----------------------------------------------------------------------------------------- |
+| Backend        | PHP 8.5, Laravel 13, Inertia 3, Fortify (hasła i klucze dostępu), Wayfinder               |
+| Frontend       | React 19 z React Compilerem, TypeScript, Tailwind CSS 4, shadcn/ui, Vite+ (Oxlint, Oxfmt) |
+| Baza danych    | PostgreSQL 18                                                                             |
+| Jakość         | Pest 5 / PHPUnit 13, Larastan poziom 7, Laravel Pint, Vitest, Playwright                  |
+| Infrastruktura | Laravel Sail lokalnie; Docker Compose za Traefikiem na VPS, szyfrowane kopie Spatie       |
 
 ## Uruchomienie
 
@@ -99,24 +99,24 @@ Aplikacja działa pod <http://localhost:8000> (`APP_PORT`).
 
 ## Praca nad kodem
 
-| Polecenie | Co robi |
-| --- | --- |
-| `sail composer test` | Lint, Larastan i testy Pest |
-| `sail composer types:check` | Larastan (poziom 7) |
-| `sail bin pint --dirty --format agent` | Styl kodu |
-| `sail npm run check` | Oxfmt i Oxlint (ostrzeżenie przerywa build) |
-| `sail npm run types:check` | TypeScript |
-| `sail npm run test:js` | Vitest |
-| `npx playwright test` | E2E Playwright na osobnym kontenerze Sail na porcie 8100 |
+| Polecenie                              | Co robi                                                  |
+| -------------------------------------- | -------------------------------------------------------- |
+| `sail composer test`                   | Lint, Larastan i testy Pest                              |
+| `sail composer types:check`            | Larastan (poziom 7)                                      |
+| `sail bin pint --dirty --format agent` | Styl kodu                                                |
+| `sail npm run check`                   | Oxfmt i Oxlint (ostrzeżenie przerywa build)              |
+| `sail npm run types:check`             | TypeScript                                               |
+| `sail npm run test:js`                 | Vitest                                                   |
+| `npx playwright test`                  | E2E Playwright na osobnym kontenerze Sail na porcie 8100 |
 
 Cztery workflowy GitHub Actions uruchamiają się na każdym pushu i pull requeście:
 
-| Workflow | Co sprawdza |
-| --- | --- |
-| [`lint`](.github/workflows/lint.yml) | Oxlint i Oxfmt, ostrzeżenia traktowane jak błędy |
-| [`static-analysis`](.github/workflows/static-analysis.yml) | Larastan poziom 7 |
-| [`tests`](.github/workflows/tests.yml) | Testy Pest (feature i unit) |
-| [`e2e`](.github/workflows/e2e.yml) | Testy end-to-end Playwright |
+| Workflow                                                   | Co sprawdza                                      |
+| ---------------------------------------------------------- | ------------------------------------------------ |
+| [`lint`](.github/workflows/lint.yml)                       | Oxlint i Oxfmt, ostrzeżenia traktowane jak błędy |
+| [`static-analysis`](.github/workflows/static-analysis.yml) | Larastan poziom 7                                |
+| [`tests`](.github/workflows/tests.yml)                     | Testy Pest (feature i unit)                      |
+| [`e2e`](.github/workflows/e2e.yml)                         | Testy end-to-end Playwright                      |
 
 Praca toczy się na `develop`, `main` to gałąź wydań.
 

@@ -58,13 +58,13 @@ Root Keeper is a private, self-hosted family tree for after-hours genealogy rese
 
 ## Tech stack
 
-| Layer | Technology |
-| --- | --- |
-| Backend | PHP 8.5, Laravel 13, Inertia 3, Fortify (passwords and passkeys), Wayfinder |
-| Frontend | React 19 with the React Compiler, TypeScript, Tailwind CSS 4, shadcn/ui, Vite+ (Oxlint, Oxfmt) |
-| Database | PostgreSQL 18 |
-| Quality | Pest 5 / PHPUnit 13, Larastan level 7, Laravel Pint, Vitest, Playwright |
-| Infrastructure | Laravel Sail locally; Docker Compose behind Traefik on a VPS, encrypted Spatie backups |
+| Layer          | Technology                                                                                     |
+| -------------- | ---------------------------------------------------------------------------------------------- |
+| Backend        | PHP 8.5, Laravel 13, Inertia 3, Fortify (passwords and passkeys), Wayfinder                    |
+| Frontend       | React 19 with the React Compiler, TypeScript, Tailwind CSS 4, shadcn/ui, Vite+ (Oxlint, Oxfmt) |
+| Database       | PostgreSQL 18                                                                                  |
+| Quality        | Pest 5 / PHPUnit 13, Larastan level 7, Laravel Pint, Vitest, Playwright                        |
+| Infrastructure | Laravel Sail locally; Docker Compose behind Traefik on a VPS, encrypted Spatie backups         |
 
 ## Getting started
 
@@ -99,24 +99,24 @@ The app runs on <http://localhost:8000> (`APP_PORT`).
 
 ## Development
 
-| Command | What it does |
-| --- | --- |
-| `sail composer test` | Lint, Larastan and the Pest suite |
-| `sail composer types:check` | Larastan (level 7) |
-| `sail bin pint --dirty --format agent` | Code style |
-| `sail npm run check` | Oxfmt and Oxlint (warnings fail the build) |
-| `sail npm run types:check` | TypeScript |
-| `sail npm run test:js` | Vitest |
-| `npx playwright test` | Playwright E2E against a separate Sail container on port 8100 |
+| Command                                | What it does                                                  |
+| -------------------------------------- | ------------------------------------------------------------- |
+| `sail composer test`                   | Lint, Larastan and the Pest suite                             |
+| `sail composer types:check`            | Larastan (level 7)                                            |
+| `sail bin pint --dirty --format agent` | Code style                                                    |
+| `sail npm run check`                   | Oxfmt and Oxlint (warnings fail the build)                    |
+| `sail npm run types:check`             | TypeScript                                                    |
+| `sail npm run test:js`                 | Vitest                                                        |
+| `npx playwright test`                  | Playwright E2E against a separate Sail container on port 8100 |
 
 Four GitHub Actions workflows run on every push and pull request:
 
-| Workflow | What it checks |
-| --- | --- |
-| [`lint`](.github/workflows/lint.yml) | Oxlint and Oxfmt, warnings treated as errors |
-| [`static-analysis`](.github/workflows/static-analysis.yml) | Larastan level 7 |
-| [`tests`](.github/workflows/tests.yml) | Pest feature and unit tests |
-| [`e2e`](.github/workflows/e2e.yml) | Playwright end-to-end tests |
+| Workflow                                                   | What it checks                               |
+| ---------------------------------------------------------- | -------------------------------------------- |
+| [`lint`](.github/workflows/lint.yml)                       | Oxlint and Oxfmt, warnings treated as errors |
+| [`static-analysis`](.github/workflows/static-analysis.yml) | Larastan level 7                             |
+| [`tests`](.github/workflows/tests.yml)                     | Pest feature and unit tests                  |
+| [`e2e`](.github/workflows/e2e.yml)                         | Playwright end-to-end tests                  |
 
 Work happens on `develop`; `main` is the release branch.
 
