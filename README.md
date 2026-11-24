@@ -5,9 +5,9 @@
 **A family tree where every date has a source: a parish record, a civil registry entry or a gravestone.**
 
 [![Live](https://img.shields.io/website?url=https%3A%2F%2Fgenealogy.kostecki.dev%2Fup&style=for-the-badge&label=genealogy.kostecki.dev&up_message=online&down_message=offline)](https://genealogy.kostecki.dev)
-[![Release](https://img.shields.io/github/v/release/sebastian-kostecki/root-keeper?style=for-the-badge&logo=github)](../../releases/latest)
-[![Tests](https://img.shields.io/github/actions/workflow/status/sebastian-kostecki/root-keeper/tests.yml?branch=main&style=for-the-badge&label=Tests&logo=githubactions&logoColor=white)](../../actions/workflows/tests.yml)
-[![E2E](https://img.shields.io/github/actions/workflow/status/sebastian-kostecki/root-keeper/e2e.yml?branch=main&style=for-the-badge&label=E2E&logo=playwright&logoColor=white)](../../actions/workflows/e2e.yml)
+[![Release](https://img.shields.io/github/v/release/sebastian-kostecki/root-keeper?style=for-the-badge&logo=github)](https://github.com/sebastian-kostecki/root-keeper/releases/latest)
+[![Tests](https://img.shields.io/github/actions/workflow/status/sebastian-kostecki/root-keeper/tests.yml?branch=main&style=for-the-badge&label=Tests&logo=githubactions&logoColor=white)](https://github.com/sebastian-kostecki/root-keeper/actions/workflows/tests.yml)
+[![E2E](https://img.shields.io/github/actions/workflow/status/sebastian-kostecki/root-keeper/e2e.yml?branch=main&style=for-the-badge&label=E2E&logo=playwright&logoColor=white)](https://github.com/sebastian-kostecki/root-keeper/actions/workflows/e2e.yml)
 [![Changelog](https://img.shields.io/badge/Changelog-Keep_a_Changelog-E05735?style=for-the-badge)](CHANGELOG.md)
 
 [![PHP 8.5](https://img.shields.io/badge/PHP_8.5-777BB4?style=for-the-badge&logo=php&logoColor=white)](https://www.php.net/)
@@ -18,7 +18,7 @@
 [![Tailwind CSS 4](https://img.shields.io/badge/Tailwind_4-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white)](https://tailwindcss.com/)
 [![PostgreSQL 18](https://img.shields.io/badge/PostgreSQL_18-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)](https://www.postgresql.org/)
 
-[Live app](https://genealogy.kostecki.dev) · [Changelog](CHANGELOG.md) · [Roadmap](context/foundation/roadmap.md) · [Report a bug](../../issues/new)
+[Live app](https://genealogy.kostecki.dev) · [Changelog](CHANGELOG.md) · [Roadmap](context/foundation/roadmap.md) · [Report a bug](https://github.com/sebastian-kostecki/root-keeper/issues/new)
 
 **English** · [Polski](README.pl.md)
 
