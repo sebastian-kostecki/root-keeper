@@ -6,6 +6,8 @@ Numeracja wersji: wersja minor odpowiada kamieniowi milowemu z `context/foundati
 
 ## [Unreleased]
 
+## [0.3.1] - 2026-11-17
+
 ### Dodane
 
 - Repo badawcze na produkcji: klon git na hoście zamontowany w kontenerze tylko do odczytu pod `/research` (`RESEARCH_REPO_HOST_DIR`), więc `import:research <email> /research` działa na produkcji.
@@ -129,7 +131,8 @@ Kamień milowy M-1 „Drzewo potwierdzone źródłami”.
 - Usuwanie źródła po pokazaniu faktów, które stracą potwierdzenie.
 - Produkcja z codzienną kopią bazy i skanów oraz ochroną danych przed podmiotami trzecimi.
 
-[Unreleased]: https://github.com/sebastian-kostecki/root-keeper/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/sebastian-kostecki/root-keeper/compare/v0.3.1...HEAD
+[0.3.1]: https://github.com/sebastian-kostecki/root-keeper/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/sebastian-kostecki/root-keeper/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/sebastian-kostecki/root-keeper/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/sebastian-kostecki/root-keeper/releases/tag/v0.1.0
